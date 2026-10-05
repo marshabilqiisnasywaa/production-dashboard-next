@@ -1,0 +1,83 @@
+:root {
+  --primary: #046A39;
+  --primary-dark: #034D29;
+  --primary-light: #2E8B57;
+  --primary-soft: #E6F2EB;
+  --primary-border: #BFDECB;
+  --accent-amber: #F2A93B;
+  --accent-teal: #0F9D8A;
+  --accent-slate: #5B7A6B;
+  --accent-lime: #8CC63F;
+  --success: #046A39;
+  --warning: #F2A93B;
+  --danger: #D64545;
+  --bg: #F5F8F6;
+  --surface: #FFFFFF;
+  --line: #E3EAE6;
+  --text: #1B2B23;
+  --muted: #6B7C73;
+  --faint: #8BA198;
+  --canvas: #F5F8F6;
+  --app: #F5F8F6;
+  --app-glow: #EEF5F1;
+  --sidebar: #FFFFFF;
+  --card: #FFFFFF;
+  --card-grad: rgba(230, 242, 235, 0.72);
+  --border: #E3EAE6;
+  --accent-1: var(--primary);
+  --accent-2: var(--primary-dark);
+  --accent-rgb: 4, 106, 57;
+  --active: var(--success);
+  --inactive: var(--warning);
+  --success-soft: rgba(4, 106, 57, 0.12);
+  --danger-soft: rgba(214, 69, 69, 0.12);
+  --shadow: 0 1px 3px rgba(4, 106, 57, 0.06);
+  --frame-shadow: 0 18px 42px rgba(4, 106, 57, 0.08);
+  --chart-1: #046A39;
+  --chart-2: #F2A93B;
+  --chart-3: #0F9D8A;
+  --chart-4: #8CC63F;
+  --chart-5: #5B7A6B;
+  --chart-cursor: rgba(4, 106, 57, 0.05);
+  --font-sans: "Montserrat", "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
+  color-scheme: light;
+  font-synthesis: none;
+}
+
+.dark {
+  color-scheme: dark;
+  --bg: #0E1713;
+  --surface: #112019;
+  --line: rgba(255,255,255,0.08);
+  --text: #ECF5F0;
+  --muted: #AABBB2;
+  --faint: #8DA39A;
+  --canvas: #0E1713;
+  --app: #0D1714;
+  --app-glow: #101F1A;
+  --sidebar: #102018;
+  --card: #112019;
+  --card-grad: rgba(230,242,235,0.04);
+  --border: rgba(255,255,255,0.08);
+  --accent-1: var(--primary);
+  --accent-2: var(--primary-dark);
+  --accent-rgb: 4, 106, 57;
+  --active: var(--success);
+  --inactive: var(--warning);
+  --success-soft: rgba(4,106,57,0.18);
+  --danger-soft: rgba(214,69,69,0.18);
+  --shadow: 0 14px 30px rgba(0, 0, 0, 0.2);
+  --frame-shadow: 0 22px 52px rgba(0,0,0,0.26);
+  --chart-1: #046A39;
+  --chart-2: #F2A93B;
+  --chart-3: #0F9D8A;
+  --chart-4: #8CC63F;
+  --chart-5: #5B7A6B;
+  --chart-cursor: rgba(255,255,255,0.04);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--canvas); color: var(--text); }
+button, input { font: inherit; }
+button { color: inherit; }

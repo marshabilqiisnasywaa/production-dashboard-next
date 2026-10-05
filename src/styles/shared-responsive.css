@@ -1,0 +1,17 @@
+@media (max-width: 1200px) {
+  .repair-header { align-items: flex-start; flex-direction: column; }
+  .repair-actions { flex-wrap: wrap; }
+  .repair-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .abnormal-kpi-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .abnormal-charts-grid { grid-template-columns: 1fr; }
+  .detail-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 767px) {
+  .repair-content { padding: 18px 14px 28px; }
+  .repair-kpis,.repair-kpis.two,.repair-charts { grid-template-columns: 1fr; }
+  .skeleton-kpis,.skeleton-panels { grid-template-columns: 1fr; }.skeleton-panels i:first-child { grid-column: auto; }
+  .repair-actions { width: 100%; }
+  .period-tabs { width: 100%; }.period-tabs button { flex: 1; }
+  .repair-panel.wide { grid-column: auto; }
+  .form-grid { grid-template-columns: 1fr; }
+}

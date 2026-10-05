@@ -1,0 +1,22 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@import "../styles/fonts.css";
+@import "../styles/base.css";
+@import "../styles/shared-ui.css";
+@import "../styles/layout.css";
+@import "../styles/production.css";
+@import "../styles/shell.css";
+@import "../styles/warehouse.css";
+@import "../styles/shared-charts.css";
+@import "../styles/packing.css";
+@import "../styles/assembly.css";
+@import "../styles/qc.css";
+@import "../styles/service.css";
+@import "../styles/oqc.css";
+@import "../styles/repair.css";
+@import "../styles/shared-repair.css";
+@import "../styles/loading.css";
+@import "../styles/abnormality.css";
+@import "../styles/shared-responsive.css";
+@import "../styles/sqcdip.css";

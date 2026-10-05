@@ -1,0 +1,6 @@
+.skeleton-title,.skeleton-kpis i,.skeleton-panels i { display: block; border-radius: 14px; background: linear-gradient(100deg,rgba(var(--accent-rgb),.06) 20%,rgba(var(--accent-rgb),.13) 40%,rgba(var(--accent-rgb),.06) 60%); background-size: 300% 100%; animation: skeleton-shimmer 1.4s infinite linear; }
+.skeleton-title { width: 260px; height: 56px; margin-bottom: 20px; }
+.skeleton-kpis { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }.skeleton-kpis i { height: 138px; }
+.skeleton-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }.skeleton-panels i { height: 330px; }.skeleton-panels i:first-child { grid-column: 1/-1; }
+@keyframes skeleton-shimmer { to { background-position: -150% 0; } }
+@keyframes skeleton-in { from { opacity: 0; } }

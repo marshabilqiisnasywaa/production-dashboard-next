@@ -1,0 +1,64 @@
+﻿   Γû▓ Next.js 15.5.27
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully in 5.9s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/42) ...
+   Generating static pages (10/42) 
+   Generating static pages (20/42) 
+   Generating static pages (31/42) 
+ Γ£ô Generating static pages (42/42)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+Γöî Γùï /                                      228 B         103 kB
+Γö£ Γùï /_not-found                             1 kB         104 kB
+Γö£ Γùï /abnormality                           228 B         103 kB
+Γö£ ╞Æ /api/health                            228 B         103 kB
+Γö£ Γùï /assembly                              228 B         103 kB
+Γö£ Γùï /cost                                  228 B         103 kB
+Γö£ Γùï /cost/cost-improvement                 228 B         103 kB
+Γö£ Γùï /cost/cost-transfer                    228 B         103 kB
+Γö£ Γùï /cost/improvement                      228 B         103 kB
+Γö£ Γùï /cost/losses                           228 B         103 kB
+Γö£ Γùï /cost/losses-cost                      228 B         103 kB
+Γö£ Γùï /cost/monitoring                       228 B         103 kB
+Γö£ Γùï /cost/transfer                         228 B         103 kB
+Γö£ Γùï /dashboard                             228 B         103 kB
+Γö£ Γùï /material                              228 B         103 kB
+Γö£ Γùï /material/clearance                    228 B         103 kB
+Γö£ Γùï /material/clearance-discontinue        228 B         103 kB
+Γö£ Γùï /material/new-model                    228 B         103 kB
+Γö£ Γùï /material/new-model-progress           228 B         103 kB
+Γö£ Γùï /material/wo-close                     228 B         103 kB
+Γö£ Γùï /messages                              228 B         103 kB
+Γö£ Γùï /packing                               228 B         103 kB
+Γö£ Γùï /qc                                    228 B         103 kB
+Γö£ Γùï /qc/fqc                                228 B         103 kB
+Γö£ Γùï /qc/oqc                                228 B         103 kB
+Γö£ Γùï /qc/solusi                             228 B         103 kB
+Γö£ Γùï /qc/solusi-improvement                 228 B         103 kB
+Γö£ Γùï /repair/abnormal                       228 B         103 kB
+Γö£ Γùï /repair/preassembly                    228 B         103 kB
+Γö£ Γùï /repair/rework                         228 B         103 kB
+Γö£ Γùï /repair/warranty                       228 B         103 kB
+Γö£ Γùï /service                               228 B         103 kB
+Γö£ Γùï /service/battery                       228 B         103 kB
+Γö£ Γùï /service/external                      228 B         103 kB
+Γö£ Γùï /service/mainboard                     228 B         103 kB
+Γö£ Γùï /service/qualitas                      228 B         103 kB
+Γö£ Γùï /settings                              228 B         103 kB
+Γö£ Γùï /sqcdip                                228 B         103 kB
+Γö£ Γùï /sqcdip/abnormal-tracker               228 B         103 kB
+Γöö Γùï /warehouse                             228 B         103 kB
++ First Load JS shared by all             103 kB
+  Γö£ chunks/1255-5cd2fe06309409a0.js      46.5 kB
+  Γö£ chunks/4bd1b696-f785427dddbba9fb.js  54.2 kB
+  Γöö other shared chunks (total)          2.51 kB
+
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

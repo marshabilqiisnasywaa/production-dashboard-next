@@ -1,0 +1,60 @@
+@keyframes command-in { from { opacity: 0; transform: translateY(-8px) scale(.985); } }
+
+.chart-card { min-height: 340px; padding: 20px; }
+.year-filter { position: relative; }
+.year-filter > button {
+  height: 32px;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.year-filter > button svg { transform: rotate(90deg); }
+.year-filter > div {
+  position: absolute;
+  z-index: 10;
+  top: 38px;
+  right: 0;
+  width: 96px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.year-filter > div button { width: 100%; height: 29px; padding: 0 7px; display: flex; justify-content: space-between; align-items: center; border: 0; border-radius: 6px; background: transparent; font-size: 12px; cursor: pointer; }
+.year-filter > div button:hover { background: rgba(var(--accent-rgb),.08); }
+.year-filter b { color: var(--accent-2); }
+.recharts-wrap { height: 210px; margin-top: 8px; font-feature-settings: "tnum"; }
+.recharts-cartesian-grid-horizontal line { stroke: var(--line); stroke-width: 1; }
+.recharts-cartesian-axis-tick-value { fill: var(--faint); font-family: var(--font-sans); font-size: 12px; }
+.recharts-rectangle { transition: opacity .3s ease,filter .2s ease; }
+.recharts-rectangle:hover { filter: brightness(1.08); }
+.chart-tooltip {
+  min-width: 145px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 12px;
+  backdrop-filter: blur(18px);
+}
+.dark .chart-tooltip { background: rgba(11,18,36,.92); }
+.chart-tooltip > strong { display: block; margin-bottom: 7px; font-size: 12px; font-weight: 600; }
+.chart-tooltip > div { display: grid; grid-template-columns: 7px 1fr auto; align-items: center; gap: 7px; padding-top: 4px; color: var(--muted); }
+.chart-tooltip i,.chart-legend i { width: 7px; height: 7px; border-radius: 50%; }
+.chart-tooltip b { color: var(--text); font-weight: 600; font-feature-settings: "tnum"; }
+.chart-legend { display: flex; justify-content: center; gap: 18px; padding-top: 5px; color: var(--muted); font-size: 12px; }
+
+.chart-legend span { display: flex; align-items: center; gap: 6px; }
+.chart-footer { padding-top: 7px; border-top: 1px solid var(--line); }
+.chart-footer strong { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; }
+.chart-footer span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }

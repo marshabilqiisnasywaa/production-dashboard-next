@@ -1,0 +1,29 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "oppo": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "OPPO Model Plaza",
+      "options": {
+        "baseURL": "https://oppo-cloud-llm-personal-sgp.oppoer.me/personal/openai/api/v1",
+        "apiKey": "personal-a21dec9019d9439d94591b4c772a2d9c"
+      },
+      "models": {
+        "claude-sonnet-4-6-gcp": { "name": "Claude Sonnet 4.6" },
+        "qwen3-coder-plus": { "name": "Qwen3 Coder Plus" },
+        "kimi-k2.7-code": { "name": "Kimi K2.7 Code" }
+      }
+    },
+    "oppo-gpt": {
+      "npm": "@ai-sdk/openai",
+      "name": "OPPO GPT",
+      "options": {
+        "baseURL": "https://oppo-cloud-llm-personal-sgp.oppoer.me/personal/openai/api/v1",
+        "apiKey": "personal-a21dec9019d9439d94591b4c772a2d9c"
+      },
+      "models": {
+        "gpt-5.5": { "name": "GPT-5.5" }
+      }
+    }
+  }
+}

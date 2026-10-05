@@ -1,0 +1,68 @@
+.service-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.service-overview-card {
+  min-height: unset;
+}
+
+.service-group-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.service-selected {
+  border-color: rgba(var(--accent-rgb), 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.18), 0 14px 28px rgba(var(--accent-rgb), 0.12) !important;
+}
+
+.service-chart-card {
+  min-height: 290px;
+}
+
+.service-chart-card-active {
+  border-color: rgba(var(--accent-rgb), 0.45);
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.12), 0 18px 34px rgba(var(--accent-rgb), 0.12);
+}
+
+.service-chart-shell {
+  height: 240px;
+}
+
+.service-page-title {
+  margin-top: 12px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(var(--accent-rgb), 0.04);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.service-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.service-chart-slot {
+  display: block;
+}
+
+.service-chart-second {
+  grid-column: auto;
+}
+
+.service-kpi-card-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}

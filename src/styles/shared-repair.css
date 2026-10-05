@@ -1,0 +1,35 @@
+/* Shared Repair geometry for legacy dashboard surfaces. */
+.qc-page-shell,.material-page,.sqcdip-content { min-width: 0; }
+.qc-card,.material-card,.glass-card,.abnormality-panel,.sq-panel,.qc-kpi-card,.material-kpi-card,.pd-kpi-card,.sq-kpi,.sq-tiles > button {
+  min-width: 0;
+  border-color: var(--border);
+  border-radius: 20px;
+  background: radial-gradient(circle at 0 0,var(--card-grad),transparent 40%),var(--card);
+  box-shadow: var(--shadow),inset 0 1px 0 rgba(255,255,255,.65);
+}
+.dark .qc-card,.dark .material-card,.dark .glass-card,.dark .abnormality-panel,.dark .sq-panel,.dark .qc-kpi-card,.dark .material-kpi-card,.dark .pd-kpi-card,.dark .sq-kpi,.dark .sq-tiles > button { box-shadow: var(--shadow),inset 0 1px 0 rgba(255,255,255,.05); }
+.qc-card,.material-card,.glass-card,.abnormality-panel,.sq-panel { padding: 24px; overflow: visible; }
+.qc-grid-2,.material-grid-two,.material-card-grid,.service-overview-grid,.qc-kpi-grid,.material-kpi-grid,.tracker-kpis,.sq-kpi-grid,.sq-tiles { gap: 16px; }
+.qc-kpi-grid,.material-kpi-grid,.tracker-kpis,.sq-kpi-grid { gap: 12px; }
+.qc-card-header,.card-head,.repair-card-head,.abnormality-panel-head,.sq-panel-head { min-width: 0; }
+.qc-card-header h3,.card-head h3,.abnormality-panel-head h2,.sq-panel-head h2 { margin: 0 0 5px; font-size: 16px; font-weight: 600; }
+.qc-card-header p,.card-head p,.abnormality-panel-head p,.sq-panel-head p { margin: 0; color: var(--muted); font-size: 12px; }
+.service-chart-shell,.assembly-chart-wrap,.material-chart-wrap,.material-pie-wrap,.qc-chart-wrap,.pd-chart-wrap,.packing-chart-wrap,.sq-detail-chart,.sq-panel > div:has(> .recharts-responsive-container) { min-width: 0; min-height: 240px; margin: 24px 0; }
+.material-table-wrap,.assembly-table-wrap,.qc-table-wrap,.sq-table-wrap,.sq-calendar-scroll { width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: thin; }
+.material-table,.assembly-table,.sq-table,.qc-table { width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 0; }
+.material-table th,.assembly-table th,.sq-table th,.qc-table th { height: 37px; padding: 0 11px; background: color-mix(in srgb,var(--card) 90%,var(--app)); color: var(--faint); font-size: 11px; font-weight: 500; text-align: left; white-space: nowrap; }
+.material-table td,.assembly-table td,.sq-table td,.qc-table td { min-height: 43px; height: auto; padding: 10px 11px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; line-height: 1.5; white-space: nowrap; }
+.material-table td:nth-child(2),.material-table td:nth-child(3),.material-table td:nth-child(4),.material-table td:nth-child(5),.assembly-table td:nth-child(1),.assembly-table td:nth-child(3),.sq-table td:nth-child(1),.sq-table td:nth-child(2),.sq-table td:nth-child(4),.sq-table td:nth-child(8) { white-space: nowrap; }
+.material-table td:nth-child(3),.material-table td:nth-child(4),.material-table td:nth-child(5),.sq-table td.tracker-problem,.sq-table td:last-child,.qc-table td:last-child { min-width: 220px; max-width: 320px; white-space: normal; overflow-wrap: anywhere; }
+.material-table tr:first-child th:first-child,.material-table td:first-child,.assembly-table tr:first-child th:first-child,.assembly-table td:first-child,.sq-table tr:first-child th:first-child,.sq-table td:first-child,.qc-table tr:first-child th:first-child,.qc-table td:first-child { position: sticky; left: 0; z-index: 2; background: var(--card); }
+.material-table tr:first-child th:first-child,.assembly-table tr:first-child th:first-child,.sq-table tr:first-child th:first-child,.qc-table tr:first-child th:first-child { z-index: 3; background: color-mix(in srgb,var(--card) 90%,var(--app)); }
+.oqc-metric-card,.pd-kpi-card,.material-kpi-card,.sq-kpi,.qc-kpi-card { position: relative; min-height: 96px; padding: 10px 12px; text-align: left; }
+.material-kpi-card,.sq-kpi,.qc-kpi-card { color: var(--text); }
+.material-kpi-card strong,.sq-kpi > strong,.qc-kpi-card > strong { display: block; margin-top: 8px; font-size: 20px; font-weight: 600; }
+.material-kpi-card small,.sq-kpi small,.qc-kpi-card small { color: var(--muted); font-size: 10px; font-weight: 400; }
+.material-kpi-card::after,.sq-kpi::after,.qc-kpi-card::after { content: ""; position: absolute; right: 10px; bottom: 8px; width: 38%; height: 28px; border-bottom: 2px solid var(--success); opacity: .18; transform: skewY(-8deg); }
+@media (max-width: 768px) {
+  .qc-card,.material-card,.glass-card,.abnormality-panel,.sq-panel,.repair-panel { padding: 24px; }
+  .qc-grid-2,.material-grid-two,.service-overview-grid,.repair-charts { grid-template-columns: minmax(0,1fr); }
+  .repair-kpis,.qc-kpi-grid,.material-kpi-grid,.tracker-kpis,.sq-kpi-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
