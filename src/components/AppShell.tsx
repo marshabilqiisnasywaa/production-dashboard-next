@@ -1,7 +1,9 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { parentForKey, resolveNavItem } from "@/config/navigation";
+import { filterNavGroups, parentForKey, resolveNavItem } from "@/config/navigation";
+import { useDisplayMode } from "@/components/providers/DisplayModeProvider";
+import { useRole } from "@/components/providers/RoleProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { commandGroups } from "@/components/shell/commands";
@@ -21,6 +23,8 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
   const router = useRouter();
   const { dark, toggleTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
+  const { mode, setMode } = useDisplayMode();
+  const { user, role, picArea, setRole, setPicArea } = useRole();
   const [active, setActive] = useState(initialActive);
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [mobileSidebar, setMobileSidebar] = useState(false);
@@ -47,11 +51,13 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
 
   const page = getShellPage(active);
   const brandLogo = dark ? oppoLogoDark : oppoLogo;
+  const navigationGroups = useMemo(() => filterNavGroups({ role, picArea, mode }), [role, picArea, mode]);
+  const visibleCommandLabels = useMemo(() => new Set(navigationGroups.flatMap((group) => group.items.flatMap((item) => [item.label, ...(item.children?.map((child) => child.label) ?? [])]))), [navigationGroups]);
 
   const filteredCommandGroups = useMemo(() => commandGroups.map((group) => ({
     ...group,
-    items: group.items.filter((item) => item.label.toLowerCase().includes(commandQuery.toLowerCase())),
-  })).filter((group) => group.items.length), [commandQuery]);
+    items: group.items.filter((item) => item.label.toLowerCase().includes(commandQuery.toLowerCase()) && (!resolveNavItem(item.label) || visibleCommandLabels.has(item.label))),
+  })).filter((group) => group.items.length), [commandQuery, visibleCommandLabels]);
   const filteredCommands = filteredCommandGroups.flatMap((group) => group.items);
 
   useEffect(() => {
@@ -119,6 +125,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
           brandLogo={brandLogo}
           expanded={sidebarExpanded}
           mobileOpen={mobileSidebar}
+          groups={navigationGroups}
           openMenu={openMenu}
           onExpand={() => setSidebarExpanded(true)}
           onCloseMobile={() => setMobileSidebar(false)}
@@ -133,7 +140,14 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
             dark={dark}
             language={language}
             languageOpen={languageOpen}
+            mode={mode}
+            role={role}
+            picArea={picArea}
+            user={user}
             onOpenCommand={() => setCommandOpen(true)}
+            onSelectMode={setMode}
+            onSelectRole={setRole}
+            onSelectPicArea={setPicArea}
             onToggleLanguageMenu={() => setLanguageOpen(!languageOpen)}
             onSelectLanguage={selectLanguage}
             onToggleTheme={toggleTheme}

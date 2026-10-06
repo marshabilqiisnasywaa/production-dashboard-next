@@ -1,0 +1,335 @@
+{
+ "source": "Konsep_BI_dashboard_morning_meeting_prod.xlsx, sheet Production KPI",
+ "periode": "Jan-Jul 2026",
+ "catatan": [
+  "Nilai persen disimpan sebagai pecahan (0.0126 = 1.26%)",
+  "aktual2026Excel adalah angka kolom 'Aktual 2026' di Excel, tidak selalu sama dengan rata-rata bulanan",
+  "PIC kosong untuk Safety Information dan Safety Material di Excel (merge ke ALVIN CHANDRA)"
+ ],
+ "kpis": [
+  {
+   "no": 1,
+   "code": "oqc",
+   "name": "OQC Defect Rate",
+   "weight": 20,
+   "t1": 0.02,
+   "t2": 0.01,
+   "pic": "SOLI",
+   "aktual2026Excel": 0.0126,
+   "monthly": {
+    "2026-01": 0.0105,
+    "2026-02": 0.0126,
+    "2026-03": 0.0155,
+    "2026-04": 0.0152,
+    "2026-05": 0.0123,
+    "2026-06": 0.0111,
+    "2026-07": 0.011
+   }
+  },
+  {
+   "no": 2,
+   "code": "slc",
+   "name": "Single Labor Cost",
+   "weight": 20,
+   "t1": 3.7,
+   "t2": 3.67,
+   "pic": "ALVIN CHANDRA / REYNARD",
+   "aktual2026Excel": 3.56,
+   "monthly": {
+    "2026-01": 4.05,
+    "2026-02": 3.35,
+    "2026-03": 6.81,
+    "2026-04": 2.78,
+    "2026-05": 3.93,
+    "2026-06": 3.36,
+    "2026-07": 2.98
+   }
+  },
+  {
+   "no": 3,
+   "code": "ngp",
+   "name": "NGP",
+   "weight": 10,
+   "t1": 0.3,
+   "t2": 0.3,
+   "pic": "SOLI",
+   "aktual2026Excel": 0.22,
+   "monthly": {
+    "2026-01": 0.11,
+    "2026-02": 0.21,
+    "2026-03": 0.36,
+    "2026-04": 0.25,
+    "2026-05": 0.24,
+    "2026-06": 0.3,
+    "2026-07": 0.244
+   }
+  },
+  {
+   "no": 4,
+   "code": "losses-material",
+   "name": "Losses Material",
+   "weight": 20,
+   "t1": 0.51,
+   "t2": 0.51,
+   "pic": "RICKHY LADIANSYAH",
+   "aktual2026Excel": 0.43,
+   "monthly": {
+    "2026-01": 0.24,
+    "2026-02": 0.38,
+    "2026-03": 0.48,
+    "2026-04": 0.42,
+    "2026-05": 0.41,
+    "2026-06": 0.55,
+    "2026-07": 0.54
+   }
+  },
+  {
+   "no": 5,
+   "code": "e2e-delivery",
+   "name": "End-to-End Delivery Time",
+   "weight": 20,
+   "t1": 60.45,
+   "t2": 58.41,
+   "pic": "ALVIN CHANDRA",
+   "aktual2026Excel": 62.1,
+   "monthly": {
+    "2026-01": 57.52,
+    "2026-02": 58.33,
+    "2026-03": 62.93,
+    "2026-04": 63.28,
+    "2026-05": 68.87,
+    "2026-06": 62.31,
+    "2026-07": 104.6
+   }
+  },
+  {
+   "no": 6,
+   "code": "wo-close",
+   "name": "WO Close (3D On-time)",
+   "weight": 10,
+   "t1": 0.98,
+   "t2": 0.99,
+   "pic": "IRFAN NURCHOLIS",
+   "aktual2026Excel": 0.9961,
+   "monthly": {
+    "2026-01": 0.9869,
+    "2026-02": 0.9922,
+    "2026-03": 0.9932,
+    "2026-04": 1,
+    "2026-05": 1,
+    "2026-06": 1,
+    "2026-07": 1
+   }
+  },
+  {
+   "no": 7,
+   "code": "big-problem",
+   "name": "Big Problem",
+   "weight": null,
+   "t1": 0,
+   "t2": 0,
+   "pic": "AS'AD",
+   "aktual2026Excel": 0,
+   "monthly": {
+    "2026-01": 0,
+    "2026-02": 0,
+    "2026-03": 0,
+    "2026-04": 0,
+    "2026-05": 0,
+    "2026-06": 0,
+    "2026-07": 0
+   }
+  },
+  {
+   "no": 8,
+   "code": "safety-battery",
+   "name": "Battery Safety",
+   "weight": null,
+   "t1": 0,
+   "t2": 0,
+   "pic": "IKHWAN HANDOKO",
+   "aktual2026Excel": 0,
+   "monthly": {
+    "2026-01": 0,
+    "2026-02": 0,
+    "2026-03": 0,
+    "2026-04": 0,
+    "2026-05": 0,
+    "2026-06": 0,
+    "2026-07": 0
+   }
+  },
+  {
+   "no": 9,
+   "code": "safety-incident",
+   "name": "Safety Incident",
+   "weight": null,
+   "t1": 0,
+   "t2": 0,
+   "pic": "ALVIN CHANDRA",
+   "aktual2026Excel": 0,
+   "monthly": {
+    "2026-01": 0,
+    "2026-02": 0,
+    "2026-03": 0,
+    "2026-04": 0,
+    "2026-05": 0,
+    "2026-06": 0,
+    "2026-07": 0
+   }
+  },
+  {
+   "no": 10,
+   "code": "safety-information",
+   "name": "Safety Information",
+   "weight": null,
+   "t1": 0,
+   "t2": 0,
+   "pic": null,
+   "aktual2026Excel": 0,
+   "monthly": {
+    "2026-01": 0,
+    "2026-02": 0,
+    "2026-03": 0,
+    "2026-04": 0,
+    "2026-05": 0,
+    "2026-06": 0,
+    "2026-07": 0
+   }
+  },
+  {
+   "no": 11,
+   "code": "safety-material",
+   "name": "Safety Material",
+   "weight": null,
+   "t1": 0,
+   "t2": 0,
+   "pic": null,
+   "aktual2026Excel": 0,
+   "monthly": {
+    "2026-01": 0,
+    "2026-02": 0,
+    "2026-03": 0,
+    "2026-04": 0,
+    "2026-05": 0,
+    "2026-06": 0,
+    "2026-07": 0
+   }
+  },
+  {
+   "no": 12,
+   "code": "upph",
+   "name": "UPPH",
+   "weight": null,
+   "t1": 5.26,
+   "t2": 5.26,
+   "pic": "SUBAGYO",
+   "aktual2026Excel": 5.57,
+   "monthly": {
+    "2026-01": 5.46,
+    "2026-02": 5.66,
+    "2026-03": 5.48,
+    "2026-04": 5.43,
+    "2026-05": 5.3,
+    "2026-06": 5.55,
+    "2026-07": 6.17
+   }
+  },
+  {
+   "no": 13,
+   "code": "material-mgmt-impact",
+   "name": "Material Management Impact",
+   "weight": null,
+   "t1": 3,
+   "t2": 1,
+   "pic": "IRFAN NURCHOLIS",
+   "aktual2026Excel": 1,
+   "monthly": {
+    "2026-01": 0,
+    "2026-02": 0,
+    "2026-03": 1,
+    "2026-04": 0,
+    "2026-05": 0,
+    "2026-06": 0,
+    "2026-07": 0
+   }
+  },
+  {
+   "no": 14,
+   "code": "smed",
+   "name": "SMED",
+   "weight": null,
+   "t1": "A/B 6H, C 10H",
+   "t2": "A/B 6H, C 10H",
+   "pic": "FAJRUL AL HUDA",
+   "aktual2026Excel": 9.9,
+   "monthly": {
+    "2026-01": 9.8,
+    "2026-02": 7.3,
+    "2026-03": null,
+    "2026-04": 7.85,
+    "2026-05": 7.2,
+    "2026-06": 8,
+    "2026-07": 7.1
+   },
+   "note": "Maret bernilai 0 di Excel (dianggap tidak ada data), diubah jadi null"
+  },
+  {
+   "no": 15,
+   "code": "lean-5s",
+   "name": "Lean Maturity 5S",
+   "weight": null,
+   "t1": 3,
+   "t2": 3,
+   "pic": "REYNARD",
+   "aktual2026Excel": 3,
+   "monthly": {
+    "2026-01": 3,
+    "2026-02": 3,
+    "2026-03": 3,
+    "2026-04": 3,
+    "2026-05": 3,
+    "2026-06": 3,
+    "2026-07": 3
+   }
+  },
+  {
+   "no": 16,
+   "code": "lean-dm",
+   "name": "Lean Maturity DM",
+   "weight": null,
+   "t1": 2,
+   "t2": 2,
+   "pic": "REYNARD",
+   "aktual2026Excel": 2,
+   "monthly": {
+    "2026-01": 2,
+    "2026-02": 2,
+    "2026-03": 2,
+    "2026-04": 2,
+    "2026-05": 2,
+    "2026-06": 2,
+    "2026-07": 2
+   }
+  },
+  {
+   "no": 17,
+   "code": "resign-rate",
+   "name": "Resign Rate",
+   "weight": null,
+   "t1": 0.015,
+   "t2": 0.01,
+   "pic": "YOGI SASTRA DINATA",
+   "aktual2026Excel": 0.0147,
+   "monthly": {
+    "2026-01": 0.016,
+    "2026-02": 0.0195,
+    "2026-03": 0.0146,
+    "2026-04": 0.0138,
+    "2026-05": 0.0123,
+    "2026-06": 0.0063,
+    "2026-07": 0.0104
+   }
+  }
+ ]
+}

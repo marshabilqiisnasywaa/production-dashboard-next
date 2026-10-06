@@ -223,6 +223,9 @@ main { min-width: 0; }
 .command-search span { flex: 1; text-align: left; }
 .command-search kbd { padding: 3px 5px; border: 1px solid var(--border); border-radius: 5px; background: rgba(var(--accent-rgb),.05); color: var(--muted); font: 6px inherit; }
 .command-search:hover { border-color: color-mix(in srgb,var(--accent-1) 48%,var(--border)); }
+.topbar-selects { display: flex; align-items: center; gap: 6px; }
+.topbar-selects select { height: 34px; max-width: 142px; padding: 0 8px; border: 1px solid var(--border); border-radius: 9px; background: var(--card); color: var(--text); font-size: 11px; cursor: pointer; }
+.topbar-selects select:hover { border-color: color-mix(in srgb,var(--accent-1) 48%,var(--border)); }
 .language-wrap { position: relative; }
 .language-button { width: auto; padding: 0 8px; display: flex; gap: 5px; font-size: 7px; }
 .language-menu {
@@ -396,6 +399,8 @@ body,button,input { font-family: var(--font-sans); }
   .breadcrumb button, .breadcrumb strong { font-size: 12px; max-width: 160px; }
   .command-search { width: 34px; padding: 0; justify-content: center; }
   .command-search span,.command-search kbd,.language-button span,.account-copy,.profile-button > svg { display: none; }
+  .topbar-selects { gap: 4px; }
+  .topbar-selects select { width: 84px; max-width: 84px; padding: 0 4px; font-size: 9px; }
   .language-button { width: 34px; padding: 0; justify-content: center; }
   .navbar-right { gap: 3px; }
   .topbar .navbar-right > .divider { display: none; }

@@ -1,6 +1,9 @@
 import Icon from "@/components/shell/Icon";
+import { appRoles, picAreaOptions, type AppUser, type PicAreaKey } from "@/components/providers/RoleProvider";
+import type { DisplayMode } from "@/components/providers/DisplayModeProvider";
 import type { AppLanguage } from "@/components/providers/LanguageProvider";
 import type { ShellPage } from "@/components/shell/shellPage";
+import type { Role } from "@/types/morningMeeting";
 
 type ShellTopbarProps = {
   page: ShellPage;
@@ -9,7 +12,14 @@ type ShellTopbarProps = {
   dark: boolean;
   language: AppLanguage;
   languageOpen: boolean;
+  mode: DisplayMode;
+  role: Role;
+  picArea: PicAreaKey;
+  user: AppUser;
   onOpenCommand: () => void;
+  onSelectMode: (mode: DisplayMode) => void;
+  onSelectRole: (role: Role) => void;
+  onSelectPicArea: (area: PicAreaKey) => void;
   onToggleLanguageMenu: () => void;
   onSelectLanguage: (language: AppLanguage) => void;
   onToggleTheme: () => void;
@@ -24,7 +34,14 @@ export default function ShellTopbar({
   dark,
   language,
   languageOpen,
+  mode,
+  role,
+  picArea,
+  user,
   onOpenCommand,
+  onSelectMode,
+  onSelectRole,
+  onSelectPicArea,
   onToggleLanguageMenu,
   onSelectLanguage,
   onToggleTheme,
@@ -58,6 +75,18 @@ export default function ShellTopbar({
       </div>
       <div className="navbar-right">
         <button className="command-search" onClick={onOpenCommand}><Icon name="search" size={16} /><span>Search...</span><kbd>{isMac ? "⌘K" : "Ctrl K"}</kbd></button>
+        <div className="topbar-selects">
+          <select value={mode} onChange={(event) => onSelectMode(event.target.value as DisplayMode)} aria-label="Mode tampilan">
+            <option value="klasik">Klasik</option>
+            <option value="morning-meeting">Morning Meeting</option>
+          </select>
+          <select value={role} onChange={(event) => onSelectRole(event.target.value as Role)} aria-label="Role pengguna">
+            {appRoles.map((item) => <option key={item} value={item}>{item}</option>)}
+          </select>
+          {role === "PIC Area" && <select value={picArea} onChange={(event) => onSelectPicArea(event.target.value as PicAreaKey)} aria-label="Area PIC">
+            {picAreaOptions.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+          </select>}
+        </div>
         <div className="language-wrap">
           <button className="ghost-button language-button" onClick={onToggleLanguageMenu}><Icon name="globe" size={17} /><span>{language}</span></button>
           {languageOpen && <div className="language-menu">
@@ -69,8 +98,8 @@ export default function ShellTopbar({
         <button className="ghost-button notification" aria-label="Notifications"><Icon name="bell" size={18} /><i /></button>
         <span className="divider" />
         <button className="profile-button">
-          <span className="avatar">MB</span>
-          <span className="account-copy"><strong>Marsha Bilqiis</strong><small>marsha@manuflow.id</small></span>
+          <span className="avatar">{user.initials}</span>
+          <span className="account-copy"><strong>{user.name}</strong><small>{user.email}</small></span>
           <Icon name="chevron" size={13} />
         </button>
       </div>
