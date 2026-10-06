@@ -1,5 +1,8 @@
+import { useState } from "react";
 import Icon from "@/components/shell/Icon";
 import { appRoles, picAreaOptions, type AppUser, type PicAreaKey } from "@/components/providers/RoleProvider";
+import SimulationBadge from "@/features/morning-meeting/SimulationBadge";
+import { getNotifications } from "@/features/morning-meeting/aiFollowupData";
 import type { DisplayMode } from "@/components/providers/DisplayModeProvider";
 import type { AppLanguage } from "@/components/providers/LanguageProvider";
 import type { ShellPage } from "@/components/shell/shellPage";
@@ -48,6 +51,8 @@ export default function ShellTopbar({
   onToggleSidebar,
   onNavigate,
 }: ShellTopbarProps) {
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const notifications = mode === "morning-meeting" ? getNotifications(role, picArea) : [];
   return (
     <header className="topbar">
       <div className="navbar-left">
@@ -95,7 +100,7 @@ export default function ShellTopbar({
           </div>}
         </div>
         <button className="ghost-button theme-button" onClick={onToggleTheme} aria-label="Switch theme"><Icon name={dark ? "sun" : "moon"} size={17} /></button>
-        <button className="ghost-button notification" aria-label="Notifications"><Icon name="bell" size={18} /><i /></button>
+        {mode === "morning-meeting" ? <div className="mm-notification-wrap"><button className="ghost-button notification" aria-label="Notifications" onClick={() => setNotificationOpen((value) => !value)}><Icon name="bell" size={18} /><i /><b>{notifications.length}</b></button>{notificationOpen && <div className="mm-notification-menu"><div><strong>Notifikasi</strong><SimulationBadge /></div>{notifications.map((item) => <button key={item.id} className={item.severity} onClick={() => { onNavigate(item.target); setNotificationOpen(false); }}><b>{item.title}</b><span>{item.body}</span></button>)}</div>}</div> : <button className="ghost-button notification" aria-label="Notifications"><Icon name="bell" size={18} /><i /></button>}
         <span className="divider" />
         <button className="profile-button">
           <span className="avatar">{user.initials}</span>

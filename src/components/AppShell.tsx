@@ -12,6 +12,7 @@ import SidebarNav from "@/components/shell/SidebarNav";
 import ShellTopbar from "@/components/shell/ShellTopbar";
 import CommandPalette from "@/components/shell/CommandPalette";
 import ShellContent from "@/components/shell/ShellContent";
+import PaiRobot from "@/features/morning-meeting/PaiRobot";
 import type { CostNav } from "@/data/costData";
 import type { AppLanguage } from "@/components/providers/LanguageProvider";
 
@@ -178,6 +179,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
           onClose={() => setCommandOpen(false)}
         />
       )}
+      {mode === "morning-meeting" && <PaiRobot />}
     </div>
   );
 }

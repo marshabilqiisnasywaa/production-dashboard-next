@@ -38,6 +38,7 @@ export const morningMeetingGroup: NavGroup = {
     { label: "Beranda Meeting", key: "meeting-home", href: "/morning-meeting", icon: "calendar", mode: morningMeetingMode, badge: "Baru", general: true, allowedRoles: ["PIC Area", "KPI Admin", "Host", "Manajer", "HOD"] },
     { label: "Production KPI", key: "production-kpi", href: "/morning-meeting/production-kpi", icon: "chart", mode: morningMeetingMode, badge: "Baru", allowedRoles: ["KPI Admin", "Host", "Manajer"] },
     { label: "Project 2026", key: "project-2026", href: "/morning-meeting/project-2026", icon: "trending", mode: morningMeetingMode, badge: "Baru", allowedRoles: ["KPI Admin", "Host", "Manajer"] },
+    { label: "Followup", key: "followup", href: "/morning-meeting/followup", icon: "message", mode: morningMeetingMode, badge: "Baru", general: true, allowedRoles: ["PIC Area", "KPI Admin", "Host", "Manajer", "HOD"] },
   ],
 };
 
