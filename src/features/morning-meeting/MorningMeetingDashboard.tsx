@@ -12,7 +12,7 @@ type MorningMeetingDashboardProps = {
 
 export default function MorningMeetingDashboard({ page, onNavigate }: MorningMeetingDashboardProps) {
   const { role, picArea } = useRole();
-  if (page === "production-kpi") return <ProductionKpiPage />;
+  if (page === "production-kpi") return <ProductionKpiPage onNavigate={onNavigate} />;
   if (page === "project-2026") return <Project2026Page />;
   if (page === "followup") return <FollowupPage role={role} picArea={picArea} />;
   return <MorningMeetingHome role={role} picArea={picArea} onNavigate={onNavigate} />;
