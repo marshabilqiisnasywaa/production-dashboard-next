@@ -26,18 +26,18 @@ import {
 } from "recharts";
 
 type RepairPage = "Preassembly" | "Rework" | "Warranty" | "Abnormal";
-type Direction = "lower" | "higher";
+export type Direction = "lower" | "higher";
 
-const periods = ["2025", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "W36", "W37", "W38", "W39", "28/9", "29/9", "30/9", "1/10", "2/10"];
-const wipActual = [14479, 12995, 11492, 6710, 4010, 3681, 3340, 3416, 3380, 3529, 3359, 2886, 2756, 2336, 2456, null, null, null];
-const wipTargets = [6000, 5600, 5600, 5600, 3550, 3550, 3550, 3550, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800];
-const inputRate = [1.29, 1.46, 1.39, 1.82, 1.99, 1.02, .98, .94, .69, .92, 1.03, 1.05, .72, .52, .8, 1.5, 1.43, 1];
+export const periods = ["2025", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "W36", "W37", "W38", "W39", "28/9", "29/9", "30/9", "1/10", "2/10"];
+export const wipActual = [14479, 12995, 11492, 6710, 4010, 3681, 3340, 3416, 3380, 3529, 3359, 2886, 2756, 2336, 2456, null, null, null];
+export const wipTargets = [6000, 5600, 5600, 5600, 3550, 3550, 3550, 3550, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800, 2800];
+export const inputRate = [1.29, 1.46, 1.39, 1.82, 1.99, 1.02, .98, .94, .69, .92, 1.03, 1.05, .72, .52, .8, 1.5, 1.43, 1];
 const preassemblyRate = [97.5, 96.3, 96.8, 98.8, 98.8, 99.5, 99.7, 99.8, 99.8, 99.7, 100, 100, 100, 100, 100];
 const qaRate = [99.6, 99.8, 99.2, 99.5, 99.4, 99.5, 99.9, 99.8, 99.7, 100, 100, 100, 100, 100, 100, 100];
 const frameRate = [59.4, 47.3, 45, 50.6, 64, 67.9, 70, 85.8, 94.4, 100, 100, 100, 100, 100, 100, 100];
 const lcdRate = [75.7, null, null, null, 75, 69, 78.8, 86.4, 100, 100, 100, 100, 100, 100, 100];
 
-const kpiSeed = [
+export const kpiSeed = [
   { id: "wip", name: "WIP / Inventory Qty", value: 2456, display: "2,456", unit: "pcs", target: 2800, targetLabel: "2,800 pcs", direction: "lower" as Direction },
   { id: "input", name: "Input Rate", value: 1.18, display: "1.18%", unit: "", target: 1, targetLabel: "1.00%", direction: "lower" as Direction },
   { id: "assembly", name: "Assembly Output", value: 100, display: "100.0%", unit: "", target: 99, targetLabel: "99%", direction: "higher" as Direction },
@@ -72,7 +72,7 @@ const issueSeed = [
   { no: 3, date: "28 Sep 2025", problem: "Top cover scratch", improvement: "Add protective film", plan: "30 Sep 2025", pic: "Rina", status: "Done" },
 ];
 
-function Glyph({ name }: { name: "calendar" | "download" | "plus" | "trend" | "close" | "upload" | "search" | "alert" }) {
+export function Glyph({ name }: { name: "calendar" | "download" | "plus" | "trend" | "close" | "upload" | "search" | "alert" }) {
   const paths = {
     calendar: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></>,
     download: <><path d="M12 3v12m-4-4 4 4 4-4"/><path d="M4 19h16"/></>,
@@ -86,9 +86,9 @@ function Glyph({ name }: { name: "calendar" | "download" | "plus" | "trend" | "c
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
 
-const isOnTarget = (actual: number, target: number, direction: Direction) => direction === "lower" ? actual <= target : actual >= target;
+export const isOnTarget = (actual: number, target: number, direction: Direction) => direction === "lower" ? actual <= target : actual >= target;
 
-function Sparkline({ success }: { success: boolean }) {
+export function Sparkline({ success }: { success: boolean }) {
   return <svg className="repair-spark" viewBox="0 0 112 35" preserveAspectRatio="none"><path d="M1 28 8 25 15 27 22 18 29 21 36 15 43 18 50 11 57 14 64 8 71 13 78 6 85 10 92 5 99 9 111 3" fill="none" stroke={success ? "var(--success)" : "var(--danger)"} strokeWidth="2"/><path d="M1 34V28L8 25 15 27 22 18 29 21 36 15 43 18 50 11 57 14 64 8 71 13 78 6 85 10 92 5 99 9 111 3V34Z" fill={success ? "var(--success-soft)" : "var(--danger-soft)"}/></svg>;
 }
 
@@ -106,7 +106,7 @@ function StatusDot(props: { cx?: number; cy?: number; payload?: ChartDatum; dire
   return <circle cx={props.cx} cy={props.cy} r="4" fill={good ? "var(--success)" : "var(--danger)"} stroke="var(--card)" strokeWidth="2" />;
 }
 
-function MetricChart({ id, title, values, target, direction, domain, full = false }: {
+export function MetricChart({ id, title, values, target, direction, domain, full = false }: {
   id: string; title: string; values: (number | null)[]; target: number | number[]; direction: Direction; domain?: [number, number]; full?: boolean;
 }) {
   const [labels, setLabels] = useState(false);
@@ -136,7 +136,7 @@ function MetricChart({ id, title, values, target, direction, domain, full = fals
   </article>;
 }
 
-function WipTable() {
+export function WipTable() {
   return <div className="repair-table-scroll"><table className="repair-data-table wip-table"><thead><tr><th className="sticky-col">Proses</th><th>T</th>{periods.slice(0,15).map((period) => <th key={period}>{period}</th>)}</tr></thead><tbody>
     <tr><td className="sticky-col"><strong>Target WIP</strong></td><td>—</td>{wipTargets.slice(0,15).map((value,index) => <td key={index}>{value.toLocaleString()}</td>)}</tr>
     <tr><td className="sticky-col"><strong>Actual WIP</strong></td><td>—</td>{wipActual.slice(0,15).map((value,index) => <td className={value !== null && value <= wipTargets[index] ? "pass-cell" : "fail-cell"} key={index}>{value?.toLocaleString() ?? "—"}</td>)}</tr>
@@ -153,7 +153,7 @@ function NgProductionCard() {
   </article>;
 }
 
-function Header({ page, onInput }: { page: string; onInput: () => void }) {
+export function Header({ page, onInput }: { page: string; onInput: () => void }) {
   const [periodType,setPeriodType] = useState("Harian");
   const [exportOpen,setExportOpen] = useState(false);
   return <div className="repair-header"><div><div className="repair-eyebrow">REPAIR CENTER</div><div className="repair-title-row"><h1>{page}</h1><span className="pic-chip"><span>YU</span>PIC: Yusriyadi</span></div><p>Monitor performa repair dan quality secara real-time.</p></div><div className="repair-actions">
@@ -164,7 +164,7 @@ function Header({ page, onInput }: { page: string; onInput: () => void }) {
   </div></div>;
 }
 
-function InputDialog({ onClose, onSave }: { onClose: () => void; onSave: (id: string, actual: number) => void }) {
+export function InputDialog({ onClose, onSave }: { onClose: () => void; onSave: (id: string, actual: number) => void }) {
   const [tab,setTab] = useState<"manual"|"import">("manual");
   const [selectedKpi,setSelectedKpi] = useState("wip");
   return <div className="repair-modal-backdrop" onMouseDown={onClose}><form className="repair-dialog" onMouseDown={(event)=>event.stopPropagation()} onSubmit={(event)=>{event.preventDefault();const data=new FormData(event.currentTarget);onSave(String(data.get("kpi")),Number(data.get("actual")));}}>
@@ -192,7 +192,7 @@ function QualityIssues() {
   </article>;
 }
 
-function Preassembly() {
+export function Preassembly() {
   const [sheetKpi,setSheetKpi] = useState<typeof kpiSeed[number]|null>(null);
   const [inputOpen,setInputOpen] = useState(false);
   const [values,setValues] = useState<Record<string,number>>({});
@@ -208,15 +208,19 @@ function Preassembly() {
   </>;
 }
 
-function Rework() {
+export const reworkPlanning=[{date:"28 Sep",model:"A5 Pro",plan:120,actual:126},{date:"29 Sep",model:"Reno 14",plan:100,actual:94},{date:"30 Sep",model:"A5 Pro",plan:130,actual:132},{date:"1 Oct",model:"Reno 14",plan:110,actual:101}];
+
+export function Rework() {
   const [dialog,setDialog]=useState(false);
-  const planning=[{date:"28 Sep",model:"A5 Pro",plan:120,actual:126},{date:"29 Sep",model:"Reno 14",plan:100,actual:94},{date:"30 Sep",model:"A5 Pro",plan:130,actual:132},{date:"1 Oct",model:"Reno 14",plan:110,actual:101}];
+  const planning=reworkPlanning;
   return <><Header page="Rework" onInput={()=>setDialog(true)}/><div className="repair-kpis two"><button className="repair-kpi"><div className="repair-kpi-top"><span>WIP Rework</span><span className="repair-status good">On Target</span></div><strong>1,284 <small>pcs</small></strong><p>Target: 1,500 pcs</p><Sparkline success/></button><button className="repair-kpi"><div className="repair-kpi-top"><span>Planning Harian</span><span className="repair-status good">Achieved</span></div><strong>102.4%</strong><p>Target: 100%</p><Sparkline success/></button></div><div className="repair-charts"><MetricChart id="rework" title="WIP Rework" values={wipActual.map((v)=>v===null?null:Math.round(v*.45))} target={1500} direction="lower" full/><article className="repair-panel wide"><div className="repair-card-head"><div><h2>Planning Harian</h2><p>Plan vs actual output per hari</p></div><button className="repair-primary" onClick={()=>setDialog(true)}><Glyph name="plus"/>Input Planning</button></div><div className="planning-chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={planning}><CartesianGrid vertical={false}/><XAxis dataKey="date" axisLine={false} tickLine={false}/><Tooltip/><Legend/><Bar dataKey="plan" name="Plan" fill="var(--chart-1)" radius={6}/><Bar dataKey="actual" name="Actual" fill="var(--chart-2)" radius={6}/></BarChart></ResponsiveContainer></div><div className="repair-table-scroll"><table className="repair-data-table"><thead><tr><th>Tanggal</th><th>Model</th><th>Plan Qty</th><th>Actual Qty</th><th>Achievement</th><th>Status</th><th>Catatan</th></tr></thead><tbody>{planning.map((row)=><tr key={row.date}><td>{row.date}</td><td>{row.model}</td><td>{row.plan}</td><td>{row.actual}</td><td><div className="achievement"><i style={{width:`${Math.min(row.actual/row.plan*100,100)}%`}}/><span>{(row.actual/row.plan*100).toFixed(1)}%</span></div></td><td><span className={`repair-status ${row.actual>=row.plan?"good":"bad"}`}>{row.actual>=row.plan?"Achieved":"Behind"}</span></td><td>Monitoring</td></tr>)}</tbody></table></div></article></div>{dialog&&<InputDialog onClose={()=>setDialog(false)} onSave={()=>setDialog(false)}/>}</>;
 }
 
-function Warranty() {
+export const warrantyDaily = [{day:"25 Sep",input:32,off:4},{day:"26 Sep",input:41,off:6},{day:"27 Sep",input:36,off:3},{day:"28 Sep",input:48,off:8},{day:"29 Sep",input:44,off:5},{day:"30 Sep",input:52,off:7}];
+
+export function Warranty() {
   const [dialog,setDialog]=useState(false);
-  const daily=[{day:"25 Sep",input:32,off:4},{day:"26 Sep",input:41,off:6},{day:"27 Sep",input:36,off:3},{day:"28 Sep",input:48,off:8},{day:"29 Sep",input:44,off:5},{day:"30 Sep",input:52,off:7}];
+  const daily=warrantyDaily;
   return <><Header page="Warranty" onInput={()=>setDialog(true)}/><div className="repair-kpis two"><button className="repair-kpi"><div className="repair-kpi-top"><span>Input Unit Market</span><span className="repair-status good">Active</span></div><strong>52 <small>units</small></strong><p>Hari ini</p><Sparkline success/></button><button className="repair-kpi"><div className="repair-kpi-top"><span>Phone Off</span><span className="repair-status bad">7 units</span></div><strong>13.5%</strong><p>dari input market</p><Sparkline success={false}/></button></div><div className="repair-charts"><article className="repair-panel"><div className="repair-card-head"><div><h2>Input Unit Market</h2><p>Jumlah unit masuk harian</p></div><button className="repair-primary" onClick={()=>setDialog(true)}><Glyph name="plus"/>Input</button></div><div className="warranty-chart"><ResponsiveContainer><BarChart data={daily}><CartesianGrid vertical={false}/><XAxis dataKey="day" axisLine={false} tickLine={false}/><Tooltip/><Bar dataKey="input" fill="var(--chart-1)" radius={6}/></BarChart></ResponsiveContainer></div></article><article className="repair-panel"><div className="repair-card-head"><div><h2>Phone Off</h2><p>Temuan phone off harian</p></div><button className="repair-primary" onClick={()=>setDialog(true)}><Glyph name="plus"/>Input</button></div><div className="warranty-chart"><ResponsiveContainer><LineChart data={daily}><CartesianGrid vertical={false}/><XAxis dataKey="day" axisLine={false} tickLine={false}/><Tooltip/><Line dataKey="off" stroke="var(--chart-5)" strokeWidth={2}/></LineChart></ResponsiveContainer></div></article><article className="repair-panel wide"><div className="repair-card-head"><div><h2>Warranty recap</h2><p>Rekap unit berdasarkan tanggal dan model</p></div></div><div className="repair-table-scroll"><table className="repair-data-table"><thead><tr><th>Tanggal</th><th>Model</th><th>Input Unit Market</th><th>Phone Off</th><th>Keterangan</th></tr></thead><tbody>{daily.map((row)=><tr key={row.day}><td>{row.day}</td><td>OPPO A5 Pro</td><td>{row.input}</td><td className={row.off>5?"fail-cell":"pass-cell"}>{row.off}</td><td>Warranty inspection</td></tr>)}</tbody></table></div></article></div>{dialog&&<InputDialog onClose={()=>setDialog(false)} onSave={()=>setDialog(false)}/>}</>;
 }
 
@@ -293,7 +297,7 @@ const abnormalStatusClass: Record<AbnormalStatus, string> = {
   Draft: "status-draft",
 };
 
-const abnormalSqcdipClass: Record<string, string> = {
+export const abnormalSqcdipClass: Record<string, string> = {
   Safety: "sqcdip-safety",
   Quality: "sqcdip-quality",
   Cost: "sqcdip-cost",
@@ -311,7 +315,7 @@ function formatDateTime(date: Date) {
   return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
-function AbnormalPageHeader() {
+export function AbnormalPageHeader() {
   return (
     <header className="qc-page-header">
       <div>
@@ -334,7 +338,7 @@ function AbnormalPageHeader() {
   );
 }
 
-function AbnormalPage() {
+export function AbnormalPage() {
   const [rows, setRows] = useState<AbnormalRecord[]>(abnormalSeed);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");

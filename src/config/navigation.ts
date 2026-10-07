@@ -38,7 +38,34 @@ export const morningMeetingGroup: NavGroup = {
     { label: "Beranda Meeting", key: "meeting-home", href: "/morning-meeting", icon: "calendar", mode: morningMeetingMode, badge: "Baru", general: true, allowedRoles: ["PIC Area", "KPI Admin", "Host", "Manajer", "HOD"] },
     { label: "Production KPI", key: "production-kpi", href: "/morning-meeting/production-kpi", icon: "chart", mode: morningMeetingMode, badge: "Baru", allowedRoles: ["KPI Admin", "Host", "Manajer"] },
     { label: "Project 2026", key: "project-2026", href: "/morning-meeting/project-2026", icon: "trending", mode: morningMeetingMode, badge: "Baru", allowedRoles: ["KPI Admin", "Host", "Manajer"] },
-    { label: "Followup", key: "followup", href: "/morning-meeting/followup", icon: "message", mode: morningMeetingMode, badge: "Baru", general: true, allowedRoles: ["PIC Area", "KPI Admin", "Host", "Manajer", "HOD"] },
+    { label: "Followup", key: "followup", href: "/morning-meeting/followup", icon: "message", mode: morningMeetingMode, badge: "Baru", general: true, allowedRoles: ["PIC Area", "KPI Admin", "Host", "Manajer", "HOD"], aliases: ["Follow-up", "Action Plan"] },
+  ],
+};
+
+export const monitoringGroup: NavGroup = {
+  title: "MONITORING",
+  items: [
+    {
+      label: "Area Monitoring",
+      key: "repair-monitor",
+      href: "/morning-meeting/repair-monitoring",
+      icon: "assembly",
+      mode: morningMeetingMode,
+      area: "repair",
+      allowedRoles: ["PIC Area"],
+      children: [
+        { label: "Pre Assembly", key: "Preassembly", href: "/repair/preassembly", icon: "assembly", mode: morningMeetingMode, area: "repair", allowedRoles: ["PIC Area"] },
+        { label: "Rework", key: "Rework", href: "/repair/rework", icon: "refresh", mode: morningMeetingMode, area: "repair", allowedRoles: ["PIC Area"] },
+        { label: "Warranty", key: "Warranty", href: "/repair/warranty", icon: "shield", mode: morningMeetingMode, area: "repair", allowedRoles: ["PIC Area"] },
+      ],
+    },
+  ],
+};
+
+export const abnormalityGroup: NavGroup = {
+  title: "ABNORMALITY",
+  items: [
+    { label: "Abnormality", key: "Abnormality", href: "/abnormality", icon: "alert", mode: morningMeetingMode, area: "repair", allowedRoles: ["PIC Area"], badge: "3" },
   ],
 };
 
@@ -140,7 +167,7 @@ export const managementGroup: NavGroup = {
   ],
 };
 
-export const navGroups: readonly NavGroup[] = [morningMeetingGroup, platformGroup, managementGroup];
+export const navGroups: readonly NavGroup[] = [morningMeetingGroup, platformGroup, monitoringGroup, managementGroup, abnormalityGroup];
 
 export const navItems: readonly NavItem[] = navGroups.flatMap((group) =>
   group.items.flatMap((item) => [item, ...(item.children ?? [])]),
@@ -244,6 +271,12 @@ export function breadcrumbForKey(active: string): { label: string; href?: string
     return trail;
   }
 
+  if (active === "repair-monitor") {
+    trail.push({ label: "Monitoring", href: "/morning-meeting/repair-monitoring" });
+    trail.push({ label: "Area Monitoring" });
+    return trail;
+  }
+
   const item = byTarget.get(active);
   if (item) {
     trail.push({ label: item.label, href: item.href });
@@ -273,7 +306,11 @@ function isFutureGeneralItem(item: NavItem): boolean {
 }
 
 function isAllowedForRole(item: NavItem, filter: NavigationFilter): boolean {
-  if (item.allowedRoles) return item.allowedRoles.includes(filter.role);
+  if (item.allowedRoles) {
+    if (!item.allowedRoles.includes(filter.role)) return false;
+    if (filter.role === "PIC Area" && item.area) return item.area === filter.picArea;
+    return true;
+  }
   if (filter.role === "HOD") return filter.mode === "morning-meeting" ? false : item.key === "Dashboard" || isFutureGeneralItem(item) && normalizedFollowup(item);
   if (filter.role === "PIC Area") return Boolean(item.general) || isFutureGeneralItem(item) || item.area === filter.picArea;
   return true;
@@ -289,6 +326,18 @@ function isVisibleNavItem(item: NavItem, filter: NavigationFilter): boolean {
 }
 
 export function filterNavGroups(filter: NavigationFilter): NavGroup[] {
+  if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "repair") {
+    const meetingItems = morningMeetingGroup.items
+      .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"))
+      .map((item) => (item.key === "followup" ? { ...item, label: "Action Plan" } : item));
+    const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
+    const abnormalityItems = abnormalityGroup.items.filter((item) => isVisibleNavItem(item, filter));
+    return [
+      { title: "MORNING MEETING", items: meetingItems },
+      { title: "MONITORING", items: monitorItems },
+      { title: "ABNORMALITY", items: abnormalityItems },
+    ].filter((group) => group.items.length);
+  }
   return navGroups.map((group) => ({
     ...group,
     items: group.items.map((item) => {

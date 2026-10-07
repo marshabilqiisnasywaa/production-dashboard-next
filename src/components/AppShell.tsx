@@ -12,6 +12,11 @@ import SidebarNav from "@/components/shell/SidebarNav";
 import ShellTopbar from "@/components/shell/ShellTopbar";
 import CommandPalette from "@/components/shell/CommandPalette";
 import ShellContent from "@/components/shell/ShellContent";
+import { RepairPicProvider } from "@/features/pic-repair/RepairPicContext";
+import PicRepairHome from "@/features/pic-repair/PicRepairHome";
+import PicRepairFollowup from "@/features/pic-repair/PicRepairFollowup";
+import PicRepairMonitoring from "@/features/pic-repair/PicRepairMonitoring";
+import PicAbnormality from "@/features/pic-repair/PicAbnormality";
 import PaiRobot from "@/features/morning-meeting/PaiRobot";
 import type { CostNav } from "@/data/costData";
 import type { AppLanguage } from "@/components/providers/LanguageProvider";
@@ -52,8 +57,27 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
 
   const page = getShellPage(active);
   const brandLogo = dark ? oppoLogoDark : oppoLogo;
+  const isRepairPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "repair";
+
+  useEffect(() => {
+    if (isRepairPicMeeting) {
+      if (active !== "meeting-home" && active !== "followup" && active !== "repair-monitor" && active !== "Preassembly" && active !== "Rework" && active !== "Warranty" && active !== "Abnormality" && active !== "Abnormal") {
+        setActive("meeting-home");
+        router.push("/morning-meeting");
+      }
+    } else if (active === "repair-monitor") {
+      setActive("Dashboard");
+      router.push(dashboardHref);
+    }
+  }, [isRepairPicMeeting, active, router]);
+
+  useEffect(() => {
+    if (isRepairPicMeeting && (active === "repair-monitor" || active === "Preassembly" || active === "Rework" || active === "Warranty")) {
+      setOpenMenu("Area Monitoring");
+    }
+  }, [isRepairPicMeeting, active]);
   const navigationGroups = useMemo(() => filterNavGroups({ role, picArea, mode }), [role, picArea, mode]);
-  const visibleCommandLabels = useMemo(() => new Set(navigationGroups.flatMap((group) => group.items.flatMap((item) => [item.label, ...(item.children?.map((child) => child.label) ?? [])]))), [navigationGroups]);
+  const visibleCommandLabels = useMemo(() => new Set(navigationGroups.flatMap((group) => group.items.flatMap((item) => [item.label, ...(item.aliases ?? []), ...(item.children?.flatMap((child) => [child.label, ...(child.aliases ?? [])]) ?? [])]))), [navigationGroups]);
 
   const filteredCommandGroups = useMemo(() => commandGroups.map((group) => ({
     ...group,
@@ -158,13 +182,33 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
             }}
             onNavigate={selectMenu}
           />
-          <ShellContent
-            page={page}
-            costFocus={costFocus}
-            onNavigate={selectMenu}
-            onSubPageNavigate={selectSubPage}
-            onQcPageChange={(nextPage) => setActive(nextPage)}
-          />
+          {isRepairPicMeeting ? (
+            <section className="content repair-content">
+              <RepairPicProvider>
+                {active === "followup" ? (
+                  <PicRepairFollowup />
+                ) : active === "Abnormality" || active === "Abnormal" ? (
+                  <PicAbnormality />
+                ) : active === "Rework" ? (
+                  <PicRepairMonitoring area="Rework" />
+                ) : active === "Warranty" ? (
+                  <PicRepairMonitoring area="Warranty" />
+                ) : active === "Preassembly" || active === "repair-monitor" ? (
+                  <PicRepairMonitoring area="Preassembly" />
+                ) : (
+                  <PicRepairHome />
+                )}
+              </RepairPicProvider>
+            </section>
+          ) : (
+            <ShellContent
+              page={page}
+              costFocus={costFocus}
+              onNavigate={selectMenu}
+              onSubPageNavigate={selectSubPage}
+              onQcPageChange={(nextPage) => setActive(nextPage)}
+            />
+          )}
         </main>
       </div>
       {commandOpen && (
