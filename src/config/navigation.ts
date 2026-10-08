@@ -38,7 +38,8 @@ export const morningMeetingGroup: NavGroup = {
     { label: "Beranda Meeting", key: "meeting-home", href: "/morning-meeting", icon: "calendar", mode: morningMeetingMode, badge: "Baru", general: true, allowedRoles: ["PIC Area", "KPI Admin", "Host", "Manajer", "HOD"] },
     { label: "Production KPI", key: "production-kpi", href: "/morning-meeting/production-kpi", icon: "chart", mode: morningMeetingMode, badge: "Baru", allowedRoles: ["KPI Admin", "Host", "Manajer"] },
     { label: "Project 2026", key: "project-2026", href: "/morning-meeting/project-2026", icon: "trending", mode: morningMeetingMode, badge: "Baru", allowedRoles: ["KPI Admin", "Host", "Manajer"] },
-    { label: "Followup", key: "followup", href: "/morning-meeting/followup", icon: "message", mode: morningMeetingMode, badge: "Baru", general: true, allowedRoles: ["PIC Area", "KPI Admin", "Host", "Manajer", "HOD"], aliases: ["Follow-up", "Action Plan"] },
+    { label: "Followup", key: "followup", href: "/morning-meeting/followup", icon: "message", mode: morningMeetingMode, badge: "Baru", general: true, allowedRoles: ["PIC Area", "KPI Admin", "Host", "Manajer", "HOD"], aliases: ["Follow-up", "Action Plan", "Follow-up Progress"] },
+    { label: "Beranda", key: "hod-overview", href: "/morning-meeting/hod", icon: "panel", mode: morningMeetingMode, badge: "Baru", general: true, allowedRoles: ["HOD"], aliases: ["Beranda Departemen"] },
   ],
 };
 
@@ -326,6 +327,19 @@ function isVisibleNavItem(item: NavItem, filter: NavigationFilter): boolean {
 }
 
 export function filterNavGroups(filter: NavigationFilter): NavGroup[] {
+  if (filter.mode === "morning-meeting" && filter.role === "Host") {
+    const meetingItems = morningMeetingGroup.items
+      .filter((item) => item.key === "meeting-home" || item.key === "followup")
+      .map((item) => (item.key === "followup" ? { ...item, label: "Follow-up Progress" } : item));
+    return [{ title: "MORNING MEETING", items: meetingItems }];
+  }
+  if (filter.mode === "morning-meeting" && filter.role === "HOD") {
+    const order = ["hod-overview", "followup"];
+    const meetingItems = morningMeetingGroup.items
+      .filter((item) => order.includes(item.key) && isVisibleNavItem(item, filter))
+      .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+    return [{ title: "MORNING MEETING", items: meetingItems }];
+  }
   if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "repair") {
     const meetingItems = morningMeetingGroup.items
       .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"))

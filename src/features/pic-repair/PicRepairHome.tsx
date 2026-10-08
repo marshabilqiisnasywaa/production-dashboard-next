@@ -1,25 +1,35 @@
 "use client";
 import { useMemo, useState } from "react";
 import {
-  Header,
   InputDialog,
   MetricChart,
   Sparkline,
   WipTable,
   isOnTarget,
-  kpiSeed,
   reworkPlanning,
   warrantyDaily,
   wipActual,
   wipTargets,
 } from "@/features/repair/RepairDashboard";
+import { PIC_NAME } from "@/features/pic-repair/RepairPicContext";
+import PicAiInsight from "@/features/pic-repair/PicAiInsight";
 
 type TrendKey = "wip-pre" | "wip-rework" | "wip-warranty";
 
-const baseCards = [
-  { ...kpiSeed[0], id: "wip", name: "WIP Pre-assembly" },
-  { id: "wip-rework", name: "WIP Rework", value: 1284, display: "1,284", unit: "pcs", target: 1500, targetLabel: "1,500 pcs", direction: "lower" as const },
-  { id: "wip-warranty", name: "WIP Warranty", value: 52, display: "52", unit: "units", target: 40, targetLabel: "40 units", direction: "lower" as const },
+type MeetingCard = {
+  id: TrendKey;
+  name: string;
+  value: number;
+  display: string;
+  unit: string;
+  target: number;
+  targetLabel: string;
+};
+
+const baseCards: MeetingCard[] = [
+  { id: "wip-pre", name: "WIP Pre-assembly", value: 2456, display: "2,456", unit: "pcs", target: 2800, targetLabel: "2,800 pcs" },
+  { id: "wip-rework", name: "WIP Rework", value: 1284, display: "1,284", unit: "pcs", target: 1500, targetLabel: "1,500 pcs" },
+  { id: "wip-warranty", name: "WIP Warranty", value: 52, display: "52", unit: "units", target: 40, targetLabel: "40 units" },
 ];
 
 function Breakdown({ trendKey }: { trendKey: TrendKey }) {
@@ -36,7 +46,7 @@ function Breakdown({ trendKey }: { trendKey: TrendKey }) {
       <article className="repair-panel wide">
         <div className="repair-card-head"><div><h2>Breakdown WIP Rework</h2><p>Plan vs actual per tanggal dan model</p></div></div>
         <div className="repair-table-scroll">
-          <table className="repair-data-table">
+          <table className="repair-data-table pic-table">
             <thead><tr><th>Tanggal</th><th>Model</th><th>Plan Qty</th><th>Actual Qty</th><th>Achievement</th><th>Status</th></tr></thead>
             <tbody>
               {reworkPlanning.map((row) => (
@@ -59,7 +69,7 @@ function Breakdown({ trendKey }: { trendKey: TrendKey }) {
     <article className="repair-panel wide">
       <div className="repair-card-head"><div><h2>Breakdown WIP Warranty</h2><p>Detail input market dan phone off harian</p></div></div>
       <div className="repair-table-scroll">
-        <table className="repair-data-table">
+        <table className="repair-data-table pic-table">
           <thead><tr><th>Tanggal</th><th>Input Unit Market</th><th>Phone Off</th><th>Share</th></tr></thead>
           <tbody>
             {warrantyDaily.map((row) => (
@@ -82,11 +92,12 @@ export default function PicRepairHome() {
   const [values, setValues] = useState<Record<string, number>>({});
   const [inputOpen, setInputOpen] = useState(false);
   const [toast, setToast] = useState(false);
+  const [aiCard, setAiCard] = useState<MeetingCard | null>(null);
 
   const cards = useMemo(() => baseCards.map((card) => {
     if (values[card.id] === undefined) return card;
     const value = values[card.id];
-    const display = card.unit === "pcs" ? value.toLocaleString() : card.unit === "units" ? String(value) : `${value.toFixed(2)}%`;
+    const display = card.unit === "pcs" ? value.toLocaleString("en-US") : String(value);
     return { ...card, value, display };
   }), [values]);
 
@@ -106,20 +117,38 @@ export default function PicRepairHome() {
   const toggle = (id: TrendKey) => setSelected((current) => (current === id ? null : id));
 
   return (
-    <div>
-      <Header page="Beranda Meeting" onInput={() => setInputOpen(true)} />
+    <div className="pic-page">
+      <div className="repair-header">
+        <div>
+          <div className="repair-eyebrow">MORNING MEETING • PIC AREA</div>
+          <div className="repair-title-row">
+            <h1>Beranda Meeting</h1>
+            <span className="pic-chip"><span>YU</span>PIC: {PIC_NAME}</span>
+          </div>
+          <p>Ringkasan metric inti morning review: WIP Pre-assembly, Rework, dan Warranty.</p>
+        </div>
+        <div className="repair-actions">
+          <button className="repair-outline" type="button">07 Oct 2026</button>
+          <button className="repair-primary" type="button" onClick={() => setInputOpen(true)}>+ Input Data</button>
+        </div>
+      </div>
 
-      <div className="repair-kpis">
+      <div className="repair-kpis pic-kpis-three">
         {cards.map((card) => {
-          const good = isOnTarget(card.value, card.target, card.direction);
+          const good = isOnTarget(card.value, card.target, "lower");
           const active = selected === card.id;
+          const gap = Math.abs(card.value - card.target).toLocaleString("en-US");
           return (
-            <button className="repair-kpi" type="button" key={card.id} onClick={() => toggle(card.id as TrendKey)} style={active ? { borderColor: "var(--accent-1)" } : undefined}>
+            <article className="repair-kpi pic-kpi" key={card.id} style={active ? { borderColor: "var(--accent-1)" } : undefined}>
               <div className="repair-kpi-top"><span>{card.name}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? "On Target" : "Off Target"}</span></div>
               <strong>{card.display} <small>{card.unit}</small></strong>
-              <p>Target: {card.targetLabel} <b className={good ? "good-text" : "bad-text"}>{good ? "↓" : "↑"} {Math.abs(card.value - card.target).toLocaleString()}</b></p>
+              <p>Target: {card.targetLabel} <b className={good ? "good-text" : "bad-text"}>{good ? "↓" : "↑"} {gap}</b></p>
               <Sparkline success={good} />
-            </button>
+              <div className="pic-kpi-actions">
+                <button type="button" className="repair-outline pic-mini" onClick={() => toggle(card.id)}>{active ? "Tutup Tren" : "Lihat Tren"}</button>
+                {!good && <button type="button" className="pic-ai-btn" onClick={() => setAiCard(card)}>Tanya AI</button>}
+              </div>
+            </article>
           );
         })}
       </div>
@@ -137,6 +166,16 @@ export default function PicRepairHome() {
         </div>
       )}
 
+      {aiCard && (
+        <PicAiInsight
+          metricName={aiCard.name}
+          actualLabel={`${aiCard.display} ${aiCard.unit}`}
+          targetLabel={aiCard.targetLabel}
+          gapLabel={Math.abs(aiCard.value - aiCard.target).toLocaleString("en-US")}
+          direction="lower"
+          onClose={() => setAiCard(null)}
+        />
+      )}
       {inputOpen && <InputDialog onClose={() => setInputOpen(false)} onSave={saveInput} />}
       {toast && <div className="repair-toast"><span>✓</span>Data berhasil disimpan</div>}
     </div>

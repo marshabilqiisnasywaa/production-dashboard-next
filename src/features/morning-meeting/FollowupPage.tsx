@@ -1,17 +1,11 @@
 "use client";
-import { useState } from "react";
-import { picAreaOptions, type PicAreaKey } from "@/components/providers/RoleProvider";
+import type { PicAreaKey } from "@/components/providers/RoleProvider";
 import type { Role } from "@/types/morningMeeting";
-import { getInitialFollowups, standardPics, type FollowupTask } from "@/features/morning-meeting/aiFollowupData";
+import HostFollowupBoard from "@/features/morning-meeting/HostFollowupBoard";
 
 type FollowupPageProps = { role: Role; picArea: PicAreaKey };
 
-export default function FollowupPage({ role, picArea }: FollowupPageProps) {
-  const [tasks, setTasks] = useState<FollowupTask[]>(getInitialFollowups);
-  const [form, setForm] = useState({ task: "", output: "", pic: standardPics[0], dueDate: "" });
-  const visibleTasks = tasks.filter((task) => role === "Manajer" || role === "Host" || role === "KPI Admin" || role === "HOD" && (task.assigneeRole === "HOD" || task.status === "Overdue") || role === "PIC Area" && task.area === picArea);
-  const canAdd = role === "Host" || role === "Manajer";
-  const areaLabel = picAreaOptions.find((item) => item.key === picArea)?.label ?? picArea;
-  const addTask = () => { if (!form.task.trim()) return; setTasks((current) => [...current, { id: `fu-${Date.now()}`, task: form.task, output: form.output || "Output follow-up baru", pic: form.pic, area: picArea, dueDate: form.dueDate || new Date().toISOString().slice(0, 10), status: "Berjalan", source: "Poin Follow-up Baru" }]); setForm({ task: "", output: "", pic: standardPics[0], dueDate: "" }); };
-  return <div className="mm-page"><section className="mm-hero compact"><div><span>Followup Progress</span><h1>Review Follow-up Kemarin</h1><p>{role === "PIC Area" ? `Tugas area ${areaLabel}` : "Task, output, PIC, due date, dan status follow-up morning meeting."}</p></div></section><section className="mm-panel"><h2>Review Follow-up Kemarin</h2><div className="mm-table-wrap"><table className="mm-table"><thead><tr><th>Task</th><th>Output</th><th>PIC</th><th>Due Date</th><th>Status</th><th>Sumber</th></tr></thead><tbody>{visibleTasks.map((task) => <tr key={task.id}><td><b>{task.task}</b></td><td>{task.output}</td><td>{task.pic}</td><td>{task.dueDate}</td><td>{role === "PIC Area" && task.area === picArea ? <select value={task.status} onChange={(event) => setTasks((current) => current.map((item) => item.id === task.id ? { ...item, status: event.target.value as FollowupTask["status"] } : item))}><option>Selesai</option><option>Berjalan</option><option>Overdue</option></select> : <span className={`mm-project-status ${task.status === "Selesai" ? "on-track" : task.status === "Overdue" ? "off-track" : "belum-dilaporkan"}`}>{task.status}</span>}</td><td>{task.source}</td></tr>)}</tbody></table></div></section>{canAdd && <section className="mm-panel mm-followup-form"><h2>Poin Follow-up Baru</h2><div><input value={form.task} onChange={(event) => setForm({ ...form, task: event.target.value })} placeholder="Task" /><input value={form.output} onChange={(event) => setForm({ ...form, output: event.target.value })} placeholder="Output" /><select value={form.pic} onChange={(event) => setForm({ ...form, pic: event.target.value })}>{standardPics.map((pic) => <option key={pic}>{pic}</option>)}</select><input type="date" value={form.dueDate} onChange={(event) => setForm({ ...form, dueDate: event.target.value })} /><button onClick={addTask}>Tambah Follow-up</button></div></section>}{role === "HOD" && <section className="mm-panel"><h2>Instruksi HOD</h2><p className="mm-empty">HOD dapat memberi instruksi pada item overdue atau eskalasi. Prototype ini menyimpan instruksi di memori saat sesi berjalan.</p></section>}</div>;
+export default function FollowupPage(_props: FollowupPageProps) {
+  void _props;
+  return <HostFollowupBoard />;
 }
