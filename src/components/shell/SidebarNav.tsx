@@ -1,6 +1,7 @@
-import { managementGroup, platformGroup } from "@/config/navigation";
+import { parentForKey } from "@/config/navigation";
 import Icon from "@/components/shell/Icon";
 import type { ShellPage } from "@/components/shell/shellPage";
+import type { NavGroup } from "@/config/navigation";
 
 const ollieImage = "/assets/ollie.png";
 const oppoLogoDark = "/assets/oppo-logo-dark.svg";
@@ -10,6 +11,7 @@ type SidebarNavProps = {
   brandLogo: string;
   expanded: boolean;
   mobileOpen: boolean;
+  groups: readonly NavGroup[];
   openMenu: string | null;
   onExpand: () => void;
   onCloseMobile: () => void;
@@ -17,13 +19,12 @@ type SidebarNavProps = {
   onToggleMenu: (label: string) => void;
 };
 
-import { parentForKey } from "@/config/navigation";
-
 export default function SidebarNav({
   page,
   brandLogo,
   expanded,
   mobileOpen,
+  groups,
   openMenu,
   onExpand,
   onCloseMobile,
@@ -61,9 +62,9 @@ export default function SidebarNav({
         </button>
 
         <nav>
-          <div className="nav-group">
-            <p>{platformGroup.title}</p>
-            {platformGroup.items.map((item) => {
+          {groups.map((group) => <div className={`nav-group ${group.title === "MANAGEMENT" ? "management" : ""}`} key={group.title}>
+            <p>{group.title}</p>
+            {group.items.map((item) => {
               const parent = parentForKey(active);
               const isActiveParent = parent
                 ? parent.label === item.label
@@ -81,6 +82,7 @@ export default function SidebarNav({
                     }
                   }}>
                     <Icon name={item.icon} /><span className="sidebar-copy">{item.label}</span>
+                    {item.badge && <b>{item.badge}</b>}
                     {item.children && <Icon name="chevron" size={13} />}
                   </button>
                   {item.children && isOpen && expanded && (
@@ -93,18 +95,7 @@ export default function SidebarNav({
                 </div>
               );
             })}
-          </div>
-          <div className="nav-group management">
-            <p>{managementGroup.title}</p>
-            {managementGroup.items.map((item) => (
-              <div className="nav-entry" key={item.label}>
-                <button data-tooltip={item.label} className={active === item.label ? "active" : ""} onClick={() => onSelect(item.label)}>
-                  <Icon name={item.icon} /><span className="sidebar-copy">{item.label}</span>
-                  {item.badge && <b>{item.badge}</b>}
-                </button>
-              </div>
-            ))}
-          </div>
+          </div>)}
         </nav>
 
         <div className="sidebar-foot">

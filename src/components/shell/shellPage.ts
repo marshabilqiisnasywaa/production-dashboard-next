@@ -19,7 +19,9 @@ export type ShellPage = {
   isMaterialPage: boolean;
   isAssemblyPage: boolean;
   isCostPage: boolean;
+  isMorningMeetingPage: boolean;
   isAbnormalityPage: boolean;
+  morningMeetingPage: "meeting-home" | "production-kpi" | "project-2026" | "followup" | "hod-overview";
   materialPage: MaterialPageKey;
   costPage: CostPage;
   breadcrumb: { label: string; href?: string }[];
@@ -39,6 +41,7 @@ const assemblyPages = [
   "assembly-wip",
   "assembly-rework",
 ];
+const morningMeetingPages = ["meeting-home", "production-kpi", "project-2026", "followup", "hod-overview"];
 
 export function getShellPage(active: string): ShellPage {
   const isRepairPage = repairPages.includes(active);
@@ -50,6 +53,7 @@ export function getShellPage(active: string): ShellPage {
   const isMaterialPage = materialPages.includes(active as MaterialPageKey);
   const isAssemblyPage = assemblyPages.includes(active);
   const isCostPage = active.startsWith("cost-");
+  const isMorningMeetingPage = morningMeetingPages.includes(active);
   const isAbnormalityPage = active === "Abnormality";
 
   const costPage = (isCostPage
@@ -69,9 +73,11 @@ export function getShellPage(active: string): ShellPage {
     isMaterialPage,
     isAssemblyPage,
     isCostPage,
+    isMorningMeetingPage,
     isAbnormalityPage,
     materialPage: active as MaterialPageKey,
     costPage,
+    morningMeetingPage: active as "meeting-home" | "production-kpi" | "project-2026" | "followup" | "hod-overview",
     breadcrumb,
   };
 }

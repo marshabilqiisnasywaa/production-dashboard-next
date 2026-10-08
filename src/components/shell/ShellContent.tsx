@@ -7,6 +7,7 @@ import SqcdipDashboard from "@/features/sqcdip/SqcdipDashboard";
 import AssemblyDashboard, { type AssemblyPage } from "@/features/assembly/AssemblyDashboard";
 import MaterialDashboard from "@/features/material/MaterialDashboard";
 import CostDashboard from "@/features/cost/CostDashboard";
+import MorningMeetingDashboard from "@/features/morning-meeting/MorningMeetingDashboard";
 import WarehouseOverview from "@/features/warehouse/WarehouseOverview";
 import type { ServicePageKey } from "@/data/serviceData";
 import type { CostNav } from "@/data/costData";
@@ -24,7 +25,9 @@ export default function ShellContent({ page, costFocus, onNavigate, onSubPageNav
   const { active } = page;
   let content;
 
-  if (page.isRepairPage) {
+  if (page.isMorningMeetingPage) {
+    content = <MorningMeetingDashboard page={page.morningMeetingPage} onNavigate={onNavigate} />;
+  } else if (page.isRepairPage) {
     content = <RepairDashboard page={page.isAbnormalityPage ? "Abnormal" : (active as "Preassembly" | "Rework" | "Warranty" | "Abnormal")} />;
   } else if (page.isProductionPage) {
     content = <ProductionDashboard onNavigate={onNavigate} />;
