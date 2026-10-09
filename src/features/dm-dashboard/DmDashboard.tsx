@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 "use client";
 import { useEffect, useState } from "react";
 import { defaultDmBoard, dmStatusLabels } from "./dmData";
@@ -287,6 +288,14 @@ export default function DmDashboard() {
         onReset={handleResetBoard}
         onClose={() => setAdminOpen(false)}
       />
+=======
+import "./DmDashboard.css";
+
+export default function DmDashboard() {
+  return (
+    <main className="dm-root">
+      <h1 className="dm-title">Digital Management Dashboard</h1>
+>>>>>>> 4458425efc4ea46e9b704bbad16834b83aa1fb25
     </main>
   );
 }

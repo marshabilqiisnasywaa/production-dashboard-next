@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* DM Dashboard - High Performance OPPO Manufacturing Line Aesthetic */
 
 .dm-root {
@@ -614,4 +615,29 @@
   .dm-bottom-value {
     font-size: 1.25rem;
   }
+=======
+.dm-root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 16px;
+  background: #ffffff;
+  color: #111827;
+  font-family: "Montserrat", system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dm-root {
+    background: #0f1420;
+    color: #e5e7eb;
+  }
+}
+
+.dm-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+>>>>>>> 4458425efc4ea46e9b704bbad16834b83aa1fb25
 }
