@@ -1,5 +1,7 @@
 export type DmLineStatus = "running" | "idle" | "stopped";
 
+export const DM_STORAGE_KEY = "dm_dashboard_custom_board";
+
 export type DmMember = {
   name: string | null;
   employeeId: string | null;

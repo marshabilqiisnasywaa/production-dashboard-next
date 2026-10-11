@@ -1,13 +1,11 @@
-<<<<<<< HEAD
 "use client";
 import { useEffect, useState } from "react";
-import { defaultDmBoard, dmStatusLabels } from "./dmData";
+import Link from "next/link";
+import { DM_STORAGE_KEY, defaultDmBoard, dmStatusLabels } from "./dmData";
 import type { DmBoard, DmMember } from "./dmData";
-import AdminPanelModal from "./admin/AdminPanelModal";
 import MeetingControls from "./meeting/MeetingControls";
 import "./DmDashboard.css";
 
-const STORAGE_KEY = "dm_dashboard_custom_board";
 
 function PersonIcon() {
   return (
@@ -80,36 +78,29 @@ function MemberCard({ member }: { member: DmMember }) {
 
 export default function DmDashboard() {
   const [board, setBoard] = useState<DmBoard>(defaultDmBoard);
-  const [adminOpen, setAdminOpen] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        setBoard(JSON.parse(saved));
+    function loadSaved() {
+      try {
+        const saved = localStorage.getItem(DM_STORAGE_KEY);
+        if (saved) {
+          setBoard(JSON.parse(saved));
+        } else {
+          setBoard(defaultDmBoard);
+        }
+      } catch {
+        // Ignore localStorage errors
       }
-    } catch {
-      // Ignore localStorage errors
     }
+
+    loadSaved();
+    window.addEventListener("focus", loadSaved);
+    window.addEventListener("storage", loadSaved);
+    return () => {
+      window.removeEventListener("focus", loadSaved);
+      window.removeEventListener("storage", loadSaved);
+    };
   }, []);
-
-  function handleSaveBoard(updated: DmBoard) {
-    setBoard(updated);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch {
-      // Ignore localStorage errors
-    }
-  }
-
-  function handleResetBoard() {
-    setBoard(defaultDmBoard);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // Ignore localStorage errors
-    }
-  }
 
   const mpv = board.mpv;
 
@@ -139,15 +130,15 @@ export default function DmDashboard() {
                 <h1 className="dm-line-code">{board.lineCode}</h1>
               </div>
               <div className="dm-brand-actions">
-                <button
-                  type="button"
+                <Link
+                  href="/dm-dashboard/admin"
                   className="dm-admin-trigger-btn"
-                  onClick={() => setAdminOpen(true)}
-                  title="Buka Panel Admin untuk mengatur workshop, nama lini, dan anggota"
+                  title="Buka Halaman Admin untuk mengatur workshop, nama lini, dan anggota"
+                  style={{ textDecoration: "none" }}
                 >
                   <GearIcon />
                   <span>Panel Admin</span>
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -271,7 +262,7 @@ export default function DmDashboard() {
 
         {/* Integrated Operational & Meeting Center */}
         <section className="dm-operations-dock" aria-label="Pusat Operasional dan Meeting">
-          <MeetingControls onOpenAdmin={() => setAdminOpen(true)} />
+          <MeetingControls />
         </section>
       </div>
 
@@ -279,23 +270,6 @@ export default function DmDashboard() {
       <aside className="dm-rail dm-rail-right" aria-label={board.workshopLabel}>
         <span className="dm-rail-text dm-rail-en">{board.workshopLabel}</span>
       </aside>
-
-      {/* Admin Panel Modal */}
-      <AdminPanelModal
-        open={adminOpen}
-        board={board}
-        onSave={handleSaveBoard}
-        onReset={handleResetBoard}
-        onClose={() => setAdminOpen(false)}
-      />
-=======
-import "./DmDashboard.css";
-
-export default function DmDashboard() {
-  return (
-    <main className="dm-root">
-      <h1 className="dm-title">Digital Management Dashboard</h1>
->>>>>>> 4458425efc4ea46e9b704bbad16834b83aa1fb25
     </main>
   );
 }
