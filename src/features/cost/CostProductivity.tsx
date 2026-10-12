@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -14,6 +14,8 @@ import {
 } from "recharts";
 import { Download, RefreshCw } from "lucide-react";
 import CustomSelect from "@/components/shell/CustomSelect";
+import PicAiInsight from "@/features/pic-repair/PicAiInsight";
+import PicMetricCard, { type PicMetricCardData } from "@/features/pic-repair/PicMetricCard";
 
 type ProductivityPeriod = "Daily" | "Week" | "Month" | "Year";
 
@@ -52,6 +54,22 @@ const internshipData: Record<ProductivityPeriod, { labels: string[]; rate: numbe
   "Year": { labels: ["2022", "2023", "2024", "2025", "2026"], rate: [12.5, 14.1, 15.8, 17.2, 18.5], cap: 20 },
 };
 
+type ProductivityChartKey = "ope" | "upph" | "ratio" | "intern";
+
+const metrics: PicMetricCardData[] = [
+  { id: "ope", name: "OPE Productivity", value: 78.5, display: "78.5", unit: "%", target: 80, targetLabel: "80.00%", gap: "1.5", direction: "higher" },
+  { id: "upph", name: "UPPH", value: 42.6, display: "42.6", unit: "pcs/h", target: 40, targetLabel: "40.0 pcs/h", gap: "2.6", direction: "higher" },
+  { id: "ratio", name: "Direct : Indirect", value: 3.2, display: "3.2 : 1", unit: "", target: 3, targetLabel: "3.0 : 1", gap: "0.2", direction: "higher" },
+  { id: "intern", name: "Internship Rate", value: 18.5, display: "18.5", unit: "%", target: 15, targetLabel: "15.00%", gap: "3.5", direction: "lower" },
+];
+
+const chartFor: Record<string, ProductivityChartKey> = {
+  "ope": "ope",
+  "upph": "upph",
+  "ratio": "ratio",
+  "intern": "intern",
+};
+
 function ChartToggle({ value, onChange, ariaLabel }: { value: ProductivityPeriod; onChange: (next: ProductivityPeriod) => void; ariaLabel: string }) {
   return (
     <div className="sq-period" role="group" aria-label={ariaLabel}>
@@ -69,6 +87,21 @@ export default function CostProductivity() {
   const [ratioPeriod, setRatioPeriod] = useState<ProductivityPeriod>("Month");
   const [internPeriod, setInternPeriod] = useState<ProductivityPeriod>("Month");
   const [toast, setToast] = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
+  const [aiMetric, setAiMetric] = useState<PicMetricCardData | null>(null);
+  const chartRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  const focusChart = (id: string) => {
+    if (focused === id) {
+      setFocused(null);
+      return;
+    }
+    setFocused(id);
+    const key = chartFor[id];
+    if (key) chartRefs.current[key]?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const chartRing = (key: string): string => (focused && chartFor[focused] === key ? " ring-2 ring-emerald-500" : "");
 
   const ope = opeData[opePeriod];
   const opeRows = useMemo(() => ope.labels.map((label, index) => ({ label, actual: ope.actual[index], target: ope.target })), [ope]);
@@ -120,8 +153,14 @@ export default function CostProductivity() {
         </div>
       </div>
 
+      <div className="repair-kpis pic-kpis-five">
+        {metrics.map((metric) => (
+          <PicMetricCard key={metric.id} card={metric} selected={focused === metric.id} onToggle={focusChart} onAskAi={setAiMetric} />
+        ))}
+      </div>
+
       <div className="repair-charts">
-        <article className="bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60">
+        <article ref={(node) => { chartRefs.current["ope"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("ope")}`}>
           <div className="repair-card-head">
             <div>
               <h2 className="text-slate-900 font-semibold">OPE Productivity</h2>
@@ -144,7 +183,7 @@ export default function CostProductivity() {
           </div>
         </article>
 
-        <article className="bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60">
+        <article ref={(node) => { chartRefs.current["upph"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("upph")}`}>
           <div className="repair-card-head">
             <div>
               <h2 className="text-slate-900 font-semibold">UPPH</h2>
@@ -167,7 +206,7 @@ export default function CostProductivity() {
           </div>
         </article>
 
-        <article className="bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60">
+        <article ref={(node) => { chartRefs.current["ratio"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("ratio")}`}>
           <div className="repair-card-head">
             <div>
               <h2 className="text-slate-900 font-semibold">Direct to Indirect Ratio</h2>
@@ -189,7 +228,7 @@ export default function CostProductivity() {
           </div>
         </article>
 
-        <article className="bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60">
+        <article ref={(node) => { chartRefs.current["intern"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("intern")}`}>
           <div className="repair-card-head">
             <div>
               <h2 className="text-slate-900 font-semibold">Internship Rate</h2>
@@ -214,6 +253,16 @@ export default function CostProductivity() {
       </div>
 
       {toast && <div className="repair-toast"><span>✓</span>Data berhasil diperbarui</div>}
+      {aiMetric && (
+        <PicAiInsight
+          metricName={aiMetric.name}
+          actualLabel={`${aiMetric.display} ${aiMetric.unit}`.trim()}
+          targetLabel={aiMetric.targetLabel}
+          gapLabel={aiMetric.gap}
+          direction={aiMetric.direction}
+          onClose={() => setAiMetric(null)}
+        />
+      )}
     </div>
   );
 }
