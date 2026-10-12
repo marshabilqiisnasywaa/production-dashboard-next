@@ -90,15 +90,6 @@ export const monitoringGroup: NavGroup = {
       ],
     },
     {
-      label: "Safety Area",
-      key: "safety-area",
-      href: "/morning-meeting",
-      icon: "shield",
-      mode: morningMeetingMode,
-      area: "cost",
-      allowedRoles: ["PIC Area"],
-    },
-    {
       label: "Area Monitoring",
       key: "cost-area-monitoring",
       href: "/morning-meeting",

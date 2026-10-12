@@ -254,7 +254,7 @@ export default function MeetingDashboard({ section = "overview", onNavigate }: {
           </div>
           <div className="repair-kpis">
             {safetyCards.map((card) => (
-              <PicMetricCard key={card.id} card={card} selected={false} onToggle={() => onNavigate?.("safety-area")} onAskAi={setSafetyAi} />
+              <PicMetricCard key={card.id} card={card} selected={false} onToggle={() => onNavigate?.("cost-overview")} onAskAi={setSafetyAi} />
             ))}
           </div>
         </>

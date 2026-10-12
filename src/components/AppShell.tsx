@@ -38,7 +38,6 @@ import CostProductivity from "@/features/cost/CostProductivity";
 import CostManpower from "@/features/cost/CostManpower";
 import CostBreakdown from "@/features/cost/CostBreakdown";
 import CostFinishGood from "@/features/cost/CostFinishGood";
-import CostSafetyArea from "@/features/cost/CostSafetyArea";
 import PicCostAbnormality from "@/features/cost/PicCostAbnormality";
 import PicCostPlan from "@/features/cost/PicCostPlan";
 import type { CostNav } from "@/data/costData";
@@ -103,7 +102,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
         router.push("/morning-meeting");
       }
     } else if (isCostPicMeeting) {
-      if (active !== "meeting-home" && active !== "followup" && active !== "safety-area" && !active.startsWith("cost-") && active !== "cost-area-monitoring") {
+      if (active !== "meeting-home" && active !== "followup" && !active.startsWith("cost-") && active !== "cost-area-monitoring") {
         setActive("meeting-home");
         router.push("/morning-meeting");
       }
@@ -307,8 +306,6 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
             <section className="content repair-content">
               {active === "followup" ? (
                 <FollowupPage role={role} picArea={picArea} />
-              ) : active === "safety-area" ? (
-                <CostSafetyArea />
               ) : active === "cost-abnormality" ? (
                 <PicCostAbnormality />
               ) : active === "cost-daily-plan" ? (
