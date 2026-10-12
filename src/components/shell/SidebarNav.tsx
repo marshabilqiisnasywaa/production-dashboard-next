@@ -76,7 +76,7 @@ export default function SidebarNav({
               return (
                 <div className="nav-entry" key={item.label}>
                   <button data-tooltip={item.label} className={btnClass} onClick={() => {
-                    onSelect(item.key === "cost-area-monitoring" ? "cost-overview" : item.key);
+                    onSelect(item.key === "cost-area-monitoring" ? "cost-overview" : item.key === "safety-area-monitoring" ? "safety-monitoring" : item.key);
                     if (item.children) {
                       onToggleMenu(item.label);
                     }
@@ -87,7 +87,19 @@ export default function SidebarNav({
                   </button>
                   {item.children && isOpen && expanded && (
                     <div className="submenu">
-                      {item.key === "cost-area-monitoring" ? (
+                      {item.key === "safety-area-monitoring" ? (
+                        <>
+                          {item.children.filter((child) => ["safety-monitoring"].includes(child.key)).map((child) => (
+                            <button key={child.key} className={`text-xs font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
+                          ))}
+                          {item.children.filter((child) => ["safety-isc"].includes(child.key)).map((child) => (
+                            <button key={child.key} className={`text-xs font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
+                          ))}
+                          {item.children.filter((child) => ["safety-ga-admin"].includes(child.key)).map((child) => (
+                            <button key={child.key} className={`text-xs font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
+                          ))}
+                        </>
+                      ) : item.key === "cost-area-monitoring" ? (
                         <>
                           {item.children.filter((child) => ["cost-overview", "cost-productivity", "cost-manpower-hours"].includes(child.key)).map((child) => (
                             <button key={child.key} className={`text-xs font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>

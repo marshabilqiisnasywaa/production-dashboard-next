@@ -27,6 +27,7 @@ import PicServicePlan from "@/features/pic-service/PicServicePlan";
 import PicQcHome from "@/features/pic-qc/PicQcHome";
 import PicQcFollowup from "@/features/pic-qc/PicQcFollowup";
 import PicQcMonitoring from "@/features/pic-qc/PicQcMonitoring";
+import SafetyDashboard from "@/features/safety/SafetyDashboard";
 import PicQcAbnormality from "@/features/pic-qc/PicQcAbnormality";
 import PicQcPlan from "@/features/pic-qc/PicQcPlan";
 import PaiRobot from "@/features/morning-meeting/PaiRobot";
@@ -83,6 +84,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
   const isServicePicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "service";
   const isQcPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "qc";
   const isCostPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "cost";
+  const isSafetyPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "safety";
 
   useEffect(() => {
     if (isRepairPicMeeting) {
@@ -105,11 +107,16 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
         setActive("meeting-home");
         router.push("/morning-meeting");
       }
+    } else if (isSafetyPicMeeting) {
+      if (active !== "meeting-home" && active !== "followup" && active !== "safety-area-monitoring" && !active.startsWith("safety-")) {
+        setActive("meeting-home");
+        router.push("/morning-meeting");
+      }
     } else if (active === "repair-monitor") {
       setActive("Dashboard");
       router.push(dashboardHref);
     }
-  }, [isRepairPicMeeting, isServicePicMeeting, isQcPicMeeting, isCostPicMeeting, active, router]);
+  }, [isRepairPicMeeting, isServicePicMeeting, isQcPicMeeting, isCostPicMeeting, isSafetyPicMeeting, active, router]);
 
   useEffect(() => {
     if (isRepairPicMeeting && (active === "repair-monitor" || active === "Preassembly" || active === "Rework" || active === "Warranty")) {
@@ -121,6 +128,11 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
       setOpenMenu("Area Monitoring");
     }
   }, [isCostPicMeeting, active]);
+  useEffect(() => {
+    if (isSafetyPicMeeting && (active === "safety-area-monitoring" || active.startsWith("safety-"))) {
+      setOpenMenu("Area Monitoring");
+    }
+  }, [isSafetyPicMeeting, active]);
   const navigationGroups = useMemo(() => filterNavGroups({ role, picArea, mode }), [role, picArea, mode]);
   const visibleCommandLabels = useMemo(() => new Set(navigationGroups.flatMap((group) => group.items.flatMap((item) => [item.label, ...(item.aliases ?? []), ...(item.children?.flatMap((child) => [child.label, ...(child.aliases ?? [])]) ?? [])]))), [navigationGroups]);
 
@@ -315,6 +327,26 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
                 <CostOverview />
               ) : (
                 <MeetingDashboard section="overview" />
+              )}
+            </section>
+          ) : isSafetyPicMeeting ? (
+            <section className="content repair-content">
+              {active === "followup" ? (
+                <FollowupPage role={role} picArea={picArea} />
+              ) : active === "safety-monitoring" ? (
+                <SafetyDashboard section="safety" onNavigate={selectMenu} />
+              ) : active === "safety-isc" ? (
+                <SafetyDashboard section="isc" onNavigate={selectMenu} />
+              ) : active === "safety-ga-admin" ? (
+                <SafetyDashboard section="ga-admin" onNavigate={selectMenu} />
+              ) : active === "safety-data-source" ? (
+                <SafetyDashboard section="data-source" onNavigate={selectMenu} />
+              ) : active === "safety-abnormality" ? (
+                <PicCostAbnormality />
+              ) : active === "safety-daily-plan" ? (
+                <PicCostPlan />
+              ) : (
+                <SafetyDashboard section="overview" onNavigate={selectMenu} />
               )}
             </section>
           ) : (

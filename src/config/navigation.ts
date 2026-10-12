@@ -115,6 +115,29 @@ export const monitoringGroup: NavGroup = {
         { label: "Data Source", key: "cost-data-source", href: "/morning-meeting", icon: "database", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
       ],
     },
+    {
+      label: "Area Monitoring",
+      key: "safety-area-monitoring",
+      href: "/morning-meeting",
+      icon: "shield",
+      mode: morningMeetingMode,
+      area: "safety",
+      allowedRoles: ["PIC Area"],
+      children: [
+        { label: "Safety", key: "safety-monitoring", href: "/morning-meeting", icon: "shield", mode: morningMeetingMode, area: "safety", allowedRoles: ["PIC Area"] },
+        { label: "ISC", key: "safety-isc", href: "/morning-meeting", icon: "alert", mode: morningMeetingMode, area: "safety", allowedRoles: ["PIC Area"] },
+        { label: "GA Admin", key: "safety-ga-admin", href: "/morning-meeting", icon: "users", mode: morningMeetingMode, area: "safety", allowedRoles: ["PIC Area"] },
+      ],
+    },
+    {
+      label: "Data Source",
+      key: "safety-data-source",
+      href: "/morning-meeting",
+      icon: "database",
+      mode: morningMeetingMode,
+      area: "safety",
+      allowedRoles: ["PIC Area"],
+    },
   ],
 };
 
@@ -129,6 +152,8 @@ export const laporanGroup: NavGroup = {
     { label: "Daily Plan", key: "qc-plan", href: "/qc/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
     { label: "Abnormality", key: "cost-abnormality", href: "/abnormality", icon: "alert", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
     { label: "Daily Plan", key: "cost-daily-plan", href: "/abnormality/plan", icon: "calendar", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
+    { label: "Abnormality", key: "safety-abnormality", href: "/abnormality", icon: "alert", mode: morningMeetingMode, area: "safety", allowedRoles: ["PIC Area"] },
+    { label: "Daily Plan", key: "safety-daily-plan", href: "/abnormality/plan", icon: "calendar", mode: morningMeetingMode, area: "safety", allowedRoles: ["PIC Area"] },
   ],
 };
 
@@ -322,6 +347,19 @@ export function breadcrumbForKey(active: string): { label: string; href?: string
     trail.push({ label: labels[active] ?? active });
     return trail;
   }
+  if (["safety-monitoring", "safety-isc", "safety-ga-admin", "safety-data-source", "safety-area-monitoring"].includes(active)) {
+    const labels: Record<string, string> = {
+      "safety-monitoring": "Safety",
+      "safety-isc": "ISC",
+      "safety-ga-admin": "GA Admin",
+      "safety-data-source": "Data Source",
+      "safety-area-monitoring": "Safety",
+    };
+    trail.push({ label: "Monitoring", href: "/morning-meeting" });
+    trail.push({ label: "Safety, ISC, GA", href: "/morning-meeting" });
+    trail.push({ label: labels[active] ?? active });
+    return trail;
+  }
 
   if (active.startsWith("assembly-")) {
     const asm = resolveNavItem("Assembly") || resolveNavItem("assembly-overview");
@@ -451,6 +489,24 @@ export function filterNavGroups(filter: NavigationFilter): NavGroup[] {
     return [
       { title: "MORNING MEETING", items: meetingItems as NavItem[] },
       { title: "MONITORING", items: monitorItems },
+      { title: "REPORTS", items: laporanItems },
+    ].filter((group) => group.items.length);
+  }
+  if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "safety") {
+    const meetingItems = morningMeetingGroup.items
+      .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"))
+      .map((item) => (item.key === "meeting-home" ? { ...item, label: "Beranda Meeting" } : item));
+    const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
+    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
+    const dataGroup: NavGroup = {
+      title: "DATA",
+      items: monitorItems.filter((item) => item.key === "safety-data-source"),
+    };
+    const monitoringOnly: NavItem[] = monitorItems.filter((item) => item.key !== "safety-data-source");
+    return [
+      { title: "MORNING MEETING", items: meetingItems as NavItem[] },
+      { title: "MONITORING", items: monitoringOnly },
+      { title: "DATA", items: dataGroup.items },
       { title: "REPORTS", items: laporanItems },
     ].filter((group) => group.items.length);
   }
