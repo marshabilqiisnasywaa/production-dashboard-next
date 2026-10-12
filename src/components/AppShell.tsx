@@ -36,6 +36,7 @@ import CostOverview from "@/features/cost/CostOverview";
 import CostProductivity from "@/features/cost/CostProductivity";
 import CostManpower from "@/features/cost/CostManpower";
 import CostBreakdown from "@/features/cost/CostBreakdown";
+import CostFinishGood from "@/features/cost/CostFinishGood";
 import PicCostAbnormality from "@/features/cost/PicCostAbnormality";
 import PicCostPlan from "@/features/cost/PicCostPlan";
 import type { CostNav } from "@/data/costData";
@@ -304,7 +305,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
               ) : active === "cost-breakdown" ? (
                 <CostBreakdown />
               ) : active === "cost-finish-good" ? (
-                <MeetingDashboard section="finish-good" />
+                <CostFinishGood />
               ) : active === "cost-data-source" ? (
                 <MeetingDashboard section="data-source" />
               ) : active === "cost-overview" ? (

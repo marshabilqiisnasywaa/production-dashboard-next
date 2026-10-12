@@ -19,15 +19,16 @@ type PicMetricCardProps = {
   selected: boolean;
   onToggle: (id: string) => void;
   onAskAi: (card: PicMetricCardData) => void;
+  subtext?: string;
 };
 
-export default function PicMetricCard({ card, selected, onToggle, onAskAi }: PicMetricCardProps) {
+export default function PicMetricCard({ card, selected, onToggle, onAskAi, subtext }: PicMetricCardProps) {
   const good = isOnTarget(card.value, card.target, card.direction);
   return (
     <article className="repair-kpi pic-kpi bg-white! border border-gray-200/80!" style={selected ? { borderColor: "var(--accent-1)" } : undefined}>
       <div className="repair-kpi-top"><span>{card.name}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? "On Target" : "Off Target"}</span></div>
       <strong>{card.display} <small>{card.unit}</small></strong>
-      <p>Target: {card.targetLabel} <b className={good ? "good-text" : "bad-text"}>{good ? "↓" : "↑"} {card.gap}</b></p>
+      {subtext ? <p>{subtext}</p> : <p>Target: {card.targetLabel} <b className={good ? "good-text" : "bad-text"}>{good ? "↓" : "↑"} {card.gap}</b></p>}
       <Sparkline success={good} />
       <div className="pic-kpi-actions">
         <button type="button" className="repair-outline pic-mini" onClick={() => onToggle(card.id)}>{selected ? "Tutup Tren" : "Lihat Tren"}</button>
