@@ -1,8 +1,6 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
 import {
-  Area,
-  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -17,10 +15,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Sparkles } from "lucide-react";
 import CustomSelect from "@/components/shell/CustomSelect";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
-import type { Direction } from "@/features/repair/RepairDashboard";
+import PicMetricCard, { type PicMetricCardData } from "@/features/pic-repair/PicMetricCard";
 
 type CostPeriod = "Harian" | "Mingguan" | "Bulanan" | "Tahunan";
 
@@ -31,28 +28,25 @@ const EMERALD_LIGHT = "#10B981";
 const TEAL = "#0D9488";
 const SLATE = "#64748B";
 const AMBER = "#F59E0B";
-const ROSE = "#E11D48";
 const GRID = "#E2E8F0";
 
-type CostOverviewMetric = {
-  id: string;
-  label: string;
-  value: string;
-  target: string;
-  delta: string;
-  onTarget: boolean;
-  direction: Direction;
-  chart: "trend" | "structure" | "manpower" | "overtime";
-  spark: number[];
-};
+type CostChartKey = "trend" | "structure" | "manpower" | "overtime";
 
-const metrics: CostOverviewMetric[] = [
-  { id: "slc", label: "SLC (per unit)", value: "¥2.85", target: "¥3.00", delta: "-0.15", onTarget: true, direction: "lower", chart: "trend", spark: [3.0, 2.97, 2.95, 2.92, 2.9, 2.87, 2.85] },
-  { id: "ope", label: "OPE Productivity", value: "78.5%", target: "80.00%", delta: "-1.5", onTarget: false, direction: "higher", chart: "manpower", spark: [80.2, 79.8, 79.5, 79.2, 79.0, 78.7, 78.5] },
-  { id: "upph", label: "UPPH", value: "42.6 pcs/h", target: "40.0 pcs/h", delta: "+2.6", onTarget: true, direction: "higher", chart: "manpower", spark: [40.1, 40.5, 40.9, 41.4, 41.8, 42.2, 42.6] },
-  { id: "ratio", label: "Direct : Indirect", value: "3.2 : 1", target: "3.0 : 1", delta: "+0.2", onTarget: true, direction: "higher", chart: "structure", spark: [2.9, 3.0, 3.0, 3.1, 3.1, 3.2, 3.2] },
-  { id: "intern", label: "Internship Rate", value: "18.5%", target: "15.00%", delta: "+3.5", onTarget: false, direction: "lower", chart: "overtime", spark: [15.2, 15.8, 16.3, 16.9, 17.4, 18.0, 18.5] },
+const metrics: PicMetricCardData[] = [
+  { id: "slc", name: "SLC (per unit)", value: 2.85, display: "¥2.85", unit: "", target: 3, targetLabel: "¥3.00", gap: "0.15", direction: "lower" },
+  { id: "ope", name: "OPE Productivity", value: 78.5, display: "78.5", unit: "%", target: 80, targetLabel: "80.00%", gap: "1.5", direction: "higher" },
+  { id: "upph", name: "UPPH", value: 42.6, display: "42.6", unit: "pcs/h", target: 40, targetLabel: "40.0 pcs/h", gap: "2.6", direction: "higher" },
+  { id: "ratio", name: "Direct : Indirect", value: 3.2, display: "3.2 : 1", unit: "", target: 3, targetLabel: "3.0 : 1", gap: "0.2", direction: "higher" },
+  { id: "intern", name: "Internship Rate", value: 18.5, display: "18.5", unit: "%", target: 15, targetLabel: "15.00%", gap: "3.5", direction: "lower" },
 ];
+
+const chartFor: Record<string, CostChartKey> = {
+  "slc": "trend",
+  "ope": "manpower",
+  "upph": "manpower",
+  "ratio": "structure",
+  "intern": "overtime",
+};
 
 const slcTrend: Record<CostPeriod, { labels: string[]; actual: number[]; target: number }> = {
   "Harian": { labels: ["1 Okt", "2 Okt", "3 Okt", "4 Okt", "5 Okt", "6 Okt", "7 Okt"], actual: [2.91, 2.9, 2.89, 2.88, 2.87, 2.86, 2.85], target: 2.9 },
@@ -96,32 +90,6 @@ function ChartToggle({ value, onChange, ariaLabel }: { value: CostPeriod; onChan
   );
 }
 
-function badgeClass(onTarget: boolean): string {
-  return onTarget
-    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-    : "bg-rose-50 text-rose-700 border border-rose-200";
-}
-
-function CostSparkline({ id, values, positive }: { id: string; values: number[]; positive: boolean }) {
-  const color = positive ? EMERALD : ROSE;
-  const data = values.map((value, index) => ({ index, value }));
-  return (
-    <div className="w-24 h-9 shrink-0">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id={`cost-spark-${id}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.35} />
-              <stop offset="100%" stopColor={color} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <Area type="monotone" dataKey="value" stroke={color} strokeWidth={2} fill={`url(#cost-spark-${id})`} isAnimationActive={false} />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
 export default function CostOverview() {
   const [period, setPeriod] = useState<CostPeriod>("Bulanan");
   const [trendPeriod, setTrendPeriod] = useState<CostPeriod>("Bulanan");
@@ -130,19 +98,20 @@ export default function CostOverview() {
   const [shift, setShift] = useState("Semua Shift");
   const [area, setArea] = useState("Semua Area");
   const [focused, setFocused] = useState<string | null>(null);
-  const [aiMetric, setAiMetric] = useState<CostOverviewMetric | null>(null);
+  const [aiMetric, setAiMetric] = useState<PicMetricCardData | null>(null);
   const chartRefs = useRef<Record<string, HTMLElement | null>>({});
 
-  const focusChart = (metric: CostOverviewMetric) => {
-    if (focused === metric.id) {
+  const focusChart = (id: string) => {
+    if (focused === id) {
       setFocused(null);
       return;
     }
-    setFocused(metric.id);
-    chartRefs.current[metric.chart]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFocused(id);
+    const key = chartFor[id];
+    if (key) chartRefs.current[key]?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const chartRing = (key: string): string => (focused && metrics.find((metric) => metric.id === focused)?.chart === key ? " ring-2 ring-emerald-500" : "");
+  const chartRing = (key: string): string => (focused && chartFor[focused] === key ? " ring-2 ring-emerald-500" : "");
 
   const trend = slcTrend[trendPeriod];
   const trendData = useMemo(() => trend.labels.map((label, index) => ({ label, actual: trend.actual[index], target: trend.target })), [trend]);
@@ -185,23 +154,7 @@ export default function CostOverview() {
 
       <div className="repair-kpis pic-kpis-five">
         {metrics.map((metric) => (
-          <article key={metric.id} className="bg-white/80 backdrop-blur-md rounded-2xl p-4 border border-white/60 shadow-xs">
-            <div className="flex items-start justify-between gap-2">
-              <span className="text-slate-500 text-xs font-medium">{metric.label}</span>
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${badgeClass(metric.onTarget)}`}>{metric.onTarget ? "On Target" : "Off Target"}</span>
-            </div>
-            <strong className="block mt-2 text-slate-900 text-2xl font-bold tracking-tight">{metric.value}</strong>
-            <p className="mt-1 text-slate-500 text-xs">Target: {metric.target} <b className={metric.onTarget ? "text-emerald-600" : "text-rose-600"}>({metric.delta})</b></p>
-            <div className="mt-3 flex items-end justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button type="button" onClick={() => focusChart(metric)} className="text-[11px] font-medium text-slate-700 bg-white/60 border border-slate-200 hover:bg-white px-3 py-1 rounded-full transition-all">{focused === metric.id ? "Tutup Tren" : "Lihat Tren"}</button>
-                {!metric.onTarget && (
-                  <button type="button" onClick={() => setAiMetric(metric)} className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-800 bg-emerald-50/80 border border-emerald-200 hover:bg-emerald-50 px-3 py-1 rounded-full transition-all"><Sparkles size={12} />Tanya AI</button>
-                )}
-              </div>
-              <CostSparkline id={metric.id} values={metric.spark} positive={metric.onTarget} />
-            </div>
-          </article>
+          <PicMetricCard key={metric.id} card={metric} selected={focused === metric.id} onToggle={focusChart} onAskAi={setAiMetric} />
         ))}
       </div>
 
@@ -314,10 +267,10 @@ export default function CostOverview() {
       </div>
       {aiMetric && (
         <PicAiInsight
-          metricName={aiMetric.label}
-          actualLabel={aiMetric.value}
-          targetLabel={aiMetric.target}
-          gapLabel={aiMetric.delta}
+          metricName={aiMetric.name}
+          actualLabel={`${aiMetric.display} ${aiMetric.unit}`.trim()}
+          targetLabel={aiMetric.targetLabel}
+          gapLabel={aiMetric.gap}
           direction={aiMetric.direction}
           onClose={() => setAiMetric(null)}
         />
