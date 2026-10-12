@@ -34,6 +34,7 @@ import MeetingDashboard from "@/features/morning-meeting/MeetingDashboard";
 import FollowupPage from "@/features/morning-meeting/FollowupPage";
 import CostOverview from "@/features/cost/CostOverview";
 import CostProductivity from "@/features/cost/CostProductivity";
+import CostManpower from "@/features/cost/CostManpower";
 import PicCostAbnormality from "@/features/cost/PicCostAbnormality";
 import PicCostPlan from "@/features/cost/PicCostPlan";
 import type { CostNav } from "@/data/costData";
@@ -298,7 +299,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
               ) : active === "cost-productivity" ? (
                 <CostProductivity />
               ) : active === "cost-manpower-hours" ? (
-                <MeetingDashboard section="manpower" />
+                <CostManpower />
               ) : active === "cost-breakdown" ? (
                 <MeetingDashboard section="breakdown" />
               ) : active === "cost-finish-good" ? (
