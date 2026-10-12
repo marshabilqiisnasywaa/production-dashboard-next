@@ -76,7 +76,7 @@ export default function SidebarNav({
               return (
                 <div className="nav-entry" key={item.label}>
                   <button data-tooltip={item.label} className={btnClass} onClick={() => {
-                    onSelect(item.key);
+                    onSelect(item.key === "cost-area-monitoring" ? "cost-overview" : item.key);
                     if (item.children) {
                       onToggleMenu(item.label);
                     }
