@@ -33,6 +33,7 @@ import PaiRobot from "@/features/morning-meeting/PaiRobot";
 import MeetingDashboard from "@/features/morning-meeting/MeetingDashboard";
 import FollowupPage from "@/features/morning-meeting/FollowupPage";
 import CostOverview from "@/features/cost/CostOverview";
+import CostProductivity from "@/features/cost/CostProductivity";
 import PicCostAbnormality from "@/features/cost/PicCostAbnormality";
 import PicCostPlan from "@/features/cost/PicCostPlan";
 import type { CostNav } from "@/data/costData";
@@ -295,7 +296,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
               ) : active === "cost-daily-plan" ? (
                 <PicCostPlan />
               ) : active === "cost-productivity" ? (
-                <MeetingDashboard section="productivity" />
+                <CostProductivity />
               ) : active === "cost-manpower-hours" ? (
                 <MeetingDashboard section="manpower" />
               ) : active === "cost-breakdown" ? (
