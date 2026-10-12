@@ -3,8 +3,8 @@ import Icon from "@/components/shell/Icon";
 import type { ShellPage } from "@/components/shell/shellPage";
 import type { NavGroup } from "@/config/navigation";
 
-const ollieImage = "/assets/ollie.png";
-const oppoLogoDark = "/assets/oppo-logo-dark.svg";
+const ollieImage = "/assets/ollie-when-close.png";
+const oppoLogoDark = "/assets/oppo-logo-dark.png";
 
 type SidebarNavProps = {
   page: ShellPage;
@@ -76,7 +76,7 @@ export default function SidebarNav({
               return (
                 <div className="nav-entry" key={item.label}>
                   <button data-tooltip={item.label} className={btnClass} onClick={() => {
-                    onSelect(item.label);
+                    onSelect(item.key);
                     if (item.children) {
                       onToggleMenu(item.label);
                     }
@@ -88,7 +88,7 @@ export default function SidebarNav({
                   {item.children && isOpen && expanded && (
                     <div className="submenu">
                       {item.children.map((child) => (
-                        <button key={child.label} className={child.currentWhenActive !== false && child.key === active ? "current" : ""} onClick={() => onSelect(child.label)}>{child.label}</button>
+                        <button key={child.label} className={child.currentWhenActive !== false && child.key === active ? "current" : ""} onClick={() => onSelect(child.key)}>{child.label}</button>
                       ))}
                     </div>
                   )}

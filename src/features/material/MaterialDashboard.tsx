@@ -1,4 +1,5 @@
 "use client";
+import CustomSelect from "@/components/shell/CustomSelect";
 import { useMemo, useState } from "react";
 import {
   Area,
@@ -488,10 +489,10 @@ function WoClosePage() {
           <button type="button" className="btn btn-outline">Retract</button>
         </div>
         <div className="wo-filter-grid">
-          <label><span>Report type</span><select defaultValue="Daily report"><option>Daily report</option><option>Weekly report</option><option>Monthly report</option></select></label>
+          <label><span>Report type</span><CustomSelect defaultValue="Daily report" options={["Daily report", "Weekly report", "Monthly report"]} /></label>
           <label><span>Target closing time</span><div className="range-field"><input defaultValue="2026-03-01" /><span>to</span><input defaultValue="2026-03-13" /></div></label>
-          <label><span>Workshop type</span><select defaultValue="Mass production"><option>Mass production</option><option>All</option></select></label>
-          <label><span>Work order type</span><select value={workOrderType} onChange={(event) => setWorkOrderType(event.target.value as WoType)}><option>Standard</option><option>Non-Standard</option></select></label>
+          <label><span>Workshop type</span><CustomSelect defaultValue="Mass production" options={["Mass production", "All"]} /></label>
+          <label><span>Work order type</span><CustomSelect value={workOrderType} options={["Standard", "Non-Standard"]} onChange={(next) => setWorkOrderType(next as WoType)} /></label>
           <label><span>Work order classification</span><button type="button" className="chip-select">all +5</button></label>
           <label><span>Factory Area</span><button type="button" className="chip-select">all +4</button></label>
           <label><span>Workshop</span><button type="button" className="chip-select">all +11</button></label>

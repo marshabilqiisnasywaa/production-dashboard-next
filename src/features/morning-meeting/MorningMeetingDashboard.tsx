@@ -1,6 +1,7 @@
 "use client";
 import { useRole } from "@/components/providers/RoleProvider";
 import HodMeetingBoard from "@/features/morning-meeting/HodMeetingBoard";
+import MeetingDashboard from "@/features/morning-meeting/MeetingDashboard";
 import MorningMeetingHome from "@/features/morning-meeting/MorningMeetingHome";
 import FollowupPage from "@/features/morning-meeting/FollowupPage";
 import ProductionKpiPage from "@/features/morning-meeting/ProductionKpiPage";
@@ -17,5 +18,6 @@ export default function MorningMeetingDashboard({ page, onNavigate }: MorningMee
   if (page === "project-2026") return <Project2026Page />;
   if (page === "followup") return <FollowupPage role={role} picArea={picArea} />;
   if (page === "hod-overview") return <HodMeetingBoard />;
+  if (role === "PIC Area" && picArea === "cost") return <MeetingDashboard />;
   return <MorningMeetingHome role={role} picArea={picArea} onNavigate={onNavigate} />;
 }

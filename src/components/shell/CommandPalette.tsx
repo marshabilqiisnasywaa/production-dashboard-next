@@ -8,7 +8,7 @@ type CommandPaletteProps = {
   index: number;
   onQueryChange: (query: string) => void;
   onIndexChange: (index: number) => void;
-  onPick: (label: string) => void;
+  onPick: (item: CommandItem) => void;
   onClose: () => void;
 };
 
@@ -36,7 +36,7 @@ export default function CommandPalette({
               <p>{group.label}</p>
               {group.items.map((item) => {
                 const itemIndex = commands.findIndex((command) => command.label === item.label);
-                return <button key={item.label} className={index === itemIndex ? "selected" : ""} onMouseEnter={() => onIndexChange(itemIndex)} onClick={() => onPick(item.label)}>
+                return <button key={item.label} className={index === itemIndex ? "selected" : ""} onMouseEnter={() => onIndexChange(itemIndex)} onClick={() => onPick(item)}>
                   <Icon name={item.icon} size={17} /><span>{item.label}</span>{item.shortcut && <kbd>{item.shortcut}</kbd>}
                 </button>;
               })}

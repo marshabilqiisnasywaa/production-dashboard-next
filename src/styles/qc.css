@@ -27,9 +27,10 @@
 
 .qc-page-header h1 {
   margin: 8px 0 4px;
-  font-size: clamp(24px, 2.2vw, 32px);
+  font-size: 28px;
+  font-weight: 600;
   line-height: 1.08;
-  letter-spacing: -0.04em;
+  letter-spacing: -.02em;
 }
 
 .qc-page-header p {
@@ -80,6 +81,7 @@
 .qc-primary-button {
   background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   color: white;
+  font-weight: 700;
   box-shadow: 0 10px 18px rgba(var(--accent-rgb), 0.2);
 }
 

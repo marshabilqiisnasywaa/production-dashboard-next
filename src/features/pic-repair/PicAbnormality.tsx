@@ -2,12 +2,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { PIC_NAME, useRepairPic, type PicRepairInput, type PicRepairRecord, type PicRepairStatus } from "@/features/pic-repair/RepairPicContext";
 import AbnormalityTable from "@/features/pic-repair/AbnormalityTable";
+import CustomSelect from "@/components/shell/CustomSelect";
 import PicAttachmentPreview from "@/features/pic-repair/PicAttachmentPreview";
+import PicPlanUpload, { type PlanUploadValue } from "@/features/pic-repair/PicPlanUpload";
+import { AlertCircle, CheckCircle2, Clock, FileText } from "lucide-react";
 
 const areaOptions = ["Pre Assembly", "Rework", "Warranty"];
 const factorOptions = ["Machine", "Man", "Material", "Method", "Media", "Env"];
 const statusOptions: PicRepairStatus[] = ["Open", "In Progress", "Resolved"];
-const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Oct", "Nov", "Dec"];
+const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const emptyForm = {
   date: "2026-10-07",
@@ -37,14 +40,29 @@ export default function PicAbnormality() {  const { records, addRecord } = useRe
   const [pageSize, setPageSize] = useState(5);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [attachment, setAttachment] = useState<PlanUploadValue | null>(null);
   const [preview, setPreview] = useState<PicRepairRecord | null>(null);
 
   const summary = useMemo(() => ([
-    { label: "Total Abnormality", value: String(records.length), helper: "Total kasus tercatat", tone: "kpi-total" },
-    { label: "Open", value: String(records.filter((item) => item.status === "Open").length), helper: "Membutuhkan penanganan", tone: "kpi-open" },
-    { label: "In Progress", value: String(records.filter((item) => item.status === "In Progress").length), helper: "Dalam proses tindakan", tone: "kpi-progress" },
-    { label: "Resolved / Closed", value: String(records.filter((item) => item.status === "Resolved").length), helper: "Selesai dieksekusi", tone: "kpi-resolved" },
+    { label: "Total Abnormality", value: String(records.length), helper: "Total recorded cases", tone: "total", icon: FileText, iconBox: "text-slate-900 bg-slate-100/60 border border-slate-200/50 backdrop-blur-sm" },
+    { label: "Open", value: String(records.filter((item) => item.status === "Open").length), helper: "Requires attention", tone: "open", icon: AlertCircle, iconBox: "text-red-600 bg-red-100/60 border border-red-200/50 backdrop-blur-sm" },
+    { label: "In Progress", value: String(records.filter((item) => item.status === "In Progress").length), helper: "Under action", tone: "progress", icon: Clock, iconBox: "text-amber-600 bg-amber-100/60 border border-amber-200/50 backdrop-blur-sm" },
+    { label: "Resolved", value: String(records.filter((item) => item.status === "Resolved").length), helper: "Completed", tone: "resolved", icon: CheckCircle2, iconBox: "text-emerald-600 bg-emerald-100/60 border border-emerald-200/50 backdrop-blur-sm" },
   ]), [records]);
+
+  const metricCardClass: Record<string, string> = {
+    total: "bg-gradient-to-br! from-slate-50 via-white to-slate-50/50 border border-slate-200/70! rounded-xl! shadow-sm",
+    open: "bg-gradient-to-br! from-red-50/80 via-red-50/20 to-white border border-red-200/60! rounded-xl! shadow-sm",
+    progress: "bg-gradient-to-br! from-amber-50/80 via-amber-50/20 to-white border border-amber-200/60! rounded-xl! shadow-sm",
+    resolved: "bg-gradient-to-br! from-emerald-50/80 via-emerald-50/20 to-white border border-emerald-200/60! rounded-xl! shadow-sm",
+  };
+
+  const metricValueClass: Record<string, string> = {
+    total: "text-slate-900 font-bold!",
+    open: "text-red-600 font-bold!",
+    progress: "text-amber-600 font-bold!",
+    resolved: "text-emerald-600 font-bold!",
+  };
 
   const filteredRows = useMemo(() => records.filter((row) => {
     const searchTerm = query.trim().toLowerCase();
@@ -69,6 +87,23 @@ export default function PicAbnormality() {  const { records, addRecord } = useRe
     setPage(1);
   };
 
+  const selectFile = (file: File) => {
+    if (attachment?.url) URL.revokeObjectURL(attachment.url);
+    setAttachment({ name: file.name, url: URL.createObjectURL(file) });
+    setForm((current) => ({ ...current, evidence: file.name }));
+  };
+
+  const clearFile = () => {
+    if (attachment?.url) URL.revokeObjectURL(attachment.url);
+    setAttachment(null);
+    setForm((current) => ({ ...current, evidence: "" }));
+  };
+
+  const closeModal = () => {
+    clearFile();
+    setModalOpen(false);
+  };
+
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!form.problem.trim()) return;
@@ -87,6 +122,8 @@ export default function PicAbnormality() {  const { records, addRecord } = useRe
       evidence: form.evidence || "evidence.jpg",
     };
     addRecord(input);
+    if (attachment?.url) URL.revokeObjectURL(attachment.url);
+    setAttachment(null);
     setForm(emptyForm);
     setModalOpen(false);
     setPage(1);
@@ -96,104 +133,88 @@ export default function PicAbnormality() {  const { records, addRecord } = useRe
     <div className="abnormality-page pic-page">
       <header className="qc-page-header">
         <div>
-          <div className="qc-kicker">ABNORMALITY • PIC AREA</div>
-          <h1>Abnormality Log</h1>
-          <p>Seluruh temuan di bawah kontrol {PIC_NAME}. Tangani kasus Open sesuai prioritas.</p>
+          <div className="qc-kicker">ABNORMALITY LOG</div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Abnormality Log</h1>
+          <p>All findings are recorded here. Handle Open cases by priority.</p>
         </div>
         <div className="qc-toolbar">
-          <div className="qc-live">
-            <span className="live-dot" />
-            <span>PIC: {PIC_NAME}</span>
-          </div>
           <button className="qc-secondary-button" type="button">07 Oct 2026</button>
         </div>
       </header>
 
       <section className="qc-kpi-grid abnormality-kpis pic-kpis">
         {summary.map((item) => (
-          <article key={item.label} className={`qc-kpi-card abnormality-kpi-card ${item.tone}`}>
-            <span className="kpi-label">{item.label}</span>
-            <strong>{item.value}</strong>
-            <span className="kpi-unit">{item.helper}</span>
+          <article key={item.label} className={`sq-kpi ${metricCardClass[item.tone]}`}>
+            <div className="sq-kpi-head flex justify-between items-start"><span>{item.label}</span><div className={`p-2.5 rounded-xl ${item.iconBox}`}><item.icon className="w-5 h-5" /></div></div>
+            <strong className={metricValueClass[item.tone]}>{item.value}</strong>
+            <p>{item.helper}</p>
           </article>
         ))}
       </section>
 
-      <article className="abnormality-panel">
-        <div className="abnormality-panel-head">
+      <section className="sq-panel">
+        <div className="sq-panel-head">
           <div>
-            <h2>Daftar Temuan Abnormality</h2>
-            <p>Klik ikon kamera untuk melihat foto bukti temuan.</p>
+            <h2>Abnormality Findings</h2>
+            <p>Click the camera icon to view photo evidence.</p>
           </div>
-          <button type="button" className="qc-primary-button" onClick={() => setModalOpen(true)}>+ Tambah Temuan</button>
+          <button type="button" className="repair-primary text-white font-bold" style={{ background: "linear-gradient(135deg,var(--accent-1),var(--accent-2))", color: "#fff" }} onClick={() => setModalOpen(true)}>+ Add Issue</button>
         </div>
 
         <div className="abnormality-filter-row">
           <label className="abnormality-search">
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari masalah, penyebab..." />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search problems, causes..." />
           </label>
-          <select value={areaFilter} onChange={(event) => setAreaFilter(event.target.value)} aria-label="Filter area">
-            <option value="All">Semua Area</option>
-            {areaOptions.map((item) => <option key={item} value={item}>{item}</option>)}
-          </select>
-          <select value={factorFilter} onChange={(event) => setFactorFilter(event.target.value)} aria-label="Filter faktor">
-            <option value="All">Semua Faktor 5M1E</option>
-            {factorOptions.map((item) => <option key={item} value={item}>{item}</option>)}
-          </select>
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filter status">
-            <option value="All">Semua Status</option>
-            {statusOptions.map((item) => <option key={item} value={item}>{item}</option>)}
-          </select>
+          <CustomSelect value={areaFilter} options={[{ value: "All", label: "All Areas" }, ...areaOptions]} onChange={setAreaFilter} ariaLabel="Area filter" />
+          <CustomSelect value={factorFilter} options={[{ value: "All", label: "All 5M1E Factors" }, ...factorOptions]} onChange={setFactorFilter} ariaLabel="Factor filter" />
+          <CustomSelect value={statusFilter} options={[{ value: "All", label: "All Statuses" }, ...statusOptions]} onChange={setStatusFilter} ariaLabel="Status filter" />
           <button type="button" className="qc-secondary-button abnormality-reset" onClick={resetFilters}>Reset</button>
         </div>
 
         {filteredRows.length === 0 ? (
-          <div className="abnormality-empty">Tidak ada temuan yang cocok dengan filter.</div>
+          <div className="abnormality-empty">No findings match the filters.</div>
         ) : (
           <>
             <AbnormalityTable rows={pageRows} onPreview={setPreview} />
             <div className="pic-pagination">
-              <span>Menampilkan {startIndex + 1}-{Math.min(startIndex + pageSize, filteredRows.length)} dari {filteredRows.length} data</span>
+              <span>Showing {startIndex + 1}-{Math.min(startIndex + pageSize, filteredRows.length)} of {filteredRows.length} data</span>
               <div className="pic-pagination-controls">
-                <select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))} aria-label="Baris per halaman">
-                  <option value={5}>5 / halaman</option>
-                  <option value={10}>10 / halaman</option>
-                </select>
-                <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Sebelumnya</button>
+                <CustomSelect value={String(pageSize)} options={[{ value: "5", label: "5 / page" }, { value: "10", label: "10 / page" }]} onChange={(next) => setPageSize(Number(next))} ariaLabel="Rows per page" />
+                <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Previous</button>
                 <b>{safePage} / {totalPages}</b>
-                <button type="button" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Berikutnya</button>
+                <button type="button" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Next</button>
               </div>
             </div>
           </>
         )}
-      </article>
+      </section>
 
       {modalOpen && (
-        <div className="repair-modal-backdrop" onMouseDown={() => setModalOpen(false)}>
+        <div className="repair-modal-backdrop" onMouseDown={closeModal}>
           <form className="repair-dialog" onMouseDown={(event) => event.stopPropagation()} onSubmit={submit}>
             <div className="repair-dialog-head">
-              <div><h2>Tambah Temuan</h2><p>Temuan baru otomatis tercatat atas nama {PIC_NAME}.</p></div>
-              <button type="button" aria-label="Tutup" onClick={() => setModalOpen(false)}>✕</button>
+              <div><h2>Add Issue</h2><p>New findings are automatically recorded under {PIC_NAME}.</p></div>
+              <button type="button" aria-label="Close" onClick={closeModal}>✕</button>
             </div>
             <div className="repair-form">
               <div className="form-grid">
-                <label>Tanggal Temuan<input type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} required /></label>
-                <label>Area Lini<select value={form.area} onChange={(event) => setForm({ ...form, area: event.target.value })}>{areaOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
+                <label>Issue Date<input type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} required /></label>
+                <label>Line Area<CustomSelect value={form.area} options={areaOptions} onChange={(next) => setForm({ ...form, area: next })} /></label>
               </div>
-              <label>Faktor Problem (5M1E)<select value={form.factor} onChange={(event) => setForm({ ...form, factor: event.target.value })}>{factorOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
-              <label>Deskripsi Masalah<textarea rows={3} value={form.problem} onChange={(event) => setForm({ ...form, problem: event.target.value })} placeholder="Deskripsi masalah yang ditemukan" required /></label>
-              <label className="repair-dropzone"><strong>Upload Foto Bukti</strong><span>Dummy upload • JPG/PNG maksimal 10 MB</span><input type="file" accept="image/*" onChange={(event) => setForm({ ...form, evidence: event.target.files?.[0]?.name ?? "evidence.jpg" })} /></label>
-              <label>Akar Penyebab<textarea rows={2} value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} placeholder="Akar penyebab" /></label>
-              <label>Efek Masalah (Impact)<textarea rows={2} value={form.impact} onChange={(event) => setForm({ ...form, impact: event.target.value })} placeholder="Dampak operasional, contoh: Line Stop 10 Min" /></label>
-              <label>Rencana Solusi<textarea rows={2} value={form.countermeasure} onChange={(event) => setForm({ ...form, countermeasure: event.target.value })} placeholder="Rencana solusi untuk Action Plan" /></label>
+              <label>Problem Factor (5M1E)<CustomSelect value={form.factor} options={factorOptions} onChange={(next) => setForm({ ...form, factor: next })} /></label>
+              <label>Problem Description<textarea rows={3} value={form.problem} onChange={(event) => setForm({ ...form, problem: event.target.value })} placeholder="Describe the problem found" required /></label>
+              <PicPlanUpload values={attachment ? [attachment] : []} onSelect={(files) => { const file = files[0]; if (file) selectFile(file); }} onRemove={() => clearFile()} />
+              <label>Root Cause<textarea rows={2} value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} placeholder="Root cause" /></label>
+              <label>Effect (Impact)<textarea rows={2} value={form.impact} onChange={(event) => setForm({ ...form, impact: event.target.value })} placeholder="Operational impact, e.g. Line Stop 10 Min" /></label>
+              <label>Solution Plan<textarea rows={2} value={form.countermeasure} onChange={(event) => setForm({ ...form, countermeasure: event.target.value })} placeholder="Solution plan for Follow-up" /></label>
               <div className="form-grid">
-                <label>Tenggat Waktu<input type="date" value={form.dueDate} onChange={(event) => setForm({ ...form, dueDate: event.target.value })} /></label>
-                <label>Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as PicRepairStatus })}>{statusOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
+                <label>Due Date<input type="date" value={form.dueDate} onChange={(event) => setForm({ ...form, dueDate: event.target.value })} /></label>
+                <label>Status<CustomSelect value={form.status} options={statusOptions} onChange={(next) => setForm({ ...form, status: next as PicRepairStatus })} /></label>
               </div>
             </div>
             <div className="repair-dialog-actions">
-              <button type="button" className="repair-outline" onClick={() => setModalOpen(false)}>Batal</button>
-              <button type="submit" className="repair-primary">Simpan Temuan</button>
+              <button type="button" className="repair-outline" onClick={closeModal}>Cancel</button>
+              <button type="submit" className="repair-primary">Save Issue</button>
             </div>
           </form>
         </div>

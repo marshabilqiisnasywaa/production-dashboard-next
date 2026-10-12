@@ -1,4 +1,6 @@
 "use client";
+import CustomSelect from "@/components/shell/CustomSelect";
+import PeriodControl, { periodView, type PeriodKey } from "@/components/shell/PeriodControl";
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -110,13 +112,16 @@ export function MetricChart({ id, title, values, target, direction, domain, full
   id: string; title: string; values: (number | null)[]; target: number | number[]; direction: Direction; domain?: [number, number]; full?: boolean;
 }) {
   const [labels, setLabels] = useState(false);
-  const data: ChartDatum[] = periods.map((period, index) => ({
-    period,
-    actual: values[index] ?? null,
-    target: Array.isArray(target) ? (target[index] ?? target[target.length - 1]) : target,
+  const [period, setPeriod] = useState<PeriodKey>("Week");
+  const flatTarget = Array.isArray(target) ? target[target.length - 1] : target;
+  const view = periodView(periods, values, period);
+  const data: ChartDatum[] = view.labels.map((periodLabel, index) => ({
+    period: periodLabel,
+    actual: view.values[index] ?? null,
+    target: flatTarget,
   }));
   return <article id={`chart-${id}`} className={`repair-panel metric-chart ${full ? "wide" : ""}`}>
-    <div className="repair-card-head"><div><h2>{title}</h2><p>Performa aktual terhadap target • 2025</p></div><label className="label-toggle"><input type="checkbox" checked={labels} onChange={(event) => setLabels(event.target.checked)}/><span/>Tampilkan label</label></div>
+    <div className="repair-card-head"><div><h2>{title}</h2><p>Performa aktual terhadap target • 2025</p></div><div className="flex items-center justify-end gap-4"><label className="label-toggle flex items-center gap-2 text-xs text-slate-500 font-medium"><input type="checkbox" checked={labels} onChange={(event) => setLabels(event.target.checked)}/><span/>Tampilkan label</label><PeriodControl value={period} onChange={setPeriod} /></div></div>
     <div className="line-chart-wrap">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 18, right: 18, left: 6, bottom: 8 }}>
@@ -156,7 +161,7 @@ function NgProductionCard() {
 export function Header({ page, onInput }: { page: string; onInput: () => void }) {
   const [periodType,setPeriodType] = useState("Harian");
   const [exportOpen,setExportOpen] = useState(false);
-  return <div className="repair-header"><div><div className="repair-eyebrow">REPAIR CENTER</div><div className="repair-title-row"><h1>{page}</h1><span className="pic-chip"><span>YU</span>PIC: Yusriyadi</span></div><p>Monitor performa repair dan quality secara real-time.</p></div><div className="repair-actions">
+  return <div className="repair-header"><div><div className="repair-eyebrow">REPAIR CENTER</div><div className="repair-title-row"><h1>{page}</h1></div><p>Monitor performa repair dan quality secara real-time.</p></div><div className="repair-actions">
     <div className="period-tabs">{["Harian","Mingguan","Bulanan"].map((type)=><button className={periodType===type?"active":""} onClick={()=>setPeriodType(type)} key={type}>{type}</button>)}</div>
     <button className="repair-outline"><Glyph name="calendar"/>30 Sep 2025</button>
     <div className="export-wrap"><button className="repair-outline" onClick={()=>setExportOpen(!exportOpen)}><Glyph name="download"/>Export</button>{exportOpen&&<div><button>Excel (.xlsx)</button><button>PDF</button></div>}</div>
@@ -170,7 +175,7 @@ export function InputDialog({ onClose, onSave }: { onClose: () => void; onSave: 
   return <div className="repair-modal-backdrop" onMouseDown={onClose}><form className="repair-dialog" onMouseDown={(event)=>event.stopPropagation()} onSubmit={(event)=>{event.preventDefault();const data=new FormData(event.currentTarget);onSave(String(data.get("kpi")),Number(data.get("actual")));}}>
     <div className="repair-dialog-head"><div><h2>Input Data KPI</h2><p>Tambahkan data aktual untuk periode baru.</p></div><button type="button" onClick={onClose}><Glyph name="close"/></button></div>
     <div className="dialog-tabs"><button type="button" className={tab==="manual"?"active":""} onClick={()=>setTab("manual")}>Input Manual</button><button type="button" className={tab==="import"?"active":""} onClick={()=>setTab("import")}>Import Excel</button></div>
-    {tab==="manual"?<div className="repair-form"><label>Pilih KPI<select name="kpi" value={selectedKpi} onChange={(event)=>setSelectedKpi(event.target.value)}>{kpiSeed.map((kpi)=><option value={kpi.id} key={kpi.id}>{kpi.name}</option>)}</select></label><div className="form-grid"><label>Periode<input type="date" required/></label><label>Tipe<select><option>Harian</option><option>Mingguan</option><option>Bulanan</option></select></label><label>Target<input name="target" type="number" step="any" required/></label><label>Actual<input name="actual" type="number" step="any" required/></label></div>{selectedKpi==="wip"&&<div className="form-grid detail-fields"><label>Judgement Area<input type="number"/></label><label>Top Cover<input type="number"/></label><label>Frame<input type="number"/></label><label>LCD<input type="number"/></label></div>}{selectedKpi==="ng"&&<div className="form-grid detail-fields"><label>Total NGS<input type="number"/></label><label>Total NGP<input type="number"/></label><label>TC Preassembly<input type="number"/></label><label>NG Proses<input type="number"/></label></div>}<label>Catatan<textarea rows={3} placeholder="Catatan PIC..."/></label></div>:<div className="repair-dropzone"><Glyph name="upload"/><strong>Drop file Excel atau CSV di sini</strong><span>.xlsx, .xls, atau .csv maksimal 10 MB</span><input type="file" accept=".xlsx,.xls,.csv"/><div className="import-preview"><span>Preview akan tampil setelah file dipilih</span></div></div>}
+    {tab==="manual"?<div className="repair-form"><label>Pilih KPI<CustomSelect value={selectedKpi} options={kpiSeed.map((kpi) => ({ value: kpi.id, label: kpi.name }))} onChange={(next) => setSelectedKpi(next)} /></label><div className="form-grid"><label>Periode<input type="date" required/></label><label>Tipe<CustomSelect defaultValue="Harian" options={["Harian", "Mingguan", "Bulanan"]} /></label><label>Target<input name="target" type="number" step="any" required/></label><label>Actual<input name="actual" type="number" step="any" required/></label></div>{selectedKpi==="wip"&&<div className="form-grid detail-fields"><label>Judgement Area<input type="number"/></label><label>Top Cover<input type="number"/></label><label>Frame<input type="number"/></label><label>LCD<input type="number"/></label></div>}{selectedKpi==="ng"&&<div className="form-grid detail-fields"><label>Total NGS<input type="number"/></label><label>Total NGP<input type="number"/></label><label>TC Preassembly<input type="number"/></label><label>NG Proses<input type="number"/></label></div>}<label>Catatan<textarea rows={3} placeholder="Catatan PIC..."/></label></div>:<div className="repair-dropzone"><Glyph name="upload"/><strong>Drop file Excel atau CSV di sini</strong><span>.xlsx, .xls, atau .csv maksimal 10 MB</span><input type="file" accept=".xlsx,.xls,.csv"/><div className="import-preview"><span>Preview akan tampil setelah file dipilih</span></div></div>}
     <div className="repair-dialog-actions"><button type="button" className="repair-outline" onClick={onClose}>Batal</button><button className="repair-primary">{tab==="manual"?"Simpan":"Konfirmasi Import"}</button></div>
   </form></div>;
 }
@@ -186,8 +191,8 @@ function QualityIssues() {
   const [status,setStatus] = useState("All");
   const [selected,setSelected] = useState<(typeof issueSeed)[number]|null>(null);
   const filtered=issueSeed.filter((issue)=>(status==="All"||issue.status===status)&&issue.problem.toLowerCase().includes(query.toLowerCase()));
-  return <article id="quality-issues" className="repair-panel wide quality-panel"><div className="repair-card-head"><div><h2>Quality Issue</h2><p>Daftar issue terbuka dan improvement plan</p></div><button className="repair-primary" onClick={()=>setDialog(true)}><Glyph name="plus"/>Tambah Issue</button></div><div className="issue-toolbar"><label><Glyph name="search"/><input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Cari problem..."/></label><select value={status} onChange={(e)=>setStatus(e.target.value)}><option>All</option><option>Open</option><option>On Progress</option><option>Done</option></select></div><div className="repair-table-scroll"><table className="repair-data-table"><thead><tr><th>No</th><th>Tanggal</th><th>Problem</th><th>Improvement</th><th>Plan</th><th>PIC</th><th>Status</th><th>Attachment</th></tr></thead><tbody>{filtered.map((issue)=><tr key={issue.no} onClick={()=>setSelected(issue)}><td>{issue.no}</td><td>{issue.date}</td><td><strong>{issue.problem}</strong></td><td>{issue.improvement}</td><td>{issue.plan}</td><td>{issue.pic}</td><td><span className={`issue-status ${issue.status.toLowerCase().replace(" ","-")}`}>{issue.status}</span></td><td><button className="attachment-thumb"><Glyph name="alert"/></button></td></tr>)}</tbody></table></div>
-    {dialog&&<div className="repair-modal-backdrop" onMouseDown={()=>setDialog(false)}><form className="repair-dialog" onMouseDown={(e)=>e.stopPropagation()} onSubmit={(e)=>{e.preventDefault();setDialog(false)}}><div className="repair-dialog-head"><div><h2>Tambah Quality Issue</h2><p>Lengkapi detail issue dan improvement.</p></div><button type="button" onClick={()=>setDialog(false)}><Glyph name="close"/></button></div><div className="repair-form"><label>Tanggal<input type="date" required/></label><label>Problem<textarea rows={3} required/></label><label>Improvement<textarea rows={3}/></label><div className="form-grid"><label>Due date<input type="date"/></label><label>PIC<select><option>Yusriyadi</option><option>Andri</option><option>Rina</option></select></label><label>Status<select><option>Open</option><option>On Progress</option><option>Done</option></select></label></div><label className="repair-dropzone"><Glyph name="upload"/><strong>Upload foto</strong><span>Drag & drop atau klik untuk pilih beberapa file</span><input type="file" multiple accept="image/*"/></label></div><div className="repair-dialog-actions"><button type="button" className="repair-outline" onClick={()=>setDialog(false)}>Batal</button><button className="repair-primary">Simpan Issue</button></div></form></div>}
+  return <article id="quality-issues" className="repair-panel wide quality-panel"><div className="repair-card-head"><div><h2>Quality Issue</h2><p>Daftar issue terbuka dan improvement plan</p></div><button className="repair-primary" onClick={()=>setDialog(true)}><Glyph name="plus"/>Tambah Issue</button></div><div className="issue-toolbar"><label><Glyph name="search"/><input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Cari problem..."/></label><CustomSelect value={status} options={["All", "Open", "On Progress", "Done"]} onChange={(next) => setStatus(next)} /></div><div className="repair-table-scroll"><table className="repair-data-table"><thead><tr><th>No</th><th>Tanggal</th><th>Problem</th><th>Improvement</th><th>Plan</th><th>PIC</th><th>Status</th><th>Attachment</th></tr></thead><tbody>{filtered.map((issue)=><tr key={issue.no} onClick={()=>setSelected(issue)}><td>{issue.no}</td><td>{issue.date}</td><td><strong>{issue.problem}</strong></td><td>{issue.improvement}</td><td>{issue.plan}</td><td>{issue.pic}</td><td><span className={`issue-status ${issue.status.toLowerCase().replace(" ","-")}`}>{issue.status}</span></td><td><button className="attachment-thumb"><Glyph name="alert"/></button></td></tr>)}</tbody></table></div>
+    {dialog&&<div className="repair-modal-backdrop" onMouseDown={()=>setDialog(false)}><form className="repair-dialog" onMouseDown={(e)=>e.stopPropagation()} onSubmit={(e)=>{e.preventDefault();setDialog(false)}}><div className="repair-dialog-head"><div><h2>Tambah Quality Issue</h2><p>Lengkapi detail issue dan improvement.</p></div><button type="button" onClick={()=>setDialog(false)}><Glyph name="close"/></button></div><div className="repair-form"><label>Tanggal<input type="date" required/></label><label>Problem<textarea rows={3} required/></label><label>Improvement<textarea rows={3}/></label><div className="form-grid"><label>Due date<input type="date"/></label><label>PIC<CustomSelect defaultValue="Yusriyadi" options={["Yusriyadi", "Andri", "Rina"]} /></label><label>Status<CustomSelect defaultValue="Open" options={["Open", "On Progress", "Done"]} /></label></div><label className="repair-dropzone"><Glyph name="upload"/><strong>Upload foto</strong><span>Drag & drop atau klik untuk pilih beberapa file</span><input type="file" multiple accept="image/*"/></label></div><div className="repair-dialog-actions"><button type="button" className="repair-outline" onClick={()=>setDialog(false)}>Batal</button><button className="repair-primary">Simpan Issue</button></div></form></div>}
     {selected&&<><button className="repair-sheet-overlay" onClick={()=>setSelected(null)}/><aside className="repair-sheet issue-sheet"><div className="repair-dialog-head"><div><p>QUALITY ISSUE #{selected.no}</p><h2>{selected.problem}</h2></div><button onClick={()=>setSelected(null)}><Glyph name="close"/></button></div><dl><dt>Status</dt><dd><span className={`issue-status ${selected.status.toLowerCase().replace(" ","-")}`}>{selected.status}</span></dd><dt>Improvement</dt><dd>{selected.improvement}</dd><dt>Plan</dt><dd>{selected.plan}</dd><dt>PIC</dt><dd>{selected.pic}</dd></dl><div className="repair-dialog-actions"><button className="danger-button">Hapus</button><button className="repair-primary">Edit</button></div></aside></>}
   </article>;
 }
@@ -459,7 +464,7 @@ export function AbnormalPage() {
         <div className="abnormality-panel-head">
           <div>
             <h2>Abnormal log</h2>
-            <p>Filter by SQCDIP, 5M1E, or status.</p>
+            <p>Filter by SQDCIP, 5M1E, or status.</p>
           </div>
           <button type="button" className="qc-primary-button" onClick={openCreate}>
             <Plus size={14} />
@@ -473,33 +478,11 @@ export function AbnormalPage() {
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search abnormal..." />
           </label>
 
-          <select value={sqcdipFilter} onChange={(event) => setSqcdipFilter(event.target.value)}>
-            <option value="All">All SQCDIP</option>
-            <option value="Safety">Safety</option>
-            <option value="Quality">Quality</option>
-            <option value="Cost">Cost</option>
-            <option value="Delivery">Delivery</option>
-            <option value="Inventory">Inventory</option>
-            <option value="Productivity">Productivity</option>
-          </select>
+          <CustomSelect value={sqcdipFilter} options={[{ value: "All", label: "All SQDCIP" }, "Safety", "Quality", "Delivery", "Cost", "Inventory", "Productivity"]} onChange={(next) => setSqcdipFilter(next)} />
 
-          <select value={factorFilter} onChange={(event) => setFactorFilter(event.target.value)}>
-            <option value="All">All 5M1E</option>
-            <option value="Machine">Machine</option>
-            <option value="Man">Man</option>
-            <option value="Material">Material</option>
-            <option value="Method">Method</option>
-            <option value="Measurement">Measurement</option>
-            <option value="Environment">Environment</option>
-          </select>
+          <CustomSelect value={factorFilter} options={[{ value: "All", label: "All 5M1E" }, "Machine", "Man", "Material", "Method", "Measurement", "Environment"]} onChange={(next) => setFactorFilter(next)} />
 
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-            <option value="All">All status</option>
-            <option value="Open">Open</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Closed-Loop">Closed-Loop</option>
-            <option value="Draft">Draft</option>
-          </select>
+          <CustomSelect value={statusFilter} options={[{ value: "All", label: "All status" }, "Open", "In Progress", "Closed-Loop", "Draft"]} onChange={(next) => setStatusFilter(next)} />
 
           <button type="button" className="qc-secondary-button abnormality-reset" onClick={resetFilters}>
             <Filter size={14} />
@@ -517,7 +500,7 @@ export function AbnormalPage() {
                   <th>ID</th>
                   <th>Date</th>
                   <th>Area</th>
-                  <th>SQCDIP</th>
+                  <th>SQDCIP</th>
                   <th>5M1E</th>
                   <th>Problem</th>
                   <th>PIC</th>
@@ -580,40 +563,17 @@ export function AbnormalPage() {
               <div className="form-grid">
                 <label>
                   Area
-                  <select value={draft.area} onChange={(event) => setDraft((current) => ({ ...current, area: event.target.value }))}>
-                    <option>Pre Assembly</option>
-                    <option>Rework</option>
-                    <option>Warranty</option>
-                    <option>Service</option>
-                    <option>QC</option>
-                    <option>Material</option>
-                    <option>Packing</option>
-                    <option>Instalasi</option>
-                  </select>
+                  <CustomSelect value={draft.area} options={["Pre Assembly", "Rework", "Warranty", "Service", "QC", "Material", "Packing", "Instalasi"]} onChange={(next) => setDraft((current) => ({ ...current, area: next }))} />
                 </label>
 
                 <label>
-                  SQCDIP
-                  <select value={draft.sqcdip} onChange={(event) => setDraft((current) => ({ ...current, sqcdip: event.target.value }))}>
-                    <option>Safety</option>
-                    <option>Quality</option>
-                    <option>Cost</option>
-                    <option>Delivery</option>
-                    <option>Inventory</option>
-                    <option>Productivity</option>
-                  </select>
+                  SQDCIP
+                  <CustomSelect value={draft.sqcdip} options={["Safety", "Quality", "Delivery", "Cost", "Inventory", "Productivity"]} onChange={(next) => setDraft((current) => ({ ...current, sqcdip: next }))} />
                 </label>
 
                 <label>
                   5M1E
-                  <select value={draft.factor} onChange={(event) => setDraft((current) => ({ ...current, factor: event.target.value }))}>
-                    <option>Machine</option>
-                    <option>Man</option>
-                    <option>Material</option>
-                    <option>Method</option>
-                    <option>Measurement</option>
-                    <option>Environment</option>
-                  </select>
+                  <CustomSelect value={draft.factor} options={["Machine", "Man", "Material", "Method", "Measurement", "Environment"]} onChange={(next) => setDraft((current) => ({ ...current, factor: next }))} />
                 </label>
 
                 <label>
@@ -661,12 +621,7 @@ export function AbnormalPage() {
               <div className="form-grid">
                 <label>
                   Status
-                  <select value={draft.status} onChange={(event) => setDraft((current) => ({ ...current, status: event.target.value as AbnormalStatus }))}>
-                    <option>Open</option>
-                    <option>In Progress</option>
-                    <option>Closed-Loop</option>
-                    <option>Draft</option>
-                  </select>
+                  <CustomSelect value={draft.status} options={["Open", "In Progress", "Closed-Loop", "Draft"]} onChange={(next) => setDraft((current) => ({ ...current, status: next as AbnormalStatus }))} />
                 </label>
 
                 <label>
@@ -866,7 +821,7 @@ function AbnormalWizard({ onQuit }: { onQuit: () => void }) {
     <div className="abnormal-wizard-body">
       {step === 1 && <div className="form-grid-large">
         <label>Abnormal Name<input value={problemStatement} onChange={(event) => { setProblemStatement(event.target.value); setSaved(false); }} /></label>
-        <label>Workshop Line<select value="Workshop 5" onChange={() => setSaved(false)}><option>Workshop 5</option><option>Workshop 3</option><option>Workshop 2</option></select></label>
+        <label>Workshop Line<CustomSelect defaultValue="Workshop 5" options={["Workshop 5", "Workshop 3", "Workshop 2"]} onChange={() => setSaved(false)} /></label>
         <label>Proposer<input value="Galuh / Irfan N" onChange={() => setSaved(false)} /></label>
         <label>Tanggal kejadian<input type="date" value="2026-10-04" onChange={() => setSaved(false)} /></label>
         <label className="segmented-block">Exception source
@@ -942,9 +897,9 @@ function AbnormalWizard({ onQuit }: { onQuit: () => void }) {
             {actions.map((item, index) => (
               <div key={index} className="action-row">
                 <input value={item.text} onChange={(event) => updateAction(index, 'text', event.target.value)} placeholder="Tindakan" />
-                <select value={item.pic} onChange={(event) => updateAction(index, 'pic', event.target.value)}><option value="">PIC</option><option>Galuh</option><option>Irfan N</option><option>Bayu</option></select>
+                <CustomSelect value={item.pic} options={[{ value: "", label: "PIC" }, "Galuh", "Irfan N", "Bayu"]} onChange={(next) => updateAction(index, 'pic', next)} />
                 <input type="date" value={item.dueDate} onChange={(event) => updateAction(index, 'dueDate', event.target.value)} />
-                <select value={item.status} onChange={(event) => updateAction(index, 'status', event.target.value)}><option>Belum</option><option>Proses</option><option>Selesai</option></select>
+                <CustomSelect value={item.status} options={["Belum", "Proses", "Selesai"]} onChange={(next) => updateAction(index, 'status', next)} />
                 <button type="button" onClick={() => setActions((current) => current.filter((_, idx) => idx !== index))}>Hapus</button>
               </div>
             ))}

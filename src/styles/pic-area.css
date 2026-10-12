@@ -56,8 +56,11 @@
   .pic-kpis, .pic-kpis-three, .pic-kpis-five { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pic-pagination { align-items: flex-start; flex-direction: column; }
 }
-.abnormality-page .abnormality-kpi-card::after { content: none; }
-.abnormality-page .abnormality-kpi-card.kpi-open { border: 1.5px solid #ef4444; }
-.abnormality-page .abnormality-kpi-card.kpi-progress { border: 1.5px solid #f59e0b; }
-.abnormality-page .abnormality-kpi-card.kpi-resolved { border: 1.5px solid #22c55e; }
-.abnormality-page .abnormality-kpi-card.kpi-total { border: 1.5px solid #166534; }
+.abnormality-page .abnormality-kpi-card::after,
+.abnormality-page .sq-kpi::after,
+.pic-page .sq-kpi::after { content: none; }
+.abnormality-page .sq-kpi,
+.pic-page .sq-kpi { border-color: transparent; background: radial-gradient(circle at 0 0, var(--card-grad), transparent 50%), var(--card); cursor: default; }
+.pic-qc-glass .repair-panel { background: rgba(255,255,255,.8); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-color: rgba(255,255,255,.6); border-radius: 16px; box-shadow: 0 1px 2px 0 rgb(0 0 0/.05); }
+.abnormality-page .sq-kpi:hover,
+.pic-page .sq-kpi:hover { transform: none; border-color: transparent; }

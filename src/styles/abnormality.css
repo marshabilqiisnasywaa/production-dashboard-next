@@ -141,7 +141,7 @@
 .abnormality-title-wrap { display: flex; flex-direction: column; gap: 4px; max-width: 330px; }
 .abnormality-title-wrap strong { color: var(--text); }
 .abnormality-title-wrap small { color: var(--muted); font-size: 10px; line-height: 1.5; }
-.status-chip { display: inline-flex; align-items: center; justify-content: center; padding: 5px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; }
+.status-chip { display: inline-flex; align-items: center; justify-content: center; padding: 5px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; white-space: nowrap; }
 .status-open { background: var(--danger-soft); color: var(--danger); }
 .status-progress { background: rgba(245, 158, 11, 0.12); color: #b45309; }
 .status-closed { background: var(--success-soft); color: var(--success); }

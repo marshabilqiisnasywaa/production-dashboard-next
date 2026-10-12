@@ -21,6 +21,7 @@ export type ShellPage = {
   isCostPage: boolean;
   isMorningMeetingPage: boolean;
   isAbnormalityPage: boolean;
+  isPlanPage: boolean;
   morningMeetingPage: "meeting-home" | "production-kpi" | "project-2026" | "followup" | "hod-overview";
   materialPage: MaterialPageKey;
   costPage: CostPage;
@@ -55,6 +56,7 @@ export function getShellPage(active: string): ShellPage {
   const isCostPage = active.startsWith("cost-");
   const isMorningMeetingPage = morningMeetingPages.includes(active);
   const isAbnormalityPage = active === "Abnormality";
+  const isPlanPage = active === "repair-plan";
 
   const costPage = (isCostPage
     ? active.replace(/^cost-/, "").split("-").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
@@ -75,6 +77,7 @@ export function getShellPage(active: string): ShellPage {
     isCostPage,
     isMorningMeetingPage,
     isAbnormalityPage,
+    isPlanPage,
     materialPage: active as MaterialPageKey,
     costPage,
     morningMeetingPage: active as "meeting-home" | "production-kpi" | "project-2026" | "followup" | "hod-overview",

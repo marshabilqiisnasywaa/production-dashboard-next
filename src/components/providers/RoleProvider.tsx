@@ -25,13 +25,12 @@ const RoleContext = createContext<RoleContextValue | null>(null);
 
 const roleProfiles: Record<Role, Omit<AppUser, "role" | "area">> = {
   "PIC Area": { id: "pic-area", name: "PIC Area", email: "pic.area@manuflow.id", initials: "PA" },
-  "KPI Admin": { id: "kpi-admin", name: "KPI Admin", email: "kpi.admin@manuflow.id", initials: "KA" },
   Host: { id: "host", name: "Host Meeting", email: "host@manuflow.id", initials: "HM" },
-  Manajer: { id: "marsha", name: "Marsha Bilqiis", email: "marsha@manuflow.id", initials: "MB" },
   HOD: { id: "hod", name: "HOD", email: "hod@manuflow.id", initials: "HD" },
+  Superadmin: { id: "superadmin", name: "Superadmin", email: "superadmin@manuflow.id", initials: "SA" },
 };
 
-export const appRoles: Role[] = ["PIC Area", "KPI Admin", "Host", "Manajer", "HOD"];
+export const appRoles: Role[] = ["Superadmin", "PIC Area", "Host", "HOD"];
 export const picAreaOptions: { key: PicAreaKey; label: string }[] = [
   { key: "assembly", label: "Assembly" },
   { key: "packing", label: "Packing" },
@@ -43,7 +42,7 @@ export const picAreaOptions: { key: PicAreaKey; label: string }[] = [
 ];
 
 export function RoleProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<Role>("Manajer");
+  const [role, setRole] = useState<Role>("Superadmin");
   const [picArea, setPicArea] = useState<PicAreaKey>("assembly");
   const user = useMemo<AppUser>(() => ({ ...roleProfiles[role], role, area: role === "PIC Area" ? picArea : undefined }), [role, picArea]);
   const value = useMemo(() => ({ user, role, picArea, setRole, setPicArea }), [user, role, picArea]);

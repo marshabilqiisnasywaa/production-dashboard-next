@@ -1,4 +1,4 @@
-export type Role = "PIC Area" | "KPI Admin" | "Host" | "Manajer" | "HOD";
+export type Role = "PIC Area" | "Host" | "HOD" | "Superadmin";
 
 export type Area = {
   id: string;
