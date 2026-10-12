@@ -161,7 +161,7 @@ function NgProductionCard() {
 export function Header({ page, onInput }: { page: string; onInput: () => void }) {
   const [periodType,setPeriodType] = useState("Harian");
   const [exportOpen,setExportOpen] = useState(false);
-  return <div className="repair-header"><div><div className="repair-eyebrow">REPAIR CENTER</div><div className="repair-title-row"><h1>{page}</h1><span className="pic-chip"><span>YU</span>PIC: Yusriyadi</span></div><p>Monitor performa repair dan quality secara real-time.</p></div><div className="repair-actions">
+  return <div className="repair-header"><div><div className="repair-eyebrow">REPAIR CENTER</div><div className="repair-title-row"><h1>{page}</h1></div><p>Monitor performa repair dan quality secara real-time.</p></div><div className="repair-actions">
     <div className="period-tabs">{["Harian","Mingguan","Bulanan"].map((type)=><button className={periodType===type?"active":""} onClick={()=>setPeriodType(type)} key={type}>{type}</button>)}</div>
     <button className="repair-outline"><Glyph name="calendar"/>30 Sep 2025</button>
     <div className="export-wrap"><button className="repair-outline" onClick={()=>setExportOpen(!exportOpen)}><Glyph name="download"/>Export</button>{exportOpen&&<div><button>Excel (.xlsx)</button><button>PDF</button></div>}</div>

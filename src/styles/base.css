@@ -81,3 +81,23 @@
 body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--canvas); color: var(--text); }
 button, input { font: inherit; }
 button { color: inherit; }
+
+h1,
+.page-header h1,
+.page-heading h1,
+.sq-header h1,
+.repair-title-row h1,
+.qc-page-header h1,
+.mm-hero h1,
+.pd-header h1,
+.material-header h1,
+.abnormal-header h1,
+.oqc-header h1,
+.repair-empty h1 {
+  color: #032B22 !important;
+  font-size: clamp(1.6rem, 2vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  text-rendering: optimizeLegibility;
+}

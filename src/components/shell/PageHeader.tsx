@@ -12,7 +12,7 @@ export default function PageHeader({ eyebrow, title, subtitle, actions }: PageHe
     <header className="sq-header">
       <div>
         <div className="sq-eyebrow">{eyebrow}</div>
-        <h1 className="font-semibold text-emerald-950 dark:text-white">{title}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h1>
         <p>{subtitle}</p>
       </div>
       {actions && <div className="sq-header-actions">{actions}</div>}

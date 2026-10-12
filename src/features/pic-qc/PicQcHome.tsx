@@ -119,7 +119,7 @@ export default function PicQcHome() {
         <div>
           <div className="repair-eyebrow">MORNING MEETING • PIC AREA</div>
           <div className="repair-title-row">
-            <h1 className="font-semibold text-emerald-950 dark:text-white">Meeting Dashboard</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Meeting Dashboard</h1>
           </div>
           <p>Core metric summary for QC area: FQC, OQC, and ODM NG units.</p>
         </div>

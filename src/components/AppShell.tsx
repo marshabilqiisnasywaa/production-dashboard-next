@@ -72,6 +72,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
   const isRepairPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "repair";
   const isServicePicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "service";
   const isQcPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "qc";
+  const isCostPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "cost";
 
   useEffect(() => {
     if (isRepairPicMeeting) {
@@ -89,11 +90,16 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
         setActive("meeting-home");
         router.push("/morning-meeting");
       }
+    } else if (isCostPicMeeting) {
+      if (active !== "meeting-home" && active !== "followup" && !active.startsWith("cost-") && active !== "cost-area-monitoring" && !active.startsWith("cost-")) {
+        setActive("meeting-home");
+        router.push("/morning-meeting");
+      }
     } else if (active === "repair-monitor") {
       setActive("Dashboard");
       router.push(dashboardHref);
     }
-  }, [isRepairPicMeeting, isServicePicMeeting, isQcPicMeeting, active, router]);
+  }, [isRepairPicMeeting, isServicePicMeeting, isQcPicMeeting, isCostPicMeeting, active, router]);
 
   useEffect(() => {
     if (isRepairPicMeeting && (active === "repair-monitor" || active === "Preassembly" || active === "Rework" || active === "Warranty")) {

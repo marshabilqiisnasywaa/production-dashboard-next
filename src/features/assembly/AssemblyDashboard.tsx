@@ -70,10 +70,6 @@ function PageHeader({
       </div>
       {showActions && (
         <div className="qc-toolbar">
-          <div className="qc-live">
-            <span className="live-dot" />
-            <span>PIC: {pic}</span>
-          </div>
           <button className="qc-secondary-button" type="button">30 Sep 2026</button>
           <button className="qc-primary-button" type="button">Export</button>
         </div>

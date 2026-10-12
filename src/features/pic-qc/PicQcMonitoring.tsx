@@ -219,7 +219,7 @@ export default function PicQcMonitoring({ module }: QcMonitoringProps) {
         <div>
           <div className="repair-eyebrow">MONITORING • DEEP DIVE</div>
           <div className="repair-title-row">
-            <h1 className="font-semibold text-emerald-950 dark:text-white">{module} Monitoring</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{module} Monitoring</h1>
           </div>
           <p>Acceptance and defect monitoring with daily trend for {module} area.</p>
         </div>

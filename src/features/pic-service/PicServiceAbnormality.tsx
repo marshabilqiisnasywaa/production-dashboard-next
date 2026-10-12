@@ -135,7 +135,7 @@ export default function PicServiceAbnormality() {  const { records, addRecord } 
       <header className="qc-page-header">
         <div>
           <div className="qc-kicker">REPORTS</div>
-          <h1 className="font-semibold text-emerald-950 dark:text-white">Abnormality Log</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Abnormality Log</h1>
           <p>All recorded findings and issue tracking for Service area.</p>
         </div>
         <div className="qc-toolbar">

@@ -98,7 +98,7 @@ function PreassemblyDeepDive() {
         <div>
           <div className="repair-eyebrow">MONITORING • DEEP DIVE</div>
           <div className="repair-title-row">
-            <h1 className="font-semibold text-emerald-950 dark:text-white">Pre-Assembly</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Pre-Assembly</h1>
           </div>
           <p>Metric operasional dan tren histori harian area Pre-assembly.</p>
         </div>

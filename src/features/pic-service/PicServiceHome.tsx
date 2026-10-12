@@ -135,7 +135,7 @@ export default function PicServiceHome() {
         <div>
           <div className="repair-eyebrow">MORNING MEETING • PIC AREA</div>
           <div className="repair-title-row">
-            <h1 className="font-semibold text-emerald-950 dark:text-white">Meeting Dashboard</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Meeting Dashboard</h1>
           </div>
           <p>Core metric summary for Service area: WIP Mainboard Service and WIP Service External.</p>
         </div>

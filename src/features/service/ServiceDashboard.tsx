@@ -197,7 +197,6 @@ function ServiceOverview() {
         <div>
           <div className="qc-kicker">Service</div>
           <h1>Service Overview</h1>
-          <p>PIC: Ricky L</p>
         </div>
         <div className="qc-toolbar">
           <div className="qc-live">
@@ -303,7 +302,7 @@ function ServicePage({ pageKey }: { pageKey: ServicePageKey }) {
       <div className="repair-header">
         <div>
           <div className="repair-eyebrow">MONITORING • DEEP DIVE</div>
-          <div className="repair-title-row"><h1 className="font-semibold text-emerald-950 dark:text-white">{page.title}</h1></div>
+          <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900">{page.title}</h1></div>
           <p>{page.subtitle}</p>
         </div>
         <div className="repair-actions">
