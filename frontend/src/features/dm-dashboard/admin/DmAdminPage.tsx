@@ -6,9 +6,27 @@ import type { DmBoard, DmLineStatus, DmMember } from "../dmData";
 import AttendanceRecap from "../meeting/AttendanceRecap";
 import DmAdminSidebar from "./DmAdminSidebar";
 import type { DmAdminTabKey } from "./DmAdminSidebar";
+import LineDetailModal from "./LineDetailModal";
+import type { LineTableItem } from "./LineDetailModal";
 import "./AdminPanel.css";
 
 type TabKey = DmAdminTabKey;
+
+const defaultLinesList: LineTableItem[] = dmWorkshopPresets.map((preset) => ({
+  id: preset.id,
+  workshopLabel: preset.board.workshopLabel,
+  lineLabel: preset.board.lineLabel,
+  lineLabelZh: preset.board.lineLabelZh,
+  lineCode: preset.board.lineCode,
+  lineName: preset.board.lineName,
+  model: preset.board.model,
+  status: preset.board.status,
+  slogan: preset.board.slogan,
+  values: [...preset.board.values],
+  teamPhotoUrl: preset.board.teamPhotoUrl,
+  members: preset.board.members,
+  mpv: preset.board.mpv,
+}));
 
 export default function DmAdminPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("workshop");
@@ -20,12 +38,66 @@ export default function DmAdminPage() {
     message: string;
   } | null>(null);
 
+  // Table & Modal state for Lini & Workshop
+  const [linesList, setLinesList] = useState<LineTableItem[]>(defaultLinesList);
+  const [activeLineId, setActiveLineId] = useState<string>("ws-5");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | DmLineStatus>("all");
+  const [selectedLineForModal, setSelectedLineForModal] = useState<LineTableItem | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
   useEffect(() => {
     try {
+      const savedLines = localStorage.getItem("dm_dashboard_lines_list");
+      let currentLines = defaultLinesList;
+      if (savedLines) {
+        currentLines = JSON.parse(savedLines);
+      }
+
       const saved = localStorage.getItem(DM_STORAGE_KEY);
       if (saved) {
-        setFormData(JSON.parse(saved));
+        const parsedBoard: DmBoard = JSON.parse(saved);
+        setFormData(parsedBoard);
+
+        // Sync parsedBoard into matching line or prepend
+        const matchIdx = currentLines.findIndex((l) => l.lineCode === parsedBoard.lineCode);
+        if (matchIdx !== -1) {
+          currentLines[matchIdx] = {
+            ...currentLines[matchIdx],
+            workshopLabel: parsedBoard.workshopLabel,
+            lineLabel: parsedBoard.lineLabel,
+            lineLabelZh: parsedBoard.lineLabelZh,
+            model: parsedBoard.model,
+            status: parsedBoard.status,
+            lineName: parsedBoard.lineName,
+            slogan: parsedBoard.slogan,
+            values: [...parsedBoard.values],
+            teamPhotoUrl: parsedBoard.teamPhotoUrl,
+            members: parsedBoard.members,
+            mpv: parsedBoard.mpv,
+          };
+          setActiveLineId(currentLines[matchIdx].id);
+        } else {
+          const customLine: LineTableItem = {
+            id: `line-${parsedBoard.lineCode}`,
+            workshopLabel: parsedBoard.workshopLabel,
+            lineLabel: parsedBoard.lineLabel,
+            lineLabelZh: parsedBoard.lineLabelZh,
+            lineCode: parsedBoard.lineCode,
+            lineName: parsedBoard.lineName,
+            model: parsedBoard.model,
+            status: parsedBoard.status,
+            slogan: parsedBoard.slogan,
+            values: [...parsedBoard.values],
+            teamPhotoUrl: parsedBoard.teamPhotoUrl,
+            members: parsedBoard.members,
+            mpv: parsedBoard.mpv,
+          };
+          currentLines = [customLine, ...currentLines];
+          setActiveLineId(customLine.id);
+        }
       }
+      setLinesList(currentLines);
     } catch {
       // Ignore localStorage errors
     }
@@ -36,6 +108,7 @@ export default function DmAdminPage() {
     const found = dmWorkshopPresets.find((p) => p.id === presetId);
     if (found) {
       setFormData(found.board);
+      setActiveLineId(presetId);
       setAlertBanner({
         type: "info",
         message: `Template "${found.name}" berhasil diterapkan ke form. Klik "Simpan Perubahan" untuk mengaktifkan di dashboard.`,
@@ -88,9 +161,121 @@ export default function DmAdminPage() {
     reader.readAsDataURL(file);
   }
 
+  // Open modal for a line
+  function handleOpenDetail(line: LineTableItem) {
+    setSelectedLineForModal(line);
+    setIsDetailModalOpen(true);
+  }
+
+  // Add new line button handler
+  function handleAddNewLine() {
+    const randomCode = `TAC20${Math.floor(100 + Math.random() * 899)}`;
+    const newLine: LineTableItem = {
+      id: `ws-new-${Date.now()}`,
+      workshopLabel: `DM TRIANGLE WORKSHOP ${linesList.length + 1}`,
+      lineLabel: "DM TRIANGLE LINE",
+      lineLabelZh: "DM 三角线",
+      lineCode: randomCode,
+      lineName: "QUALITY LINE",
+      model: "OPPO-PRO",
+      status: "running",
+      slogan: "BERSAMA MERAIH PRESTASI",
+      values: ["Benfen", "Orientasi Pengguna", "Mengejar Keunggulan", "Keterbukaan"],
+      teamPhotoUrl: "/assets/dm/team-photo.png",
+      members: defaultDmBoard.members,
+      mpv: defaultDmBoard.mpv,
+    };
+    setSelectedLineForModal(newLine);
+    setIsDetailModalOpen(true);
+  }
+
+  // Activate a line directly from table
+  function handleActivateLine(line: LineTableItem) {
+    setActiveLineId(line.id);
+    const nextBoard: DmBoard = {
+      lineCode: line.lineCode,
+      lineName: line.lineName,
+      workshopLabel: line.workshopLabel,
+      lineLabel: line.lineLabel,
+      lineLabelZh: line.lineLabelZh,
+      model: line.model,
+      status: line.status,
+      slogan: line.slogan,
+      values: line.values,
+      teamPhotoUrl: line.teamPhotoUrl,
+      members: line.members ?? formData.members,
+      mpv: line.mpv !== undefined ? line.mpv : formData.mpv,
+    };
+    setFormData(nextBoard);
+    try {
+      localStorage.setItem(DM_STORAGE_KEY, JSON.stringify(nextBoard));
+    } catch {
+      // Ignore
+    }
+    setAlertBanner({
+      type: "success",
+      message: `Lini ${line.lineCode} (${line.lineName}) sekarang aktif di DM Dashboard.`,
+    });
+  }
+
+  // Save changes from Line Detail Modal
+  function handleSaveLineModal(updatedLine: LineTableItem, setAsActive: boolean) {
+    const existingIndex = linesList.findIndex((l) => l.id === updatedLine.id);
+    let nextLines: LineTableItem[];
+    if (existingIndex !== -1) {
+      nextLines = [...linesList];
+      nextLines[existingIndex] = updatedLine;
+    } else {
+      nextLines = [updatedLine, ...linesList];
+    }
+    setLinesList(nextLines);
+
+    try {
+      localStorage.setItem("dm_dashboard_lines_list", JSON.stringify(nextLines));
+    } catch {
+      // Ignore
+    }
+
+    if (setAsActive || updatedLine.id === activeLineId || updatedLine.lineCode === formData.lineCode) {
+      setActiveLineId(updatedLine.id);
+      const nextBoard: DmBoard = {
+        lineCode: updatedLine.lineCode,
+        lineName: updatedLine.lineName,
+        workshopLabel: updatedLine.workshopLabel,
+        lineLabel: updatedLine.lineLabel,
+        lineLabelZh: updatedLine.lineLabelZh,
+        model: updatedLine.model,
+        status: updatedLine.status,
+        slogan: updatedLine.slogan,
+        values: updatedLine.values,
+        teamPhotoUrl: updatedLine.teamPhotoUrl,
+        members: updatedLine.members ?? formData.members,
+        mpv: updatedLine.mpv !== undefined ? updatedLine.mpv : formData.mpv,
+      };
+      setFormData(nextBoard);
+      try {
+        localStorage.setItem(DM_STORAGE_KEY, JSON.stringify(nextBoard));
+      } catch {
+        // Ignore
+      }
+      setAlertBanner({
+        type: "success",
+        message: `Perubahan input Lini ${updatedLine.lineCode} (${updatedLine.lineName}) berhasil disimpan & langsung aktif di DM Dashboard!`,
+      });
+    } else {
+      setAlertBanner({
+        type: "success",
+        message: `Detail Lini ${updatedLine.lineCode} (${updatedLine.lineName}) berhasil diperbarui dalam tabel!`,
+      });
+    }
+
+    setIsDetailModalOpen(false);
+  }
+
   function handleSave() {
     try {
       localStorage.setItem(DM_STORAGE_KEY, JSON.stringify(formData));
+      localStorage.setItem("dm_dashboard_lines_list", JSON.stringify(linesList));
     } catch {
       // Ignore localStorage errors
     }
@@ -107,8 +292,11 @@ export default function DmAdminPage() {
   function handleResetAll() {
     if (window.confirm("Kembalikan seluruh data ke konfigurasi bawaan Workshop 5?")) {
       setFormData(defaultDmBoard);
+      setLinesList(defaultLinesList);
+      setActiveLineId("ws-5");
       try {
         localStorage.removeItem(DM_STORAGE_KEY);
+        localStorage.removeItem("dm_dashboard_lines_list");
       } catch {
         // Ignore localStorage errors
       }
@@ -118,6 +306,19 @@ export default function DmAdminPage() {
       });
     }
   }
+
+  const filteredLines = linesList.filter((item) => {
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      item.lineCode.toLowerCase().includes(q) ||
+      item.lineName.toLowerCase().includes(q) ||
+      item.workshopLabel.toLowerCase().includes(q) ||
+      item.model.toLowerCase().includes(q) ||
+      item.slogan.toLowerCase().includes(q);
+    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const tabLabels: Record<TabKey, { crumb: string; title: string }> = {
     workshop: { crumb: "Lini & Workshop", title: "Pengaturan Lini Produksi & Workshop" },
@@ -201,166 +402,178 @@ export default function DmAdminPage() {
           )}
 
           <div className="dm-admin-panel-card">
-            {/* Tab 1: Workshop & Line Info */}
+            {/* Tab 1: Workshop & Line Table */}
             {activeTab === "workshop" && (
               <div className="dm-admin-section">
                 <div className="dm-admin-sec-head">
-                  <h3 className="dm-admin-sec-title">Informasi Dasar Lini &amp; Workshop</h3>
-                  <span className="dm-admin-sec-sub">
-                    Konfigurasi teks side rail, model smartphone, kode mesin, dan kultur tim
-                  </span>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.6rem" }}>
+                    <div>
+                      <h3 className="dm-admin-sec-title">Daftar Lini Produksi &amp; Workshop</h3>
+                      <span className="dm-admin-sec-sub">
+                        Ringkasan input lini &amp; workshop. Klik salah satu baris tabel untuk membuka modal detail dan mengubah data.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="dm-admin-btn is-primary"
+                      onClick={handleAddNewLine}
+                      style={{ gap: "0.4rem" }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                      Tambah Lini Baru
+                    </button>
+                  </div>
                 </div>
 
-                <div className="dm-admin-grid">
-                  <div className="dm-admin-field">
-                    <label htmlFor="field-workshopLabel">Label Workshop (Side Rail Kanan)</label>
-                    <input
-                      id="field-workshopLabel"
-                      type="text"
-                      className="dm-admin-input"
-                      value={formData.workshopLabel}
-                      onChange={(e) => handleFieldChange("workshopLabel", e.target.value)}
-                      placeholder="Contoh: DM TRIANGLE WORKSHOP 5"
-                    />
-                  </div>
-
-                  <div className="dm-admin-field">
-                    <label htmlFor="field-lineLabel">Label Lini (Side Rail Kiri)</label>
-                    <input
-                      id="field-lineLabel"
-                      type="text"
-                      className="dm-admin-input"
-                      value={formData.lineLabel}
-                      onChange={(e) => handleFieldChange("lineLabel", e.target.value)}
-                      placeholder="Contoh: DM TRIANGLE LINE"
-                    />
-                  </div>
-
-                  <div className="dm-admin-field">
-                    <label htmlFor="field-lineLabelZh">Label Mandarin (Side Rail Kiri)</label>
-                    <input
-                      id="field-lineLabelZh"
-                      type="text"
-                      className="dm-admin-input"
-                      value={formData.lineLabelZh}
-                      onChange={(e) => handleFieldChange("lineLabelZh", e.target.value)}
-                      placeholder="Contoh: DM 三角线"
-                    />
-                  </div>
-
-                  <div className="dm-admin-field">
-                    <label htmlFor="field-lineCode">Kode Lini Produksi</label>
-                    <input
-                      id="field-lineCode"
-                      type="text"
-                      className="dm-admin-input"
-                      value={formData.lineCode}
-                      onChange={(e) => handleFieldChange("lineCode", e.target.value)}
-                      placeholder="Contoh: TAC20601"
-                    />
-                  </div>
-
-                  <div className="dm-admin-field">
-                    <label htmlFor="field-lineName">Nama Tim / Nama Lini</label>
-                    <input
-                      id="field-lineName"
-                      type="text"
-                      className="dm-admin-input"
-                      value={formData.lineName}
-                      onChange={(e) => handleFieldChange("lineName", e.target.value)}
-                      placeholder="Contoh: EXCELLENCE"
-                    />
-                  </div>
-
-                  <div className="dm-admin-field">
-                    <label htmlFor="field-model">Model Ponsel</label>
-                    <input
-                      id="field-model"
-                      type="text"
-                      className="dm-admin-input"
-                      value={formData.model}
-                      onChange={(e) => handleFieldChange("model", e.target.value)}
-                      placeholder="Contoh: LATTE-M"
-                    />
-                  </div>
-
-                  <div className="dm-admin-field">
-                    <label htmlFor="field-status">Status Operasional Lini</label>
+                {/* Toolbar: Search, Filter, Count */}
+                <div className="dm-table-toolbar">
+                  <div className="dm-table-toolbar-left">
+                    <div className="dm-table-search-box">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="dm-table-search-icon" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      </svg>
+                      <input
+                        type="search"
+                        className="dm-table-search-input"
+                        placeholder="Cari kode lini, nama tim, workshop, model..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
                     <select
-                      id="field-status"
-                      className="dm-admin-select"
-                      value={formData.status}
-                      onChange={(e) =>
-                        handleFieldChange("status", e.target.value as DmLineStatus)
-                      }
+                      className="dm-table-filter-select"
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value as "all" | DmLineStatus)}
                     >
-                      <option value="running">RUNNING (Operasi Berjalan Normal)</option>
-                      <option value="idle">IDLE (Standby / Menunggu Material)</option>
+                      <option value="all">Semua Status Operasional</option>
+                      <option value="running">RUNNING (Beroperasi Normal)</option>
+                      <option value="idle">IDLE (Standby / Menunggu)</option>
                       <option value="stopped">STOPPED (Berhenti / Maintenance)</option>
                     </select>
                   </div>
 
-                  <div className="dm-admin-field">
-                    <label htmlFor="field-slogan">Slogan Tim</label>
-                    <input
-                      id="field-slogan"
-                      type="text"
-                      className="dm-admin-input"
-                      value={formData.slogan}
-                      onChange={(e) => handleFieldChange("slogan", e.target.value)}
-                      placeholder="Contoh: SATU TIM SATU TUJUAN"
-                    />
+                  <div className="dm-table-count-badge">
+                    Menampilkan <strong>{filteredLines.length}</strong> dari <strong>{linesList.length}</strong> lini
                   </div>
+                </div>
 
-                  <div className="dm-admin-field" style={{ gridColumn: "1 / -1" }}>
-                    <label htmlFor="field-values">
-                      Nilai-Nilai Inti OPPO (Core Values, pisahkan dengan koma)
-                    </label>
-                    <input
-                      id="field-values"
-                      type="text"
-                      className="dm-admin-input"
-                      value={formData.values.join(", ")}
-                      onChange={(e) =>
-                        handleFieldChange(
-                          "values",
-                          e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
-                        )
-                      }
-                      placeholder="Contoh: Benfen, Orientasi Pengguna, Mengejar Keunggulan, Keterbukaan"
-                    />
-                  </div>
+                {/* Table Data Lini & Workshop */}
+                <div className="dm-admin-table-wrap">
+                  <table className="dm-admin-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: "48px", textAlign: "center" }}>No</th>
+                        <th style={{ width: "115px" }}>Kode Lini</th>
+                        <th style={{ minWidth: "130px" }}>Nama Lini</th>
+                        <th style={{ minWidth: "170px" }}>Workshop</th>
+                        <th style={{ width: "110px" }}>Model</th>
+                        <th style={{ width: "125px" }}>Status</th>
+                        <th style={{ minWidth: "160px" }}>Slogan Tim</th>
+                        <th style={{ width: "110px", textAlign: "center" }}>Dashboard</th>
+                        <th style={{ width: "130px", textAlign: "center" }}>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredLines.length === 0 ? (
+                        <tr>
+                          <td colSpan={9} className="dm-table-empty">
+                            Tidak ditemukan data lini yang cocok dengan kriteria pencarian "{searchQuery}".
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredLines.map((line, idx) => {
+                          const isActive =
+                            line.id === activeLineId || line.lineCode === formData.lineCode;
+                          return (
+                            <tr
+                              key={line.id}
+                              className={isActive ? "is-active-row" : ""}
+                              onClick={() => handleOpenDetail(line)}
+                              title="Klik untuk membuka modal detail input lini"
+                            >
+                              <td style={{ textAlign: "center", color: "#6a8877", fontWeight: 600 }}>
+                                {idx + 1}
+                              </td>
+                              <td>
+                                <span className="dm-col-code">{line.lineCode}</span>
+                              </td>
+                              <td>
+                                <span className="dm-col-name">{line.lineName}</span>
+                              </td>
+                              <td>
+                                <span className="dm-col-ws">{line.workshopLabel}</span>
+                              </td>
+                              <td>
+                                <span className="dm-col-model">{line.model}</span>
+                              </td>
+                              <td>
+                                <span className={`dm-status-badge is-${line.status}`}>
+                                  <span className="dm-status-dot" />
+                                  {line.status.toUpperCase()}
+                                </span>
+                              </td>
+                              <td>
+                                <span className="dm-col-slogan" title={line.slogan}>
+                                  {line.slogan || "-"}
+                                </span>
+                              </td>
+                              <td style={{ textAlign: "center" }}>
+                                {isActive ? (
+                                  <span className="dm-badge-pill-live">
+                                    <span className="dm-live-dot" />
+                                    Aktif
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="dm-table-btn-use"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleActivateLine(line);
+                                    }}
+                                    title="Tampilkan lini ini di DM Dashboard"
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                                      <polygon points="5 3 19 12 5 21 5 3" />
+                                    </svg>
+                                    Gunakan
+                                  </button>
+                                )}
+                              </td>
+                              <td style={{ textAlign: "center" }}>
+                                <button
+                                  type="button"
+                                  className="dm-table-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenDetail(line);
+                                  }}
+                                >
+                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+                                    <path d="M12 20h9" />
+                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                  </svg>
+                                  Detail / Edit
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
 
-                  <div className="dm-admin-field" style={{ gridColumn: "1 / -1" }}>
-                    <label htmlFor="field-teamPhoto">Foto Tim Bersama (Panoramik)</label>
-                    <div className="dm-admin-upload-wrap">
-                      <input
-                        id="field-teamPhoto"
-                        type="text"
-                        className="dm-admin-input"
-                        value={formData.teamPhotoUrl ?? ""}
-                        onChange={(e) => handleFieldChange("teamPhotoUrl", e.target.value || null)}
-                        placeholder="URL gambar atau unggah file foto tim"
-                      />
-                      <label className="dm-admin-file-label">
-                        Unggah Foto
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="dm-admin-file-input"
-                          onChange={(e) => handleFileUpload(e, "teamPhoto")}
-                        />
-                      </label>
-                    </div>
-                    {formData.teamPhotoUrl ? (
-                      <div className="dm-admin-photo-preview">
-                        <img
-                          src={formData.teamPhotoUrl}
-                          alt="Preview foto tim"
-                          className="dm-admin-preview-img"
-                        />
-                      </div>
-                    ) : null}
+                  <div className="dm-table-footer-summary">
+                    <span>
+                      Lini Aktif Saat Ini: <strong>{formData.lineCode}</strong> &bull; {formData.lineName} ({formData.model})
+                    </span>
+                    <span style={{ fontSize: "0.72rem", color: "#6b8678" }}>
+                      💡 Tip: Klik salah satu baris tabel untuk melihat dan mengubah inputan lini dalam modal.
+                    </span>
                   </div>
                 </div>
               </div>
@@ -711,6 +924,25 @@ export default function DmAdminPage() {
           </div>
         </main>
       </div>
+
+      {/* Modal Detail & Input Lini & Workshop */}
+      <LineDetailModal
+        open={isDetailModalOpen}
+        line={selectedLineForModal}
+        isActiveOnDashboard={
+          Boolean(
+            selectedLineForModal &&
+              (selectedLineForModal.id === activeLineId ||
+                selectedLineForModal.lineCode === formData.lineCode)
+          )
+        }
+        onSave={handleSaveLineModal}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedLineForModal(null);
+        }}
+      />
     </div>
   );
 }
+
