@@ -35,11 +35,11 @@ const morningMeetingMode: readonly DisplayMode[] = ["morning-meeting"];
 export const morningMeetingGroup: NavGroup = {
   title: "MORNING MEETING",
   items: [
-    { label: "Beranda Meeting", key: "meeting-home", href: "/morning-meeting", icon: "calendar", mode: morningMeetingMode, badge: "Baru", general: true, allowedRoles: ["PIC Area", "KPI Admin", "Host", "Manajer", "HOD"] },
-    { label: "Production KPI", key: "production-kpi", href: "/morning-meeting/production-kpi", icon: "chart", mode: morningMeetingMode, badge: "Baru", allowedRoles: ["KPI Admin", "Host", "Manajer"] },
-    { label: "Project 2026", key: "project-2026", href: "/morning-meeting/project-2026", icon: "trending", mode: morningMeetingMode, badge: "Baru", allowedRoles: ["KPI Admin", "Host", "Manajer"] },
-    { label: "Followup", key: "followup", href: "/morning-meeting/followup", icon: "message", mode: morningMeetingMode, badge: "Baru", general: true, allowedRoles: ["PIC Area", "KPI Admin", "Host", "Manajer", "HOD"], aliases: ["Follow-up", "Action Plan", "Follow-up Progress"] },
-    { label: "Beranda", key: "hod-overview", href: "/morning-meeting/hod", icon: "panel", mode: morningMeetingMode, badge: "Baru", general: true, allowedRoles: ["HOD"], aliases: ["Beranda Departemen"] },
+    { label: "Meeting Dashboard", key: "meeting-home", href: "/morning-meeting", icon: "calendar", mode: morningMeetingMode, general: true, allowedRoles: ["PIC Area", "Host", "HOD"], aliases: ["Beranda Meeting"] },
+    { label: "Production KPI", key: "production-kpi", href: "/morning-meeting/production-kpi", icon: "chart", mode: morningMeetingMode, allowedRoles: ["Host"] },
+    { label: "Project 2026", key: "project-2026", href: "/morning-meeting/project-2026", icon: "trending", mode: morningMeetingMode, allowedRoles: ["Host"] },
+    { label: "Follow-up", key: "followup", href: "/morning-meeting/followup", icon: "message", mode: morningMeetingMode, general: true, allowedRoles: ["PIC Area", "Host", "HOD"], aliases: ["Followup", "Follow-up Progress"] },
+    { label: "Meeting Dashboard", key: "hod-overview", href: "/morning-meeting/hod", icon: "panel", mode: morningMeetingMode, general: true, allowedRoles: ["HOD"], aliases: ["Beranda", "Beranda Meeting", "Beranda Departemen"] },
   ],
 };
 
@@ -60,13 +60,47 @@ export const monitoringGroup: NavGroup = {
         { label: "Warranty", key: "Warranty", href: "/repair/warranty", icon: "shield", mode: morningMeetingMode, area: "repair", allowedRoles: ["PIC Area"] },
       ],
     },
+    {
+      label: "Area Monitoring",
+      key: "service-monitor",
+      href: "/service",
+      icon: "assembly",
+      mode: morningMeetingMode,
+      area: "service",
+      allowedRoles: ["PIC Area"],
+      children: [
+        { label: "Mainboard Service", key: "service-mainboard", href: "/service/mainboard", icon: "wrench", mode: morningMeetingMode, area: "service", allowedRoles: ["PIC Area"] },
+        { label: "Battery Service", key: "service-battery", href: "/service/battery", icon: "wrench", mode: morningMeetingMode, area: "service", allowedRoles: ["PIC Area"] },
+        { label: "Service External", key: "service-external", href: "/service/external", icon: "globe", mode: morningMeetingMode, area: "service", allowedRoles: ["PIC Area"] },
+        { label: "Quality", key: "service-qualitas", href: "/service/qualitas", icon: "shield", mode: morningMeetingMode, area: "service", allowedRoles: ["PIC Area"] },
+      ],
+    },
+    {
+      label: "Area Monitoring",
+      key: "qc-monitor",
+      href: "/qc/monitoring/fqc",
+      icon: "assembly",
+      mode: morningMeetingMode,
+      area: "qc",
+      allowedRoles: ["PIC Area"],
+      children: [
+        { label: "FQC", key: "qc-mon-fqc", href: "/qc/monitoring/fqc", icon: "shield", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
+        { label: "OQC", key: "qc-mon-oqc", href: "/qc/monitoring/oqc", icon: "shield", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
+        { label: "ODM", key: "qc-mon-odm", href: "/qc/monitoring/odm", icon: "shield", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
+      ],
+    },
   ],
 };
 
-export const abnormalityGroup: NavGroup = {
-  title: "ABNORMALITY",
+export const laporanGroup: NavGroup = {
+  title: "REPORTS",
   items: [
-    { label: "Abnormality", key: "Abnormality", href: "/abnormality", icon: "alert", mode: morningMeetingMode, area: "repair", allowedRoles: ["PIC Area"], badge: "3" },
+    { label: "Abnormality", key: "Abnormality", href: "/abnormality", icon: "alert", mode: morningMeetingMode, area: "repair", allowedRoles: ["PIC Area"] },
+    { label: "Daily Plan", key: "repair-plan", href: "/abnormality/plan", icon: "calendar", mode: morningMeetingMode, area: "repair", allowedRoles: ["PIC Area", "HOD"], aliases: ["Plan Hari Ini"] },
+    { label: "Abnormality", key: "service-abnormality", href: "/service/pic-abnormality", icon: "alert", mode: morningMeetingMode, area: "service", allowedRoles: ["PIC Area"] },
+    { label: "Daily Plan", key: "service-plan", href: "/service/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "service", allowedRoles: ["PIC Area"] },
+    { label: "Abnormality", key: "qc-abnormality", href: "/qc/pic-abnormality", icon: "alert", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
+    { label: "Daily Plan", key: "qc-plan", href: "/qc/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
   ],
 };
 
@@ -74,12 +108,12 @@ export const platformGroup: NavGroup = {
   title: "PLATFORM",
   items: [
     {
-      label: "SQCDIP",
+      label: "SQDCIP",
       key: "Overview",
       href: "/sqcdip",
       icon: "chart",
       children: [
-        { label: "Overview", key: "Overview", href: "/sqcdip", icon: "chart", mode: allModes, general: true, aliases: ["SQCDIP Overview"], currentWhenActive: false },
+        { label: "Overview", key: "Overview", href: "/sqcdip", icon: "chart", mode: allModes, general: true, aliases: ["SQDCIP Overview"], currentWhenActive: false },
         { label: "Abnormal Tracker", key: "Abnormal Tracker", href: "/sqcdip/abnormal-tracker", icon: "alert", mode: allModes, general: true, currentWhenActive: false },
       ],
       mode: allModes,
@@ -111,21 +145,7 @@ export const platformGroup: NavGroup = {
       children: [
         { label: "FQC", key: "fqc", href: "/qc/fqc", icon: "shield", mode: allModes, area: "qc" },
         { label: "OQC", key: "oqc", href: "/qc/oqc", icon: "shield", mode: allModes, area: "qc" },
-        { label: "Solusi Improvement", key: "solusi", href: "/qc/solusi-improvement", icon: "wrench", mode: allModes, area: "qc" },
-      ],
-    },
-    {
-      label: "Service",
-      key: "service-overview",
-      href: "/service",
-      icon: "wrench",
-      mode: allModes,
-      area: "service",
-      children: [
-        { label: "Mainboard Service Rate", key: "service-mainboard", href: "/service/mainboard", icon: "wrench", mode: allModes, area: "service" },
-        { label: "Battery Service Rate", key: "service-battery", href: "/service/battery", icon: "wrench", mode: allModes, area: "service" },
-        { label: "Service External", key: "service-external", href: "/service/external", icon: "globe", mode: allModes, area: "service" },
-        { label: "Qualitas", key: "service-qualitas", href: "/service/qualitas", icon: "shield", mode: allModes, area: "service" },
+        { label: "Improvement Solutions", key: "solusi", href: "/qc/solusi-improvement", icon: "wrench", mode: allModes, area: "qc", aliases: ["Solusi Improvement"] },
       ],
     },
     {
@@ -162,30 +182,31 @@ export const platformGroup: NavGroup = {
 export const managementGroup: NavGroup = {
   title: "MANAGEMENT",
   items: [
-    { label: "Messages", key: "Messages", href: "/messages", icon: "message", mode: allModes },
-    { label: "Abnormality", key: "Abnormality", href: "/abnormality", icon: "alert", mode: allModes, badge: "3" },
-    { label: "Settings", key: "Settings", href: "/settings", icon: "settings", mode: allModes },
+    { label: "Messages", key: "Messages", href: "/messages", icon: "message", mode: morningMeetingMode },
+    { label: "Abnormality", key: "Abnormality", href: "/abnormality", icon: "alert", mode: morningMeetingMode, badge: "3" },
+    { label: "Settings", key: "Settings", href: "/settings", icon: "settings", mode: morningMeetingMode },
   ],
 };
 
-export const navGroups: readonly NavGroup[] = [morningMeetingGroup, platformGroup, monitoringGroup, managementGroup, abnormalityGroup];
+export const navGroups: readonly NavGroup[] = [morningMeetingGroup, platformGroup, monitoringGroup, managementGroup, laporanGroup];
 
 export const navItems: readonly NavItem[] = navGroups.flatMap((group) =>
   group.items.flatMap((item) => [item, ...(item.children ?? [])]),
 );
 
-const byTarget = new Map<string, NavItem>();
+const byKey = new Map<string, NavItem>();
+const byLabelOrAlias = new Map<string, NavItem>();
 for (const item of navItems) {
-  byTarget.set(item.label, item);
-  byTarget.set(item.key, item);
-  for (const alias of item.aliases ?? []) byTarget.set(alias, item);
+  byKey.set(item.key, item);
+  byLabelOrAlias.set(item.label, item);
+  for (const alias of item.aliases ?? []) byLabelOrAlias.set(alias, item);
 }
 
 const byHref = new Map<string, NavItem>();
 for (const item of navItems) byHref.set(item.href, item);
 
 export function resolveNavItem(target: string): NavItem | undefined {
-  return byTarget.get(target);
+  return byKey.get(target) ?? byLabelOrAlias.get(target);
 }
 
 export function hrefForTarget(target: string): string | undefined {
@@ -235,32 +256,32 @@ export function breadcrumbForKey(active: string): { label: string; href?: string
   }
 
   if (active === "qc-achievement") {
-    const qc = byTarget.get("QC") || parentForKey("fqc");
+    const qc = resolveNavItem("QC") || parentForKey("fqc");
     if (qc) trail.push({ label: qc.label, href: qc.href });
     trail.push({ label: "Pencapaian" });
     return trail;
   }
   if (active === "material-overview") {
-    const mat = byTarget.get("Material") || parentForKey("material-clearance");
+    const mat = resolveNavItem("Material") || parentForKey("material-clearance");
     if (mat) trail.push({ label: mat.label, href: mat.href });
     trail.push({ label: "Overview" });
     return trail;
   }
   if (active === "service-overview") {
-    const svc = byTarget.get("Service") || parentForKey("service-mainboard");
+    const svc = resolveNavItem("Service") || parentForKey("service-mainboard");
     if (svc) trail.push({ label: svc.label, href: svc.href });
     trail.push({ label: "Overview" });
     return trail;
   }
   if (active === "cost-monitoring") {
-    const cost = byTarget.get("Cost") || parentForKey("cost-monitoring");
+    const cost = resolveNavItem("Cost") || parentForKey("cost-monitoring");
     if (cost) trail.push({ label: cost.label, href: cost.href });
     trail.push({ label: "Monitoring" });
     return trail;
   }
 
   if (active.startsWith("assembly-")) {
-    const asm = byTarget.get("Assembly") || byTarget.get("assembly-overview");
+    const asm = resolveNavItem("Assembly") || resolveNavItem("assembly-overview");
     if (asm) trail.push({ label: asm.label, href: asm.href });
     const lbl = assemblyLabelMap[active] ?? active;
     if (active === "assembly-overview") {
@@ -278,7 +299,7 @@ export function breadcrumbForKey(active: string): { label: string; href?: string
     return trail;
   }
 
-  const item = byTarget.get(active);
+  const item = resolveNavItem(active);
   if (item) {
     trail.push({ label: item.label, href: item.href });
     return trail;
@@ -307,6 +328,7 @@ function isFutureGeneralItem(item: NavItem): boolean {
 }
 
 function isAllowedForRole(item: NavItem, filter: NavigationFilter): boolean {
+  if (filter.role === "Superadmin") return true;
   if (item.allowedRoles) {
     if (!item.allowedRoles.includes(filter.role)) return false;
     if (filter.role === "PIC Area" && item.area) return item.area === filter.picArea;
@@ -330,7 +352,7 @@ export function filterNavGroups(filter: NavigationFilter): NavGroup[] {
   if (filter.mode === "morning-meeting" && filter.role === "Host") {
     const meetingItems = morningMeetingGroup.items
       .filter((item) => item.key === "meeting-home" || item.key === "followup")
-      .map((item) => (item.key === "followup" ? { ...item, label: "Follow-up Progress" } : item));
+      .map((item) => (item.key === "followup" ? { ...item, label: "Follow-up" } : item));
     return [{ title: "MORNING MEETING", items: meetingItems }];
   }
   if (filter.mode === "morning-meeting" && filter.role === "HOD") {
@@ -338,18 +360,43 @@ export function filterNavGroups(filter: NavigationFilter): NavGroup[] {
     const meetingItems = morningMeetingGroup.items
       .filter((item) => order.includes(item.key) && isVisibleNavItem(item, filter))
       .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
-    return [{ title: "MORNING MEETING", items: meetingItems }];
+    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
+    return [
+      { title: "MORNING MEETING", items: meetingItems },
+      { title: "REPORTS", items: laporanItems },
+    ].filter((group) => group.items.length);
   }
   if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "repair") {
     const meetingItems = morningMeetingGroup.items
-      .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"))
-      .map((item) => (item.key === "followup" ? { ...item, label: "Action Plan" } : item));
+      .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"));
     const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    const abnormalityItems = abnormalityGroup.items.filter((item) => isVisibleNavItem(item, filter));
+    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
     return [
       { title: "MORNING MEETING", items: meetingItems },
       { title: "MONITORING", items: monitorItems },
-      { title: "ABNORMALITY", items: abnormalityItems },
+      { title: "REPORTS", items: laporanItems },
+    ].filter((group) => group.items.length);
+  }
+  if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "service") {
+    const meetingItems = morningMeetingGroup.items
+      .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"));
+    const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
+    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
+    return [
+      { title: "MORNING MEETING", items: meetingItems },
+      { title: "MONITORING", items: monitorItems },
+      { title: "REPORTS", items: laporanItems },
+    ].filter((group) => group.items.length);
+  }
+  if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "qc") {
+    const meetingItems = morningMeetingGroup.items
+      .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"));
+    const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
+    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
+    return [
+      { title: "MORNING MEETING", items: meetingItems },
+      { title: "MONITORING", items: monitorItems },
+      { title: "REPORTS", items: laporanItems },
     ].filter((group) => group.items.length);
   }
   return navGroups.map((group) => ({

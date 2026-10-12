@@ -1,10 +1,19 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { PIC_NAME, TODAY_ISO, getDueStatus, useRepairPic, type PicRepairRecord, type PicRepairStatus } from "@/features/pic-repair/RepairPicContext";
+import { TODAY_ISO, getDueStatus, useRepairPic, type DueTone, type PicRepairRecord, type PicRepairStatus } from "@/features/pic-repair/RepairPicContext";
 import PicAttachmentPreview from "@/features/pic-repair/PicAttachmentPreview";
+import CustomSelect from "@/components/shell/CustomSelect";
+import PageHeader from "@/components/shell/PageHeader";
+import { AlertCircle, CheckCheck, ListTodo, Timer } from "lucide-react";
 
-const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Oct", "Nov", "Dec"];
+const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const activeOptions: PicRepairStatus[] = ["Open", "In Progress"];
+
+const dueBadgeClass: Record<DueTone, string> = {
+  overdue: "border border-red-300 bg-red-50/50 text-red-600 font-medium",
+  warn: "border border-amber-300 bg-amber-50/50 text-amber-700 font-medium",
+  safe: "border border-gray-200 bg-gray-50 text-gray-600 font-normal",
+};
 
 function formatDueDate(iso: string) {
   const parts = iso.split("-");
@@ -27,21 +36,17 @@ function UpdateStatusModal({ record, onClose }: { record: PicRepairRecord; onClo
     <div className="repair-modal-backdrop" onMouseDown={onClose}>
       <form className="repair-dialog" onMouseDown={(event) => event.stopPropagation()} onSubmit={save}>
         <div className="repair-dialog-head">
-          <div><h2>Update Status</h2><p>{record.problem}</p></div>
-          <button type="button" aria-label="Tutup" onClick={onClose}>✕</button>
+              <div><h2>Update Status</h2><p>{record.problem}</p></div>
+              <button type="button" aria-label="Close" onClick={onClose}>✕</button>
         </div>
         <div className="repair-form">
-          <label>Status Penanganan<select value={status} onChange={(event) => setStatus(event.target.value as PicRepairStatus)}>
-            <option>Open</option>
-            <option>In Progress</option>
-            <option>Resolved</option>
-          </select></label>
-          <p className="pic-form-hint">Isu yang ditandai Resolved otomatis hilang dari daftar tugas.</p>
-          <label className="repair-dropzone"><strong>Upload Foto Bukti</strong><span>{evidence || "Dummy upload • JPG/PNG maksimal 10 MB"}</span><input type="file" accept="image/*" onChange={(event) => setEvidence(event.target.files?.[0]?.name ?? evidence)} /></label>
+          <label>Handling Status<CustomSelect value={status} options={["Open", "In Progress", "Resolved"]} onChange={(next) => setStatus(next as PicRepairStatus)} /></label>
+          <p className="pic-form-hint">Issues marked Resolved automatically leave this task list.</p>
+          <label className="repair-dropzone"><strong>Upload Photo Evidence</strong><span>{evidence || "JPG/PNG up to 10 MB"}</span><input type="file" accept="image/*" onChange={(event) => setEvidence(event.target.files?.[0]?.name ?? evidence)} /></label>
         </div>
         <div className="repair-dialog-actions">
-          <button type="button" className="repair-outline" onClick={onClose}>Batal</button>
-          <button type="submit" className="repair-primary">Simpan Update</button>
+              <button type="button" className="repair-outline" onClick={onClose}>Cancel</button>
+              <button type="submit" className="repair-primary">Save Update</button>
         </div>
       </form>
     </div>
@@ -61,11 +66,25 @@ export default function PicRepairFollowup() {
   const activeRecords = useMemo(() => records.filter((item) => item.status !== "Resolved"), [records]);
 
   const summary = useMemo(() => ([
-    { label: "Isu Aktif", value: String(activeRecords.length), helper: "Perlu ditangani" },
-    { label: "Open", value: String(activeRecords.filter((item) => item.status === "Open").length), helper: "Belum ditangani" },
-    { label: "In Progress", value: String(activeRecords.filter((item) => item.status === "In Progress").length), helper: "Sedang dikerjakan" },
-    { label: "Selesai", value: String(records.filter((item) => item.status === "Resolved").length), helper: "Sudah closed" },
+    { label: "Active Issues", value: String(activeRecords.length), helper: "Require follow-up", tone: "active", icon: ListTodo, iconBox: "text-blue-700 bg-blue-100/60 border border-blue-200/50 backdrop-blur-sm" },
+    { label: "Open", value: String(activeRecords.filter((item) => item.status === "Open").length), helper: "Not yet handled", tone: "open", icon: AlertCircle, iconBox: "text-red-600 bg-red-100/60 border border-red-200/50 backdrop-blur-sm" },
+    { label: "In Progress", value: String(activeRecords.filter((item) => item.status === "In Progress").length), helper: "Being handled", tone: "progress", icon: Timer, iconBox: "text-amber-600 bg-amber-100/60 border border-amber-200/50 backdrop-blur-sm" },
+    { label: "Resolved", value: String(records.filter((item) => item.status === "Resolved").length), helper: "Closed", tone: "resolved", icon: CheckCheck, iconBox: "text-emerald-600 bg-emerald-100/60 border border-emerald-200/50 backdrop-blur-sm" },
   ]), [activeRecords, records]);
+
+  const metricCardClass: Record<string, string> = {
+    active: "bg-gradient-to-br! from-blue-50/80 via-indigo-50/30 to-white border border-blue-200/60! rounded-xl! shadow-sm",
+    open: "bg-gradient-to-br! from-red-50/80 via-red-50/20 to-white border border-red-200/60! rounded-xl! shadow-sm",
+    progress: "bg-gradient-to-br! from-amber-50/80 via-amber-50/20 to-white border border-amber-200/60! rounded-xl! shadow-sm",
+    resolved: "bg-gradient-to-br! from-emerald-50/80 via-emerald-50/20 to-white border border-emerald-200/60! rounded-xl! shadow-sm",
+  };
+
+  const metricValueClass: Record<string, string> = {
+    active: "text-blue-700 font-bold!",
+    open: "text-red-600 font-bold!",
+    progress: "text-amber-600 font-bold!",
+    resolved: "text-emerald-600 font-bold!",
+  };
 
   const filtered = useMemo(() => activeRecords.filter((item) => {
     const searchTerm = query.trim().toLowerCase();
@@ -92,56 +111,47 @@ export default function PicRepairFollowup() {
 
   return (
     <div className="pic-page">
-      <div className="repair-header">
-        <div>
-          <div className="repair-eyebrow">MORNING MEETING • PIC AREA</div>
-          <div className="repair-title-row">
-            <h1>Action Plan</h1>
-            <span className="pic-chip"><span>YU</span>PIC: {PIC_NAME} • Pre-Assembly</span>
-          </div>
-          <p>Tugas follow-up dari isu Abnormality Log yang masih Open atau In Progress. Hari ini {formatDueDate(TODAY_ISO)}.</p>
-        </div>
-        <div className="repair-actions">
-          <select className="repair-outline" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filter status">
-            <option value="All">Semua Status Aktif</option>
-            {activeOptions.map((item) => <option key={item}>{item}</option>)}
-          </select>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="MORNING MEETING"
+        title="Follow-up"
+        subtitle={`Follow-up tasks from Abnormality Log issues that are still Open or In Progress. Today ${formatDueDate(TODAY_ISO)}.`}
+        actions={<CustomSelect value={statusFilter} options={[{ value: "All", label: "All Active Statuses" }, ...activeOptions]} onChange={setStatusFilter} ariaLabel="Status filter" />}
+      />
 
       <section className="qc-kpi-grid abnormality-kpis pic-kpis">
         {summary.map((item) => (
-          <article key={item.label} className="qc-kpi-card abnormality-kpi-card">
-            <span className="kpi-label">{item.label}</span>
-            <strong>{item.value}</strong>
-            <span className="kpi-unit">{item.helper}</span>
+          <article key={item.label} className={`sq-kpi ${metricCardClass[item.tone]}`}>
+            <div className="sq-kpi-head flex justify-between items-start"><span>{item.label}</span><div className={`p-2.5 rounded-xl ${item.iconBox}`}><item.icon className="w-5 h-5" /></div></div>
+            <strong className={metricValueClass[item.tone]}>{item.value}</strong>
+            <p>{item.helper}</p>
           </article>
         ))}
       </section>
 
-      <article className="abnormality-panel">
-        <div className="abnormality-panel-head">
+      <section className="sq-panel">
+        <div className="sq-panel-head">
           <div>
-            <h2>Tugas Saya</h2>
-            <p>Isu selesai otomatis hilang dari daftar ini.</p>
+            <h2>My Tasks</h2>
+            <p>Resolved issues automatically leave this list.</p>
           </div>
         </div>
 
         <div className="abnormality-filter-row">
           <label className="abnormality-search">
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari masalah, solusi..." />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search problems, solutions..." />
           </label>
           <button type="button" className="qc-secondary-button abnormality-reset" onClick={() => { setQuery(""); setStatusFilter("All"); setPage(1); }}>Reset</button>
         </div>
 
         {filtered.length === 0 ? (
-          <div className="abnormality-empty">Semua isu sudah selesai. Tidak ada tugas aktif.</div>
+          <div className="abnormality-empty">All issues are resolved. No active tasks.</div>
         ) : (
           <>
             <div className="repair-table-scroll">
               <table className="repair-data-table abnormality-table pic-table pic-table-slim">
                 <colgroup>
-                  <col style={{ minWidth: "300px" }} />
+                  <col style={{ minWidth: "260px" }} />
+                  <col style={{ minWidth: "240px" }} />
                   <col style={{ width: "150px" }} />
                   <col style={{ width: "96px" }} />
                   <col style={{ width: "130px" }} />
@@ -149,11 +159,12 @@ export default function PicRepairFollowup() {
                 </colgroup>
                 <thead>
                   <tr>
-                    <th>Masalah &amp; Rencana Solusi</th>
-                    <th>Tenggat Waktu</th>
-                    <th>Foto Bukti</th>
+                    <th>Problem Description</th>
+                    <th>Solution Plan</th>
+                    <th>Due Date</th>
+                    <th>Photo Evidence</th>
                     <th>Status</th>
-                    <th>Aksi</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -161,18 +172,14 @@ export default function PicRepairFollowup() {
                     const due = getDueStatus(item.dueDate);
                     return (
                       <tr key={item.id}>
+                        <td><p className="pic-clamp">{item.problem}</p></td>
+                        <td><p className="pic-clamp">{item.countermeasure}</p></td>
                         <td>
-                          <div className="abnormality-title-wrap">
-                            <strong>{item.problem}</strong>
-                            <small>{item.countermeasure}</small>
-                          </div>
+                          <div className="text-xs text-gray-500">{formatDueDate(item.dueDate)}</div>
+                          <span className={`mt-1 inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs ${dueBadgeClass[due.tone]}`}>{due.label}</span>
                         </td>
                         <td>
-                          <span className="pic-date">{formatDueDate(item.dueDate)}</span>
-                          <span className={`pic-due ${due.tone}`}>{due.label}</span>
-                        </td>
-                        <td>
-                          <button type="button" className="attachment-thumb" aria-label={`Lihat bukti ${item.problem}`} onClick={() => setPreview(item)}>
+                          <button type="button" className="attachment-thumb" aria-label={`View evidence for ${item.problem}`} onClick={() => setPreview(item)}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="m5 18 5-5 3 3 3-3 3 3" /></svg>
                           </button>
                         </td>
@@ -185,24 +192,21 @@ export default function PicRepairFollowup() {
               </table>
             </div>
             <div className="pic-pagination">
-              <span>Menampilkan {startIndex + 1}-{Math.min(startIndex + pageSize, filtered.length)} dari {filtered.length} data</span>
+              <span>Showing {startIndex + 1}-{Math.min(startIndex + pageSize, filtered.length)} of {filtered.length} data</span>
               <div className="pic-pagination-controls">
-                <select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))} aria-label="Baris per halaman">
-                  <option value={5}>5 / halaman</option>
-                  <option value={10}>10 / halaman</option>
-                </select>
-                <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Sebelumnya</button>
+                <CustomSelect value={String(pageSize)} options={[{ value: "5", label: "5 / page" }, { value: "10", label: "10 / page" }]} onChange={(next) => setPageSize(Number(next))} ariaLabel="Rows per page" />
+                <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Previous</button>
                 <b>{safePage} / {totalPages}</b>
-                <button type="button" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Berikutnya</button>
+                <button type="button" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Next</button>
               </div>
             </div>
           </>
         )}
-      </article>
+      </section>
 
       <PicAttachmentPreview record={preview} onClose={() => setPreview(null)} />
       {editing && <UpdateStatusModal record={editing} onClose={closeEditing} />}
-      {toast && <div className="repair-toast"><span>✓</span>Status berhasil diperbarui</div>}
+      {toast && <div className="repair-toast"><span>✓</span>Status updated</div>}
     </div>
   );
 }

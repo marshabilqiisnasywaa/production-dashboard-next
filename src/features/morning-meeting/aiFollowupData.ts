@@ -5,7 +5,7 @@ import { productionKpiActualRows, type ProductionKpiActualRow } from "@/data/mor
 import { formatKpiValue, getExceptionInsights, getKpiInsights, kpiAreaMap } from "@/features/morning-meeting/morningMeetingUtils";
 
 export type AiWarning = { title: string; body: string; severity: "merah" | "kuning"; target: string };
-export type FollowupTask = { id: string; task: string; output: string; pic: string; area: PicAreaKey; dueDate: string; status: "Selesai" | "Berjalan" | "Overdue"; assigneeRole?: Role; source: string };
+export type FollowupTask = { id: string; task: string; output: string; pic: string; area: PicAreaKey; dueDate: string; status: "Resolved" | "In Progress" | "Overdue"; assigneeRole?: Role; source: string };
 export type AppNotification = { id: string; title: string; body: string; target: string; role: "all" | Role; area?: PicAreaKey; severity: "merah" | "kuning" | "hijau" };
 
 const dayMs = 24 * 60 * 60 * 1000;
@@ -32,10 +32,10 @@ export function getInitialFollowups(): FollowupTask[] {
   return [
     { id: "fu-e2e", task: "Turunkan E2E Delivery Juli", output: "Daftar bottleneck material dan keputusan prioritas", pic: "ALVIN CHANDRA", area: "assembly", dueDate: dateOffset(-2), status: "Overdue", assigneeRole: "HOD", source: "E2E Delivery merah" },
     { id: "fu-losses-jun", task: "Audit Losses Material Juni", output: "Countermeasure scrap material", pic: "RICKHY LADIANSYAH", area: "material", dueDate: dateOffset(-1), status: "Overdue", source: "Losses Material merah" },
-    { id: "fu-losses-jul", task: "Recovery Losses Material Juli", output: "Losses harian turun menuju T1", pic: "RICKHY LADIANSYAH", area: "material", dueDate: dateOffset(2), status: "Berjalan", source: "Losses Material merah" },
-    { id: "fu-slc", task: "Validasi Single Labor Cost Maret", output: "Rekonsiliasi manpower dan output", pic: "REYNARD", area: "cost", dueDate: dateOffset(1), status: "Berjalan", source: "SLC Maret abnormal" },
-    { id: "fu-ngp", task: "Review NGP Maret", output: "Pareto NG dan action QC", pic: "SOLI", area: "qc", dueDate: dateOffset(3), status: "Berjalan", source: "NGP Maret merah" },
-    { id: "fu-oqc", task: "Pareto OQC defect", output: "Top defect dan owner action", pic: "SOLI", area: "qc", dueDate: dateOffset(0), status: "Berjalan", source: "OQC kuning" },
+    { id: "fu-losses-jul", task: "Recovery Losses Material Juli", output: "Losses harian turun menuju T1", pic: "RICKHY LADIANSYAH", area: "material", dueDate: dateOffset(2), status: "In Progress", source: "Losses Material merah" },
+    { id: "fu-slc", task: "Validasi Single Labor Cost Maret", output: "Rekonsiliasi manpower dan output", pic: "REYNARD", area: "cost", dueDate: dateOffset(1), status: "In Progress", source: "SLC Maret abnormal" },
+    { id: "fu-ngp", task: "Review NGP Maret", output: "Pareto NG dan action QC", pic: "SOLI", area: "qc", dueDate: dateOffset(3), status: "In Progress", source: "NGP Maret merah" },
+    { id: "fu-oqc", task: "Pareto OQC defect", output: "Top defect dan owner action", pic: "SOLI", area: "qc", dueDate: dateOffset(0), status: "In Progress", source: "OQC kuning" },
     { id: "fu-smed", task: "Eskalasi SMED di atas 6H", output: "Plan Lean support", pic: "FAJRUL AL HUDA", area: "assembly", dueDate: dateOffset(-3), status: "Overdue", assigneeRole: "HOD", source: "SMED off-track" },
   ];
 }
@@ -44,9 +44,9 @@ export function getNotifications(role: Role, picArea: PicAreaKey): AppNotificati
   const red = getKpiInsights().filter((item) => item.status === "merah");
   const base: AppNotification[] = [
     ...red.slice(0, 3).map((item) => ({ id: `notif-${item.row.kpi.id}`, title: `${item.row.kpi.nama} merah`, body: item.reason, target: "Production KPI", role: "all" as const, area: kpiAreaMap[item.row.kpi.id], severity: "merah" as const })),
-    { id: "notif-d1", title: "PIC belum input H-1", body: "Simulasi disiplin data untuk area dengan follow-up berjalan.", target: "Followup", role: "all", area: picArea, severity: "kuning" },
-    { id: "notif-d4", title: "Follow-up overdue", body: "Ada task E2E dan SMED melewati due date.", target: "Followup", role: "all", severity: "merah" },
-    { id: "notif-d5", title: "Butuh keputusan HOD", body: "KPI merah tanpa countermeasure final perlu eskalasi.", target: "Beranda Meeting", role: "HOD", severity: "merah" },
+    { id: "notif-d1", title: "PIC belum input H-1", body: "Simulasi disiplin data untuk area dengan follow-up berjalan.", target: "Follow-up", role: "all", area: picArea, severity: "kuning" },
+    { id: "notif-d4", title: "Follow-up overdue", body: "Ada task E2E dan SMED melewati due date.", target: "Follow-up", role: "all", severity: "merah" },
+    { id: "notif-d5", title: "Butuh keputusan HOD", body: "KPI merah tanpa countermeasure final perlu eskalasi.", target: "Meeting Dashboard", role: "HOD", severity: "merah" },
   ];
   return base.filter((item) => (item.role === "all" || item.role === role) && (role !== "PIC Area" || !item.area || item.area === picArea) && (role !== "HOD" || item.severity === "merah"));
 }

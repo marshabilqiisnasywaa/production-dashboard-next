@@ -22,8 +22,8 @@ import {
   Warranty,
   type Direction,
 } from "@/features/repair/RepairDashboard";
-import { PIC_NAME } from "@/features/pic-repair/RepairPicContext";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
+import PeriodControl, { periodView, type PeriodKey } from "@/components/shell/PeriodControl";
 
 export type PicMonitorArea = "Preassembly" | "Rework" | "Warranty";
 
@@ -47,24 +47,29 @@ const opsCards: OpsCard[] = [
   { id: "input", name: "Input Rate", display: "1.18%", unit: "", value: 1.18, target: 1, targetLabel: "1.00%", direction: "lower" },
   { id: "assembly", name: "Assembly Output", display: "100.0%", unit: "", value: 100, target: 99, targetLabel: "99%", direction: "higher" },
   { id: "qa", name: "QA Pass Rate", display: "100.0%", unit: "", value: 100, target: 99, targetLabel: "99%", direction: "higher" },
-  { id: "nc", name: "NC Production Rate", display: "0.98%", unit: "", value: 0.98, target: 1, targetLabel: "1.00%", direction: "lower" },
+  { id: "nc", name: "NG Production Rate", display: "0.98%", unit: "", value: 0.98, target: 1, targetLabel: "1.00%", direction: "lower" },
 ];
 
 const dailyLabels = ["30 Sep", "1 Oct", "2 Oct", "3 Oct", "4 Oct", "5 Oct", "6 Oct"];
 const outputDaily = [98.8, 99.5, 99.7, 99.8, 99.7, 100, 100];
 const qaDaily = [99.4, 99.5, 99.9, 99.8, 99.7, 100, 100];
-const ncDaily = [1.29, 1.46, 1.39, 1.82, 1.99, 1.02, 0.98];
+const ngDaily = [1.29, 1.46, 1.39, 1.82, 1.99, 1.02, 0.98];
 const inputDaily = [1.39, 1.82, 1.99, 1.02, 0.98, 1.5, 1.18];
 
 function DailyTrend({ title, subtitle, series, target }: { title: string; subtitle: string; series: { key: string; name: string; color: string; values: number[] }[]; target: number }) {
-  const data = dailyLabels.map((day, index) => {
+  const [period, setPeriod] = useState<PeriodKey>("Week");
+  const views = series.map((item) => periodView(dailyLabels, item.values, period));
+  const headLabels = views.length > 0 ? views[0].labels : [];
+  const data = headLabels.map((day, position) => {
     const point: Record<string, number | string> = { day, Target: target };
-    for (const item of series) point[item.name] = item.values[index];
+    series.forEach((item, seriesIndex) => {
+      point[item.name] = views[seriesIndex]?.values[position] ?? null;
+    });
     return point;
   });
   return (
     <article className="repair-panel">
-      <div className="repair-card-head"><div><h2>{title}</h2><p>{subtitle}</p></div></div>
+      <div className="repair-card-head"><div><h2>{title}</h2><p>{subtitle}</p></div><div className="flex items-center justify-end gap-4"><PeriodControl value={period} onChange={setPeriod} /></div></div>
       <div className="warranty-chart">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
@@ -93,8 +98,7 @@ function PreassemblyDeepDive() {
         <div>
           <div className="repair-eyebrow">MONITORING • DEEP DIVE</div>
           <div className="repair-title-row">
-            <h1>Pre-Assembly</h1>
-            <span className="pic-chip"><span>YU</span>PIC: {PIC_NAME}</span>
+            <h1 className="font-semibold text-emerald-950 dark:text-white">Pre-Assembly</h1>
           </div>
           <p>Metric operasional dan tren histori harian area Pre-assembly.</p>
         </div>
@@ -135,12 +139,12 @@ function PreassemblyDeepDive() {
           ]}
         />
         <DailyTrend
-          title="Input Rate & NC Production Rate"
+          title="Input Rate & NG Production Rate"
           subtitle="Histori harian 30 Sep - 6 Oct • target max 1.00%"
           target={1}
           series={[
             { key: "input", name: "Input Rate", color: "var(--chart-1)", values: inputDaily },
-            { key: "nc", name: "NC Rate", color: "var(--chart-5)", values: ncDaily },
+            { key: "ng", name: "NG Rate", color: "var(--chart-5)", values: ngDaily },
           ]}
         />
         <article className="repair-panel wide">

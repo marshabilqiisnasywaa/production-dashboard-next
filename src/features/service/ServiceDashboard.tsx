@@ -12,6 +12,8 @@ import {
   YAxis,
 } from "recharts";
 import { serviceOverviewGroups, servicePages, type ServiceKpiDefinition, type ServicePageKey } from "@/data/serviceData";
+import PicAiInsight from "@/features/pic-repair/PicAiInsight";
+import PeriodControl, { periodView, type PeriodKey } from "@/components/shell/PeriodControl";
 
 type ServiceChartItem = {
   label: string;
@@ -44,7 +46,7 @@ type ServiceChartPoint = ServiceChartItem & { higherIsBetter: boolean };
 function ServiceTooltip({ active, payload, label, unit }: { active?: boolean; payload?: readonly { payload?: ServiceChartPoint }[]; label?: string; unit: string }) {
   if (!active || !payload?.[0]?.payload) return null;
   const point = payload[0].payload;
-  return <div className="repair-tooltip"><strong>{label}</strong><div><span>Target</span><b>{point.target.toFixed(2)}{unit}</b></div><div><span>Actual</span><b>{point.actual.toFixed(2)}{unit}</b></div><div><span>Selisih</span><b>{(point.actual - point.target).toFixed(2)}{unit}</b></div></div>;
+  return <div className="repair-tooltip"><strong>{label}</strong><div><span>Target</span><b>{point.target.toFixed(2)}{unit}</b></div><div><span>Actual</span><b>{point.actual.toFixed(2)}{unit}</b></div><div><span>Gap</span><b>{(point.actual - point.target).toFixed(2)}{unit}</b></div></div>;
 }
 
 function ServiceStatusDot(props: { cx?: number; cy?: number; payload?: ServiceChartPoint }) {
@@ -57,26 +59,34 @@ function ServiceKpiCard({
   item,
   onSelect,
   selected,
+  higherIsBetter,
+  onAsk,
 }: {
   item: { id: string; label: string; value: number; target: number };
   onSelect: (id: string) => void;
   selected: boolean;
+  higherIsBetter?: boolean;
+  onAsk?: (kpi: { label: string; value: number; target: number; higherIsBetter: boolean }) => void;
 }) {
   const status = getStatus(item.value, item.target, item.target >= 90 || item.label.toLowerCase().includes("pass") || item.label.toLowerCase().includes("rate"));
   const good = status === "ok";
 
   return (
-    <button
-      type="button"
-      className={`repair-kpi status-${status} ${selected ? "service-selected" : ""}`}
+    <article
+      className={`repair-kpi status-${status} bg-white! border border-gray-200/80! rounded-xl! ${selected ? "service-selected" : ""}`}
       onClick={() => onSelect(item.id)}
       style={{ textAlign: "left", cursor: "pointer" }}
     >
       <div className="repair-kpi-top"><span>{item.label}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? "On Target" : "Off Target"}</span></div>
-      <strong>{item.value.toFixed(1)}%</strong>
+      <strong className="text-2xl! font-bold!">{item.value.toFixed(1)}%</strong>
       <p>Target: {item.target.toFixed(1)}%</p>
+      {!good && onAsk && (
+        <div className="pic-kpi-actions">
+          <button type="button" className="pic-ai-btn" onClick={(event) => { event.stopPropagation(); onAsk({ label: item.label, value: item.value, target: item.target, higherIsBetter: higherIsBetter ?? true }); }}>Ask AI</button>
+        </div>
+      )}
       <Sparkline success={good} />
-    </button>
+    </article>
   );
 }
 
@@ -104,7 +114,9 @@ function ServiceLineChart({
   selected: boolean;
 }) {
   const [labels, setLabels] = useState(false);
-  const chartData = data.map((point) => ({ ...point, target: targetValue, actual: point.actual }));
+  const [period, setPeriod] = useState<PeriodKey>("Week");
+  const view = periodView(data.map((point) => point.label), data.map((point) => point.actual), period);
+  const chartData = view.labels.map((label, index) => ({ label, target: targetValue, actual: view.values[index] ?? 0 }));
   const higherIsBetter = targetValue >= 90 || title.toLowerCase().includes("pass") || title.toLowerCase().includes("rate");
 
   return (
@@ -112,9 +124,9 @@ function ServiceLineChart({
       <div className="repair-card-head">
         <div>
           <h2>{title}</h2>
-          <p>Performa aktual terhadap target • 2025</p>
+          <p>Actual performance vs target • 2025</p>
         </div>
-        <label className="label-toggle"><input type="checkbox" checked={labels} onChange={(event) => setLabels(event.target.checked)} /><span />Tampilkan label</label>
+        <div className="flex items-center justify-end gap-4"><label className="label-toggle flex items-center gap-2 text-xs text-slate-500 font-medium"><input type="checkbox" checked={labels} onChange={(event) => setLabels(event.target.checked)} /><span />Show labels</label><PeriodControl value={period} onChange={setPeriod} /></div>
       </div>
 
       <div className="line-chart-wrap service-chart-shell">
@@ -166,7 +178,7 @@ function ServiceLineChart({
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <div className="metric-chart-footer"><strong>Target dan actual untuk periode terpilih</strong><span>Nilai aktual dibandingkan dengan standar yang ditetapkan</span></div>
+      <div className="metric-chart-footer"><strong>Target and actual for the selected period</strong><span>Actual values compared against defined standards</span></div>
     </article>
   );
 }
@@ -190,9 +202,9 @@ function ServiceOverview() {
         <div className="qc-toolbar">
           <div className="qc-live">
             <span className="live-dot" />
-            <span>Terakhir diperbarui: {updatedAt}</span>
+            <span>Last updated: {updatedAt}</span>
           </div>
-          <button className="qc-primary-button" onClick={refresh}>Muat Ulang</button>
+          <button className="qc-primary-button" onClick={refresh}>Reload</button>
         </div>
       </header>
 
@@ -229,6 +241,7 @@ function ServiceOverview() {
 function ServicePage({ pageKey }: { pageKey: ServicePageKey }) {
   const [updatedAt, setUpdatedAt] = useState(() => new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
   const [selectedChart, setSelectedChart] = useState<string | null>(null);
+  const [aiKpi, setAiKpi] = useState<{ label: string; value: number; target: number; higherIsBetter: boolean } | null>(null);
   const page = servicePages[pageKey];
 
   useEffect(() => {
@@ -242,30 +255,30 @@ function ServicePage({ pageKey }: { pageKey: ServicePageKey }) {
       return [
         {
           id: "input-rate-battery",
-          title: "Monitoring Battery Input",
+          title: "Battery Input Monitoring",
           target: 2.0,
           targetLabel: "NG Rate",
-          actualLabel: "Aktual NG",
+          actualLabel: "Actual NG",
           yMax: 2.5,
           yTicks: [0, 0.5, 1, 1.5, 2, 2.5],
           data: page.kpis[0].series,
         },
         {
           id: "pass-rate-repair-battery",
-          title: "Repair Rate Battery",
+          title: "Battery Repair Rate",
           target: 98.0,
-          targetLabel: "Standart repair",
-          actualLabel: "Aktual repair",
+          targetLabel: "Repair Standard",
+          actualLabel: "Actual Repair",
           yMax: 100,
           yTicks: [0, 20, 40, 60, 80, 100],
           data: page.kpis[1].series,
         },
         {
           id: "pass-rate-qa-battery",
-          title: "Monitoring penggunaan QA pass battery",
+          title: "Battery QA Pass Monitoring",
           target: 98.0,
-          targetLabel: "NG rate",
-          actualLabel: "Aktual NG",
+          targetLabel: "NG Rate",
+          actualLabel: "Actual NG",
           yMax: 100,
           yTicks: [0, 20, 40, 60, 80, 100],
           data: page.kpis[2].series,
@@ -277,34 +290,43 @@ function ServicePage({ pageKey }: { pageKey: ServicePageKey }) {
       id: item.id,
       title: `Monitoring ${item.label}`,
       target: item.target,
-      targetLabel: item.higherIsBetter ? "Standart" : "NG Rate",
-      actualLabel: item.higherIsBetter ? "Aktual" : "Aktual NG",
+      targetLabel: item.higherIsBetter ? "Standard" : "NG Rate",
+      actualLabel: item.higherIsBetter ? "Actual" : "Actual NG",
       yMax: item.target >= 90 ? 100 : 2.5,
       yTicks: item.target >= 90 ? [0, 20, 40, 60, 80, 100] : [0, 0.5, 1, 1.5, 2, 2.5],
       data: item.series,
     }));
   }, [page, pageKey]);
 
-  const pageTitle = pageKey === "service-battery" ? "Tabel Monitoring BATTERY Repair" : `Tabel Monitoring ${page.title.toUpperCase()}`;
-
   return (
-    <div className="qc-page-shell">
-      <header className="qc-page-header">
+    <div className="pic-page">
+      <div className="repair-header">
         <div>
-          <div className="qc-kicker">Service / {page.title}</div>
-          <h1>{page.title}</h1>
+          <div className="repair-eyebrow">MONITORING • DEEP DIVE</div>
+          <div className="repair-title-row"><h1 className="font-semibold text-emerald-950 dark:text-white">{page.title}</h1></div>
           <p>{page.subtitle}</p>
         </div>
-        <div className="qc-toolbar">
+        <div className="repair-actions">
           <div className="qc-live">
             <span className="live-dot" />
-            <span>Terakhir diperbarui: {updatedAt}</span>
+            <span>Last updated: {updatedAt}</span>
           </div>
-          <button className="qc-primary-button" onClick={() => setUpdatedAt(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }))}>Muat Ulang</button>
+          <button className="qc-primary-button" onClick={() => setUpdatedAt(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }))}>Reload</button>
         </div>
-      </header>
+      </div>
 
-      <div className="service-page-title">{pageTitle}</div>
+      <div className="repair-kpis">
+        {page.kpis.map((item) => (
+          <ServiceKpiCard
+            key={item.id}
+            item={{ id: item.id, label: item.label, value: item.series[item.series.length - 1].actual, target: item.target }}
+            selected={selectedChart === item.id}
+            onSelect={(id) => setSelectedChart(id)}
+            higherIsBetter={item.higherIsBetter}
+            onAsk={(kpi) => setAiKpi(kpi)}
+          />
+        ))}
+      </div>
 
       <div className="service-chart-grid">
         {cardConfigs.map((chart, index) => (
@@ -324,28 +346,16 @@ function ServicePage({ pageKey }: { pageKey: ServicePageKey }) {
         ))}
       </div>
 
-      <div className="service-kpi-card-list">
-        {page.kpis.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={`oqc-metric-card status-${getStatus(item.series[item.series.length - 1].actual, item.target, item.higherIsBetter)} ${selectedChart === item.id ? "service-selected" : ""}`}
-            onClick={() => {
-              const target = document.getElementById(item.id);
-              if (target) {
-                setSelectedChart(item.id);
-                target.scrollIntoView({ behavior: "smooth", block: "center" });
-              }
-            }}
-            style={{ textAlign: "left", cursor: "pointer" }}
-          >
-            <span className="metric-accent" />
-            <div className="oqc-metric-label">{item.label}</div>
-            <div className="oqc-metric-value up">{item.series[item.series.length - 1].actual.toFixed(1)}%</div>
-            <div className="oqc-metric-delta up">Target {item.target.toFixed(1)}%</div>
-          </button>
-        ))}
-      </div>
+      {aiKpi && (
+        <PicAiInsight
+          metricName={aiKpi.label}
+          actualLabel={`${aiKpi.value.toFixed(1)}%`}
+          targetLabel={`${aiKpi.target.toFixed(1)}%`}
+          gapLabel={`${Math.abs(aiKpi.value - aiKpi.target).toFixed(2)}%`}
+          direction={aiKpi.higherIsBetter ? "higher" : "lower"}
+          onClose={() => setAiKpi(null)}
+        />
+      )}
     </div>
   );
 }

@@ -40,7 +40,7 @@ function buildActions(metricName: string): string[] {
     return [
       "Hentikan sementara 1 lot untuk verifikasi 5M1E pada proses utama.",
       "Briefing 10 menit ke operator tentang defect yang sedang naik.",
-      "Buat tugas tindak lanjut di Action Plan dengan tenggat maksimal H+2.",
+      "Buat tugas tindak lanjut di Follow-up dengan tenggat maksimal H+2.",
     ];
   }
   return [
@@ -77,7 +77,7 @@ export default function PicAiInsight({ metricName, actualLabel, targetLabel, gap
         </div>
         <div className="repair-dialog-actions">
           <button type="button" className="repair-outline" onClick={onClose}>Tutup</button>
-          <button type="button" className="repair-primary" onClick={onClose}>Salin ke Action Plan</button>
+          <button type="button" className="repair-primary" onClick={onClose}>Salin ke Follow-up</button>
         </div>
       </div>
     </div>

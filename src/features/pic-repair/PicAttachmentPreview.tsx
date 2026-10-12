@@ -8,7 +8,7 @@ type PicAttachmentPreviewProps = {
 
 export function AttachmentButton({ record, onPreview }: { record: PicRepairRecord; onPreview: (record: PicRepairRecord) => void }) {
   return (
-    <button type="button" className="attachment-thumb" aria-label={`Lihat lampiran ${record.id}`} onClick={() => onPreview(record)}>
+    <button type="button" className="attachment-thumb" aria-label={`View attachment ${record.id}`} onClick={() => onPreview(record)}>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="m5 18 5-5 3 3 3-3 3 3" /></svg>
     </button>
   );
@@ -27,11 +27,11 @@ export default function PicAttachmentPreview({ record, onClose }: PicAttachmentP
           <div style={{ minHeight: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, padding: 28, color: "var(--faint)" }}>
             <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="m5 18 5-5 3 3 3-3 3 3" /></svg>
             <strong style={{ color: "var(--text)", fontSize: 13 }}>{record.evidence}</strong>
-            <span style={{ fontSize: 11 }}>Dummy preview • {record.area} • {record.date}</span>
+            <span style={{ fontSize: 11 }}>Preview • {record.area} • {record.date}</span>
           </div>
         </div>
         <div className="repair-dialog-actions">
-          <button type="button" className="repair-outline" onClick={onClose}>Tutup</button>
+          <button type="button" className="repair-outline" onClick={onClose}>Close</button>
         </div>
       </div>
     </div>

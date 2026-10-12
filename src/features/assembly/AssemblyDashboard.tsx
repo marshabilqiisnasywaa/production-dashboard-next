@@ -1,4 +1,5 @@
 "use client";
+import CustomSelect from "@/components/shell/CustomSelect";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -316,12 +317,7 @@ function TrendLineChart({
     <ChartCard title={title} subtitle="Trend harian vs target">
       <div className="assembly-chart-toolbar">
         {leaderFilter && (
-          <select value={selectedLeader ?? "Semua"} onChange={(event) => onFilterChange?.(event.target.value)}>
-            <option value="Semua">Semua</option>
-            {leaderFilter.map((leader) => (
-              <option key={leader} value={leader}>{leader}</option>
-            ))}
-          </select>
+          <CustomSelect value={selectedLeader ?? "Semua"} options={[{ value: "Semua", label: "Semua" }, ...leaderFilter]} onChange={(next) => onFilterChange?.(next)} />
         )}
         <button type="button" className="chart-toggle" onClick={() => setShowLabels((value) => !value)}>
           {showLabels ? "Sembunyikan label" : "Tampilkan label"}

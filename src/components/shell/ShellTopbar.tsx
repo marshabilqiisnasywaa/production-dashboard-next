@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Icon from "@/components/shell/Icon";
+import CustomSelect from "@/components/shell/CustomSelect";
 import { appRoles, picAreaOptions, type AppUser, type PicAreaKey } from "@/components/providers/RoleProvider";
 import SimulationBadge from "@/features/morning-meeting/SimulationBadge";
 import { getNotifications } from "@/features/morning-meeting/aiFollowupData";
@@ -81,16 +82,9 @@ export default function ShellTopbar({
       <div className="navbar-right">
         <button className="command-search" onClick={onOpenCommand}><Icon name="search" size={16} /><span>Search...</span><kbd>{isMac ? "⌘K" : "Ctrl K"}</kbd></button>
         <div className="topbar-selects">
-          <select value={mode} onChange={(event) => onSelectMode(event.target.value as DisplayMode)} aria-label="Mode tampilan">
-            <option value="klasik">Klasik</option>
-            <option value="morning-meeting">Morning Meeting</option>
-          </select>
-          <select value={role} onChange={(event) => onSelectRole(event.target.value as Role)} aria-label="Role pengguna">
-            {appRoles.map((item) => <option key={item} value={item}>{item}</option>)}
-          </select>
-          {role === "PIC Area" && <select value={picArea} onChange={(event) => onSelectPicArea(event.target.value as PicAreaKey)} aria-label="Area PIC">
-            {picAreaOptions.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
-          </select>}
+          <CustomSelect value={mode} options={[{ value: "klasik", label: "Classic" }, { value: "morning-meeting", label: "Morning Meeting" }]} onChange={(next) => onSelectMode(next as DisplayMode)} ariaLabel="Display mode" />
+          <CustomSelect value={role} options={appRoles.map((item) => ({ value: item, label: item }))} onChange={(next) => onSelectRole(next as Role)} ariaLabel="User role" />
+          {role === "PIC Area" && <CustomSelect value={picArea} options={picAreaOptions.map((item) => ({ value: item.key, label: item.label }))} onChange={(next) => onSelectPicArea(next as PicAreaKey)} ariaLabel="PIC area" />}
         </div>
         <div className="language-wrap">
           <button className="ghost-button language-button" onClick={onToggleLanguageMenu}><Icon name="globe" size={17} /><span>{language}</span></button>
@@ -100,7 +94,7 @@ export default function ShellTopbar({
           </div>}
         </div>
         <button className="ghost-button theme-button" onClick={onToggleTheme} aria-label="Switch theme"><Icon name={dark ? "sun" : "moon"} size={17} /></button>
-        {mode === "morning-meeting" ? <div className="mm-notification-wrap"><button className="ghost-button notification" aria-label="Notifications" onClick={() => setNotificationOpen((value) => !value)}><Icon name="bell" size={18} /><i /><b>{notifications.length}</b></button>{notificationOpen && <div className="mm-notification-menu"><div><strong>Notifikasi</strong><SimulationBadge /></div>{notifications.map((item) => <button key={item.id} className={item.severity} onClick={() => { onNavigate(item.target); setNotificationOpen(false); }}><b>{item.title}</b><span>{item.body}</span></button>)}</div>}</div> : <button className="ghost-button notification" aria-label="Notifications"><Icon name="bell" size={18} /><i /></button>}
+        {mode === "morning-meeting" ? <div className="mm-notification-wrap"><button className="ghost-button notification" aria-label="Notifications" onClick={() => setNotificationOpen((value) => !value)}><Icon name="bell" size={18} /><i /><b>{notifications.length}</b></button>{notificationOpen && <div className="mm-notification-menu"><div><strong>Notifications</strong><SimulationBadge /></div>{notifications.map((item) => <button key={item.id} className={item.severity} onClick={() => { onNavigate(item.target); setNotificationOpen(false); }}><b>{item.title}</b><span>{item.body}</span></button>)}</div>}</div> : <button className="ghost-button notification" aria-label="Notifications"><Icon name="bell" size={18} /><i /></button>}
         <span className="divider" />
         <button className="profile-button">
           <span className="avatar">{user.initials}</span>

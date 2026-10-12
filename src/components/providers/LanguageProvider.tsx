@@ -11,7 +11,7 @@ type LanguageContextValue = {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<AppLanguage>("ID");
+  const [language, setLanguage] = useState<AppLanguage>("EN");
 
   const value = useMemo(() => ({ language, setLanguage }), [language]);
 

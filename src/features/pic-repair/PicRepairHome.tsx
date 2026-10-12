@@ -11,7 +11,6 @@ import {
   wipActual,
   wipTargets,
 } from "@/features/repair/RepairDashboard";
-import { PIC_NAME } from "@/features/pic-repair/RepairPicContext";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
 
 type TrendKey = "wip-pre" | "wip-rework" | "wip-warranty";
@@ -123,13 +122,12 @@ export default function PicRepairHome() {
           <div className="repair-eyebrow">MORNING MEETING • PIC AREA</div>
           <div className="repair-title-row">
             <h1>Beranda Meeting</h1>
-            <span className="pic-chip"><span>YU</span>PIC: {PIC_NAME}</span>
           </div>
           <p>Ringkasan metric inti morning review: WIP Pre-assembly, Rework, dan Warranty.</p>
         </div>
         <div className="repair-actions">
           <button className="repair-outline" type="button">07 Oct 2026</button>
-          <button className="repair-primary" type="button" onClick={() => setInputOpen(true)}>+ Input Data</button>
+          <button className="repair-primary text-white font-bold" type="button" onClick={() => setInputOpen(true)}>+ Input Data</button>
         </div>
       </div>
 

@@ -13,16 +13,28 @@ import ShellTopbar from "@/components/shell/ShellTopbar";
 import CommandPalette from "@/components/shell/CommandPalette";
 import ShellContent from "@/components/shell/ShellContent";
 import { RepairPicProvider } from "@/features/pic-repair/RepairPicContext";
+import { ServicePicProvider } from "@/features/pic-service/ServicePicContext";
+import { QcPicProvider } from "@/features/pic-qc/QcPicContext";
 import PicRepairHome from "@/features/pic-repair/PicRepairHome";
 import PicRepairFollowup from "@/features/pic-repair/PicRepairFollowup";
 import PicRepairMonitoring from "@/features/pic-repair/PicRepairMonitoring";
 import PicAbnormality from "@/features/pic-repair/PicAbnormality";
+import PicPlan from "@/features/pic-repair/PicPlan";
+import PicServiceHome from "@/features/pic-service/PicServiceHome";
+import PicServiceFollowup from "@/features/pic-service/PicServiceFollowup";
+import PicServiceAbnormality from "@/features/pic-service/PicServiceAbnormality";
+import PicServicePlan from "@/features/pic-service/PicServicePlan";
+import PicQcHome from "@/features/pic-qc/PicQcHome";
+import PicQcFollowup from "@/features/pic-qc/PicQcFollowup";
+import PicQcMonitoring from "@/features/pic-qc/PicQcMonitoring";
+import PicQcAbnormality from "@/features/pic-qc/PicQcAbnormality";
+import PicQcPlan from "@/features/pic-qc/PicQcPlan";
 import PaiRobot from "@/features/morning-meeting/PaiRobot";
 import type { CostNav } from "@/data/costData";
 import type { AppLanguage } from "@/components/providers/LanguageProvider";
 
-const oppoLogo = "/assets/oppo-logo.png";
-const oppoLogoDark = "/assets/oppo-logo-dark.svg";
+const oppoLogo = "/assets/oppo-logo-light.png";
+const oppoLogoDark = "/assets/oppo-logo-dark.png";
 const dashboardHref = "/dashboard";
 
 export default function AppShell({ initialActive = "Dashboard" }: { initialActive?: string }) {
@@ -58,10 +70,22 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
   const page = getShellPage(active);
   const brandLogo = dark ? oppoLogoDark : oppoLogo;
   const isRepairPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "repair";
+  const isServicePicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "service";
+  const isQcPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "qc";
 
   useEffect(() => {
     if (isRepairPicMeeting) {
-      if (active !== "meeting-home" && active !== "followup" && active !== "repair-monitor" && active !== "Preassembly" && active !== "Rework" && active !== "Warranty" && active !== "Abnormality" && active !== "Abnormal") {
+      if (active !== "meeting-home" && active !== "followup" && active !== "repair-monitor" && active !== "Preassembly" && active !== "Rework" && active !== "Warranty" && active !== "Abnormality" && active !== "Abnormal" && active !== "repair-plan") {
+        setActive("meeting-home");
+        router.push("/morning-meeting");
+      }
+    } else if (isServicePicMeeting) {
+      if (active !== "meeting-home" && active !== "followup" && !active.startsWith("service-")) {
+        setActive("meeting-home");
+        router.push("/morning-meeting");
+      }
+    } else if (isQcPicMeeting) {
+      if (active !== "meeting-home" && active !== "followup" && active !== "qc-monitor" && active !== "qc-mon-fqc" && active !== "qc-mon-oqc" && active !== "qc-mon-odm" && active !== "qc-abnormality" && active !== "qc-plan") {
         setActive("meeting-home");
         router.push("/morning-meeting");
       }
@@ -69,7 +93,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
       setActive("Dashboard");
       router.push(dashboardHref);
     }
-  }, [isRepairPicMeeting, active, router]);
+  }, [isRepairPicMeeting, isServicePicMeeting, isQcPicMeeting, active, router]);
 
   useEffect(() => {
     if (isRepairPicMeeting && (active === "repair-monitor" || active === "Preassembly" || active === "Rework" || active === "Warranty")) {
@@ -112,7 +136,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
         setCommandIndex((index) => (index - 1 + Math.max(filteredCommands.length, 1)) % Math.max(filteredCommands.length, 1));
       } else if (event.key === "Enter" && filteredCommands[commandIndex]) {
         event.preventDefault();
-        selectMenu(filteredCommands[commandIndex].label);
+        selectMenu(filteredCommands[commandIndex].key ?? filteredCommands[commandIndex].label);
         setCommandOpen(false);
       }
     };
@@ -189,6 +213,8 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
                   <PicRepairFollowup />
                 ) : active === "Abnormality" || active === "Abnormal" ? (
                   <PicAbnormality />
+                ) : active === "repair-plan" ? (
+                  <PicPlan />
                 ) : active === "Rework" ? (
                   <PicRepairMonitoring area="Rework" />
                 ) : active === "Warranty" ? (
@@ -199,6 +225,50 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
                   <PicRepairHome />
                 )}
               </RepairPicProvider>
+            </section>
+          ) : isServicePicMeeting ? (
+            active.startsWith("service-") && active !== "service-abnormality" && active !== "service-plan" ? (
+              <ShellContent
+                page={getShellPage(active === "service-monitor" ? "service-overview" : active)}
+                costFocus={costFocus}
+                onNavigate={selectMenu}
+                onSubPageNavigate={selectSubPage}
+                onQcPageChange={(nextPage) => setActive(nextPage)}
+              />
+            ) : (
+              <section className="content repair-content">
+                <ServicePicProvider>
+                  {active === "followup" ? (
+                    <PicServiceFollowup />
+                  ) : active === "service-abnormality" ? (
+                    <PicServiceAbnormality />
+                  ) : active === "service-plan" ? (
+                    <PicServicePlan />
+                  ) : (
+                    <PicServiceHome />
+                  )}
+                </ServicePicProvider>
+              </section>
+            )
+          ) : isQcPicMeeting ? (
+            <section className="content repair-content">
+              <QcPicProvider>
+                {active === "followup" ? (
+                  <PicQcFollowup />
+                ) : active === "qc-abnormality" ? (
+                  <PicQcAbnormality />
+                ) : active === "qc-plan" ? (
+                  <PicQcPlan />
+                ) : active === "qc-mon-oqc" ? (
+                  <PicQcMonitoring module="OQC" />
+                ) : active === "qc-mon-odm" ? (
+                  <PicQcMonitoring module="ODM" />
+                ) : active === "qc-monitor" || active === "qc-mon-fqc" ? (
+                  <PicQcMonitoring module="FQC" />
+                ) : (
+                  <PicQcHome />
+                )}
+              </QcPicProvider>
             </section>
           ) : (
             <ShellContent
@@ -219,7 +289,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
           index={commandIndex}
           onQueryChange={setCommandQuery}
           onIndexChange={setCommandIndex}
-          onPick={(label) => { selectMenu(label); setCommandOpen(false); }}
+          onPick={(item) => { selectMenu(item.key ?? item.label); setCommandOpen(false); }}
           onClose={() => setCommandOpen(false)}
         />
       )}
