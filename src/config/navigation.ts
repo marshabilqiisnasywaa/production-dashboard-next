@@ -89,6 +89,23 @@ export const monitoringGroup: NavGroup = {
         { label: "ODM", key: "qc-mon-odm", href: "/qc/monitoring/odm", icon: "shield", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
       ],
     },
+    {
+      label: "Area Monitoring",
+      key: "cost-area-monitoring",
+      href: "/morning-meeting",
+      icon: "assembly",
+      mode: morningMeetingMode,
+      area: "cost",
+      allowedRoles: ["PIC Area"],
+      children: [
+        { label: "Overview", key: "cost-overview", href: "/morning-meeting", icon: "chart", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
+        { label: "Productivity", key: "cost-productivity", href: "/morning-meeting", icon: "trending", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
+        { label: "Manpower & Hours", key: "cost-manpower-hours", href: "/morning-meeting", icon: "users", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
+        { label: "Cost Breakdown", key: "cost-breakdown", href: "/morning-meeting", icon: "billing", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
+        { label: "Finish Good", key: "cost-finish-good", href: "/morning-meeting", icon: "package", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
+        { label: "Data Source", key: "cost-data-source", href: "/morning-meeting", icon: "database", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
+      ],
+    },
   ],
 };
 
@@ -101,6 +118,8 @@ export const laporanGroup: NavGroup = {
     { label: "Daily Plan", key: "service-plan", href: "/service/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "service", allowedRoles: ["PIC Area"] },
     { label: "Abnormality", key: "qc-abnormality", href: "/qc/pic-abnormality", icon: "alert", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
     { label: "Daily Plan", key: "qc-plan", href: "/qc/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
+    { label: "Abnormality", key: "cost-abnormality", href: "/abnormality", icon: "alert", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
+    { label: "Daily Plan", key: "cost-daily-plan", href: "/abnormality/plan", icon: "calendar", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
   ],
 };
 
@@ -403,37 +422,13 @@ export function filterNavGroups(filter: NavigationFilter): NavGroup[] {
     const meetingItems = morningMeetingGroup.items
       .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"))
       .map((item) => (item.key === "meeting-home" ? { ...item, label: "Meeting Dashboard" } : item));
-
-    const costMonitoringChildren: NavItem[] = [
-      { label: "Overview", key: "cost-overview", href: "/morning-meeting", icon: "chart", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
-      { label: "Productivity", key: "cost-productivity", href: "/morning-meeting", icon: "trending", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
-      { label: "Manpower & Hours", key: "cost-manpower-hours", href: "/morning-meeting", icon: "users", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
-      { label: "Cost Breakdown", key: "cost-breakdown", href: "/morning-meeting", icon: "billing", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
-      { label: "Finish Good", key: "cost-finish-good", href: "/morning-meeting", icon: "package", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
-      { label: "Data Source", key: "cost-data-source", href: "/morning-meeting", icon: "database", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
-    ];
-
-    const costMonitoringItem: NavItem = {
-      label: "Area Monitoring",
-      key: "cost-area-monitoring",
-      href: "/morning-meeting",
-      icon: "assembly",
-      mode: morningMeetingMode,
-      area: "cost",
-      allowedRoles: ["PIC Area"],
-      children: costMonitoringChildren,
-    };
-
-    const reportItems: NavItem[] = [
-      { label: "Abnormality", key: "cost-abnormality", href: "/abnormality", icon: "alert", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
-      { label: "Daily Plan", key: "cost-daily-plan", href: "/abnormality/plan", icon: "calendar", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
-    ];
-
+    const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
+    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
     return [
       { title: "MORNING MEETING", items: meetingItems as NavItem[] },
-      { title: "MONITORING", items: [costMonitoringItem] },
-      { title: "REPORTS", items: reportItems },
-    ] as NavGroup[];
+      { title: "MONITORING", items: monitorItems },
+      { title: "REPORTS", items: laporanItems },
+    ].filter((group) => group.items.length);
   }
   return navGroups.map((group) => ({
     ...group,

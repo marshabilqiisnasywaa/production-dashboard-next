@@ -30,6 +30,8 @@ import PicQcMonitoring from "@/features/pic-qc/PicQcMonitoring";
 import PicQcAbnormality from "@/features/pic-qc/PicQcAbnormality";
 import PicQcPlan from "@/features/pic-qc/PicQcPlan";
 import PaiRobot from "@/features/morning-meeting/PaiRobot";
+import MeetingDashboard from "@/features/morning-meeting/MeetingDashboard";
+import FollowupPage from "@/features/morning-meeting/FollowupPage";
 import type { CostNav } from "@/data/costData";
 import type { AppLanguage } from "@/components/providers/LanguageProvider";
 
@@ -91,7 +93,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
         router.push("/morning-meeting");
       }
     } else if (isCostPicMeeting) {
-      if (active !== "meeting-home" && active !== "followup" && !active.startsWith("cost-") && active !== "cost-area-monitoring" && !active.startsWith("cost-")) {
+      if (active !== "meeting-home" && active !== "followup" && !active.startsWith("cost-") && active !== "cost-area-monitoring") {
         setActive("meeting-home");
         router.push("/morning-meeting");
       }
@@ -106,6 +108,11 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
       setOpenMenu("Area Monitoring");
     }
   }, [isRepairPicMeeting, active]);
+  useEffect(() => {
+    if (isCostPicMeeting && (active === "cost-area-monitoring" || active.startsWith("cost-"))) {
+      setOpenMenu("Area Monitoring");
+    }
+  }, [isCostPicMeeting, active]);
   const navigationGroups = useMemo(() => filterNavGroups({ role, picArea, mode }), [role, picArea, mode]);
   const visibleCommandLabels = useMemo(() => new Set(navigationGroups.flatMap((group) => group.items.flatMap((item) => [item.label, ...(item.aliases ?? []), ...(item.children?.flatMap((child) => [child.label, ...(child.aliases ?? [])]) ?? [])]))), [navigationGroups]);
 
@@ -275,6 +282,14 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
                   <PicQcHome />
                 )}
               </QcPicProvider>
+            </section>
+          ) : isCostPicMeeting ? (
+            <section className="content repair-content">
+              {active === "followup" ? (
+                <FollowupPage role={role} picArea={picArea} />
+              ) : (
+                <MeetingDashboard />
+              )}
             </section>
           ) : (
             <ShellContent
