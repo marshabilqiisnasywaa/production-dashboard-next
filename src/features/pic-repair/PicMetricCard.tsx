@@ -12,6 +12,7 @@ export type PicMetricCardData = {
   targetLabel: string;
   gap: string;
   direction: Direction;
+  status?: "good" | "bad";
 };
 
 type PicMetricCardProps = {
@@ -23,7 +24,7 @@ type PicMetricCardProps = {
 };
 
 export default function PicMetricCard({ card, selected, onToggle, onAskAi, subtext }: PicMetricCardProps) {
-  const good = isOnTarget(card.value, card.target, card.direction);
+  const good = card.status ? card.status === "good" : isOnTarget(card.value, card.target, card.direction);
   return (
     <article className="repair-kpi pic-kpi bg-white! border border-gray-200/80!" style={selected ? { borderColor: "var(--accent-1)" } : undefined}>
       <div className="repair-kpi-top"><span>{card.name}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? "On Target" : "Off Target"}</span></div>

@@ -18,6 +18,6 @@ export default function MorningMeetingDashboard({ page, onNavigate }: MorningMee
   if (page === "project-2026") return <Project2026Page />;
   if (page === "followup") return <FollowupPage role={role} picArea={picArea} />;
   if (page === "hod-overview") return <HodMeetingBoard />;
-  if (role === "PIC Area" && picArea === "cost") return <MeetingDashboard />;
+  if (role === "PIC Area" && picArea === "cost") return <MeetingDashboard onNavigate={onNavigate} />;
   return <MorningMeetingHome role={role} picArea={picArea} onNavigate={onNavigate} />;
 }

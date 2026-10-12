@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { MetricChart, Sparkline, isOnTarget } from "@/features/repair/RepairDashboard";
 import { Download } from "lucide-react";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
+import PicMetricCard, { type PicMetricCardData } from "@/features/pic-repair/PicMetricCard";
 
 type CostTrendKey = "slc" | "ope-pabrik" | "ope-instalasi" | "ope-packing" | "upph";
 
@@ -72,11 +73,19 @@ const dataSourceRows = [
   { source: "WMS", metric: "Finish Good", updated: "07 Oct 2026 07:45" },
 ];
 
-export default function MeetingDashboard({ section = "overview" }: { section?: CostSection }) {
+const safetyCards: PicMetricCardData[] = [
+  { id: "safety-battery", name: "Safety Battery", value: 0, display: "0", unit: "incident", target: 0, targetLabel: "0 incident", gap: "0", direction: "lower" },
+  { id: "safety-incident", name: "Safety Incident", value: 1, display: "1", unit: "incident", target: 0, targetLabel: "0 incident", gap: "1", direction: "lower" },
+  { id: "safety-info", name: "Safety Information", value: 98.5, display: "98.5", unit: "%", target: 100, targetLabel: "100%", gap: "1.5%", direction: "higher", status: "good" },
+  { id: "safety-material", name: "Safety Material", value: 92, display: "92.0", unit: "%", target: 100, targetLabel: "100%", gap: "8.0%", direction: "higher" },
+];
+
+export default function MeetingDashboard({ section = "overview", onNavigate }: { section?: CostSection; onNavigate?: (target: string) => void }) {
   const meta = sectionMeta[section];
   const [selected, setSelected] = useState<CostTrendKey | null>(null);
   const [toast, setToast] = useState(false);
   const [aiCard, setAiCard] = useState<CostMeetingCard | null>(null);
+  const [safetyAi, setSafetyAi] = useState<PicMetricCardData | null>(null);
 
   const cards = baseCards;
 
@@ -233,6 +242,31 @@ export default function MeetingDashboard({ section = "overview" }: { section?: C
           gapLabel={aiCard.delta}
           direction={aiCard.higherIsBetter ? "higher" : "lower"}
           onClose={() => setAiCard(null)}
+        />
+      )}
+      {section === "overview" && (
+        <>
+          <div className="repair-card-head">
+            <div>
+              <h2 className="text-slate-900 font-semibold">Safety</h2>
+              <p className="text-slate-500">KPI safety area Cost: battery, incident, information, dan material.</p>
+            </div>
+          </div>
+          <div className="repair-kpis">
+            {safetyCards.map((card) => (
+              <PicMetricCard key={card.id} card={card} selected={false} onToggle={() => onNavigate?.("safety-area")} onAskAi={setSafetyAi} />
+            ))}
+          </div>
+        </>
+      )}
+      {safetyAi && (
+        <PicAiInsight
+          metricName={safetyAi.name}
+          actualLabel={`${safetyAi.display} ${safetyAi.unit}`.trim()}
+          targetLabel={safetyAi.targetLabel}
+          gapLabel={safetyAi.gap}
+          direction={safetyAi.direction}
+          onClose={() => setSafetyAi(null)}
         />
       )}
       {toast && <div className="repair-toast"><span>✓</span>Data berhasil diekspor</div>}
