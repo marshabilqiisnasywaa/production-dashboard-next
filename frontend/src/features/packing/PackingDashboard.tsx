@@ -1,4 +1,5 @@
 "use client";
+import CustomSelect from "@/components/shell/CustomSelect";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -76,19 +77,11 @@ function PageHeader({
       <div className="packing-toolbar">
         <label className="packing-filter-field">
           <span>Time</span>
-          <select value={timeFilter} onChange={(event) => onTimeFilterChange(event.target.value)}>
-            {packingTimeOptions.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
+          <CustomSelect value={timeFilter} options={packingTimeOptions} onChange={(next) => onTimeFilterChange(next)} />
         </label>
         <label className="packing-filter-field">
           <span>Category</span>
-          <select value={categoryFilter} onChange={(event) => onCategoryFilterChange(event.target.value)}>
-            {packingCategoryOptions.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
+          <CustomSelect value={categoryFilter} options={packingCategoryOptions} onChange={(next) => onCategoryFilterChange(next)} />
         </label>
       </div>
     </header>

@@ -33,6 +33,7 @@ export const iconPaths: Record<IconName, ReactNode> = {
   billing: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18M7 15h3" /></>,
   trending: <><path d="m3 17 6-6 4 4 8-8" /><path d="M15 7h6v6" /></>,
   cost: <><circle cx="12" cy="12" r="8" /><path d="M12 7v10m3-7.5c-.6-.7-1.5-1-3-1-1.7 0-3 .8-3 2s1.3 2 3 2 3 .8 3 2-1.3 2-3 2c-1.5 0-2.4-.3-3-1" /></>,
+  database: <><ellipse cx="12" cy="5" rx="7" ry="3" /><path d="M5 5v14c0 1.7 3.1 3 7 3s7-1.3 7-3V5" /><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3" /></>,
 };
 
 export default function Icon({ name, size = 18 }: { name: IconName; size?: number }) {

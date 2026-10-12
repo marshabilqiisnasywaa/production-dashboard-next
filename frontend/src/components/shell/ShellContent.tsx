@@ -8,6 +8,7 @@ import AssemblyDashboard, { type AssemblyPage } from "@/features/assembly/Assemb
 import MaterialDashboard from "@/features/material/MaterialDashboard";
 import CostDashboard from "@/features/cost/CostDashboard";
 import MorningMeetingDashboard from "@/features/morning-meeting/MorningMeetingDashboard";
+import PicPlan from "@/features/pic-repair/PicPlan";
 import WarehouseOverview from "@/features/warehouse/WarehouseOverview";
 import type { ServicePageKey } from "@/data/serviceData";
 import type { CostNav } from "@/data/costData";
@@ -45,6 +46,8 @@ export default function ShellContent({ page, costFocus, onNavigate, onSubPageNav
     content = <OqcDashboard page={active as Page} onPageChange={onQcPageChange} />;
   } else if (page.isAssemblyPage) {
     content = <AssemblyDashboard page={active as AssemblyPage} />;
+  } else if (page.isPlanPage) {
+    content = <PicPlan />;
   } else {
     content = <WarehouseOverview />;
   }

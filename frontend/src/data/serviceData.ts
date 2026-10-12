@@ -90,7 +90,7 @@ const buildFlatSeries = ({
 const mainboardServiceRate: ServicePageDefinition = {
   id: "service-mainboard",
   title: "Mainboard Service Rate",
-  subtitle: "Monitoring penyediaan dan hasil perbaikan mainboard",
+  subtitle: "Monitoring mainboard supply and repair output",
   kpis: [
     {
       id: "input-rate-pcb",
@@ -130,7 +130,7 @@ const mainboardServiceRate: ServicePageDefinition = {
 const batteryServiceRate: ServicePageDefinition = {
   id: "service-battery",
   title: "Battery Service Rate",
-  subtitle: "Monitoring input, repair, dan QA battery",
+  subtitle: "Monitoring battery input, repair, and QA",
   kpis: [
     {
       id: "input-rate-battery",
@@ -162,7 +162,7 @@ const batteryServiceRate: ServicePageDefinition = {
 const serviceExternal: ServicePageDefinition = {
   id: "service-external",
   title: "Service External",
-  subtitle: "Monitoring penanganan material dan analisa eksternal",
+  subtitle: "Monitoring material handling and external analysis",
   kpis: [
     {
       id: "pemberesan-material",
@@ -193,8 +193,8 @@ const serviceExternal: ServicePageDefinition = {
 
 const qualitas: ServicePageDefinition = {
   id: "service-qualitas",
-  title: "Qualitas",
-  subtitle: "Monitoring masalah kualitas eksternal dan internal",
+  title: "Quality",
+  subtitle: "Monitoring external and internal quality issues",
   kpis: [
     {
       id: "masalah-qualitas",

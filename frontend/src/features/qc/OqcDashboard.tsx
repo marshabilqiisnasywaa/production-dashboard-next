@@ -1,4 +1,5 @@
 "use client";
+import CustomSelect from "@/components/shell/CustomSelect";
 import { useEffect, useMemo, useState } from "react";
 import {
   Area,
@@ -115,19 +116,7 @@ function DonutChartCard({
         </div>
         <label className="qc-select-wrap">
           <span>Filter Area / Material</span>
-          <select value={filter} onChange={(event) => setFilter(event.target.value)}>
-            {[
-              "Semua Area",
-              "Top Cover",
-              "Bottom Cover",
-              "Battery Cover",
-              "Kamera",
-              "Decorative",
-              "Lainnya",
-            ].map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
+          <CustomSelect value={filter} options={["Semua Area", "Top Cover", "Bottom Cover", "Battery Cover", "Kamera", "Decorative", "Lainnya"]} onChange={(next) => setFilter(next)} />
         </label>
       </div>
 
@@ -529,10 +518,7 @@ function SolusiImprovementPage() {
         <div className="qc-form-grid">
           <label>
             <span>Sumber</span>
-            <select value={source} onChange={(e) => setSource(e.target.value as SolutionSource)}>
-              <option value="FQC">FQC</option>
-              <option value="OQC">OQC</option>
-            </select>
+            <CustomSelect value={source} options={[{ value: "FQC", label: "FQC" }, { value: "OQC", label: "OQC" }]} onChange={(next) => setSource(next as SolutionSource)} />
           </label>
 
           <label>

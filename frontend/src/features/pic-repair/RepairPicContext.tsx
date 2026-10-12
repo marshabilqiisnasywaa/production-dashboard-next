@@ -31,10 +31,10 @@ export type DueTone = "safe" | "warn" | "overdue";
 export function getDueStatus(dueDate: string, todayIso: string = TODAY_ISO): { label: string; tone: DueTone } {
   const diffDays = Math.round((Date.parse(dueDate) - Date.parse(todayIso)) / 86400000);
   if (Number.isNaN(diffDays)) return { label: "-", tone: "safe" };
-  if (diffDays < 0) return { label: `Overdue ${Math.abs(diffDays)} hari`, tone: "overdue" };
-  if (diffDays === 0) return { label: "Hari ini", tone: "warn" };
-  if (diffDays <= 2) return { label: `H-${diffDays}`, tone: "warn" };
-  return { label: "Aman", tone: "safe" };
+  if (diffDays < 0) return { label: `Overdue ${Math.abs(diffDays)} days`, tone: "overdue" };
+  if (diffDays === 0) return { label: "Today", tone: "warn" };
+  if (diffDays <= 2) return { label: `D-${diffDays}`, tone: "warn" };
+  return { label: "Safe", tone: "safe" };
 }
 
 type RepairPicContextValue = {
