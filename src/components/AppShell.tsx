@@ -32,6 +32,8 @@ import PicQcPlan from "@/features/pic-qc/PicQcPlan";
 import PaiRobot from "@/features/morning-meeting/PaiRobot";
 import MeetingDashboard from "@/features/morning-meeting/MeetingDashboard";
 import FollowupPage from "@/features/morning-meeting/FollowupPage";
+import PicCostAbnormality from "@/features/cost/PicCostAbnormality";
+import PicCostPlan from "@/features/cost/PicCostPlan";
 import type { CostNav } from "@/data/costData";
 import type { AppLanguage } from "@/components/providers/LanguageProvider";
 
@@ -287,8 +289,22 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
             <section className="content repair-content">
               {active === "followup" ? (
                 <FollowupPage role={role} picArea={picArea} />
+              ) : active === "cost-abnormality" ? (
+                <PicCostAbnormality />
+              ) : active === "cost-daily-plan" ? (
+                <PicCostPlan />
+              ) : active === "cost-productivity" ? (
+                <MeetingDashboard section="productivity" />
+              ) : active === "cost-manpower-hours" ? (
+                <MeetingDashboard section="manpower" />
+              ) : active === "cost-breakdown" ? (
+                <MeetingDashboard section="breakdown" />
+              ) : active === "cost-finish-good" ? (
+                <MeetingDashboard section="finish-good" />
+              ) : active === "cost-data-source" ? (
+                <MeetingDashboard section="data-source" />
               ) : (
-                <MeetingDashboard />
+                <MeetingDashboard section="overview" />
               )}
             </section>
           ) : (

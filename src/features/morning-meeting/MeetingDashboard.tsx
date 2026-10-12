@@ -5,6 +5,8 @@ import PicAiInsight from "@/features/pic-repair/PicAiInsight";
 
 type CostTrendKey = "slc" | "ope-pabrik" | "ope-instalasi" | "ope-packing" | "upph";
 
+export type CostSection = "overview" | "productivity" | "manpower" | "breakdown" | "finish-good" | "data-source";
+
 type CostMeetingCard = {
   id: CostTrendKey;
   name: string;
@@ -33,7 +35,44 @@ const trendSeeds: Record<CostTrendKey, number[]> = {
   "upph": [5.21, 5.28, 5.33, 5.38, 5.42, 5.47, 5.51, 5.54, 5.57],
 };
 
-export default function MeetingDashboard() {
+const sectionMeta: Record<CostSection, { title: string; subtitle: string; focus: CostTrendKey[] }> = {
+  "overview": { title: "Meeting Dashboard", subtitle: "Ringkasan metric inti morning review area Cost: SLC, OPE Pabrik, OPE Instalasi, OPE Packing, dan UPPH.", focus: ["slc", "ope-pabrik", "ope-instalasi", "ope-packing", "upph"] },
+  "productivity": { title: "Productivity", subtitle: "Fokus produktivitas area Cost: UPPH dan OPE sebagai penggerak utama output per jam.", focus: ["upph", "ope-pabrik", "ope-instalasi"] },
+  "manpower": { title: "Manpower & Hours", subtitle: "Kecukupan dan jam kerja manpower pabrik terhadap target OPE Pabrik.", focus: ["ope-pabrik"] },
+  "breakdown": { title: "Cost Breakdown", subtitle: "Rincian komponen biaya dan SLC terhadap target pengendalian kerugian.", focus: ["slc"] },
+  "finish-good": { title: "Finish Good", subtitle: "Kesiapan finish good packing dan OPE Packing terhadap target pengiriman.", focus: ["ope-packing"] },
+  "data-source": { title: "Data Source", subtitle: "Sumber data metric Cost dan waktu pembaruan terakhir tiap sumber.", focus: ["slc", "ope-pabrik", "ope-instalasi", "ope-packing", "upph"] },
+};
+
+const manpowerRows = [
+  { shift: "Shift 1", plan: 120, actual: 118, hours: 7.5 },
+  { shift: "Shift 2", plan: 110, actual: 112, hours: 7.5 },
+  { shift: "Shift 3", plan: 60, actual: 58, hours: 7 },
+];
+
+const breakdownRows = [
+  { category: "Direct Labor", before: 1.82, after: 1.71 },
+  { category: "Overtime", before: 0.64, after: 0.58 },
+  { category: "Rework", before: 0.71, after: 0.66 },
+  { category: "Scrap", before: 0.45, after: 0.38 },
+  { category: "Other", before: 0.28, after: 0.23 },
+];
+
+const finishGoodRows = [
+  { model: "121516", stock: 12400, target: 12000 },
+  { model: "121518", stock: 8600, target: 9000 },
+  { model: "121520", stock: 5300, target: 5000 },
+];
+
+const dataSourceRows = [
+  { source: "IoT Line Sensor", metric: "UPPH, OPE", updated: "07 Oct 2026 08:30" },
+  { source: "HR Attendance", metric: "Manpower & Hours", updated: "07 Oct 2026 08:00" },
+  { source: "ERP Cost", metric: "SLC, Breakdown", updated: "06 Oct 2026 17:00" },
+  { source: "WMS", metric: "Finish Good", updated: "07 Oct 2026 07:45" },
+];
+
+export default function MeetingDashboard({ section = "overview" }: { section?: CostSection }) {
+  const meta = sectionMeta[section];
   const [selected, setSelected] = useState<CostTrendKey | null>(null);
   const [values, setValues] = useState<Record<string, number>>({});
   const [inputOpen, setInputOpen] = useState(false);
@@ -45,6 +84,9 @@ export default function MeetingDashboard() {
     const value = values[card.id];
     return { ...card, value, display: value.toFixed(2) };
   }), [values]);
+
+  const visibleCards = useMemo(() => cards.filter((card) => meta.focus.includes(card.id)), [cards, meta]);
+  const chartKeys = (selected ? [selected] : meta.focus) as CostTrendKey[];
 
   const saveInput = (id: string, actual: number) => {
     setValues((current) => ({ ...current, [id]: actual }));
@@ -59,11 +101,11 @@ export default function MeetingDashboard() {
     <div className="pic-page">
       <div className="repair-header">
         <div>
-          <div className="repair-eyebrow">MORNING MEETING • PIC AREA</div>
+          <div className="repair-eyebrow">MORNING MEETING • PIC AREA • COST</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Meeting Dashboard</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{meta.title}</h1>
           </div>
-          <p>Ringkasan metric inti morning review area Cost: SLC, OPE Pabrik, OPE Instalasi, OPE Packing, dan UPPH.</p>
+          <p>{meta.subtitle}</p>
         </div>
         <div className="repair-actions">
           <button className="repair-outline" type="button">07 Oct 2026</button>
@@ -72,7 +114,7 @@ export default function MeetingDashboard() {
       </div>
 
       <div className="repair-kpis pic-kpis-five">
-        {cards.map((card) => {
+        {visibleCards.map((card) => {
           const good = isOnTarget(card.value, card.target, card.higherIsBetter ? "higher" : "lower");
           const active = selected === card.id;
           return (
@@ -90,20 +132,95 @@ export default function MeetingDashboard() {
         })}
       </div>
 
-      {selected === null ? (
-        <div className="repair-charts">
-          {(Object.keys(trendSeeds) as CostTrendKey[]).map((key) => {
-            const card = baseCards.find((item) => item.id === key)!;
-            return <MetricChart key={key} id={`pic-cost-${key}`} title={card.name} values={trendSeeds[key]} target={card.target} direction={card.higherIsBetter ? "higher" : "lower"} full />;
-          })}
-        </div>
-      ) : (
-        <div className="repair-charts">
-          {(() => {
-            const card = baseCards.find((item) => item.id === selected)!;
-            return <MetricChart id={`pic-cost-${selected}`} title={card.name} values={trendSeeds[selected]} target={card.target} direction={card.higherIsBetter ? "higher" : "lower"} full />;
-          })()}
-        </div>
+      <div className="repair-charts">
+        {chartKeys.map((key) => {
+          const card = baseCards.find((item) => item.id === key)!;
+          return <MetricChart key={key} id={`pic-cost-${section}-${key}`} title={card.name} values={trendSeeds[key]} target={card.target} direction={card.higherIsBetter ? "higher" : "lower"} full />;
+        })}
+      </div>
+
+      {section === "manpower" && (
+        <article className="repair-panel wide">
+          <div className="repair-card-head"><div><h2>Manpower per Shift</h2><p>Plan vs actual kehadiran dan jam kerja</p></div></div>
+          <div className="repair-table-scroll">
+            <table className="repair-data-table pic-table">
+              <thead><tr><th>Shift</th><th>Plan</th><th>Actual</th><th>Jam Kerja</th><th>Status</th></tr></thead>
+              <tbody>
+                {manpowerRows.map((row) => (
+                  <tr key={row.shift}>
+                    <td>{row.shift}</td>
+                    <td>{row.plan}</td>
+                    <td>{row.actual}</td>
+                    <td>{row.hours} jam</td>
+                    <td><span className={`repair-status ${row.actual >= row.plan ? "good" : "bad"}`}>{row.actual >= row.plan ? "Terpenuhi" : "Kurang"}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      )}
+
+      {section === "breakdown" && (
+        <article className="repair-panel wide">
+          <div className="repair-card-head"><div><h2>Cost Breakdown</h2><p>Before vs after per komponen biaya (point SLC)</p></div></div>
+          <div className="repair-table-scroll">
+            <table className="repair-data-table pic-table">
+              <thead><tr><th>Kategori</th><th>Before</th><th>After</th><th>Saving</th></tr></thead>
+              <tbody>
+                {breakdownRows.map((row) => (
+                  <tr key={row.category}>
+                    <td>{row.category}</td>
+                    <td>{row.before.toFixed(2)}</td>
+                    <td>{row.after.toFixed(2)}</td>
+                    <td>{(row.before - row.after).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      )}
+
+      {section === "finish-good" && (
+        <article className="repair-panel wide">
+          <div className="repair-card-head"><div><h2>Finish Good Stock</h2><p>Stok vs target per model</p></div></div>
+          <div className="repair-table-scroll">
+            <table className="repair-data-table pic-table">
+              <thead><tr><th>Model</th><th>Stock</th><th>Target</th><th>Status</th></tr></thead>
+              <tbody>
+                {finishGoodRows.map((row) => (
+                  <tr key={row.model}>
+                    <td>{row.model}</td>
+                    <td>{row.stock.toLocaleString("en-US")}</td>
+                    <td>{row.target.toLocaleString("en-US")}</td>
+                    <td><span className={`repair-status ${row.stock >= row.target ? "good" : "bad"}`}>{row.stock >= row.target ? "Ready" : "Kurang"}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      )}
+
+      {section === "data-source" && (
+        <article className="repair-panel wide">
+          <div className="repair-card-head"><div><h2>Data Source</h2><p>Sumber data dan waktu pembaruan terakhir</p></div></div>
+          <div className="repair-table-scroll">
+            <table className="repair-data-table pic-table">
+              <thead><tr><th>Sumber</th><th>Metric</th><th>Terakhir Update</th></tr></thead>
+              <tbody>
+                {dataSourceRows.map((row) => (
+                  <tr key={row.source}>
+                    <td>{row.source}</td>
+                    <td>{row.metric}</td>
+                    <td>{row.updated}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
       )}
 
       {aiCard && (
