@@ -1,4 +1,4 @@
-@AGENTS.md
+@frontend/AGENTS.md
 
 <!-- antislop:start -->
 ## antislop
