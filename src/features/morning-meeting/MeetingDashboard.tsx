@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
-import { InputDialog, MetricChart, Sparkline, isOnTarget } from "@/features/repair/RepairDashboard";
+import { MetricChart, Sparkline, isOnTarget } from "@/features/repair/RepairDashboard";
+import { Download } from "lucide-react";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
 
 type CostTrendKey = "slc" | "ope-pabrik" | "ope-instalasi" | "ope-packing" | "upph";
@@ -74,23 +75,24 @@ const dataSourceRows = [
 export default function MeetingDashboard({ section = "overview" }: { section?: CostSection }) {
   const meta = sectionMeta[section];
   const [selected, setSelected] = useState<CostTrendKey | null>(null);
-  const [values, setValues] = useState<Record<string, number>>({});
-  const [inputOpen, setInputOpen] = useState(false);
   const [toast, setToast] = useState(false);
   const [aiCard, setAiCard] = useState<CostMeetingCard | null>(null);
 
-  const cards = useMemo(() => baseCards.map((card) => {
-    if (values[card.id] === undefined) return card;
-    const value = values[card.id];
-    return { ...card, value, display: value.toFixed(2) };
-  }), [values]);
+  const cards = baseCards;
 
   const visibleCards = useMemo(() => cards.filter((card) => meta.focus.includes(card.id)), [cards, meta]);
   const chartKeys = (selected ? [selected] : meta.focus) as CostTrendKey[];
 
-  const saveInput = (id: string, actual: number) => {
-    setValues((current) => ({ ...current, [id]: actual }));
-    setInputOpen(false);
+  const exportCsv = () => {
+    const lines = ["metric,value,target"];
+    for (const card of visibleCards) lines.push(`${card.name},${card.display} ${card.unit},${card.targetLabel}`);
+    const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "cost-meeting-dashboard.csv";
+    anchor.click();
+    URL.revokeObjectURL(url);
     setToast(true);
     window.setTimeout(() => setToast(false), 2600);
   };
@@ -109,7 +111,7 @@ export default function MeetingDashboard({ section = "overview" }: { section?: C
         </div>
         <div className="repair-actions">
           <button className="repair-outline" type="button">07 Oct 2026</button>
-          <button className="repair-primary text-white font-bold" type="button" onClick={() => setInputOpen(true)}>+ Input Data</button>
+          <button className="repair-outline" type="button" onClick={exportCsv}><Download size={14} />Export</button>
         </div>
       </div>
 
@@ -233,8 +235,7 @@ export default function MeetingDashboard({ section = "overview" }: { section?: C
           onClose={() => setAiCard(null)}
         />
       )}
-      {inputOpen && <InputDialog onClose={() => setInputOpen(false)} onSave={saveInput} />}
-      {toast && <div className="repair-toast"><span>✓</span>Data berhasil disimpan</div>}
+      {toast && <div className="repair-toast"><span>✓</span>Data berhasil diekspor</div>}
     </div>
   );
 }
