@@ -89,7 +89,7 @@ export default function SidebarNav({
                     <div className="submenu">
                       {item.key === "cost-area-monitoring" ? (
                         <>
-                          {item.children.filter((child) => ["cost-overview", "cost-productivity", "cost-manpower-hours"].includes(child.key)).map((child) => (
+                          {item.children.filter((child) => ["cost-productivity", "cost-manpower-hours"].includes(child.key)).map((child) => (
                             <button key={child.key} className={`text-xs font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
                           ))}
                           <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-4 pt-3 pb-1 select-none pointer-events-none">Cost</p>

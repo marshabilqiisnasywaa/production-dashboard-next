@@ -98,7 +98,6 @@ export const monitoringGroup: NavGroup = {
       area: "cost",
       allowedRoles: ["PIC Area"],
       children: [
-        { label: "Overview", key: "cost-overview", href: "/morning-meeting", icon: "chart", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
         { label: "Productivity", key: "cost-productivity", href: "/morning-meeting", icon: "trending", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
         { label: "Manpower & Hours", key: "cost-manpower-hours", href: "/morning-meeting", icon: "users", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
         { label: "Cost Breakdown", key: "cost-breakdown", href: "/morning-meeting", icon: "billing", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
