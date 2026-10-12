@@ -32,6 +32,7 @@ import PicQcPlan from "@/features/pic-qc/PicQcPlan";
 import PaiRobot from "@/features/morning-meeting/PaiRobot";
 import MeetingDashboard from "@/features/morning-meeting/MeetingDashboard";
 import FollowupPage from "@/features/morning-meeting/FollowupPage";
+import CostOverview from "@/features/cost/CostOverview";
 import PicCostAbnormality from "@/features/cost/PicCostAbnormality";
 import PicCostPlan from "@/features/cost/PicCostPlan";
 import type { CostNav } from "@/data/costData";
@@ -303,6 +304,8 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
                 <MeetingDashboard section="finish-good" />
               ) : active === "cost-data-source" ? (
                 <MeetingDashboard section="data-source" />
+              ) : active === "cost-overview" ? (
+                <CostOverview />
               ) : (
                 <MeetingDashboard section="overview" />
               )}

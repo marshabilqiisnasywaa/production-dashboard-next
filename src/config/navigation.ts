@@ -298,6 +298,21 @@ export function breadcrumbForKey(active: string): { label: string; href?: string
     trail.push({ label: "Monitoring" });
     return trail;
   }
+  if (["cost-overview", "cost-productivity", "cost-manpower-hours", "cost-breakdown", "cost-finish-good", "cost-data-source", "cost-area-monitoring"].includes(active)) {
+    const labels: Record<string, string> = {
+      "cost-overview": "Overview",
+      "cost-productivity": "Productivity",
+      "cost-manpower-hours": "Manpower & Hours",
+      "cost-breakdown": "Cost Breakdown",
+      "cost-finish-good": "Finish Good",
+      "cost-data-source": "Data Source",
+      "cost-area-monitoring": "Overview",
+    };
+    trail.push({ label: "Monitoring", href: "/morning-meeting" });
+    trail.push({ label: "Cost", href: "/morning-meeting" });
+    trail.push({ label: labels[active] ?? active });
+    return trail;
+  }
 
   if (active.startsWith("assembly-")) {
     const asm = resolveNavItem("Assembly") || resolveNavItem("assembly-overview");
