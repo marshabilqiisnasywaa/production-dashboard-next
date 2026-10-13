@@ -15,6 +15,8 @@ import ShellContent from "@/components/shell/ShellContent";
 import { RepairPicProvider } from "@/features/pic-repair/RepairPicContext";
 import { ServicePicProvider } from "@/features/pic-service/ServicePicContext";
 import { QcPicProvider } from "@/features/pic-qc/QcPicContext";
+import { CostPicProvider } from "@/features/cost/CostPicContext";
+import { SafetyPicProvider } from "@/features/safety/SafetyPicContext";
 import PicRepairHome from "@/features/pic-repair/PicRepairHome";
 import PicRepairFollowup from "@/features/pic-repair/PicRepairFollowup";
 import PicRepairMonitoring from "@/features/pic-repair/PicRepairMonitoring";
@@ -40,6 +42,8 @@ import CostBreakdown from "@/features/cost/CostBreakdown";
 import CostFinishGood from "@/features/cost/CostFinishGood";
 import PicCostAbnormality from "@/features/cost/PicCostAbnormality";
 import PicCostPlan from "@/features/cost/PicCostPlan";
+import PicSafetyAbnormality from "@/features/safety/PicSafetyAbnormality";
+import PicSafetyPlan from "@/features/safety/PicSafetyPlan";
 import type { CostNav } from "@/data/costData";
 import type { AppLanguage } from "@/components/providers/LanguageProvider";
 
@@ -304,6 +308,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
             </section>
           ) : isCostPicMeeting ? (
             <section className="content repair-content">
+              <CostPicProvider>
               {active === "followup" ? (
                 <FollowupPage role={role} picArea={picArea} />
               ) : active === "cost-abnormality" ? (
@@ -325,9 +330,11 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
               ) : (
                 <MeetingDashboard section="overview" />
               )}
+              </CostPicProvider>
             </section>
           ) : isSafetyPicMeeting ? (
             <section className="content repair-content">
+              <SafetyPicProvider>
               {active === "followup" ? (
                 <FollowupPage role={role} picArea={picArea} />
               ) : active === "safety-monitoring" ? (
@@ -339,12 +346,13 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
               ) : active === "safety-data-source" ? (
                 <SafetyDashboard section="data-source" onNavigate={selectMenu} />
               ) : active === "safety-abnormality" ? (
-                <PicCostAbnormality />
+                <PicSafetyAbnormality />
               ) : active === "safety-daily-plan" ? (
-                <PicCostPlan />
+                <PicSafetyPlan />
               ) : (
                 <SafetyDashboard section="overview" onNavigate={selectMenu} />
               )}
+              </SafetyPicProvider>
             </section>
           ) : (
             <ShellContent

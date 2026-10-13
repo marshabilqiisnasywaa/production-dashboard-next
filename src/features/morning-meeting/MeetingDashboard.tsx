@@ -5,7 +5,7 @@ import { Download } from "lucide-react";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
 import PicMetricCard, { type PicMetricCardData } from "@/features/pic-repair/PicMetricCard";
 
-type CostTrendKey = "slc" | "ope-pabrik" | "ope-instalasi" | "ope-packing" | "upph";
+type CostTrendKey = "slc" | "ope" | "upph" | "ratio" | "intern";
 
 export type CostSection = "overview" | "productivity" | "manpower" | "breakdown" | "finish-good" | "data-source";
 
@@ -18,32 +18,41 @@ type CostMeetingCard = {
   target: number;
   targetLabel: string;
   delta: string;
+  subtext: string;
   higherIsBetter: boolean;
 };
 
 const baseCards: CostMeetingCard[] = [
-  { id: "slc", name: "SLC (Single Labor Cost)", value: 3.56, display: "3.56", unit: "%", target: 3.7, targetLabel: "3.70%", delta: "-0.14", higherIsBetter: false },
-  { id: "ope-pabrik", name: "OPE Pabrik", value: 82.4, display: "82.40", unit: "%", target: 85, targetLabel: "85.00%", delta: "-2.6", higherIsBetter: true },
-  { id: "ope-instalasi", name: "OPE Instalasi", value: 91.2, display: "91.20", unit: "%", target: 90, targetLabel: "90.00%", delta: "+1.2", higherIsBetter: true },
-  { id: "ope-packing", name: "OPE Packing", value: 87.5, display: "87.50", unit: "%", target: 88, targetLabel: "88.00%", delta: "-0.5", higherIsBetter: true },
-  { id: "upph", name: "UPPH", value: 5.57, display: "5.57", unit: "pcs/h", target: 5.4, targetLabel: "5.40 pcs/h", delta: "+0.17", higherIsBetter: true },
+  { id: "slc", name: "SLC (per unit)", value: 2.85, display: "¥2.85", unit: "", target: 3, targetLabel: "¥3.00", delta: "-0.15", subtext: "YoY -4.2% · ¥/unit", higherIsBetter: false },
+  { id: "ope", name: "OPE Productivity", value: 78.5, display: "78.5%", unit: "", target: 77, targetLabel: "77.0%", delta: "+1.5", subtext: "MoM +1.6pp", higherIsBetter: true },
+  { id: "upph", name: "UPPH", value: 42.6, display: "42.6", unit: "", target: 40, targetLabel: "40.0", delta: "+2.6", subtext: "MoM +2.3 · units/p-h", higherIsBetter: true },
+  { id: "ratio", name: "Direct : Indirect", value: 3.2, display: "3.2 : 1", unit: "", target: 3, targetLabel: "3.0 : 1", delta: "+0.2", subtext: "Target 3.0:1", higherIsBetter: true },
+  { id: "intern", name: "Internship Rate", value: 18.5, display: "18.5%", unit: "", target: 15, targetLabel: "15.00%", delta: "+3.5", subtext: "Cap 20% · watch", higherIsBetter: false },
 ];
 
 const trendSeeds: Record<CostTrendKey, number[]> = {
-  "slc": [3.82, 3.78, 3.74, 3.71, 3.68, 3.64, 3.6, 3.58, 3.56],
-  "ope-pabrik": [80.1, 80.8, 81.2, 81.6, 81.9, 82.1, 82.2, 82.3, 82.4],
-  "ope-instalasi": [89.4, 89.8, 90.1, 90.4, 90.7, 90.9, 91, 91.1, 91.2],
-  "ope-packing": [86.2, 86.5, 86.8, 87, 87.2, 87.3, 87.4, 87.4, 87.5],
-  "upph": [5.21, 5.28, 5.33, 5.38, 5.42, 5.47, 5.51, 5.54, 5.57],
+  "slc": [3.12, 3.08, 3.05, 3.01, 2.98, 2.95, 2.92, 2.88, 2.85],
+  "ope": [75.2, 75.8, 76.3, 76.9, 77.2, 77.6, 77.9, 78.2, 78.5],
+  "upph": [39.8, 40.2, 40.6, 41, 41.4, 41.8, 42, 42.3, 42.6],
+  "ratio": [2.9, 2.95, 3, 2.98, 3.05, 3.08, 3.1, 3.15, 3.2],
+  "intern": [15.8, 16.2, 16.5, 16.9, 17.2, 17.5, 17.9, 18.2, 18.5],
+};
+
+const chartDomains: Record<CostTrendKey, [number, number]> = {
+  "slc": [2.5, 3.5],
+  "ope": [74, 80],
+  "upph": [38, 44],
+  "ratio": [2.5, 3.5],
+  "intern": [14, 20],
 };
 
 const sectionMeta: Record<CostSection, { title: string; subtitle: string; focus: CostTrendKey[] }> = {
-  "overview": { title: "Meeting Dashboard", subtitle: "Ringkasan metric inti morning review area Cost: SLC, OPE Pabrik, OPE Instalasi, OPE Packing, dan UPPH.", focus: ["slc", "ope-pabrik", "ope-instalasi", "ope-packing", "upph"] },
-  "productivity": { title: "Productivity", subtitle: "Fokus produktivitas area Cost: UPPH dan OPE sebagai penggerak utama output per jam.", focus: ["upph", "ope-pabrik", "ope-instalasi"] },
-  "manpower": { title: "Manpower & Hours", subtitle: "Kecukupan dan jam kerja manpower pabrik terhadap target OPE Pabrik.", focus: ["ope-pabrik"] },
+  "overview": { title: "Meeting Dashboard", subtitle: "Ringkasan metric inti morning review area Cost: SLC, OPE Productivity, UPPH, Direct : Indirect, dan Internship Rate.", focus: ["slc", "ope", "upph", "ratio", "intern"] },
+  "productivity": { title: "Productivity", subtitle: "Fokus produktivitas area Cost: UPPH dan OPE Productivity sebagai penggerak utama output per jam.", focus: ["upph", "ope"] },
+  "manpower": { title: "Manpower & Hours", subtitle: "Kecukupan dan jam kerja manpower pabrik terhadap target OPE Productivity.", focus: ["ope"] },
   "breakdown": { title: "Cost Breakdown", subtitle: "Rincian komponen biaya dan SLC terhadap target pengendalian kerugian.", focus: ["slc"] },
-  "finish-good": { title: "Finish Good", subtitle: "Kesiapan finish good packing dan OPE Packing terhadap target pengiriman.", focus: ["ope-packing"] },
-  "data-source": { title: "Data Source", subtitle: "Sumber data metric Cost dan waktu pembaruan terakhir tiap sumber.", focus: ["slc", "ope-pabrik", "ope-instalasi", "ope-packing", "upph"] },
+  "finish-good": { title: "Finish Good", subtitle: "Kesiapan finish good packing dan UPPH terhadap target pengiriman.", focus: ["upph"] },
+  "data-source": { title: "Data Source", subtitle: "Sumber data metric Cost dan waktu pembaruan terakhir tiap sumber.", focus: ["slc", "ope", "upph", "ratio", "intern"] },
 };
 
 const manpowerRows = [
@@ -132,7 +141,7 @@ export default function MeetingDashboard({ section = "overview", onNavigate }: {
             <article className="repair-kpi pic-kpi bg-white! border border-gray-200/80!" key={card.id} style={active ? { borderColor: "var(--accent-1)" } : undefined}>
               <div className="repair-kpi-top"><span>{card.name}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? "On Target" : "Off Target"}</span></div>
               <strong>{card.display} <small>{card.unit}</small></strong>
-              <p>Target: {card.targetLabel} <b className={good ? "good-text" : "bad-text"}>{card.delta}</b></p>
+              <p>{card.subtext}</p>
               <Sparkline success={good} />
               <div className="pic-kpi-actions">
                 <button type="button" className="repair-outline pic-mini" onClick={() => toggle(card.id)}>{active ? "Tutup Tren" : "Lihat Tren"}</button>
@@ -146,7 +155,7 @@ export default function MeetingDashboard({ section = "overview", onNavigate }: {
       <div className="repair-charts">
         {chartKeys.map((key) => {
           const card = baseCards.find((item) => item.id === key)!;
-          return <MetricChart key={key} id={`pic-cost-${section}-${key}`} title={card.name} values={trendSeeds[key]} target={card.target} direction={card.higherIsBetter ? "higher" : "lower"} full />;
+          return <MetricChart key={key} id={`pic-cost-${section}-${key}`} title={card.name} values={trendSeeds[key]} target={card.target} direction={card.higherIsBetter ? "higher" : "lower"} domain={chartDomains[key]} yFormat={key === "slc" ? (value) => `¥${value.toFixed(2)}` : undefined} full />;
         })}
       </div>
 

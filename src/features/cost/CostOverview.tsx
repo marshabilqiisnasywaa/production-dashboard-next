@@ -33,11 +33,11 @@ const GRID = "#E2E8F0";
 type CostChartKey = "trend" | "structure" | "manpower" | "overtime";
 
 const metrics: PicMetricCardData[] = [
-  { id: "slc", name: "SLC (per unit)", value: 2.85, display: "¥2.85", unit: "", target: 3, targetLabel: "¥3.00", gap: "0.15", direction: "lower" },
-  { id: "ope", name: "OPE Productivity", value: 78.5, display: "78.5", unit: "%", target: 80, targetLabel: "80.00%", gap: "1.5", direction: "higher" },
-  { id: "upph", name: "UPPH", value: 42.6, display: "42.6", unit: "pcs/h", target: 40, targetLabel: "40.0 pcs/h", gap: "2.6", direction: "higher" },
-  { id: "ratio", name: "Direct : Indirect", value: 3.2, display: "3.2 : 1", unit: "", target: 3, targetLabel: "3.0 : 1", gap: "0.2", direction: "higher" },
-  { id: "intern", name: "Internship Rate", value: 18.5, display: "18.5", unit: "%", target: 15, targetLabel: "15.00%", gap: "3.5", direction: "lower" },
+  { id: "slc", name: "SLC (per unit)", value: 2.85, display: "¥2.85", unit: "", target: 3, targetLabel: "¥3.00", gap: "0.15", direction: "lower", subtext: "YoY -4.2% · ¥/unit" },
+  { id: "ope", name: "OPE Productivity", value: 78.5, display: "78.5", unit: "%", target: 77, targetLabel: "77.0%", gap: "1.5", direction: "higher", subtext: "MoM +1.6pp" },
+  { id: "upph", name: "UPPH", value: 42.6, display: "42.6", unit: "", target: 40, targetLabel: "40.0", gap: "2.6", direction: "higher", subtext: "MoM +2.3 · units/p-h" },
+  { id: "ratio", name: "Direct : Indirect", value: 3.2, display: "3.2 : 1", unit: "", target: 3, targetLabel: "3.0 : 1", gap: "0.2", direction: "higher", subtext: "Target 3.0:1" },
+  { id: "intern", name: "Internship Rate", value: 18.5, display: "18.5", unit: "%", target: 15, targetLabel: "15.00%", gap: "3.5", direction: "lower", subtext: "Cap 20% · watch" },
 ];
 
 const chartFor: Record<string, CostChartKey> = {
@@ -172,8 +172,8 @@ export default function CostOverview() {
               <LineChart data={trendData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
                 <CartesianGrid vertical={false} stroke={GRID} />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 11 }} />
-                <YAxis axisLine={false} tickLine={false} width={44} tick={{ fontSize: 11 }} domain={["auto", "auto"]} />
-                <Tooltip />
+                <YAxis axisLine={false} tickLine={false} width={52} tick={{ fontSize: 11 }} domain={[2.5, 3.5]} tickFormatter={(value) => `¥${Number(value).toFixed(2)}`} />
+                <Tooltip formatter={(value) => `¥${Number(value).toFixed(2)}`} />
                 <Legend />
                 <Line type="monotone" dataKey="target" name="Target" stroke={SLATE} strokeDasharray="5 5" dot={false} strokeWidth={2} />
                 <Line type="monotone" dataKey="actual" name="SLC Aktual" stroke={EMERALD} strokeWidth={2} dot={{ r: 3, stroke: EMERALD_LIGHT }} />

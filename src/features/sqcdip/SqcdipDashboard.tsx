@@ -21,34 +21,30 @@ type Category = "S" | "Q" | "C" | "D" | "I" | "P" | "O";
 type Kpi = { name: string; actual: number; display: string; target: number; targetLabel: string; direction: Direction; unit?: string; views: ("H" | "B")[]; external?: boolean; externalUrl?: string };
 
 const categories: { key: Category; name: string; summary: string; abnormal: number }[] = [
-  { key: "S", name: "Safety", summary: "4/6 on target", abnormal: 1 },
-  { key: "Q", name: "Quality", summary: "1/2 on target", abnormal: 3 },
-  { key: "D", name: "Delivery", summary: "2/5 on target", abnormal: 2 },
+  { key: "S", name: "Safety", summary: "3/4 on target", abnormal: 1 },
+  { key: "Q", name: "Quality", summary: "2/3 on target", abnormal: 3 },
+  { key: "D", name: "Delivery", summary: "0/2 on target", abnormal: 2 },
   { key: "C", name: "Cost", summary: "5/7 on target", abnormal: 0 },
-  { key: "I", name: "Inventory", summary: "7/8 on target", abnormal: 1 },
-  { key: "P", name: "Productivity", summary: "1/2 on target", abnormal: 2 },
+  { key: "I", name: "Inventory", summary: "4/4 on target", abnormal: 1 },
+  { key: "P", name: "Productivity", summary: "5/5 on target", abnormal: 2 },
   { key: "O", name: "Lainnya", summary: "1/4 on target", abnormal: 0 },
 ];
 
 const kpis: Record<Category, Kpi[]> = {
   S: [
-    { name: "Kecelakaan Kerja", actual: 0, display: "0", target: 0, targetLabel: "0 kasus", direction: "lower", unit: "kasus", views: ["H"] },
-    { name: "ISC Abnormal", actual: 1, display: "1", target: 0, targetLabel: "0 kasus", direction: "lower", unit: "kasus", views: ["H"] },
     { name: "Battery Safety", actual: 0, display: "0", target: 0, targetLabel: "0 kasus", direction: "lower", unit: "kasus", views: ["B"] },
     { name: "Safety Incident", actual: 1, display: "1", target: 0, targetLabel: "0 kasus", direction: "lower", unit: "kasus", views: ["B"] },
     { name: "Safety Information", actual: 100, display: "100%", target: 100, targetLabel: "100%", direction: "higher", views: ["B"] },
     { name: "Safety Material", actual: 0, display: "0", target: 0, targetLabel: "0 kasus", direction: "lower", unit: "kasus", views: ["B"] },
   ],
   Q: [
-    { name: "OQC / FQC", actual: 98.9, display: "98.9%", target: 99, targetLabel: "99%", direction: "higher", views: ["H", "B"] },
-    { name: "Pemilahan ODM", actual: 98.5, display: "98.5%", target: 98, targetLabel: "98%", direction: "higher", views: ["H"] },
+    { name: "FQC Rate", actual: 1.45, display: "1.45%", target: 1.5, targetLabel: "1.50%", direction: "lower", views: ["H", "B"] },
+    { name: "OQC Rate", actual: 1.82, display: "1.82%", target: 1.2, targetLabel: "1.20%", direction: "lower", views: ["H", "B"] },
+    { name: "ODM Rate", actual: 1.15, display: "1.15%", target: 1.3, targetLabel: "1.30%", direction: "lower", views: ["H", "B"] },
   ],
   D: [
     { name: "WO Close", actual: 94, display: "94%", target: 100, targetLabel: "100%", direction: "higher", views: ["H", "B"] },
-    { name: "Change Over", actual: 5.8, display: "5.8", target: 6, targetLabel: "6 jam", direction: "lower", unit: "jam", views: ["H"] },
-    { name: "SMED", actual: 6.5, display: "6.5", target: 6, targetLabel: "6 jam", direction: "lower", unit: "jam", views: ["B"] },
     { name: "End-to-End Delivery", actual: 5.2, display: "5.2", target: 5, targetLabel: "5.0 hari", direction: "lower", unit: "hari", views: ["B"] },
-    { name: "Resign Rate", actual: 1.8, display: "1.8%", target: 2, targetLabel: "2.0%", direction: "lower", views: ["B"] },
   ],
   C: [
     { name: "NGP", actual: .98, display: "0.98%", target: 1, targetLabel: "1.00%", direction: "lower", views: ["H", "B"] },
@@ -60,18 +56,17 @@ const kpis: Record<Category, Kpi[]> = {
     { name: "Losses Material", actual: .35, display: "0.35%", target: .4, targetLabel: "0.40%", direction: "lower", views: ["B"] },
   ],
   I: [
-    { name: "WIP Mainboard Service", actual: 320, display: "320", target: 400, targetLabel: "400 pcs", direction: "lower", unit: "pcs", views: ["H"] },
-    { name: "WIP Service Eksternal", actual: 85, display: "85", target: 100, targetLabel: "100 pcs", direction: "lower", unit: "pcs", views: ["H"] },
     { name: "WIP Warranty", actual: 890, display: "890", target: 900, targetLabel: "900 pcs", direction: "lower", unit: "pcs", views: ["H"] },
     { name: "WIP Rework", actual: 640, display: "640", target: 700, targetLabel: "700 pcs", direction: "lower", unit: "pcs", views: ["H"] },
     { name: "WIP Pre-assembly", actual: 2456, display: "2,456", target: 2800, targetLabel: "2,800 pcs", direction: "lower", unit: "pcs", views: ["H"] },
     { name: "Clearance Model", actual: 98, display: "98%", target: 95, targetLabel: "95%", direction: "higher", views: ["H"] },
-    { name: "SO & Pemberesan Material", actual: 91, display: "91%", target: 95, targetLabel: "95%", direction: "higher", views: ["H"] },
-    { name: "Material Management Impact", actual: 2, display: "2", target: 3, targetLabel: "3 kali", direction: "lower", unit: "kali", views: ["B"] },
   ],
   P: [
-    { name: "Output Assembly", actual: 96, display: "96%", target: 95, targetLabel: "95%", direction: "higher", views: ["H"] },
-    { name: "Output Packing", actual: 93, display: "93%", target: 95, targetLabel: "95%", direction: "higher", views: ["H"] },
+    { name: "Assembly Plan", actual: 12800, display: "12,800", target: 12500, targetLabel: "12,500 units", direction: "higher", unit: "units", views: ["H"] },
+    { name: "Assembly Actual", actual: 12650, display: "12,650", target: 12500, targetLabel: "12,500 units", direction: "higher", unit: "units", views: ["H"] },
+    { name: "Achievement Rate", actual: 98.8, display: "98.8%", target: 95, targetLabel: "95%", direction: "higher", views: ["H"] },
+    { name: "Packaging Plan", actual: 9600, display: "9,600", target: 9500, targetLabel: "9,500 units", direction: "higher", unit: "units", views: ["H"] },
+    { name: "FG Actual", actual: 9580, display: "9,580", target: 9500, targetLabel: "9,500 units", direction: "higher", unit: "units", views: ["H"] },
   ],
   O: [
     { name: "5S", actual: 88, display: "88%", target: 90, targetLabel: "90%", direction: "higher", views: ["H"], external: true },
@@ -136,7 +131,7 @@ function Spark({ good }: { good: boolean }) {
 function KpiCard({ kpi, category, onClick }: { kpi: Kpi; category: Category; onClick: () => void }) {
   const good = onTarget(kpi);
   const delta = Math.abs(kpi.actual-kpi.target);
-  return <button className="sq-kpi" onClick={onClick}><div className="sq-kpi-head"><span>{kpi.name}</span><b>{category}</b></div><strong>{kpi.display} <small>{kpi.unit}</small></strong><p>Target: {kpi.targetLabel}</p><div className="sq-view-tags">{kpi.views.map((view)=><span key={view} className="sq-view-tag" title={view === "H" ? "Tampilan Harian" : "Tampilan Bulanan"}>{view}</span>)}{kpi.external && <span className="sq-view-tag ext" title="Membuka tautan eksternal">↗</span>}</div><div className={`sq-status ${good?"good":"bad"}`}>{good?"On Target":"Off Target"} <span>{good?"↓":"↑"} {delta.toLocaleString()}</span></div><Spark good={good}/></button>;
+  return <button className="sq-kpi" onClick={onClick}><div className="sq-kpi-head"><span>{kpi.name}</span><b>{category}</b></div><strong>{kpi.display} <small>{kpi.unit}</small></strong><p>Target: {kpi.targetLabel}</p><div className="sq-view-tags">{kpi.views.map((view)=><span key={view} className="sq-view-tag" title={view === "H" ? "Tampilan Harian" : "Tampilan Bulanan"}>{view}</span>)}</div><div className={`sq-status ${good?"good":"bad"}`}>{good?"On Target":"Off Target"} <span>{good?"↓":"↑"} {delta.toLocaleString()}</span></div><Spark good={good}/></button>;
 }
 
 function KpiDetail({ kpi, category, initialPeriod, onClose, onOpenCost }: { kpi: Kpi; category: Category; initialPeriod?: string; onClose: () => void; onOpenCost?: NavigateCost }) {
@@ -157,7 +152,7 @@ function Overview({ onOpenCost }: { onOpenCost?: NavigateCost }) {
   const [detail,setDetail]=useState<{kpi:Kpi;category:Category;initialPeriod:string}|null>(null);
   const visible=selected?categories.filter((item)=>item.key===selected):categories;
   const getState=(item:{abnormal:number})=>item.abnormal===0?"good":item.abnormal<=2?"warning":"bad";
-  return <div className="sqcdip-content"><Header/><div className="sq-tiles">{categories.map((item)=>{const state=item.key==="O"?"neutral":getState(item);return <button className={`${state} ${selected===item.key?"active":""}`.trim()} onClick={()=>setSelected(selected===item.key?null:item.key)} key={item.key}><strong>{item.key}</strong><div><h2>{item.name}</h2><p>{item.summary}</p></div><span className={`sq-big-dot ${state}`}/><em>{item.abnormal} open</em></button>;})}</div><div className="sq-legend"><span><b>H</b> Tampilan Harian</span><span><b>B</b> Tampilan Bulanan</span><span><b>↗</b> Membuka tautan eksternal</span></div><div className="sq-overview-main"><div className="sq-sections">{visible.map((category)=><section className="sq-panel sq-category" key={category.key}><button className="sq-category-head" onClick={()=>setCollapsed((current)=>current.includes(category.key)?current.filter((key)=>key!==category.key):[...current,category.key])}><span>{category.key}</span><div><h2>{category.name}</h2><p>{category.summary}</p></div><Icon name="chevron"/></button>{!collapsed.includes(category.key)&&<div className="sq-kpi-grid">{kpis[category.key].map((kpi)=><KpiCard key={kpi.name} kpi={kpi} category={category.key} onClick={()=>{ if (kpi.externalUrl) { window.open(kpi.externalUrl, "_blank", "noopener,noreferrer"); return; } setDetail({ kpi, category: category.key, initialPeriod: kpi.views[0] === "B" ? "Bulanan" : "Harian" }); }}/>)}</div>}</section>)}</div><TodayAbnormal category={selected} onReset={() => setSelected(null)} /></div>{detail&&<KpiDetail {...detail} onClose={()=>setDetail(null)} onOpenCost={onOpenCost}/>}</div>;
+  return <div className="sqcdip-content"><Header/><div className="sq-tiles">{categories.map((item)=>{const state=item.key==="O"?"neutral":getState(item);return <button className={`${state} ${selected===item.key?"active":""}`.trim()} onClick={()=>setSelected(selected===item.key?null:item.key)} key={item.key}><strong>{item.key}</strong><div><h2>{item.name}</h2><p>{item.summary}</p></div><span className={`sq-big-dot ${state}`}/><em>{item.abnormal} open</em></button>;})}</div><div className="sq-overview-main"><div className="sq-sections">{visible.map((category)=><section className="sq-panel sq-category" key={category.key}><button className="sq-category-head" onClick={()=>setCollapsed((current)=>current.includes(category.key)?current.filter((key)=>key!==category.key):[...current,category.key])}><span>{category.key}</span><div><h2>{category.name}</h2><p>{category.summary}</p></div><Icon name="chevron"/></button>{!collapsed.includes(category.key)&&<div className="sq-kpi-grid">{kpis[category.key].map((kpi)=><KpiCard key={kpi.name} kpi={kpi} category={category.key} onClick={()=>{ if (kpi.externalUrl) { window.open(kpi.externalUrl, "_blank", "noopener,noreferrer"); return; } setDetail({ kpi, category: category.key, initialPeriod: kpi.views[0] === "B" ? "Bulanan" : "Harian" }); }}/>)}</div>}</section>)}</div><TodayAbnormal category={selected} onReset={() => setSelected(null)} /></div>{detail&&<KpiDetail {...detail} onClose={()=>setDetail(null)} onOpenCost={onOpenCost}/>}</div>;
 }
 
 const heatValues = [[1,0,2,1,0,0],[3,1,2,2,1,0],[0,1,3,2,0,1],[1,2,1,3,2,0],[0,1,2,1,3,1],[2,1,0,2,2,1],[0,1,0,0,1,0]];

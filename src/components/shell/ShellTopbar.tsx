@@ -82,7 +82,7 @@ export default function ShellTopbar({
       <div className="navbar-right">
         <button className="command-search" onClick={onOpenCommand}><Icon name="search" size={16} /><span>Search...</span><kbd>{isMac ? "⌘K" : "Ctrl K"}</kbd></button>
         <div className="topbar-selects">
-          <CustomSelect value={mode} options={[{ value: "klasik", label: "Classic" }, { value: "morning-meeting", label: "Morning Meeting" }]} onChange={(next) => onSelectMode(next as DisplayMode)} ariaLabel="Display mode" />
+          <CustomSelect value={mode} options={[{ value: "klasik", label: "Production KPI" }, { value: "morning-meeting", label: "Morning Meeting" }]} onChange={(next) => onSelectMode(next as DisplayMode)} ariaLabel="Display mode" />
           <CustomSelect value={role} options={appRoles.map((item) => ({ value: item, label: item }))} onChange={(next) => onSelectRole(next as Role)} ariaLabel="User role" />
           {role === "PIC Area" && <CustomSelect value={picArea} options={picAreaOptions.map((item) => ({ value: item.key, label: item.label }))} onChange={(next) => onSelectPicArea(next as PicAreaKey)} ariaLabel="PIC area" />}
         </div>

@@ -22,28 +22,11 @@ type MeetingCard = {
   targetLabel: string;
 };
 
-function ngCount(module: QcModuleKey): { value: number; target: number } {
-  const dataDef = QC_MODULE_DATA[module];
-  const latest = dataDef.dailyNg[dataDef.dailyNg.length - 1];
-  return {
-    value: Math.round((dataDef.totalSample * latest) / 100),
-    target: Math.round((dataDef.totalSample * dataDef.ngTarget) / 100),
-  };
-}
-
-const baseCards: MeetingCard[] = QC_MODULES.map((module) => {
-  const dataDef = QC_MODULE_DATA[module];
-  const count = ngCount(module);
-  return {
-    id: module,
-    name: `${module} NG Units`,
-    value: count.value,
-    display: count.value.toLocaleString("en-US"),
-    unit: "units",
-    target: count.target,
-    targetLabel: `${count.target.toLocaleString("en-US")} units`,
-  };
-});
+const baseCards: MeetingCard[] = [
+  { id: "FQC", name: "FQC Rate", value: 1.45, display: "1.45%", unit: "", target: 1.5, targetLabel: "1.50%" },
+  { id: "OQC", name: "OQC Rate", value: 1.82, display: "1.82%", unit: "", target: 1.2, targetLabel: "1.20%" },
+  { id: "ODM", name: "ODM Rate", value: 1.15, display: "1.15%", unit: "", target: 1.3, targetLabel: "1.30%" },
+];
 
 function Breakdown({ trendKey }: { trendKey: TrendKey }) {
   const dataDef = QC_MODULE_DATA[trendKey];
@@ -80,7 +63,7 @@ function QcInputDialog({ onClose, onSave }: { onClose: () => void; onSave: (id: 
   return <div className="repair-modal-backdrop" onMouseDown={onClose}><form className="repair-dialog" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); onSave(String(data.get("kpi")), Number(data.get("actual"))); }}>
     <div className="repair-dialog-head"><div><h2>Input Data KPI</h2><p>Tambahkan data aktual untuk periode baru.</p></div><button type="button" onClick={onClose}><Glyph name="close" /></button></div>
     <div className="dialog-tabs"><button type="button" className={tab === "manual" ? "active" : ""} onClick={() => setTab("manual")}>Input Manual</button><button type="button" className={tab === "import" ? "active" : ""} onClick={() => setTab("import")}>Import Excel</button></div>
-    {tab === "manual" ? <div className="repair-form"><label>Pilih KPI<CustomSelect value={selectedKpi} options={QC_MODULES.map((module) => ({ value: module, label: `${module} NG Units` }))} onChange={(next) => setSelectedKpi(next)} /></label><div className="form-grid"><label>Periode<input type="date" required /></label><label>Tipe<CustomSelect defaultValue="Harian" options={["Harian", "Mingguan", "Bulanan"]} /></label><label>Target<input name="target" type="number" step="any" required /></label><label>Actual<input name="actual" type="number" step="any" required /></label></div><label>Catatan<textarea rows={3} placeholder="Catatan PIC..." /></label></div> : <div className="repair-dropzone"><Glyph name="upload" /><strong>Drop file Excel atau CSV di sini</strong><span>.xlsx, .xls, atau .csv maksimal 10 MB</span><input type="file" accept=".xlsx,.xls,.csv" /><div className="import-preview"><span>Preview akan tampil setelah file dipilih</span></div></div>}
+    {tab === "manual" ? <div className="repair-form"><label>Pilih KPI<CustomSelect value={selectedKpi} options={QC_MODULES.map((module) => ({ value: module, label: `${module} Rate` }))} onChange={(next) => setSelectedKpi(next)} /></label><div className="form-grid"><label>Periode<input type="date" required /></label><label>Tipe<CustomSelect defaultValue="Harian" options={["Harian", "Mingguan", "Bulanan"]} /></label><label>Target<input name="target" type="number" step="any" required /></label><label>Actual<input name="actual" type="number" step="any" required /></label></div><label>Catatan<textarea rows={3} placeholder="Catatan PIC..." /></label></div> : <div className="repair-dropzone"><Glyph name="upload" /><strong>Drop file Excel atau CSV di sini</strong><span>.xlsx, .xls, atau .csv maksimal 10 MB</span><input type="file" accept=".xlsx,.xls,.csv" /><div className="import-preview"><span>Preview akan tampil setelah file dipilih</span></div></div>}
     <div className="repair-dialog-actions"><button type="button" className="repair-outline" onClick={onClose}>Batal</button><button className="repair-primary">{tab === "manual" ? "Simpan" : "Konfirmasi Import"}</button></div>
   </form></div>;
 }
@@ -95,13 +78,13 @@ export default function PicQcHome() {
   const cards = useMemo(() => baseCards.map((card) => {
     if (values[card.id] === undefined) return card;
     const value = values[card.id];
-    return { ...card, value, display: value.toLocaleString("en-US") };
+    return { ...card, value, display: `${value.toFixed(2)}%` };
   }), [values]);
 
   const trendConfig = useMemo(() => ({
-    FQC: { title: "FQC NG Units", values: QC_MODULE_DATA.FQC.dailyNg.map((rate) => Math.round((QC_MODULE_DATA.FQC.totalSample * rate) / 100)), target: ngCount("FQC").target, direction: "lower" as const },
-    OQC: { title: "OQC NG Units", values: QC_MODULE_DATA.OQC.dailyNg.map((rate) => Math.round((QC_MODULE_DATA.OQC.totalSample * rate) / 100)), target: ngCount("OQC").target, direction: "lower" as const },
-    ODM: { title: "ODM NG Units", values: QC_MODULE_DATA.ODM.dailyNg.map((rate) => Math.round((QC_MODULE_DATA.ODM.totalSample * rate) / 100)), target: ngCount("ODM").target, direction: "lower" as const },
+    FQC: { title: "FQC Rate Performance", values: [1.62, 1.58, 1.66, 1.55, 1.6, 1.52, 1.57, 1.49, 1.54, 1.47, 1.51, 1.48, 1.5, 1.45], target: 1.5, direction: "lower" as const },
+    OQC: { title: "OQC Rate Performance", values: [1.25, 1.3, 1.28, 1.35, 1.42, 1.38, 1.45, 1.52, 1.48, 1.55, 1.6, 1.58, 1.7, 1.82], target: 1.2, direction: "lower" as const },
+    ODM: { title: "ODM Rate Performance", values: [1.42, 1.38, 1.35, 1.4, 1.32, 1.28, 1.33, 1.25, 1.29, 1.22, 1.26, 1.2, 1.18, 1.15], target: 1.3, direction: "lower" as const },
   }), []);
 
   const saveInput = (id: string, actual: number) => {
@@ -121,7 +104,7 @@ export default function PicQcHome() {
           <div className="repair-title-row">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Meeting Dashboard</h1>
           </div>
-          <p>Core metric summary for QC area: FQC, OQC, and ODM NG units.</p>
+          <p>Core metric summary for QC area: FQC Rate, OQC Rate, and ODM Rate.</p>
         </div>
         <div className="repair-actions">
           <button className="repair-outline" type="button">07 Oct 2026</button>
@@ -133,12 +116,13 @@ export default function PicQcHome() {
         {cards.map((card) => {
           const good = isOnTarget(card.value, card.target, "lower");
           const active = selected === card.id;
-          const gap = Math.abs(card.value - card.target).toLocaleString("en-US");
+          const diff = card.value - card.target;
+          const gap = `${diff >= 0 ? "+" : ""}${diff.toFixed(2)}%`;
           return (
             <article className="repair-kpi pic-kpi bg-white/80! backdrop-blur-md border border-white/60! shadow-xs! rounded-2xl!" key={card.id} style={active ? { borderColor: "var(--accent-1)" } : undefined}>
               <div className="repair-kpi-top"><span>{card.name}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? "On Target" : "Off Target"}</span></div>
               <strong>{card.display} <small>{card.unit}</small></strong>
-              <p>Target: {card.targetLabel} <b className={good ? "good-text" : "bad-text"}>{good ? "↓" : "↑"} {gap}</b></p>
+              <p>Target: {card.targetLabel} <b className={good ? "good-text" : "bad-text"}> {gap}</b></p>
               <Sparkline success={good} />
               <div className="pic-kpi-actions">
                 <button type="button" className="repair-outline pic-mini" onClick={() => toggle(card.id)}>{active ? "Tutup Tren" : "Lihat Tren"}</button>
@@ -152,12 +136,12 @@ export default function PicQcHome() {
       {selected === null ? (
         <div className="repair-charts pic-qc-glass">
           {(Object.keys(trendConfig) as TrendKey[]).map((key) => (
-            <MetricChart key={key} id={`pic-qc-${key}`} title={trendConfig[key].title} values={trendConfig[key].values} target={trendConfig[key].target} direction={trendConfig[key].direction} full />
+            <MetricChart key={key} id={`pic-qc-${key}`} title={trendConfig[key].title} values={trendConfig[key].values} target={trendConfig[key].target} direction={trendConfig[key].direction} domain={[0.5, 2.5]} full />
           ))}
         </div>
       ) : (
         <div className="repair-charts pic-qc-glass">
-          <MetricChart id={`pic-qc-${selected}`} title={trendConfig[selected].title} values={trendConfig[selected].values} target={trendConfig[selected].target} direction={trendConfig[selected].direction} full />
+          <MetricChart id={`pic-qc-${selected}`} title={trendConfig[selected].title} values={trendConfig[selected].values} target={trendConfig[selected].target} direction={trendConfig[selected].direction} domain={[0.5, 2.5]} full />
           <Breakdown trendKey={selected} />
         </div>
       )}
@@ -165,9 +149,9 @@ export default function PicQcHome() {
       {aiCard && (
         <PicAiInsight
           metricName={aiCard.name}
-          actualLabel={`${aiCard.display} ${aiCard.unit}`}
+          actualLabel={aiCard.display}
           targetLabel={aiCard.targetLabel}
-          gapLabel={Math.abs(aiCard.value - aiCard.target).toLocaleString("en-US")}
+          gapLabel={`${(aiCard.value - aiCard.target) >= 0 ? "+" : ""}${(aiCard.value - aiCard.target).toFixed(2)}%`}
           direction="lower"
           onClose={() => setAiCard(null)}
         />

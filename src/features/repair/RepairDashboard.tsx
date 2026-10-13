@@ -96,10 +96,11 @@ export function Sparkline({ success }: { success: boolean }) {
 
 type ChartDatum = { period: string; actual: number | null; target: number };
 
-function RepairTooltip({ active, payload, label }: { active?: boolean; payload?: readonly { payload?: ChartDatum }[]; label?: string }) {
+function RepairTooltip({ active, payload, label, format }: { active?: boolean; payload?: readonly { payload?: ChartDatum }[]; label?: string; format?: (value: number) => string }) {
   if (!active || !payload?.[0]?.payload) return null;
   const point = payload[0].payload;
-  return <div className="repair-tooltip"><strong>{label}</strong>{point.actual === null ? <p>Belum ada data</p> : <><div><span>Target</span><b>{point.target.toLocaleString()}</b></div><div><span>Actual</span><b>{point.actual.toLocaleString()}</b></div><div><span>Selisih</span><b>{(point.actual - point.target).toLocaleString()}</b></div></>}</div>;
+  const fmt = format ?? ((value: number) => value.toLocaleString());
+  return <div className="repair-tooltip"><strong>{label}</strong>{point.actual === null ? <p>Belum ada data</p> : <><div><span>Target</span><b>{fmt(point.target)}</b></div><div><span>Actual</span><b>{fmt(point.actual)}</b></div><div><span>Selisih</span><b>{fmt(point.actual - point.target)}</b></div></>}</div>;
 }
 
 function StatusDot(props: { cx?: number; cy?: number; payload?: ChartDatum; direction: Direction }) {
@@ -108,8 +109,8 @@ function StatusDot(props: { cx?: number; cy?: number; payload?: ChartDatum; dire
   return <circle cx={props.cx} cy={props.cy} r="4" fill={good ? "var(--success)" : "var(--danger)"} stroke="var(--card)" strokeWidth="2" />;
 }
 
-export function MetricChart({ id, title, values, target, direction, domain, full = false }: {
-  id: string; title: string; values: (number | null)[]; target: number | number[]; direction: Direction; domain?: [number, number]; full?: boolean;
+export function MetricChart({ id, title, values, target, direction, domain, yFormat, full = false }: {
+  id: string; title: string; values: (number | null)[]; target: number | number[]; direction: Direction; domain?: [number, number]; yFormat?: (value: number) => string; full?: boolean;
 }) {
   const [labels, setLabels] = useState(false);
   const [period, setPeriod] = useState<PeriodKey>("Week");
@@ -127,8 +128,8 @@ export function MetricChart({ id, title, values, target, direction, domain, full
         <LineChart data={data} margin={{ top: 18, right: 18, left: 6, bottom: 8 }}>
           <CartesianGrid vertical={false}/>
           <XAxis dataKey="period" axisLine={false} tickLine={false} tickMargin={10} interval="preserveStartEnd"/>
-          <YAxis domain={domain ?? ["auto", "auto"]} axisLine={false} tickLine={false} width={48}/>
-          <Tooltip content={<RepairTooltip/>} cursor={{ stroke: "var(--line)" }}/>
+          <YAxis domain={domain ?? ["auto", "auto"]} axisLine={false} tickLine={false} width={48} tickFormatter={yFormat}/>
+          <Tooltip content={<RepairTooltip format={yFormat}/>} cursor={{ stroke: "var(--line)" }}/>
           <Legend wrapperStyle={{ paddingTop: 8, marginTop: 0 }} iconType="line" />
           <Line type="natural" dataKey="target" name="Target" stroke="var(--success)" strokeDasharray="5 5" dot={false} strokeWidth={2} connectNulls={false}/>
           <Line type="natural" dataKey="actual" name="Actual" stroke="var(--chart-1)" strokeWidth={2} connectNulls={false} dot={(props) => <StatusDot {...props} direction={direction}/>}>

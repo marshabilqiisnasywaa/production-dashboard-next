@@ -141,10 +141,10 @@ export const laporanGroup: NavGroup = {
     { label: "Daily Plan", key: "service-plan", href: "/service/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "service", allowedRoles: ["PIC Area"] },
     { label: "Abnormality", key: "qc-abnormality", href: "/qc/pic-abnormality", icon: "alert", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
     { label: "Daily Plan", key: "qc-plan", href: "/qc/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
-    { label: "Abnormality", key: "cost-abnormality", href: "/abnormality", icon: "alert", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
-    { label: "Daily Plan", key: "cost-daily-plan", href: "/abnormality/plan", icon: "calendar", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
-    { label: "Abnormality", key: "safety-abnormality", href: "/abnormality", icon: "alert", mode: morningMeetingMode, area: "safety", allowedRoles: ["PIC Area"] },
-    { label: "Daily Plan", key: "safety-daily-plan", href: "/abnormality/plan", icon: "calendar", mode: morningMeetingMode, area: "safety", allowedRoles: ["PIC Area"] },
+    { label: "Abnormality", key: "cost-abnormality", href: "/cost/pic-abnormality", icon: "alert", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
+    { label: "Daily Plan", key: "cost-daily-plan", href: "/cost/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
+    { label: "Abnormality", key: "safety-abnormality", href: "/safety/pic-abnormality", icon: "alert", mode: morningMeetingMode, area: "safety", allowedRoles: ["PIC Area"] },
+    { label: "Daily Plan", key: "safety-daily-plan", href: "/safety/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "safety", allowedRoles: ["PIC Area"] },
   ],
 };
 

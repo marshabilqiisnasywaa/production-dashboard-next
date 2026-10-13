@@ -7,7 +7,17 @@ import PicAttachmentPreview from "@/features/pic-repair/PicAttachmentPreview";
 import PicPlanUpload, { type PlanUploadValue } from "@/features/pic-repair/PicPlanUpload";
 import { AlertCircle, CheckCircle2, Clock, FileText } from "lucide-react";
 
-const areaOptions = ["Pre Assembly", "Rework", "Warranty"];
+export type AbnormalityBoardProps = {
+  records: PicRepairRecord[];
+  addRecord: (input: PicRepairInput) => void;
+  picName: string;
+  areaOptions: string[];
+  defaultArea?: string;
+  kicker?: string;
+  description?: string;
+};
+
+const defaultAreaOptions = ["Pre Assembly", "Rework", "Warranty"];
 const factorOptions = ["Machine", "Man", "Material", "Method", "Media", "Env"];
 const statusOptions: PicRepairStatus[] = ["Open", "In Progress", "Resolved"];
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -31,7 +41,7 @@ function formatDisplayDate(iso: string) {
   return `${parts[2]} ${monthNames[Number(parts[1]) - 1] ?? parts[1]} ${parts[0]}`;
 }
 
-export default function PicAbnormality() {  const { records, addRecord } = useRepairPic();
+export function AbnormalityBoard({ records, addRecord, picName, areaOptions, defaultArea = "Pre Assembly", kicker = "ABNORMALITY LOG", description = "All findings are recorded here. Handle Open cases by priority." }: AbnormalityBoardProps) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [areaFilter, setAreaFilter] = useState("All");
@@ -39,7 +49,7 @@ export default function PicAbnormality() {  const { records, addRecord } = useRe
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState({ ...emptyForm, area: defaultArea });
   const [attachment, setAttachment] = useState<PlanUploadValue | null>(null);
   const [preview, setPreview] = useState<PicRepairRecord | null>(null);
 
@@ -116,7 +126,7 @@ export default function PicAbnormality() {  const { records, addRecord } = useRe
       reason: form.reason.trim() || "-",
       impact: form.impact.trim() || "-",
       countermeasure: form.countermeasure.trim() || "-",
-      pic: PIC_NAME,
+      pic: picName,
       dueDate: form.dueDate,
       status: form.status,
       evidence: form.evidence || "evidence.jpg",
@@ -124,7 +134,7 @@ export default function PicAbnormality() {  const { records, addRecord } = useRe
     addRecord(input);
     if (attachment?.url) URL.revokeObjectURL(attachment.url);
     setAttachment(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, area: defaultArea });
     setModalOpen(false);
     setPage(1);
   };
@@ -133,9 +143,9 @@ export default function PicAbnormality() {  const { records, addRecord } = useRe
     <div className="abnormality-page pic-page">
       <header className="qc-page-header">
         <div>
-          <div className="qc-kicker">ABNORMALITY LOG</div>
+          <div className="qc-kicker">{kicker}</div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Abnormality Log</h1>
-          <p>All findings are recorded here. Handle Open cases by priority.</p>
+          <p>{description}</p>
         </div>
         <div className="qc-toolbar">
           <button className="qc-secondary-button" type="button">07 Oct 2026</button>
@@ -193,7 +203,7 @@ export default function PicAbnormality() {  const { records, addRecord } = useRe
         <div className="repair-modal-backdrop" onMouseDown={closeModal}>
           <form className="repair-dialog" onMouseDown={(event) => event.stopPropagation()} onSubmit={submit}>
             <div className="repair-dialog-head">
-              <div><h2>Add Issue</h2><p>New findings are automatically recorded under {PIC_NAME}.</p></div>
+              <div><h2>Add Issue</h2><p>New findings are automatically recorded under {picName}.</p></div>
               <button type="button" aria-label="Close" onClick={closeModal}>✕</button>
             </div>
             <div className="repair-form">
@@ -223,4 +233,9 @@ export default function PicAbnormality() {  const { records, addRecord } = useRe
       <PicAttachmentPreview record={preview} onClose={() => setPreview(null)} />
     </div>
   );
+}
+
+export default function PicAbnormality() {
+  const { records, addRecord } = useRepairPic();
+  return <AbnormalityBoard records={records} addRecord={addRecord} picName={PIC_NAME} areaOptions={defaultAreaOptions} />;
 }
