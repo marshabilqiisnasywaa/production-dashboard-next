@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { TODAY_ISO, getDueStatus, useRepairPic, type DueTone, type PicRepairRecord, type PicRepairStatus } from "@/features/pic-repair/RepairPicContext";
+import { TODAY_ISO, getDueStatus, useRepairPic, type DueTone, type PicRecordPatch, type PicRepairRecord, type PicRepairStatus } from "@/features/pic-repair/RepairPicContext";
 import PicAttachmentPreview from "@/features/pic-repair/PicAttachmentPreview";
 import CustomSelect from "@/components/shell/CustomSelect";
 import PageHeader from "@/components/shell/PageHeader";
@@ -21,8 +21,13 @@ function formatDueDate(iso: string) {
   return `${parts[2]} ${monthNames[Number(parts[1]) - 1] ?? parts[1]} ${parts[0]}`;
 }
 
-function UpdateStatusModal({ record, onClose }: { record: PicRepairRecord; onClose: () => void }) {
-  const { updateRecord } = useRepairPic();
+export type FollowupBoardProps = {
+  records: PicRepairRecord[];
+  updateRecord: (id: string, patch: PicRecordPatch) => void;
+  sourceLabel?: string;
+};
+
+function UpdateStatusModal({ record, updateRecord, onClose }: { record: PicRepairRecord; updateRecord: (id: string, patch: PicRecordPatch) => void; onClose: () => void }) {
   const [status, setStatus] = useState<PicRepairStatus>(record.status);
   const [evidence, setEvidence] = useState(record.evidence);
 
@@ -53,8 +58,7 @@ function UpdateStatusModal({ record, onClose }: { record: PicRepairRecord; onClo
   );
 }
 
-export default function PicRepairFollowup() {
-  const { records } = useRepairPic();
+export function FollowupBoard({ records, updateRecord, sourceLabel = "Abnormality Log" }: FollowupBoardProps) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [page, setPage] = useState(1);
@@ -114,7 +118,7 @@ export default function PicRepairFollowup() {
       <PageHeader
         eyebrow="MORNING MEETING"
         title="Follow-up"
-        subtitle={`Follow-up tasks from Abnormality Log issues that are still Open or In Progress. Today ${formatDueDate(TODAY_ISO)}.`}
+        subtitle={`Follow-up tasks from ${sourceLabel} issues that are still Open or In Progress. Today ${formatDueDate(TODAY_ISO)}.`}
         actions={<CustomSelect value={statusFilter} options={[{ value: "All", label: "All Active Statuses" }, ...activeOptions]} onChange={setStatusFilter} ariaLabel="Status filter" />}
       />
 
@@ -205,8 +209,13 @@ export default function PicRepairFollowup() {
       </section>
 
       <PicAttachmentPreview record={preview} onClose={() => setPreview(null)} />
-      {editing && <UpdateStatusModal record={editing} onClose={closeEditing} />}
+      {editing && <UpdateStatusModal record={editing} updateRecord={updateRecord} onClose={closeEditing} />}
       {toast && <div className="repair-toast"><span>✓</span>Status updated</div>}
     </div>
   );
+}
+
+export default function PicRepairFollowup() {
+  const { records, updateRecord } = useRepairPic();
+  return <FollowupBoard records={records} updateRecord={updateRecord} />;
 }

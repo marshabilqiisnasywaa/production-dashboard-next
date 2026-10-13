@@ -91,6 +91,19 @@ export const monitoringGroup: NavGroup = {
     },
     {
       label: "Area Monitoring",
+      key: "assembly-monitor",
+      href: "/assembly/monitoring/assembly",
+      icon: "assembly",
+      mode: morningMeetingMode,
+      area: "assembly",
+      allowedRoles: ["PIC Area"],
+      children: [
+        { label: "Assembly", key: "assembly-prod", href: "/assembly/monitoring/assembly", icon: "assembly", mode: morningMeetingMode, area: "assembly", allowedRoles: ["PIC Area"] },
+        { label: "Packaging", key: "assembly-pack", href: "/assembly/monitoring/packaging", icon: "package", mode: morningMeetingMode, area: "assembly", allowedRoles: ["PIC Area"] },
+      ],
+    },
+    {
+      label: "Area Monitoring",
       key: "cost-area-monitoring",
       href: "/morning-meeting",
       icon: "assembly",
@@ -141,6 +154,8 @@ export const laporanGroup: NavGroup = {
     { label: "Daily Plan", key: "service-plan", href: "/service/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "service", allowedRoles: ["PIC Area"] },
     { label: "Abnormality", key: "qc-abnormality", href: "/qc/pic-abnormality", icon: "alert", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
     { label: "Daily Plan", key: "qc-plan", href: "/qc/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
+    { label: "Abnormality", key: "assembly-abnormality", href: "/assembly/pic-abnormality", icon: "alert", mode: morningMeetingMode, area: "assembly", allowedRoles: ["PIC Area"] },
+    { label: "Daily Plan", key: "assembly-plan", href: "/assembly/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "assembly", allowedRoles: ["PIC Area"] },
     { label: "Abnormality", key: "cost-abnormality", href: "/cost/pic-abnormality", icon: "alert", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
     { label: "Daily Plan", key: "cost-daily-plan", href: "/cost/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "cost", allowedRoles: ["PIC Area"] },
     { label: "Abnormality", key: "safety-abnormality", href: "/safety/pic-abnormality", icon: "alert", mode: morningMeetingMode, area: "safety", allowedRoles: ["PIC Area"] },
@@ -461,6 +476,17 @@ export function filterNavGroups(filter: NavigationFilter): NavGroup[] {
     ].filter((group) => group.items.length);
   }
   if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "qc") {
+    const meetingItems = morningMeetingGroup.items
+      .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"));
+    const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
+    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
+    return [
+      { title: "MORNING MEETING", items: meetingItems },
+      { title: "MONITORING", items: monitorItems },
+      { title: "REPORTS", items: laporanItems },
+    ].filter((group) => group.items.length);
+  }
+  if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "assembly") {
     const meetingItems = morningMeetingGroup.items
       .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"));
     const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));

@@ -32,6 +32,12 @@ import PicQcMonitoring from "@/features/pic-qc/PicQcMonitoring";
 import SafetyDashboard from "@/features/safety/SafetyDashboard";
 import PicQcAbnormality from "@/features/pic-qc/PicQcAbnormality";
 import PicQcPlan from "@/features/pic-qc/PicQcPlan";
+import { AssemblyPicProvider } from "@/features/pic-assembly/AssemblyPicContext";
+import PicAssemblyAbnormality from "@/features/pic-assembly/PicAssemblyAbnormality";
+import PicAssemblyFollowup from "@/features/pic-assembly/PicAssemblyFollowup";
+import PicAssemblyHome from "@/features/pic-assembly/PicAssemblyHome";
+import PicAssemblyMonitoring from "@/features/pic-assembly/PicAssemblyMonitoring";
+import PicAssemblyPlan from "@/features/pic-assembly/PicAssemblyPlan";
 import PaiRobot from "@/features/morning-meeting/PaiRobot";
 import MeetingDashboard from "@/features/morning-meeting/MeetingDashboard";
 import FollowupPage from "@/features/morning-meeting/FollowupPage";
@@ -86,6 +92,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
   const isRepairPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "repair";
   const isServicePicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "service";
   const isQcPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "qc";
+  const isAssemblyPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "assembly";
   const isCostPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "cost";
   const isSafetyPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "safety";
 
@@ -105,6 +112,11 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
         setActive("meeting-home");
         router.push("/morning-meeting");
       }
+    } else if (isAssemblyPicMeeting) {
+      if (active !== "meeting-home" && active !== "followup" && active !== "assembly-monitor" && !active.startsWith("assembly-")) {
+        setActive("meeting-home");
+        router.push("/morning-meeting");
+      }
     } else if (isCostPicMeeting) {
       if (active !== "meeting-home" && active !== "followup" && !active.startsWith("cost-") && active !== "cost-area-monitoring") {
         setActive("meeting-home");
@@ -119,7 +131,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
       setActive("Dashboard");
       router.push(dashboardHref);
     }
-  }, [isRepairPicMeeting, isServicePicMeeting, isQcPicMeeting, isCostPicMeeting, isSafetyPicMeeting, active, router]);
+  }, [isRepairPicMeeting, isServicePicMeeting, isQcPicMeeting, isAssemblyPicMeeting, isCostPicMeeting, isSafetyPicMeeting, active, router]);
 
   useEffect(() => {
     if (isRepairPicMeeting && (active === "repair-monitor" || active === "Preassembly" || active === "Rework" || active === "Warranty")) {
@@ -305,6 +317,24 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
                   <PicQcHome />
                 )}
               </QcPicProvider>
+            </section>
+          ) : isAssemblyPicMeeting ? (
+            <section className="content repair-content">
+              <AssemblyPicProvider>
+                {active === "followup" ? (
+                  <PicAssemblyFollowup />
+                ) : active === "assembly-abnormality" ? (
+                  <PicAssemblyAbnormality />
+                ) : active === "assembly-plan" ? (
+                  <PicAssemblyPlan />
+                ) : active === "assembly-pack" ? (
+                  <PicAssemblyMonitoring module="packaging" />
+                ) : active === "assembly-prod" || active === "assembly-monitor" ? (
+                  <PicAssemblyMonitoring module="assembly" />
+                ) : (
+                  <PicAssemblyHome />
+                )}
+              </AssemblyPicProvider>
             </section>
           ) : isCostPicMeeting ? (
             <section className="content repair-content">
