@@ -60,7 +60,7 @@ export default function PicAiInsight({ metricName, actualLabel, targetLabel, gap
           <div>
             <p className="pic-ai-kicker">P-AI • ANALISA CEPAT</p>
             <h2>{metricName}</h2>
-            <p>Actual {actualLabel} • Target {targetLabel} • Selisih {gapLabel}</p>
+            <p>Actual {actualLabel} • Target {targetLabel} • Gap {gapLabel}</p>
           </div>
           <button type="button" aria-label="Tutup" onClick={onClose}>✕</button>
         </div>

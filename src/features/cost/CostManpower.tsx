@@ -14,7 +14,9 @@ import {
 } from "recharts";
 import { Download, RefreshCw } from "lucide-react";
 import CustomSelect from "@/components/shell/CustomSelect";
+import ChartTooltip from "@/components/shell/ChartTooltip";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
+import ChartTimeTabs from "@/components/shell/ChartTimeTabs";
 import PicMetricCard, { type PicMetricCardData } from "@/features/pic-repair/PicMetricCard";
 
 type ManpowerPeriod = "Daily" | "Week" | "Month" | "Year";
@@ -47,23 +49,23 @@ const chartFor: Record<string, ManpowerChartKey> = {
 };
 
 const trendData: Record<ManpowerPeriod, { labels: string[]; direct: number[]; indirect: number[] }> = {
-  "Daily": { labels: ["1 Okt", "2 Okt", "3 Okt", "4 Okt", "5 Okt", "6 Okt", "7 Okt"], direct: [1672, 1674, 1675, 1677, 1678, 1679, 1680], indirect: [472, 474, 475, 477, 478, 479, 480] },
+  "Daily": { labels: ["1 Oct", "2 Oct", "3 Oct", "4 Oct", "5 Oct", "6 Oct", "7 Oct"], direct: [1672, 1674, 1675, 1677, 1678, 1679, 1680], indirect: [472, 474, 475, 477, 478, 479, 480] },
   "Week": { labels: ["W32", "W33", "W34", "W35", "W36", "W37", "W38", "W39"], direct: [1648, 1652, 1656, 1660, 1665, 1670, 1675, 1680], indirect: [448, 452, 458, 462, 468, 472, 476, 480] },
-  "Month": { labels: ["Apr", "Mei", "Jun", "Jul", "Agu", "Sep"], direct: [1620, 1635, 1648, 1660, 1670, 1680], indirect: [420, 432, 445, 458, 470, 480] },
+  "Month": { labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep"], direct: [1620, 1635, 1648, 1660, 1670, 1680], indirect: [420, 432, 445, 458, 470, 480] },
   "Year": { labels: ["2022", "2023", "2024", "2025", "2026"], direct: [1580, 1605, 1630, 1655, 1680], indirect: [380, 405, 430, 455, 480] },
 };
 
 const hoursData: Record<ManpowerPeriod, { labels: string[]; hours: number[] }> = {
-  "Daily": { labels: ["1 Okt", "2 Okt", "3 Okt", "4 Okt", "5 Okt", "6 Okt", "7 Okt"], hours: [52, 55, 54, 57, 56, 58, 59] },
+  "Daily": { labels: ["1 Oct", "2 Oct", "3 Oct", "4 Oct", "5 Oct", "6 Oct", "7 Oct"], hours: [52, 55, 54, 57, 56, 58, 59] },
   "Week": { labels: ["W32", "W33", "W34", "W35", "W36", "W37", "W38", "W39"], hours: [352, 358, 364, 371, 378, 385, 392, 398] },
-  "Month": { labels: ["Apr", "Mei", "Jun", "Jul", "Agu", "Sep"], hours: [320, 335, 352, 360, 382, 398] },
+  "Month": { labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep"], hours: [320, 335, 352, 360, 382, 398] },
   "Year": { labels: ["2022", "2023", "2024", "2025", "2026"], hours: [3420, 3610, 3780, 3900, 3980] },
 };
 
 const overtimeData: Record<ManpowerPeriod, { labels: string[]; rate: number[]; limit: number }> = {
-  "Daily": { labels: ["1 Okt", "2 Okt", "3 Okt", "4 Okt", "5 Okt", "6 Okt", "7 Okt"], rate: [13.9, 14.1, 14.2, 14.4, 14.5, 14.7, 14.8], limit: 12 },
+  "Daily": { labels: ["1 Oct", "2 Oct", "3 Oct", "4 Oct", "5 Oct", "6 Oct", "7 Oct"], rate: [13.9, 14.1, 14.2, 14.4, 14.5, 14.7, 14.8], limit: 12 },
   "Week": { labels: ["W32", "W33", "W34", "W35", "W36", "W37", "W38", "W39"], rate: [12.4, 12.7, 13.0, 13.4, 13.8, 14.1, 14.5, 14.8], limit: 12 },
-  "Month": { labels: ["Apr", "Mei", "Jun", "Jul", "Agu", "Sep"], rate: [11.2, 11.8, 12.4, 13.0, 13.9, 14.8], limit: 12 },
+  "Month": { labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep"], rate: [11.2, 11.8, 12.4, 13.0, 13.9, 14.8], limit: 12 },
   "Year": { labels: ["2022", "2023", "2024", "2025", "2026"], rate: [9.8, 10.9, 12.1, 13.4, 14.8], limit: 12 },
 };
 
@@ -77,21 +79,13 @@ const docRows = [
 
 const docMax = Math.max(...docRows.map((row) => row.value));
 
-function ChartToggle({ value, onChange, ariaLabel }: { value: ManpowerPeriod; onChange: (next: ManpowerPeriod) => void; ariaLabel: string }) {
-  return (
-    <div className="sq-period" role="group" aria-label={ariaLabel}>
-      {periodOptions.map((option) => (
-        <button key={option} type="button" aria-pressed={value === option} className={value === option ? "active" : ""} onClick={() => onChange(option)}>{option}</button>
-      ))}
-    </div>
-  );
-}
+
 
 export default function CostManpower() {
   const [fiscal, setFiscal] = useState("FY2026 - Q1");
-  const [trendPeriod, setTrendPeriod] = useState<ManpowerPeriod>("Month");
-  const [hoursPeriod, setHoursPeriod] = useState<ManpowerPeriod>("Month");
-  const [overtimePeriod, setOvertimePeriod] = useState<ManpowerPeriod>("Month");
+  const [trendPeriod, setTrendPeriod] = useState<ManpowerPeriod>("Week");
+  const [hoursPeriod, setHoursPeriod] = useState<ManpowerPeriod>("Week");
+  const [overtimePeriod, setOvertimePeriod] = useState<ManpowerPeriod>("Week");
   const [toast, setToast] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
   const [aiMetric, setAiMetric] = useState<PicMetricCardData | null>(null);
@@ -132,9 +126,9 @@ export default function CostManpower() {
   };
 
   const refresh = () => {
-    setTrendPeriod("Month");
-    setHoursPeriod("Month");
-    setOvertimePeriod("Month");
+    setTrendPeriod("Week");
+    setHoursPeriod("Week");
+    setOvertimePeriod("Week");
     setToast(true);
     window.setTimeout(() => setToast(false), 2600);
   };
@@ -150,7 +144,7 @@ export default function CostManpower() {
           <p className="text-slate-500">Headcount direct-indirect, jam kerja, dan lembur area Cost.</p>
         </div>
         <div className="repair-actions">
-          <CustomSelect value={fiscal} options={["FY2026 - Q1", "FY2026 - Q2", "FY2026 - Q3", "FY2026 - Q4"]} onChange={setFiscal} ariaLabel="Filter periode fiskal" />
+          <CustomSelect value={fiscal} options={["FY2026 - Q1", "FY2026 - Q2", "FY2026 - Q3", "FY2026 - Q4"]} onChange={setFiscal} ariaLabel="Filter fiscal period" />
           <button className="repair-outline" type="button" onClick={exportCsv}><Download size={14} />Export</button>
           <button className="repair-outline" type="button" onClick={refresh}><RefreshCw size={14} />Refresh</button>
         </div>
@@ -169,7 +163,7 @@ export default function CostManpower() {
               <h2 className="text-slate-900 font-semibold">Manpower Trend</h2>
               <p className="text-slate-500">headcount • direct vs indirect</p>
             </div>
-            <ChartToggle value={trendPeriod} onChange={setTrendPeriod} ariaLabel="Periode manpower trend" />
+            <ChartTimeTabs activeTab={trendPeriod} onChange={setTrendPeriod} ariaLabel="Manpower trend period" />
           </div>
           <div className="warranty-chart">
             <ResponsiveContainer width="100%" height="100%">
@@ -177,7 +171,7 @@ export default function CostManpower() {
                 <CartesianGrid vertical={false} stroke={GRID} />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} width={44} tick={{ fontSize: 11 }} domain={["auto", "auto"]} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip />} />
                 <Legend />
                 <Line type="monotone" dataKey="direct" name="Direct" stroke={EMERALD} strokeWidth={2} dot={{ r: 3 }} />
                 <Line type="monotone" dataKey="indirect" name="Indirect" stroke={TEAL} strokeWidth={2} dot={{ r: 3 }} />
@@ -190,9 +184,9 @@ export default function CostManpower() {
           <div className="repair-card-head">
             <div>
               <h2 className="text-slate-900 font-semibold">Working Hours</h2>
-              <p className="text-slate-500">thousand hours • per periode</p>
+              <p className="text-slate-500">thousand hours • per period</p>
             </div>
-            <ChartToggle value={hoursPeriod} onChange={setHoursPeriod} ariaLabel="Periode working hours" />
+            <ChartTimeTabs activeTab={hoursPeriod} onChange={setHoursPeriod} ariaLabel="Working hours period" />
           </div>
           <div className="warranty-chart">
             <ResponsiveContainer width="100%" height="100%">
@@ -200,7 +194,7 @@ export default function CostManpower() {
                 <CartesianGrid vertical={false} stroke={GRID} />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} width={44} tick={{ fontSize: 11 }} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip />} />
                 <Legend />
                 <Bar dataKey="hours" name="Working Hours (k)" fill={EMERALD} radius={[6, 6, 0, 0]} maxBarSize={28} />
               </BarChart>
@@ -214,7 +208,7 @@ export default function CostManpower() {
               <h2 className="text-slate-900 font-semibold">Overtime Rate</h2>
               <p className="text-slate-500">% of total hours • vs limit 12%</p>
             </div>
-            <ChartToggle value={overtimePeriod} onChange={setOvertimePeriod} ariaLabel="Periode overtime" />
+            <ChartTimeTabs activeTab={overtimePeriod} onChange={setOvertimePeriod} ariaLabel="Overtime period" />
           </div>
           <div className="warranty-chart">
             <ResponsiveContainer width="100%" height="100%">
@@ -222,7 +216,7 @@ export default function CostManpower() {
                 <CartesianGrid vertical={false} stroke={GRID} />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} width={44} tick={{ fontSize: 11 }} domain={[0, "auto"]} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip />} />
                 <Legend />
                 <Line type="monotone" dataKey="limit" name="Limit 12%" stroke={AMBER} strokeDasharray="5 5" dot={false} strokeWidth={2} />
                 <Line type="monotone" dataKey="rate" name="Overtime %" stroke={EMERALD} strokeWidth={2} dot={{ r: 3 }} />

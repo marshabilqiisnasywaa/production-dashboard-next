@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { serviceOverviewGroups, servicePages, type ServiceKpiDefinition, type ServicePageKey } from "@/data/serviceData";
+import ChartTooltip from "@/components/shell/ChartTooltip";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
 import PeriodControl, { periodView, type PeriodKey } from "@/components/shell/PeriodControl";
 
@@ -42,12 +43,6 @@ function Sparkline({ success }: { success: boolean }) {
 }
 
 type ServiceChartPoint = ServiceChartItem & { higherIsBetter: boolean };
-
-function ServiceTooltip({ active, payload, label, unit }: { active?: boolean; payload?: readonly { payload?: ServiceChartPoint }[]; label?: string; unit: string }) {
-  if (!active || !payload?.[0]?.payload) return null;
-  const point = payload[0].payload;
-  return <div className="repair-tooltip"><strong>{label}</strong><div><span>Target</span><b>{point.target.toFixed(2)}{unit}</b></div><div><span>Actual</span><b>{point.actual.toFixed(2)}{unit}</b></div><div><span>Gap</span><b>{(point.actual - point.target).toFixed(2)}{unit}</b></div></div>;
-}
 
 function ServiceStatusDot(props: { cx?: number; cy?: number; payload?: ServiceChartPoint }) {
   if (props.cx === undefined || props.cy === undefined || !props.payload) return <g />;
@@ -148,7 +143,7 @@ function ServiceLineChart({
               axisLine={false}
               tickLine={false}
             />
-            <Tooltip content={<ServiceTooltip unit={unit} />} cursor={{ stroke: "var(--line)" }} />
+            <Tooltip content={<ChartTooltip format={(value) => `${Number(value).toFixed(2)}${unit}`} />} cursor={{ stroke: "var(--line)" }} />
             <Legend
               verticalAlign="bottom"
               iconType="line"

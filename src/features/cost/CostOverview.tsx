@@ -16,12 +16,14 @@ import {
   YAxis,
 } from "recharts";
 import CustomSelect from "@/components/shell/CustomSelect";
+import ChartTooltip from "@/components/shell/ChartTooltip";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
+import ChartTimeTabs from "@/components/shell/ChartTimeTabs";
 import PicMetricCard, { type PicMetricCardData } from "@/features/pic-repair/PicMetricCard";
 
-type CostPeriod = "Harian" | "Mingguan" | "Bulanan" | "Tahunan";
+type CostPeriod = "Daily" | "Week" | "Month" | "Year";
 
-const periodOptions: CostPeriod[] = ["Harian", "Mingguan", "Bulanan", "Tahunan"];
+const periodOptions: CostPeriod[] = ["Daily", "Week", "Month", "Year"];
 
 const EMERALD = "#059669";
 const EMERALD_LIGHT = "#10B981";
@@ -49,10 +51,10 @@ const chartFor: Record<string, CostChartKey> = {
 };
 
 const slcTrend: Record<CostPeriod, { labels: string[]; actual: number[]; target: number }> = {
-  "Harian": { labels: ["1 Okt", "2 Okt", "3 Okt", "4 Okt", "5 Okt", "6 Okt", "7 Okt"], actual: [2.91, 2.9, 2.89, 2.88, 2.87, 2.86, 2.85], target: 2.9 },
-  "Mingguan": { labels: ["W32", "W33", "W34", "W35", "W36", "W37", "W38", "W39"], actual: [2.98, 2.96, 2.94, 2.93, 2.91, 2.89, 2.87, 2.85], target: 2.9 },
-  "Bulanan": { labels: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"], actual: [3.12, 3.08, 3.05, 3.02, 2.99, 2.97, 2.94, 2.92, 2.9, 2.88, 2.86, 2.85], target: 2.9 },
-  "Tahunan": { labels: ["2022", "2023", "2024", "2025", "2026"], actual: [3.42, 3.28, 3.1, 2.96, 2.85], target: 2.9 },
+  "Daily": { labels: ["1 Oct", "2 Oct", "3 Oct", "4 Oct", "5 Oct", "6 Oct", "7 Oct"], actual: [2.91, 2.9, 2.89, 2.88, 2.87, 2.86, 2.85], target: 2.9 },
+  "Week": { labels: ["W32", "W33", "W34", "W35", "W36", "W37", "W38", "W39"], actual: [2.98, 2.96, 2.94, 2.93, 2.91, 2.89, 2.87, 2.85], target: 2.9 },
+  "Month": { labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], actual: [3.12, 3.08, 3.05, 3.02, 2.99, 2.97, 2.94, 2.92, 2.9, 2.88, 2.86, 2.85], target: 2.9 },
+  "Year": { labels: ["2022", "2023", "2024", "2025", "2026"], actual: [3.42, 3.28, 3.1, 2.96, 2.85], target: 2.9 },
 };
 
 const costStructure = [
@@ -63,38 +65,30 @@ const costStructure = [
 ];
 
 const manpowerBase: Record<CostPeriod, { labels: string[]; manpower: number[]; hours: number[] }> = {
-  "Harian": { labels: ["1 Okt", "2 Okt", "3 Okt", "4 Okt", "5 Okt", "6 Okt", "7 Okt"], manpower: [288, 291, 289, 292, 290, 287, 286], hours: [7.5, 7.6, 7.5, 7.6, 7.5, 7.4, 7.2] },
-  "Mingguan": { labels: ["W32", "W33", "W34", "W35", "W36", "W37", "W38", "W39"], manpower: [294, 292, 291, 290, 289, 288, 287, 286], hours: [7.6, 7.6, 7.5, 7.5, 7.4, 7.4, 7.3, 7.2] },
-  "Bulanan": { labels: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"], manpower: [298, 296, 295, 293, 292, 291, 290, 289, 288, 287, 287, 286], hours: [7.7, 7.7, 7.6, 7.6, 7.5, 7.5, 7.4, 7.4, 7.3, 7.3, 7.2, 7.2] },
-  "Tahunan": { labels: ["2022", "2023", "2024", "2025", "2026"], manpower: [312, 305, 296, 290, 286], hours: [7.9, 7.8, 7.6, 7.4, 7.2] },
+  "Daily": { labels: ["1 Oct", "2 Oct", "3 Oct", "4 Oct", "5 Oct", "6 Oct", "7 Oct"], manpower: [288, 291, 289, 292, 290, 287, 286], hours: [7.5, 7.6, 7.5, 7.6, 7.5, 7.4, 7.2] },
+  "Week": { labels: ["W32", "W33", "W34", "W35", "W36", "W37", "W38", "W39"], manpower: [294, 292, 291, 290, 289, 288, 287, 286], hours: [7.6, 7.6, 7.5, 7.5, 7.4, 7.4, 7.3, 7.2] },
+  "Month": { labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], manpower: [298, 296, 295, 293, 292, 291, 290, 289, 288, 287, 287, 286], hours: [7.7, 7.7, 7.6, 7.6, 7.5, 7.5, 7.4, 7.4, 7.3, 7.3, 7.2, 7.2] },
+  "Year": { labels: ["2022", "2023", "2024", "2025", "2026"], manpower: [312, 305, 296, 290, 286], hours: [7.9, 7.8, 7.6, 7.4, 7.2] },
 };
 
 const shiftScale: Record<string, number> = { "Semua Shift": 1, "Shift 1": 0.42, "Shift 2": 0.38, "Shift 3": 0.2 };
 
 const overtimeBase: Record<CostPeriod, { labels: string[]; rate: number[] }> = {
-  "Harian": { labels: ["1 Okt", "2 Okt", "3 Okt", "4 Okt", "5 Okt", "6 Okt", "7 Okt"], rate: [3.1, 2.9, 3.0, 2.8, 2.7, 2.6, 2.5] },
-  "Mingguan": { labels: ["W32", "W33", "W34", "W35", "W36", "W37", "W38", "W39"], rate: [4.2, 4.0, 3.8, 3.5, 3.2, 3.0, 2.7, 2.5] },
-  "Bulanan": { labels: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"], rate: [4.8, 4.5, 4.3, 4.1, 3.9, 3.7, 3.5, 3.3, 3.1, 2.9, 2.7, 2.5] },
-  "Tahunan": { labels: ["2022", "2023", "2024", "2025", "2026"], rate: [6.4, 5.6, 4.4, 3.2, 2.5] },
+  "Daily": { labels: ["1 Oct", "2 Oct", "3 Oct", "4 Oct", "5 Oct", "6 Oct", "7 Oct"], rate: [3.1, 2.9, 3.0, 2.8, 2.7, 2.6, 2.5] },
+  "Week": { labels: ["W32", "W33", "W34", "W35", "W36", "W37", "W38", "W39"], rate: [4.2, 4.0, 3.8, 3.5, 3.2, 3.0, 2.7, 2.5] },
+  "Month": { labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], rate: [4.8, 4.5, 4.3, 4.1, 3.9, 3.7, 3.5, 3.3, 3.1, 2.9, 2.7, 2.5] },
+  "Year": { labels: ["2022", "2023", "2024", "2025", "2026"], rate: [6.4, 5.6, 4.4, 3.2, 2.5] },
 };
 
 const areaScale: Record<string, number> = { "Semua Area": 1, "Pabrik": 1.1, "Instalasi": 0.85, "Packing": 1.25 };
 
-function ChartToggle({ value, onChange, ariaLabel }: { value: CostPeriod; onChange: (next: CostPeriod) => void; ariaLabel: string }) {
-  return (
-    <div className="sq-period" role="group" aria-label={ariaLabel}>
-      {periodOptions.map((option) => (
-        <button key={option} type="button" aria-pressed={value === option} className={value === option ? "active" : ""} onClick={() => onChange(option)}>{option}</button>
-      ))}
-    </div>
-  );
-}
+
 
 export default function CostOverview() {
-  const [period, setPeriod] = useState<CostPeriod>("Bulanan");
-  const [trendPeriod, setTrendPeriod] = useState<CostPeriod>("Bulanan");
-  const [manpowerPeriod, setManpowerPeriod] = useState<CostPeriod>("Bulanan");
-  const [overtimePeriod, setOvertimePeriod] = useState<CostPeriod>("Bulanan");
+  const [period, setPeriod] = useState<CostPeriod>("Week");
+  const [trendPeriod, setTrendPeriod] = useState<CostPeriod>("Week");
+  const [manpowerPeriod, setManpowerPeriod] = useState<CostPeriod>("Week");
+  const [overtimePeriod, setOvertimePeriod] = useState<CostPeriod>("Week");
   const [shift, setShift] = useState("Semua Shift");
   const [area, setArea] = useState("Semua Area");
   const [focused, setFocused] = useState<string | null>(null);
@@ -146,7 +140,7 @@ export default function CostOverview() {
           <p className="text-slate-500">Ringkasan biaya tenaga kerja langsung dan produktivitas area Cost.</p>
         </div>
         <div className="repair-actions">
-          <CustomSelect value={period} options={periodOptions} onChange={(next) => applyGlobalPeriod(next as CostPeriod)} ariaLabel="Filter periode" />
+          <CustomSelect value={period} options={periodOptions} onChange={(next) => applyGlobalPeriod(next as CostPeriod)} ariaLabel="Filter period" />
           <CustomSelect value={shift} options={Object.keys(shiftScale)} onChange={setShift} ariaLabel="Filter shift" />
           <CustomSelect value={area} options={Object.keys(areaScale)} onChange={setArea} ariaLabel="Filter area" />
         </div>
@@ -165,7 +159,7 @@ export default function CostOverview() {
               <h2 className="text-slate-900 font-semibold">SLC Trend</h2>
               <p className="text-slate-500">12 months • ¥ per unit vs target</p>
             </div>
-            <ChartToggle value={trendPeriod} onChange={setTrendPeriod} ariaLabel="Periode tren SLC" />
+            <ChartTimeTabs activeTab={trendPeriod} onChange={setTrendPeriod} ariaLabel="SLC trend period" />
           </div>
           <div className="warranty-chart">
             <ResponsiveContainer width="100%" height="100%">
@@ -173,10 +167,10 @@ export default function CostOverview() {
                 <CartesianGrid vertical={false} stroke={GRID} />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} width={52} tick={{ fontSize: 11 }} domain={[2.5, 3.5]} tickFormatter={(value) => `¥${Number(value).toFixed(2)}`} />
-                <Tooltip formatter={(value) => `¥${Number(value).toFixed(2)}`} />
+                <Tooltip content={<ChartTooltip format={(value) => `¥${Number(value).toFixed(2)}`} />} />
                 <Legend />
                 <Line type="monotone" dataKey="target" name="Target" stroke={SLATE} strokeDasharray="5 5" dot={false} strokeWidth={2} />
-                <Line type="monotone" dataKey="actual" name="SLC Aktual" stroke={EMERALD} strokeWidth={2} dot={{ r: 3, stroke: EMERALD_LIGHT }} />
+                <Line type="monotone" dataKey="actual" name="SLC Actual" stroke={EMERALD} strokeWidth={2} dot={{ r: 3, stroke: EMERALD_LIGHT }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -197,7 +191,7 @@ export default function CostOverview() {
                     <Pie data={costStructure} dataKey="value" nameKey="name" innerRadius={62} outerRadius={92} paddingAngle={3} strokeWidth={2}>
                       {costStructure.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip content={<ChartTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -223,9 +217,9 @@ export default function CostOverview() {
           <div className="repair-card-head">
             <div>
               <h2 className="text-slate-900 font-semibold">Manpower vs Working Hours</h2>
-              <p className="text-slate-500">{shift} • headcount vs jam kerja</p>
+              <p className="text-slate-500">{shift} • headcount vs working hours</p>
             </div>
-            <ChartToggle value={manpowerPeriod} onChange={setManpowerPeriod} ariaLabel="Periode manpower" />
+            <ChartTimeTabs activeTab={manpowerPeriod} onChange={setManpowerPeriod} ariaLabel="Manpower period" />
           </div>
           <div className="warranty-chart">
             <ResponsiveContainer width="100%" height="100%">
@@ -234,7 +228,7 @@ export default function CostOverview() {
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 11 }} />
                 <YAxis yAxisId="left" axisLine={false} tickLine={false} width={44} tick={{ fontSize: 11 }} />
                 <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} width={36} tick={{ fontSize: 11 }} domain={["auto", "auto"]} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip />} />
                 <Legend />
                 <Line yAxisId="left" type="monotone" dataKey="manpower" name="Manpower" stroke={EMERALD} strokeWidth={2} dot={{ r: 3 }} />
                 <Line yAxisId="right" type="monotone" dataKey="hours" name="Working Hours" stroke={TEAL} strokeWidth={2} dot={{ r: 3 }} />
@@ -247,9 +241,9 @@ export default function CostOverview() {
           <div className="repair-card-head">
             <div>
               <h2 className="text-slate-900 font-semibold">Overtime Rate</h2>
-              <p className="text-slate-500">{area} • % lembur per periode</p>
+              <p className="text-slate-500">{area} • % overtime per period</p>
             </div>
-            <ChartToggle value={overtimePeriod} onChange={setOvertimePeriod} ariaLabel="Periode overtime" />
+            <ChartTimeTabs activeTab={overtimePeriod} onChange={setOvertimePeriod} ariaLabel="Overtime period" />
           </div>
           <div className="warranty-chart">
             <ResponsiveContainer width="100%" height="100%">
@@ -257,7 +251,7 @@ export default function CostOverview() {
                 <CartesianGrid vertical={false} stroke={GRID} />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} width={44} tick={{ fontSize: 11 }} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip />} />
                 <Legend />
                 <Bar dataKey="rate" name="Overtime %" fill={EMERALD} radius={[6, 6, 0, 0]} maxBarSize={28} />
               </BarChart>

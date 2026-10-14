@@ -17,7 +17,9 @@ import {
 } from "recharts";
 import { Download, RefreshCw } from "lucide-react";
 import CustomSelect from "@/components/shell/CustomSelect";
+import ChartTooltip from "@/components/shell/ChartTooltip";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
+import ChartTimeTabs from "@/components/shell/ChartTimeTabs";
 import PicMetricCard, { type PicMetricCardData } from "@/features/pic-repair/PicMetricCard";
 import { DataTable } from "@/features/cost/shared";
 
@@ -54,9 +56,9 @@ const chartFor: Record<string, FinishGoodChartKey> = {
 };
 
 const trendData: Record<FinishGoodPeriod, { labels: string[]; value: number[] }> = {
-  "Daily": { labels: ["1 Okt", "2 Okt", "3 Okt", "4 Okt", "5 Okt", "6 Okt", "7 Okt"], value: [40100, 40800, 41400, 42100, 42800, 43200, 43612] },
+  "Daily": { labels: ["1 Oct", "2 Oct", "3 Oct", "4 Oct", "5 Oct", "6 Oct", "7 Oct"], value: [40100, 40800, 41400, 42100, 42800, 43200, 43612] },
   "Week": { labels: ["W32", "W33", "W34", "W35", "W36", "W37", "W38", "W39"], value: [35200, 36400, 37600, 38900, 40200, 41500, 42600, 43612] },
-  "Month": { labels: ["Apr", "Mei", "Jun", "Jul", "Agu", "Sep"], value: [21200, 24500, 28900, 33400, 39100, 43612] },
+  "Month": { labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep"], value: [21200, 24500, 28900, 33400, 39100, 43612] },
   "Year": { labels: ["2022", "2023", "2024", "2025", "2026"], value: [18200, 24800, 31500, 38900, 43612] },
 };
 
@@ -116,20 +118,12 @@ const tableRows: FinishGoodRow[] = Array.from({ length: 120 }, (_, index) => {
   };
 });
 
-function ChartToggle({ value, onChange, ariaLabel }: { value: FinishGoodPeriod; onChange: (next: FinishGoodPeriod) => void; ariaLabel: string }) {
-  return (
-    <div className="sq-period" role="group" aria-label={ariaLabel}>
-      {periodOptions.map((option) => (
-        <button key={option} type="button" aria-pressed={value === option} className={value === option ? "active" : ""} onClick={() => onChange(option)}>{option}</button>
-      ))}
-    </div>
-  );
-}
+
 
 export default function CostFinishGood() {
   const [fiscal, setFiscal] = useState("FY2026 - Q3");
-  const [trendPeriod, setTrendPeriod] = useState<FinishGoodPeriod>("Month");
-  const [linePeriod, setLinePeriod] = useState<FinishGoodPeriod>("Month");
+  const [trendPeriod, setTrendPeriod] = useState<FinishGoodPeriod>("Week");
+  const [linePeriod, setLinePeriod] = useState<FinishGoodPeriod>("Week");
   const [toast, setToast] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
   const [aiMetric, setAiMetric] = useState<PicMetricCardData | null>(null);
@@ -168,8 +162,8 @@ export default function CostFinishGood() {
   };
 
   const refresh = () => {
-    setTrendPeriod("Month");
-    setLinePeriod("Month");
+    setTrendPeriod("Week");
+    setLinePeriod("Week");
     setToast(true);
     window.setTimeout(() => setToast(false), 2600);
   };
@@ -185,7 +179,7 @@ export default function CostFinishGood() {
           <p className="text-slate-500">Output finish good per brand, line, dan model area Cost.</p>
         </div>
         <div className="repair-actions">
-          <CustomSelect value={fiscal} options={["FY2026 - Q1", "FY2026 - Q2", "FY2026 - Q3", "FY2026 - Q4"]} onChange={setFiscal} ariaLabel="Filter periode fiskal" />
+          <CustomSelect value={fiscal} options={["FY2026 - Q1", "FY2026 - Q2", "FY2026 - Q3", "FY2026 - Q4"]} onChange={setFiscal} ariaLabel="Filter fiscal period" />
           <button className="repair-outline" type="button" onClick={exportCsv}><Download size={14} />Export</button>
           <button className="repair-outline" type="button" onClick={refresh}><RefreshCw size={14} />Refresh</button>
         </div>
@@ -204,7 +198,7 @@ export default function CostFinishGood() {
               <h2 className="text-slate-900 font-semibold">Trend Finishgood</h2>
               <p className="text-slate-500">total units - monthly</p>
             </div>
-            <ChartToggle value={trendPeriod} onChange={setTrendPeriod} ariaLabel="Periode tren finishgood" />
+            <ChartTimeTabs activeTab={trendPeriod} onChange={setTrendPeriod} ariaLabel="Finishgood trend period" />
           </div>
           <div className="warranty-chart">
             <ResponsiveContainer width="100%" height="100%">
@@ -212,7 +206,7 @@ export default function CostFinishGood() {
                 <CartesianGrid vertical={false} stroke={GRID} />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} width={48} tick={{ fontSize: 11 }} tickFormatter={(value) => `${Number(value) / 1000}k`} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip />} />
                 <Legend />
                 <Line type="monotone" dataKey="value" name="Total Units" stroke={EMERALD} strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
@@ -235,7 +229,7 @@ export default function CostFinishGood() {
                     <Pie data={brandShare} dataKey="value" nameKey="name" innerRadius={62} outerRadius={92} paddingAngle={3} strokeWidth={2}>
                       {brandShare.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip content={<ChartTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -263,7 +257,7 @@ export default function CostFinishGood() {
               <h2 className="text-slate-900 font-semibold">Finishgood Per Line</h2>
               <p className="text-slate-500">by work order type</p>
             </div>
-            <ChartToggle value={linePeriod} onChange={setLinePeriod} ariaLabel="Periode per line" />
+            <ChartTimeTabs activeTab={linePeriod} onChange={setLinePeriod} ariaLabel="Per line period" />
           </div>
           <div className="warranty-chart">
             <ResponsiveContainer width="100%" height="100%">
@@ -271,7 +265,7 @@ export default function CostFinishGood() {
                 <CartesianGrid vertical={false} stroke={GRID} />
                 <XAxis dataKey="line" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} width={44} tick={{ fontSize: 11 }} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip />} />
                 <Legend />
                 <Bar dataKey="rmmn" name="RMMN" fill={EMERALD} radius={[6, 6, 0, 0]} maxBarSize={18} />
                 <Bar dataKey="ummn" name="UMMN" fill={AMBER} radius={[6, 6, 0, 0]} maxBarSize={18} />
@@ -305,7 +299,7 @@ export default function CostFinishGood() {
         <div className="repair-card-head">
           <div>
             <h2 className="text-slate-900 font-semibold">Detailed Data Finishgood</h2>
-            <p className="text-slate-500">120 records • work order harian</p>
+            <p className="text-slate-500">120 records • daily work orders</p>
           </div>
         </div>
         <DataTable

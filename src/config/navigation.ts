@@ -133,15 +133,6 @@ export const monitoringGroup: NavGroup = {
         { label: "GA Admin", key: "safety-ga-admin", href: "/morning-meeting", icon: "users", mode: morningMeetingMode, area: "safety", allowedRoles: ["PIC Area"] },
       ],
     },
-    {
-      label: "Data Source",
-      key: "safety-data-source",
-      href: "/morning-meeting",
-      icon: "database",
-      mode: morningMeetingMode,
-      area: "safety",
-      allowedRoles: ["PIC Area"],
-    },
   ],
 };
 
@@ -515,15 +506,9 @@ export function filterNavGroups(filter: NavigationFilter): NavGroup[] {
       .map((item) => (item.key === "meeting-home" ? { ...item, label: "Beranda Meeting" } : item));
     const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
     const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    const dataGroup: NavGroup = {
-      title: "DATA",
-      items: monitorItems.filter((item) => item.key === "safety-data-source"),
-    };
-    const monitoringOnly: NavItem[] = monitorItems.filter((item) => item.key !== "safety-data-source");
     return [
       { title: "MORNING MEETING", items: meetingItems as NavItem[] },
-      { title: "MONITORING", items: monitoringOnly },
-      { title: "DATA", items: dataGroup.items },
+      { title: "MONITORING", items: monitorItems },
       { title: "REPORTS", items: laporanItems },
     ].filter((group) => group.items.length);
   }

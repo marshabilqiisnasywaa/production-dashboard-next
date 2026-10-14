@@ -1,8 +1,9 @@
 "use client";
+import ChartTimeTabs, { type ChartTimeTab } from "@/components/shell/ChartTimeTabs";
 
-export type PeriodKey = "Today" | "Week" | "Month" | "Year";
+export type PeriodKey = ChartTimeTab;
 
-export const periodOptions: PeriodKey[] = ["Today", "Week", "Month", "Year"];
+export const periodOptions: PeriodKey[] = ["Daily", "Week", "Month", "Year"];
 
 const monthIndex: Record<string, number> = {
   jan: 0, feb: 1, mar: 2, apr: 3, mei: 4, may: 4, jun: 5,
@@ -93,7 +94,7 @@ export function referenceDate(allLabels: string[], values: (number | null)[]): D
 
 export function windowForPeriod(count: number, period: PeriodKey): { start: number; end: number } {
   const end = count - 1;
-  if (period === "Today") return { start: end, end };
+  if (period === "Daily") return { start: end, end };
   if (period === "Week") return { start: Math.max(end - 6, 0), end };
   return { start: 0, end };
 }
@@ -111,7 +112,7 @@ export function periodView(allLabels: string[], values: (number | null)[], perio
   const ref = referenceDate(allLabels, values);
   const shift = (offset: number) => new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() + offset);
   const dayLabel = (date: Date) => `${date.getDate()} ${shortMonths[date.getMonth()]}`;
-  if (period === "Today") {
+  if (period === "Daily") {
     const taken = trailingValues(values, 1);
     return { labels: taken.length > 0 ? [dayLabel(ref)] : [], values: taken };
   }
@@ -132,21 +133,5 @@ type PeriodControlProps = {
 };
 
 export default function PeriodControl({ value, onChange, ariaLabel }: PeriodControlProps) {
-  return (
-    <div className="bg-white/60 backdrop-blur-md p-0.5 rounded-lg flex items-center gap-0.5 border border-white/60" role="group" aria-label={ariaLabel ?? "Time period"}>
-      {periodOptions.map((option) => (
-        <button
-          key={option}
-          type="button"
-          onClick={() => onChange(option)}
-          aria-pressed={value === option}
-          className={value === option
-            ? "bg-white text-slate-900 shadow-2xs rounded-md px-1.5 py-0.5 text-[4px] font-medium transition-all"
-            : "text-slate-400 hover:text-slate-600 px-1.5 py-0.5 rounded-md text-[4px] font-medium cursor-pointer transition-all"}
-        >
-          {option}
-        </button>
-      ))}
-    </div>
-  );
+  return <ChartTimeTabs activeTab={value} onChange={onChange} ariaLabel={ariaLabel ?? "Time period"} />;
 }

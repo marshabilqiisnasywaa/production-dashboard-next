@@ -14,7 +14,9 @@ import {
 } from "recharts";
 import { Download, RefreshCw } from "lucide-react";
 import CustomSelect from "@/components/shell/CustomSelect";
+import ChartTooltip from "@/components/shell/ChartTooltip";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
+import ChartTimeTabs from "@/components/shell/ChartTimeTabs";
 import PicMetricCard, { type PicMetricCardData } from "@/features/pic-repair/PicMetricCard";
 
 type BreakdownPeriod = "Daily" | "Week" | "Month" | "Year";
@@ -52,9 +54,9 @@ const lossesByCategory = [
 ];
 
 const lossesTrend: Record<BreakdownPeriod, { labels: string[]; value: number[] }> = {
-  "Daily": { labels: ["1 Okt", "2 Okt", "3 Okt", "4 Okt", "5 Okt", "6 Okt", "7 Okt"], value: [1270, 1275, 1282, 1288, 1292, 1296, 1300] },
+  "Daily": { labels: ["1 Oct", "2 Oct", "3 Oct", "4 Oct", "5 Oct", "6 Oct", "7 Oct"], value: [1270, 1275, 1282, 1288, 1292, 1296, 1300] },
   "Week": { labels: ["W32", "W33", "W34", "W35", "W36", "W37", "W38", "W39"], value: [1150, 1170, 1195, 1215, 1235, 1255, 1275, 1300] },
-  "Month": { labels: ["Apr", "Mei", "Jun", "Jul", "Agu", "Sep"], value: [980, 1020, 1080, 1150, 1220, 1300] },
+  "Month": { labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep"], value: [980, 1020, 1080, 1150, 1220, 1300] },
   "Year": { labels: ["2022", "2023", "2024", "2025", "2026"], value: [980, 1050, 1140, 1220, 1300] },
 };
 
@@ -91,20 +93,12 @@ function statusClass(status: ComponentStatus): string {
   return "bg-emerald-50 text-emerald-700 border border-emerald-200";
 }
 
-function ChartToggle({ value, onChange, ariaLabel }: { value: BreakdownPeriod; onChange: (next: BreakdownPeriod) => void; ariaLabel: string }) {
-  return (
-    <div className="sq-period" role="group" aria-label={ariaLabel}>
-      {periodOptions.map((option) => (
-        <button key={option} type="button" aria-pressed={value === option} className={value === option ? "active" : ""} onClick={() => onChange(option)}>{option}</button>
-      ))}
-    </div>
-  );
-}
+
 
 export default function CostBreakdown() {
   const [fiscal, setFiscal] = useState("FY2026 - Q1");
-  const [trendPeriod, setTrendPeriod] = useState<BreakdownPeriod>("Month");
-  const [transferPeriod, setTransferPeriod] = useState<BreakdownPeriod>("Month");
+  const [trendPeriod, setTrendPeriod] = useState<BreakdownPeriod>("Week");
+  const [transferPeriod, setTransferPeriod] = useState<BreakdownPeriod>("Week");
   const [toast, setToast] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
   const [aiMetric, setAiMetric] = useState<PicMetricCardData | null>(null);
@@ -143,8 +137,8 @@ export default function CostBreakdown() {
   };
 
   const refresh = () => {
-    setTrendPeriod("Month");
-    setTransferPeriod("Month");
+    setTrendPeriod("Week");
+    setTransferPeriod("Week");
     setToast(true);
     window.setTimeout(() => setToast(false), 2600);
   };
@@ -160,7 +154,7 @@ export default function CostBreakdown() {
           <p className="text-slate-500">Rincian losses, improvement, transfer, dan komponen biaya area Cost.</p>
         </div>
         <div className="repair-actions">
-          <CustomSelect value={fiscal} options={["FY2026 - Q1", "FY2026 - Q2", "FY2026 - Q3", "FY2026 - Q4"]} onChange={setFiscal} ariaLabel="Filter periode fiskal" />
+          <CustomSelect value={fiscal} options={["FY2026 - Q1", "FY2026 - Q2", "FY2026 - Q3", "FY2026 - Q4"]} onChange={setFiscal} ariaLabel="Filter fiscal period" />
           <button className="repair-outline" type="button" onClick={exportCsv}><Download size={14} />Export</button>
           <button className="repair-outline" type="button" onClick={refresh}><RefreshCw size={14} />Refresh</button>
         </div>
@@ -186,7 +180,7 @@ export default function CostBreakdown() {
                 <CartesianGrid vertical={false} stroke={GRID} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} width={44} tick={{ fontSize: 11 }} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip />} />
                 <Legend />
                 <Bar dataKey="value" name="Losses (¥k)" fill={EMERALD} radius={[6, 6, 0, 0]} maxBarSize={28} />
               </BarChart>
@@ -198,9 +192,9 @@ export default function CostBreakdown() {
           <div className="repair-card-head">
             <div>
               <h2 className="text-slate-900 font-semibold">Losses Cost Trend</h2>
-              <p className="text-slate-500">¥ thousand • per periode</p>
+              <p className="text-slate-500">¥ thousand • per period</p>
             </div>
-            <ChartToggle value={trendPeriod} onChange={setTrendPeriod} ariaLabel="Periode tren losses" />
+            <ChartTimeTabs activeTab={trendPeriod} onChange={setTrendPeriod} ariaLabel="Losses trend period" />
           </div>
           <div className="warranty-chart">
             <ResponsiveContainer width="100%" height="100%">
@@ -208,7 +202,7 @@ export default function CostBreakdown() {
                 <CartesianGrid vertical={false} stroke={GRID} />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} width={44} tick={{ fontSize: 11 }} domain={["auto", "auto"]} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip />} />
                 <Legend />
                 <Line type="monotone" dataKey="value" name="Losses (¥k)" stroke={EMERALD} strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
@@ -229,7 +223,7 @@ export default function CostBreakdown() {
                 <CartesianGrid vertical={false} stroke={GRID} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} width={44} tick={{ fontSize: 11 }} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip />} />
                 <Legend />
                 <Bar dataKey="savings" name="Savings (¥k)" fill={EMERALD} radius={[6, 6, 0, 0]} maxBarSize={22} />
                 <Bar dataKey="spend" name="Spend (¥k)" fill={TEAL} radius={[6, 6, 0, 0]} maxBarSize={22} />
@@ -244,7 +238,7 @@ export default function CostBreakdown() {
               <h2 className="text-slate-900 font-semibold">Transfer Cost</h2>
               <p className="text-slate-500">¥ thousand • by type</p>
             </div>
-            <ChartToggle value={transferPeriod} onChange={setTransferPeriod} ariaLabel="Periode transfer" />
+            <ChartTimeTabs activeTab={transferPeriod} onChange={setTransferPeriod} ariaLabel="Transfer period" />
           </div>
           <div className="warranty-chart">
             <ResponsiveContainer width="100%" height="100%">
@@ -252,7 +246,7 @@ export default function CostBreakdown() {
                 <CartesianGrid vertical={false} stroke={GRID} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} width={44} tick={{ fontSize: 11 }} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip />} />
                 <Legend />
                 <Bar dataKey="value" name="Transfer (¥k)" fill={EMERALD} radius={[6, 6, 0, 0]} maxBarSize={28} />
               </BarChart>

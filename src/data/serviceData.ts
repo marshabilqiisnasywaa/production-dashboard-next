@@ -27,7 +27,7 @@ export type ServicePageDefinition = {
   kpis: ServiceKpiDefinition[];
 };
 
-const monthLabels = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep"];
+const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"];
 
 const buildSeries = ({
   target,

@@ -1,5 +1,6 @@
 "use client";
 import CustomSelect from "@/components/shell/CustomSelect";
+import ChartTooltip from "@/components/shell/ChartTooltip";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -195,10 +196,10 @@ function AssemblyOverview() {
                 <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="leader" tick={{ fill: "var(--muted)", fontSize: 11, fontFamily: "Montserrat" }} axisLine={false} tickLine={false} interval={0} angle={-12} textAnchor="end" height={54} />
                 <YAxis tick={{ fill: "var(--muted)", fontSize: 11, fontFamily: "Montserrat" }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: "rgba(27, 43, 35, 0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#fff", fontFamily: "Montserrat" }} />
+                <Tooltip content={<ChartTooltip />} />
                 <Legend />
-                <Line type="monotone" dataKey="target" name="Nilai 85" stroke="var(--danger)" strokeWidth={2} strokeDasharray="4 4" dot={false} />
-                <Bar dataKey="totalNilai" name="Total Nilai" radius={[8, 8, 0, 0]} fill="var(--chart-1)">
+                <Line type="monotone" dataKey="target" name="Score 85" stroke="var(--danger)" strokeWidth={2} strokeDasharray="4 4" dot={false} />
+                <Bar dataKey="totalNilai" name="Total Score" radius={[8, 8, 0, 0]} fill="var(--chart-1)">
                   {assemblyPerLeaderValues.map((entry, index) => (
                     <Cell key={entry.leader} fill={entry.totalNilai >= 85 ? "var(--success)" : entry.totalNilai >= 75 ? "var(--warning)" : "var(--danger)"} opacity={index === 0 ? 1 : 0.9} />
                   ))}
@@ -215,10 +216,10 @@ function AssemblyOverview() {
                 <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="spv" tick={{ fill: "var(--muted)", fontSize: 11, fontFamily: "Montserrat" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: "var(--muted)", fontSize: 11, fontFamily: "Montserrat" }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: "rgba(27, 43, 35, 0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#fff", fontFamily: "Montserrat" }} />
+                <Tooltip content={<ChartTooltip />} />
                 <Legend />
-                <Line type="monotone" dataKey="target" name="Nilai 85" stroke="var(--danger)" strokeWidth={2} strokeDasharray="4 4" dot={false} />
-                <Bar dataKey="totalNilai" name="Total Nilai" radius={[8, 8, 0, 0]} fill="var(--chart-2)">
+                <Line type="monotone" dataKey="target" name="Score 85" stroke="var(--danger)" strokeWidth={2} strokeDasharray="4 4" dot={false} />
+                <Bar dataKey="totalNilai" name="Total Score" radius={[8, 8, 0, 0]} fill="var(--chart-2)">
                   {assemblySpvValues.map((entry, index) => (
                     <Cell key={entry.spv} fill={entry.totalNilai >= 85 ? "var(--success)" : entry.totalNilai >= 75 ? "var(--warning)" : "var(--danger)"} opacity={index === 0 ? 1 : 0.9} />
                   ))}
@@ -310,16 +311,16 @@ function TrendLineChart({
   const filtered = selectedLeader && selectedLeader !== "Semua" ? data.filter((row) => row.leader === selectedLeader) : data;
 
   return (
-    <ChartCard title={title} subtitle="Trend harian vs target">
+    <ChartCard title={title} subtitle="Daily trend vs target">
       <div className="assembly-chart-toolbar">
         {leaderFilter && (
           <CustomSelect value={selectedLeader ?? "Semua"} options={[{ value: "Semua", label: "Semua" }, ...leaderFilter]} onChange={(next) => onFilterChange?.(next)} />
         )}
         <button type="button" className="chart-toggle" onClick={() => setShowLabels((value) => !value)}>
-          {showLabels ? "Sembunyikan label" : "Tampilkan label"}
+          {showLabels ? "Hide labels" : "Show labels"}
         </button>
         <button type="button" className="chart-toggle" onClick={() => setShowTable((value) => !value)}>
-          {showTable ? "Sembunyikan Tabel" : "Tampilkan Tabel"}
+          {showTable ? "Hide table" : "Show table"}
         </button>
       </div>
       <div className="assembly-chart-wrap">
@@ -328,7 +329,7 @@ function TrendLineChart({
             <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="date" tick={{ fill: "var(--muted)", fontSize: 11, fontFamily: "Montserrat" }} axisLine={false} tickLine={false} interval={0} />
             <YAxis tick={{ fill: "var(--muted)", fontSize: 11, fontFamily: "Montserrat" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "rgba(27, 43, 35, 0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#fff", fontFamily: "Montserrat" }} />
+            <Tooltip content={<ChartTooltip />} />
             <Legend />
             <Line type="monotone" dataKey="target" name={targetLabel} stroke="var(--danger)" strokeWidth={2} strokeDasharray="4 4" dot={false} />
             <Line type="monotone" dataKey={valueKey} name={actualLabel} stroke="var(--success)" strokeWidth={2.5} dot={{ r: 2.5, fill: "var(--success)" }} activeDot={{ r: 5 }}>
@@ -382,7 +383,7 @@ function GroupedBarChart({
             <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey={xKey} tick={{ fill: "var(--muted)", fontSize: 11, fontFamily: "Montserrat" }} axisLine={false} tickLine={false} interval={0} angle={-10} textAnchor="end" height={52} />
             <YAxis tick={{ fill: "var(--muted)", fontSize: 11, fontFamily: "Montserrat" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "rgba(27, 43, 35, 0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#fff", fontFamily: "Montserrat" }} />
+            <Tooltip content={<ChartTooltip />} />
             <Legend />
             {series.map((item) => (
               <Bar key={item.key} dataKey={item.key} name={item.name} fill={item.color} radius={[6, 6, 0, 0]} />
@@ -403,7 +404,7 @@ function DonutChart({ title, data }: { title: string; data: Array<{ name: string
             <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="name" tick={{ fill: "var(--muted)", fontSize: 11, fontFamily: "Montserrat" }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fill: "var(--muted)", fontSize: 11, fontFamily: "Montserrat" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "rgba(27, 43, 35, 0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#fff", fontFamily: "Montserrat" }} />
+            <Tooltip content={<ChartTooltip />} />
             <Bar dataKey="value" radius={[8, 8, 0, 0]}>
               {data.map((entry) => (
                 <Cell key={entry.name} fill={entry.color} />
@@ -449,7 +450,7 @@ function AssemblyKpiPage({ page, pageTitle }: { page: AssemblyPage; pageTitle: s
 
       <div className="qc-kpi-grid assembly-kpi-grid detail-grid-cards">
         <article className="qc-kpi-card">
-          <span className="kpi-label">Aktual bulan ini</span>
+          <span className="kpi-label">Actual this month</span>
           <strong>{(kpi.perLeader.reduce((sum, item) => sum + item.value, 0) / kpi.perLeader.length).toFixed(2)}</strong>
           <span className="kpi-unit">{kpi.unit}</span>
         </article>
@@ -474,7 +475,7 @@ function AssemblyKpiPage({ page, pageTitle }: { page: AssemblyPage; pageTitle: s
         {page === "assembly-oqc" && (
           <>
             <TrendLineChart
-              title="Tren NG Rate OQC Harian"
+              title="OQC NG Rate Daily Trend"
               data={chartData}
               valueKey="value"
               target={kpi.t2}
@@ -511,7 +512,7 @@ function AssemblyKpiPage({ page, pageTitle }: { page: AssemblyPage; pageTitle: s
         {page === "assembly-violation" && (
           <>
             <TrendLineChart
-              title="Tren Violation Rate Harian"
+              title="Violation Rate Daily Trend"
               data={chartData}
               valueKey="value"
               target={kpi.t2}
@@ -548,7 +549,7 @@ function AssemblyKpiPage({ page, pageTitle }: { page: AssemblyPage; pageTitle: s
         {page === "assembly-upph" && (
           <>
             <TrendLineChart
-              title="Tren UPPH Harian (Total Area)"
+              title="UPPH Daily Trend (Total Area)"
               data={chartData}
               valueKey="value"
               target={kpi.t2}
@@ -570,7 +571,7 @@ function AssemblyKpiPage({ page, pageTitle }: { page: AssemblyPage; pageTitle: s
         {page === "assembly-ngp" && (
           <>
             <TrendLineChart
-              title="Tren NGP Harian"
+              title="NGP Daily Trend"
               data={chartData}
               valueKey="value"
               target={kpi.t2}
@@ -601,7 +602,7 @@ function AssemblyKpiPage({ page, pageTitle }: { page: AssemblyPage; pageTitle: s
         {page === "assembly-woclose" && (
           <>
             <TrendLineChart
-              title="Tren Closed Rate Harian"
+              title="Closed Rate Daily Trend"
               data={chartData}
               valueKey="value"
               target={100}
@@ -632,7 +633,7 @@ function AssemblyKpiPage({ page, pageTitle }: { page: AssemblyPage; pageTitle: s
         {page === "assembly-wip" && (
           <>
             <TrendLineChart
-              title="Tren WIP Harian (Total Area)"
+              title="WIP Daily Trend (Total Area)"
               data={chartData}
               valueKey="value"
               target={kpi.t2}
@@ -654,7 +655,7 @@ function AssemblyKpiPage({ page, pageTitle }: { page: AssemblyPage; pageTitle: s
         {page === "assembly-rework" && (
           <>
             <TrendLineChart
-              title="Tren Rework Rate Harian"
+              title="Rework Rate Daily Trend"
               data={chartData}
               valueKey="value"
               target={kpi.t2}

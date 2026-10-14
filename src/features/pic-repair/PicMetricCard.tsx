@@ -34,8 +34,8 @@ export default function PicMetricCard({ card, selected, onToggle, onAskAi, subte
       {text ? <p>{text}</p> : <p>Target: {card.targetLabel} <b className={good ? "good-text" : "bad-text"}>{good ? "↓" : "↑"} {card.gap}</b></p>}
       <Sparkline success={good} />
       <div className="pic-kpi-actions">
-        <button type="button" className="repair-outline pic-mini" onClick={() => onToggle(card.id)}>{selected ? "Tutup Tren" : "Lihat Tren"}</button>
-        {!good && <button type="button" className="pic-ai-btn" onClick={() => onAskAi(card)}>Tanya AI</button>}
+        <button type="button" className="repair-outline pic-mini" onClick={() => onToggle(card.id)}>{selected ? "Hide Trend" : "View Trend"}</button>
+        {!good && <button type="button" className="pic-ai-btn" onClick={() => onAskAi(card)}>Ask AI</button>}
       </div>
     </article>
   );

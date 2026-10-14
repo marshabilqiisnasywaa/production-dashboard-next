@@ -1,11 +1,12 @@
 "use client";
+import ChartTimeTabs, { type ChartTimeTab } from "@/components/shell/ChartTimeTabs";
 import CustomSelect from "@/components/shell/CustomSelect";
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X } from "lucide-react";
 import { formatMoney } from "./format";
 
-export type PeriodOption = "Today" | "Week" | "Month" | "Year" | "8 Minggu" | "6 Bulan" | "1 Tahun" | "Custom";
-export const defaultPeriods: PeriodOption[] = ["Today", "Week", "Month", "Year"];
+export type PeriodOption = "Daily" | "Week" | "Month" | "Year" | "8 Weeks" | "6 Months" | "1 Year" | "Custom";
+export const defaultPeriods: PeriodOption[] = ["Daily", "Week", "Month", "Year"];
 
 export function Panel({ title, subtitle, action, children, className = "" }: { title: string; subtitle?: string; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return <section className={`sq-panel ${className}`}><div className="sq-panel-head"><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>{action}</div>{children}</section>;
@@ -13,7 +14,9 @@ export function Panel({ title, subtitle, action, children, className = "" }: { t
 
 export function PeriodTabs({ options = defaultPeriods, value, onChange }: { options?: PeriodOption[]; value: PeriodOption; onChange: (value: PeriodOption) => void }) {
   const isCustom = options.includes("Custom");
-  return <div className="cm-panel-tabs"><div className="sq-period" role="group" aria-label="Periode"><ChevronDown size={0} aria-hidden="true" />{options.map((option) => <button type="button" key={option} aria-pressed={value === option} className={value === option ? "active" : ""} onClick={() => onChange(option)}>{option}</button>)}</div>{isCustom && value === "Custom" && <div className="cm-action-row"><input className="cm-date-input" type="date" aria-label="Tanggal mulai" /><span>hingga</span><input className="cm-date-input" type="date" aria-label="Tanggal akhir" /></div>}</div>;
+  const isStandard = options.length === 4 && (["Daily", "Week", "Month", "Year"] as string[]).every((item) => (options as string[]).includes(item));
+  if (isStandard) return <div className="cm-panel-tabs"><ChartTimeTabs activeTab={value as ChartTimeTab} onChange={(tab) => onChange(tab as PeriodOption)} ariaLabel="Period" /></div>;
+  return <div className="cm-panel-tabs"><div className="bg-white/80 backdrop-blur-md border border-white/60 rounded-xl p-1 shadow-xs flex items-center gap-1 w-max" role="group" aria-label="Period"><ChevronDown size={0} aria-hidden="true" />{options.map((option) => <button type="button" key={option} aria-pressed={value === option} className={value === option ? "bg-slate-900 text-white font-semibold rounded-lg px-3 py-1 text-xs transition-all" : "text-slate-500 hover:text-slate-900 rounded-lg px-3 py-1 text-xs font-medium transition-all"} onClick={() => onChange(option)}>{option}</button>)}</div>{isCustom && value === "Custom" && <div className="cm-action-row"><input className="cm-date-input" type="date" aria-label="Start date" /><span>to</span><input className="cm-date-input" type="date" aria-label="End date" /></div>}</div>;
 }
 
 export function StatCard({ label, value, icon, sub, delta }: { label: string; value: React.ReactNode; icon?: React.ReactNode; sub?: string; delta?: { pct: number; goodWhen: "up" | "down" | "neutral" } }) {
@@ -24,7 +27,7 @@ export function StatCard({ label, value, icon, sub, delta }: { label: string; va
 export function HBarList({ rows, format = formatMoney, selected, onSelect }: { rows: { name: string; value: number }[]; format?: (value: number) => string; selected?: string; onSelect?: (name: string) => void }) {
   const sorted = [...rows].sort((a, b) => b.value - a.value);
   const max = sorted[0]?.value ?? 0;
-  if (!sorted.length) return <div className="cm-empty">Belum ada data untuk ditampilkan.</div>;
+  if (!sorted.length) return <div className="cm-empty">No data to display.</div>;
   return <div className="cm-hbar">{sorted.map((row) => <div className={`cm-hbar-row ${selected === row.name ? "selected" : ""}`} key={row.name} role={onSelect ? "button" : undefined} tabIndex={onSelect ? 0 : undefined} onClick={() => onSelect?.(row.name)} onKeyDown={(event) => { if (event.key === "Enter") onSelect?.(row.name); }}><span className="cm-hbar-name">{row.name}</span><span className="cm-hbar-track"><i style={{ width: `${max ? row.value / max * 100 : 0}%` }} /></span><b className="cm-hbar-value">{format(row.value)}</b></div>)}</div>;
 }
 

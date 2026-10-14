@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import CustomSelect from "@/components/shell/CustomSelect";
+import ChartTooltip from "@/components/shell/ChartTooltip";
 import PeriodControl, { periodView, windowForPeriod, type PeriodKey } from "@/components/shell/PeriodControl";
 import {
   QC_AREAS,
@@ -72,14 +73,14 @@ function RateByDateChart({ moduleKey, endIdx }: { moduleKey: QcModuleKey; endIdx
   const ngTaken = dataDef.dailyNg.slice(0, endIdx + 1).slice(-view.labels.length);
   const rows = view.labels.map((date, index) => ({ date, acc: view.values[index] ?? 0, ng: ngTaken[index] ?? 0 }));
   return (
-    <ChartShell title={`${moduleKey} Rate by Date`} subtitle="NG Rate & Acceptance Rate harian" period={period} onPeriod={setPeriod} labels={labels} onLabels={setLabels}>
+    <ChartShell title={`${moduleKey} Rate by Date`} subtitle="NG Rate & Acceptance Rate · Daily" period={period} onPeriod={setPeriod} labels={labels} onLabels={setLabels}>
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={rows} margin={{ top: 18, right: 6, left: 0, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--line)" />
           <XAxis dataKey="date" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 10 }} interval="preserveStartEnd" />
           <YAxis yAxisId="left" axisLine={false} tickLine={false} width={40} tick={{ fontSize: 10 }} domain={[0, "auto"]} />
           <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} width={44} tick={{ fontSize: 10 }} domain={[90, 100]} />
-          <Tooltip cursor={{ fill: "rgba(4,106,57,0.05)" }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(4,106,57,0.05)" }} />
           <Legend wrapperStyle={{ paddingTop: 8 }} />
           <Bar yAxisId="left" dataKey="ng" name="NG Rate" fill={RED} radius={[6, 6, 0, 0]} maxBarSize={26}>
             {labels && <LabelList dataKey="ng" position="top" fontSize={9} formatter={(value) => `${Number(value).toFixed(1)}`} />}
@@ -105,13 +106,13 @@ function ModelByDateChart({ moduleKey, endIdx, modelSel }: { moduleKey: QcModule
     return { model, ng: Number(mean(slice).toFixed(2)) };
   });
   return (
-    <ChartShell title={`${moduleKey} Model by Date`} subtitle="NG Rate per model (aggregat)" period={period} onPeriod={setPeriod} labels={labels} onLabels={setLabels}>
+    <ChartShell title={`${moduleKey} Model by Date`} subtitle="NG Rate per model (aggregate)" period={period} onPeriod={setPeriod} labels={labels} onLabels={setLabels}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={rows} margin={{ top: 18, right: 12, left: 0, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--line)" />
           <XAxis dataKey="model" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 10 }} interval={0} />
           <YAxis axisLine={false} tickLine={false} width={40} tick={{ fontSize: 10 }} domain={[0, "auto"]} />
-          <Tooltip cursor={{ fill: "rgba(4,106,57,0.05)" }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(4,106,57,0.05)" }} />
           <Legend wrapperStyle={{ paddingTop: 8 }} />
           <Bar dataKey="ng" name="NG Rate" fill={EMERALD} radius={[6, 6, 0, 0]} maxBarSize={44}>
             {labels && <LabelList dataKey="ng" position="top" fontSize={10} formatter={(value) => `${Number(value).toFixed(1)}`} />}
@@ -140,7 +141,7 @@ function AreaChart({ moduleKey, endIdx, areaSel }: { moduleKey: QcModuleKey; end
           <CartesianGrid horizontal={false} stroke="var(--line)" />
           <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} domain={[90, 100]} />
           <YAxis type="category" dataKey="area" axisLine={false} tickLine={false} width={104} tick={{ fontSize: 10 }} />
-          <Tooltip cursor={{ fill: "rgba(4,106,57,0.05)" }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(4,106,57,0.05)" }} />
           <Legend wrapperStyle={{ paddingTop: 8 }} />
           <Bar dataKey="acc" name="Acc Rate" fill={EMERALD} radius={[0, 6, 6, 0]} maxBarSize={26}>
             {labels && <LabelList dataKey="acc" position="right" fontSize={10} formatter={(value) => `${Number(value).toFixed(1)}`} />}
@@ -167,13 +168,13 @@ function AreaDefectChart({ moduleKey, endIdx, areaSel }: { moduleKey: QcModuleKe
     return point;
   });
   return (
-    <ChartShell title={`${moduleKey} by Area Defect`} subtitle="Jenis defect per area (stacked)" period={period} onPeriod={setPeriod} labels={labels} onLabels={setLabels}>
+    <ChartShell title={`${moduleKey} by Area Defect`} subtitle="Defect types per area (stacked)" period={period} onPeriod={setPeriod} labels={labels} onLabels={setLabels}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
           <CartesianGrid horizontal={false} stroke="var(--line)" />
           <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
           <YAxis type="category" dataKey="area" axisLine={false} tickLine={false} width={104} tick={{ fontSize: 10 }} />
-          <Tooltip cursor={{ fill: "rgba(4,106,57,0.05)" }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(4,106,57,0.05)" }} />
           <Legend wrapperStyle={{ paddingTop: 8 }} />
           {QC_DEFECTS.map((defect, defectIndex) => (
             <Bar key={defect} dataKey={defect} stackId="defects" fill={QC_DEFECT_COLORS[defectIndex]} maxBarSize={26}>
