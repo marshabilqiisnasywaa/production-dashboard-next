@@ -1,396 +1,404 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import type { ChangeEvent } from "react";
-import type { DmLineStatus, DmMember } from "../dmData";
+import type { ChangeEvent, FormEvent } from "react";
+import type { DmLine, DmLineInput, DmWorkshop } from "../api";
+import type { DmLineStatus } from "../dmData";
+import TeamManager from "./TeamManager";
 
-export interface LineTableItem {
-  id: string;
-  workshopLabel: string;
-  lineLabel: string;
-  lineLabelZh: string;
-  lineCode: string;
-  lineName: string;
-  model: string;
-  status: DmLineStatus;
-  slogan: string;
-  values: string[];
-  teamPhotoUrl: string | null;
-  members?: readonly DmMember[];
-  mpv?: DmMember | null;
-}
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+
+type TabKey = "general" | "culture" | "media" | "team";
 
 interface LineDetailModalProps {
   open: boolean;
-  line: LineTableItem | null;
-  isActiveOnDashboard: boolean;
-  onSave: (updatedLine: LineTableItem, setAsActive: boolean) => void;
+  line: DmLine | null;
+  initialTab: TabKey;
+  workshops: DmWorkshop[];
+  defaultWorkshopId: number | null;
+  call: <T>(fn: () => Promise<T>) => Promise<T>;
+  onTeamChanged: () => Promise<void>;
+  onSave: (data: DmLineInput) => Promise<void>;
+  onDelete: (line: DmLine) => Promise<void>;
   onClose: () => void;
 }
+
+type FormState = {
+  workshopId: number | null;
+  code: string;
+  name: string;
+  model: string;
+  status: DmLineStatus;
+  lineLabel: string;
+  lineLabelZh: string;
+  slug: string;
+  slogan: string;
+  values: string;
+  teamPhotoUrl: string;
+};
+
+const statusOptions: { value: DmLineStatus; label: string }[] = [
+  { value: "running", label: "RUNNING: lini beroperasi normal" },
+  { value: "idle", label: "IDLE: standby, ganti model, atau menunggu material" },
+  { value: "stopped", label: "STOPPED: lini berhenti, maintenance, atau rusak" },
+];
+
+function blank(defaultWorkshopId: number | null): FormState {
+  return {
+    workshopId: defaultWorkshopId,
+    code: "",
+    name: "",
+    model: "",
+    status: "running",
+    lineLabel: "DM TRIANGLE LINE",
+    lineLabelZh: "",
+    slug: "",
+    slogan: "",
+    values: "",
+    teamPhotoUrl: "",
+  };
+}
+
+function fromLine(line: DmLine): FormState {
+  return {
+    workshopId: line.workshopId,
+    code: line.code,
+    name: line.name,
+    model: line.model ?? "",
+    status: line.status,
+    lineLabel: line.lineLabel ?? "",
+    lineLabelZh: line.lineLabelZh ?? "",
+    slug: line.slug,
+    slogan: line.slogan ?? "",
+    values: line.values.join(", "),
+    teamPhotoUrl: line.teamPhotoUrl ?? "",
+  };
+}
+
+function nullable(value: string) {
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+export type { TabKey };
 
 export default function LineDetailModal({
   open,
   line,
-  isActiveOnDashboard,
+  initialTab,
+  workshops,
+  defaultWorkshopId,
+  call,
+  onTeamChanged,
   onSave,
+  onDelete,
   onClose,
 }: LineDetailModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-
-  const [formData, setFormData] = useState<LineTableItem>({
-    id: "",
-    workshopLabel: "",
-    lineLabel: "",
-    lineLabelZh: "",
-    lineCode: "",
-    lineName: "",
-    model: "",
-    status: "running",
-    slogan: "",
-    values: [],
-    teamPhotoUrl: null,
-  });
-
-  const [setAsActive, setSetAsActive] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<"general" | "culture" | "media">("general");
+  const [form, setForm] = useState<FormState>(blank(defaultWorkshopId));
+  const [tab, setTab] = useState<TabKey>("general");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (line) {
-      setFormData({
-        ...line,
-        values: [...line.values],
-      });
-      setSetAsActive(isActiveOnDashboard);
-    }
-  }, [line, isActiveOnDashboard]);
+    if (!open) return;
+    setForm(line ? fromLine(line) : blank(defaultWorkshopId ?? workshops[0]?.id ?? null));
+    setTab(line ? initialTab : "general");
+    setError(null);
+    setBusy(false);
+  }, [open, line?.id, initialTab]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    if (open && !dialog.open) {
-      dialog.showModal();
-    } else if (!open && dialog.open) {
-      dialog.close();
-    }
+    if (open && !dialog.open) dialog.showModal();
+    else if (!open && dialog.open) dialog.close();
   }, [open]);
 
-  if (!open || !line) return null;
+  if (!open) return null;
 
-  function handleChange<K extends keyof LineTableItem>(key: K, value: LineTableItem[K]) {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+  function change<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleFileUpload(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  function pickPhoto(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
     if (!file) return;
+    if (file.size > MAX_PHOTO_BYTES) {
+      setError("Foto tim lebih dari 2 MB. Kecilkan ukurannya dulu.");
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      handleChange("teamPhotoUrl", result);
+    reader.onload = () => {
+      change("teamPhotoUrl", String(reader.result));
+      setError(null);
     };
     reader.readAsDataURL(file);
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    onSave(formData, setAsActive);
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (form.workshopId === null) {
+      setTab("general");
+      setError("Pilih workshop dulu. Kalau daftarnya kosong, tambahkan workshop di halaman sebelumnya.");
+      return;
+    }
+    if (!form.code.trim() || !form.name.trim()) {
+      setTab("general");
+      setError("Kode lini dan nama tim wajib diisi.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await onSave({
+        workshopId: form.workshopId,
+        code: form.code.trim(),
+        name: form.name.trim(),
+        model: nullable(form.model),
+        status: form.status,
+        slogan: nullable(form.slogan),
+        lineLabel: nullable(form.lineLabel),
+        lineLabelZh: nullable(form.lineLabelZh),
+        values: form.values.split(",").map((value) => value.trim()).filter(Boolean),
+        teamPhotoUrl: nullable(form.teamPhotoUrl),
+        slug: nullable(form.slug),
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal menyimpan.");
+      setBusy(false);
+    }
   }
+
+  async function remove() {
+    if (!line) return;
+    if (!window.confirm(`Hapus lini ${line.code} beserta dashboard-nya? Link dashboard ini akan berhenti bekerja.`)) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await onDelete(line);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal menghapus.");
+      setBusy(false);
+    }
+  }
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: "general", label: "1. Info Lini & Workshop" },
+    { key: "culture", label: "2. Kultur & Slogan" },
+    { key: "media", label: "3. Foto Tim Bersama" },
+    ...(line ? [{ key: "team" as const, label: "4. Anggota Tim" }] : []),
+  ];
+  const values = form.values.split(",").map((value) => value.trim()).filter(Boolean);
 
   return (
     <dialog
       ref={dialogRef}
       className="dm-admin-modal dm-line-detail-modal"
+      aria-labelledby="line-modal-heading"
       onClose={onClose}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
       }}
     >
       <div className="dm-line-modal-shell">
-        {/* Top Accent Gradient Line */}
-        <div className="dm-modal-top-accent" />
-
-        {/* Modal Header */}
         <div className="dm-line-modal-head">
           <div className="dm-line-modal-head-left">
-            <div className="dm-line-modal-avatar-badge" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
-                <path d="M17 18h1" />
-                <path d="M12 18h1" />
-                <path d="M7 18h1" />
-              </svg>
-            </div>
             <div>
               <div className="dm-line-modal-meta-row">
-                <span className="dm-line-badge-cat">KONFIGURASI LINI</span>
-                <span className="dm-line-code-chip">{formData.lineCode || "LINI BARU"}</span>
-                {isActiveOnDashboard && (
-                  <span className="dm-badge-pill-live">
-                    <span className="dm-live-dot" />
-                    Sedang Ditampilkan
-                  </span>
-                )}
+                <span className="dm-line-badge-cat">{line ? "UBAH LINI" : "LINI BARU"}</span>
+                <span className="dm-line-code-chip">{form.code || "Kode belum diisi"}</span>
               </div>
-              <h2 className="dm-line-modal-heading">
-                {formData.lineName ? `${formData.lineName} — ${formData.workshopLabel || "Workshop"}` : "Detail & Pengaturan Lini"}
+              <h2 id="line-modal-heading" className="dm-line-modal-heading">
+                {form.name ? `${form.name}, ${workshops.find((w) => w.id === form.workshopId)?.name ?? "tanpa workshop"}` : "Detail dan pengaturan lini"}
               </h2>
             </div>
           </div>
-
-          <button
-            type="button"
-            className="dm-modal-close-icon-btn"
-            onClick={onClose}
-            aria-label="Tutup modal"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <button type="button" className="dm-modal-close-icon-btn" onClick={onClose} aria-label="Tutup">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
 
-        {/* Segmented Subnav Navigation */}
-        <div className="dm-modal-tabs-track">
-          <button
-            type="button"
-            className={`dm-modal-tab-btn ${activeTab === "general" ? "is-active" : ""}`}
-            onClick={() => setActiveTab("general")}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect width="18" height="18" x="3" y="3" rx="2" />
-              <path d="M3 9h18" />
-              <path d="M9 21V9" />
-            </svg>
-            <span>1. Info Lini &amp; Workshop</span>
-          </button>
-
-          <button
-            type="button"
-            className={`dm-modal-tab-btn ${activeTab === "culture" ? "is-active" : ""}`}
-            onClick={() => setActiveTab("culture")}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-            <span>2. Kultur &amp; Slogan</span>
-          </button>
-
-          <button
-            type="button"
-            className={`dm-modal-tab-btn ${activeTab === "media" ? "is-active" : ""}`}
-            onClick={() => setActiveTab("media")}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-              <circle cx="9" cy="9" r="2" />
-              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-            </svg>
-            <span>3. Foto Tim Bersama</span>
-          </button>
+        <div className="dm-modal-tabs-track" role="tablist" aria-label="Bagian formulir lini">
+          {tabs.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              role="tab"
+              aria-selected={tab === item.key}
+              className={`dm-modal-tab-btn ${tab === item.key ? "is-active" : ""}`}
+              onClick={() => setTab(item.key)}
+            >
+              <span>{item.label}</span>
+            </button>
+          ))}
         </div>
 
-        {/* Modal Form Body */}
-        <form onSubmit={handleSubmit} className="dm-line-modal-body">
-          {/* TAB 1: IDENTITAS LINI & WORKSHOP */}
-          {activeTab === "general" && (
-            <div className="dm-modal-sec-container">
-              <div className="dm-modal-info-card">
-                <div className="dm-modal-info-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="16" x2="12" y2="12" />
-                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                  </svg>
-                </div>
-                <span>
-                  Informasi ini mendefinisikan kode mesin, penamaan rail samping kiri/kanan dashboard, dan status kerja lini.
-                </span>
+        {tab === "team" && line ? (
+          <div className="dm-line-modal-body">
+            <TeamManager line={line} call={call} onChanged={onTeamChanged} />
+            <div className="dm-modal-footer-bar">
+              <div className="dm-footer-info-slot" />
+              <div className="dm-footer-btn-slot">
+                <button type="button" className="dm-btn-modal-submit" onClick={onClose}>Selesai</button>
               </div>
-
+            </div>
+          </div>
+        ) : (
+        <form onSubmit={submit} className="dm-line-modal-body" noValidate>
+          {tab === "general" && (
+            <div className="dm-modal-sec-container">
               <div className="dm-modal-form-grid">
                 <div className="dm-form-group">
-                  <label htmlFor="modal-field-lineCode" className="dm-form-label">
-                    Kode Lini Produksi <span className="dm-required-mark">*</span>
+                  <label htmlFor="line-workshop" className="dm-form-label">
+                    Workshop <span className="dm-required-mark">*</span>
                   </label>
-                  <input
-                    id="modal-field-lineCode"
-                    type="text"
-                    required
-                    className="dm-form-input font-mono"
-                    value={formData.lineCode}
-                    onChange={(e) => handleChange("lineCode", e.target.value)}
-                    placeholder="Contoh: TAC20601"
-                  />
-                  <span className="dm-form-subtext">ID unik lini produksi di manufaktur OPPO</span>
+                  <select
+                    id="line-workshop"
+                    className="dm-form-select"
+                    value={form.workshopId ?? ""}
+                    onChange={(event) => change("workshopId", event.target.value ? Number(event.target.value) : null)}
+                  >
+                    <option value="">Pilih workshop</option>
+                    {workshops.map((workshop) => (
+                      <option key={workshop.id} value={workshop.id}>{workshop.name}</option>
+                    ))}
+                  </select>
+                  <span className="dm-form-subtext">Tampil di rail kanan dashboard sebagai DM TRIANGLE + nama workshop</span>
                 </div>
 
                 <div className="dm-form-group">
-                  <label htmlFor="modal-field-lineName" className="dm-form-label">
+                  <label htmlFor="line-code" className="dm-form-label">
+                    Kode Lini <span className="dm-required-mark">*</span>
+                  </label>
+                  <input
+                    id="line-code"
+                    type="text"
+                    className="dm-form-input font-mono"
+                    value={form.code}
+                    onChange={(event) => change("code", event.target.value)}
+                    placeholder="Contoh: TAC20601"
+                  />
+                  <span className="dm-form-subtext">Harus unik di seluruh lini</span>
+                </div>
+
+                <div className="dm-form-group">
+                  <label htmlFor="line-name" className="dm-form-label">
                     Nama Tim / Nama Lini <span className="dm-required-mark">*</span>
                   </label>
                   <input
-                    id="modal-field-lineName"
+                    id="line-name"
                     type="text"
-                    required
                     className="dm-form-input"
-                    value={formData.lineName}
-                    onChange={(e) => handleChange("lineName", e.target.value)}
+                    value={form.name}
+                    onChange={(event) => change("name", event.target.value)}
                     placeholder="Contoh: EXCELLENCE"
                   />
-                  <span className="dm-form-subtext">Nama panggil tim lini kerja</span>
                 </div>
 
                 <div className="dm-form-group">
-                  <label htmlFor="modal-field-workshopLabel" className="dm-form-label">
-                    Label Workshop (Side Rail Kanan) <span className="dm-required-mark">*</span>
-                  </label>
+                  <label htmlFor="line-model" className="dm-form-label">Model Ponsel</label>
                   <input
-                    id="modal-field-workshopLabel"
+                    id="line-model"
                     type="text"
-                    required
                     className="dm-form-input"
-                    value={formData.workshopLabel}
-                    onChange={(e) => handleChange("workshopLabel", e.target.value)}
-                    placeholder="Contoh: DM TRIANGLE WORKSHOP 5"
-                  />
-                  <span className="dm-form-subtext">Banner vertikal di rail kanan dashboard</span>
-                </div>
-
-                <div className="dm-form-group">
-                  <label htmlFor="modal-field-model" className="dm-form-label">
-                    Model Ponsel <span className="dm-required-mark">*</span>
-                  </label>
-                  <input
-                    id="modal-field-model"
-                    type="text"
-                    required
-                    className="dm-form-input"
-                    value={formData.model}
-                    onChange={(e) => handleChange("model", e.target.value)}
+                    value={form.model}
+                    onChange={(event) => change("model", event.target.value)}
                     placeholder="Contoh: LATTE-M"
                   />
-                  <span className="dm-form-subtext">Kode tipe smartphone yang dirakit saat ini</span>
                 </div>
 
                 <div className="dm-form-group">
-                  <label htmlFor="modal-field-lineLabel" className="dm-form-label">
-                    Label Lini Inggris (Side Rail Kiri)
-                  </label>
+                  <label htmlFor="line-label" className="dm-form-label">Label Lini Inggris (rail kiri)</label>
                   <input
-                    id="modal-field-lineLabel"
+                    id="line-label"
                     type="text"
                     className="dm-form-input"
-                    value={formData.lineLabel}
-                    onChange={(e) => handleChange("lineLabel", e.target.value)}
+                    value={form.lineLabel}
+                    onChange={(event) => change("lineLabel", event.target.value)}
                     placeholder="Contoh: DM TRIANGLE LINE"
                   />
-                  <span className="dm-form-subtext">Teks bahasa Inggris vertikal</span>
                 </div>
 
                 <div className="dm-form-group">
-                  <label htmlFor="modal-field-lineLabelZh" className="dm-form-label">
-                    Label Mandarin (Side Rail Kiri)
-                  </label>
+                  <label htmlFor="line-label-zh" className="dm-form-label">Label Mandarin (rail kiri)</label>
                   <input
-                    id="modal-field-lineLabelZh"
+                    id="line-label-zh"
                     type="text"
                     className="dm-form-input"
-                    value={formData.lineLabelZh}
-                    onChange={(e) => handleChange("lineLabelZh", e.target.value)}
+                    value={form.lineLabelZh}
+                    onChange={(event) => change("lineLabelZh", event.target.value)}
                     placeholder="Contoh: DM 三角线"
                   />
-                  <span className="dm-form-subtext">Karakter Hanzi untuk tampilan bilingual</span>
                 </div>
 
-                <div className="dm-form-group is-fullwidth">
-                  <label htmlFor="modal-field-status" className="dm-form-label">
-                    Status Operasional Lini <span className="dm-required-mark">*</span>
-                  </label>
-                  <div className="dm-status-select-wrap">
-                    <select
-                      id="modal-field-status"
-                      className="dm-form-select"
-                      value={formData.status}
-                      onChange={(e) => handleChange("status", e.target.value as DmLineStatus)}
-                    >
-                      <option value="running">🟢 RUNNING — Lini Beroperasi Penuh &amp; Normal</option>
-                      <option value="idle">🟡 IDLE — Standby / Pergantian Model / Menunggu Material</option>
-                      <option value="stopped">🔴 STOPPED — Lini Berhenti / Maintenance / Kerusakan</option>
-                    </select>
-                  </div>
-                  <span className="dm-form-subtext">Mempengaruhi warna badge status di dashboard utama</span>
+                <div className="dm-form-group">
+                  <label htmlFor="line-status" className="dm-form-label">Status Operasional</label>
+                  <select
+                    id="line-status"
+                    className="dm-form-select"
+                    value={form.status}
+                    onChange={(event) => change("status", event.target.value as DmLineStatus)}
+                  >
+                    {statusOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="dm-form-group">
+                  <label htmlFor="line-slug" className="dm-form-label">Alamat Link Dashboard</label>
+                  <input
+                    id="line-slug"
+                    type="text"
+                    className="dm-form-input font-mono"
+                    value={form.slug}
+                    onChange={(event) => change("slug", event.target.value)}
+                    placeholder="Kosongkan agar dibuat otomatis"
+                  />
+                  <span className="dm-form-subtext">
+                    {line
+                      ? "Mengubah alamat ini membuat link lama berhenti bekerja di layar yang sudah terpasang."
+                      : "Contoh hasil: workshop-5-tac20601"}
+                  </span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 2: KULTUR & CORE VALUES */}
-          {activeTab === "culture" && (
+          {tab === "culture" && (
             <div className="dm-modal-sec-container">
-              <div className="dm-modal-info-card">
-                <div className="dm-modal-info-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                  </svg>
-                </div>
-                <span>
-                  Slogan tim membakar semangat kerja operator, sedangkan Core Values mencerminkan budaya Benfen OPPO.
-                </span>
-              </div>
-
               <div className="dm-form-group">
-                <label htmlFor="modal-field-slogan" className="dm-form-label">
-                  Slogan Tim Lini
-                </label>
-                <div className="dm-input-with-icon">
-                  <span className="dm-input-lead-icon" aria-hidden="true">
-                    💬
-                  </span>
-                  <input
-                    id="modal-field-slogan"
-                    type="text"
-                    className="dm-form-input with-lead"
-                    value={formData.slogan}
-                    onChange={(e) => handleChange("slogan", e.target.value)}
-                    placeholder="Contoh: SATU TIM SATU TUJUAN"
-                  />
-                </div>
-                <span className="dm-form-subtext">Ditampilkan pada header kartu tim di dashboard</span>
+                <label htmlFor="line-slogan" className="dm-form-label">Slogan Tim</label>
+                <input
+                  id="line-slogan"
+                  type="text"
+                  className="dm-form-input"
+                  value={form.slogan}
+                  onChange={(event) => change("slogan", event.target.value)}
+                  placeholder="Contoh: SATU TIM SATU TUJUAN"
+                />
               </div>
 
               <div className="dm-form-group" style={{ marginTop: "0.85rem" }}>
-                <label htmlFor="modal-field-values" className="dm-form-label">
-                  Nilai-Nilai Inti (Core Values, pisahkan dengan koma)
-                </label>
+                <label htmlFor="line-values" className="dm-form-label">Nilai Inti (pisahkan dengan koma)</label>
                 <input
-                  id="modal-field-values"
+                  id="line-values"
                   type="text"
                   className="dm-form-input"
-                  value={formData.values.join(", ")}
-                  onChange={(e) =>
-                    handleChange(
-                      "values",
-                      e.target.value
-                        .split(",")
-                        .map((s) => s.trim())
-                        .filter(Boolean)
-                    )
-                  }
+                  value={form.values}
+                  onChange={(event) => change("values", event.target.value)}
                   placeholder="Benfen, Orientasi Pengguna, Mengejar Keunggulan, Keterbukaan"
                 />
-                <span className="dm-form-subtext">
-                  Pisahkan kata dengan tanda koma ( , ) untuk membuat pill tag otomatis
-                </span>
-
-                {formData.values.length > 0 && (
+                {values.length > 0 && (
                   <div className="dm-tags-cloud-box">
-                    <span className="dm-tags-cloud-label">Preview Core Values:</span>
+                    <span className="dm-tags-cloud-label">Pratinjau nilai inti:</span>
                     <div className="dm-tags-cloud-items">
-                      {formData.values.map((val, idx) => (
-                        <span key={idx} className="dm-cloud-tag-pill">
-                          <span className="dm-tag-dot" />
-                          {val}
-                        </span>
+                      {values.map((value) => (
+                        <span key={value} className="dm-cloud-tag-pill">{value}</span>
                       ))}
                     </div>
                   </div>
@@ -399,89 +407,42 @@ export default function LineDetailModal({
             </div>
           )}
 
-          {/* TAB 3: FOTO TIM */}
-          {activeTab === "media" && (
+          {tab === "media" && (
             <div className="dm-modal-sec-container">
-              <div className="dm-modal-info-card">
-                <div className="dm-modal-info-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                    <circle cx="9" cy="9" r="2" />
-                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                  </svg>
-                </div>
-                <span>
-                  Unggah berkas foto beresolusi tinggi atau masukkan URL gambar tim bersama. Direkomendasikan rasio memanjang / landscape.
-                </span>
-              </div>
-
               <div className="dm-form-group">
-                <label htmlFor="modal-field-teamPhoto" className="dm-form-label">
-                  URL / Berkas Foto Tim
-                </label>
+                <label htmlFor="line-photo" className="dm-form-label">URL atau Berkas Foto Tim</label>
                 <div className="dm-upload-input-group">
                   <input
-                    id="modal-field-teamPhoto"
+                    id="line-photo"
                     type="text"
                     className="dm-form-input"
-                    value={formData.teamPhotoUrl ?? ""}
-                    onChange={(e) => handleChange("teamPhotoUrl", e.target.value || null)}
-                    placeholder="URL gambar (misal /assets/dm/team-photo.png)"
+                    value={form.teamPhotoUrl.startsWith("data:") ? "" : form.teamPhotoUrl}
+                    onChange={(event) => change("teamPhotoUrl", event.target.value)}
+                    placeholder={form.teamPhotoUrl.startsWith("data:") ? "Foto dari berkas terpilih" : "URL gambar, contoh /assets/dm/team-photo.png"}
                   />
                   <label className="dm-file-btn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
                     Pilih File
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="dm-hidden-file-input"
-                      onChange={handleFileUpload}
-                    />
+                    <input type="file" accept="image/*" className="dm-hidden-file-input" onChange={pickPhoto} />
                   </label>
                 </div>
+                <span className="dm-form-subtext">Rasio landscape paling pas. Maksimal 2 MB.</span>
               </div>
 
-              {/* Photo Frame Container */}
               <div className="dm-photo-preview-card">
-                {formData.teamPhotoUrl ? (
+                {form.teamPhotoUrl ? (
                   <div className="dm-photo-loaded-wrap">
-                    <div className="dm-photo-overlay-tag">Preview Foto Tim Lini</div>
-                    <img
-                      src={formData.teamPhotoUrl}
-                      alt="Preview foto tim"
-                      className="dm-photo-preview-image"
-                    />
+                    <img src={form.teamPhotoUrl} alt="Pratinjau foto tim" className="dm-photo-preview-image" />
                     <div className="dm-photo-action-bar">
-                      <span className="dm-photo-status-text">✓ Gambar berhasil dimuat</span>
-                      <button
-                        type="button"
-                        className="dm-photo-btn-delete"
-                        onClick={() => handleChange("teamPhotoUrl", null)}
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
+                      <button type="button" className="dm-photo-btn-delete" onClick={() => change("teamPhotoUrl", "")}>
                         Hapus Foto
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div className="dm-photo-placeholder-box">
-                    <div className="dm-photo-placeholder-icon">
-                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
-                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                        <circle cx="9" cy="9" r="2" />
-                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                      </svg>
-                    </div>
-                    <div className="dm-placeholder-title">Belum ada foto tim yang dipilih</div>
+                    <div className="dm-placeholder-title">Belum ada foto tim</div>
                     <div className="dm-placeholder-desc">
-                      Gunakan tombol "Pilih File" di atas atau tempel tautan URL gambar.
+                      Pilih berkas atau tempel URL gambar. Tanpa foto, dashboard menampilkan keterangan bahwa foto belum diunggah.
                     </div>
                   </div>
                 )}
@@ -489,57 +450,25 @@ export default function LineDetailModal({
             </div>
           )}
 
-          {/* ACTIVE DASHBOARD TOGGLE CARD */}
-          <div className="dm-active-toggle-card">
-            <label className="dm-toggle-switch-label">
-              <input
-                type="checkbox"
-                className="dm-toggle-real-input"
-                checked={setAsActive}
-                onChange={(e) => setSetAsActive(e.target.checked)}
-              />
-              <span className="dm-toggle-switch-slider" />
-              <div className="dm-toggle-texts">
-                <div className="dm-toggle-title">
-                  Jadikan Sebagai Lini Aktif di DM Dashboard
-                  {setAsActive && <span className="dm-toggle-status-badge">Aktif</span>}
-                </div>
-                <div className="dm-toggle-desc">
-                  Data lini ini akan langsung menjadi display utama di layar dashboard lini produksi.
-                </div>
-              </div>
-            </label>
-          </div>
+          {error ? <p className="dm-admin-inline-error" role="alert">{error}</p> : null}
 
-          {/* Modal Footer Bar */}
           <div className="dm-modal-footer-bar">
             <div className="dm-footer-info-slot">
-              <span className="dm-footer-id-label">Line ID:</span>
-              <code className="dm-footer-id-code">{formData.id}</code>
+              {line ? (
+                <button type="button" className="dm-admin-btn is-danger-outline" disabled={busy} onClick={remove}>
+                  Hapus Lini
+                </button>
+              ) : null}
             </div>
-
             <div className="dm-footer-btn-slot">
-              <button
-                type="button"
-                className="dm-btn-modal-cancel"
-                onClick={onClose}
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                className="dm-btn-modal-submit"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                  <polyline points="17 21 17 13 7 13 7 21" />
-                  <polyline points="7 3 7 8 15 8" />
-                </svg>
-                Simpan Perubahan
+              <button type="button" className="dm-btn-modal-cancel" onClick={onClose}>Batal</button>
+              <button type="submit" className="dm-btn-modal-submit" disabled={busy}>
+                {busy ? "Menyimpan..." : line ? "Simpan Perubahan" : "Buat Lini"}
               </button>
             </div>
           </div>
         </form>
+        )}
       </div>
     </dialog>
   );

@@ -1,13 +1,11 @@
 "use client";
 import Link from "next/link";
 
-export type DmAdminTabKey = "workshop" | "team" | "mpv" | "attendance" | "presets";
+export type DmAdminTabKey = "dashboard" | "workshop" | "mpv" | "attendance";
 
 interface DmAdminSidebarProps {
   activeTab: DmAdminTabKey;
   onSelectTab: (tab: DmAdminTabKey) => void;
-  lineCode?: string;
-  model?: string;
 }
 
 function FactoryIcon() {
@@ -21,13 +19,12 @@ function FactoryIcon() {
   );
 }
 
-function UsersIcon() {
+function ChartIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      <line x1="6" y1="20" x2="6" y2="12" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="18" y1="20" x2="18" y2="9" />
     </svg>
   );
 }
@@ -55,16 +52,6 @@ function ClipboardCheckIcon() {
   );
 }
 
-function TemplateIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect width="18" height="18" x="3" y="3" rx="2" />
-      <path d="M3 9h18" />
-      <path d="M9 21V9" />
-    </svg>
-  );
-}
-
 function ArrowLeftIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -88,8 +75,6 @@ function GridIcon() {
 export default function DmAdminSidebar({
   activeTab,
   onSelectTab,
-  lineCode = "TAC20601",
-  model = "LATTE-M",
 }: DmAdminSidebarProps) {
   return (
     <aside className="dm-admin-sidebar">
@@ -113,21 +98,20 @@ export default function DmAdminSidebar({
 
         <button
           type="button"
-          className={`dm-admin-nav-btn ${activeTab === "workshop" ? "is-active" : ""}`}
-          onClick={() => onSelectTab("workshop")}
+          className={`dm-admin-nav-btn ${activeTab === "dashboard" ? "is-active" : ""}`}
+          onClick={() => onSelectTab("dashboard")}
         >
-          <span className="dm-admin-nav-icon"><FactoryIcon /></span>
-          <span>Lini &amp; Workshop</span>
+          <span className="dm-admin-nav-icon"><ChartIcon /></span>
+          <span>Dashboard</span>
         </button>
 
         <button
           type="button"
-          className={`dm-admin-nav-btn ${activeTab === "team" ? "is-active" : ""}`}
-          onClick={() => onSelectTab("team")}
+          className={`dm-admin-nav-btn ${activeTab === "workshop" ? "is-active" : ""}`}
+          onClick={() => onSelectTab("workshop")}
         >
-          <span className="dm-admin-nav-icon"><UsersIcon /></span>
-          <span>Triangle Team</span>
-          {/* <span className="dm-admin-nav-badge-pill">4 Org</span> */}
+          <span className="dm-admin-nav-icon"><FactoryIcon /></span>
+          <span>Lini, Workshop &amp; Tim</span>
         </button>
 
         <button
@@ -149,20 +133,11 @@ export default function DmAdminSidebar({
           {/* <span className="dm-admin-nav-badge-pill" style={{ background: "#eaf3f9", color: "#1e5a7d" }}>3 Sesi</span> */}
         </button>
 
-        <button
-          type="button"
-          className={`dm-admin-nav-btn ${activeTab === "presets" ? "is-active" : ""}`}
-          onClick={() => onSelectTab("presets")}
-        >
-          <span className="dm-admin-nav-icon"><TemplateIcon /></span>
-          <span>Template Preset</span>
-        </button>
-
         <div className="dm-admin-nav-heading">NAVIGASI</div>
 
         <Link href="/dm-dashboard" className="dm-admin-nav-btn">
           <span className="dm-admin-nav-icon"><ArrowLeftIcon /></span>
-          <span>Ke DM Dashboard</span>
+          <span>Daftar Dashboard DM</span>
         </Link>
 
         <Link href="/dashboard" className="dm-admin-nav-btn">
@@ -171,18 +146,6 @@ export default function DmAdminSidebar({
         </Link>
       </nav>
 
-      {/* Footer Info */}
-      <div className="dm-admin-sidebar-footer">
-        <div className="dm-admin-live-status-card">
-          <span className="dm-admin-status-dot" aria-hidden="true" />
-          <div>
-            <div style={{ fontSize: "0.72rem", color: "#6a8c7b" }}>Lini Terhubung:</div>
-            <div style={{ fontWeight: 700, color: "#1a2c22" }}>
-              {lineCode} &bull; {model}
-            </div>
-          </div>
-        </div>
-      </div>
     </aside>
   );
 }

@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { DM_STORAGE_KEY, defaultDmBoard, dmStatusLabels } from "./dmData";
+import { ApiError, publicApi } from "./api";
+import { dmStatusLabels, formatPeriod } from "./dmData";
 import type { DmBoard, DmMember } from "./dmData";
-import MeetingControls from "./meeting/MeetingControls";
 import "./DmDashboard.css";
 
 
@@ -76,38 +76,83 @@ function MemberCard({ member }: { member: DmMember }) {
   );
 }
 
-export default function DmDashboard() {
-  const [board, setBoard] = useState<DmBoard>(defaultDmBoard);
+const REFRESH_MS = 60_000;
+
+type LoadState =
+  | { kind: "loading" }
+  | { kind: "missing" }
+  | { kind: "error"; message: string }
+  | { kind: "ready"; board: DmBoard };
+
+export default function DmDashboard({ slug }: { slug: string }) {
+  const [state, setState] = useState<LoadState>({ kind: "loading" });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    function loadSaved() {
+    let cancelled = false;
+
+    async function load() {
       try {
-        const saved = localStorage.getItem(DM_STORAGE_KEY);
-        if (saved) {
-          setBoard(JSON.parse(saved));
+        const board = await publicApi.board(slug);
+        if (!cancelled) setState({ kind: "ready", board });
+      } catch (error) {
+        if (cancelled) return;
+        if (error instanceof ApiError && error.status === 404) {
+          setState({ kind: "missing" });
         } else {
-          setBoard(defaultDmBoard);
+          const message = error instanceof Error ? error.message : "Terjadi kesalahan.";
+          setState((prev) => (prev.kind === "ready" ? prev : { kind: "error", message }));
         }
-      } catch {
-        // Ignore localStorage errors
       }
     }
 
-    loadSaved();
-    window.addEventListener("focus", loadSaved);
-    window.addEventListener("storage", loadSaved);
+    load();
+    const timer = window.setInterval(load, REFRESH_MS);
+    window.addEventListener("focus", load);
     return () => {
-      window.removeEventListener("focus", loadSaved);
-      window.removeEventListener("storage", loadSaved);
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", load);
     };
-  }, []);
+  }, [slug, attempt]);
 
+  if (state.kind === "loading") {
+    return (
+      <main className="dm-root dm-state-screen" aria-busy="true">
+        <p role="status">Memuat dashboard {slug}...</p>
+      </main>
+    );
+  }
+
+  if (state.kind === "missing") {
+    return (
+      <main className="dm-root dm-state-screen">
+        <h1 className="dm-state-title">Dashboard tidak ditemukan</h1>
+        <p>Tidak ada dashboard dengan alamat &quot;{slug}&quot;. Periksa link-nya atau pilih dari daftar.</p>
+        <Link href="/dm-dashboard" className="dm-state-action">Lihat daftar dashboard</Link>
+      </main>
+    );
+  }
+
+  if (state.kind === "error") {
+    return (
+      <main className="dm-root dm-state-screen">
+        <h1 className="dm-state-title">Dashboard belum bisa dimuat</h1>
+        <p role="alert">{state.message}</p>
+        <button type="button" className="dm-state-action" onClick={() => setAttempt((n) => n + 1)}>
+          Coba lagi
+        </button>
+      </main>
+    );
+  }
+
+  const board = state.board;
   const mpv = board.mpv;
 
   return (
     <main className="dm-root">
       {/* Left Vertical Rail */}
-      <aside className="dm-rail dm-rail-left" aria-label={board.lineLabel}>
+      <aside className="dm-rail dm-rail-left" aria-label={board.lineLabel ?? board.lineCode}>
         <span className="dm-rail-text dm-rail-zh" lang="zh">{board.lineLabelZh}</span>
         <span className="dm-rail-text dm-rail-en">{board.lineLabel}</span>
       </aside>
@@ -129,7 +174,7 @@ export default function DmDashboard() {
                 <span className="dm-code-glow" aria-hidden="true" />
                 <h1 className="dm-line-code">{board.lineCode}</h1>
               </div>
-              <div className="dm-brand-actions">
+              {/* <div className="dm-brand-actions">
                 <Link
                   href="/dm-dashboard/admin"
                   className="dm-admin-trigger-btn"
@@ -139,13 +184,13 @@ export default function DmDashboard() {
                   <GearIcon />
                   <span>Panel Admin</span>
                 </Link>
-              </div>
+              </div> */}
             </div>
 
             <div className="dm-facts-row">
               <div className="dm-card dm-fact-card">
                 <span className="dm-fact-label">Model:</span>
-                <span className="dm-fact-value">{board.model}</span>
+                <span className="dm-fact-value">{board.model ?? "-"}</span>
               </div>
               <div className="dm-card dm-fact-card">
                 <span className="dm-fact-label">Line Status:</span>
@@ -187,9 +232,13 @@ export default function DmDashboard() {
             </header>
 
             <div className="dm-team-grid">
-              {board.members.map((member, idx) => (
-                <MemberCard key={idx} member={member} />
-              ))}
+              {board.members.length === 0 ? (
+                <p className="dm-team-empty">Anggota tim belum diatur. Admin bisa menambahkannya di Panel Admin.</p>
+              ) : (
+                board.members.map((member, idx) => (
+                  <MemberCard key={member.id ?? idx} member={member} />
+                ))
+              )}
             </div>
 
             <div className="dm-mpv-section">
@@ -197,6 +246,7 @@ export default function DmDashboard() {
                 <div className="dm-mpv-title-wrap">
                   <span className="dm-mpv-heading-main">MPV</span>
                   <span className="dm-mpv-heading-sub">of The Month</span>
+                  {mpv ? <span className="dm-mpv-period">{formatPeriod(mpv.period)}</span> : null}
                 </div>
                 <div className="dm-chevrons" aria-hidden="true">
                   <svg width="46" height="16" viewBox="0 0 46 16" fill="none">
@@ -254,16 +304,11 @@ export default function DmDashboard() {
               </div>
               <div className="dm-card dm-bottom-card">
                 <span className="dm-bottom-label">Slogan:</span>
-                <span className="dm-bottom-value dm-slogan-text">{board.slogan}</span>
+                <span className="dm-bottom-value dm-slogan-text">{board.slogan ?? "-"}</span>
               </div>
             </div>
           </section>
         </div>
-
-        {/* Integrated Operational & Meeting Center */}
-        <section className="dm-operations-dock" aria-label="Pusat Operasional dan Meeting">
-          <MeetingControls />
-        </section>
       </div>
 
       {/* Right Vertical Rail */}

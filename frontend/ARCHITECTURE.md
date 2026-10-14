@@ -95,7 +95,19 @@ inline SVG icon registry used by the shell and dashboards.
 copy was removed. Cost subpages share `shared.tsx` and `format.ts` inside the feature folder
 and import their stylesheet from `src/features/cost/Cost.css`.
 
-## Routes
+## DM dashboard and backend
+
+The DM Triangle Team dashboards are the first feature backed by the FastAPI service in `backend/`
+(`NEXT_PUBLIC_API_BASE_URL`, default `http://localhost:8000`). They render outside the shell.
+
+- `/dm-dashboard` lists every line grouped by workshop (`DmBoardIndex`).
+- `/dm-dashboard/[slug]` is one line's board for a TV (`DmDashboard`, polls every 60 seconds).
+- `/dm-dashboard/admin` is the superadmin panel. Workshops, lines and each line's team are managed through one
+  door, the line modal (`LineDetailModal` with a `TeamManager` tab). The MPV tab (`MpvManager`) keeps a monthly
+  history per line.
+- `src/features/dm-dashboard/api.ts` is the only API client. The admin token lives in
+  `localStorage` under `dm_admin_token`.
+
 
 - `/` redirects to `/dashboard`.
 - `/warehouse` is a legacy alias for the Material overview.
