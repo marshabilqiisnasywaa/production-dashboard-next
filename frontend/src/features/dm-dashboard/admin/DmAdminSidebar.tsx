@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
 
-export type DmAdminTabKey = "dashboard" | "workshop" | "mpv" | "attendance";
+export type DmAdminTabKey = "dashboard" | "workshop" | "users" | "mpv" | "attendance";
 
 interface DmAdminSidebarProps {
+  isAdmin: boolean;
   activeTab: DmAdminTabKey;
   onSelectTab: (tab: DmAdminTabKey) => void;
 }
@@ -52,6 +53,17 @@ function ClipboardCheckIcon() {
   );
 }
 
+function UsersGroupIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
 function ArrowLeftIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -73,6 +85,7 @@ function GridIcon() {
 }
 
 export default function DmAdminSidebar({
+  isAdmin,
   activeTab,
   onSelectTab,
 }: DmAdminSidebarProps) {
@@ -94,7 +107,7 @@ export default function DmAdminSidebar({
 
       {/* Menu Navigasi */}
       <nav className="dm-admin-sidebar-nav" aria-label="Menu Admin">
-        <div className="dm-admin-nav-heading">PENGATURAN LINI</div>
+        <div className="dm-admin-nav-heading">{isAdmin ? "PENGATURAN LINI" : "MENU"}</div>
 
         <button
           type="button"
@@ -105,6 +118,8 @@ export default function DmAdminSidebar({
           <span>Dashboard</span>
         </button>
 
+        {isAdmin ? (
+        <>
         <button
           type="button"
           className={`dm-admin-nav-btn ${activeTab === "workshop" ? "is-active" : ""}`}
@@ -112,6 +127,15 @@ export default function DmAdminSidebar({
         >
           <span className="dm-admin-nav-icon"><FactoryIcon /></span>
           <span>Lini, Workshop &amp; Tim</span>
+        </button>
+
+        <button
+          type="button"
+          className={`dm-admin-nav-btn ${activeTab === "users" ? "is-active" : ""}`}
+          onClick={() => onSelectTab("users")}
+        >
+          <span className="dm-admin-nav-icon"><UsersGroupIcon /></span>
+          <span>Pengguna</span>
         </button>
 
         <button
@@ -132,6 +156,13 @@ export default function DmAdminSidebar({
           <span>Rekap Presensi</span>
           {/* <span className="dm-admin-nav-badge-pill" style={{ background: "#eaf3f9", color: "#1e5a7d" }}>3 Sesi</span> */}
         </button>
+        </>
+        ) : (
+          <Link href="/dm-dashboard/akun" className="dm-admin-nav-btn">
+            <span className="dm-admin-nav-icon"><UsersGroupIcon /></span>
+            <span>Akun saya</span>
+          </Link>
+        )}
 
         <div className="dm-admin-nav-heading">NAVIGASI</div>
 

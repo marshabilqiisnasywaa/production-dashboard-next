@@ -1,9 +1,10 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 
 LineStatus = Literal["running", "idle", "stopped"]
+EmployeeRole = Literal["member", "leader", "supervisor"]
 
 
 class CamelModel(BaseModel):
@@ -18,6 +19,36 @@ class LoginIn(CamelModel):
 class TokenOut(CamelModel):
     access_token: str
     username: str
+    kind: Literal["admin", "employee"] = "admin"
+    role: str = "superadmin"
+    name: str | None = None
+    must_change_password: bool = False
+
+
+class ChangePasswordIn(CamelModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class ResetPasswordIn(CamelModel):
+    password: str | None = Field(default=None, min_length=8, max_length=128)
+
+
+class LineRef(CamelModel):
+    id: int
+    code: str
+    name: str
+    workshop_name: str
+    slug: str
+
+
+class MeOut(CamelModel):
+    username: str
+    role: str
+    kind: Literal["admin", "employee"]
+    name: str | None
+    must_change_password: bool
+    line: LineRef | None
 
 
 class WorkshopIn(CamelModel):
@@ -41,6 +72,7 @@ class LineBase(CamelModel):
     line_label_zh: str | None = Field(default=None, max_length=120)
     values: list[str] = Field(default_factory=list, max_length=12)
     team_photo_url: str | None = None
+    published: bool = True
 
 
 class LineIn(LineBase):
@@ -58,6 +90,7 @@ class LineUpdate(CamelModel):
     line_label_zh: str | None = Field(default=None, max_length=120)
     values: list[str] | None = Field(default=None, max_length=12)
     team_photo_url: str | None = None
+    published: bool | None = None
     slug: str | None = Field(default=None, min_length=1, max_length=120)
 
 
@@ -76,12 +109,23 @@ class LineOut(CamelModel):
     values: list[str]
     team_photo_url: str | None
     slug: str
+    published: bool
     member_count: int
 
 
-class MemberIn(CamelModel):
-    employee_id: str = Field(min_length=1, max_length=32)
-    name: str = Field(min_length=1, max_length=120)
+class EmployeeRef(CamelModel):
+    employee_pk: int | None = None
+    employee_id: str | None = Field(default=None, min_length=1, max_length=32)
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+
+    @model_validator(mode="after")
+    def need_employee(self):
+        if self.employee_pk is None and not (self.employee_id and self.name):
+            raise ValueError("Pilih pengguna atau isi NIK dan nama.")
+        return self
+
+
+class MemberIn(EmployeeRef):
     dept: str | None = Field(default=None, max_length=120)
     supervisor: str | None = Field(default=None, max_length=120)
     work_phone: str | None = Field(default=None, max_length=32)
@@ -113,9 +157,45 @@ class MemberOut(CamelModel):
     sort_order: int
 
 
-class MpvIn(CamelModel):
+class EmployeeIn(CamelModel):
     employee_id: str = Field(min_length=1, max_length=32)
     name: str = Field(min_length=1, max_length=120)
+    role: EmployeeRole = "member"
+    dept: str | None = Field(default=None, max_length=120)
+    position: str | None = Field(default=None, max_length=120)
+    supervisor: str | None = Field(default=None, max_length=120)
+    work_phone: str | None = Field(default=None, max_length=32)
+    photo_url: str | None = None
+
+
+class EmployeeUpdate(CamelModel):
+    employee_id: str | None = Field(default=None, min_length=1, max_length=32)
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    role: EmployeeRole | None = None
+    dept: str | None = Field(default=None, max_length=120)
+    position: str | None = Field(default=None, max_length=120)
+    supervisor: str | None = Field(default=None, max_length=120)
+    work_phone: str | None = Field(default=None, max_length=32)
+    photo_url: str | None = None
+    is_active: bool | None = None
+
+
+class EmployeeOut(CamelModel):
+    id: int
+    employee_id: str
+    name: str
+    role: EmployeeRole
+    dept: str | None
+    position: str | None
+    supervisor: str | None
+    work_phone: str | None
+    photo_url: str | None
+    is_active: bool
+    must_change_password: bool
+    line_label: str | None
+
+
+class MpvIn(EmployeeRef):
     dept: str | None = Field(default=None, max_length=120)
     supervisor: str | None = Field(default=None, max_length=120)
     work_phone: str | None = Field(default=None, max_length=32)

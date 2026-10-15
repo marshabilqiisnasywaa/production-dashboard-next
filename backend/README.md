@@ -49,7 +49,10 @@ Docs: http://localhost:8000/docs, health check: http://localhost:8000/api/health
 
 ## API
 
-- `POST /api/auth/login`, `GET /api/auth/me`: superadmin login (JWT bearer token).
+- `POST /api/auth/login`, `GET /api/auth/me`: login for the superadmin (username) and for employees (NIK as username). The initial employee password is the NIK, and `mustChangePassword` stays true until `POST /api/auth/change-password` succeeds. Employees with `mustChangePassword` can only call `/auth/me` and `/auth/change-password`. Login is limited to 5 wrong attempts per IP and username, then locked for 5 minutes (in memory, per process).
+- `GET /api/lines`: lines the logged-in account may see on the admin dashboard tab. Admin gets all, member and leader get their own active line, supervisor gets none until the scope is decided. Non-admins see only the Dashboard tab of the admin panel; the TV boards stay public and need no login.
+- `GET /api/lines/{line_id}/board`: a member or leader only reaches their own active line, the admin reaches every line, supervisors are refused until their scope is decided.
+- `POST /api/admin/employees/{id}/reset-password`: sets the password back to the NIK (or to a given `password`) and forces a change at the next login.
 - `GET /api/public/boards`, `GET /api/public/boards/{slug}`: no login, used by the TV dashboards.
 - `/api/admin/...`: workshops, lines, team members, and MPV history. Requires the superadmin token.
 - `GET|PUT|DELETE /api/admin/lines/{id}/mpv[/{YYYY-MM}]`: one MPV per line per month. The public board shows the previous month's MPV (October shows September), or the latest earlier month if that one is empty.

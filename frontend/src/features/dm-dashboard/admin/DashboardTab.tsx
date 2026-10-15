@@ -8,6 +8,7 @@ import { UsersIcon } from "./AdminIcons";
 interface DashboardTabProps {
   lines: DmLine[];
   onGoToLines: () => void;
+  canManage?: boolean;
 }
 
 const CLOCK_REFRESH_MS = 30_000;
@@ -16,7 +17,7 @@ function formatToday(now: Date) {
   return now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
-export default function DashboardTab({ lines, onGoToLines }: DashboardTabProps) {
+export default function DashboardTab({ lines, onGoToLines, canManage = true }: DashboardTabProps) {
   const [lineId, setLineId] = useState<number | null>(lines[0]?.id ?? null);
   const [now, setNow] = useState(() => new Date());
 
@@ -35,10 +36,16 @@ export default function DashboardTab({ lines, onGoToLines }: DashboardTabProps) 
     return (
       <div className="dm-admin-state-block">
         <h3>Belum ada lini</h3>
-        <p>Dashboard ini menampilkan KPI, absensi, dan meeting per lini. Buat lini dulu di tab Lini, Workshop &amp; Tim.</p>
-        <button type="button" className="dm-admin-btn is-primary" onClick={onGoToLines}>
-          Ke daftar lini
-        </button>
+        {canManage ? (
+          <>
+            <p>Dashboard ini menampilkan KPI, absensi, dan meeting per lini. Buat lini dulu di tab Lini, Workshop &amp; Tim.</p>
+            <button type="button" className="dm-admin-btn is-primary" onClick={onGoToLines}>
+              Ke daftar lini
+            </button>
+          </>
+        ) : (
+          <p>Akunmu belum ditempatkan di sebuah lini, atau cakupan aksesnya belum diatur. Hubungi admin.</p>
+        )}
       </div>
     );
   }

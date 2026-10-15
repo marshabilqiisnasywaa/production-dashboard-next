@@ -6,6 +6,9 @@ from app.api.deps import get_current_admin
 from app.db.session import get_db
 from app.models import Board, BoardMember, Employee, Line, MpvAward, Workshop
 from app.schemas import (
+    EmployeeIn,
+    EmployeeOut,
+    EmployeeUpdate,
     LineIn,
     LineOut,
     LineUpdate,
@@ -14,9 +17,11 @@ from app.schemas import (
     MemberUpdate,
     MpvIn,
     MpvOut,
+    ResetPasswordIn,
     WorkshopIn,
     WorkshopOut,
 )
+from app.services.accounts import new_employee, reset_password
 from app.services.boards import (
     active_members,
     line_out,
@@ -144,6 +149,7 @@ def create_line(body: LineIn, db: Session = Depends(get_db)) -> LineOut:
         line_label_zh=body.line_label_zh,
         values=body.values,
         team_photo_url=body.team_photo_url,
+        is_active=body.published,
     )
     db.add(board)
     db.commit()
@@ -181,6 +187,8 @@ def update_line(line_id: int, body: LineUpdate, db: Session = Depends(get_db)) -
         board.values = body.values
     if "team_photo_url" in sent:
         board.team_photo_url = body.team_photo_url
+    if "published" in sent and body.published is not None:
+        board.is_active = body.published
     if "slug" in sent and body.slug is not None:
         slug = slugify(body.slug)
         if not slug or slug_taken(db, slug, board.id):
@@ -220,31 +228,48 @@ def employee_board_name(db: Session, employee_id: int) -> str | None:
     return f"{row[0]} ({row[1]})" if row else None
 
 
+def employee_by_pk(db: Session, employee_pk: int) -> Employee:
+    employee = db.get(Employee, employee_pk)
+    if employee is None:
+        raise not_found("Pengguna")
+    if not employee.is_active:
+        raise conflict(f"{employee.name} nonaktif. Aktifkan dulu di menu Pengguna.")
+    return employee
+
+
 @router.post(
     "/lines/{line_id}/members", response_model=MemberOut, status_code=status.HTTP_201_CREATED
 )
 def add_member(line_id: int, body: MemberIn, db: Session = Depends(get_db)) -> MemberOut:
     board, _, _ = line_row(db, line_id)
-    employee_no = body.employee_id.strip()
-    employee = db.scalar(select(Employee).where(Employee.employee_no == employee_no))
-    if employee is None:
-        employee = Employee(employee_no=employee_no, name=body.name.strip())
-        db.add(employee)
-        db.flush()
-    else:
+    if body.employee_pk is not None:
+        employee = employee_by_pk(db, body.employee_pk)
         busy = employee_board_name(db, employee.id)
         if busy:
             raise conflict(f"{employee.name} masih aktif di lini {busy}. Lepas dulu dari sana.")
-        employee.name = body.name.strip()
-    employee.dept = body.dept
-    employee.supervisor = body.supervisor
-    employee.work_phone = body.work_phone
-    if body.photo_url is not None:
-        employee.photo_url = body.photo_url
+    else:
+        employee_no = (body.employee_id or "").strip()
+        name = (body.name or "").strip()
+        employee = db.scalar(select(Employee).where(Employee.employee_no == employee_no))
+        if employee is None:
+            employee = new_employee(employee_no, name)
+            db.add(employee)
+            db.flush()
+        else:
+            busy = employee_board_name(db, employee.id)
+            if busy:
+                raise conflict(f"{employee.name} masih aktif di lini {busy}. Lepas dulu dari sana.")
+            employee.name = name
+        employee.dept = body.dept
+        employee.supervisor = body.supervisor
+        employee.work_phone = body.work_phone
+        if body.position is not None:
+            employee.position = body.position
+        if body.photo_url is not None:
+            employee.photo_url = body.photo_url
     member = BoardMember(
         board_id=board.id,
         employee_id=employee.id,
-        position=body.position,
         sort_order=body.sort_order,
     )
     db.add(member)
@@ -273,6 +298,8 @@ def update_member(member_id: int, body: MemberUpdate, db: Session = Depends(get_
         if taken:
             raise conflict(f"NIK '{employee_no}' sudah dipakai karyawan lain.")
         employee.employee_no = employee_no
+        if employee.must_change_password:
+            reset_password(employee)
     if "name" in sent and body.name is not None:
         employee.name = body.name.strip()
     if "dept" in sent:
@@ -284,7 +311,7 @@ def update_member(member_id: int, body: MemberUpdate, db: Session = Depends(get_
     if "photo_url" in sent:
         employee.photo_url = body.photo_url
     if "position" in sent:
-        member.position = body.position
+        employee.position = body.position
     if "sort_order" in sent and body.sort_order is not None:
         member.sort_order = body.sort_order
     db.commit()
@@ -318,23 +345,27 @@ def list_mpv(line_id: int, db: Session = Depends(get_db)) -> list[MpvOut]:
 def save_mpv(line_id: int, body: MpvIn, period: str = PERIOD_PATH, db: Session = Depends(get_db)) -> MpvOut:
     line_row(db, line_id)
     month = parse_period(period)
-    employee_no = body.employee_id.strip()
-    employee = db.scalar(select(Employee).where(Employee.employee_no == employee_no))
-    if employee is None:
-        employee = Employee(employee_no=employee_no, name=body.name.strip())
-        db.add(employee)
-        db.flush()
-    employee.name = body.name.strip()
-    employee.dept = body.dept
-    employee.supervisor = body.supervisor
-    employee.work_phone = body.work_phone
-    employee.photo_url = body.photo_url
+    if body.employee_pk is not None:
+        employee = employee_by_pk(db, body.employee_pk)
+    else:
+        employee_no = (body.employee_id or "").strip()
+        name = (body.name or "").strip()
+        employee = db.scalar(select(Employee).where(Employee.employee_no == employee_no))
+        if employee is None:
+            employee = new_employee(employee_no, name)
+            db.add(employee)
+            db.flush()
+        employee.name = name
+        employee.dept = body.dept
+        employee.supervisor = body.supervisor
+        employee.work_phone = body.work_phone
+        employee.position = body.position
+        employee.photo_url = body.photo_url
     award = db.scalar(select(MpvAward).where(MpvAward.line_id == line_id, MpvAward.period == month))
     if award is None:
         award = MpvAward(line_id=line_id, period=month, employee_id=employee.id)
         db.add(award)
     award.employee_id = employee.id
-    award.position = body.position
     db.commit()
     return mpv_out(award, employee)
 
@@ -348,5 +379,130 @@ def delete_mpv(line_id: int, period: str = PERIOD_PATH, db: Session = Depends(ge
     if award is None:
         raise not_found("MPV bulan itu")
     db.delete(award)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+def employee_lines(db: Session) -> dict[int, str]:
+    rows = db.execute(
+        select(BoardMember.employee_id, Line.code, Workshop.name)
+        .join(Board, Board.id == BoardMember.board_id)
+        .join(Line, Line.id == Board.line_id)
+        .join(Workshop, Workshop.id == Line.workshop_id)
+        .where(BoardMember.ended_at.is_(None))
+    ).all()
+    return {row[0]: f"{row[1]} ({row[2]})" for row in rows}
+
+
+def employee_out(employee: Employee, line_label: str | None) -> EmployeeOut:
+    return EmployeeOut(
+        id=employee.id,
+        employee_id=employee.employee_no,
+        name=employee.name,
+        role=employee.role,
+        dept=employee.dept,
+        position=employee.position,
+        supervisor=employee.supervisor,
+        work_phone=employee.work_phone,
+        photo_url=employee.photo_url,
+        is_active=employee.is_active,
+        must_change_password=employee.must_change_password,
+        line_label=line_label,
+    )
+
+
+def nik_taken(db: Session, employee_no: str, exclude_id: int | None = None) -> bool:
+    query = select(Employee.id).where(Employee.employee_no == employee_no)
+    if exclude_id is not None:
+        query = query.where(Employee.id != exclude_id)
+    return db.scalar(query) is not None
+
+
+@router.get("/employees", response_model=list[EmployeeOut])
+def list_employees(db: Session = Depends(get_db)) -> list[EmployeeOut]:
+    lines = employee_lines(db)
+    employees = db.scalars(select(Employee).order_by(Employee.name, Employee.id))
+    return [employee_out(e, lines.get(e.id)) for e in employees]
+
+
+@router.post("/employees", response_model=EmployeeOut, status_code=status.HTTP_201_CREATED)
+def create_employee(body: EmployeeIn, db: Session = Depends(get_db)) -> EmployeeOut:
+    employee_no = body.employee_id.strip()
+    if nik_taken(db, employee_no):
+        raise conflict(f"NIK '{employee_no}' sudah dipakai karyawan lain.")
+    employee = new_employee(
+        employee_no,
+        body.name.strip(),
+        role=body.role,
+        dept=body.dept,
+        position=body.position,
+        supervisor=body.supervisor,
+        work_phone=body.work_phone,
+        photo_url=body.photo_url,
+    )
+    db.add(employee)
+    db.commit()
+    return employee_out(employee, None)
+
+
+@router.patch("/employees/{employee_pk}", response_model=EmployeeOut)
+def update_employee(employee_pk: int, body: EmployeeUpdate, db: Session = Depends(get_db)) -> EmployeeOut:
+    employee = db.get(Employee, employee_pk)
+    if employee is None:
+        raise not_found("Pengguna")
+    sent = body.model_fields_set
+    line_label = employee_lines(db).get(employee.id)
+    if "employee_id" in sent and body.employee_id is not None:
+        employee_no = body.employee_id.strip()
+        if nik_taken(db, employee_no, employee.id):
+            raise conflict(f"NIK '{employee_no}' sudah dipakai karyawan lain.")
+        employee.employee_no = employee_no
+        if employee.must_change_password:
+            reset_password(employee)
+    if "name" in sent and body.name is not None:
+        employee.name = body.name.strip()
+    if "role" in sent and body.role is not None:
+        employee.role = body.role
+    if "dept" in sent:
+        employee.dept = body.dept
+    if "position" in sent:
+        employee.position = body.position
+    if "supervisor" in sent:
+        employee.supervisor = body.supervisor
+    if "work_phone" in sent:
+        employee.work_phone = body.work_phone
+    if "photo_url" in sent:
+        employee.photo_url = body.photo_url
+    if "is_active" in sent and body.is_active is not None:
+        if not body.is_active and line_label:
+            raise conflict(f"{employee.name} masih aktif di lini {line_label}. Lepas dulu dari sana.")
+        employee.is_active = body.is_active
+    db.commit()
+    return employee_out(employee, line_label)
+
+
+@router.post("/employees/{employee_pk}/reset-password", response_model=EmployeeOut)
+def reset_employee_password(
+    employee_pk: int, body: ResetPasswordIn | None = None, db: Session = Depends(get_db)
+) -> EmployeeOut:
+    employee = db.get(Employee, employee_pk)
+    if employee is None:
+        raise not_found("Pengguna")
+    reset_password(employee, body.password if body else None)
+    db.commit()
+    return employee_out(employee, employee_lines(db).get(employee.id))
+
+
+@router.delete("/employees/{employee_pk}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_employee(employee_pk: int, db: Session = Depends(get_db)) -> Response:
+    employee = db.get(Employee, employee_pk)
+    if employee is None:
+        raise not_found("Pengguna")
+    used = db.scalar(select(BoardMember.id).where(BoardMember.employee_id == employee.id).limit(1)) or db.scalar(
+        select(MpvAward.id).where(MpvAward.employee_id == employee.id).limit(1)
+    )
+    if used:
+        raise conflict(f"{employee.name} punya riwayat lini atau MPV. Nonaktifkan saja, jangan dihapus.")
+    db.delete(employee)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

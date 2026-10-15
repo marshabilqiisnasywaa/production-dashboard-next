@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import admin, auth, health, public
+from app.api import admin, auth, health, lines, public
 from app.core.config import settings
 
 app = FastAPI(title="Production Dashboard API")
@@ -14,5 +14,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for module in (health, auth, public, admin):
+for module in (health, auth, public, lines, admin):
     app.include_router(module.router, prefix="/api")

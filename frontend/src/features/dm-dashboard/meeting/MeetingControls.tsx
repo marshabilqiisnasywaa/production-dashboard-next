@@ -2,6 +2,7 @@
 import { useState } from "react";
 import AttendanceModal from "./AttendanceModal";
 import ChecklistModal from "./ChecklistModal";
+import type { DmMember } from "../dmData";
 import { clock, dmMeetingsPerDay, getMeetingLabel, isMorning } from "./meetingData";
 import type { DmAttendance, DmChecklistRecord, DmMeeting } from "./meetingData";
 import "./Meeting.css";
@@ -10,7 +11,7 @@ type OpenModal = "none" | "checklist" | "attendance";
 
 const meetingSlots = Array.from({ length: dmMeetingsPerDay }, (_, index) => index + 1);
 
-export default function MeetingControls({ onOpenAdmin }: { onOpenAdmin?: () => void } = {}) {
+export default function MeetingControls({ members = [], onOpenAdmin }: { members?: readonly DmMember[]; onOpenAdmin?: () => void } = {}) {
   const [meetings, setMeetings] = useState<readonly DmMeeting[]>([]);
   const [attendance, setAttendance] = useState<readonly DmAttendance[]>([]);
   const [user, setUser] = useState<string | null>(null);
@@ -151,6 +152,7 @@ export default function MeetingControls({ onOpenAdmin }: { onOpenAdmin?: () => v
       <ChecklistModal
         open={modal === "checklist"}
         morning={morning}
+        members={members}
         user={user}
         saved={checklist}
         onLogin={setUser}

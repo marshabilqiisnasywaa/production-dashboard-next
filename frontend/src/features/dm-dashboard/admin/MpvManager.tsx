@@ -1,9 +1,10 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { adminApi } from "../api";
-import type { DmLine, DmMpvInput } from "../api";
+import type { DmEmployee, DmLine, DmMpvInput } from "../api";
 import { formatPeriod, previousPeriod } from "../dmData";
 import type { DmMpv } from "../dmData";
+import EmployeePick from "./EmployeePick";
 import MemberEditor from "./MemberEditor";
 
 interface MpvManagerProps {
@@ -21,6 +22,7 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
   const [lineId, setLineId] = useState<number | null>(lines[0]?.id ?? null);
   const [period, setPeriod] = useState(previousPeriod());
   const [history, setHistory] = useState<DmMpv[]>([]);
+  const [employees, setEmployees] = useState<DmEmployee[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -35,7 +37,11 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
     setLoading(true);
     setLoadError(null);
     try {
-      setHistory(await call(() => adminApi.mpvHistory(lineId)));
+      const [nextHistory, nextEmployees] = await call(() =>
+        Promise.all([adminApi.mpvHistory(lineId), adminApi.employees()])
+      );
+      setHistory(nextHistory);
+      setEmployees(nextEmployees);
     } catch (error) {
       setLoadError(messageOf(error));
     } finally {
@@ -68,6 +74,13 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
     if (lineId === null) return;
     const { sortOrder: _ignored, ...data } = input;
     await call(() => adminApi.saveMpv(lineId, period, data));
+    setStatus(`MPV ${formatPeriod(period)} untuk ${line?.code} disimpan.`);
+    await load();
+  }
+
+  async function pick(input: { employeePk: number }) {
+    if (lineId === null) return;
+    await call(() => adminApi.saveMpv(lineId, period, { employeePk: input.employeePk }));
     setStatus(`MPV ${formatPeriod(period)} untuk ${line?.code} disimpan.`);
     await load();
   }
@@ -187,6 +200,15 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
       </h4>
       {validPeriod ? (
         <div className="dm-admin-member-grid">
+          <EmployeePick
+            key={`pick-${line.id}-${period}-${existing?.id ?? "new"}-${existing?.name ?? ""}`}
+            idPrefix="mpv-pick"
+            title={existing ? "Ganti dari daftar pengguna" : "Pilih dari daftar pengguna"}
+            employees={employees}
+            preferLine={`${line.code} (${line.workshopName})`}
+            submitLabel={existing ? "Ganti MPV" : "Tetapkan MPV"}
+            onSubmit={pick}
+          />
           <MemberEditor
             key={`${line.id}-${period}-${existing?.id ?? "new"}-${existing?.name ?? ""}`}
             idPrefix="mpv"
