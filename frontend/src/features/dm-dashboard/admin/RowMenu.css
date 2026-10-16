@@ -1,0 +1,86 @@
+.rm-trigger {
+  display: inline-grid;
+  place-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #5b6e63;
+  cursor: pointer;
+}
+
+.rm-trigger:hover,
+.rm-trigger.is-open {
+  background: #eef3f0;
+  color: #1b2a22;
+}
+
+.rm-trigger:focus-visible,
+.rm-item:focus-visible {
+  outline: 3px solid rgba(0, 139, 71, 0.45);
+  outline-offset: 2px;
+}
+
+.rm-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 208px;
+  padding: 6px;
+  border: 1px solid #e3ebe6;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 14px 34px -10px rgba(20, 50, 35, 0.28);
+}
+
+.rm-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  height: 40px;
+  padding: 0 0.7rem;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #1b2a22;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rm-item:hover,
+.rm-item:focus-visible {
+  background: #f2f6f4;
+}
+
+.rm-item.is-danger {
+  color: #a3261d;
+}
+
+.rm-item.is-danger:hover,
+.rm-item.is-danger:focus-visible {
+  background: #fdf1f0;
+}
+
+.rm-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-content: center;
+  width: 18px;
+  height: 18px;
+  color: #5b6e63;
+}
+
+.rm-item.is-danger .rm-icon {
+  color: inherit;
+}
+
+.rm-sep {
+  height: 1px;
+  margin: 5px 4px;
+  background: #edf2ef;
+}

@@ -80,6 +80,7 @@ export type DmEmployee = {
   dept: string | null;
   position: string | null;
   supervisor: string | null;
+  supervisorId: number | null;
   workPhone: string | null;
   photoUrl: string | null;
   isActive: boolean;
@@ -93,7 +94,7 @@ export type DmEmployeeInput = {
   role: DmEmployeeRole;
   dept: string | null;
   position: string | null;
-  supervisor: string | null;
+  supervisorId?: number | null;
   workPhone: string | null;
   photoUrl: string | null;
 };

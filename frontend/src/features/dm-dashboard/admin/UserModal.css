@@ -1,0 +1,371 @@
+.dm-line-detail-modal.um-modal {
+  width: min(520px, calc(100vw - 32px)) !important;
+  border: 1px solid #e4ece7 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 24px 56px -20px rgba(20, 50, 35, 0.28) !important;
+}
+
+.um-modal {
+  --um-green: #008b47;
+  --um-green-ink: #007a3f;
+  --um-ink: #1b2a22;
+  --um-muted: #5b6e63;
+  --um-line: #dbe5df;
+  --um-soft: #f2f6f4;
+  --um-danger: #a3261d;
+}
+
+.um-form {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 36px);
+  background: #ffffff;
+}
+
+.um-head {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.4rem 0.4rem;
+}
+
+.um-title {
+  margin: 0;
+  color: var(--um-ink);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.um-title:focus {
+  outline: none;
+}
+
+.um-sub {
+  margin: 0.1rem 0 0;
+  color: var(--um-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem;
+}
+
+.um-close {
+  display: grid;
+  flex-shrink: 0;
+  place-content: center;
+  width: 36px;
+  height: 36px;
+  margin: -0.2rem -0.4rem 0 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--um-muted);
+  cursor: pointer;
+}
+
+.um-close:hover {
+  background: var(--um-soft);
+  color: var(--um-ink);
+}
+
+.um-modal :is(button, input, select):focus-visible,
+.um-seg-item:has(input:focus-visible) {
+  outline: 3px solid rgba(0, 139, 71, 0.45);
+  outline-offset: 2px;
+}
+
+.um-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0.7rem 1.4rem 0.4rem;
+  overflow-y: auto;
+}
+
+.um-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem 0.9rem;
+}
+
+.um-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.um-field.is-wide {
+  grid-column: 1 / -1;
+}
+
+.um-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.um-label {
+  padding: 0;
+  color: var(--um-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.um-req {
+  color: var(--um-danger);
+}
+
+.um-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 0.8rem;
+  border: 1.5px solid var(--um-line);
+  border-radius: 11px;
+  background: #fbfdfc;
+  color: var(--um-ink);
+  font-family: inherit;
+  font-size: 0.92rem;
+  box-sizing: border-box;
+}
+
+.um-input::placeholder {
+  color: #7d8f85;
+}
+
+.um-input:focus {
+  border-color: var(--um-green);
+  background: #ffffff;
+}
+
+.um-input.is-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.um-seg {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--um-soft);
+}
+
+.um-seg-item {
+  position: relative;
+  display: grid;
+  place-content: center;
+  height: 36px;
+  border-radius: 9px;
+  color: var(--um-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.um-seg-item input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.um-seg-item:has(input:checked) {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(20, 50, 35, 0.14);
+  color: var(--um-green-ink);
+  font-weight: 700;
+}
+
+.um-photo {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.um-avatar {
+  display: grid;
+  flex-shrink: 0;
+  place-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.um-avatar.is-initials {
+  background: #e4f2ea;
+  color: #0b4d28;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.um-photo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.um-photo-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.um-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--um-green-ink);
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.um-link:hover {
+  text-decoration: underline;
+}
+
+.um-link.is-danger {
+  color: var(--um-danger);
+}
+
+.um-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.um-file {
+  position: relative;
+}
+
+.um-file:focus-within {
+  outline: 3px solid rgba(0, 139, 71, 0.45);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.um-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.um-hint {
+  color: var(--um-muted);
+  font-size: 0.82rem;
+}
+
+.um-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 11px;
+  background: var(--um-soft);
+}
+
+.um-note p {
+  margin: 0;
+  color: var(--um-muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.um-note .um-link {
+  flex-shrink: 0;
+}
+
+.um-error {
+  margin: 0 0 0.8rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 11px;
+  background: #fdf1f0;
+  color: #8a1f17;
+  font-size: 0.86rem;
+}
+
+.um-foot {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.9rem 1.4rem 1.2rem;
+}
+
+.um-btn {
+  min-width: 5.5rem;
+  height: 42px;
+  padding: 0 1.2rem;
+  border: 0;
+  border-radius: 11px;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.um-btn.is-ghost {
+  background: transparent;
+  color: var(--um-muted);
+}
+
+.um-btn.is-ghost:hover {
+  background: var(--um-soft);
+  color: var(--um-ink);
+}
+
+.um-btn.is-primary {
+  background: var(--um-green-ink);
+  color: #ffffff;
+}
+
+.um-btn.is-primary:hover {
+  background: #00693a;
+}
+
+.um-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .um-head,
+  .um-body,
+  .um-foot {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .um-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .um-note {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .um-foot {
+    flex-direction: column-reverse;
+  }
+
+  .um-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dm-line-detail-modal.um-modal {
+    animation: none;
+  }
+}
+
+.um-label .um-hint {
+  margin-left: 0.25rem;
+  font-weight: 400;
+}

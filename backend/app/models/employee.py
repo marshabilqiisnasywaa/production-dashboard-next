@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, String, Text, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -19,9 +19,18 @@ class Employee(Base):
     dept: Mapped[str | None] = mapped_column(String(120))
     position: Mapped[str | None] = mapped_column(String(120))
     supervisor: Mapped[str | None] = mapped_column(String(120))
+    supervisor_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id", ondelete="SET NULL"), index=True)
     work_phone: Mapped[str | None] = mapped_column(String(32))
     photo_url: Mapped[str | None] = mapped_column(Text)
     password_hash: Mapped[str | None] = mapped_column(String(255))
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    supervisor_ref: Mapped["Employee | None"] = relationship(
+        "Employee", remote_side=[id], foreign_keys=[supervisor_id], lazy="joined"
+    )
+
+    @property
+    def supervisor_name(self) -> str | None:
+        return self.supervisor_ref.name if self.supervisor_ref is not None else self.supervisor

@@ -12,7 +12,7 @@ const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 
 type TabKey = "general" | "culture" | "media" | "team";
 
-const STEPS = ["Info Lini", "Tampilan", "Anggota Tim", "Tinjau"] as const;
+const STEPS = ["Info", "Tampilan", "Tim", "Tinjau"] as const;
 const TEAM_STEP = 3;
 const LAST_STEP = STEPS.length;
 
@@ -45,9 +45,9 @@ type FormState = {
 };
 
 const statusOptions: { value: DmLineStatus; label: string }[] = [
-  { value: "running", label: "RUNNING: lini beroperasi normal" },
-  { value: "idle", label: "IDLE: standby, ganti model, atau menunggu material" },
-  { value: "stopped", label: "STOPPED: lini berhenti, maintenance, atau rusak" },
+  { value: "running", label: "RUNNING: beroperasi normal" },
+  { value: "idle", label: "IDLE: standby atau ganti model" },
+  { value: "stopped", label: "STOPPED: berhenti atau maintenance" },
 ];
 
 function blank(defaultWorkshopId: number | null): FormState {
@@ -124,8 +124,7 @@ export default function LineDetailModal({
     setForm(initial);
     setSnapshot(JSON.stringify(initial));
     setSavedLine(line);
-    const startStep = line && initialTab === "team" ? TEAM_STEP : 1;
-    setStep(startStep);
+    setStep(line && initialTab === "team" ? TEAM_STEP : 1);
     setReached(line ? LAST_STEP : 1);
     setError(null);
     setBusy(false);
@@ -298,7 +297,8 @@ export default function LineDetailModal({
     }
   }
 
-  const headingName = form.name ? `${form.name}, ${workshopName ?? "tanpa workshop"}` : "Pengaturan lini";
+  const kicker = savedLine ? `Kelola lini · ${savedLine.code}` : "Lini baru";
+  const headingName = form.name ? `${form.name}${workshopName ? ` · ${workshopName}` : ""}` : "Pengaturan lini";
   const link = savedLine ? `/dm-dashboard/${savedLine.slug}` : null;
 
   return (
@@ -315,314 +315,261 @@ export default function LineDetailModal({
         if (event.target === event.currentTarget) requestClose();
       }}
     >
-      <div className="dm-line-modal-shell">
-        <div className="dm-line-modal-head">
-          <div className="dm-line-modal-head-left">
-            <div>
-              <div className="dm-line-modal-meta-row">
-                <span className="dm-line-badge-cat">{savedLine ? "Kelola lini" : "Lini baru"}</span>
-                {savedLine ? <span className="lw-state-chip">{published ? "Terbit" : "Draft"}</span> : null}
-                <span className="dm-line-code-chip">{form.code || "Kode belum diisi"}</span>
-              </div>
-              <h2 id="line-modal-heading" className="dm-line-modal-heading" tabIndex={-1} autoFocus>{headingName}</h2>
-            </div>
+      <div className="lw-shell">
+        <header className="lw-head">
+          <div className="lw-head-text">
+            <p className="lw-kicker">
+              {kicker}
+              {savedLine ? <span className="lw-chip">{published ? "Terbit" : "Draft"}</span> : null}
+            </p>
+            <h2 id="line-modal-heading" className="lw-title" tabIndex={-1} autoFocus>{headingName}</h2>
           </div>
-          <button type="button" className="dm-modal-close-icon-btn" onClick={requestClose} aria-label="Tutup">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <button type="button" className="lw-close" onClick={requestClose} aria-label="Tutup">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-        </div>
+        </header>
 
         <WizardStepper steps={STEPS} current={step} reached={reached} onSelect={goTo} />
 
         <div className="lw-body" ref={bodyRef}>
+          {error ? <p className="lw-error" role="alert">{error}</p> : null}
+
           {step === 1 && (
-            <section className="lw-section" aria-labelledby="lw-s1">
-              <h3 id="lw-s1" className="lw-section-title">Info lini</h3>
-              <p className="lw-section-sub">Identitas lini di daftar admin dan di rail dashboard.</p>
-              <div className="lw-card">
-              <h4 className="lw-card-title">Identitas</h4>
-              <div className="lw-grid">
-                <div className="lw-field">
-                  <label htmlFor="line-workshop" className="lw-label">Workshop <span className="lw-req">*</span></label>
-                  <select
-                    id="line-workshop"
-                    className="lw-input"
-                    value={form.workshopId ?? ""}
-                    onChange={(event) => change("workshopId", event.target.value ? Number(event.target.value) : null)}
-                  >
-                    <option value="">Pilih workshop</option>
-                    {workshops.map((workshop) => (
-                      <option key={workshop.id} value={workshop.id}>{workshop.name}</option>
-                    ))}
-                  </select>
-                  <span className="lw-hint">Tampil di rail kanan dashboard sebagai DM TRIANGLE + nama workshop.</span>
-                </div>
-                <div className="lw-field">
-                  <label htmlFor="line-code" className="lw-label">Kode lini <span className="lw-req">*</span></label>
-                  <input
-                    id="line-code"
-                    type="text"
-                    className="lw-input is-mono"
-                    value={form.code}
-                    onChange={(event) => change("code", event.target.value)}
-                    placeholder="Contoh: TAC20601"
-                  />
-                  <span className="lw-hint">Harus unik di seluruh lini.</span>
-                </div>
-                <div className="lw-field">
-                  <label htmlFor="line-name" className="lw-label">Nama tim / nama lini <span className="lw-req">*</span></label>
-                  <input
-                    id="line-name"
-                    type="text"
-                    className="lw-input"
-                    value={form.name}
-                    onChange={(event) => change("name", event.target.value)}
-                    placeholder="Contoh: EXCELLENCE"
-                  />
-                </div>
-                <div className="lw-field">
-                  <label htmlFor="line-model" className="lw-label">Model ponsel</label>
-                  <input
-                    id="line-model"
-                    type="text"
-                    className="lw-input"
-                    value={form.model}
-                    onChange={(event) => change("model", event.target.value)}
-                    placeholder="Contoh: LATTE-M"
-                  />
-                </div>
+            <div className="lw-grid">
+              <div className="lw-field">
+                <label htmlFor="line-workshop" className="lw-label">Workshop <span className="lw-req">*</span></label>
+                <select
+                  id="line-workshop"
+                  className="lw-input"
+                  value={form.workshopId ?? ""}
+                  onChange={(event) => change("workshopId", event.target.value ? Number(event.target.value) : null)}
+                >
+                  <option value="">Pilih workshop</option>
+                  {workshops.map((workshop) => (
+                    <option key={workshop.id} value={workshop.id}>{workshop.name}</option>
+                  ))}
+                </select>
               </div>
+              <div className="lw-field">
+                <label htmlFor="line-code" className="lw-label">Kode lini <span className="lw-req">*</span></label>
+                <input
+                  id="line-code"
+                  type="text"
+                  className="lw-input is-mono"
+                  value={form.code}
+                  onChange={(event) => change("code", event.target.value)}
+                  placeholder="TAC20601"
+                />
               </div>
-              <div className="lw-card">
-              <h4 className="lw-card-title">Operasional dan link</h4>
-              <div className="lw-grid">
-                <div className="lw-field">
-                  <label htmlFor="line-status" className="lw-label">Status operasional</label>
-                  <select
-                    id="line-status"
-                    className="lw-input"
-                    value={form.status}
-                    onChange={(event) => change("status", event.target.value as DmLineStatus)}
-                  >
-                    {statusOptions.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="lw-field">
-                  <label htmlFor="line-slug" className="lw-label">Alamat link dashboard</label>
-                  <input
-                    id="line-slug"
-                    type="text"
-                    className="lw-input is-mono"
-                    value={form.slug}
-                    onChange={(event) => change("slug", event.target.value)}
-                    placeholder="Kosongkan agar dibuat otomatis"
-                  />
-                  <span className="lw-hint">
-                    {savedLine
-                      ? "Mengubah alamat ini membuat link lama berhenti bekerja di layar yang sudah terpasang."
-                      : "Contoh hasil: workshop-5-tac20601"}
-                  </span>
-                </div>
+              <div className="lw-field">
+                <label htmlFor="line-name" className="lw-label">Nama tim <span className="lw-req">*</span></label>
+                <input
+                  id="line-name"
+                  type="text"
+                  className="lw-input"
+                  value={form.name}
+                  onChange={(event) => change("name", event.target.value)}
+                  placeholder="EXCELLENCE"
+                />
               </div>
+              <div className="lw-field">
+                <label htmlFor="line-model" className="lw-label">Model ponsel</label>
+                <input
+                  id="line-model"
+                  type="text"
+                  className="lw-input"
+                  value={form.model}
+                  onChange={(event) => change("model", event.target.value)}
+                  placeholder="LATTE-M"
+                />
               </div>
-            </section>
+              <div className="lw-field">
+                <label htmlFor="line-status" className="lw-label">Status</label>
+                <select
+                  id="line-status"
+                  className="lw-input"
+                  value={form.status}
+                  onChange={(event) => change("status", event.target.value as DmLineStatus)}
+                >
+                  {statusOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="lw-field">
+                <label htmlFor="line-slug" className="lw-label">Alamat link</label>
+                <input
+                  id="line-slug"
+                  type="text"
+                  className="lw-input is-mono"
+                  value={form.slug}
+                  onChange={(event) => change("slug", event.target.value)}
+                  placeholder="Otomatis"
+                />
+                {savedLine ? <span className="lw-hint">Mengubahnya mematikan link lama di layar yang terpasang.</span> : null}
+              </div>
+            </div>
           )}
 
           {step === 2 && (
-            <section className="lw-section" aria-labelledby="lw-s2">
-              <h3 id="lw-s2" className="lw-section-title">Tampilan dashboard</h3>
-              <p className="lw-section-sub">Teks dan foto yang tampil di layar TV lini.</p>
-              <div className="lw-card">
-              <h4 className="lw-card-title">Teks di dashboard</h4>
-              <div className="lw-grid">
-                <div className="lw-field">
-                  <label htmlFor="line-label" className="lw-label">Label lini Inggris (rail kiri)</label>
+            <div className="lw-grid">
+              <div className="lw-field">
+                <label htmlFor="line-label" className="lw-label">Label Inggris</label>
+                <input
+                  id="line-label"
+                  type="text"
+                  className="lw-input"
+                  value={form.lineLabel}
+                  onChange={(event) => change("lineLabel", event.target.value)}
+                  placeholder="DM TRIANGLE LINE"
+                />
+              </div>
+              <div className="lw-field">
+                <label htmlFor="line-label-zh" className="lw-label">Label Mandarin</label>
+                <input
+                  id="line-label-zh"
+                  type="text"
+                  className="lw-input"
+                  value={form.lineLabelZh}
+                  onChange={(event) => change("lineLabelZh", event.target.value)}
+                  placeholder="DM 三角线"
+                />
+              </div>
+              <div className="lw-field is-wide">
+                <label htmlFor="line-slogan" className="lw-label">Slogan tim</label>
+                <input
+                  id="line-slogan"
+                  type="text"
+                  className="lw-input"
+                  value={form.slogan}
+                  onChange={(event) => change("slogan", event.target.value)}
+                  placeholder="SATU TIM SATU TUJUAN"
+                />
+              </div>
+              <div className="lw-field is-wide">
+                <label htmlFor="line-values" className="lw-label">Nilai inti <span className="lw-hint">pisahkan dengan koma</span></label>
+                <input
+                  id="line-values"
+                  type="text"
+                  className="lw-input"
+                  value={form.values}
+                  onChange={(event) => change("values", event.target.value)}
+                  placeholder="Benfen, Orientasi Pengguna, Mengejar Keunggulan"
+                />
+                {values.length > 0 ? (
+                  <ul className="lw-tags" aria-label="Pratinjau nilai inti">
+                    {values.map((value) => (
+                      <li key={value} className="lw-tag">{value}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+              <div className="lw-field is-wide">
+                <label htmlFor="line-photo" className="lw-label">Foto tim <span className="lw-hint">landscape, maks. 2 MB</span></label>
+                <div className="lw-photo">
+                  {form.teamPhotoUrl ? (
+                    <img src={form.teamPhotoUrl} alt="Pratinjau foto tim" className="lw-thumb" />
+                  ) : (
+                    <span className="lw-thumb is-empty" aria-hidden="true">Foto</span>
+                  )}
                   <input
-                    id="line-label"
+                    id="line-photo"
                     type="text"
                     className="lw-input"
-                    value={form.lineLabel}
-                    onChange={(event) => change("lineLabel", event.target.value)}
-                    placeholder="Contoh: DM TRIANGLE LINE"
+                    value={form.teamPhotoUrl.startsWith("data:") ? "" : form.teamPhotoUrl}
+                    onChange={(event) => change("teamPhotoUrl", event.target.value)}
+                    placeholder={form.teamPhotoUrl.startsWith("data:") ? "Foto dari berkas terpilih" : "URL gambar"}
                   />
-                </div>
-                <div className="lw-field">
-                  <label htmlFor="line-label-zh" className="lw-label">Label Mandarin (rail kiri)</label>
-                  <input
-                    id="line-label-zh"
-                    type="text"
-                    className="lw-input"
-                    value={form.lineLabelZh}
-                    onChange={(event) => change("lineLabelZh", event.target.value)}
-                    placeholder="Contoh: DM 三角线"
-                  />
-                </div>
-                <div className="lw-field is-wide">
-                  <label htmlFor="line-slogan" className="lw-label">Slogan tim</label>
-                  <input
-                    id="line-slogan"
-                    type="text"
-                    className="lw-input"
-                    value={form.slogan}
-                    onChange={(event) => change("slogan", event.target.value)}
-                    placeholder="Contoh: SATU TIM SATU TUJUAN"
-                  />
-                </div>
-                <div className="lw-field is-wide">
-                  <label htmlFor="line-values" className="lw-label">Nilai inti (pisahkan dengan koma)</label>
-                  <input
-                    id="line-values"
-                    type="text"
-                    className="lw-input"
-                    value={form.values}
-                    onChange={(event) => change("values", event.target.value)}
-                    placeholder="Benfen, Orientasi Pengguna, Mengejar Keunggulan, Keterbukaan"
-                  />
-                  {values.length > 0 ? (
-                    <ul className="lw-tags" aria-label="Pratinjau nilai inti">
-                      {values.map((value) => (
-                        <li key={value} className="lw-tag">{value}</li>
-                      ))}
-                    </ul>
+                  <label className="lw-btn is-soft lw-file-btn">
+                    Pilih file
+                    <input type="file" accept="image/*" className="lw-file-input" onChange={pickPhoto} />
+                  </label>
+                  {form.teamPhotoUrl ? (
+                    <button type="button" className="lw-link is-danger" onClick={() => change("teamPhotoUrl", "")}>Hapus</button>
                   ) : null}
                 </div>
               </div>
-              </div>
-              <div className="lw-card">
-              <h4 className="lw-card-title">Foto tim</h4>
-              <div className="lw-grid">
-                <div className="lw-field is-wide">
-                  <label htmlFor="line-photo" className="lw-label">URL atau berkas foto tim</label>
-                  <div className="lw-upload">
-                    <input
-                      id="line-photo"
-                      type="text"
-                      className="lw-input"
-                      value={form.teamPhotoUrl.startsWith("data:") ? "" : form.teamPhotoUrl}
-                      onChange={(event) => change("teamPhotoUrl", event.target.value)}
-                      placeholder={form.teamPhotoUrl.startsWith("data:") ? "Foto dari berkas terpilih" : "URL gambar, contoh /assets/dm/team-photo.png"}
-                    />
-                    <label className="lw-btn is-secondary lw-file-btn">
-                      Pilih file
-                      <input type="file" accept="image/*" className="lw-file-input" onChange={pickPhoto} />
-                    </label>
-                  </div>
-                  <span className="lw-hint">Rasio landscape paling pas. Maksimal 2 MB.</span>
-                  {form.teamPhotoUrl ? (
-                    <div className="lw-photo">
-                      <img src={form.teamPhotoUrl} alt="Pratinjau foto tim" className="lw-photo-img" />
-                      <button type="button" className="lw-btn is-secondary" onClick={() => change("teamPhotoUrl", "")}>
-                        Hapus foto
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="lw-photo-empty">Belum ada foto tim. Tanpa foto, dashboard menampilkan keterangan bahwa foto belum diunggah.</p>
-                  )}
-                </div>
-              </div>
-              </div>
-            </section>
+            </div>
           )}
 
-          {step === TEAM_STEP && savedLine && (
-            <section className="lw-section" aria-labelledby="lw-s3">
-              <h3 id="lw-s3" className="lw-section-title">Anggota tim</h3>
-              <p className="lw-section-sub">Lini {savedLine.code} sudah tersimpan sebagai {published ? "lini terbit" : "draft"}. Perubahan anggota langsung tersimpan.</p>
-              <TeamManager line={savedLine} call={call} onChanged={onTeamChanged} />
-            </section>
-          )}
+          {step === TEAM_STEP && savedLine && <TeamManager line={savedLine} call={call} onChanged={onTeamChanged} />}
 
           {step === LAST_STEP && savedLine && (
-            <section className="lw-section" aria-labelledby="lw-s4">
-              <h3 id="lw-s4" className="lw-section-title">Tinjau dan terbitkan</h3>
-              <p className="lw-section-sub">
+            <div className="lw-review">
+              <p className="lw-lead">
                 {published
                   ? "Dashboard ini sudah terbit. Menyimpan memperbarui tampilan di layar dalam semenit."
                   : "Lini masih draft. Dashboard muncul di daftar dashboard setelah diterbitkan."}
               </p>
-
-              <div className="lw-summary">
-                <div className="lw-sum-group">
+              <div className="lw-sum">
+                <section className="lw-sum-part" aria-label="Info lini">
                   <div className="lw-sum-head">
-                    <h4>Info lini</h4>
-                    <button type="button" className="lw-link-btn" onClick={() => goTo(1)}>Ubah</button>
+                    <h3>Info lini</h3>
+                    <button type="button" className="lw-link" onClick={() => goTo(1)}>Ubah</button>
                   </div>
-                  <dl>
+                  <dl className="lw-facts">
                     <div><dt>Workshop</dt><dd>{workshopName ?? "Belum dipilih"}</dd></div>
                     <div><dt>Kode</dt><dd className="is-mono">{form.code}</dd></div>
                     <div><dt>Nama</dt><dd>{form.name}</dd></div>
-                    <div><dt>Model</dt><dd>{form.model || "Belum diisi"}</dd></div>
+                    <div><dt>Model</dt><dd>{form.model || "-"}</dd></div>
                     <div><dt>Status</dt><dd>{form.status.toUpperCase()}</dd></div>
+                    <div className="is-wide"><dt>Link</dt><dd className="is-mono">{link}</dd></div>
                   </dl>
-                </div>
+                </section>
 
-                <div className="lw-sum-group">
+                <section className="lw-sum-part" aria-label="Tampilan">
                   <div className="lw-sum-head">
-                    <h4>Tampilan</h4>
-                    <button type="button" className="lw-link-btn" onClick={() => goTo(2)}>Ubah</button>
+                    <h3>Tampilan</h3>
+                    <button type="button" className="lw-link" onClick={() => goTo(2)}>Ubah</button>
                   </div>
-                  <dl>
-                    <div><dt>Label</dt><dd>{[form.lineLabel, form.lineLabelZh].filter(Boolean).join(" / ") || "Belum diisi"}</dd></div>
-                    <div><dt>Slogan</dt><dd>{form.slogan || "Belum diisi"}</dd></div>
-                    <div><dt>Nilai inti</dt><dd>{values.length > 0 ? values.join(", ") : "Belum diisi"}</dd></div>
+                  <dl className="lw-facts">
+                    <div><dt>Label</dt><dd>{[form.lineLabel, form.lineLabelZh].filter(Boolean).join(" / ") || "-"}</dd></div>
                     <div><dt>Foto tim</dt><dd>{form.teamPhotoUrl ? "Sudah ada" : "Belum ada"}</dd></div>
+                    <div className="is-wide"><dt>Slogan</dt><dd>{form.slogan || "-"}</dd></div>
+                    <div className="is-wide"><dt>Nilai inti</dt><dd>{values.length > 0 ? values.join(", ") : "-"}</dd></div>
                   </dl>
-                </div>
+                </section>
 
-                <div className="lw-sum-group">
+                <section className="lw-sum-part" aria-label="Anggota tim">
                   <div className="lw-sum-head">
-                    <h4>Anggota tim</h4>
-                    <button type="button" className="lw-link-btn" onClick={() => goTo(TEAM_STEP)}>Ubah</button>
+                    <h3>Anggota{members ? ` (${members.length})` : ""}</h3>
+                    <button type="button" className="lw-link" onClick={() => goTo(TEAM_STEP)}>Ubah</button>
                   </div>
                   {membersError ? (
-                    <p className="lw-note is-warn" role="alert">{membersError}</p>
+                    <p className="lw-warn" role="alert">{membersError}</p>
                   ) : members === null ? (
-                    <p className="lw-note" role="status">Memuat anggota...</p>
+                    <p className="lw-muted" role="status">Memuat anggota...</p>
                   ) : members.length === 0 ? (
-                    <p className="lw-note is-warn">Belum ada anggota. Dashboard tetap bisa terbit, tapi bagian tim akan kosong.</p>
+                    <p className="lw-warn">Belum ada anggota. Dashboard tetap bisa terbit, tapi bagian tim kosong.</p>
                   ) : (
-                    <ul className="lw-members">
+                    <ul className="lw-tags">
                       {members.map((member) => (
-                        <li key={member.id ?? member.employeeId}>
-                          <span>{member.name}</span>
-                          <span className="lw-members-meta">{[member.dept, member.position].filter(Boolean).join(", ")}</span>
-                        </li>
+                        <li key={member.id ?? member.employeeId} className="lw-tag">{member.name}</li>
                       ))}
                     </ul>
                   )}
-                </div>
-
-                <div className="lw-sum-group">
-                  <div className="lw-sum-head">
-                    <h4>Link dashboard</h4>
-                  </div>
-                  <p className="lw-link is-mono">{link}</p>
-                </div>
+                </section>
               </div>
-
-              <div className="lw-danger">
-                <button type="button" className="lw-btn is-danger" disabled={busy} onClick={remove}>Hapus lini ini</button>
-              </div>
-            </section>
+            </div>
           )}
-
-          {error ? <p className="lw-error" role="alert">{error}</p> : null}
         </div>
 
-        <div className="lw-footer">
-          <p className="lw-footer-note">
-            {step === 2 && !savedLine ? "Lanjut menyimpan lini sebagai draft." : ""}
-          </p>
-          <div className="lw-footer-actions">
+        <footer className="lw-foot">
+          <div className="lw-foot-side">
+            {step === LAST_STEP ? (
+              <button type="button" className="lw-link is-danger" disabled={busy} onClick={remove}>Hapus lini</button>
+            ) : step === 2 && !savedLine ? (
+              <span className="lw-muted">Lanjut menyimpan sebagai draft.</span>
+            ) : null}
+          </div>
+          <div className="lw-foot-actions">
             {step === 1 ? (
-              <button type="button" className="lw-btn is-secondary" disabled={busy} onClick={requestClose}>Batal</button>
+              <button type="button" className="lw-btn is-ghost" disabled={busy} onClick={requestClose}>Batal</button>
             ) : (
-              <button type="button" className="lw-btn is-secondary" disabled={busy} onClick={() => goTo(step - 1)}>Kembali</button>
+              <button type="button" className="lw-btn is-ghost" disabled={busy} onClick={() => goTo(step - 1)}>Kembali</button>
             )}
             {step < LAST_STEP ? (
               <button type="button" className="lw-btn is-primary" disabled={busy} onClick={next}>
@@ -634,7 +581,7 @@ export default function LineDetailModal({
               </button>
             )}
           </div>
-        </div>
+        </footer>
       </div>
     </dialog>
   );

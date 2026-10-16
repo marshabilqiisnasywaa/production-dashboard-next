@@ -9,7 +9,7 @@ interface WizardStepperProps {
 
 function CheckIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M5 12.5l4.5 4.5L19 7.5" />
     </svg>
   );
@@ -42,9 +42,6 @@ export default function WizardStepper({ steps, current, reached, onSelect }: Wiz
           );
         })}
       </ol>
-      <p className="lw-progress">
-        Langkah {current} dari {steps.length}: <strong>{steps[current - 1]}</strong>
-      </p>
     </div>
   );
 }

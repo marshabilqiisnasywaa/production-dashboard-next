@@ -1,15 +1,16 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import type { ChangeEvent, FormEvent } from "react";
 import { adminApi, dmDepartments, dmEmployeeRoles } from "../api";
 import type { DmEmployee, DmEmployeeInput, DmEmployeeRole } from "../api";
 import { PlusIcon } from "./AdminIcons";
+import RowMenu from "./RowMenu";
+import type { RowMenuItem } from "./RowMenu";
+import UserModal from "./UserModal";
+import "./UserTable.css";
 
 interface UserManagerProps {
   call: <T>(fn: () => Promise<T>) => Promise<T>;
 }
-
-const MAX_PHOTO_BYTES = 1024 * 1024;
 
 function messageOf(error: unknown) {
   return error instanceof Error ? error.message : "Terjadi kesalahan.";
@@ -19,171 +20,52 @@ function roleLabel(role: DmEmployeeRole) {
   return dmEmployeeRoles.find((item) => item.value === role)?.label ?? role;
 }
 
-function blankToNull(value: string) {
-  const trimmed = value.trim();
-  return trimmed === "" ? null : trimmed;
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
 }
 
-interface UserFormProps {
-  user: DmEmployee | null;
-  onSave: (input: DmEmployeeInput) => Promise<void>;
-  onCancel: () => void;
-}
+const iconProps = { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
-function UserForm({ user, onSave, onCancel }: UserFormProps) {
-  const [name, setName] = useState(user?.name ?? "");
-  const [employeeId, setEmployeeId] = useState(user?.employeeId ?? "");
-  const [role, setRole] = useState<DmEmployeeRole>(user?.role ?? "member");
-  const [dept, setDept] = useState(user?.dept ?? "");
-  const [position, setPosition] = useState(user?.position ?? "");
-  const [supervisor, setSupervisor] = useState(user?.supervisor ?? "");
-  const [workPhone, setWorkPhone] = useState(user?.workPhone ?? "");
-  const [photoUrl, setPhotoUrl] = useState(user?.photoUrl ?? "");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const deptOptions = dept && !dmDepartments.includes(dept) ? [...dmDepartments, dept] : dmDepartments;
-
-  function pickPhoto(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    if (file.size > MAX_PHOTO_BYTES) {
-      setError("Foto lebih dari 1 MB. Kecilkan ukurannya dulu.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPhotoUrl(String(reader.result));
-      setError(null);
-    };
-    reader.readAsDataURL(file);
-  }
-
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (!name.trim() || !employeeId.trim()) {
-      setError("Nama dan NIK wajib diisi.");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      await onSave({
-        employeeId: employeeId.trim(),
-        name: name.trim(),
-        role,
-        dept: blankToNull(dept),
-        position: blankToNull(position),
-        supervisor: blankToNull(supervisor),
-        workPhone: blankToNull(workPhone),
-        photoUrl: blankToNull(photoUrl),
-      });
-    } catch (err) {
-      setError(messageOf(err));
-      setBusy(false);
-    }
-  }
-
-  const text = (id: string, label: string, value: string, set: (v: string) => void, placeholder: string, required = false) => (
-    <div className="dm-admin-field">
-      <label htmlFor={`user-${id}`}>
-        {label}
-        {required ? <span className="dm-required-mark"> *</span> : null}
-      </label>
-      <input
-        id={`user-${id}`}
-        type="text"
-        className="dm-admin-input"
-        value={value}
-        onChange={(event) => set(event.target.value)}
-        placeholder={placeholder}
-      />
-    </div>
-  );
-
-  return (
-    <form className="dm-admin-member-card" onSubmit={submit} noValidate>
-      <div className="dm-admin-member-head">
-        <span className="dm-admin-member-role">{user ? `Ubah ${user.name}` : "Pengguna baru"}</span>
-      </div>
-      <div className="dm-admin-member-body">
-        {text("name", "Name", name, setName, "Nama lengkap", true)}
-        {text("nik", "Work No", employeeId, setEmployeeId, "Nomor induk karyawan", true)}
-        <div className="dm-admin-field">
-          <label htmlFor="user-role">Role</label>
-          <select
-            id="user-role"
-            className="dm-admin-input"
-            value={role}
-            onChange={(event) => setRole(event.target.value as DmEmployeeRole)}
-          >
-            {dmEmployeeRoles.map((item) => (
-              <option key={item.value} value={item.value}>{item.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className="dm-admin-field">
-          <label htmlFor="user-dept">Departemen</label>
-          <select
-            id="user-dept"
-            className="dm-admin-input"
-            value={dept}
-            onChange={(event) => setDept(event.target.value)}
-          >
-            <option value="">Belum dipilih</option>
-            {deptOptions.map((item) => (
-              <option key={item} value={item}>{item}</option>
-            ))}
-          </select>
-        </div>
-        {text("pos", "Position", position, setPosition, "Jabatan, contoh: PE Technician")}
-        {text("sup", "Supervisor", supervisor, setSupervisor, "Nama atasan")}
-        {text("phone", "Work Phone", workPhone, setWorkPhone, "Nomor kontak kerja")}
-        <div className="dm-admin-field">
-          <label htmlFor="user-photo">Foto Profil</label>
-          <div className="dm-admin-upload-wrap">
-            <input
-              id="user-photo"
-              type="text"
-              className="dm-admin-input"
-              value={photoUrl.startsWith("data:") ? "" : photoUrl}
-              onChange={(event) => setPhotoUrl(event.target.value)}
-              placeholder={photoUrl.startsWith("data:") ? "Foto dari berkas terpilih" : "URL foto"}
-            />
-            <label className="dm-admin-file-label">
-              Unggah
-              <input type="file" accept="image/*" className="dm-admin-file-input" onChange={pickPhoto} />
-            </label>
-          </div>
-        </div>
-        {photoUrl ? (
-          <div className="dm-admin-avatar-preview">
-            <img src={photoUrl} alt={name ? `Foto ${name}` : "Pratinjau foto"} className="dm-admin-avatar-img" />
-            <button type="button" className="dm-admin-btn is-secondary" onClick={() => setPhotoUrl("")}>
-              Hapus Foto
-            </button>
-          </div>
-        ) : null}
-        {error ? <p className="dm-admin-inline-error" role="alert">{error}</p> : null}
-        <div className="dm-admin-member-actions">
-          <button type="submit" className="dm-admin-btn is-primary" disabled={busy}>
-            {busy ? "Menyimpan..." : user ? "Simpan Perubahan" : "Tambah Pengguna"}
-          </button>
-          <button type="button" className="dm-admin-btn is-tonal" disabled={busy} onClick={onCancel}>
-            Batal
-          </button>
-        </div>
-      </div>
-    </form>
-  );
-}
+const icons = {
+  edit: (
+    <svg {...iconProps}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  ),
+  key: (
+    <svg {...iconProps}>
+      <circle cx="7.5" cy="15.5" r="4.5" />
+      <path d="m10.7 12.3 9.8-9.8M16 7l3 3" />
+    </svg>
+  ),
+  off: (
+    <svg {...iconProps}>
+      <path d="M12 3v9" />
+      <path d="M6.3 6.8a8 8 0 1 0 11.4 0" />
+    </svg>
+  ),
+  on: (
+    <svg {...iconProps}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  ),
+  trash: (
+    <svg {...iconProps}>
+      <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
+    </svg>
+  ),
+};
 
 export default function UserManager({ call }: UserManagerProps) {
   const [users, setUsers] = useState<DmEmployee[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ type: "ok" | "error"; text: string } | null>(null);
+
+  const ok = (text: string) => setNotice({ type: "ok", text });
+  const fail = (error: unknown) => setNotice({ type: "error", text: messageOf(error) });
   const [form, setForm] = useState<{ open: boolean; user: DmEmployee | null }>({ open: false, user: null });
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | DmEmployeeRole>("all");
@@ -210,10 +92,10 @@ export default function UserManager({ call }: UserManagerProps) {
     const editing = form.user;
     if (editing) {
       await call(() => adminApi.updateEmployee(editing.id, input));
-      setStatus(`Data ${input.name} disimpan.`);
+      ok(`Data ${input.name} disimpan.`);
     } else {
       await call(() => adminApi.createEmployee(input));
-      setStatus(`${input.name} ditambahkan.`);
+      ok(`${input.name} ditambahkan.`);
     }
     setForm({ open: false, user: null });
     await load();
@@ -222,32 +104,29 @@ export default function UserManager({ call }: UserManagerProps) {
   async function toggleActive(user: DmEmployee) {
     try {
       await call(() => adminApi.updateEmployee(user.id, { isActive: !user.isActive }));
-      setStatus(user.isActive ? `${user.name} dinonaktifkan.` : `${user.name} diaktifkan lagi.`);
+      ok(user.isActive ? `${user.name} dinonaktifkan.` : `${user.name} diaktifkan lagi.`);
       await load();
     } catch (error) {
-      setStatus(messageOf(error));
+      fail(error);
     }
   }
 
   async function resetPassword(user: DmEmployee) {
     if (!window.confirm(`Reset password ${user.name} ke NIK (${user.employeeId})? Orangnya wajib menggantinya saat login berikutnya.`)) return;
-    try {
-      await call(() => adminApi.resetEmployeePassword(user.id));
-      setStatus(`Password ${user.name} dikembalikan ke NIK. Wajib diganti saat login.`);
-      await load();
-    } catch (error) {
-      setStatus(messageOf(error));
-    }
+    const updated = await call(() => adminApi.resetEmployeePassword(user.id));
+    ok(`Password ${user.name} dikembalikan ke NIK. Wajib diganti saat login.`);
+    setForm((current) => (current.open && current.user?.id === updated.id ? { open: true, user: updated } : current));
+    await load();
   }
 
   async function remove(user: DmEmployee) {
-    if (!window.confirm(`Hapus ${user.name} dari daftar pengguna?`)) return;
+    if (!window.confirm(`Hapus ${user.name} secara permanen? Riwayat lininya yang sudah dilepas ikut terhapus dan tidak bisa dikembalikan.`)) return;
     try {
       await call(() => adminApi.deleteEmployee(user.id));
-      setStatus(`${user.name} dihapus.`);
+      ok(`${user.name} dihapus.`);
       await load();
     } catch (error) {
-      setStatus(messageOf(error));
+      fail(error);
     }
   }
 
@@ -256,8 +135,9 @@ export default function UserManager({ call }: UserManagerProps) {
     if (!showInactive && !user.isActive) return false;
     if (roleFilter !== "all" && user.role !== roleFilter) return false;
     if (deptFilter !== "all" && (user.dept ?? "") !== deptFilter) return false;
-    return !query || [user.name, user.employeeId, user.dept ?? "", user.position ?? "", user.lineLabel ?? ""].some((value) => value.toLowerCase().includes(query));
+    return !query || [user.name, user.employeeId, user.dept ?? "", user.position ?? "", user.supervisor ?? "", user.lineLabel ?? ""].some((value) => value.toLowerCase().includes(query));
   });
+  const supervisors = users.filter((user) => user.role === "supervisor" && user.isActive);
   const inactiveCount = users.filter((user) => !user.isActive).length;
   const deptChoices = Array.from(
     new Set([...dmDepartments, ...users.map((user) => user.dept).filter((value): value is string => Boolean(value))])
@@ -272,28 +152,21 @@ export default function UserManager({ call }: UserManagerProps) {
             <span className="dm-pill">{users.length} Terdaftar</span>
           </div>
           <p className="dm-panel-sub">
-            Isi data orang sekali di sini. Saat menyusun tim atau memilih MPV, cukup pilih namanya.
-            Akun admin diatur terpisah di login, bukan di daftar ini.
+            Daftarkan supervisor lebih dulu, lalu pilih mereka saat mengisi member. Saat menyusun tim atau MPV, cukup pilih namanya. Akun admin diatur terpisah di login.
           </p>
         </div>
-        {!form.open ? (
-          <button type="button" className="dm-admin-btn is-primary dm-btn-add" onClick={() => setForm({ open: true, user: null })}>
-            <PlusIcon size={14} />
-            Tambah Pengguna
-          </button>
-        ) : null}
+        <button type="button" className="dm-admin-btn is-primary dm-btn-add" onClick={() => setForm({ open: true, user: null })}>
+          <PlusIcon size={14} />
+          Tambah Pengguna
+        </button>
       </div>
 
-      <div role="status" className="dm-admin-team-status">{status}</div>
-
-      {form.open ? (
-        <div className="dm-admin-member-grid">
-          <UserForm
-            key={form.user?.id ?? "new"}
-            user={form.user}
-            onSave={save}
-            onCancel={() => setForm({ open: false, user: null })}
-          />
+      {notice ? (
+        <div className={`ut-notice is-${notice.type}`} role={notice.type === "error" ? "alert" : "status"}>
+          <span>{notice.text}</span>
+          <button type="button" className="ut-notice-close" onClick={() => setNotice(null)} aria-label="Tutup pesan">
+            &times;
+          </button>
         </div>
       ) : null}
 
@@ -349,9 +222,9 @@ export default function UserManager({ call }: UserManagerProps) {
               ))}
             </select>
             {inactiveCount > 0 ? (
-              <label>
-                <input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} />{" "}
-                Tampilkan nonaktif ({inactiveCount})
+              <label className="ut-toggle">
+                <input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} />
+                <span>Tampilkan nonaktif ({inactiveCount})</span>
               </label>
             ) : null}
             <span className="dm-pill dm-lines-count" role="status">
@@ -362,55 +235,92 @@ export default function UserManager({ call }: UserManagerProps) {
           {shown.length === 0 ? (
             <p className="dm-lines-none">Tidak ada pengguna yang cocok dengan pencarian atau filter ini.</p>
           ) : (
-            <div className="dm-admin-table-wrap">
-              <table className="dm-admin-table">
+            <div className="ut-wrap">
+              <table className="ut-table">
                 <thead>
                   <tr>
-                    <th>Nama</th>
-                    <th>NIK</th>
+                    <th>Pengguna</th>
                     <th>Role</th>
                     <th>Departemen</th>
-                    <th>Position</th>
                     <th>Lini</th>
+                    <th>Supervisor</th>
                     <th>Login</th>
-                    <th style={{ textAlign: "center" }}>Aksi</th>
+                    <th className="ut-col-action"><span className="ut-sr">Aksi</span></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {shown.map((user) => (
-                    <tr key={user.id}>
-                      <td>
-                        <span className="dm-col-name">{user.name}</span>
-                        {user.isActive ? null : <span className="dm-pill"> Nonaktif</span>}
-                      </td>
-                      <td><span className="dm-col-code">{user.employeeId}</span></td>
-                      <td>{roleLabel(user.role)}</td>
-                      <td>{user.dept ?? "-"}</td>
-                      <td>{user.position ?? "-"}</td>
-                      <td>{user.lineLabel ?? "-"}</td>
-                      <td>{user.mustChangePassword ? "Password awal" : "Sudah diganti"}</td>
-                      <td style={{ textAlign: "center" }}>
-                        <button type="button" className="dm-table-btn" onClick={() => setForm({ open: true, user })}>
-                          Ubah
-                        </button>{" "}
-                        <button type="button" className="dm-table-btn" onClick={() => resetPassword(user)}>
-                          Reset password
-                        </button>{" "}
-                        <button type="button" className="dm-table-btn" onClick={() => toggleActive(user)}>
-                          {user.isActive ? "Nonaktifkan" : "Aktifkan"}
-                        </button>{" "}
-                        <button type="button" className="dm-table-btn" onClick={() => remove(user)}>
-                          Hapus
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {shown.map((user) => {
+                    const items: RowMenuItem[] = [
+                      { key: "edit", label: "Ubah", icon: icons.edit, onSelect: () => setForm({ open: true, user }) },
+                      {
+                        key: "reset",
+                        label: "Reset password",
+                        icon: icons.key,
+                        onSelect: () => resetPassword(user).catch((error) => fail(error)),
+                      },
+                      {
+                        key: "toggle",
+                        label: user.isActive ? "Nonaktifkan" : "Aktifkan",
+                        icon: user.isActive ? icons.off : icons.on,
+                        onSelect: () => toggleActive(user),
+                      },
+                      { key: "delete", label: "Hapus", icon: icons.trash, danger: true, onSelect: () => remove(user) },
+                    ];
+                    return (
+                      <tr key={user.id} className={user.isActive ? undefined : "is-inactive"}>
+                        <td>
+                          <div className="ut-person">
+                            {user.photoUrl ? (
+                              <img src={user.photoUrl} alt="" className="ut-avatar" />
+                            ) : (
+                              <span className="ut-avatar is-initials" aria-hidden="true">{initials(user.name)}</span>
+                            )}
+                            <div className="ut-person-text">
+                              <span className="ut-name">
+                                {user.name}
+                                {user.isActive ? null : <span className="ut-badge is-off">Nonaktif</span>}
+                              </span>
+                              <span className="ut-sub">{user.employeeId}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td><span className={`ut-badge is-${user.role}`}>{roleLabel(user.role)}</span></td>
+                        <td>
+                          <div className="ut-stack">
+                            <strong>{user.dept ?? "-"}</strong>
+                            {user.position ? <span className="ut-muted">{user.position}</span> : null}
+                          </div>
+                        </td>
+                        <td>{user.lineLabel ?? <span className="ut-muted">Belum ada lini</span>}</td>
+                        <td>{user.supervisor ?? <span className="ut-muted">-</span>}</td>
+                        <td>
+                          {user.mustChangePassword ? (
+                            <span className="ut-badge is-warn">Password awal</span>
+                          ) : (
+                            <span className="ut-muted">Sudah diganti</span>
+                          )}
+                        </td>
+                        <td className="ut-col-action">
+                          <RowMenu label={`Aksi untuk ${user.name}`} items={items} />
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </>
       )}
+
+      <UserModal
+        open={form.open}
+        user={form.user}
+        supervisors={supervisors}
+        onSave={save}
+        onResetPassword={resetPassword}
+        onClose={() => setForm({ open: false, user: null })}
+      />
     </section>
   );
 }

@@ -163,7 +163,7 @@ class EmployeeIn(CamelModel):
     role: EmployeeRole = "member"
     dept: str | None = Field(default=None, max_length=120)
     position: str | None = Field(default=None, max_length=120)
-    supervisor: str | None = Field(default=None, max_length=120)
+    supervisor_id: int | None = None
     work_phone: str | None = Field(default=None, max_length=32)
     photo_url: str | None = None
 
@@ -174,7 +174,7 @@ class EmployeeUpdate(CamelModel):
     role: EmployeeRole | None = None
     dept: str | None = Field(default=None, max_length=120)
     position: str | None = Field(default=None, max_length=120)
-    supervisor: str | None = Field(default=None, max_length=120)
+    supervisor_id: int | None = None
     work_phone: str | None = Field(default=None, max_length=32)
     photo_url: str | None = None
     is_active: bool | None = None
@@ -188,6 +188,7 @@ class EmployeeOut(CamelModel):
     dept: str | None
     position: str | None
     supervisor: str | None
+    supervisor_id: int | None
     work_phone: str | None
     photo_url: str | None
     is_active: bool

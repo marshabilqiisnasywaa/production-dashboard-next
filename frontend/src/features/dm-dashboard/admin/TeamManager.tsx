@@ -11,22 +11,15 @@ interface TeamManagerProps {
   onChanged: () => Promise<void>;
 }
 
+const CANCELLED = "Dibatalkan.";
+
 function messageOf(error: unknown) {
   return error instanceof Error ? error.message : "Terjadi kesalahan.";
 }
 
-const CANCELLED = "Dibatalkan.";
-
 function initials(name: string | null) {
   const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
-  return (parts[0]?.[0] ?? "?").concat(parts[1]?.[0] ?? "").toUpperCase();
-}
-
-function Avatar({ member }: { member: DmMember }) {
-  if (member.photoUrl) {
-    return <img src={member.photoUrl} alt="" className="lw-avatar" />;
-  }
-  return <span className="lw-avatar is-initials" aria-hidden="true">{initials(member.name)}</span>;
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
 }
 
 interface MemberRowProps {
@@ -65,26 +58,28 @@ function MemberRow({ member, index, onSave, onRelease }: MemberRowProps) {
   return (
     <li className="lw-roster-item">
       <form className="lw-roster-row" onSubmit={submit} noValidate>
-        <Avatar member={member} />
+        {member.photoUrl ? (
+          <img src={member.photoUrl} alt="" className="lw-avatar" />
+        ) : (
+          <span className="lw-avatar is-initials" aria-hidden="true">{initials(member.name)}</span>
+        )}
         <div className="lw-roster-info">
           <strong>{member.name}</strong>
           <span>{detail}</span>
         </div>
-        <label className="lw-roster-order">
-          <span>Urutan</span>
-          <input
-            type="number"
-            className="lw-input"
-            value={sortOrder}
-            onChange={(event) => setSortOrder(event.target.value)}
-            aria-label={`Urutan ${member.name ?? "anggota"}`}
-          />
-        </label>
+        <input
+          type="number"
+          className="lw-input lw-order-input"
+          value={sortOrder}
+          onChange={(event) => setSortOrder(event.target.value)}
+          aria-label={`Urutan ${member.name ?? "anggota"}`}
+          title="Urutan tampil di dashboard"
+        />
         <div className="lw-roster-actions">
-          <button type="submit" className="lw-btn is-secondary" disabled={busy || sortOrder === original}>
-            Simpan
-          </button>
-          <button type="button" className="lw-btn is-danger" disabled={busy} onClick={() => run(onRelease)}>
+          {sortOrder !== original ? (
+            <button type="submit" className="lw-link" disabled={busy}>Simpan</button>
+          ) : null}
+          <button type="button" className="lw-link is-danger" disabled={busy} onClick={() => run(onRelease)}>
             Lepas
           </button>
         </div>
@@ -171,12 +166,12 @@ export default function TeamManager({ line, call, onChanged }: TeamManagerProps)
   const available = employees.filter((employee) => employee.isActive && !employee.lineLabel);
 
   if (loading && members.length === 0 && employees.length === 0) {
-    return <p role="status" className="lw-note">Memuat anggota...</p>;
+    return <p role="status" className="lw-muted">Memuat anggota...</p>;
   }
 
   if (loadError) {
     return (
-      <div className="lw-card">
+      <div>
         <p className="lw-error" role="alert">{loadError}</p>
         <button type="button" className="lw-btn is-primary" onClick={load}>Coba lagi</button>
       </div>
@@ -184,58 +179,52 @@ export default function TeamManager({ line, call, onChanged }: TeamManagerProps)
   }
 
   return (
-    <div className="lw-stack">
-      <form className="lw-card" onSubmit={add} noValidate>
-        <h4 className="lw-card-title">Tambah anggota</h4>
-        <p className="lw-card-sub">Pilih dari daftar Pengguna. Satu orang hanya bisa aktif di satu lini.</p>
-        <div className="lw-add-row">
-          <div className="lw-field lw-grow">
-            <label htmlFor="team-pick" className="lw-label">Nama</label>
-            <select id="team-pick" className="lw-input" value={pick} onChange={(event) => setPick(event.target.value)}>
-              <option value="">{available.length === 0 ? "Tidak ada pengguna yang bebas" : "Pilih pengguna"}</option>
-              {available.map((employee) => (
-                <option key={employee.id} value={employee.id}>
-                  {employee.name} ({[employee.employeeId, employee.dept].filter(Boolean).join(", ")})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="lw-field lw-order">
-            <label htmlFor="team-order" className="lw-label">Urutan</label>
-            <input id="team-order" type="number" className="lw-input" value={order} onChange={(event) => setOrder(event.target.value)} />
-          </div>
-          <button type="submit" className="lw-btn is-primary lw-add-btn" disabled={adding || available.length === 0}>
-            {adding ? "Menambah..." : "Tambah"}
-          </button>
-        </div>
-        {available.length === 0 ? (
-          <p className="lw-hint">Tambahkan orang baru di menu Pengguna, atau lepas seseorang dari lini lain.</p>
-        ) : null}
-        {addError ? <p className="lw-error" role="alert">{addError}</p> : null}
-      </form>
-
-      <section className="lw-card" aria-labelledby="team-roster-title">
-        <div className="lw-card-head">
-          <h4 id="team-roster-title" className="lw-card-title">Anggota lini {line.code}</h4>
-          <span className="lw-count">{members.length} orang</span>
-        </div>
-        <div role="status" className="lw-note">{status}</div>
-        {members.length === 0 ? (
-          <p className="lw-empty">Belum ada anggota. Tambahkan dari kolom di atas.</p>
-        ) : (
-          <ul className="lw-roster">
-            {members.map((member, index) => (
-              <MemberRow
-                key={`${line.id}-${member.id}`}
-                member={member}
-                index={index}
-                onSave={(input) => save(member, input)}
-                onRelease={() => release(member)}
-              />
+    <div className="lw-team">
+      <form className="lw-add" onSubmit={add} noValidate>
+        <div className="lw-field lw-grow">
+          <label htmlFor="team-pick" className="lw-label">Tambah anggota</label>
+          <select id="team-pick" className="lw-input" value={pick} onChange={(event) => setPick(event.target.value)}>
+            <option value="">{available.length === 0 ? "Tidak ada pengguna yang bebas" : "Pilih dari daftar pengguna"}</option>
+            {available.map((employee) => (
+              <option key={employee.id} value={employee.id}>
+                {employee.name} ({[employee.employeeId, employee.dept].filter(Boolean).join(", ")})
+              </option>
             ))}
-          </ul>
-        )}
-      </section>
+          </select>
+        </div>
+        <div className="lw-field lw-order">
+          <label htmlFor="team-order" className="lw-label">Urutan</label>
+          <input id="team-order" type="number" className="lw-input" value={order} onChange={(event) => setOrder(event.target.value)} />
+        </div>
+        <button type="submit" className="lw-btn is-primary lw-add-btn" disabled={adding || available.length === 0}>
+          {adding ? "..." : "Tambah"}
+        </button>
+      </form>
+      {available.length === 0 ? (
+        <p className="lw-hint">Tambahkan orang baru di menu Pengguna, atau lepas seseorang dari lini lain.</p>
+      ) : null}
+      {addError ? <p className="lw-error" role="alert">{addError}</p> : null}
+
+      <div className="lw-roster-head">
+        <h3>Anggota lini {line.code}</h3>
+        <span className="lw-count">{members.length} orang</span>
+      </div>
+      <p role="status" className="lw-muted lw-status">{status}</p>
+      {members.length === 0 ? (
+        <p className="lw-empty">Belum ada anggota. Tambahkan dari kolom di atas.</p>
+      ) : (
+        <ul className="lw-roster">
+          {members.map((member, index) => (
+            <MemberRow
+              key={`${line.id}-${member.id}`}
+              member={member}
+              index={index}
+              onSave={(input) => save(member, input)}
+              onRelease={() => release(member)}
+            />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

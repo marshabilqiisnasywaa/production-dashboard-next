@@ -402,13 +402,32 @@ def employee_out(employee: Employee, line_label: str | None) -> EmployeeOut:
         role=employee.role,
         dept=employee.dept,
         position=employee.position,
-        supervisor=employee.supervisor,
+        supervisor=employee.supervisor_name,
+        supervisor_id=employee.supervisor_id,
         work_phone=employee.work_phone,
         photo_url=employee.photo_url,
         is_active=employee.is_active,
         must_change_password=employee.must_change_password,
         line_label=line_label,
     )
+
+
+def check_supervisor(db: Session, supervisor_id: int | None, employee_id: int | None = None) -> None:
+    if supervisor_id is None:
+        return
+    if employee_id is not None and supervisor_id == employee_id:
+        raise conflict("Seseorang tidak bisa menjadi supervisor dirinya sendiri.")
+    supervisor = db.get(Employee, supervisor_id)
+    if supervisor is None:
+        raise not_found("Supervisor")
+    if supervisor.role != "supervisor":
+        raise conflict(f"{supervisor.name} bukan supervisor. Ubah role-nya dulu di menu Pengguna.")
+    if not supervisor.is_active:
+        raise conflict(f"{supervisor.name} nonaktif, jadi tidak bisa dipilih sebagai supervisor.")
+
+
+def subordinate_count(db: Session, employee_id: int) -> int:
+    return db.scalar(select(func.count(Employee.id)).where(Employee.supervisor_id == employee_id)) or 0
 
 
 def nik_taken(db: Session, employee_no: str, exclude_id: int | None = None) -> bool:
@@ -430,13 +449,14 @@ def create_employee(body: EmployeeIn, db: Session = Depends(get_db)) -> Employee
     employee_no = body.employee_id.strip()
     if nik_taken(db, employee_no):
         raise conflict(f"NIK '{employee_no}' sudah dipakai karyawan lain.")
+    check_supervisor(db, body.supervisor_id)
     employee = new_employee(
         employee_no,
         body.name.strip(),
         role=body.role,
         dept=body.dept,
         position=body.position,
-        supervisor=body.supervisor,
+        supervisor_id=body.supervisor_id,
         work_phone=body.work_phone,
         photo_url=body.photo_url,
     )
@@ -462,13 +482,19 @@ def update_employee(employee_pk: int, body: EmployeeUpdate, db: Session = Depend
     if "name" in sent and body.name is not None:
         employee.name = body.name.strip()
     if "role" in sent and body.role is not None:
+        if body.role != "supervisor" and employee.role == "supervisor":
+            count = subordinate_count(db, employee.id)
+            if count:
+                raise conflict(f"{employee.name} masih jadi supervisor {count} orang. Pindahkan mereka dulu.")
         employee.role = body.role
     if "dept" in sent:
         employee.dept = body.dept
     if "position" in sent:
         employee.position = body.position
-    if "supervisor" in sent:
-        employee.supervisor = body.supervisor
+    if "supervisor_id" in sent:
+        check_supervisor(db, body.supervisor_id, employee.id)
+        employee.supervisor_id = body.supervisor_id
+        employee.supervisor = None
     if "work_phone" in sent:
         employee.work_phone = body.work_phone
     if "photo_url" in sent:
@@ -498,11 +524,15 @@ def delete_employee(employee_pk: int, db: Session = Depends(get_db)) -> Response
     employee = db.get(Employee, employee_pk)
     if employee is None:
         raise not_found("Pengguna")
-    used = db.scalar(select(BoardMember.id).where(BoardMember.employee_id == employee.id).limit(1)) or db.scalar(
-        select(MpvAward.id).where(MpvAward.employee_id == employee.id).limit(1)
-    )
-    if used:
-        raise conflict(f"{employee.name} punya riwayat lini atau MPV. Nonaktifkan saja, jangan dihapus.")
+    count = subordinate_count(db, employee.id)
+    if count:
+        raise conflict(f"{employee.name} masih jadi supervisor {count} orang. Pindahkan mereka dulu.")
+    active_in = employee_lines(db).get(employee.id)
+    if active_in:
+        raise conflict(f"{employee.name} masih aktif di lini {active_in}. Lepas dulu dari lini itu, baru bisa dihapus.")
+    if db.scalar(select(MpvAward.id).where(MpvAward.employee_id == employee.id).limit(1)):
+        raise conflict(f"{employee.name} pernah jadi MPV, jadi riwayatnya harus tetap ada. Nonaktifkan saja.")
+    db.execute(delete(BoardMember).where(BoardMember.employee_id == employee.id))
     db.delete(employee)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
