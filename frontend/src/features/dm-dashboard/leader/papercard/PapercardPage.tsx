@@ -6,17 +6,16 @@ import { CategoryNav } from "./components/CategoryNav";
 import { CategoryPanel } from "./components/CategoryPanel";
 import { OverallProgress } from "./components/OverallProgress";
 import { PapercardMetaCard } from "./components/PapercardMetaCard";
-import { SubmissionNotice } from "./components/SubmissionNotice";
 import { SubmitBar } from "./components/SubmitBar";
 import { WindowBanner } from "./components/WindowBanner";
 import { useInspectionWindow } from "./hooks/useInspectionWindow";
 import { usePapercardForm } from "./hooks/usePapercardForm";
 import { LEADER_TEMPLATE, PAPERCARD_CONFIG, PAPERCARD_LINES } from "./mockTemplate";
-import type { ChecklistCategory, ChecklistTemplate, Submission } from "./types";
+import type { Answer, ChecklistCategory, ChecklistTemplate, Submission } from "./types";
 import { formatDateId } from "./utils";
 import { LEADER_USER } from "../mockData";
 import { accountApi, papercardApi } from "../../api";
-import type { DmMe } from "../../api";
+import type { DmMe, DmPapercardSubmission } from "../../api";
 
 // Fallback empty template if neither LEADER_TEMPLATE nor database template exists
 const EMPTY_LEADER_TEMPLATE: ChecklistTemplate = {
@@ -139,13 +138,68 @@ export default function PapercardPage() {
 
   const [activeId, setActiveId] = useState<string>("");
   const [submission, setSubmission] = useState<Submission | null>(null);
+  const [dbSubmission, setDbSubmission] = useState<DmPapercardSubmission | null>(null);
+  const [submissionLoading, setSubmissionLoading] = useState(true);
 
-  const readOnly = submission !== null;
+  const todayIso = new Date().toISOString().split("T")[0];
+
+  // Fetch today's submission for Leader's line
+  useEffect(() => {
+    let cancelled = false;
+    setSubmissionLoading(true);
+
+    papercardApi
+      .listSubmissions({
+        lineId: effectiveLineId,
+        department: "PROD",
+        date: todayIso,
+      })
+      .then((res) => {
+        if (cancelled) return;
+        const sub = res && res.length > 0 ? res[0] : null;
+        setDbSubmission(sub);
+
+        if (sub && sub.answers && Array.isArray(sub.answers) && sub.answers.length > 0) {
+          const loadedMap: Record<string, Answer> = {};
+          for (const a of sub.answers) {
+            if (a && a.itemId) {
+              loadedMap[String(a.itemId)] = {
+                status: a.status === "OK" || a.status === "NG" ? a.status : null,
+                posName: a.textValue || "",
+                cause: a.cause || "",
+                solution: a.solution || "",
+              };
+            }
+          }
+          form.loadAnswers(loadedMap);
+        }
+      })
+      .catch((err) => {
+        console.error("Gagal memuat submission hari ini:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setSubmissionLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveLineId, todayIso]);
+
+  const approvalStatus = (dbSubmission?.approvalStatus || "").toLowerCase();
+  const isApproved = approvalStatus === "approved";
+  const isRejected = approvalStatus === "rejected";
+  const isPending = Boolean(dbSubmission) && !isApproved && !isRejected;
+  const isRevisionMode = isRejected;
+  // If approved or waiting review (pending), form is locked read-only.
+  // If rejected by supervisor, readOnly is false (Leader can edit and resubmit).
+  const readOnly = isApproved || isPending;
+
   const active = dynamicTemplate.categories.find((c) => c.id === activeId) ?? dynamicTemplate.categories[0];
   const activeProgress = active ? (form.progress.byCategory[active.id] ?? { done: 0, total: 0 }) : { done: 0, total: 0 };
 
   const handleSubmit = async () => {
-    if (!form.progress.complete || !win.now) return;
+    if (!form.progress.complete || !win.now || readOnly) return;
     const now = win.now;
     const status = win.state === "closed" ? "LATE" : "ON_TIME";
 
@@ -154,10 +208,10 @@ export default function PapercardPage() {
 
     // Submit to backend API if available
     try {
-      await papercardApi.submit({
+      const res = await papercardApi.submit({
         lineId: effectiveLineId,
         department: "PROD",
-        date: new Date().toISOString().slice(0, 10),
+        date: todayIso,
         shift: PAPERCARD_CONFIG.shift,
         answers: Object.entries(form.answers).map(([itemId, val]) => ({
           itemId,
@@ -168,8 +222,10 @@ export default function PapercardPage() {
         })),
         abnormalNotes: null,
       });
-    } catch (e) {
-      console.warn("Papercard API submission warning (offline/mock):", e);
+      setDbSubmission(res);
+    } catch (e: any) {
+      console.warn("Papercard API submission warning:", e);
+      alert(e?.message || "Gagal mengirimkan papercard. Pastikan server aktif.");
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -190,8 +246,6 @@ export default function PapercardPage() {
         </div>
       </div>
 
-      {submission && <SubmissionNotice submission={submission} />}
-
       <PapercardMetaCard
         lines={PAPERCARD_LINES}
         line={lineDisplayName.replace(/^Line\s+/i, "")}
@@ -206,6 +260,18 @@ export default function PapercardPage() {
           start={dynamicTemplate.window?.start || "07:30"}
           end={dynamicTemplate.window?.end || "08:15"}
           remainingMs={win.remainingMs}
+          submissionStatus={
+            isApproved ? "approved" : isRejected ? "rejected" : isPending ? "pending" : null
+          }
+          supervisorName={dbSubmission?.approvedByName || supervisorName}
+          supervisorNotes={dbSubmission?.supervisorNotes}
+          submittedAt={
+            dbSubmission?.submittedAt
+              ? (dbSubmission.submittedAt.includes("T")
+                  ? new Date(dbSubmission.submittedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+                  : dbSubmission.submittedAt) + " WIB"
+              : null
+          }
         />
       </PapercardMetaCard>
 
@@ -306,6 +372,7 @@ export default function PapercardPage() {
             total={form.progress.total}
             complete={form.progress.complete}
             submitted={readOnly}
+            isRevision={isRevisionMode}
             onSubmit={handleSubmit}
           />
         </>

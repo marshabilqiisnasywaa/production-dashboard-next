@@ -53,7 +53,6 @@ export function PapercardMetaCard({
                   fontWeight: 600,
                 }}
               >
-                🔒 Terkunci
               </span>
             </div>
           ) : (

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { IconAlert, IconCheckCircle, IconClipboardCheck } from "@/components/ui/icons";
 import type { DmPapercardSubmission } from "../../api";
@@ -17,6 +18,54 @@ export function LeaderPapercardStatusCard({
   supervisorName = LEADER_USER.supervisor.name,
   loading = false,
 }: LeaderPapercardStatusCardProps) {
+  const isSubmitted = Boolean(submission);
+  const statusUpper = (submission?.approvalStatus || "").toUpperCase();
+  const isApproved = statusUpper === "APPROVED";
+  const isRejected = statusUpper === "REJECTED";
+  const isPending = isSubmitted && (statusUpper === "PENDING" || !statusUpper);
+
+  // Answers & Counts
+  const answers = Array.isArray(submission?.answers) ? submission.answers : [];
+  const totalItems = answers.length;
+  const okItems = answers.filter(
+    (a: any) => a.status === "OK" || (a.status !== "NG" && a.ok !== false && a.ok !== "NG")
+  ).length;
+  const ngCount = totalItems - okItems;
+  const isNG = submission?.status === "NG" || ngCount > 0;
+
+  // Group and count answers by category dynamically from database
+  const categoryStats = useMemo(() => {
+    if (answers.length === 0) return [];
+
+    const map = new Map<string, { total: number; ok: number; ng: number }>();
+
+    for (const ans of answers) {
+      const catName = ans.category || ans.categoryName || "Umum";
+      const isItemNG = ans.status === "NG" || ans.ok === "NG" || ans.ok === false;
+
+      const current = map.get(catName) || { total: 0, ok: 0, ng: 0 };
+      current.total += 1;
+      if (isItemNG) {
+        current.ng += 1;
+      } else {
+        current.ok += 1;
+      }
+      map.set(catName, current);
+    }
+
+    return Array.from(map.entries()).map(([name, stat]) => ({
+      name,
+      ...stat,
+    }));
+  }, [answers]);
+
+  // Format submit time
+  const submitTimeStr = submission?.submittedAt
+    ? submission.submittedAt.includes("T")
+      ? new Date(submission.submittedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
+      : submission.submittedAt + " WIB"
+    : "-";
+
   if (loading) {
     return (
       <div className="dms-card" style={{ minHeight: "135px", justifyContent: "center", alignItems: "center" }}>
@@ -24,28 +73,6 @@ export function LeaderPapercardStatusCard({
       </div>
     );
   }
-
-  const isSubmitted = Boolean(submission);
-  const isApproved = submission?.approvalStatus === "APPROVED";
-  const isPending = !submission || submission.approvalStatus === "PENDING";
-  const isRejected = submission?.approvalStatus === "REJECTED";
-  const isNG = submission?.status === "NG";
-
-  // Format submit time
-  const submitTimeStr = submission?.submittedAt
-    ? submission.submittedAt.includes("T")
-      ? new Date(submission.submittedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
-      : submission.submittedAt + " WIB"
-    : "07:42 WIB";
-
-  // Item counts
-  const totalItems = submission?.answers && Array.isArray(submission.answers) ? submission.answers.length : 29;
-  const okItems =
-    submission?.answers && Array.isArray(submission.answers)
-      ? submission.answers.filter((a: any) => a.ok !== false && a.ok !== 0 && a.ok !== "NG").length
-      : isSubmitted
-      ? totalItems
-      : 0;
 
   return (
     <div className="dms-card">
@@ -61,10 +88,23 @@ export function LeaderPapercardStatusCard({
         </div>
         <Link
           href={LEADER_ROUTES.papercard}
-          className="dms-btn-compact dms-btn-compact--secondary"
-          style={{ padding: "4px 10px", fontSize: "11.5px" }}
+          className={`dms-btn-compact ${isRejected ? "dms-btn-compact--danger" : "dms-btn-compact--secondary"}`}
+          style={{
+            padding: "4px 10px",
+            fontSize: "11.5px",
+            background: isRejected ? "#fee2e2" : undefined,
+            color: isRejected ? "#b91c1c" : undefined,
+            borderColor: isRejected ? "#fca5a5" : undefined,
+            fontWeight: isRejected ? 700 : undefined,
+          }}
         >
-          {isSubmitted ? "Buka Checklist" : "Isi Sekarang"}
+          {isRejected
+            ? "Perbaiki Checklist"
+            : isApproved
+            ? "Lihat Checklist (Terkunci)"
+            : isSubmitted
+            ? "Lihat Pengajuan"
+            : "Isi Sekarang"}
         </Link>
       </div>
 
@@ -74,7 +114,7 @@ export function LeaderPapercardStatusCard({
             <div>
               <span style={{ fontSize: "11px", color: "#64748b", display: "block" }}>Status Pengajuan Hari Ini</span>
               <strong style={{ fontSize: "13.5px", color: "#0f172a", marginTop: "1px", display: "block" }}>
-                {okItems} / {totalItems} Item OK {isNG ? "· 1 Temuan NG" : "· Kondisi Siap"}
+                {okItems} / {totalItems} Item OK {isNG ? `· ${ngCount > 0 ? `${ngCount} Temuan NG` : "1 Temuan NG"}` : "· Kondisi Siap"}
               </strong>
             </div>
 
@@ -101,28 +141,49 @@ export function LeaderPapercardStatusCard({
             )}
           </div>
 
-          <div className="dms-categories-bar">
-            <div className="dms-cat-item">
-              <span className="dms-cat-name">Manusia</span>
-              <span className="dms-cat-val" style={{ color: "#059669" }}>11/11 OK</span>
+          {/* Supervisor Revision Note if rejected */}
+          {isRejected && submission?.supervisorNotes && (
+            <div
+              style={{
+                padding: "6px 10px",
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                borderRadius: "6px",
+                marginBottom: "8px",
+                fontSize: "11px",
+                color: "#991b1b",
+                lineHeight: "1.35",
+              }}
+            >
+              Catatan SPV: <strong>"{submission.supervisorNotes}"</strong>
             </div>
-            <div className="dms-cat-item">
-              <span className="dms-cat-name">Mesin</span>
-              <span className="dms-cat-val" style={{ color: "#059669" }}>5/5 OK</span>
+          )}
+
+          {categoryStats.length > 0 && (
+            <div
+              className="dms-categories-bar"
+              style={{
+                gridTemplateColumns: `repeat(${Math.min(Math.max(categoryStats.length, 1), 6)}, 1fr)`,
+              }}
+            >
+              {categoryStats.map((cat) => {
+                const isAllOk = cat.ng === 0;
+                return (
+                  <div key={cat.name} className="dms-cat-item">
+                    <span className="dms-cat-name" title={cat.name}>
+                      {cat.name}
+                    </span>
+                    <span
+                      className="dms-cat-val"
+                      style={{ color: isAllOk ? "#059669" : "#dc2626" }}
+                    >
+                      {cat.ok}/{cat.total} OK {cat.ng > 0 && `(${cat.ng} NG)`}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-            <div className="dms-cat-item">
-              <span className="dms-cat-name">Material</span>
-              <span className="dms-cat-val" style={{ color: "#059669" }}>6/6 OK</span>
-            </div>
-            <div className="dms-cat-item">
-              <span className="dms-cat-name">Metode</span>
-              <span className="dms-cat-val" style={{ color: "#059669" }}>4/4 OK</span>
-            </div>
-            <div className="dms-cat-item">
-              <span className="dms-cat-name">5S &amp; Lain</span>
-              <span className="dms-cat-val" style={{ color: "#059669" }}>3/3 OK</span>
-            </div>
-          </div>
+          )}
 
           <div className="dms-spv-note">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -11,7 +11,7 @@ export default function MemberShell({ children }: { children: ReactNode }) {
       <MemberSidebar />
       <div className="dml-main">
         <MemberHeader />
-        <main className="dml-content" style={{ padding: "24px 28px" }}>
+        <main className="dml-content member-content">
           {children}
         </main>
       </div>

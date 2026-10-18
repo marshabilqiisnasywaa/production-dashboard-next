@@ -367,7 +367,7 @@
 
 .dms-categories-bar {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
   gap: 6px;
   margin-bottom: 8px;
 }
@@ -724,3 +724,220 @@
   color: #be123c;
   border-color: #fecdd3;
 }
+
+/* ---------- Member Dashboard Dedicated & High-Density Responsive Styles ---------- */
+.member-dash {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.member-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
+}
+
+.member-tri-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.member-card {
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.member-team {
+  padding: 18px 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
+}
+
+.member-team__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+}
+
+.member-team__card {
+  padding: 12px 14px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.member-team__avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 11px;
+}
+
+.member-team__name {
+  font-size: 13px;
+}
+
+.member-team__pos {
+  font-size: 10.5px;
+}
+
+.member-team__footer {
+  font-size: 11px;
+  padding-top: 6px;
+}
+
+.member-mpv-banner {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #fefce8 0%, #fffbeb 100%);
+  border: 1px solid #fef08a;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.member-mpv-title {
+  font-size: 12.5px;
+}
+
+.member-mpv-sub {
+  font-size: 11.5px;
+}
+
+.member-mpv-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
+/* Mobile Optimizations (< 768px) */
+@media (max-width: 767px) {
+  .member-dash {
+    gap: 8px;
+  }
+
+  .member-hero {
+    padding: 10px 12px;
+    gap: 8px;
+    border-radius: 10px;
+  }
+  .member-hero__title {
+    font-size: 15px !important;
+  }
+  .member-hero__badges {
+    gap: 4px !important;
+    margin-bottom: 2px !important;
+  }
+  .member-hero__badge {
+    font-size: 10px !important;
+    padding: 1px 6px !important;
+  }
+  .member-hero__location {
+    font-size: 11px !important;
+  }
+  .member-hero__spv {
+    font-size: 10.5px !important;
+    padding: 1px 6px !important;
+  }
+  .member-hero__presensi {
+    padding: 3px 8px !important;
+    font-size: 11px !important;
+    border-radius: 6px !important;
+  }
+
+  .member-tri-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .member-card {
+    padding: 10px 12px;
+    gap: 8px;
+    border-radius: 10px;
+  }
+  .member-card strong {
+    font-size: 13px;
+  }
+
+  .member-team {
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+  .member-team__head {
+    margin-bottom: 8px !important;
+  }
+  .member-team__head h2 {
+    font-size: 13.5px !important;
+  }
+  .member-team__head span {
+    font-size: 11px !important;
+  }
+
+  /* 2-column compact grid on mobile */
+  .member-team__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .member-team__card {
+    padding: 8px 10px !important;
+    gap: 6px !important;
+    border-radius: 8px !important;
+  }
+  .member-team__avatar {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 10px !important;
+  }
+  .member-team__name {
+    font-size: 11.5px !important;
+  }
+  .member-team__pos {
+    font-size: 9.5px !important;
+  }
+  .member-team__footer {
+    font-size: 9.5px !important;
+    padding-top: 4px !important;
+  }
+
+  .member-mpv-banner {
+    margin-top: 8px !important;
+    padding: 6px 10px !important;
+    gap: 6px !important;
+    border-radius: 8px !important;
+  }
+  .member-mpv-title {
+    font-size: 11px !important;
+  }
+  .member-mpv-sub {
+    font-size: 10px !important;
+  }
+  .member-mpv-badge {
+    font-size: 9.5px !important;
+    padding: 1px 6px !important;
+  }
+}
+

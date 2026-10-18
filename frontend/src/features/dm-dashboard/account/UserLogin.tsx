@@ -115,10 +115,10 @@ export default function UserLogin() {
           </strong>
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
             {[
-              { label: "👑 Leader", nik: "S009898", hint: "Role: Leader" },
-              { label: "👤 Member", nik: "009878", hint: "Role: Member" },
-              { label: "🛡️ Supervisor", nik: "S223433", hint: "Role: Supervisor" },
-              { label: "⚙️ Admin", nik: "admin", hint: "Role: Admin" },
+              { label: " Leader", nik: "S009898", hint: "Role: Leader" },
+              { label: " Member", nik: "009878", hint: "Role: Member" },
+              { label: " Supervisor", nik: "S223433", hint: "Role: Supervisor" },
+              { label: " Admin", nik: "admin", hint: "Role: Admin" },
             ].map((acc) => (
               <button
                 key={acc.nik}

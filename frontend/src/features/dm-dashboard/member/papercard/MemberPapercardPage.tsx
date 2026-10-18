@@ -9,7 +9,6 @@ import { CategoryNav } from "../../leader/papercard/components/CategoryNav";
 import { CategoryPanel } from "../../leader/papercard/components/CategoryPanel";
 import { OverallProgress } from "../../leader/papercard/components/OverallProgress";
 import { PapercardMetaCard } from "../../leader/papercard/components/PapercardMetaCard";
-import { SubmissionNotice } from "../../leader/papercard/components/SubmissionNotice";
 import { SubmitBar } from "../../leader/papercard/components/SubmitBar";
 import { WindowBanner } from "../../leader/papercard/components/WindowBanner";
 import { useInspectionWindow } from "../../leader/papercard/hooks/useInspectionWindow";
@@ -243,16 +242,21 @@ export default function MemberPapercardPage({
     }
   }, [realSubmission]);
 
-  const readOnly = submission !== null && !isEditing;
+  const approvalStatus = (realSubmission?.approvalStatus || "").toLowerCase();
+  const isApproved = approvalStatus === "approved";
+  const isRejected = approvalStatus === "rejected";
+  const isPending = Boolean(realSubmission) && !isApproved && !isRejected;
+  const isRevisionMode = isRejected;
+  const readOnly = isApproved || isPending;
+
   const active =
     dynamicTemplate.categories.find((c) => c.id === activeId) ?? dynamicTemplate.categories[0];
   const activeProgress = active
     ? (form.progress.byCategory[active.id] ?? { done: 0, total: 0 })
     : { done: 0, total: 0 };
 
-
   const handleSubmit = async () => {
-    if (!form.progress.complete || !win.now) return;
+    if (!form.progress.complete || !win.now || readOnly) return;
     const now = win.now;
     const status = win.state === "closed" ? "LATE" : "ON_TIME";
 
@@ -275,8 +279,9 @@ export default function MemberPapercardPage({
         abnormalNotes: null,
       });
       loadDailySubmissions();
-    } catch (e) {
-      console.warn("Papercard API submission warning (offline/mock):", e);
+    } catch (e: any) {
+      console.warn("Papercard API submission warning:", e);
+      alert(e?.message || "Gagal mengirimkan papercard.");
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -284,15 +289,12 @@ export default function MemberPapercardPage({
 
   return (
     <div className="dml-pc">
-      {/* 1. Header Navigation & Supervisor Pill */}
-      
-
       <div className="dml-page-head" style={{ marginBottom: 12 }}>
         <div>
-          <h1 style={{ fontSize: 18, margin: "0 0 4px" }}>
+          <h1 className="dml-pc__title" style={{ fontSize: 18, margin: "0 0 4px" }}>
             Papercard Kesiapan Anggota Lini
           </h1>
-          <p style={{ fontSize: 12.5, lineHeight: 1.5, margin: 0 }}>
+          <p className="dml-pc__intro" style={{ fontSize: 12.5, lineHeight: 1.5, margin: 0 }}>
             Checklist kesiapan kerja sebelum DM Meeting khusus departemen{" "}
             <strong>{activeProfile.deptLabel} ({selectedDept})</strong> pada{" "}
             <strong>{activeProfile.lineName}</strong>. Hasil pemeriksaan otomatis diteruskan ke
@@ -301,36 +303,7 @@ export default function MemberPapercardPage({
         </div>
       </div>
 
-      {/* 3. Restricted Assignment Information Bar (Read-only, Locked) */}
-      
-      {/* 4. Submission & Approval Notice with Edit Toggle */}
-      {submission && (
-        <div style={{ position: "relative" }}>
-          <SubmissionNotice submission={submission} />
-          <button
-            type="button"
-            onClick={() => setIsEditing((v) => !v)}
-            style={{
-              position: "absolute",
-              right: "16px",
-              top: "16px",
-              background: "#ffffff",
-              border: "1px solid #cbd5e1",
-              borderRadius: "8px",
-              padding: "4px 12px",
-              fontSize: "12px",
-              fontWeight: 600,
-              color: "#0f766e",
-              cursor: "pointer",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-            }}
-          >
-            {isEditing ? "Kunci Mode Tinjau" : "Ubah Jawaban"}
-          </button>
-        </div>
-      )}
-
-      {/* 5. Meta Card with Line Locked and Countdown Banner */}
+      {/* Meta Card with Countdown or Approval Banner */}
       <PapercardMetaCard
         lines={PAPERCARD_LINES}
         line={activeProfile.lineName.replace(/^Line\s+/i, "")}
@@ -346,6 +319,18 @@ export default function MemberPapercardPage({
           start={dynamicTemplate.window?.start || "07:30"}
           end={dynamicTemplate.window?.end || "08:15"}
           remainingMs={win.remainingMs}
+          submissionStatus={
+            isApproved ? "approved" : isRejected ? "rejected" : isPending ? "pending" : null
+          }
+          supervisorName={realSubmission?.approvedByName || activeProfile.supervisor.name}
+          supervisorNotes={realSubmission?.supervisorNotes}
+          submittedAt={
+            realSubmission?.submittedAt
+              ? (realSubmission.submittedAt.includes("T")
+                  ? new Date(realSubmission.submittedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+                  : realSubmission.submittedAt) + " WIB"
+              : null
+          }
         />
       </PapercardMetaCard>
 
@@ -449,6 +434,7 @@ export default function MemberPapercardPage({
             total={form.progress.total}
             complete={form.progress.complete}
             submitted={readOnly}
+            isRevision={isRevisionMode}
             onSubmit={handleSubmit}
           />
         </>

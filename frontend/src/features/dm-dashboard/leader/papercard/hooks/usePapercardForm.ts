@@ -58,5 +58,9 @@ export function usePapercardForm(categories: ChecklistCategory[]) {
     return { byCategory, done, total, complete: total > 0 && done === total };
   }, [answers, categories]);
 
-  return { getAnswer, update, markAllOk, progress, answers };
+  const loadAnswers = useCallback((loaded: Record<string, Answer>) => {
+    setAnswers(loaded);
+  }, []);
+
+  return { getAnswer, update, markAllOk, progress, answers, setAnswers, loadAnswers };
 }

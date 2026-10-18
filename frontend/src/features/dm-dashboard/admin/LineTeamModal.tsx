@@ -196,7 +196,7 @@ export default function LineTeamModal({
               <div>
                 <strong>Standar Tim Inti: Tepat 4 Personil</strong>
                 <div style={{ fontSize: "12px", color: "#64748b" }}>
-                  Slot #1 wajib 👑 <strong>Leader</strong> + 3 Personil Departemen (PROD, ME, PE, QC).
+                  Slot #1 wajib  <strong>Leader</strong> + 3 Personil Departemen (PROD, ME, PE, QC).
                 </div>
               </div>
             </div>
@@ -234,7 +234,7 @@ export default function LineTeamModal({
                       <div>
                         <div className="ltm-slot-head">
                           <span className={`ltm-slot-badge ${isLeader ? "is-leader-badge" : "is-member-badge"}`}>
-                            {isLeader ? "👑 SLOT #1 LEADER" : `SLOT #${member.sortOrder ?? idx + 1}`}
+                            {isLeader ? " SLOT #1 LEADER" : `SLOT #${member.sortOrder ?? idx + 1}`}
                           </span>
                           <span className={`ltm-slot-dept dept-${dept}`}>
                             {dept}

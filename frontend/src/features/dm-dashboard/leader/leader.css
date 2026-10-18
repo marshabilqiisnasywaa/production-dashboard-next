@@ -569,17 +569,73 @@
 }
 @media (max-width: 767px) {
   .dml-content {
-    padding: 16px 16px 88px; /* room for the bottom tab bar */
+    padding: 12px 12px 84px; /* room for the bottom tab bar */
+  }
+  .dml-content.member-content {
+    padding: 10px 10px 84px;
   }
   .dml-header {
-    padding: 0 16px;
+    height: 50px;
+    padding: 0 10px;
+    gap: 8px;
+  }
+  .dml-header__time strong {
+    font-size: 13.5px;
+    margin-right: 4px;
+  }
+  .dml-header__date {
+    display: none;
+  }
+  .dml-header__time small {
+    font-size: 10.5px;
+  }
+  .dml-header__status {
+    display: none;
+  }
+  .dml-header__right {
+    gap: 6px;
   }
   .dml-header__right .dml-role-badge,
-  .dml-user strong {
+  .dml-header__role {
+    display: none;
+  }
+  .dml-user {
+    padding-left: 6px;
+    gap: 6px;
+  }
+  .dml-user strong,
+  .dml-user__text {
+    display: none !important;
+  }
+  .dml-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+  .dml-icon-btn {
+    width: 30px;
+    height: 30px;
+  }
+  .dml-logout-btn {
+    padding: 5px 8px !important;
+    font-size: 11px !important;
+    gap: 0 !important;
+    margin-left: 2px !important;
+    border-radius: 6px !important;
+  }
+  .dml-logout-text {
     display: none;
   }
   .dml-page-head {
     flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .dml-page-head h1 {
+    font-size: 18px;
+  }
+  .dml-page-head p {
+    font-size: 12px;
   }
   .dml-kpis,
   .dml-aside {
@@ -593,6 +649,7 @@
   }
   .ui-card__header {
     flex-wrap: wrap;
+    padding: 10px 12px;
   }
   .dml-section__chart {
     padding: 0 12px 12px;

@@ -508,6 +508,11 @@ def submit_papercard(
     existing = db.scalars(stmt).first()
 
     if existing:
+        if existing.approval_status == "approved":
+            raise HTTPException(
+                status_code=400,
+                detail="Papercard hari ini sudah disetujui oleh Supervisor dan tidak dapat diubah lagi.",
+            )
         existing.answers = payload.answers
         existing.abnormal_notes = payload.abnormal_notes
         existing.status = "submitted"

@@ -168,7 +168,7 @@ export default function DmBoardIndex() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                <span style={{ fontSize: "18px" }}>👑</span>
+                <span style={{ fontSize: "18px" }}></span>
                 <strong style={{ fontSize: "15px", color: "#0f172a" }}>Dashboard Leader</strong>
               </div>
               <p style={{ margin: 0, fontSize: "12.5px", color: "#475569", lineHeight: "1.4" }}>

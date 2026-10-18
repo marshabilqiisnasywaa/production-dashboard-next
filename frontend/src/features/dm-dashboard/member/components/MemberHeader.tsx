@@ -53,19 +53,22 @@ export function MemberHeader() {
       <div className="dml-header__time">
         <div>
           <strong>{time}</strong>
-          <span>{date}</span>
+          <span className="dml-header__date">{date}</span>
         </div>
-        <small>Shift 1 · {lineName} · Operasional Normal</small>
+        <small>
+          {lineName}
+          <span className="dml-header__status"></span>
+        </small>
       </div>
 
       <div className="dml-header__right">
-        <button type="button" className="dml-icon-btn" aria-label="Notifikasi">
+        {/* <button type="button" className="dml-icon-btn" aria-label="Notifikasi">
           <IconBell />
           <span className="dml-icon-btn__dot" />
-        </button>
+        </button> */}
 
         <span
-          className="dml-role-badge"
+          className="dml-role-badge dml-header__role"
           style={{
             background: "#f0fdfa",
             color: "#0f766e",
@@ -73,7 +76,7 @@ export function MemberHeader() {
             fontWeight: 700,
           }}
         >
-          MEMBER · {dept}
+          Departemen · {dept}
         </span>
 
         <div className="dml-user">
@@ -87,7 +90,7 @@ export function MemberHeader() {
           >
             {initials}
           </span>
-          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
+          <div className="dml-user__text" style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
             <strong style={{ fontSize: "13.5px", color: "#0f172a" }}>{displayName}</strong>
             <span style={{ fontSize: "11px", color: "#64748b" }}>
               {user?.username ? `NIK: ${user.username}` : "Operator Lini"}
@@ -99,6 +102,7 @@ export function MemberHeader() {
           type="button"
           onClick={handleLogout}
           title="Keluar dari akun Member"
+          className="dml-logout-btn"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -111,12 +115,12 @@ export function MemberHeader() {
             fontSize: "12px",
             fontWeight: 600,
             cursor: "pointer",
-            marginLeft: "6px",
+            marginLeft: "4px",
             transition: "all 0.15s ease",
           }}
         >
           <IconLogout size={14} />
-          <span>Keluar</span>
+          <span className="dml-logout-text">Keluar</span>
         </button>
       </div>
     </header>
