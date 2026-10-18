@@ -37,8 +37,8 @@ export function MemberSidebar() {
     <Sidebar
       brand={
         <>
-          <span className="dml-logo">
-            <IconGauge size={22} />
+          <span>
+            <img src="/assets/dm/oppo-green-logo.svg" alt="" width={50} height={38} />
           </span>
           <strong>DM Digital</strong>
         </>

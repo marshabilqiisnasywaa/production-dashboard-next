@@ -33,16 +33,16 @@ export function SupervisorSidebar({
     <aside className="spv-sidebar" aria-label="Sidebar Supervisor">
       <div className="spv-sidebar__header">
         <div className="spv-sidebar__brand">
-          <span className="spv-sidebar__logo">
-            <IconShield size={20} />
-          </span>
+<div>
+          <img src="/assets/dm/oppo-green-logo.svg" alt="" width={50} height={38} />
+        </div>
           <div className="spv-sidebar__brand-text">
-            <strong>DM Digital</strong>
+            {/* <strong>DM Digital</strong> */}
             <span>Dashboard Supervisor</span>
           </div>
         </div>
 
-        <div className="spv-sidebar__user">
+        {/* <div className="spv-sidebar__user">
           <div className="spv-sidebar__user-avatar">{avatarInitials}</div>
           <div className="spv-sidebar__user-info">
             <span className="spv-sidebar__user-name" title={currentSupervisor.name}>
@@ -52,7 +52,7 @@ export function SupervisorSidebar({
               NIK: {currentSupervisor.employeeNo} · {currentSupervisor.dept}
             </span>
           </div>
-        </div>
+        </div> */}
       </div>
 
       <nav className="spv-sidebar__nav">

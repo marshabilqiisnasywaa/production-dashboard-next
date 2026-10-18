@@ -70,6 +70,10 @@ export default function MemberDashboardPage({ initialTab = "dashboard" }: Member
     try {
       const me = await accountApi.me();
       if (me) {
+        if (me.mustChangePassword) {
+          window.location.href = "/dm-dashboard/akun";
+          return;
+        }
         setCurrentUser(me);
         if (me.dept) {
           const rawDept = me.dept.toUpperCase();

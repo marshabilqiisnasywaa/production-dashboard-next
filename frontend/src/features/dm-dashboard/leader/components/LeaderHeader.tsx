@@ -53,15 +53,9 @@ export function LeaderHeader() {
           <strong>{time}</strong>
           <span>{date}</span>
         </div>
-        {/* TODO: shift & operational status from API */}
-        <small>Shift 1 · Operasional normal</small>
       </div>
 
       <div className="dml-header__right">
-        <button type="button" className="dml-icon-btn" aria-label="Notifikasi (1 belum dibaca)">
-          <IconBell />
-          <span className="dml-icon-btn__dot" />
-        </button>
         <span className="dml-role-badge">LEADER</span>
         <div className="dml-user">
           <span className="dml-avatar">{initials}</span>

@@ -37,7 +37,6 @@ export function HeroLeaderBanner({
               </svg>
               {lineName} ({lineCode}) · {workshopName}
             </span>
-            <span className="dms-pill dms-pill--shift">Shift 1 (07:00 - 15:30)</span>
             <span className="dms-pill dms-pill--supervisor" title="Supervisor yang bertindak sebagai Approver">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />

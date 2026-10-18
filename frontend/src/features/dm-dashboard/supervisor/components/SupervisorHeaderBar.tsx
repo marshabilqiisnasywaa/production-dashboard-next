@@ -23,18 +23,7 @@ export function SupervisorHeaderBar({
   approvedCount = 0,
   totalCount = 0,
 }: SupervisorHeaderBarProps) {
-  const getTabTitle = (tab: ActiveTab) => {
-    switch (tab) {
-      case "approvals":
-        return "Persetujuan Checklist";
-      case "lines":
-        return "Status Lini Produksi";
-      case "log":
-        return "Riwayat Checklist Harian";
-      default:
-        return "Dashboard Supervisor";
-    }
-  };
+  const getTabTitle = () => "Halo, " + currentSupervisor?.name;
 
   const formattedDate = new Date().toLocaleDateString("id-ID", {
     weekday: "long",
@@ -49,11 +38,9 @@ export function SupervisorHeaderBar({
         <div className="spv-compact-header__meta">
           <span className="spv-chip spv-chip--supervisor">Supervisor</span>
           <span className="spv-chip spv-chip--dept">Dept {currentSupervisor.dept}</span>
-          <span className="spv-compact-header__date">📅 {formattedDate}</span>
+          <span className="spv-compact-header__date">  {formattedDate}</span>
         </div>
-        <h1 className="spv-compact-header__title">
-          {getTabTitle(activeTab)}
-        </h1>
+      <h2 className="dm-admin-greeting-title">{getTabTitle()}</h2>
       </div>
 
       <div className="spv-compact-header__right">

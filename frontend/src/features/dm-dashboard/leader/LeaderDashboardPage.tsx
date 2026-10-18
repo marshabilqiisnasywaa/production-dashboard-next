@@ -55,6 +55,10 @@ export default function LeaderDashboardPage() {
         if (!isMounted) return;
 
         if (me) {
+          if (me.mustChangePassword) {
+            window.location.href = "/dm-dashboard/akun";
+            return;
+          }
           setCurrentUser(me);
           const lineId = me.line?.id || 1;
 

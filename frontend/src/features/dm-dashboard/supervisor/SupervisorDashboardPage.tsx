@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import "../leader/dmSoft.css";
 import "./supervisor.css";
 import { IconAlert, IconCheckCircle, IconClose } from "@/components/ui/icons";
-import { papercardApi, setToken } from "../api";
+import { accountApi, papercardApi, setToken } from "../api";
 import type { DmSupervisorLine, DmSupervisorOverview, DmSupervisorSubordinate } from "../api";
 import type { ActiveTab, ToastMessage, ViewMode } from "./types";
 import {
@@ -41,6 +41,18 @@ export default function SupervisorDashboardPage() {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 3500);
   };
+
+  // Check auth & mustChangePassword
+  useEffect(() => {
+    accountApi
+      .me()
+      .then((me) => {
+        if (me?.mustChangePassword) {
+          window.location.href = "/dm-dashboard/akun";
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Load 100% real database overview
   const loadOverview = useCallback(async () => {

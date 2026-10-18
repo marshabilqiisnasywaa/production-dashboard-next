@@ -47,9 +47,9 @@ export function TeamShopfloorMonitor({
     <div>
       <div className="dms-section-head">
         <div>
-          <h2 className="dms-section-title">Status Papercard Rekan Tim ({lineName})</h2>
+          <h2 className="dms-section-title">Status Papercard DM TRIANGLE TEAM ({lineName})</h2>
           <p className="dms-section-desc">
-            Pantau kesiapan Papercard 4 pilar (PROD, ME, PE, QC) sebelum lini beroperasi normal.
+            Pantau status tim dan Papercard di sini.
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>

@@ -97,15 +97,11 @@ export default function DmAdminSidebar({
     <aside className="dm-admin-sidebar">
       {/* Brand / Logo */}
       <div className="dm-admin-sidebar-brand">
-        <div className="dm-admin-brand-icon-box" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2v20" />
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-          </svg>
+        <div>
+          <img src="/assets/dm/oppo-green-logo.svg" alt="" width={50} height={38} />
         </div>
         <div>
-          <h1 className="dm-admin-brand-title">OPPO DM Admin</h1>
-          <span className="dm-admin-brand-subtitle">Digital Management</span>
+          <h2 className="dm-admin-brand-title">Admin Page</h2>
         </div>
       </div>
 
@@ -186,54 +182,14 @@ export default function DmAdminSidebar({
 
         <Link href="/dm-dashboard/member" className="dm-admin-nav-btn">
           <span className="dm-admin-nav-icon"><ClipboardCheckIcon /></span>
-          <span>Portal Member (PROD/ME/PE/QC)</span>
+          <span>Portal Member</span>
         </Link>
 
         <Link href="/dm-dashboard/supervisor" className="dm-admin-nav-btn">
           <span className="dm-admin-nav-icon"><UsersGroupIcon /></span>
-          <span>Hub Supervisor</span>
+          <span>Supervisor</span>
         </Link>
 
-        <div className="dm-admin-nav-heading">NAVIGASI</div>
-
-        <Link href="/dm-dashboard" className="dm-admin-nav-btn">
-          <span className="dm-admin-nav-icon"><ArrowLeftIcon /></span>
-          <span>Daftar Dashboard DM</span>
-        </Link>
-
-        <Link href="/dashboard" className="dm-admin-nav-btn">
-          <span className="dm-admin-nav-icon"><GridIcon /></span>
-          <span>Production Dashboard</span>
-        </Link>
-
-        <div className="dm-admin-nav-heading">AKUN</div>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (onLogout) onLogout();
-            else {
-              setToken(null);
-              window.location.href = "/dm-dashboard/masuk";
-            }
-          }}
-          className="dm-admin-nav-btn"
-          style={{
-            color: "#fb7185",
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            cursor: "pointer",
-            border: 0,
-            background: "transparent",
-            textAlign: "left",
-          }}
-          title="Keluar dari sesi Admin"
-        >
-          <span className="dm-admin-nav-icon"><IconLogout size={16} /></span>
-          <span>Keluar (Logout)</span>
-        </button>
       </nav>
 
     </aside>
