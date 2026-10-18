@@ -45,3 +45,39 @@ export const PRESET_TITLES: Record<string, string> = {
   "qc-3": "Sampel visual Golden Sample tersedia di pos inspeksi",
   "qc-4": "First Article Inspection (FAI) disetujui untuk mulai running",
 };
+
+// Category mapping for checklist items per department
+export const ITEM_CATEGORY_MAP: Record<string, string> = {
+  // PROD
+  "prd-1": "Manusia & POS Kerja",
+  "prd-2": "Manusia & POS Kerja",
+  "prd-3": "Manusia & POS Kerja",
+  "prd-4": "Manusia & POS Kerja",
+  "prd-5": "Manusia & POS Kerja",
+  "prd-6": "Mesin & Peralatan Lini",
+  "prd-7": "Mesin & Peralatan Lini",
+  "prd-8": "Mesin & Peralatan Lini",
+  "prd-9": "Material & 5S",
+  "prd-10": "Material & 5S",
+  "prd-11": "Material & 5S",
+  // ME
+  "me-1": "Pemeriksaan Mesin & Temperatur",
+  "me-2": "Pemeriksaan Mesin & Temperatur",
+  "me-3": "Pemeriksaan Mesin & Temperatur",
+  "me-4": "Pemeriksaan Mesin & Temperatur",
+  "me-5": "Pemeriksaan Mesin & Temperatur",
+  "me-6": "Pemeriksaan Mesin & Temperatur",
+  // PE
+  "pe-1": "Jig, Fixture & Instruksi Kerja",
+  "pe-2": "Jig, Fixture & Instruksi Kerja",
+  "pe-3": "Jig, Fixture & Instruksi Kerja",
+  "pe-4": "Jig, Fixture & Instruksi Kerja",
+  "pe-5": "Jig, Fixture & Instruksi Kerja",
+  // QC
+  "qc-1": "Alat Ukur & Master Sample Limit",
+  "qc-2": "Alat Ukur & Master Sample Limit",
+  "qc-3": "Alat Ukur & Master Sample Limit",
+  "qc-4": "Alat Ukur & Master Sample Limit",
+  "qc-5": "Alat Ukur & Master Sample Limit",
+};
+

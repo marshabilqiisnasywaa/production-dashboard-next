@@ -6,3 +6,4 @@ export * from "./SupervisorReviewModal";
 export * from "./tabs/SupervisorApprovalsTab";
 export * from "./tabs/SupervisorLinesTab";
 export * from "./tabs/SupervisorProfileTab";
+export * from "./tabs/SupervisorHistoryTab";

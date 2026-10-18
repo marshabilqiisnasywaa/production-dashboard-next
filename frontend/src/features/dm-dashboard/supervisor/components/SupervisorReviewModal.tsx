@@ -1,8 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import { IconCheck, IconCheckCircle, IconClose } from "@/components/ui/icons";
 import type { DmSupervisorSubordinate } from "../../api";
-import { PRESET_TITLES } from "../types";
+import { ITEM_CATEGORY_MAP, PRESET_TITLES } from "../types";
 
 interface SupervisorReviewModalProps {
   reviewTarget: DmSupervisorSubordinate | null;
@@ -27,6 +28,36 @@ export function SupervisorReviewModal({
   const okAnswers = reviewTarget.submission?.answers?.filter((a: any) => a.status === "OK") || [];
   const ngAnswers = reviewTarget.submission?.answers?.filter((a: any) => a.status === "NG") || [];
 
+  const groupedCategories = useMemo(() => {
+    if (!reviewTarget?.submission?.answers) return [];
+
+    const map = new Map<string, { answer: any; originalIndex: number }[]>();
+
+    reviewTarget.submission.answers.forEach((ans: any, idx: number) => {
+      const catName =
+        ans.categoryName ||
+        ans.category ||
+        ITEM_CATEGORY_MAP[ans.itemId] ||
+        "Pemeriksaan Umum";
+
+      if (!map.has(catName)) {
+        map.set(catName, []);
+      }
+      map.get(catName)!.push({ answer: ans, originalIndex: idx });
+    });
+
+    return Array.from(map.entries()).map(([categoryName, items]) => {
+      const hasNg = items.some((it) => it.answer.status === "NG");
+      const okCount = items.filter((it) => it.answer.status === "OK").length;
+      return {
+        categoryName,
+        items,
+        hasNg,
+        okCount,
+      };
+    });
+  }, [reviewTarget]);
+
   return (
     <div
       className="spv-modal-overlay"
@@ -39,10 +70,10 @@ export function SupervisorReviewModal({
         className="spv-modal-card"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header */}
+        {/* Compact Modal Header */}
         <div className="spv-modal-header">
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+          <div className="spv-modal-header-top">
+            <div className="spv-modal-chips-row">
               <span className={`spv-chip spv-chip--dept-${reviewTarget.dept.toLowerCase()}`}>
                 {reviewTarget.dept}
               </span>
@@ -52,111 +83,119 @@ export function SupervisorReviewModal({
               {reviewTarget.lineName && (
                 <span className="spv-chip spv-chip--line">{reviewTarget.lineName}</span>
               )}
+              {reviewTarget.submission?.shift && (
+                <span className="spv-chip spv-chip--neutral">{reviewTarget.submission.shift}</span>
+              )}
             </div>
-            <h3 className="spv-modal-title">
-              Tinjauan Papercard — {reviewTarget.name}
-            </h3>
-            <span className="spv-modal-subtitle">
-              NIK: <strong>{reviewTarget.employeeNo}</strong> · Posisi: <strong>{reviewTarget.position}</strong>
-            </span>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="spv-modal-close"
+              title="Tutup dialog"
+            >
+              <IconClose size={16} />
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="spv-modal-close"
-            title="Tutup dialog"
-          >
-            <IconClose size={18} />
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        <div className="spv-modal-body">
-          {/* Submitter & Timestamp Info Strip */}
-          <div className="spv-modal-summary-box">
-            <div className="spv-modal-summary-item">
-              <span className="spv-modal-summary-label">Nama Karyawan</span>
-              <strong className="spv-modal-summary-value">{reviewTarget.name} ({reviewTarget.employeeNo})</strong>
-            </div>
-            <div className="spv-modal-summary-item">
-              <span className="spv-modal-summary-label">Waktu Pengiriman</span>
-              <strong className="spv-modal-summary-value">
+          <div className="spv-modal-header-main">
+            <h3 className="spv-modal-title">
+              {reviewTarget.name} <span className="spv-modal-nik">· NIK: {reviewTarget.employeeNo}</span>
+            </h3>
+            <div className="spv-modal-meta-line">
+              <span>{reviewTarget.position}</span>
+              <span className="spv-dot-sep">•</span>
+              <span>
+                Submit:{" "}
                 {reviewTarget.submission?.submittedAt
                   ? `${new Date(reviewTarget.submission.submittedAt).toLocaleTimeString("id-ID", {
                       hour: "2-digit",
                       minute: "2-digit",
                     })} WIB`
-                  : "Belum submit hari ini"}
-              </strong>
-            </div>
-            <div className="spv-modal-summary-item">
-              <span className="spv-modal-summary-label">Hasil Verifikasi</span>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
-                <span className="spv-mini-badge spv-mini-badge--ok">{okAnswers.length} OK</span>
-                {ngAnswers.length > 0 ? (
-                  <span className="spv-mini-badge spv-mini-badge--ng">{ngAnswers.length} NG</span>
-                ) : (
-                  <span className="spv-mini-badge spv-mini-badge--clean">Nol Temuan</span>
-                )}
-              </div>
+                  : "Belum submit"}
+              </span>
+              <span className="spv-dot-sep">•</span>
+              <span className="spv-mini-badge spv-mini-badge--ok">{okAnswers.length} OK</span>
+              {ngAnswers.length > 0 ? (
+                <span className="spv-mini-badge spv-mini-badge--ng">{ngAnswers.length} NG</span>
+              ) : (
+                <span className="spv-mini-badge spv-mini-badge--clean">Nol Temuan</span>
+              )}
             </div>
           </div>
+        </div>
 
+        {/* Modal Body */}
+        <div className="spv-modal-body">
           {/* Checklist Answers from Database */}
           {reviewTarget.submission ? (
             <div className="spv-modal-section">
-              <div className="spv-modal-section-header">
-                <h4 className="spv-modal-section-title">
-                  Rincian Jawaban Checklist ({reviewTarget.submission.answers?.length || 0} Poin)
-                </h4>
-              </div>
 
-              <div className="spv-modal-answers-list">
-                {reviewTarget.submission.answers?.map((answer: any, aIdx: number) => {
-                  const isNG = answer.status === "NG";
-                  const isText = answer.textValue && !isNG;
-
-                  return (
-                    <div
-                      key={answer.itemId || aIdx}
-                      className={`spv-modal-answer-item ${isNG ? "is-ng" : ""}`}
-                    >
-                      <div className="spv-modal-answer-main">
-                        <span className="spv-modal-answer-title">
-                          <span className="spv-modal-answer-num">#{aIdx + 1}</span>{" "}
-                          {PRESET_TITLES[answer.itemId] || `Poin Cek ${answer.itemId}`}
-                        </span>
-
-                        <span
-                          className={`spv-status-badge ${
-                            isNG
-                              ? "spv-status-badge--ng"
-                              : isText
-                              ? "spv-status-badge--info"
-                              : "spv-status-badge--approved"
-                          }`}
-                        >
-                          {isNG ? "NG (Abnormal)" : isText ? `Nilai: ${answer.textValue}` : "OK"}
-                        </span>
+              <div className="spv-modal-categories-wrap">
+                {groupedCategories.map((group) => (
+                  <div key={group.categoryName} className="spv-modal-cat-group">
+                    <div className="spv-modal-cat-header">
+                      <div className="spv-modal-cat-left">
+                        {/* <span className="spv-modal-cat-tag">KATEGORI</span> */}
+                        <h5 className="spv-modal-cat-name">{group.categoryName}</h5>
                       </div>
-
-                      {/* If NG, show Cause & Solution entered by employee */}
-                      {isNG && (
-                        <div className="spv-modal-ng-box">
-                          <div>
-                            <strong>Penyebab:</strong> {answer.cause || "Tidak ada keterangan penyebab."}
-                          </div>
-                          {answer.solution && (
-                            <div>
-                              <strong>Tindakan Perbaikan:</strong> {answer.solution}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <span
+                        className={`spv-modal-cat-badge ${
+                          group.hasNg ? "spv-modal-cat-badge--ng" : "spv-modal-cat-badge--ok"
+                        }`}
+                      >
+                        {group.hasNg ? "Ada Temuan (NG)" : `${group.okCount}/${group.items.length} OK`}
+                      </span>
                     </div>
-                  );
-                })}
+
+                    <div className="spv-modal-answers-list">
+                      {group.items.map(({ answer, originalIndex: aIdx }) => {
+                        const isNG = answer.status === "NG";
+                        const isText = answer.textValue && !isNG;
+
+                        return (
+                          <div
+                            key={answer.itemId || aIdx}
+                            className={`spv-modal-answer-item ${isNG ? "is-ng" : ""}`}
+                          >
+                            <div className="spv-modal-answer-main">
+                              <span className="spv-modal-answer-title">
+                                <span className="spv-modal-answer-num">#{answer.number ?? aIdx + 1}</span>{" "}
+                                {answer.title || answer.itemTitle || PRESET_TITLES[answer.itemId] || `Poin Cek ${answer.itemId}`}
+                              </span>
+
+                              <span
+                                className={`spv-status-badge ${
+                                  isNG
+                                    ? "spv-status-badge--ng"
+                                    : isText
+                                    ? "spv-status-badge--info"
+                                    : "spv-status-badge--approved"
+                                }`}
+                              >
+                                {isNG ? "NG (Abnormal)" : isText ? `Nilai: ${answer.textValue}` : "OK"}
+                              </span>
+                            </div>
+
+                            {/* If NG, show Cause & Solution entered by employee */}
+                            {isNG && (
+                              <div className="spv-modal-ng-box">
+                                <div>
+                                  <strong>Penyebab:</strong> {answer.cause || "Tidak ada keterangan penyebab."}
+                                </div>
+                                {answer.solution && (
+                                  <div>
+                                    <strong>Tindakan Perbaikan:</strong> {answer.solution}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ) : (

@@ -11,6 +11,7 @@ import {
   SupervisorApprovalsTab,
   SupervisorBottombar,
   SupervisorHeaderBar,
+  SupervisorHistoryTab,
   SupervisorLinesTab,
   SupervisorNavbar,
   SupervisorProfileTab,
@@ -284,12 +285,13 @@ export default function SupervisorDashboardPage() {
             />
           )}
 
-          {/* TAB: LOG SUPERVISOR */}
+          {/* TAB: RIWAYAT CHECKLIST HARIAN */}
           {activeTab === "log" && (
-            <SupervisorProfileTab
-              currentSupervisor={currentSupervisor}
-              subordinatesCount={totalCount}
-              onLogout={handleLogout}
+            <SupervisorHistoryTab
+              onSelectReview={(member) => {
+                setReviewTarget(member);
+                setFeedbackNote(member.submission?.supervisorNotes || "");
+              }}
             />
           )}
         </div>

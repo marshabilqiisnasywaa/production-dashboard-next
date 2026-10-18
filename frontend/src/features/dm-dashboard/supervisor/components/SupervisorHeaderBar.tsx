@@ -30,7 +30,7 @@ export function SupervisorHeaderBar({
       case "lines":
         return "Status Lini Produksi";
       case "log":
-        return "Log Supervisor";
+        return "Riwayat Checklist Harian";
       default:
         return "Dashboard Supervisor";
     }

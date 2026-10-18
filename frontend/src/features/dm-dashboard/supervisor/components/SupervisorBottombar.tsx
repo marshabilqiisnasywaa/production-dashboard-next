@@ -2,8 +2,8 @@
 
 import {
   IconClipboardCheck,
+  IconHistory,
   IconPulse,
-  IconUsers,
 } from "@/components/ui/icons";
 import type { ActiveTab } from "../types";
 
@@ -46,8 +46,8 @@ export function SupervisorBottombar({
         className={`spv-bottombar__item ${activeTab === "log" ? "is-active" : ""}`}
         onClick={() => setActiveTab("log")}
       >
-        <IconUsers size={20} />
-        <span>Log</span>
+        <IconHistory size={20} />
+        <span>Riwayat</span>
       </button>
     </nav>
   );

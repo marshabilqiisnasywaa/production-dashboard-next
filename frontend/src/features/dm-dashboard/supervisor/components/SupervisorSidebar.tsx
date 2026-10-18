@@ -3,10 +3,10 @@
 import Link from "next/link";
 import {
   IconClipboardCheck,
+  IconHistory,
   IconLogout,
   IconPulse,
   IconShield,
-  IconUsers,
 } from "@/components/ui/icons";
 import type { ActiveTab, SupervisorInfo } from "../types";
 
@@ -89,8 +89,8 @@ export function SupervisorSidebar({
           onClick={() => setActiveTab("log")}
         >
           <div className="spv-sidebar__nav-left">
-            <IconUsers size={18} />
-            <span>Log</span>
+            <IconHistory size={18} />
+            <span>Riwayat Checklist</span>
           </div>
         </button>
       </nav>

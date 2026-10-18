@@ -27,6 +27,64 @@ router = APIRouter(prefix="/papercards", tags=["papercards"])
 # Supervisor Subordinates Overview (100% Real PostgreSQL Data)
 # -----------------------------------------------------------------------------
 
+def enrich_submission_answers(
+    db: Session,
+    sub: PapercardSubmission,
+    fallback_line_id: int | None = None,
+    fallback_dept: str | None = None,
+) -> list[dict[str, Any]]:
+    """Resolve item titles and category names directly from the PapercardTemplate in PostgreSQL."""
+    tmpl = None
+    if sub.template_id:
+        tmpl = db.get(PapercardTemplate, sub.template_id)
+    if not tmpl:
+        target_line = sub.line_id or fallback_line_id
+        target_dept = sub.department or fallback_dept
+        if target_line and target_dept:
+            tmpl = db.query(PapercardTemplate).filter(
+                PapercardTemplate.line_id == target_line,
+                PapercardTemplate.department == target_dept.upper(),
+            ).first()
+
+    item_meta: dict[str, dict[str, Any]] = {}
+    if tmpl and tmpl.template_data:
+        cats = tmpl.template_data.get("categories", [])
+        for cat_idx, cat in enumerate(cats):
+            cat_name = cat.get("name") or f"Kategori {cat_idx + 1}"
+            for it in (cat.get("items") or []):
+                if isinstance(it, dict) and it.get("id"):
+                    item_meta[str(it["id"])] = {
+                        "title": it.get("title", ""),
+                        "category": cat_name,
+                        "number": it.get("number"),
+                        "ruleInfo": it.get("ruleInfo", ""),
+                    }
+            for grp in (cat.get("groups") or []):
+                for it in (grp.get("items") or []):
+                    if isinstance(it, dict) and it.get("id"):
+                        item_meta[str(it["id"])] = {
+                            "title": it.get("title", ""),
+                            "category": cat_name,
+                            "number": it.get("number"),
+                            "ruleInfo": it.get("ruleInfo", ""),
+                        }
+
+    enriched = []
+    for idx, a in enumerate(sub.answers or []):
+        if not isinstance(a, dict):
+            continue
+        item_id = str(a.get("itemId", ""))
+        meta = item_meta.get(item_id, {})
+        enriched.append({
+            **a,
+            "title": meta.get("title") or a.get("title") or a.get("itemTitle") or item_id,
+            "category": meta.get("category") or a.get("category") or a.get("categoryName") or "Pemeriksaan",
+            "number": meta.get("number") or a.get("number") or (idx + 1),
+            "ruleInfo": meta.get("ruleInfo") or a.get("ruleInfo"),
+        })
+    return enriched
+
+
 @router.get("/supervisor/overview")
 def get_supervisor_overview(
     db: Session = Depends(get_db),
@@ -90,6 +148,7 @@ def get_supervisor_overview(
         sub_data = None
         if sub:
             approver = db.get(Employee, sub.approved_by_id) if sub.approved_by_id else None
+            enriched_answers = enrich_submission_answers(db, sub, line_id, emp.dept)
             sub_data = {
                 "id": sub.id,
                 "date": str(sub.date),
@@ -98,7 +157,7 @@ def get_supervisor_overview(
                 "approvalStatus": sub.approval_status,
                 "submittedAt": sub.submitted_at.isoformat() if sub.submitted_at else None,
                 "hasNg": has_ng,
-                "answers": sub.answers,
+                "answers": enriched_answers,
                 "abnormalNotes": sub.abnormal_notes,
                 "supervisorNotes": sub.supervisor_notes,
                 "approvedByName": approver.name if approver else None,
@@ -389,7 +448,7 @@ def list_submissions(
                 department=s.department,
                 date=s.date,
                 shift=s.shift,
-                answers=s.answers,
+                answers=enrich_submission_answers(db, s),
                 abnormal_notes=s.abnormal_notes,
                 status=s.status,
                 submitted_at=s.submitted_at,
