@@ -37,3 +37,5 @@ logs/
 /.agents/
 /.claude/
 /anti-slop/
+
+.DS_Store

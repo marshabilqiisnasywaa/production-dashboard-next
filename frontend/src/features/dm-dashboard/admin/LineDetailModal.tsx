@@ -468,28 +468,22 @@ export default function LineDetailModal({
                 ) : null}
               </div>
               <div className="lw-field is-wide">
-                <label htmlFor="line-photo" className="lw-label">Foto tim <span className="lw-hint">landscape, maks. 2 MB</span></label>
-                <div className="lw-photo">
+                <label className="lw-label">Foto tim <span className="lw-hint">landscape, maks. 2 MB</span></label>
+                <div className="lw-photo" style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                   {form.teamPhotoUrl ? (
                     <img src={form.teamPhotoUrl} alt="Pratinjau foto tim" className="lw-thumb" />
                   ) : (
                     <span className="lw-thumb is-empty" aria-hidden="true">Foto</span>
                   )}
-                  <input
-                    id="line-photo"
-                    type="text"
-                    className="lw-input"
-                    value={form.teamPhotoUrl.startsWith("data:") ? "" : form.teamPhotoUrl}
-                    onChange={(event) => change("teamPhotoUrl", event.target.value)}
-                    placeholder={form.teamPhotoUrl.startsWith("data:") ? "Foto dari berkas terpilih" : "URL gambar"}
-                  />
-                  <label className="lw-btn is-soft lw-file-btn">
-                    Pilih file
-                    <input type="file" accept="image/*" className="lw-file-input" onChange={pickPhoto} />
-                  </label>
-                  {form.teamPhotoUrl ? (
-                    <button type="button" className="lw-link is-danger" onClick={() => change("teamPhotoUrl", "")}>Hapus</button>
-                  ) : null}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <label className="lw-btn is-soft lw-file-btn" style={{ cursor: "pointer", display: "inline-flex", width: "fit-content" }}>
+                      {form.teamPhotoUrl ? "Ganti foto tim" : "Pilih foto tim"}
+                      <input type="file" accept="image/*" className="lw-file-input" onChange={pickPhoto} />
+                    </label>
+                    {form.teamPhotoUrl ? (
+                      <button type="button" className="lw-link is-danger" onClick={() => change("teamPhotoUrl", "")}>Hapus foto</button>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             </div>

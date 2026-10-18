@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./papercard.css";
 import { CategoryNav } from "./components/CategoryNav";
 import { CategoryPanel } from "./components/CategoryPanel";
@@ -12,43 +12,181 @@ import { WindowBanner } from "./components/WindowBanner";
 import { useInspectionWindow } from "./hooks/useInspectionWindow";
 import { usePapercardForm } from "./hooks/usePapercardForm";
 import { LEADER_TEMPLATE, PAPERCARD_CONFIG, PAPERCARD_LINES } from "./mockTemplate";
-import type { Submission } from "./types";
+import type { ChecklistCategory, ChecklistTemplate, Submission } from "./types";
 import { formatDateId } from "./utils";
 import { LEADER_USER } from "../mockData";
+import { accountApi, papercardApi } from "../../api";
+import type { DmMe } from "../../api";
 
-const TEMPLATE = LEADER_TEMPLATE;
+// Fallback empty template if neither LEADER_TEMPLATE nor database template exists
+const EMPTY_LEADER_TEMPLATE: ChecklistTemplate = {
+  id: "0",
+  version: 1,
+  window: { start: "07:30", end: "08:15" },
+  rule: { ok: "OK jika seluruh item normal.", ng: "NG jika ada deviasi abnormal." },
+  categories: [],
+};
 
 /** Composition only: logic is in hooks/, UI pieces are in components/. */
 export default function PapercardPage() {
+  const [currentUser, setCurrentUser] = useState<DmMe | null>(null);
+  const [line, setLine] = useState(PAPERCARD_LINES[0]);
+  const [dynamicTemplate, setDynamicTemplate] = useState<ChecklistTemplate>(EMPTY_LEADER_TEMPLATE);
+  const [templateLoading, setTemplateLoading] = useState(true);
+
+  // Fetch logged in leader profile
+  useEffect(() => {
+    let cancelled = false;
+    accountApi
+      .me()
+      .then((me) => {
+        if (cancelled || !me) return;
+        setCurrentUser(me);
+        if (me.line?.name) {
+          setLine(me.line.name);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const effectiveLineId = currentUser?.line?.id || (line === "502" ? 2 : line === "503" ? 3 : 1);
+
+  // Fetch template strictly from database for the leader's actual line and PROD department
+  useEffect(() => {
+    let cancelled = false;
+    setTemplateLoading(true);
+
+    papercardApi
+      .listTemplates({
+        lineId: effectiveLineId,
+        department: "PROD",
+      })
+      .then((res) => {
+        if (cancelled) return;
+        if (!res || res.length === 0) {
+          setDynamicTemplate(EMPTY_LEADER_TEMPLATE);
+          setActiveId("");
+          return;
+        }
+
+        const matched = res[0];
+        if (matched && matched.templateData && matched.templateData.categories && matched.templateData.categories.length > 0) {
+          const loadedCategories: ChecklistCategory[] = matched.templateData.categories.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            groups: c.groups ?? [
+              {
+                id: `${c.id}-g1`,
+                title: undefined,
+                items: (c.items ?? []).map((it: any) => ({
+                  id: it.id,
+                  number: it.number,
+                  title: it.title,
+                  answerType: it.answerType ?? "ok_ng",
+                  ruleInfo: it.ruleInfo,
+                  rule: it.rule ?? matched.templateData.okRule ?? "Standar normal proses",
+                })),
+              },
+            ],
+          }));
+
+          setDynamicTemplate({
+            id: String(matched.id),
+            version: Number(matched.version.replace(/[^0-9.]/g, "")) || 1,
+            window: {
+              start: matched.windowStart || "07:30",
+              end: matched.windowEnd || "08:15",
+            },
+            rule: {
+              ok: matched.templateData.okRule || "OK jika seluruh item normal.",
+              ng: matched.templateData.ngRule || "NG jika ada deviasi atau abnormalitas.",
+            },
+            categories: loadedCategories,
+          });
+          if (loadedCategories[0]) {
+            setActiveId(loadedCategories[0].id);
+          }
+        } else {
+          setDynamicTemplate(EMPTY_LEADER_TEMPLATE);
+          setActiveId("");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDynamicTemplate(EMPTY_LEADER_TEMPLATE);
+          setActiveId("");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setTemplateLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveLineId]);
+
   const win = useInspectionWindow({
-    start: TEMPLATE.window.start,
-    end: TEMPLATE.window.end,
+    start: dynamicTemplate.window?.start || "07:30",
+    end: dynamicTemplate.window?.end || "08:15",
     simulate: PAPERCARD_CONFIG.simulateWindow,
   });
-  const form = usePapercardForm(TEMPLATE.categories);
+  const form = usePapercardForm(dynamicTemplate.categories || []);
 
-  const [line, setLine] = useState(PAPERCARD_LINES[0]);
-  const [activeId, setActiveId] = useState(TEMPLATE.categories[0].id);
+  const [activeId, setActiveId] = useState<string>("");
   const [submission, setSubmission] = useState<Submission | null>(null);
 
   const readOnly = submission !== null;
-  const active = TEMPLATE.categories.find((c) => c.id === activeId) ?? TEMPLATE.categories[0];
-  const activeProgress = form.progress.byCategory[active.id] ?? { done: 0, total: 0 };
+  const active = dynamicTemplate.categories.find((c) => c.id === activeId) ?? dynamicTemplate.categories[0];
+  const activeProgress = active ? (form.progress.byCategory[active.id] ?? { done: 0, total: 0 }) : { done: 0, total: 0 };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.progress.complete || !win.now) return;
-    // Late = sent after the window closes (BR-02)
-    setSubmission({ submittedAt: win.now, status: win.state === "closed" ? "LATE" : "ON_TIME" });
-    // TODO: POST { templateId, templateVersion, line, answers: form.answers, submittedAt } to the API
+    const now = win.now;
+    const status = win.state === "closed" ? "LATE" : "ON_TIME";
+
+    // Set local submission notice
+    setSubmission({ submittedAt: now, status });
+
+    // Submit to backend API if available
+    try {
+      await papercardApi.submit({
+        lineId: effectiveLineId,
+        department: "PROD",
+        date: new Date().toISOString().slice(0, 10),
+        shift: PAPERCARD_CONFIG.shift,
+        answers: Object.entries(form.answers).map(([itemId, val]) => ({
+          itemId,
+          status: val.status,
+          textValue: val.posName || "",
+          cause: val.cause,
+          solution: val.solution,
+        })),
+        abnormalNotes: null,
+      });
+    } catch (e) {
+      console.warn("Papercard API submission warning (offline/mock):", e);
+    }
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const supervisorName = currentUser?.supervisor || LEADER_USER.supervisor.name;
+  const lineDisplayName = currentUser?.line?.name || `Line ${line}`;
+
   return (
     <div className="dml-pc">
+
       <div className="dml-page-head">
         <div>
-          <h1>Papercard Leader</h1>
-          <p>Isi checklist setiap hari sebelum DM meeting tepat waktu untuk memastikan kesiapan line.</p>
+          <h1>Papercard Kesiapan Leader</h1>
+          <p>
+            Checklist kesiapan kerja sebelum DM Meeting untuk lini <strong>{lineDisplayName}</strong>. Hasil akan dikirimkan ke Supervisor {supervisorName} untuk persetujuan.
+          </p>
         </div>
       </div>
 
@@ -56,49 +194,122 @@ export default function PapercardPage() {
 
       <PapercardMetaCard
         lines={PAPERCARD_LINES}
-        line={line}
-        onLineChange={setLine}
-        leader={LEADER_USER.name}
+        line={lineDisplayName.replace(/^Line\s+/i, "")}
+        onLineChange={() => {}}
+        leader={`${currentUser?.name || LEADER_USER.name} (Leader PROD)`}
         shift={PAPERCARD_CONFIG.shift}
         date={win.now ? formatDateId(win.now) : ""}
-        lineLocked={readOnly}
+        lineLocked={true}
       >
         <WindowBanner
           state={win.state}
-          start={TEMPLATE.window.start}
-          end={TEMPLATE.window.end}
+          start={dynamicTemplate.window?.start || "07:30"}
+          end={dynamicTemplate.window?.end || "08:15"}
           remainingMs={win.remainingMs}
         />
       </PapercardMetaCard>
 
-      <OverallProgress done={form.progress.done} total={form.progress.total} />
+      {/* Dynamic Database Template Checklist Section */}
+      {templateLoading ? (
+        <div
+          className="ui-card"
+          style={{
+            padding: "48px 24px",
+            textAlign: "center",
+            background: "#ffffff",
+            borderRadius: "14px",
+            border: "1px solid #e2e8f0",
+            margin: "20px 0",
+            boxShadow: "0 1px 3px rgba(15, 23, 42, 0.03)",
+          }}
+        >
+          <div
+            style={{
+              display: "inline-block",
+              width: "32px",
+              height: "32px",
+              border: "3px solid #cbd5e1",
+              borderTopColor: "#0f766e",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              marginBottom: "12px",
+            }}
+          />
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>
+            Memuat Checklist Papercard dari Database...
+          </div>
+          <div style={{ fontSize: "12.5px", color: "#64748b", marginTop: "4px" }}>
+            Mengambil konfigurasi resmi untuk Lini {lineDisplayName}
+          </div>
+        </div>
+      ) : dynamicTemplate.categories.length === 0 ? (
+        <div
+          className="ui-card"
+          style={{
+            padding: "48px 24px",
+            textAlign: "center",
+            background: "#f8fafc",
+            borderRadius: "14px",
+            border: "1.5px dashed #cbd5e1",
+            margin: "20px 0",
+          }}
+        >
+          <div style={{ fontSize: "36px", marginBottom: "12px" }}>📋</div>
+          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
+            Belum Ada Template Papercard di Database
+          </h3>
+          <p style={{ fontSize: "13px", color: "#64748b", maxWidth: "480px", margin: "0 auto 16px", lineHeight: "1.5" }}>
+            Database belum memiliki konfigurasi checklist pertanyaan papercard untuk Lini <strong>{lineDisplayName}</strong> dan Departemen <strong>PROD</strong>.
+          </p>
+          <div
+            style={{
+              fontSize: "12px",
+              color: "#0f766e",
+              background: "#f0fdfa",
+              padding: "10px 18px",
+              borderRadius: "8px",
+              display: "inline-block",
+              border: "1px solid #ccfbf1",
+              fontWeight: 500,
+            }}
+          >
+            💡 Silakan buat template terlebih dahulu melalui menu <strong>Admin Panel &gt; Papercard Template</strong>.
+          </div>
+        </div>
+      ) : (
+        <>
+          <OverallProgress done={form.progress.done} total={form.progress.total} />
 
-      <div className="dml-pc__grid">
-        <CategoryNav
-          categories={TEMPLATE.categories}
-          activeId={active.id}
-          progress={form.progress.byCategory}
-          onSelect={setActiveId}
-        />
-        <CategoryPanel
-          category={active}
-          rule={TEMPLATE.rule}
-          done={activeProgress.done}
-          total={activeProgress.total}
-          readOnly={readOnly}
-          getAnswer={form.getAnswer}
-          onChange={form.update}
-          onMarkAllOk={() => form.markAllOk(active.id)}
-        />
-      </div>
+          <div className="dml-pc__grid">
+            <CategoryNav
+              categories={dynamicTemplate.categories}
+              activeId={active?.id ?? ""}
+              progress={form.progress.byCategory}
+              onSelect={setActiveId}
+            />
+            {active ? (
+              <CategoryPanel
+                category={active}
+                rule={dynamicTemplate.rule}
+                done={activeProgress.done}
+                total={activeProgress.total}
+                readOnly={readOnly}
+                getAnswer={form.getAnswer}
+                onChange={form.update}
+                onMarkAllOk={() => form.markAllOk(active.id)}
+              />
+            ) : null}
+          </div>
 
-      <SubmitBar
-        done={form.progress.done}
-        total={form.progress.total}
-        complete={form.progress.complete}
-        submitted={readOnly}
-        onSubmit={handleSubmit}
-      />
+          <SubmitBar
+            done={form.progress.done}
+            total={form.progress.total}
+            complete={form.progress.complete}
+            submitted={readOnly}
+            onSubmit={handleSubmit}
+          />
+        </>
+      )}
     </div>
   );
 }

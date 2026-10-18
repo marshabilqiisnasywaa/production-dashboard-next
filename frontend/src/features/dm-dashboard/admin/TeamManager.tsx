@@ -184,7 +184,7 @@ export default function TeamManager({ line, call, onChanged }: TeamManagerProps)
         <div className="lw-field lw-grow">
           <label htmlFor="team-pick" className="lw-label">Tambah anggota</label>
           <select id="team-pick" className="lw-input" value={pick} onChange={(event) => setPick(event.target.value)}>
-            <option value="">{available.length === 0 ? "Tidak ada pengguna yang bebas" : "Pilih dari daftar pengguna"}</option>
+            <option value="">{available.length === 0 ? "Tidak ada User yang bebas" : "Pilih dari daftar User"}</option>
             {available.map((employee) => (
               <option key={employee.id} value={employee.id}>
                 {employee.name} ({[employee.employeeId, employee.dept].filter(Boolean).join(", ")})
@@ -201,7 +201,7 @@ export default function TeamManager({ line, call, onChanged }: TeamManagerProps)
         </button>
       </form>
       {available.length === 0 ? (
-        <p className="lw-hint">Tambahkan orang baru di menu Pengguna, atau lepas seseorang dari lini lain.</p>
+        <p className="lw-hint">Tambahkan orang baru di menu User, atau lepas seseorang dari lini lain.</p>
       ) : null}
       {addError ? <p className="lw-error" role="alert">{addError}</p> : null}
 

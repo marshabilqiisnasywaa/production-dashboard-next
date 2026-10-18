@@ -1,12 +1,15 @@
 "use client";
 import Link from "next/link";
+import { IconLogout } from "@/components/ui/icons";
+import { setToken } from "../api";
 
-export type DmAdminTabKey = "dashboard" | "workshop" | "users" | "mpv" | "attendance";
+export type DmAdminTabKey = "dashboard" | "workshop" | "users" | "papercard" | "mpv" | "attendance";
 
 interface DmAdminSidebarProps {
   isAdmin: boolean;
   activeTab: DmAdminTabKey;
   onSelectTab: (tab: DmAdminTabKey) => void;
+  onLogout?: () => void;
 }
 
 function FactoryIcon() {
@@ -88,6 +91,7 @@ export default function DmAdminSidebar({
   isAdmin,
   activeTab,
   onSelectTab,
+  onLogout,
 }: DmAdminSidebarProps) {
   return (
     <aside className="dm-admin-sidebar">
@@ -135,7 +139,16 @@ export default function DmAdminSidebar({
           onClick={() => onSelectTab("users")}
         >
           <span className="dm-admin-nav-icon"><UsersGroupIcon /></span>
-          <span>Pengguna</span>
+          <span>User</span>
+        </button>
+
+        <button
+          type="button"
+          className={`dm-admin-nav-btn ${activeTab === "papercard" ? "is-active" : ""}`}
+          onClick={() => onSelectTab("papercard")}
+        >
+          <span className="dm-admin-nav-icon"><ClipboardCheckIcon /></span>
+          <span>Template Papercard</span>
         </button>
 
         <button
@@ -164,6 +177,23 @@ export default function DmAdminSidebar({
           </Link>
         )}
 
+        <div className="dm-admin-nav-heading">ROLE VIEW</div>
+
+        <Link href="/dm-dashboard/leader" className="dm-admin-nav-btn">
+          <span className="dm-admin-nav-icon"><ClipboardCheckIcon /></span>
+          <span>Dashboard Leader</span>
+        </Link>
+
+        <Link href="/dm-dashboard/member" className="dm-admin-nav-btn">
+          <span className="dm-admin-nav-icon"><ClipboardCheckIcon /></span>
+          <span>Portal Member (PROD/ME/PE/QC)</span>
+        </Link>
+
+        <Link href="/dm-dashboard/supervisor" className="dm-admin-nav-btn">
+          <span className="dm-admin-nav-icon"><UsersGroupIcon /></span>
+          <span>Hub Supervisor</span>
+        </Link>
+
         <div className="dm-admin-nav-heading">NAVIGASI</div>
 
         <Link href="/dm-dashboard" className="dm-admin-nav-btn">
@@ -175,6 +205,35 @@ export default function DmAdminSidebar({
           <span className="dm-admin-nav-icon"><GridIcon /></span>
           <span>Production Dashboard</span>
         </Link>
+
+        <div className="dm-admin-nav-heading">AKUN</div>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (onLogout) onLogout();
+            else {
+              setToken(null);
+              window.location.href = "/dm-dashboard/masuk";
+            }
+          }}
+          className="dm-admin-nav-btn"
+          style={{
+            color: "#fb7185",
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            cursor: "pointer",
+            border: 0,
+            background: "transparent",
+            textAlign: "left",
+          }}
+          title="Keluar dari sesi Admin"
+        >
+          <span className="dm-admin-nav-icon"><IconLogout size={16} /></span>
+          <span>Keluar (Logout)</span>
+        </button>
       </nav>
 
     </aside>

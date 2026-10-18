@@ -36,7 +36,15 @@ def login(body: LoginIn, request: Request, db: Session = Depends(get_db)) -> Tok
     user = db.scalar(select(User).where(User.username == username))
     if user is not None and user.is_active and verify_password(body.password, user.password_hash):
         ratelimit.clear(key)
-        return TokenOut(access_token=create_access_token(user.id, "admin"), username=user.username)
+        return TokenOut(
+            access_token=create_access_token(user.id, "admin"),
+            username=user.username,
+            kind="admin",
+            role=user.role,
+            name=None,
+            must_change_password=False,
+            dept=None,
+        )
 
     employee = db.scalar(select(Employee).where(Employee.employee_no == username))
     stored = employee.password_hash if employee and employee.password_hash else DUMMY_HASH
@@ -53,6 +61,7 @@ def login(body: LoginIn, request: Request, db: Session = Depends(get_db)) -> Tok
         role=employee.role,
         name=employee.name,
         must_change_password=employee.must_change_password,
+        dept=employee.dept,
     )
 
 
@@ -66,6 +75,7 @@ def me(principal: Principal = Depends(get_principal), db: Session = Depends(get_
             name=None,
             must_change_password=False,
             line=None,
+            dept=None,
         )
     employee = principal.employee
     assert employee is not None
@@ -87,6 +97,11 @@ def me(principal: Principal = Depends(get_principal), db: Session = Depends(get_
         name=employee.name,
         must_change_password=employee.must_change_password,
         line=line,
+        dept=employee.dept,
+        position=employee.position,
+        supervisor=employee.supervisor_name,
+        work_phone=employee.work_phone,
+        photo_url=employee.photo_url,
     )
 
 

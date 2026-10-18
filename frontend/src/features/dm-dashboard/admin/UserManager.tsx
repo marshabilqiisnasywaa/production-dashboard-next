@@ -148,7 +148,7 @@ export default function UserManager({ call }: UserManagerProps) {
       <div className="dm-panel-head">
         <div>
           <div className="dm-panel-titlebar">
-            <h3 id="users-title" className="dm-panel-title">Daftar Pengguna</h3>
+            <h3 id="users-title" className="dm-panel-title">Daftar User</h3>
             <span className="dm-pill">{users.length} Terdaftar</span>
           </div>
           <p className="dm-panel-sub">
@@ -157,7 +157,7 @@ export default function UserManager({ call }: UserManagerProps) {
         </div>
         <button type="button" className="dm-admin-btn is-primary dm-btn-add" onClick={() => setForm({ open: true, user: null })}>
           <PlusIcon size={14} />
-          Tambah Pengguna
+          Tambah User
         </button>
       </div>
 
@@ -171,19 +171,19 @@ export default function UserManager({ call }: UserManagerProps) {
       ) : null}
 
       {loading && users.length === 0 ? (
-        <p role="status">Memuat pengguna...</p>
+        <p role="status">Memuat User...</p>
       ) : loadError ? (
         <div className="dm-admin-state-block">
           <p role="alert">{loadError}</p>
           <button type="button" className="dm-admin-btn is-primary" onClick={load}>Coba lagi</button>
         </div>
       ) : users.length === 0 ? (
-        <p className="dm-lines-empty">Belum ada pengguna. Klik &quot;Tambah Pengguna&quot; untuk mengisi yang pertama.</p>
+        <p className="dm-lines-empty">Belum ada User. Klik &quot;Tambah User&quot; untuk mengisi yang pertama.</p>
       ) : (
         <>
           <div className="dm-lines-toolbar">
             <div className="dm-table-search-box">
-              <label className="dm-admin-sr-only" htmlFor="user-search">Cari pengguna</label>
+              <label className="dm-admin-sr-only" htmlFor="user-search">Cari User</label>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="dm-table-search-icon" aria-hidden="true">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -228,21 +228,21 @@ export default function UserManager({ call }: UserManagerProps) {
               </label>
             ) : null}
             <span className="dm-pill dm-lines-count" role="status">
-              {shown.length} dari {users.length} pengguna
+              {shown.length} dari {users.length} User
             </span>
           </div>
 
           {shown.length === 0 ? (
-            <p className="dm-lines-none">Tidak ada pengguna yang cocok dengan pencarian atau filter ini.</p>
+            <p className="dm-lines-none">Tidak ada User yang cocok dengan pencarian atau filter ini.</p>
           ) : (
             <div className="ut-wrap">
               <table className="ut-table">
                 <thead>
                   <tr>
-                    <th>Pengguna</th>
+                    <th>User</th>
                     <th>Role</th>
                     <th>Departemen</th>
-                    <th>Lini</th>
+                    <th>Line</th>
                     <th>Supervisor</th>
                     <th>Login</th>
                     <th className="ut-col-action"><span className="ut-sr">Aksi</span></th>

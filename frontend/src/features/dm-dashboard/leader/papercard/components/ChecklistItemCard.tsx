@@ -34,9 +34,37 @@ export function ChecklistItemCard({ item, rule, answer, readOnly = false, onChan
       </span>
 
       <div className="dml-item__body">
-        <p id={titleId} className="dml-item__title">
-          {item.title}
-        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <p id={titleId} className="dml-item__title" style={{ margin: 0 }}>
+            {item.title}
+          </p>
+
+          {/* Info Bullet (i) */}
+          {(item.ruleInfo || item.rule) && (
+            <button
+              type="button"
+              onClick={() => setShowRule((v) => !v)}
+              style={{
+                width: "18px",
+                height: "18px",
+                borderRadius: "50%",
+                background: "#e0f2fe",
+                color: "#0284c7",
+                border: 0,
+                fontSize: "11px",
+                fontWeight: 700,
+                display: "inline-grid",
+                placeItems: "center",
+                cursor: "pointer",
+                padding: 0,
+              }}
+              title={item.ruleInfo || item.rule || "Lihat aturan"}
+              aria-label="Lihat aturan"
+            >
+              i
+            </button>
+          )}
+        </div>
 
         <button
           type="button"
@@ -50,6 +78,11 @@ export function ChecklistItemCard({ item, rule, answer, readOnly = false, onChan
 
         {showRule && (
           <div id={ruleId} className="dml-rule">
+            {item.ruleInfo && (
+              <p style={{ marginBottom: "6px", color: "#0369a1", fontWeight: 600 }}>
+                ℹ️ {item.ruleInfo}
+              </p>
+            )}
             {item.rule ? (
               <p>{item.rule}</p>
             ) : (
@@ -77,24 +110,43 @@ export function ChecklistItemCard({ item, rule, answer, readOnly = false, onChan
           />
         )}
 
-        <div className="dml-answer" role="radiogroup" aria-labelledby={titleId}>
-          {OPTIONS.map((opt) => {
-            const selected = answer.status === opt;
-            return (
-              <button
-                key={opt}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                disabled={readOnly}
-                className={`dml-answer__btn dml-answer__btn--${opt.toLowerCase()}${selected ? " is-selected" : ""}`}
-                onClick={() => onChange({ status: opt })}
-              >
-                {opt}
-              </button>
-            );
-          })}
-        </div>
+        {/* Answer Selection: Text Input vs OK / NG */}
+        {item.answerType === "text" ? (
+          <div style={{ marginTop: "10px" }}>
+            <input
+              type="text"
+              className="ui-input ui-input--block"
+              placeholder="Catat nilai hasil pengukuran / informasi..."
+              value={answer.textValue ?? ""}
+              disabled={readOnly}
+              onChange={(e) =>
+                onChange({
+                  textValue: e.target.value,
+                  status: e.target.value.trim() ? "OK" : null,
+                })
+              }
+            />
+          </div>
+        ) : (
+          <div className="dml-answer" role="radiogroup" aria-labelledby={titleId}>
+            {OPTIONS.map((opt) => {
+              const selected = answer.status === opt;
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  disabled={readOnly}
+                  className={`dml-answer__btn dml-answer__btn--${opt.toLowerCase()}${selected ? " is-selected" : ""}`}
+                  onClick={() => onChange({ status: opt })}
+                >
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {answer.status === "NG" && (
           <div className="dml-ng">

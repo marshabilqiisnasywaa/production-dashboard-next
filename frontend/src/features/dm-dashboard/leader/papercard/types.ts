@@ -7,6 +7,10 @@ export interface ChecklistItem {
   title: string;
   /** Optional per-item rule text. Falls back to the shared RuleTemplate. */
   rule?: string;
+  /** Optional tooltip rule guidance for the small info bullet */
+  ruleInfo?: string;
+  /** Question answer type: OK/NG button or Text Input */
+  answerType?: "ok_ng" | "text";
   /** Show the "Nama pos/proses yang diperiksa" input (Leader special component) */
   askPosName?: boolean;
 }
@@ -40,6 +44,7 @@ export interface ChecklistTemplate {
 
 export interface Answer {
   status: AnswerStatus | null;
+  textValue?: string;
   posName: string;
   cause: string;
   solution: string;

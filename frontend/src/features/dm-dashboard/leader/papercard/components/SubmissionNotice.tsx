@@ -10,8 +10,8 @@ export function SubmissionNotice({ submission }: { submission: Submission }) {
     <div className={late ? "dml-notice dml-notice--late" : "dml-notice"} role="status">
       <IconCheckCircle size={22} />
       <div>
-        <strong>Papercard terkirim pukul {formatTimeHm(submission.submittedAt)}</strong>
-        <p>Jawaban masih bisa dilihat di bawah, tetapi tidak dapat diubah lagi.</p>
+        <strong>Papercard terkirim pukul {formatTimeHm(submission.submittedAt)} ke Supervisor</strong>
+        <p>Hasil checklist diteruskan ke Supervisor untuk ditinjau &amp; disetujui. Jawaban di bawah bersifat read-only.</p>
       </div>
       <StatusChip tone={late ? "ng" : "ok"}>{late ? "NG (Telat)" : "On-time"}</StatusChip>
     </div>

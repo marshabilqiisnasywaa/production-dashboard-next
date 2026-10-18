@@ -173,7 +173,7 @@ export default function AccountPage() {
         <p className="dm-admin-login-sub">
           {me.mustChangePassword ? null : (
             <>
-              <Link href="/dm-dashboard/admin">Buka dashboard</Link>
+              <Link href={homeFor(me)}>Buka dashboard</Link>
               {" · "}
             </>
           )}

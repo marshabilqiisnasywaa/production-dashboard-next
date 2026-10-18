@@ -58,22 +58,108 @@ const MANUSIA: ChecklistCategory = {
   ],
 };
 
+const MESIN: ChecklistCategory = {
+  id: "mesin",
+  name: "Mesin",
+  groups: [
+    {
+      id: "mesin-utama",
+      title: "Kondisi Parameter & Safety Mesin",
+      items: [
+        { id: "ms-1", number: 1, title: "Suhu solder station stabil pada 350±10°C", ruleInfo: "Ukur suhu ujung mata solder dengan thermometer kontak" },
+        { id: "ms-2", number: 2, title: "Tekanan kompresor angin utama stabil (0.5 - 0.7 MPa)", ruleInfo: "Standar normal: 0.5 - 0.7 MPa" },
+        { id: "ms-3", number: 3, title: "Obeng elektrik terkalibrasi torsinya dan stiker kalibrasi valid", ruleInfo: "Batas kalibrasi 30 hari stiker kalibrasi" },
+        { id: "ms-4", number: 4, title: "Sensor stopper dan interlock safety mesin berfungsi normal" },
+        { id: "ms-5", number: 5, title: "Conveyor berjalan lancar tanpa getaran atau bunyi abnormal" },
+      ],
+    },
+  ],
+};
+
+const MATERIAL: ChecklistCategory = {
+  id: "material",
+  name: "Material",
+  groups: [
+    {
+      id: "mat-buffer",
+      title: "Verifikasi Part & Kesiapan Buffer",
+      items: [
+        { id: "mat-1", number: 1, title: "Material lot pertama lengkap di rak buffer pos kerja" },
+        { id: "mat-2", number: 2, title: "Label identitas lot & barcode part sesuai Work Order", ruleInfo: "Periksa kecocokan nomor lot box dengan lembar WO" },
+        { id: "mat-3", number: 3, title: "Komponen sensitif ESD berada di dalam conductive tray" },
+        { id: "mat-4", number: 4, title: "Tidak ada komponen cacat fisik / baret / deformasi" },
+        { id: "mat-5", number: 5, title: "Jumlah buffer part mencukupi untuk target jam pertama" },
+        { id: "mat-6", number: 6, title: "Material sisa shift sebelumnya telah dipisahkan rapi" },
+      ],
+    },
+  ],
+};
+
+const METODE: ChecklistCategory = {
+  id: "metode",
+  name: "Metode",
+  groups: [
+    {
+      id: "met-sop",
+      title: "Instruksi Kerja & Parameter Proses",
+      items: [
+        { id: "met-1", number: 1, title: "Lembar Instruksi Kerja (WI) revisi terbaru aktif di display pos", ruleInfo: "Cocokkan nomor drawing engineering terkini" },
+        { id: "met-2", number: 2, title: "First-piece sample lolos verifikasi kriteria QA / IPQC" },
+        { id: "met-3", number: 3, title: "Parameter proses mesin sesuai spesifikasi engineering" },
+        { id: "met-4", number: 4, title: "Catat nomor Work Order (WO) yang berjalan hari ini" },
+      ],
+    },
+  ],
+};
+
+const LIMA_S: ChecklistCategory = {
+  id: "5s",
+  name: "5S",
+  groups: [
+    {
+      id: "5s-area",
+      title: "Kebersihan & Kerapihan Area",
+      items: [
+        { id: "5s-1", number: 1, title: "Ringkas: Tidak ada barang yang tidak terpakai di meja kerja" },
+        { id: "5s-2", number: 2, title: "Rapi: Alat kerja dan obeng diletakkan pada tempat gantungan" },
+        { id: "5s-3", number: 3, title: "Resik: Meja kerja, conveyor, dan lantai bersih dari debu" },
+        { id: "5s-4", number: 4, title: "Rawat: Tempat sampah terpilah (organik, anorganik, reject)" },
+        { id: "5s-5", number: 5, title: "Rajin: Personil mengenakan seragam, topi, dan gelang ESD rapi" },
+      ],
+    },
+  ],
+};
+
+const LAINNYA: ChecklistCategory = {
+  id: "lainnya",
+  name: "Lainnya",
+  groups: [
+    {
+      id: "lainnya-lingkungan",
+      title: "Keselamatan & Lingkungan Kerja",
+      items: [
+        { id: "oth-1", number: 1, title: "Kotak P3K dan jalur evakuasi aman tanpa hambatan" },
+        { id: "oth-2", number: 2, title: "Suhu dan sirkulasi udara workshop dalam batas normal (22-26°C)" },
+      ],
+    },
+  ],
+};
+
 export const LEADER_TEMPLATE: ChecklistTemplate = {
   id: "leader-v1",
   version: 1,
-  window: { start: "08:00", end: "09:00" },
-  // The single rule template (PRD 8.3): used by every item's "Lihat aturan".
+  window: { start: "07:30", end: "08:15" },
   rule: {
     ok: "OK jika tidak ada masalah pada item ini.",
     ng: "NG jika ada abnormal. Wajib isi penyebab dan solusi yang spesifik.",
   },
   categories: [
     MANUSIA,
-    placeholders("mesin", "Mesin", 5),
-    placeholders("material", "Material", 6),
-    placeholders("metode", "Metode", 4),
-    placeholders("5s", "5S", 5),
-    placeholders("lainnya", "Lainnya", 2),
+    MESIN,
+    MATERIAL,
+    METODE,
+    LIMA_S,
+    LAINNYA,
   ],
 };
 

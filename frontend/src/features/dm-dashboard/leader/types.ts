@@ -45,3 +45,43 @@ export interface TimeShare {
   mode: "min" | "approx" | "max";
   targetText: string;
 }
+
+export type DepartmentKey = "PROD" | "ME" | "PE" | "QC";
+export type AttendanceStatus = "Hadir" | "Izin" | "Sakit" | "Alpa";
+export type ApprovalStatus = "APPROVED" | "PENDING_APPROVAL" | "REVISION" | "NOT_SUBMITTED";
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  initials: string;
+  employeeId: string;
+  role: "leader" | "member";
+  dept: DepartmentKey;
+  deptLabel: string;
+  position: string;
+  photoUrl?: string;
+  papercardStatus: "OK" | "NG" | "PENDING" | "DRAFT";
+  approvalStatus: ApprovalStatus;
+  submittedAt?: string;
+  abnormalNote?: string;
+  attendanceToday: AttendanceStatus;
+}
+
+export interface SupervisorInfo {
+  name: string;
+  employeeId: string;
+  role: string;
+}
+
+export interface LineOverviewData {
+  lineId: string;
+  lineName: string;
+  code: string;
+  workshop: string;
+  leader: { name: string; employeeId: string; initials: string };
+  supervisor: { name: string; employeeId: string };
+  shift: string;
+  members: TeamMember[];
+  approvalStatus: "APPROVED" | "PENDING" | "HAS_ABNORMAL";
+}
+

@@ -35,7 +35,7 @@ def list_my_lines(
     principal: Principal = Depends(get_active_principal),
     db: Session = Depends(get_db),
 ) -> list[LineOut]:
-    if principal.is_admin:
+    if principal.is_admin or (principal.employee and principal.employee.role == "supervisor"):
         rows = db.execute(
             select(Board, Line, Workshop)
             .join(Line, Line.id == Board.line_id)
@@ -45,7 +45,6 @@ def list_my_lines(
         return [line_out(db, board, line, workshop) for board, line, workshop in rows]
     employee = principal.employee
     assert employee is not None
-    if employee.role == "supervisor":
-        return []
     found = active_line(db, employee.id)
     return [line_out(db, *found)] if found else []
+

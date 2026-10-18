@@ -56,6 +56,7 @@ def member_out(member: BoardMember, employee: Employee) -> MemberOut:
         employee_id=employee.employee_no,
         name=employee.name,
         dept=employee.dept,
+        role=employee.role,
         supervisor=employee.supervisor_name,
         work_phone=employee.work_phone,
         photo_url=employee.photo_url,

@@ -1,4 +1,5 @@
-from typing import Literal
+from datetime import date, datetime
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
@@ -23,6 +24,7 @@ class TokenOut(CamelModel):
     role: str = "superadmin"
     name: str | None = None
     must_change_password: bool = False
+    dept: str | None = None
 
 
 class ChangePasswordIn(CamelModel):
@@ -49,6 +51,11 @@ class MeOut(CamelModel):
     name: str | None
     must_change_password: bool
     line: LineRef | None
+    dept: str | None = None
+    position: str | None = None
+    supervisor: str | None = None
+    work_phone: str | None = None
+    photo_url: str | None = None
 
 
 class WorkshopIn(CamelModel):
@@ -150,6 +157,7 @@ class MemberOut(CamelModel):
     employee_id: str
     name: str
     dept: str | None
+    role: str = "member"
     supervisor: str | None
     work_phone: str | None
     photo_url: str | None
@@ -238,3 +246,183 @@ class PublicBoardListItem(CamelModel):
     line_name: str
     workshop_name: str
     status: LineStatus
+
+
+# --- Papercard Schemas ---
+
+class PapercardTemplateIn(CamelModel):
+    workshop_id: int
+    line_id: int
+    department: str = Field(min_length=1, max_length=32)
+    name: str = Field(min_length=1, max_length=120)
+    version: str = Field(default="v1.0", max_length=16)
+    window_start: str = Field(default="07:30", max_length=8)
+    window_end: str = Field(default="08:15", max_length=8)
+    template_data: dict[str, Any] = Field(default_factory=dict)
+
+class PapercardBulkApplyIn(CamelModel):
+    target_line_ids: list[int]
+    department: str = Field(min_length=1, max_length=32)
+    name: str = Field(min_length=1, max_length=120)
+    version: str = Field(default="v1.0", max_length=16)
+    window_start: str = Field(default="07:30", max_length=8)
+    window_end: str = Field(default="08:15", max_length=8)
+    template_data: dict[str, Any] = Field(default_factory=dict)
+
+
+class PapercardTemplateOut(CamelModel):
+    id: int
+    workshop_id: int
+    line_id: int
+    department: str
+    name: str
+    version: str
+    window_start: str
+    window_end: str
+    template_data: dict[str, Any]
+    created_at: datetime
+    updated_at: datetime
+
+
+class PapercardSubmissionIn(CamelModel):
+    line_id: int
+    department: str
+    date: date
+    shift: str = "Shift 1"
+    answers: list[dict[str, Any]] = Field(default_factory=list)
+    abnormal_notes: str | None = None
+
+
+class PapercardSubmissionOut(CamelModel):
+    id: int
+    template_id: int | None
+    line_id: int
+    employee_id: int
+    employee_name: str | None = None
+    employee_no: str | None = None
+    department: str
+    date: date
+    shift: str
+    answers: list[dict[str, Any]]
+    abnormal_notes: str | None
+    status: str
+    submitted_at: datetime
+    approval_status: str
+    approved_by_id: int | None
+    approved_by_name: str | None = None
+    approved_at: datetime | None
+    supervisor_notes: str | None
+    created_at: datetime
+
+
+class SupervisorApproveIn(CamelModel):
+    approval_status: Literal["approved", "rejected"] = "approved"
+    supervisor_notes: str | None = None
+
+
+# -----------------------------------------------------------------------------
+# DM Meeting Sessions, Attendances, Summaries, Post-Meetings
+# -----------------------------------------------------------------------------
+
+class MeetingAttendanceIn(CamelModel):
+    employee_id: int
+    status: Literal["present", "absent", "permit", "sick"] = "present"
+    verification_method: str = "face_id_dummy"
+    face_confidence: float | None = 0.98
+    notes: str | None = None
+
+
+class MeetingAttendanceOut(CamelModel):
+    id: int
+    session_id: int
+    employee_id: int
+    employee_name: str | None = None
+    employee_no: str | None = None
+    department: str | None = None
+    position: str | None = None
+    status: str
+    verification_method: str
+    face_confidence: float | None
+    attended_at: datetime
+    notes: str | None
+
+
+class MeetingSummaryIn(CamelModel):
+    problem: str
+    pic_name: str
+    pic_id: int | None = None
+    due_date: str | None = None
+
+
+class MeetingSummaryOut(CamelModel):
+    id: int
+    session_id: int
+    line_id: int
+    problem: str
+    pic_name: str
+    pic_id: int | None
+    due_date: str | None
+    status: str
+    created_at: datetime
+
+
+class MeetingSessionStartIn(CamelModel):
+    line_id: int
+    date: date
+    shift: str = "Shift 1"
+    session_number: int  # 1, 2, or 3
+    attendances: list[MeetingAttendanceIn] = Field(default_factory=list)
+
+
+class MeetingSessionEndIn(CamelModel):
+    summaries: list[MeetingSummaryIn] = Field(default_factory=list)
+
+
+class MeetingSessionOut(CamelModel):
+    id: int
+    line_id: int
+    leader_id: int | None
+    leader_name: str | None = None
+    date: date
+    shift: str
+    session_type: str
+    session_number: int
+    scheduled_time: str
+    status: str
+    started_at: datetime | None
+    ended_at: datetime | None
+    duration_seconds: int
+    attendances: list[MeetingAttendanceOut] = Field(default_factory=list)
+    summaries: list[MeetingSummaryOut] = Field(default_factory=list)
+
+
+class PostMeetingIn(CamelModel):
+    line_id: int
+    date: date
+    shift: str = "Shift 1"
+    root_cause: str
+    pdca_plan: str
+    pdca_do: str
+    pdca_check: str
+    pdca_act: str
+    follow_up_update: str | None = None
+
+
+class PostMeetingOut(CamelModel):
+    id: int
+    line_id: int
+    leader_id: int | None
+    leader_name: str | None = None
+    date: date
+    shift: str
+    root_cause: str
+    pdca_plan: str
+    pdca_do: str
+    pdca_check: str
+    pdca_act: str
+    follow_up_update: str | None
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+

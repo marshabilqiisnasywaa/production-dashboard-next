@@ -89,7 +89,7 @@ export default function EmployeePick({
             value={pk}
             onChange={(event) => setPk(event.target.value)}
           >
-            <option value="">Pilih dari daftar pengguna</option>
+            <option value="">Pilih dari daftar User</option>
             {preferred.length > 0 ? (
               <optgroup label="Anggota lini ini">
                 {preferred.map((employee) => (
@@ -98,7 +98,7 @@ export default function EmployeePick({
               </optgroup>
             ) : null}
             {preferLine && others.length > 0 ? (
-              <optgroup label="Pengguna lain">
+              <optgroup label="User lain">
                 {others.map((employee) => (
                   <option key={employee.id} value={employee.id}>{optionLabel(employee)}</option>
                 ))}
@@ -112,8 +112,8 @@ export default function EmployeePick({
         {pool.length === 0 ? (
           <p className="dm-admin-empty-note">
             {hideAssigned
-              ? "Tidak ada pengguna yang bebas. Tambahkan di menu Pengguna, atau lepas seseorang dari lini lain."
-              : "Belum ada pengguna aktif. Tambahkan di menu Pengguna."}
+              ? "Tidak ada User yang bebas. Tambahkan di menu User, atau lepas seseorang dari lini lain."
+              : "Belum ada User aktif. Tambahkan di menu User."}
           </p>
         ) : null}
         {error ? <p className="dm-admin-inline-error" role="alert">{error}</p> : null}

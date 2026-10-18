@@ -141,30 +141,34 @@ export default function MemberEditor({
         {field("sup", "Supervisor", supervisor, setSupervisor, "Nama atasan")}
         {field("phone", "Work Phone", workPhone, setWorkPhone, "Nomor kontak kerja")}
         <div className="dm-admin-field">
-          <label htmlFor={`${idPrefix}-photo`}>Foto Profil</label>
-          <div className="dm-admin-upload-wrap">
-            <input
-              id={`${idPrefix}-photo`}
-              type="text"
-              className="dm-admin-input"
-              value={photoUrl.startsWith("data:") ? "" : photoUrl}
-              onChange={(event) => setPhotoUrl(event.target.value)}
-              placeholder={photoUrl.startsWith("data:") ? "Foto dari berkas terpilih" : "URL foto anggota"}
-            />
-            <label className="dm-admin-file-label">
-              Unggah
-              <input type="file" accept="image/*" className="dm-admin-file-input" onChange={pickPhoto} />
-            </label>
+          <label>Foto Profil</label>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "4px" }}>
+            {photoUrl ? (
+              <img src={photoUrl} alt={name ? `Foto ${name}` : "Pratinjau foto"} className="dm-admin-avatar-img" />
+            ) : (
+              <div style={{ width: "48px", height: "48px", borderRadius: "8px", background: "#f1f5f9", display: "grid", placeItems: "center", color: "#64748b", fontWeight: 700, fontSize: "14px", border: "1px dashed #cbd5e1" }}>
+                Foto
+              </div>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <label className="dm-admin-btn is-secondary" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", width: "fit-content", padding: "5px 12px", fontSize: "12px" }}>
+                {photoUrl ? "Ganti Foto" : "Pilih Foto"}
+                <input type="file" accept="image/*" style={{ display: "none" }} onChange={pickPhoto} />
+              </label>
+              {photoUrl ? (
+                <button
+                  type="button"
+                  style={{ background: "none", border: "none", color: "#dc2626", fontSize: "11px", cursor: "pointer", textAlign: "left", padding: 0 }}
+                  onClick={() => setPhotoUrl("")}
+                >
+                  Hapus Foto
+                </button>
+              ) : (
+                <span style={{ fontSize: "11px", color: "#94a3b8" }}>Maks. 2 MB</span>
+              )}
+            </div>
           </div>
         </div>
-        {photoUrl ? (
-          <div className="dm-admin-avatar-preview">
-            <img src={photoUrl} alt={name ? `Foto ${name}` : "Pratinjau foto"} className="dm-admin-avatar-img" />
-            <button type="button" className="dm-admin-btn is-secondary" onClick={() => setPhotoUrl("")}>
-              Hapus Foto
-            </button>
-          </div>
-        ) : null}
         {error ? <p className="dm-admin-inline-error" role="alert">{error}</p> : null}
         <div className="dm-admin-member-actions">
           <button type="submit" className="dm-admin-btn is-primary" disabled={busy}>
