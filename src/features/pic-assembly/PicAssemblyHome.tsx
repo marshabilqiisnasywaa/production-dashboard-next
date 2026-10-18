@@ -138,7 +138,7 @@ export default function PicAssemblyHome() {
         <div>
           <div className="repair-eyebrow">MORNING MEETING • PIC AREA</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Meeting Dashboard</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Meeting Dashboard</h1>
           </div>
           <p>Core metric summary for Assembly area: plan, actual, achievement, packaging, and finish good.</p>
         </div>
@@ -153,7 +153,7 @@ export default function PicAssemblyHome() {
           const good = card.value >= card.target - card.tolerance;
           const active = selected === card.id;
           return (
-            <article className="repair-kpi pic-kpi bg-white/80! backdrop-blur-md border border-white/60! shadow-xs! rounded-2xl!" key={card.id} style={active ? { borderColor: "var(--accent-1)" } : undefined}>
+            <article className="repair-kpi pic-kpi bg-white/80 dark:bg-slate-900/80! backdrop-blur-md border border-white/60 dark:border-slate-800/60! shadow-xs! rounded-2xl!" key={card.id} style={active ? { borderColor: "var(--accent-1)" } : undefined}>
               <div className="repair-kpi-top"><span>{card.name}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? "On Target" : "Off Target"}</span></div>
               <strong>{card.display} <small>{card.unit}</small></strong>
               <p>Target: {card.targetLabel}{card.gap ? ` (${card.gap})` : ""}</p>

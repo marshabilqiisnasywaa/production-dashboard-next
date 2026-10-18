@@ -135,9 +135,9 @@ export default function CostOverview() {
         <div>
           <div className="repair-eyebrow">MONITORING • COST • OVERVIEW</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Single Labor Cost Overview</h1>
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight">Single Labor Cost Overview</h1>
           </div>
-          <p className="text-slate-500">Ringkasan biaya tenaga kerja langsung dan produktivitas area Cost.</p>
+          <p className="text-slate-500 dark:text-slate-400">Ringkasan biaya tenaga kerja langsung dan produktivitas area Cost.</p>
         </div>
         <div className="repair-actions">
           <CustomSelect value={period} options={periodOptions} onChange={(next) => applyGlobalPeriod(next as CostPeriod)} ariaLabel="Filter period" />
@@ -153,11 +153,11 @@ export default function CostOverview() {
       </div>
 
       <div className="repair-charts">
-        <article ref={(node) => { chartRefs.current["trend"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("trend")}`}>
+        <article ref={(node) => { chartRefs.current["trend"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("trend")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">SLC Trend</h2>
-              <p className="text-slate-500">12 months • ¥ per unit vs target</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">SLC Trend</h2>
+              <p className="text-slate-500 dark:text-slate-400">12 months • ¥ per unit vs target</p>
             </div>
             <ChartTimeTabs activeTab={trendPeriod} onChange={setTrendPeriod} ariaLabel="SLC trend period" />
           </div>
@@ -176,11 +176,11 @@ export default function CostOverview() {
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["structure"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("structure")}`}>
+        <article ref={(node) => { chartRefs.current["structure"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("structure")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">SLC Cost Structure</h2>
-              <p className="text-slate-500">by component</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">SLC Cost Structure</h2>
+              <p className="text-slate-500 dark:text-slate-400">by component</p>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -197,27 +197,27 @@ export default function CostOverview() {
               </div>
               <div className="absolute inset-0 grid place-items-center pointer-events-none">
                 <div className="text-center">
-                  <strong className="block text-slate-900 text-xl font-semibold">¥2.85</strong>
-                  <small className="text-slate-500 text-xs">SLC / unit</small>
+                  <strong className="block text-slate-900 dark:text-slate-100 text-xl font-semibold">¥2.85</strong>
+                  <small className="text-slate-500 dark:text-slate-400 text-xs">SLC / unit</small>
                 </div>
               </div>
             </div>
             <ul className="w-full sm:w-44 grid gap-2">
               {costStructure.map((entry) => (
                 <li key={entry.name} className="flex items-center justify-between gap-2 text-xs">
-                  <span className="inline-flex items-center gap-2 text-slate-500"><i className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: entry.color }} />{entry.name}</span>
-                  <b className="text-slate-900 font-semibold">{entry.value}%</b>
+                  <span className="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400"><i className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: entry.color }} />{entry.name}</span>
+                  <b className="text-slate-900 dark:text-slate-100 font-semibold">{entry.value}%</b>
                 </li>
               ))}
             </ul>
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["manpower"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("manpower")}`}>
+        <article ref={(node) => { chartRefs.current["manpower"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("manpower")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Manpower vs Working Hours</h2>
-              <p className="text-slate-500">{shift} • headcount vs working hours</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Manpower vs Working Hours</h2>
+              <p className="text-slate-500 dark:text-slate-400">{shift} • headcount vs working hours</p>
             </div>
             <ChartTimeTabs activeTab={manpowerPeriod} onChange={setManpowerPeriod} ariaLabel="Manpower period" />
           </div>
@@ -237,11 +237,11 @@ export default function CostOverview() {
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["overtime"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("overtime")}`}>
+        <article ref={(node) => { chartRefs.current["overtime"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("overtime")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Overtime Rate</h2>
-              <p className="text-slate-500">{area} • % overtime per period</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Overtime Rate</h2>
+              <p className="text-slate-500 dark:text-slate-400">{area} • % overtime per period</p>
             </div>
             <ChartTimeTabs activeTab={overtimePeriod} onChange={setOvertimePeriod} ariaLabel="Overtime period" />
           </div>

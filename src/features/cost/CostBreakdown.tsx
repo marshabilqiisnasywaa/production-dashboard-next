@@ -87,7 +87,7 @@ const componentRows: { component: string; amount: string; share: string; mom: st
 ];
 
 function statusClass(status: ComponentStatus): string {
-  if (status === "Stable") return "bg-slate-100 text-slate-600 border border-slate-200";
+  if (status === "Stable") return "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700";
   if (status === "Over Limit") return "bg-rose-50 text-rose-700 border border-rose-200";
   if (status === "Watch") return "bg-amber-50 text-amber-700 border border-amber-200";
   return "bg-emerald-50 text-emerald-700 border border-emerald-200";
@@ -149,9 +149,9 @@ export default function CostBreakdown() {
         <div>
           <div className="repair-eyebrow">MONITORING • COST • BREAKDOWN</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Cost Breakdown</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Cost Breakdown</h1>
           </div>
-          <p className="text-slate-500">Rincian losses, improvement, transfer, dan komponen biaya area Cost.</p>
+          <p className="text-slate-500 dark:text-slate-400">Rincian losses, improvement, transfer, dan komponen biaya area Cost.</p>
         </div>
         <div className="repair-actions">
           <CustomSelect value={fiscal} options={["FY2026 - Q1", "FY2026 - Q2", "FY2026 - Q3", "FY2026 - Q4"]} onChange={setFiscal} ariaLabel="Filter fiscal period" />
@@ -167,11 +167,11 @@ export default function CostBreakdown() {
       </div>
 
       <div className="repair-charts">
-        <article ref={(node) => { chartRefs.current["losses"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("losses")}`}>
+        <article ref={(node) => { chartRefs.current["losses"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("losses")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Losses Cost</h2>
-              <p className="text-slate-500">¥ thousand • by category</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Losses Cost</h2>
+              <p className="text-slate-500 dark:text-slate-400">¥ thousand • by category</p>
             </div>
           </div>
           <div className="warranty-chart">
@@ -188,11 +188,11 @@ export default function CostBreakdown() {
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["trend"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("trend")}`}>
+        <article ref={(node) => { chartRefs.current["trend"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("trend")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Losses Cost Trend</h2>
-              <p className="text-slate-500">¥ thousand • per period</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Losses Cost Trend</h2>
+              <p className="text-slate-500 dark:text-slate-400">¥ thousand • per period</p>
             </div>
             <ChartTimeTabs activeTab={trendPeriod} onChange={setTrendPeriod} ariaLabel="Losses trend period" />
           </div>
@@ -210,11 +210,11 @@ export default function CostBreakdown() {
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["improvement"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("improvement")}`}>
+        <article ref={(node) => { chartRefs.current["improvement"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("improvement")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Project Improvement Cost</h2>
-              <p className="text-slate-500">Savings vs Spend (¥ k) • per proyek</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Project Improvement Cost</h2>
+              <p className="text-slate-500 dark:text-slate-400">Savings vs Spend (¥ k) • per proyek</p>
             </div>
           </div>
           <div className="warranty-chart">
@@ -232,11 +232,11 @@ export default function CostBreakdown() {
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["transfer"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("transfer")}`}>
+        <article ref={(node) => { chartRefs.current["transfer"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("transfer")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Transfer Cost</h2>
-              <p className="text-slate-500">¥ thousand • by type</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Transfer Cost</h2>
+              <p className="text-slate-500 dark:text-slate-400">¥ thousand • by type</p>
             </div>
             <ChartTimeTabs activeTab={transferPeriod} onChange={setTransferPeriod} ariaLabel="Transfer period" />
           </div>
@@ -255,11 +255,11 @@ export default function CostBreakdown() {
         </article>
       </div>
 
-      <article className="bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60">
+      <article className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60">
         <div className="repair-card-head">
           <div>
-            <h2 className="text-slate-900 font-semibold">Cost Component Detail</h2>
-            <p className="text-slate-500">Rincian komponen, porsi, dan status pengendalian</p>
+            <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Cost Component Detail</h2>
+            <p className="text-slate-500 dark:text-slate-400">Rincian komponen, porsi, dan status pengendalian</p>
           </div>
         </div>
         <div className="repair-table-scroll">

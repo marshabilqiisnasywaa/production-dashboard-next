@@ -136,9 +136,9 @@ export default function CostProductivity() {
         <div>
           <div className="repair-eyebrow">MONITORING • COST • PRODUCTIVITY</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Productivity Metrics</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Productivity Metrics</h1>
           </div>
-          <p className="text-slate-500">OPE, UPPH, rasio direct-indirect, dan internship rate area Cost.</p>
+          <p className="text-slate-500 dark:text-slate-400">OPE, UPPH, rasio direct-indirect, dan internship rate area Cost.</p>
         </div>
         <div className="repair-actions">
           <CustomSelect value={fiscal} options={["FY2026 - Q1", "FY2026 - Q2", "FY2026 - Q3", "FY2026 - Q4"]} onChange={setFiscal} ariaLabel="Filter fiscal period" />
@@ -154,11 +154,11 @@ export default function CostProductivity() {
       </div>
 
       <div className="repair-charts">
-        <article ref={(node) => { chartRefs.current["ope"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("ope")}`}>
+        <article ref={(node) => { chartRefs.current["ope"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("ope")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">OPE Productivity</h2>
-              <p className="text-slate-500">% • actual vs target</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">OPE Productivity</h2>
+              <p className="text-slate-500 dark:text-slate-400">% • actual vs target</p>
             </div>
             <ChartTimeTabs activeTab={opePeriod} onChange={setOpePeriod} ariaLabel="OPE period" />
           </div>
@@ -177,11 +177,11 @@ export default function CostProductivity() {
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["upph"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("upph")}`}>
+        <article ref={(node) => { chartRefs.current["upph"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("upph")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">UPPH</h2>
-              <p className="text-slate-500">units / person-hour • actual vs target</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">UPPH</h2>
+              <p className="text-slate-500 dark:text-slate-400">units / person-hour • actual vs target</p>
             </div>
             <ChartTimeTabs activeTab={upphPeriod} onChange={setUpphPeriod} ariaLabel="UPPH period" />
           </div>
@@ -200,11 +200,11 @@ export default function CostProductivity() {
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["ratio"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("ratio")}`}>
+        <article ref={(node) => { chartRefs.current["ratio"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("ratio")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Direct to Indirect Ratio</h2>
-              <p className="text-slate-500">Ratio (D:I) • monthly</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Direct to Indirect Ratio</h2>
+              <p className="text-slate-500 dark:text-slate-400">Ratio (D:I) • monthly</p>
             </div>
             <ChartTimeTabs activeTab={ratioPeriod} onChange={setRatioPeriod} ariaLabel="Ratio period" />
           </div>
@@ -222,11 +222,11 @@ export default function CostProductivity() {
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["intern"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("intern")}`}>
+        <article ref={(node) => { chartRefs.current["intern"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("intern")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Internship Rate</h2>
-              <p className="text-slate-500">% of workforce • vs cap 20%</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Internship Rate</h2>
+              <p className="text-slate-500 dark:text-slate-400">% of workforce • vs cap 20%</p>
             </div>
             <ChartTimeTabs activeTab={internPeriod} onChange={setInternPeriod} ariaLabel="Internship period" />
           </div>

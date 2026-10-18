@@ -57,14 +57,14 @@ export default function SafetyDashboard({ section = "overview", onNavigate }: { 
       <div className="pic-page">
         <div className="repair-header">
           <div><div className="repair-eyebrow">{meta.eyebrow}</div>
-          <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900">{meta.title}</h1></div>
+          <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{meta.title}</h1></div>
           <p>{meta.subtitle}</p></div>
           <div className="repair-actions"><button className="repair-outline" type="button">07 Oct 2026</button></div>
         </div>
-        <article className="bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60">
+        <article className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60">
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <h2 className="text-slate-900 font-semibold text-lg">No Data Available</h2>
-            <p className="text-slate-500 text-sm">Coming Soon — halaman GA Admin sedang disiapkan.</p>
+            <h2 className="text-slate-900 dark:text-slate-100 font-semibold text-lg">No Data Available</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Coming Soon — halaman GA Admin sedang disiapkan.</p>
           </div>
         </article>
       </div>
@@ -76,11 +76,11 @@ export default function SafetyDashboard({ section = "overview", onNavigate }: { 
       <div className="pic-page">
         <div className="repair-header">
           <div><div className="repair-eyebrow">{meta.eyebrow}</div>
-          <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900">{meta.title}</h1></div>
+          <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{meta.title}</h1></div>
           <p>{meta.subtitle}</p></div>
           <div className="repair-actions"><button className="repair-outline" type="button">07 Oct 2026</button></div>
         </div>
-        <article className="bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60">
+        <article className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60">
           <div className="repair-card-head"><div><h2>Data Source</h2><p>Sumber data dan waktu pembaruan terakhir</p></div></div>
           <div className="repair-table-scroll"><table className="repair-data-table pic-table">
             <thead><tr><th>Sumber</th><th>Metric</th><th>Terakhir Update</th></tr></thead>
@@ -103,7 +103,7 @@ export default function SafetyDashboard({ section = "overview", onNavigate }: { 
     <div className="pic-page">
       <div className="repair-header">
         <div><div className="repair-eyebrow">{meta.eyebrow}</div>
-        <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900">{meta.title}</h1></div>
+        <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{meta.title}</h1></div>
         <p>{meta.subtitle}</p></div>
         <div className="repair-actions">
           <button className="repair-outline" type="button">07 Oct 2026</button>

@@ -49,7 +49,7 @@ export default function PicAssemblyMonitoring({ module }: { module: AssemblyModu
         <div>
           <div className="repair-eyebrow">MORNING MEETING • PIC AREA • ASSEMBLY</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{isAssembly ? "Assembly Monitoring" : "Packaging Monitoring"}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{isAssembly ? "Assembly Monitoring" : "Packaging Monitoring"}</h1>
           </div>
           <p>{isAssembly ? "Output, cycle time, dan plan vs actual Line Assembly 01 - 07." : "Output line packing, sealing, dan boxing vs plan."}</p>
         </div>

@@ -19,7 +19,7 @@ function Header({ onNavigate }: { onNavigate: NavigateCost }) {
       <header className="qc-page-header">
         <div>
           <div className="qc-kicker">MORNING MEETING • COST AREA</div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Cost Meeting Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight">Cost Meeting Dashboard</h1>
         </div>
         <div className="qc-toolbar">
           <div className="qc-live">

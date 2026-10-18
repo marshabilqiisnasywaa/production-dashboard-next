@@ -54,7 +54,7 @@ export function AbnormalityBoard({ records, addRecord, picName, areaOptions, def
   const [preview, setPreview] = useState<PicRepairRecord | null>(null);
 
   const summary = useMemo(() => ([
-    { label: "Total Abnormality", value: String(records.length), helper: "Total recorded cases", tone: "total", icon: FileText, iconBox: "text-slate-900 bg-slate-100/60 border border-slate-200/50 backdrop-blur-sm" },
+    { label: "Total Abnormality", value: String(records.length), helper: "Total recorded cases", tone: "total", icon: FileText, iconBox: "text-slate-900 dark:text-slate-100 bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200/50 backdrop-blur-sm" },
     { label: "Open", value: String(records.filter((item) => item.status === "Open").length), helper: "Requires attention", tone: "open", icon: AlertCircle, iconBox: "text-red-600 bg-red-100/60 border border-red-200/50 backdrop-blur-sm" },
     { label: "In Progress", value: String(records.filter((item) => item.status === "In Progress").length), helper: "Under action", tone: "progress", icon: Clock, iconBox: "text-amber-600 bg-amber-100/60 border border-amber-200/50 backdrop-blur-sm" },
     { label: "Resolved", value: String(records.filter((item) => item.status === "Resolved").length), helper: "Completed", tone: "resolved", icon: CheckCircle2, iconBox: "text-emerald-600 bg-emerald-100/60 border border-emerald-200/50 backdrop-blur-sm" },
@@ -68,7 +68,7 @@ export function AbnormalityBoard({ records, addRecord, picName, areaOptions, def
   };
 
   const metricValueClass: Record<string, string> = {
-    total: "text-slate-900 font-bold!",
+    total: "text-slate-900 dark:text-slate-100 font-bold!",
     open: "text-red-600 font-bold!",
     progress: "text-amber-600 font-bold!",
     resolved: "text-emerald-600 font-bold!",
@@ -144,7 +144,7 @@ export function AbnormalityBoard({ records, addRecord, picName, areaOptions, def
       <header className="qc-page-header">
         <div>
           <div className="qc-kicker">{kicker}</div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Abnormality Log</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Abnormality Log</h1>
           <p>{description}</p>
         </div>
         <div className="qc-toolbar">

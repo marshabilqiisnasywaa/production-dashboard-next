@@ -50,11 +50,11 @@ function ChartShell({ title, subtitle, period, onPeriod, labels, onLabels, child
   children: ReactNode;
 }) {
   return (
-    <article className="bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl p-5 shadow-xs">
+    <article className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-2xl p-5 shadow-xs">
       <div className="repair-card-head">
         <div><h2>{title}</h2><p>{subtitle}</p></div>
         <div className="flex items-center justify-end gap-4">
-          <label className="label-toggle flex items-center gap-2 text-xs text-slate-500 font-medium">
+          <label className="label-toggle flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <input type="checkbox" checked={labels} onChange={(event) => onLabels(event.target.checked)} /><span />Show labels
           </label>
           <PeriodControl value={period} onChange={onPeriod} />
@@ -220,7 +220,7 @@ export default function PicQcMonitoring({ module }: QcMonitoringProps) {
         <div>
           <div className="repair-eyebrow">MONITORING • DEEP DIVE</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{module} Monitoring</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{module} Monitoring</h1>
           </div>
           <p>Acceptance and defect monitoring with daily trend for {module} area.</p>
         </div>
@@ -232,19 +232,19 @@ export default function PicQcMonitoring({ module }: QcMonitoringProps) {
         </div>
       </div>
 
-      <article className="bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200 w-full max-w-[420px]">
+      <article className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200 w-full max-w-[420px]">
         <div className="flex justify-between items-start">
           <div>
             <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{module} RATE</div>
-            <div className="text-3xl font-semibold text-slate-900 tracking-tight">{acc.toFixed(1)}%</div>
+            <div className="text-3xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight">{acc.toFixed(1)}%</div>
             <div className="text-xs font-semibold text-emerald-600 mt-2">{trend >= 0 ? "↑" : "↓"} {Math.abs(trend).toFixed(2)} pp vs prev period</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
             <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-0.5 rounded-full text-[11px] font-semibold mb-3 inline-block">{good ? "On Target" : "Off Target"}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 4, textAlign: "right" }}>
-              <div className="text-xs text-gray-500">Total Sample : <span className="font-bold text-slate-900">{dataDef.totalSample.toLocaleString("en-US")} units</span></div>
-              <div className="text-xs text-gray-500">Actual NG : <span className="font-bold text-red-600">{ngCount} units</span></div>
-              <div className="text-xs text-gray-500">NG Rate : <span className="font-bold text-red-600">{ng.toFixed(1)}%</span></div>
+              <div className="text-xs text-gray-500 dark:text-slate-400">Total Sample : <span className="font-bold text-slate-900 dark:text-slate-100">{dataDef.totalSample.toLocaleString("en-US")} units</span></div>
+              <div className="text-xs text-gray-500 dark:text-slate-400">Actual NG : <span className="font-bold text-red-600">{ngCount} units</span></div>
+              <div className="text-xs text-gray-500 dark:text-slate-400">NG Rate : <span className="font-bold text-red-600">{ng.toFixed(1)}%</span></div>
             </div>
           </div>
         </div>

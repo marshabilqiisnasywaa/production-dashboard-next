@@ -90,31 +90,31 @@ export default function SidebarNav({
                       {item.key === "safety-area-monitoring" ? (
                         <>
                           {item.children.filter((child) => ["safety-monitoring"].includes(child.key)).map((child) => (
-                            <button key={child.key} className={`text-xs font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
+                            <button key={child.key} className={`text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
                           ))}
                           {item.children.filter((child) => ["safety-isc"].includes(child.key)).map((child) => (
-                            <button key={child.key} className={`text-xs font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
+                            <button key={child.key} className={`text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
                           ))}
                           {item.children.filter((child) => ["safety-ga-admin"].includes(child.key)).map((child) => (
-                            <button key={child.key} className={`text-xs font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
+                            <button key={child.key} className={`text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
                           ))}
                         </>
                       ) : item.key === "cost-area-monitoring" ? (
                         <>
                           {item.children.filter((child) => ["cost-overview", "cost-productivity", "cost-manpower-hours"].includes(child.key)).map((child) => (
-                            <button key={child.key} className={`text-xs font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
+                            <button key={child.key} className={`text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
                           ))}
                           <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-4 pt-3 pb-1 select-none pointer-events-none">Cost</p>
                           {item.children.filter((child) => ["cost-breakdown"].includes(child.key)).map((child) => (
-                            <button key={child.key} className={`text-xs font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
+                            <button key={child.key} className={`text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
                           ))}
                           <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-4 pt-3 pb-1 select-none pointer-events-none">Finish Good</p>
                           {item.children.filter((child) => ["cost-finish-good"].includes(child.key)).map((child) => (
-                            <button key={child.key} className={`text-xs font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
+                            <button key={child.key} className={`text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
                           ))}
                           <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-4 pt-3 pb-1 select-none pointer-events-none">Data</p>
                           {item.children.filter((child) => ["cost-data-source"].includes(child.key)).map((child) => (
-                            <button key={child.key} className={`text-xs font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
+                            <button key={child.key} className={`text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-700 hover:bg-emerald-50/60 pl-6 pr-3 py-1.5 rounded-lg transition-all ${child.currentWhenActive !== false && child.key === active ? "current" : ""}`} onClick={() => onSelect(child.key)}>{child.label}</button>
                           ))}
                         </>
                       ) : (

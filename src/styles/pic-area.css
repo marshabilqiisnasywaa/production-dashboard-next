@@ -64,3 +64,5 @@
 .pic-qc-glass .repair-panel { background: rgba(255,255,255,.8); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-color: rgba(255,255,255,.6); border-radius: 16px; box-shadow: 0 1px 2px 0 rgb(0 0 0/.05); }
 .abnormality-page .sq-kpi:hover,
 .pic-page .sq-kpi:hover { transform: none; border-color: transparent; }
+
+.dark .pic-qc-glass .repair-panel{background:rgba(17,24,39,.72);border-color:rgba(255,255,255,.08);box-shadow:none}

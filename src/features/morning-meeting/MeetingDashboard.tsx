@@ -123,7 +123,7 @@ export default function MeetingDashboard({ section = "overview", onNavigate }: {
         <div>
           <div className="repair-eyebrow">MORNING MEETING • PIC AREA • COST</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{meta.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{meta.title}</h1>
           </div>
           <p>{meta.subtitle}</p>
         </div>
@@ -138,7 +138,7 @@ export default function MeetingDashboard({ section = "overview", onNavigate }: {
           const good = isOnTarget(card.value, card.target, card.higherIsBetter ? "higher" : "lower");
           const active = selected === card.id;
           return (
-            <article className="repair-kpi pic-kpi bg-white! border border-gray-200/80!" key={card.id} style={active ? { borderColor: "var(--accent-1)" } : undefined}>
+            <article className="repair-kpi pic-kpi bg-white dark:bg-slate-900! border border-gray-200/80!" key={card.id} style={active ? { borderColor: "var(--accent-1)" } : undefined}>
               <div className="repair-kpi-top"><span>{card.name}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? "On Target" : "Off Target"}</span></div>
               <strong>{card.display} <small>{card.unit}</small></strong>
               <p>{card.subtext}</p>
@@ -257,8 +257,8 @@ export default function MeetingDashboard({ section = "overview", onNavigate }: {
         <>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Safety</h2>
-              <p className="text-slate-500">KPI safety area Cost: battery, incident, information, dan material.</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Safety</h2>
+              <p className="text-slate-500 dark:text-slate-400">KPI safety area Cost: battery, incident, information, dan material.</p>
             </div>
           </div>
           <div className="repair-kpis">

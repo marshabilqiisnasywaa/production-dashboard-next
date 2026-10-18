@@ -70,7 +70,7 @@ function DailyTrend({ title, subtitle, series, target }: { title: string; subtit
   });
   return (
     <article className="repair-panel">
-      <div className="repair-card-head"><div><h2>{title}</h2><p>{subtitle}</p></div><div className="flex items-center justify-end gap-4"><PeriodControl value={period} onChange={setPeriod} /></div></div>
+      <div className="repair-card-head"><div><h2>{title}</h2><p>{subtitle}</p></div><div className="flex items-center justify-end gap-3"><PeriodControl value={period} onChange={setPeriod} /></div></div>
       <div className="warranty-chart">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
@@ -99,7 +99,7 @@ function PreassemblyDeepDive() {
         <div>
           <div className="repair-eyebrow">MONITORING • DEEP DIVE</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Pre-Assembly</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Pre-Assembly</h1>
           </div>
           <p>Metric operasional dan tren histori harian area Pre-assembly.</p>
         </div>

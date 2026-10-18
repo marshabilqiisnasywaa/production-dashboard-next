@@ -174,9 +174,9 @@ export default function CostFinishGood() {
         <div>
           <div className="repair-eyebrow">MONITORING • COST • FINISH GOOD</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Finish Good Production</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Finish Good Production</h1>
           </div>
-          <p className="text-slate-500">Output finish good per brand, line, dan model area Cost.</p>
+          <p className="text-slate-500 dark:text-slate-400">Output finish good per brand, line, dan model area Cost.</p>
         </div>
         <div className="repair-actions">
           <CustomSelect value={fiscal} options={["FY2026 - Q1", "FY2026 - Q2", "FY2026 - Q3", "FY2026 - Q4"]} onChange={setFiscal} ariaLabel="Filter fiscal period" />
@@ -192,11 +192,11 @@ export default function CostFinishGood() {
       </div>
 
       <div className="repair-charts">
-        <article ref={(node) => { chartRefs.current["trend"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("trend")}`}>
+        <article ref={(node) => { chartRefs.current["trend"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("trend")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Trend Finishgood</h2>
-              <p className="text-slate-500">total units - monthly</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Trend Finishgood</h2>
+              <p className="text-slate-500 dark:text-slate-400">total units - monthly</p>
             </div>
             <ChartTimeTabs activeTab={trendPeriod} onChange={setTrendPeriod} ariaLabel="Finishgood trend period" />
           </div>
@@ -214,11 +214,11 @@ export default function CostFinishGood() {
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["brand"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("brand")}`}>
+        <article ref={(node) => { chartRefs.current["brand"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("brand")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Finishgood By Brand</h2>
-              <p className="text-slate-500">share</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Finishgood By Brand</h2>
+              <p className="text-slate-500 dark:text-slate-400">share</p>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -235,27 +235,27 @@ export default function CostFinishGood() {
               </div>
               <div className="absolute inset-0 grid place-items-center pointer-events-none">
                 <div className="text-center">
-                  <strong className="block text-slate-900 text-xl font-semibold">43,612</strong>
-                  <small className="text-slate-500 text-xs">Total units</small>
+                  <strong className="block text-slate-900 dark:text-slate-100 text-xl font-semibold">43,612</strong>
+                  <small className="text-slate-500 dark:text-slate-400 text-xs">Total units</small>
                 </div>
               </div>
             </div>
             <ul className="w-full sm:w-44 grid gap-2">
               {brandShare.map((entry) => (
                 <li key={entry.name} className="flex items-center justify-between gap-2 text-xs">
-                  <span className="inline-flex items-center gap-2 text-slate-500"><i className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: entry.color }} />{entry.name}</span>
-                  <b className="text-slate-900 font-semibold">{entry.value.toLocaleString("en-US")} ({Math.round(entry.value / brandTotal * 100)}%)</b>
+                  <span className="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400"><i className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: entry.color }} />{entry.name}</span>
+                  <b className="text-slate-900 dark:text-slate-100 font-semibold">{entry.value.toLocaleString("en-US")} ({Math.round(entry.value / brandTotal * 100)}%)</b>
                 </li>
               ))}
             </ul>
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["line"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("line")}`}>
+        <article ref={(node) => { chartRefs.current["line"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("line")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Finishgood Per Line</h2>
-              <p className="text-slate-500">by work order type</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Finishgood Per Line</h2>
+              <p className="text-slate-500 dark:text-slate-400">by work order type</p>
             </div>
             <ChartTimeTabs activeTab={linePeriod} onChange={setLinePeriod} ariaLabel="Per line period" />
           </div>
@@ -274,19 +274,19 @@ export default function CostFinishGood() {
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["models"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("models")}`}>
+        <article ref={(node) => { chartRefs.current["models"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("models")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Top 10 By Model</h2>
-              <p className="text-slate-500">units</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Top 10 By Model</h2>
+              <p className="text-slate-500 dark:text-slate-400">units</p>
             </div>
           </div>
           <div className="grid gap-2.5">
             {topModels.map((row, index) => (
               <div key={row.name}>
                 <div className="flex items-center justify-between gap-2 text-xs">
-                  <span className="text-slate-500 font-medium">{row.name}</span>
-                  <b className="text-slate-900 font-semibold">{row.value.toLocaleString("en-US")}</b>
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">{row.name}</span>
+                  <b className="text-slate-900 dark:text-slate-100 font-semibold">{row.value.toLocaleString("en-US")}</b>
                 </div>
                 <div className="pic-progress large"><i style={{ width: `${row.value / topMax * 100}%`, background: index % 2 === 0 ? EMERALD : AMBER }} /><span>{row.value.toLocaleString("en-US")}</span></div>
               </div>
@@ -295,11 +295,11 @@ export default function CostFinishGood() {
         </article>
       </div>
 
-      <article className="bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60">
+      <article className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60">
         <div className="repair-card-head">
           <div>
-            <h2 className="text-slate-900 font-semibold">Detailed Data Finishgood</h2>
-            <p className="text-slate-500">120 records • daily work orders</p>
+            <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Detailed Data Finishgood</h2>
+            <p className="text-slate-500 dark:text-slate-400">120 records • daily work orders</p>
           </div>
         </div>
         <DataTable

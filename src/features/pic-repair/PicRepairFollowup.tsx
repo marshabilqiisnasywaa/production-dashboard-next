@@ -12,7 +12,7 @@ const activeOptions: PicRepairStatus[] = ["Open", "In Progress"];
 const dueBadgeClass: Record<DueTone, string> = {
   overdue: "border border-red-300 bg-red-50/50 text-red-600 font-medium",
   warn: "border border-amber-300 bg-amber-50/50 text-amber-700 font-medium",
-  safe: "border border-gray-200 bg-gray-50 text-gray-600 font-normal",
+  safe: "border border-gray-200 bg-gray-50 text-gray-600 dark:text-slate-400 font-normal",
 };
 
 function formatDueDate(iso: string) {
@@ -179,7 +179,7 @@ export function FollowupBoard({ records, updateRecord, sourceLabel = "Abnormalit
                         <td><p className="pic-clamp">{item.problem}</p></td>
                         <td><p className="pic-clamp">{item.countermeasure}</p></td>
                         <td>
-                          <div className="text-xs text-gray-500">{formatDueDate(item.dueDate)}</div>
+                          <div className="text-xs text-gray-500 dark:text-slate-400">{formatDueDate(item.dueDate)}</div>
                           <span className={`mt-1 inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs ${dueBadgeClass[due.tone]}`}>{due.label}</span>
                         </td>
                         <td>

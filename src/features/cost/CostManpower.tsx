@@ -139,9 +139,9 @@ export default function CostManpower() {
         <div>
           <div className="repair-eyebrow">MONITORING • COST • MANPOWER & HOURS</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Manpower & Hours</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Manpower & Hours</h1>
           </div>
-          <p className="text-slate-500">Headcount direct-indirect, jam kerja, dan lembur area Cost.</p>
+          <p className="text-slate-500 dark:text-slate-400">Headcount direct-indirect, jam kerja, dan lembur area Cost.</p>
         </div>
         <div className="repair-actions">
           <CustomSelect value={fiscal} options={["FY2026 - Q1", "FY2026 - Q2", "FY2026 - Q3", "FY2026 - Q4"]} onChange={setFiscal} ariaLabel="Filter fiscal period" />
@@ -157,11 +157,11 @@ export default function CostManpower() {
       </div>
 
       <div className="repair-charts">
-        <article ref={(node) => { chartRefs.current["trend"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("trend")}`}>
+        <article ref={(node) => { chartRefs.current["trend"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("trend")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Manpower Trend</h2>
-              <p className="text-slate-500">headcount • direct vs indirect</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Manpower Trend</h2>
+              <p className="text-slate-500 dark:text-slate-400">headcount • direct vs indirect</p>
             </div>
             <ChartTimeTabs activeTab={trendPeriod} onChange={setTrendPeriod} ariaLabel="Manpower trend period" />
           </div>
@@ -180,11 +180,11 @@ export default function CostManpower() {
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["hours"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("hours")}`}>
+        <article ref={(node) => { chartRefs.current["hours"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("hours")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Working Hours</h2>
-              <p className="text-slate-500">thousand hours • per period</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Working Hours</h2>
+              <p className="text-slate-500 dark:text-slate-400">thousand hours • per period</p>
             </div>
             <ChartTimeTabs activeTab={hoursPeriod} onChange={setHoursPeriod} ariaLabel="Working hours period" />
           </div>
@@ -202,11 +202,11 @@ export default function CostManpower() {
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["overtime"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("overtime")}`}>
+        <article ref={(node) => { chartRefs.current["overtime"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("overtime")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Overtime Rate</h2>
-              <p className="text-slate-500">% of total hours • vs limit 12%</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Overtime Rate</h2>
+              <p className="text-slate-500 dark:text-slate-400">% of total hours • vs limit 12%</p>
             </div>
             <ChartTimeTabs activeTab={overtimePeriod} onChange={setOvertimePeriod} ariaLabel="Overtime period" />
           </div>
@@ -225,19 +225,19 @@ export default function CostManpower() {
           </div>
         </article>
 
-        <article ref={(node) => { chartRefs.current["docs"] = node; }} className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60${chartRing("docs")}`}>
+        <article ref={(node) => { chartRefs.current["docs"] = node; }} className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60${chartRing("docs")}`}>
           <div className="repair-card-head">
             <div>
-              <h2 className="text-slate-900 font-semibold">Document Additional Manpower</h2>
-              <p className="text-slate-500">headcount by type</p>
+              <h2 className="text-slate-900 dark:text-slate-100 font-semibold">Document Additional Manpower</h2>
+              <p className="text-slate-500 dark:text-slate-400">headcount by type</p>
             </div>
           </div>
           <div className="grid gap-3">
             {docRows.map((row) => (
               <div key={row.name}>
                 <div className="flex items-center justify-between gap-2 text-xs">
-                  <span className="text-slate-500 font-medium">{row.name}</span>
-                  <b className="text-slate-900 font-semibold">{row.value}</b>
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">{row.name}</span>
+                  <b className="text-slate-900 dark:text-slate-100 font-semibold">{row.value}</b>
                 </div>
                 <div className="pic-progress large"><i style={{ width: `${row.value / docMax * 100}%`, background: row.color }} /><span>{row.value}</span></div>
               </div>

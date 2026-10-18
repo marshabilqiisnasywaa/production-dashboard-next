@@ -117,7 +117,7 @@ export function MetricChart({ id, title, values, target, direction, domain, yFor
     target: flatTarget,
   }));
   return <article id={`chart-${id}`} className={`repair-panel metric-chart ${full ? "wide" : ""}`}>
-    <div className="repair-card-head"><div><h2>{title}</h2><p>Actual performance vs target • 2025</p></div><div className="flex items-center justify-end gap-4"><label className="label-toggle flex items-center gap-2 text-xs text-slate-500 font-medium"><input type="checkbox" checked={labels} onChange={(event) => setLabels(event.target.checked)}/><span/>Show labels</label><PeriodControl value={period} onChange={setPeriod} /></div></div>
+    <div className="repair-card-head"><div><h2>{title}</h2><p>Actual performance vs target • 2025</p></div><div className="flex items-center justify-end gap-4"><label className="label-toggle flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium"><input type="checkbox" checked={labels} onChange={(event) => setLabels(event.target.checked)}/><span/>Show labels</label><PeriodControl value={period} onChange={setPeriod} /></div></div>
     <div className="line-chart-wrap">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 18, right: 18, left: 6, bottom: 8 }}>
