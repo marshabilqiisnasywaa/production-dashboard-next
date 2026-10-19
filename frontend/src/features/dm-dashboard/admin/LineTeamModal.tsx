@@ -374,7 +374,7 @@ export default function LineTeamModal({
               </section>
 
               {/* MPV Direction Card */}
-              <div
+              {/* <div
                 style={{
                   padding: "12px 16px",
                   background: "#fefce8",
@@ -417,7 +417,7 @@ export default function LineTeamModal({
                     Buka Tab MPV →
                   </button>
                 )}
-              </div>
+              </div> */}
             </>
           )}
         </div>

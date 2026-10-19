@@ -46,7 +46,7 @@ export function MemberHeader() {
     .toUpperCase() || "MB";
 
   const dept = user?.dept || "PROD";
-  const lineName = user?.line?.name || "Line 1";
+  const lineName = user?.line?.name || "Lini belum diatur";
 
   return (
     <header className="dml-header">

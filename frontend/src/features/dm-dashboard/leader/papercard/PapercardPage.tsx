@@ -13,7 +13,6 @@ import { usePapercardForm } from "./hooks/usePapercardForm";
 import { LEADER_TEMPLATE, PAPERCARD_CONFIG, PAPERCARD_LINES } from "./mockTemplate";
 import type { Answer, ChecklistCategory, ChecklistTemplate, Submission } from "./types";
 import { formatDateId } from "./utils";
-import { LEADER_USER } from "../mockData";
 import { accountApi, papercardApi } from "../../api";
 import type { DmMe, DmPapercardSubmission } from "../../api";
 
@@ -231,7 +230,7 @@ export default function PapercardPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const supervisorName = currentUser?.supervisor || LEADER_USER.supervisor.name;
+  const supervisorName = currentUser?.supervisor || "Belum diatur admin";
   const lineDisplayName = currentUser?.line?.name || `Line ${line}`;
 
   return (
@@ -252,7 +251,7 @@ export default function PapercardPage() {
         lines={PAPERCARD_LINES}
         line={lineDisplayName.replace(/^Line\s+/i, "")}
         onLineChange={() => {}}
-        leader={`${currentUser?.name || LEADER_USER.name} (Leader PROD)`}
+        leader={`${currentUser?.name || "Leader"} (Leader PROD)`}
         shift={PAPERCARD_CONFIG.shift}
         date={win.now ? formatDateId(win.now) : ""}
         lineLocked={true}

@@ -82,6 +82,11 @@ export function MemberTeamSection({
       </div>
 
       {/* 4 Compact Team Member Cards */}
+      {topTeamMembers.length === 0 && (
+        <div style={{ fontSize: "12.5px", color: "#94a3b8", fontStyle: "italic", textAlign: "center", padding: "20px 0" }}>
+          Belum ada member di lini ini yang diatur admin.
+        </div>
+      )}
       <div className="member-team__grid">
         {topTeamMembers.map((member) => {
           const isCurrentUser = member.employeeNo === currentUsername || member.name === currentName;
@@ -167,7 +172,7 @@ export function MemberTeamSection({
       </div>
 
       {/* MPV of the Month (Compact 1-row banner) */}
-      {mpvTeamMember && (
+      {/* {mpvTeamMember && (
         <div className="member-mpv-banner">
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "16px" }}>🏆</span>
@@ -185,7 +190,7 @@ export function MemberTeamSection({
             Teladan Bulan Ini
           </span>
         </div>
-      )}
+      )} */}
     </section>
   );
 }

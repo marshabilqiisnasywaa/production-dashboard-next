@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { IconAlert, IconCheckCircle, IconClipboardCheck } from "@/components/ui/icons";
 import type { DmPapercardSubmission } from "../../api";
-import { LEADER_USER } from "../mockData";
 import { LEADER_ROUTES } from "../routes";
 
 export interface LeaderPapercardStatusCardProps {
@@ -15,7 +14,7 @@ export interface LeaderPapercardStatusCardProps {
 
 export function LeaderPapercardStatusCard({
   submission,
-  supervisorName = LEADER_USER.supervisor.name,
+  supervisorName = "Belum diatur admin",
   loading = false,
 }: LeaderPapercardStatusCardProps) {
   const isSubmitted = Boolean(submission);

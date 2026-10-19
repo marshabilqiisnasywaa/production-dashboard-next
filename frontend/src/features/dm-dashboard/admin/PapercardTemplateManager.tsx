@@ -45,8 +45,8 @@ const EMPTY_TEMPLATE: DepartmentTemplate = {
   dept: "PROD",
   name: "Papercard Departemen",
   version: "v1.0",
-  windowStart: "07:30",
-  windowEnd: "08:15",
+  windowStart: "08:00",
+  windowEnd: "09:00",
   okRule: "OK jika seluruh item normal sesuai standar SOP.",
   ngRule: "NG jika ada deviasi atau abnormalitas. Wajib isi alasan perbaikan.",
   categories: [],
@@ -758,7 +758,7 @@ export default function PapercardTemplateManager({
                   value={activeTemplate.windowStart}
                   onChange={(e) => handleUpdateTemplateMeta({ windowStart: e.target.value })}
                   className="ptm-input ptm-time-input"
-                  placeholder="07:30"
+                  placeholder="08:00"
                 />
                 <span style={{ color: "#94a3b8", fontSize: "12px" }}>s/d</span>
                 <input
@@ -766,7 +766,7 @@ export default function PapercardTemplateManager({
                   value={activeTemplate.windowEnd}
                   onChange={(e) => handleUpdateTemplateMeta({ windowEnd: e.target.value })}
                   className="ptm-input ptm-time-input"
-                  placeholder="08:15"
+                  placeholder="09:00"
                 />
                 <span style={{ fontSize: "11px", color: "#64748b" }}>WIB</span>
               </div>

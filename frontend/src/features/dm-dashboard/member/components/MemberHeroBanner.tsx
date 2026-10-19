@@ -64,7 +64,7 @@ export function MemberHeroBanner({
       </div>
 
       {/* Right Info: Presensi Status */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+      {/* <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         <div
           className="member-hero__presensi"
           style={{
@@ -83,7 +83,7 @@ export function MemberHeroBanner({
           <IconCheckCircle size={15} />
           <span>Presensi DM: Hadir (Shift 1)</span>
         </div>
-      </div>
+      </div> */}
     </section>
   );
 }

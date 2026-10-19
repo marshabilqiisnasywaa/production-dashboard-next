@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { IconBell, IconLogout } from "@/components/ui/icons";
-import { LEADER_USER } from "../mockData";
 import { accountApi, setToken } from "../../api";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -38,7 +37,7 @@ export function LeaderHeader() {
     ? now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
     : "";
 
-  const displayName = userName || LEADER_USER.name;
+  const displayName = userName || "Leader";
   const initials = displayName
     .split(" ")
     .map((n) => n[0])

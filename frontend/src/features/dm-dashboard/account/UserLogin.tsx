@@ -126,9 +126,9 @@ export default function UserLogin() {
                 onClick={() => {
                   setNik(acc.nik);
                   if (acc.nik === "admin") setPassword("admin123");
-                  else if (acc.nik === "S223433") setPassword("S223433");
-                  else if (acc.nik === "S009898") setPassword("S009898");
-                  else if (acc.nik === "009878") setPassword("009878");
+                  else if (acc.nik === "S223433") setPassword("11111111");
+                  else if (acc.nik === "S009898") setPassword("11111111");
+                  else if (acc.nik === "009878") setPassword("11111111");
                 }}
                 style={{
                   padding: "4px 8px",

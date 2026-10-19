@@ -20,11 +20,6 @@ import type { DepartmentKey } from "../../leader/types";
 import { accountApi, papercardApi } from "../../api";
 import type { DmMe, DmPapercardSubmission } from "../../api";
 
-import {
-  DEFAULT_MEMBER_USER,
-  MEMBER_DEPARTMENT_TEMPLATES,
-} from "./mockPresets";
-
 const EMPTY_MEMBER_TEMPLATE: ChecklistTemplate = {
   id: "0",
   version: 1,
@@ -84,7 +79,14 @@ export default function MemberPapercardPage({
   }, []);
 
   const activeProfile = useMemo(() => {
-    if (!currentUser) return DEFAULT_MEMBER_USER;
+    if (!currentUser) {
+      return {
+        name: "Member",
+        deptLabel: "Departemen belum diatur",
+        lineName: "Lini belum diatur",
+        supervisor: { name: "Belum diatur admin" },
+      };
+    }
     const dept = (currentUser.dept as DepartmentKey) || selectedDept;
     const deptLabel =
       dept === "ME"
@@ -103,10 +105,10 @@ export default function MemberPapercardPage({
       dept,
       deptLabel,
       line: currentUser.line?.code || line,
-      lineName: currentUser.line?.name || `Line ${effectiveLineId}`,
-      workshop: currentUser.line?.workshopName || "Assembly Workshop",
+      lineName: currentUser.line?.name || "Lini belum diatur",
+      workshop: currentUser.line?.workshopName || "Workshop belum diatur",
       supervisor: {
-        name: currentUser.supervisor || DEFAULT_MEMBER_USER.supervisor.name,
+        name: currentUser.supervisor || "Belum diatur admin",
         employeeId: "SPV-019",
         role: "Supervisor Lini",
       },

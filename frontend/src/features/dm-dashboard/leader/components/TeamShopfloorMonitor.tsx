@@ -2,7 +2,6 @@
 
 import { IconAlert, IconCheckCircle } from "@/components/ui/icons";
 import type { DmPapercardSubmission } from "../../api";
-import { LEADER_USER, LINE_TEAM_MEMBERS } from "../mockData";
 import type { TeamMember } from "../types";
 
 export interface TeamShopfloorMonitorProps {
@@ -14,17 +13,17 @@ export interface TeamShopfloorMonitorProps {
 }
 
 const DEPTS = [
-  { key: "PROD", label: "Produksi", defaultName: "Budi Santoso", defaultPosition: "Senior Operator" },
-  { key: "ME", label: "Maintenance", defaultName: "Reza Pratama", defaultPosition: "ME Technician" },
-  { key: "PE", label: "Process Eng", defaultName: "Maulana I. Arif", defaultPosition: "PE Technician" },
-  { key: "QC", label: "Quality Control", defaultName: "Siti Rahma", defaultPosition: "IPQC Inspector" },
+  { key: "PROD", label: "Produksi" },
+  { key: "ME", label: "Maintenance" },
+  { key: "PE", label: "Process Eng" },
+  { key: "QC", label: "Quality Control" },
 ];
 
 export function TeamShopfloorMonitor({
   submissions = [],
-  teamMembers = LINE_TEAM_MEMBERS,
-  supervisorName = LEADER_USER.supervisor.name,
-  lineName = LEADER_USER.lineName,
+  teamMembers = [],
+  supervisorName = "Belum diatur admin",
+  lineName = "Lini belum diatur",
   loading = false,
 }: TeamShopfloorMonitorProps) {
   // Compute summary stats
@@ -35,7 +34,7 @@ export function TeamShopfloorMonitor({
   DEPTS.forEach((d) => {
     const sub = submissions.find((s) => s.department === d.key);
     if (!sub) {
-      pendingCount++;
+      if (teamMembers.some((m) => m.dept === d.key)) pendingCount++;
     } else if (sub.status === "NG") {
       ngCount++;
     } else {
@@ -74,13 +73,26 @@ export function TeamShopfloorMonitor({
           const sub = submissions.find((s) => s.department === d.key);
           const member = teamMembers.find((m) => m.dept === d.key && m.role !== "leader") || teamMembers.find((m) => m.dept === d.key);
 
+          if (!sub && !member) {
+            return (
+              <div key={d.key} className="dms-member-card">
+                <div className="dms-member-top">
+                  <span className={`dms-dept-badge dms-dept-badge--${d.key}`}>
+                    {d.key}
+                  </span>
+                </div>
+                <p className="dms-section-desc">Belum ada anggota tim {d.label}.</p>
+              </div>
+            );
+          }
+
           const isSubmitted = Boolean(sub);
           const isOK = sub?.status === "OK";
           const isNG = sub?.status === "NG";
           const isPending = !isSubmitted;
 
-          const name = sub?.employeeName || member?.name || d.defaultName;
-          const position = member?.position || d.defaultPosition;
+          const name = sub?.employeeName || member?.name || d.label;
+          const position = member?.position || d.label;
           const initials = name
             .split(" ")
             .map((n) => n[0])

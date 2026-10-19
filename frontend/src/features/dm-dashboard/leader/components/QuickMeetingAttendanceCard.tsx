@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { IconCheckCircle, IconUsers } from "@/components/ui/icons";
 import type { DmMeetingSession } from "../../api";
-import { LINE_TEAM_MEMBERS } from "../mockData";
 import { LEADER_ROUTES } from "../routes";
 import type { TeamMember } from "../types";
 
@@ -15,7 +14,7 @@ export interface QuickMeetingAttendanceCardProps {
 
 export function QuickMeetingAttendanceCard({
   sessions = [],
-  members = LINE_TEAM_MEMBERS,
+  members = [],
   loading = false,
 }: QuickMeetingAttendanceCardProps) {
   if (loading) {

@@ -22,7 +22,7 @@ import { SessionTimeline } from "./components/SessionTimeline";
 import { TeamShopfloorMonitor } from "./components/TeamShopfloorMonitor";
 import { TimeCompositionCard } from "./components/TimeCompositionCard";
 import { useInspection } from "./hooks/useInspection";
-import { LEADER_USER, LINE_TEAM_MEMBERS, OTHER_KPIS, SESSIONS, TIME_SHARES } from "./mockData";
+import { OTHER_KPIS, SESSIONS, TIME_SHARES } from "./mockData";
 import type { DateRangeKey, TeamMember } from "./types";
 
 const KPI_ICON = {
@@ -40,7 +40,7 @@ export default function LeaderDashboardPage() {
   const [currentUser, setCurrentUser] = useState<DmMe | null>(null);
   const [todaySubmissions, setTodaySubmissions] = useState<DmPapercardSubmission[]>([]);
   const [todaySessions, setTodaySessions] = useState<DmMeetingSession[]>([]);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(LINE_TEAM_MEMBERS);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingUpper, setLoadingUpper] = useState(true);
 
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
@@ -112,7 +112,7 @@ export default function LeaderDashboardPage() {
                 setTeamMembers(mapped);
               }
             } catch {
-              // fallback remains LINE_TEAM_MEMBERS
+              // members stay empty
             }
           }
         }
@@ -149,11 +149,11 @@ export default function LeaderDashboardPage() {
     <div className="dms-container">
       {/* 1. Compact & Soft Hero Banner (Live DB) */}
       <HeroLeaderBanner
-        userName={currentUser?.name || LEADER_USER.name}
-        lineName={currentUser?.line?.name || LEADER_USER.lineName}
-        lineCode={currentUser?.line?.code || LEADER_USER.line}
-        workshopName={currentUser?.line?.workshopName || LEADER_USER.workshop}
-        supervisorName={currentUser?.supervisor || LEADER_USER.supervisor.name}
+        userName={currentUser?.name || "Leader"}
+        lineName={currentUser?.line?.name || "Lini belum diatur"}
+        lineCode={currentUser?.line?.code || "-"}
+        workshopName={currentUser?.line?.workshopName || "Workshop belum diatur"}
+        supervisorName={currentUser?.supervisor || "Belum diatur admin"}
         isPapercardSubmitted={Boolean(leaderSubmission)}
         completedSessionsCount={completedSessionsCount}
       />
@@ -162,7 +162,7 @@ export default function LeaderDashboardPage() {
       <div className="dms-dual-grid">
         <LeaderPapercardStatusCard
           submission={leaderSubmission}
-          supervisorName={currentUser?.supervisor || LEADER_USER.supervisor.name}
+          supervisorName={currentUser?.supervisor || "Belum diatur admin"}
           loading={loadingUpper}
         />
         <QuickMeetingAttendanceCard
@@ -176,8 +176,8 @@ export default function LeaderDashboardPage() {
       <TeamShopfloorMonitor
         submissions={todaySubmissions}
         teamMembers={teamMembers}
-        supervisorName={currentUser?.supervisor || LEADER_USER.supervisor.name}
-        lineName={currentUser?.line?.name || LEADER_USER.lineName}
+        supervisorName={currentUser?.supervisor || "Belum diatur admin"}
+        lineName={currentUser?.line?.name || "Lini belum diatur"}
         loading={loadingUpper}
       />
 

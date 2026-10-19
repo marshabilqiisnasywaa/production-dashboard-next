@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { IconClipboardCheck, IconUsers } from "@/components/ui/icons";
-import { LEADER_USER } from "../mockData";
 import { LEADER_ROUTES } from "../routes";
 
 export interface HeroLeaderBannerProps {
@@ -16,11 +15,11 @@ export interface HeroLeaderBannerProps {
 }
 
 export function HeroLeaderBanner({
-  userName = LEADER_USER.name,
-  lineName = LEADER_USER.lineName,
-  lineCode = LEADER_USER.line,
-  workshopName = LEADER_USER.workshop,
-  supervisorName = LEADER_USER.supervisor.name,
+  userName = "Leader",
+  lineName = "Lini belum diatur",
+  lineCode = "-",
+  workshopName = "Workshop belum diatur",
+  supervisorName = "Belum diatur admin",
   isPapercardSubmitted = false,
   completedSessionsCount = 0,
 }: HeroLeaderBannerProps) {

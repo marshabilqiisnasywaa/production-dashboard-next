@@ -16,13 +16,14 @@ import {
 import {
   accountApi,
   meetingApi,
+  papercardApi,
   publicApi,
   type DmMe,
   type DmMeetingAttendance,
   type DmMeetingSession,
   type DmMeetingSummary,
+  type DmPapercardSubmission,
 } from "../../api";
-import { LEADER_USER, LINE_TEAM_MEMBERS } from "../mockData";
 import { LEADER_ROUTES } from "../routes";
 import type { AttendanceStatus, TeamMember } from "../types";
 
@@ -61,7 +62,8 @@ const SESSION_META: Record<
 export default function LeaderMeetingPage() {
   const [currentUser, setCurrentUser] = useState<DmMe | null>(null);
   const [activeTab, setActiveTab] = useState<SessionTab>("during1");
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(LINE_TEAM_MEMBERS);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [ngSubmissions, setNgSubmissions] = useState<DmPapercardSubmission[]>([]);
   const [dbSessions, setDbSessions] = useState<DmMeetingSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
@@ -82,11 +84,7 @@ export default function LeaderMeetingPage() {
 
   // Summary Form Items in Modal (Problem, PIC, Due Date)
   const [summaryItems, setSummaryItems] = useState<SummaryFormItem[]>([
-    {
-      problem: "Suhu solder station #4 berfluktuasi (±15°C di atas SOP batas)",
-      picName: "Reza Pratama",
-      dueDate: "12:00 WIB",
-    },
+    { problem: "", picName: "", dueDate: "" },
   ]);
 
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
@@ -104,7 +102,7 @@ export default function LeaderMeetingPage() {
         if (me.line?.slug) {
           try {
             const board = await publicApi.board(me.line.slug);
-            if (board && board.members && board.members.length > 0) {
+            if (board && board.members) {
               const mapped: TeamMember[] = board.members.map((bm) => {
                 const memberName = bm.name || "Anggota Tim";
                 const initials = memberName
@@ -140,9 +138,12 @@ export default function LeaderMeetingPage() {
               setTeamMembers(mapped);
             }
           } catch {
-            // Keep LINE_TEAM_MEMBERS fallback
+            setTeamMembers([]);
           }
         }
+
+        const subs = await papercardApi.listSubmissions({ lineId, date: todayStr }).catch(() => []);
+        setNgSubmissions(subs.filter((s) => s.status === "NG"));
 
         // Load sessions from API
         const sessions = await meetingApi.listSessions(lineId, todayStr);
@@ -397,7 +398,7 @@ export default function LeaderMeetingPage() {
 
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span className="dms-pill dms-pill--supervisor" style={{ fontSize: "12px" }}>
-            Dilaporkan ke Supervisor: <strong>{LEADER_USER.supervisor.name}</strong>
+            Dilaporkan ke Supervisor: <strong>{currentUser?.supervisor || "Belum diatur admin"}</strong>
           </span>
           <span
             style={{
@@ -410,7 +411,7 @@ export default function LeaderMeetingPage() {
               fontWeight: 700,
             }}
           >
-            📍 {currentUser?.line?.name || "Line 1"} ({currentUser?.line?.code || "501"}) · Shift 1
+            📍 {currentUser?.line?.name || "Lini belum diatur"} ({currentUser?.line?.code || "-"}) · Shift 1
           </span>
         </div>
       </div>
@@ -446,7 +447,7 @@ export default function LeaderMeetingPage() {
               AKUN LEADER
             </span>
             <span style={{ fontSize: "12.5px", color: "#64748b" }}>
-              Pemimpin Sesi: <strong>{currentUser?.name || LEADER_USER.name}</strong>
+              Pemimpin Sesi: <strong>{currentUser?.name || "Leader"}</strong>
             </span>
           </div>
           <h1 style={{ fontSize: "22px", fontWeight: 800, margin: 0, color: "#0f172a" }}>
@@ -781,7 +782,7 @@ export default function LeaderMeetingPage() {
               <div>
                 <h2 className="dms-card-title">Presensi Anggota Tim Lini (Face ID)</h2>
                 <p className="dms-card-subtitle">
-                  Tingkat Kehadiran: <strong>{hadirCount} dari {teamMembers.length} Anggota ({Math.round((hadirCount / teamMembers.length) * 100)}%)</strong>
+                  Tingkat Kehadiran: <strong>{hadirCount} dari {teamMembers.length} Anggota ({teamMembers.length ? Math.round((hadirCount / teamMembers.length) * 100) : 0}%)</strong>
                 </p>
               </div>
             </div>
@@ -810,6 +811,11 @@ export default function LeaderMeetingPage() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {!loading && teamMembers.length === 0 && (
+              <div style={{ fontSize: "12.5px", color: "#94a3b8", fontStyle: "italic", textAlign: "center", padding: "24px 0" }}>
+                Belum ada member di lini ini. Minta admin menambahkan member lini terlebih dahulu.
+              </div>
+            )}
             {teamMembers.map((member) => (
               <div
                 key={member.id}
@@ -958,27 +964,35 @@ export default function LeaderMeetingPage() {
               </div>
             </div>
 
-            <div
-              style={{
-                padding: "12px 14px",
-                background: "#fff1f2",
-                border: "1px solid #ffe4e6",
-                borderRadius: "10px",
-                fontSize: "12.5px",
-                color: "#9f1239",
-                lineHeight: 1.5,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                <strong>ME Technician (Reza Pratama):</strong>
-                <span style={{ fontSize: "10.5px", fontWeight: 700, background: "#fecdd3", padding: "1px 6px", borderRadius: "4px" }}>
-                  STATUS NG
-                </span>
+            {ngSubmissions.length === 0 ? (
+              <div style={{ fontSize: "12.5px", color: "#94a3b8", fontStyle: "italic", textAlign: "center", padding: "16px 0" }}>
+                Tidak ada temuan abnormal pada papercard hari ini.
               </div>
-              <p style={{ margin: "2px 0 0" }}>
-                &ldquo;Suhu solder station #4 berfluktuasi (±15°C di atas SOP batas toleransi). Memerlukan kalibrasi thermocouple.&rdquo;
-              </p>
-            </div>
+            ) : (
+              ngSubmissions.map((sub) => (
+                <div
+                  key={sub.id}
+                  style={{
+                    padding: "12px 14px",
+                    background: "#fff1f2",
+                    border: "1px solid #ffe4e6",
+                    borderRadius: "10px",
+                    fontSize: "12.5px",
+                    color: "#9f1239",
+                    lineHeight: 1.5,
+                    marginBottom: "8px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                    <strong>{sub.department} ({sub.employeeName || "Tanpa nama"}):</strong>
+                    <span style={{ fontSize: "10.5px", fontWeight: 700, background: "#fecdd3", padding: "1px 6px", borderRadius: "4px" }}>
+                      STATUS NG
+                    </span>
+                  </div>
+                  <p style={{ margin: "2px 0 0" }}>{sub.abnormalNotes || "Tidak ada catatan temuan."}</p>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Action Items List recorded in this session */}

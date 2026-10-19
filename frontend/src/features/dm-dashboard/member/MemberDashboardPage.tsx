@@ -9,11 +9,6 @@ import { accountApi, papercardApi, publicApi, setToken } from "../api";
 import type { DmMe, DmPapercardSubmission } from "../api";
 import type { DmBoard } from "../dmData";
 import type { DepartmentKey } from "../leader/types";
-import {
-  DEFAULT_MEMBER_USER,
-  FALLBACK_TEAM_MEMBERS,
-  FALLBACK_MPV_MEMBER,
-} from "./papercard/mockPresets";
 import MemberPapercardPage from "./papercard/MemberPapercardPage";
 
 // Modular Subcomponents
@@ -117,36 +112,30 @@ export default function MemberDashboardPage({ initialTab = "dashboard" }: Member
 
   // 2. Active Profile with clean fallback
   const activeProfile = useMemo(() => {
-    if (!currentUser) return DEFAULT_MEMBER_USER;
+    const deptLabel =
+      selectedDept === "ME"
+        ? "Maintenance"
+        : selectedDept === "PROD"
+        ? "Produksi"
+        : selectedDept === "PE"
+        ? "Process Eng"
+        : "Quality Control";
     return {
-      name: currentUser.name || currentUser.username,
-      employeeId: currentUser.username,
+      name: currentUser?.name || currentUser?.username || "Member",
       dept: selectedDept,
-      deptLabel:
-        selectedDept === "ME"
-          ? "Maintenance"
-          : selectedDept === "PROD"
-          ? "Produksi"
-          : selectedDept === "PE"
-          ? "Process Eng"
-          : "Quality Control",
-      position: currentUser.position || `${selectedDept} Operator`,
-      lineName: currentUser.line?.name || "Line 1",
-      lineCode: currentUser.line?.code || "501",
-      lineId: currentUser.line?.id || 1,
-      workshopName: currentUser.line?.workshopName || "Assembly Workshop",
-      supervisorName: currentUser.supervisor || "Hendra Pratama",
-      supervisor: {
-        name: currentUser.supervisor || "Hendra Pratama",
-        employeeId: "SPV-019",
-        role: "Supervisor Lini",
-      },
+      deptLabel,
+      lineName: currentUser?.line?.name || "Lini belum diatur",
+      lineCode: currentUser?.line?.code || "-",
+      lineId: currentUser?.line?.id ?? null,
+      workshopName: currentUser?.line?.workshopName || "Workshop belum diatur",
+      supervisorName: currentUser?.supervisor || "Belum diatur admin",
     };
   }, [currentUser, selectedDept]);
 
   // 3. Load daily submissions for this line
   const loadSubmissions = useCallback(() => {
-    const lineId = activeProfile.lineId || 1;
+    const lineId = activeProfile.lineId;
+    if (!lineId) return;
     papercardApi
       .listSubmissions({
         lineId,
@@ -165,7 +154,11 @@ export default function MemberDashboardPage({ initialTab = "dashboard" }: Member
   // 3b. Load template for active department & line from PostgreSQL database
   useEffect(() => {
     let cancelled = false;
-    const lineId = activeProfile.lineId || 1;
+    const lineId = activeProfile.lineId;
+    if (!lineId) {
+      setDbTemplateCount(0);
+      return;
+    }
     papercardApi
       .listTemplates({ lineId, department: selectedDept })
       .then((res) => {
@@ -244,10 +237,7 @@ export default function MemberDashboardPage({ initialTab = "dashboard" }: Member
     mpvTeamMember: MappedMpvMember | null;
   }>(() => {
     if (!lineBoard || !lineBoard.members || lineBoard.members.length === 0) {
-      return {
-        topTeamMembers: FALLBACK_TEAM_MEMBERS as MappedTeamMember[],
-        mpvTeamMember: FALLBACK_MPV_MEMBER as MappedMpvMember,
-      };
+      return { topTeamMembers: [], mpvTeamMember: null };
     }
 
     const sorted = [...lineBoard.members].sort((a, b) => (a.sortOrder ?? 99) - (b.sortOrder ?? 99));
@@ -321,7 +311,7 @@ export default function MemberDashboardPage({ initialTab = "dashboard" }: Member
     };
   }, [lineBoard, realSubmissions]);
 
-  const leaderName = topTeamMembers.find((m) => m.role === "leader")?.name || "Leader Lini";
+  const leaderName = topTeamMembers.find((m) => m.role === "leader")?.name || "Belum ada leader";
 
   return (
     <div className="member-dash">
@@ -343,8 +333,8 @@ export default function MemberDashboardPage({ initialTab = "dashboard" }: Member
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontWeight: 700 }}>ℹ️ Mode Pratinjau Member:</span>
-            <span>Anda sedang melihat tampilan profil standar <strong>{activeProfile.name}</strong>.</span>
+            <span style={{ fontWeight: 700 }}>ℹ️ Belum masuk:</span>
+            <span>Masuk dengan akun member untuk melihat data lini kamu.</span>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
