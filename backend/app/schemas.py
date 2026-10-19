@@ -463,3 +463,19 @@ class PostMeetingOut(CamelModel):
     updated_at: datetime
 
 
+class NotificationSettingIn(CamelModel):
+    papercard_reminder_minutes: int = Field(default=15, ge=1, le=180)
+    papercard_enabled: bool = True
+    meeting_reminder_minutes: int = Field(default=15, ge=1, le=180)
+    meeting_enabled: bool = True
+
+
+class NotificationSettingOut(CamelModel):
+    line_id: int
+    papercard_reminder_minutes: int = 15
+    papercard_enabled: bool = True
+    meeting_reminder_minutes: int = 15
+    meeting_enabled: bool = True
+    updated_at: datetime | None = None
+
+

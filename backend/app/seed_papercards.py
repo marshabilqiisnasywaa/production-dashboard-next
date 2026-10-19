@@ -1,10 +1,11 @@
+# pyrefly: ignore[missing-import]
 from sqlalchemy import select
 from app.db.session import SessionLocal
 from app.models import Board, Line, PapercardTemplate, Workshop
 
 FACTORY_PRESETS = {
     "PROD": {
-        "name": "Papercard Departemen Produksi (Kesiapan Lini & Pos)",
+        "name": "Papercard Departemen Produksi",
         "version": "v1.0",
         "window_start": "07:30",
         "window_end": "08:15",

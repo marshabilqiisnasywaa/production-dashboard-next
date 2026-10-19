@@ -10,6 +10,7 @@ from app.models.meeting import (
     DmPostMeeting,
 )
 from app.models.mpv_award import MpvAward
+from app.models.notification_setting import DmNotificationSetting
 from app.models.papercard import PapercardSubmission, PapercardTemplate
 from app.models.user import User
 from app.models.workshop import Workshop
@@ -21,6 +22,7 @@ __all__ = [
     "DmMeetingSchedule",
     "DmMeetingSession",
     "DmMeetingSummary",
+    "DmNotificationSetting",
     "DmPostMeeting",
     "Employee",
     "Line",
