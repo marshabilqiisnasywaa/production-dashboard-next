@@ -5,6 +5,7 @@ node_modules/
 .next/
 out/
 next-env.d.ts.timestamp
+venv
 
 # production
 build/
