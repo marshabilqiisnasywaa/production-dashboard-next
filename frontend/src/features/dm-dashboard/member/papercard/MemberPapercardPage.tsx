@@ -15,7 +15,7 @@ import { useInspectionWindow } from "../../leader/papercard/hooks/useInspectionW
 import { usePapercardForm } from "../../leader/papercard/hooks/usePapercardForm";
 import { PAPERCARD_CONFIG, PAPERCARD_LINES } from "../../leader/papercard/mockTemplate";
 import type { ChecklistCategory, ChecklistTemplate, Submission } from "../../leader/papercard/types";
-import { formatDateId } from "../../leader/papercard/utils";
+import { buildAnswerPayload, formatDateId, groupItemsBySubject } from "../../leader/papercard/utils";
 import type { DepartmentKey } from "../../leader/types";
 import { accountApi, papercardApi } from "../../api";
 import type { DmMe, DmPapercardSubmission } from "../../api";
@@ -138,20 +138,7 @@ export default function MemberPapercardPage({
           const loadedCategories: ChecklistCategory[] = matched.templateData.categories.map((c: any) => ({
             id: c.id,
             name: c.name,
-            groups: c.groups ?? [
-              {
-                id: `${c.id}-g1`,
-                title: undefined,
-                items: (c.items ?? []).map((it: any) => ({
-                  id: it.id,
-                  number: it.number,
-                  title: it.title,
-                  answerType: it.answerType ?? "ok_ng",
-                  ruleInfo: it.ruleInfo,
-                  rule: it.rule ?? matched.templateData.okRule ?? "Standar normal proses",
-                })),
-              },
-            ],
+            groups: c.groups ?? groupItemsBySubject(c.id, c.items ?? [], matched.templateData.okRule),
           }));
 
           setDynamicTemplate({
@@ -271,13 +258,7 @@ export default function MemberPapercardPage({
         department: selectedDept,
         date: new Date().toISOString().slice(0, 10),
         shift: PAPERCARD_CONFIG.shift,
-        answers: Object.entries(form.answers).map(([itemId, val]) => ({
-          itemId,
-          status: val.status,
-          textValue: val.posName || val.textValue || "",
-          cause: val.cause,
-          solution: val.solution,
-        })),
+        answers: buildAnswerPayload(dynamicTemplate.categories, form.answers),
         abnormalNotes: null,
       });
       loadDailySubmissions();

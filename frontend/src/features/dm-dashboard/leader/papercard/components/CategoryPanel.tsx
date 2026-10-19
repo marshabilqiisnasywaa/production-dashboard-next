@@ -38,9 +38,9 @@ export function CategoryPanel({ category, rule, done, total, readOnly, getAnswer
                 key={item.id}
                 item={item}
                 rule={rule}
-                answer={getAnswer(item.id)}
+                getAnswer={getAnswer}
                 readOnly={readOnly}
-                onChange={(patch) => onChange(item.id, patch)}
+                onChange={onChange}
               />
             ))}
           </ol>

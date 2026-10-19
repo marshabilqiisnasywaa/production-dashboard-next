@@ -12,7 +12,7 @@ import { useInspectionWindow } from "./hooks/useInspectionWindow";
 import { usePapercardForm } from "./hooks/usePapercardForm";
 import { LEADER_TEMPLATE, PAPERCARD_CONFIG, PAPERCARD_LINES } from "./mockTemplate";
 import type { Answer, ChecklistCategory, ChecklistTemplate, Submission } from "./types";
-import { formatDateId } from "./utils";
+import { buildAnswerPayload, formatDateId, groupItemsBySubject } from "./utils";
 import { accountApi, papercardApi } from "../../api";
 import type { DmMe, DmPapercardSubmission } from "../../api";
 
@@ -76,20 +76,7 @@ export default function PapercardPage() {
           const loadedCategories: ChecklistCategory[] = matched.templateData.categories.map((c: any) => ({
             id: c.id,
             name: c.name,
-            groups: c.groups ?? [
-              {
-                id: `${c.id}-g1`,
-                title: undefined,
-                items: (c.items ?? []).map((it: any) => ({
-                  id: it.id,
-                  number: it.number,
-                  title: it.title,
-                  answerType: it.answerType ?? "ok_ng",
-                  ruleInfo: it.ruleInfo,
-                  rule: it.rule ?? matched.templateData.okRule ?? "Standar normal proses",
-                })),
-              },
-            ],
+            groups: c.groups ?? groupItemsBySubject(c.id, c.items ?? [], matched.templateData.okRule),
           }));
 
           setDynamicTemplate({
@@ -212,13 +199,7 @@ export default function PapercardPage() {
         department: "PROD",
         date: todayIso,
         shift: PAPERCARD_CONFIG.shift,
-        answers: Object.entries(form.answers).map(([itemId, val]) => ({
-          itemId,
-          status: val.status,
-          textValue: val.posName || "",
-          cause: val.cause,
-          solution: val.solution,
-        })),
+        answers: buildAnswerPayload(dynamicTemplate.categories, form.answers),
         abnormalNotes: null,
       });
       setDbSubmission(res);

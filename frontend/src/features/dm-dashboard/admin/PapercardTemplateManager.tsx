@@ -6,28 +6,17 @@ import { adminApi, papercardApi } from "../api";
 import type { DmMember } from "../dmData";
 import type { DepartmentKey } from "../leader/types";
 import "./PapercardTemplateManager.css";
+import TemplateTreeEditor from "./TemplateTreeEditor";
+import {
+  type ChecklistCategory,
+  countItems,
+  normalizeCategories,
+  serializeCategories,
+} from "./templateModel";
 
 interface PapercardTemplateManagerProps {
   workshops: DmWorkshop[];
   lines: DmLine[];
-}
-
-export type AnswerType = "ok_ng" | "text";
-
-export interface ChecklistItem {
-  id: string;
-  number: number;
-  title: string;
-  answerType: AnswerType;
-  ruleInfo?: string;
-  requireNoteIfNg?: boolean;
-  requirePhotoIfNg?: boolean;
-}
-
-export interface ChecklistCategory {
-  id: string;
-  name: string;
-  items: ChecklistItem[];
 }
 
 export interface DepartmentTemplate {
@@ -75,23 +64,9 @@ export default function PapercardTemplateManager({
   const [templates, setTemplates] = useState<Record<string, DepartmentTemplate>>({});
   const [loadingTemplate, setLoadingTemplate] = useState<boolean>(true);
 
-  // Filter category in question list
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("all");
-
-  // Add question form state
-  const [newItemText, setNewItemText] = useState("");
-  const [newItemType, setNewItemType] = useState<AnswerType>("ok_ng");
-  const [newItemRuleInfo, setNewItemRuleInfo] = useState("");
-  const [targetCatId, setTargetCatId] = useState<string>("");
-
-  // Category inline add
-  const [newCatName, setNewCatName] = useState("");
-  const [showAddCat, setShowAddCat] = useState(false);
-
   // Save notice
   const [saving, setSaving] = useState(false);
   const [savedNotice, setSavedNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
-  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
   // Line members & worker assignment
   const [lineMembers, setLineMembers] = useState<DmMember[]>([]);
@@ -167,7 +142,7 @@ export default function PapercardTemplateManager({
               windowEnd: matched.windowEnd,
               okRule: matched.templateData?.okRule ?? "",
               ngRule: matched.templateData?.ngRule ?? "",
-              categories: matched.templateData?.categories ?? [],
+              categories: normalizeCategories(matched.templateData?.categories),
             },
           }));
         } else {
@@ -206,9 +181,6 @@ export default function PapercardTemplateManager({
     );
   }, [templates, currentLine, selectedDept]);
 
-  // Keep target category in sync
-  const effectiveCatId = targetCatId || (activeTemplate.categories[0]?.id ?? "");
-
   // Assigned members for current department
   const assignedMembers = useMemo(() => {
     return lineMembers.filter((m) => {
@@ -225,17 +197,7 @@ export default function PapercardTemplateManager({
     return allEmployees.filter((e) => !existingEmpNos.has(e.employeeId));
   }, [allEmployees, lineMembers]);
 
-  // Filtered categories and questions for display
-  const displayedCategories = useMemo(() => {
-    if (activeCategoryFilter === "all") {
-      return activeTemplate.categories;
-    }
-    return activeTemplate.categories.filter((c) => c.id === activeCategoryFilter);
-  }, [activeTemplate.categories, activeCategoryFilter]);
-
-  const totalQuestionsCount = useMemo(() => {
-    return activeTemplate.categories.reduce((acc, c) => acc + c.items.length, 0);
-  }, [activeTemplate.categories]);
+  const totalQuestionsCount = useMemo(() => countItems(activeTemplate.categories), [activeTemplate.categories]);
 
   // Current line & department composite key
   const currentKey = currentLine ? `${currentLine.id}_${selectedDept}` : "";
@@ -272,7 +234,7 @@ export default function PapercardTemplateManager({
         windowStart: templateToSave.windowStart,
         windowEnd: templateToSave.windowEnd,
         templateData: {
-          categories: templateToSave.categories,
+          categories: serializeCategories(templateToSave.categories),
           okRule: templateToSave.okRule,
           ngRule: templateToSave.ngRule,
         },
@@ -297,151 +259,12 @@ export default function PapercardTemplateManager({
     }
   };
 
-  const handleAddItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newItemText.trim() || !effectiveCatId || !currentKey || !currentLine) return;
-
-    const current = templates[currentKey] || activeTemplate;
-    const updatedCategories = current.categories.map((cat) => {
-      if (cat.id !== effectiveCatId) return cat;
-      const nextNum = cat.items.length + 1;
-      const newItem: ChecklistItem = {
-        id: `${selectedDept.toLowerCase()}-${Date.now()}`,
-        number: nextNum,
-        title: newItemText.trim(),
-        answerType: newItemType,
-        ruleInfo: newItemRuleInfo.trim() || undefined,
-        requireNoteIfNg: newItemType === "ok_ng",
-        requirePhotoIfNg: false,
-      };
-      return { ...cat, items: [...cat.items, newItem] };
-    });
-
-    const updatedTemplate: DepartmentTemplate = {
-      ...current,
-      categories: updatedCategories,
-    };
-
-    setTemplates((prev) => ({
-      ...prev,
-      [currentKey]: updatedTemplate,
-    }));
-
-    setNewItemText("");
-    setNewItemRuleInfo("");
-    setNewItemType("ok_ng");
-
-    await persistTemplate(
-      updatedTemplate,
-      `Pertanyaan baru berhasil ditambahkan dan disimpan ke database.`
-    );
-  };
-
-  const handleDeleteItem = async (catId: string, itemId: string) => {
+  const handleTreeChange = async (nextCategories: ChecklistCategory[], message: string) => {
     if (!currentKey || !currentLine) return;
     const current = templates[currentKey] || activeTemplate;
-    const cat = current.categories.find((c) => c.id === catId);
-    const itemToDelete = cat?.items.find((it) => it.id === itemId);
-    const itemTitle = itemToDelete ? `"${itemToDelete.title}"` : "pertanyaan ini";
-
-    if (!window.confirm(`Hapus ${itemTitle}?\nPerubahan akan langsung disimpan ke database.`)) {
-      return;
-    }
-
-    const updatedCategories = current.categories.map((c) => {
-      if (c.id !== catId) return c;
-      const filtered = c.items.filter((item) => item.id !== itemId);
-      const renumbered = filtered.map((item, idx) => ({ ...item, number: idx + 1 }));
-      return { ...c, items: renumbered };
-    });
-
-    const updatedTemplate: DepartmentTemplate = {
-      ...current,
-      categories: updatedCategories,
-    };
-
-    setTemplates((prev) => ({
-      ...prev,
-      [currentKey]: updatedTemplate,
-    }));
-
-    await persistTemplate(
-      updatedTemplate,
-      `Pertanyaan berhasil dihapus dan disimpan ke database.`
-    );
-  };
-
-  const handleAddCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCatName.trim() || !currentKey || !currentLine) return;
-
-    const newCat: ChecklistCategory = {
-      id: `cat-${Date.now()}`,
-      name: newCatName.trim(),
-      items: [],
-    };
-
-    const current = templates[currentKey] || activeTemplate;
-    const updatedCategories = [...current.categories, newCat];
-    const updatedTemplate: DepartmentTemplate = {
-      ...current,
-      categories: updatedCategories,
-    };
-
-    setTemplates((prev) => ({
-      ...prev,
-      [currentKey]: updatedTemplate,
-    }));
-
-    setNewCatName("");
-    setShowAddCat(false);
-    setTargetCatId(newCat.id);
-    setActiveCategoryFilter(newCat.id);
-
-    await persistTemplate(
-      updatedTemplate,
-      `Kategori "${newCat.name}" berhasil dibuat dan disimpan ke database.`
-    );
-  };
-
-  const handleDeleteCategory = async (catId: string) => {
-    if (!currentKey || !currentLine) return;
-    const current = templates[currentKey] || activeTemplate;
-    const targetCat = current.categories.find((c) => c.id === catId);
-    if (!targetCat) return;
-
-    const count = targetCat.items.length;
-    const confirmMsg =
-      count > 0
-        ? `Hapus kategori "${targetCat.name}" beserta ${count} pertanyaan di dalamnya?\nPerubahan akan langsung disimpan ke database.`
-        : `Hapus kategori "${targetCat.name}"?\nPerubahan akan langsung disimpan ke database.`;
-
-    if (!window.confirm(confirmMsg)) {
-      return;
-    }
-
-    const updatedCategories = current.categories.filter((c) => c.id !== catId);
-    const updatedTemplate: DepartmentTemplate = {
-      ...current,
-      categories: updatedCategories,
-    };
-
-    setTemplates((prev) => ({
-      ...prev,
-      [currentKey]: updatedTemplate,
-    }));
-
-    if (activeCategoryFilter === catId) {
-      setActiveCategoryFilter("all");
-    }
-    if (targetCatId === catId) {
-      setTargetCatId(updatedCategories[0]?.id ?? "");
-    }
-
-    await persistTemplate(
-      updatedTemplate,
-      `Kategori "${targetCat.name}" berhasil dihapus dan disimpan ke database.`
-    );
+    const updatedTemplate: DepartmentTemplate = { ...current, categories: nextCategories };
+    setTemplates((prev) => ({ ...prev, [currentKey]: updatedTemplate }));
+    await persistTemplate(updatedTemplate, `${message} Tersimpan ke database.`);
   };
 
   // Save single line template to PostgreSQL database
@@ -472,7 +295,7 @@ export default function PapercardTemplateManager({
         windowStart: activeTemplate.windowStart,
         windowEnd: activeTemplate.windowEnd,
         templateData: {
-          categories: activeTemplate.categories,
+          categories: serializeCategories(activeTemplate.categories),
           okRule: activeTemplate.okRule,
           ngRule: activeTemplate.ngRule,
         },
@@ -518,7 +341,7 @@ export default function PapercardTemplateManager({
             windowEnd: src.windowEnd,
             okRule: src.templateData.okRule ?? activeTemplate.okRule,
             ngRule: src.templateData.ngRule ?? activeTemplate.ngRule,
-            categories: JSON.parse(JSON.stringify(src.templateData.categories)),
+            categories: normalizeCategories(src.templateData.categories),
           },
         }));
         const srcLine = lines.find((l) => l.id === srcLineId);
@@ -605,7 +428,7 @@ export default function PapercardTemplateManager({
             windowEnd: res.windowEnd,
             okRule: res.templateData?.okRule ?? "",
             ngRule: res.templateData?.ngRule ?? "",
-            categories: res.templateData?.categories ?? [],
+            categories: normalizeCategories(res.templateData?.categories),
           },
         }));
         setSavedNotice({
@@ -653,8 +476,6 @@ export default function PapercardTemplateManager({
               value={selectedLineCode}
               onChange={(e) => {
                 setSelectedLineCode(e.target.value);
-                setActiveCategoryFilter("all");
-                setTargetCatId("");
               }}
               className="ptm-select-compact"
             >
@@ -675,8 +496,6 @@ export default function PapercardTemplateManager({
                 className={`ptm-dept-tab ${selectedDept === d.key ? "is-active" : ""}`}
                 onClick={() => {
                   setSelectedDept(d.key);
-                  setActiveCategoryFilter("all");
-                  setTargetCatId("");
                 }}
               >
                 {d.label}
@@ -879,236 +698,11 @@ export default function PapercardTemplateManager({
             </div>
           </div>
 
-          {/* Category Filter Pills & Add Category */}
-          <div className="ptm-cat-pills">
-            <button
-              type="button"
-              className={`ptm-cat-pill ${activeCategoryFilter === "all" ? "is-active" : ""}`}
-              onClick={() => setActiveCategoryFilter("all")}
-            >
-              <span>Semua</span>
-              <span className="ptm-cat-count">{totalQuestionsCount}</span>
-            </button>
-
-            {activeTemplate.categories.map((cat) => {
-              const isActive = activeCategoryFilter === cat.id;
-              return (
-                <div
-                  key={cat.id}
-                  className={`ptm-cat-pill-wrapper ${isActive ? "is-active" : ""}`}
-                >
-                  <button
-                    type="button"
-                    className={`ptm-cat-pill ${isActive ? "is-active" : ""}`}
-                    onClick={() => {
-                      setActiveCategoryFilter(cat.id);
-                      setTargetCatId(cat.id);
-                    }}
-                  >
-                    <span>{cat.name}</span>
-                    <span className="ptm-cat-count">{cat.items.length}</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="ptm-cat-pill-del"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteCategory(cat.id);
-                    }}
-                    title={`Hapus kategori "${cat.name}"`}
-                    aria-label={`Hapus kategori ${cat.name}`}
-                  >
-                    &times;
-                  </button>
-                </div>
-              );
-            })}
-
-            {!showAddCat ? (
-              <button
-                type="button"
-                className="ptm-btn-new-cat"
-                onClick={() => setShowAddCat(true)}
-              >
-                + Kategori
-              </button>
-            ) : (
-              <form onSubmit={handleAddCategory} className="ptm-new-cat-inline">
-                <input
-                  type="text"
-                  placeholder="Nama Kategori..."
-                  value={newCatName}
-                  onChange={(e) => setNewCatName(e.target.value)}
-                  autoFocus
-                />
-                <button type="submit" className="ptm-btn ptm-btn-primary" style={{ padding: "3px 8px", fontSize: "0.72rem" }}>
-                  Simpan
-                </button>
-                <button
-                  type="button"
-                  className="ptm-btn ptm-btn-ghost"
-                  onClick={() => setShowAddCat(false)}
-                  style={{ padding: "3px 6px", fontSize: "0.72rem" }}
-                >
-                  Batal
-                </button>
-              </form>
-            )}
-          </div>
-
-          {/* Questions List */}
-          <div className="ptm-questions-list">
-            {displayedCategories.length === 0 ? (
-              <div className="ptm-empty-questions">
-                Belum ada kategori pada template ini. Klik <strong>+ Kategori</strong> untuk membuat kategori baru.
-              </div>
-            ) : displayedCategories.every((c) => c.items.length === 0) ? (
-              <div className="ptm-empty-questions">
-                <p style={{ margin: "0 0 8px 0" }}>Belum ada butir pertanyaan pada kategori ini. Tambahkan melalui form di bawah.</p>
-                {displayedCategories.length === 1 && (
-                  <button
-                    type="button"
-                    className="ptm-btn ptm-btn-ghost"
-                    style={{ color: "#dc2626", borderColor: "#fecaca", fontSize: "0.75rem", padding: "4px 10px" }}
-                    onClick={() => handleDeleteCategory(displayedCategories[0].id)}
-                  >
-                    Hapus Kategori "{displayedCategories[0].name}"
-                  </button>
-                )}
-              </div>
-            ) : (
-              displayedCategories.map((cat) => (
-                <div key={cat.id} style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <div className="ptm-category-header">
-                    <span className="ptm-category-header-title">
-                      {cat.name.toUpperCase()} ({cat.items.length})
-                    </span>
-                    <button
-                      type="button"
-                      className="ptm-btn-del-cat-inline"
-                      onClick={() => handleDeleteCategory(cat.id)}
-                      title={`Hapus kategori "${cat.name}"`}
-                    >
-                      Hapus Kategori
-                    </button>
-                  </div>
-
-                  {cat.items.length === 0 ? (
-                    <div style={{ fontSize: "0.74rem", color: "#94a3b8", fontStyle: "italic", padding: "6px 8px" }}>
-                      Kategori ini belum memiliki butir pertanyaan.
-                    </div>
-                  ) : (
-                    cat.items.map((item) => (
-                      <div key={item.id} className="ptm-q-item">
-                        <div className="ptm-q-left">
-                          <span className="ptm-q-num">#{item.number}</span>
-                          {activeCategoryFilter === "all" && (
-                            <span className="ptm-q-cat-tag">{cat.name}</span>
-                          )}
-                          <span className="ptm-q-title">{item.title}</span>
-
-                          {/* Optional Info Tooltip */}
-                          {item.ruleInfo && (
-                            <div style={{ position: "relative", display: "inline-block" }}>
-                              <button
-                                type="button"
-                                className="ptm-info-btn"
-                                onClick={() => setActiveTooltip(activeTooltip === item.id ? null : item.id)}
-                                onMouseEnter={() => setActiveTooltip(item.id)}
-                                onMouseLeave={() => setActiveTooltip(null)}
-                              >
-                                i
-                              </button>
-                              {activeTooltip === item.id && (
-                                <div className="ptm-info-tooltip">
-                                  {item.ruleInfo}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="ptm-q-right">
-                          <span className={`ptm-type-pill ${item.answerType === "ok_ng" ? "is-ok-ng" : "is-text"}`}>
-                            {item.answerType === "ok_ng" ? "OK / NG" : "Teks"}
-                          </span>
-                          <button
-                            type="button"
-                            className="ptm-q-delete-btn"
-                            onClick={() => handleDeleteItem(cat.id, item.id)}
-                            title="Hapus pertanyaan"
-                          >
-                            &times;
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* 3. Compact Add Question Row */}
-          <form onSubmit={handleAddItem} className="ptm-add-row">
-            <select
-              value={effectiveCatId}
-              onChange={(e) => setTargetCatId(e.target.value)}
-              className="ptm-add-cat-select"
-              title="Pilih kategori tujuan"
-              disabled={activeTemplate.categories.length === 0}
-            >
-              {activeTemplate.categories.length === 0 ? (
-                <option value="">Buat kategori dahulu</option>
-              ) : (
-                activeTemplate.categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))
-              )}
-            </select>
-
-            <input
-              type="text"
-              placeholder={
-                activeTemplate.categories.length === 0
-                  ? "Tambahkan kategori terlebih dahulu di atas..."
-                  : "Ketik butir pengecekan / pertanyaan..."
-              }
-              value={newItemText}
-              onChange={(e) => setNewItemText(e.target.value)}
-              className="ptm-add-text-input"
-              disabled={activeTemplate.categories.length === 0}
-            />
-
-            <select
-              value={newItemType}
-              onChange={(e) => setNewItemType(e.target.value as AnswerType)}
-              className="ptm-add-type-select"
-              disabled={activeTemplate.categories.length === 0}
-            >
-              <option value="ok_ng">OK / NG</option>
-              <option value="text">Teks</option>
-            </select>
-
-            <input
-              type="text"
-              placeholder="Catatan bantuan (opsional)..."
-              value={newItemRuleInfo}
-              onChange={(e) => setNewItemRuleInfo(e.target.value)}
-              className="ptm-add-info-input"
-              disabled={activeTemplate.categories.length === 0}
-            />
-
-            <button
-              type="submit"
-              disabled={!newItemText.trim() || !effectiveCatId || saving}
-              className="ptm-btn-add-q"
-            >
-              {saving ? "Menyimpan..." : "+ Tambah"}
-            </button>
-          </form>
+          <TemplateTreeEditor
+            categories={activeTemplate.categories}
+            saving={saving}
+            onChange={handleTreeChange}
+          />
         </main>
       </div>
 

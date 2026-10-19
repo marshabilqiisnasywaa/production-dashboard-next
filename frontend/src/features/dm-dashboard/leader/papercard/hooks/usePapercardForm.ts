@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import type { Answer, ChecklistCategory } from "../types";
+import { itemKeys } from "../utils";
 
 const EMPTY: Answer = { status: null, posName: "", cause: "", solution: "" };
 
@@ -28,8 +29,11 @@ export function usePapercardForm(categories: ChecklistCategory[]) {
         const next = { ...prev };
         for (const group of category.groups) {
           for (const item of group.items) {
-            const current = next[item.id] ?? EMPTY;
-            if (current.status === null) next[item.id] = { ...current, status: "OK" };
+            if (item.answerType === "text") continue;
+            for (const key of itemKeys(item)) {
+              const current = next[key] ?? EMPTY;
+              if (current.status === null) next[key] = { ...current, status: "OK" };
+            }
           }
         }
         return next;
@@ -47,8 +51,10 @@ export function usePapercardForm(categories: ChecklistCategory[]) {
       let cTotal = 0;
       for (const g of c.groups) {
         for (const item of g.items) {
-          cTotal += 1;
-          if (isItemDone(answers[item.id] ?? EMPTY)) cDone += 1;
+          for (const key of itemKeys(item)) {
+            cTotal += 1;
+            if (isItemDone(answers[key] ?? EMPTY)) cDone += 1;
+          }
         }
       }
       byCategory[c.id] = { done: cDone, total: cTotal };

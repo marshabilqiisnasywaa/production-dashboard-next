@@ -853,3 +853,38 @@
   padding-top: 8px;
   border-top: 1px solid #f1f5f9;
 }
+
+.ptm-subject-header {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f766e;
+  background: #f0fdfa;
+  border-left: 3px solid #0f766e;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-top: 6px;
+}
+
+.ptm-q-rule-count {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  flex-shrink: 0;
+}
+
+.ptm-add-subject-input {
+  flex: 1 1 100%;
+}
+
+.ptm-add-rule-input {
+  flex: 1 1 100%;
+  font-size: 0.78rem;
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-family: inherit;
+  resize: vertical;
+}

@@ -11,6 +11,8 @@ export interface ChecklistItem {
   ruleInfo?: string;
   /** Question answer type: OK/NG button or Text Input */
   answerType?: "ok_ng" | "text";
+  /** Default (unset or "per_rule"): every line in `rule` gets its own OK/NG answer. "item": one answer for the whole item */
+  answerMode?: "item" | "per_rule";
   /** Show the "Nama pos/proses yang diperiksa" input (Leader special component) */
   askPosName?: boolean;
 }
