@@ -75,9 +75,150 @@ export default function DmBoardIndex() {
     <main className="dm-root">
       <div className="dm-index">
         <header className="dm-index-head">
-          <h1>Pilih dashboard DM Triangle Team</h1>
-          <p>Satu lini, satu dashboard. Tiap kartu punya link sendiri yang bisa dipasang di layar lini.</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "14px" }}>
+            <div>
+              <h1 style={{ margin: 0 }}>Pilih dashboard DM Triangle Team</h1>
+              <p style={{ margin: "4px 0 0" }}>Satu lini, satu dashboard. Tiap kartu punya link sendiri yang bisa dipasang di layar lini.</p>
+            </div>
+            <Link
+              href="/dm-dashboard/masuk"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "9px 18px",
+                background: "#0f766e",
+                color: "#ffffff",
+                borderRadius: "10px",
+                fontSize: "13px",
+                fontWeight: 700,
+                textDecoration: "none",
+                boxShadow: "0 1px 3px rgba(15,118,110,0.2)",
+              }}
+            >
+              🔐 Masuk Akun (Login) →
+            </Link>
+          </div>
         </header>
+
+        {/* Quick Role Navigation Bar */}
+        <section
+          style={{
+            marginBottom: "32px",
+            padding: "20px 24px",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "14px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+          }}
+          aria-label="Akses Cepat Peran DM"
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
+            <div>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f766e", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Akses Berdasarkan Peran (Role View)
+              </span>
+              <h2 style={{ fontSize: "18px", fontWeight: 700, margin: "2px 0 0", color: "#0f172a" }}>
+                Portal Operasional DM Dashboard
+              </h2>
+            </div>
+            <span style={{ fontSize: "12.5px", color: "#64748b" }}>
+              4 Departemen: PROD · ME · PE · QC
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: "12px",
+            }}
+          >
+            <Link
+              href="/dm-dashboard/member"
+              style={{
+                display: "block",
+                padding: "16px 18px",
+                background: "#f0fdfa",
+                border: "1px solid #99f6e4",
+                borderRadius: "10px",
+                textDecoration: "none",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <span style={{ fontSize: "18px" }}>👤</span>
+                <strong style={{ fontSize: "15px", color: "#0f766e" }}>Portal Member Lini</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: "12.5px", color: "#475569", lineHeight: "1.4" }}>
+                Form input Papercard untuk anggota <strong>PROD, ME, PE, QC</strong> per lini produksi.
+              </p>
+            </Link>
+
+            <Link
+              href="/dm-dashboard/leader"
+              style={{
+                display: "block",
+                padding: "16px 18px",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "10px",
+                textDecoration: "none",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <span style={{ fontSize: "18px" }}></span>
+                <strong style={{ fontSize: "15px", color: "#0f172a" }}>Dashboard Leader</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: "12.5px", color: "#475569", lineHeight: "1.4" }}>
+                Checklist kesiapan lini (Dept PROD) &amp; presensi DM Meeting tim 5 orang.
+              </p>
+            </Link>
+
+            <Link
+              href="/dm-dashboard/supervisor"
+              style={{
+                display: "block",
+                padding: "16px 18px",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "10px",
+                textDecoration: "none",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <span style={{ fontSize: "18px" }}>🛡️</span>
+                <strong style={{ fontSize: "15px", color: "#0f172a" }}>Hub Supervisor</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: "12.5px", color: "#475569", lineHeight: "1.4" }}>
+                Otoritas persetujuan (approval) semua Papercard dari 4 lini produksi.
+              </p>
+            </Link>
+
+            <Link
+              href="/dm-dashboard/admin"
+              style={{
+                display: "block",
+                padding: "16px 18px",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "10px",
+                textDecoration: "none",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <span style={{ fontSize: "18px" }}>⚙️</span>
+                <strong style={{ fontSize: "15px", color: "#0f172a" }}>Admin Panel</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: "12.5px", color: "#475569", lineHeight: "1.4" }}>
+                Kelola akun, tim lini 5 orang, dan Template Papercard per lini &amp; departemen.
+              </p>
+            </Link>
+          </div>
+        </section>
         {groupByWorkshop(state.boards).map(([workshopName, boards]) => (
           <section key={workshopName} className="dm-index-group" aria-label={workshopName}>
             <h2>{workshopName}</h2>

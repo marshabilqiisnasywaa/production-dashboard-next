@@ -1,0 +1,853 @@
+/* MpvManager.css - Soft, Calm, Compact & Space-Efficient */
+
+.mpv-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* 1. Header Toolbar */
+.mpv-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  flex-wrap: wrap;
+}
+
+.mpv-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.mpv-control-group {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.mpv-bar-label {
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.mpv-bar-select {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0f172a;
+  padding: 5px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #f8fafc;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  max-width: 320px;
+}
+
+.mpv-bar-select:focus {
+  border-color: #008a4f;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(0, 138, 79, 0.12);
+}
+
+.mpv-month-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mpv-step-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  line-height: 1;
+  transition: all 0.12s ease;
+}
+
+.mpv-step-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.mpv-month-field {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0f172a;
+  padding: 4px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #f8fafc;
+  outline: none;
+  cursor: pointer;
+}
+
+.mpv-month-field:focus {
+  border-color: #008a4f;
+  background: #ffffff;
+}
+
+.mpv-quick-chip {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.mpv-quick-chip:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.mpv-quick-chip.is-active {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+  font-weight: 700;
+}
+
+.mpv-refresh-btn {
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.mpv-refresh-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+/* Toast Message */
+.mpv-toast {
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  animation: mpv-fade 0.15s ease-out;
+}
+
+.mpv-toast.is-ok {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.mpv-toast.is-warn {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.mpv-toast-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.mpv-toast-close:hover {
+  opacity: 1;
+}
+
+@keyframes mpv-fade {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 2. Main 2-Column Grid Layout */
+.mpv-grid {
+  display: grid;
+  grid-template-columns: minmax(340px, 390px) 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .mpv-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Generic Card */
+.mpv-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+}
+
+.mpv-card-head {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mpv-head-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mpv-trophy-symbol {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.mpv-card-title {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.mpv-count-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+
+.mpv-card-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+/* Status Badges */
+.mpv-badge {
+  font-size: 0.69rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.2;
+}
+
+.mpv-badge.is-live {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+}
+
+.mpv-badge.is-archived {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.mpv-badge.is-unassigned {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+}
+
+.mpv-dot-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #059669;
+}
+
+/* Left Card: Winner Details */
+.mpv-winner-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #fafbfc;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.mpv-winner-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mpv-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
+  object-fit: cover;
+  border: 1px solid #fde68a;
+  flex-shrink: 0;
+}
+
+.mpv-avatar-fallback {
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #b45309;
+  font-size: 0.95rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.mpv-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mpv-name-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mpv-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.mpv-nik-pill {
+  font-size: 0.69rem;
+  font-weight: 600;
+  font-family: monospace;
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.mpv-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mpv-tag-dept {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #008a4f;
+  background: #ecfdf5;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.mpv-tag-pos {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+/* Action Buttons inside Winner Card */
+.mpv-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid #edf2f7;
+  padding-top: 8px;
+}
+
+.mpv-sm-btn {
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  line-height: 1.3;
+}
+
+.mpv-btn-soft-primary {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.mpv-btn-soft-primary:hover {
+  background: #dcfce7;
+}
+
+.mpv-btn-soft-ghost {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+.mpv-btn-soft-ghost:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.mpv-btn-soft-danger {
+  background: transparent;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.mpv-btn-soft-danger:hover {
+  background: #fef2f2;
+}
+
+.mpv-btn-solid-green {
+  background: #008a4f;
+  border-color: #008a4f;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.mpv-btn-solid-green:hover:not(:disabled) {
+  background: #007040;
+}
+
+.mpv-btn-solid-green:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Assign / Empty State Box */
+.mpv-assign-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fafbfc;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.mpv-assign-prompt {
+  font-size: 0.78rem;
+  color: #475569;
+}
+
+.mpv-assign-dropdown {
+  font-size: 0.78rem;
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #ffffff;
+  outline: none;
+  width: 100%;
+}
+
+.mpv-assign-dropdown:focus {
+  border-color: #008a4f;
+}
+
+.mpv-assign-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+
+/* Hint footer note */
+.mpv-hint-note {
+  margin-top: auto;
+  font-size: 0.71rem;
+  color: #64748b;
+  line-height: 1.4;
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 7px 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  border: 1px solid #f1f5f9;
+}
+
+.mpv-hint-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+/* Right Card: History Micro-Table */
+.mpv-history-scroll {
+  padding: 0;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.mpv-empty-notice {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.mpv-mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+}
+
+.mpv-mini-table th {
+  background: #f8fafc;
+  padding: 7px 10px;
+  text-align: left;
+  font-weight: 700;
+  color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.mpv-mini-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.mpv-mini-table tr:hover {
+  background: #fafbfc;
+}
+
+.mpv-mini-table tr.is-active-row {
+  background: #f0fdf4;
+}
+
+.mpv-td-period {
+  white-space: nowrap;
+}
+
+.mpv-period-text {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.mpv-person-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.mpv-cell-name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.mpv-cell-nik {
+  font-size: 0.69rem;
+  font-family: monospace;
+  color: #64748b;
+}
+
+.mpv-mini-dept {
+  font-weight: 600;
+  color: #475569;
+}
+
+.mpv-status-chip {
+  font-size: 0.67rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.mpv-status-chip.is-live {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.mpv-status-chip.is-past {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.mpv-status-chip.is-upcoming {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.mpv-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #047857;
+}
+
+.mpv-row-btns {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mpv-mini-btn {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  line-height: 1.2;
+}
+
+.mpv-mini-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.mpv-mini-btn.is-selected {
+  background: #008a4f;
+  border-color: #008a4f;
+  color: #ffffff;
+}
+
+.mpv-mini-btn.is-danger {
+  border-color: #fecaca;
+  color: #dc2626;
+  padding: 2px 5px;
+}
+
+.mpv-mini-btn.is-danger:hover {
+  background: #fef2f2;
+}
+
+/* 3. Soft Modal */
+.mpv-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+  animation: mpv-fade 0.15s ease-out;
+}
+
+.mpv-modal-panel {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
+  width: 100%;
+  max-width: 400px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mpv-modal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mpv-modal-heading {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.mpv-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: #64748b;
+  line-height: 1;
+}
+
+.mpv-modal-close:hover {
+  color: #0f172a;
+}
+
+.mpv-modal-form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mpv-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mpv-form-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.mpv-form-input, .mpv-form-select {
+  font-size: 0.8rem;
+  padding: 6px 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  outline: none;
+}
+
+.mpv-form-input:focus, .mpv-form-select:focus {
+  border-color: #008a4f;
+  box-shadow: 0 0 0 2px rgba(0, 138, 79, 0.1);
+}
+
+.mpv-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mpv-modal-bottom {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* Photo Picker in Modal */
+.mpv-photo-picker-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.mpv-photo-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #cbd5e1;
+  flex-shrink: 0;
+}
+
+.mpv-photo-thumb-empty {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.mpv-photo-picker-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mpv-file-picker-btn {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #008a4f;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+  position: relative;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.mpv-file-picker-btn:hover {
+  background: #d1fae5;
+}
+
+.mpv-hidden-file-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.mpv-photo-del-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.7rem;
+  color: #dc2626;
+  cursor: pointer;
+  text-align: left;
+  width: fit-content;
+}
+
+.mpv-photo-del-btn:hover {
+  text-decoration: underline;
+}
+
+.mpv-photo-hint {
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+

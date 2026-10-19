@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ApiError, publicApi } from "./api";
-import { dmStatusLabels, formatPeriod } from "./dmData";
+import { dmStatusLabels, formatPeriod, previousPeriod } from "./dmData";
 import type { DmBoard, DmMember } from "./dmData";
 import "./DmDashboard.css";
 
@@ -116,6 +116,23 @@ export default function DmDashboard({ slug }: { slug: string }) {
     };
   }, [slug, attempt]);
 
+  // Hook harus dipanggil di level paling atas sebelum early return sesuai aturan React Rules of Hooks
+  const readyBoard = state.kind === "ready" ? state.board : null;
+
+  // Tim Inti 4 Personil di grid atas (Leader selalu #1) dan 1 Operator Teladan di slot MPV bawah
+  const { topMembers, displayMpv } = useMemo(() => {
+    if (!readyBoard) {
+      return { topMembers: [], displayMpv: null };
+    }
+
+    const all = [...readyBoard.members].sort((a, b) => (a.sortOrder ?? 99) - (b.sortOrder ?? 99));
+
+    return {
+      topMembers: all.slice(0, 4),
+      displayMpv: readyBoard.mpv,
+    };
+  }, [readyBoard]);
+
   if (state.kind === "loading") {
     return (
       <main className="dm-root dm-state-screen" aria-busy="true">
@@ -147,7 +164,6 @@ export default function DmDashboard({ slug }: { slug: string }) {
   }
 
   const board = state.board;
-  const mpv = board.mpv;
 
   return (
     <main className="dm-root">
@@ -232,10 +248,10 @@ export default function DmDashboard({ slug }: { slug: string }) {
             </header>
 
             <div className="dm-team-grid">
-              {board.members.length === 0 ? (
+              {topMembers.length === 0 ? (
                 <p className="dm-team-empty">Anggota tim belum diatur. Admin bisa menambahkannya di Panel Admin.</p>
               ) : (
-                board.members.map((member, idx) => (
+                topMembers.map((member, idx) => (
                   <MemberCard key={member.id ?? idx} member={member} />
                 ))
               )}
@@ -246,7 +262,7 @@ export default function DmDashboard({ slug }: { slug: string }) {
                 <div className="dm-mpv-title-wrap">
                   <span className="dm-mpv-heading-main">MPV</span>
                   <span className="dm-mpv-heading-sub">of The Month</span>
-                  {mpv ? <span className="dm-mpv-period">{formatPeriod(mpv.period)}</span> : null}
+                  {displayMpv ? <span className="dm-mpv-period">{formatPeriod(displayMpv.period)}</span> : null}
                 </div>
                 <div className="dm-chevrons" aria-hidden="true">
                   <svg width="46" height="16" viewBox="0 0 46 16" fill="none">
@@ -259,17 +275,17 @@ export default function DmDashboard({ slug }: { slug: string }) {
                 </div>
               </div>
 
-              {mpv ? (
+              {displayMpv ? (
                 <div className="dm-member-card dm-mpv-card">
                   <div className="dm-member-banner dm-mpv-banner">
-                    <span className="dm-member-name">{mpv.name}</span>
+                    <span className="dm-member-name">{displayMpv.name}</span>
                   </div>
                   <div className="dm-member-content">
                     <div className="dm-member-photo-frame dm-mpv-photo-frame">
-                      {mpv.photoUrl ? (
+                      {displayMpv.photoUrl ? (
                         <img
-                          src={mpv.photoUrl}
-                          alt={mpv.name ?? "MPV"}
+                          src={displayMpv.photoUrl}
+                          alt={displayMpv.name ?? "MPV"}
                           className="dm-member-photo"
                         />
                       ) : (
@@ -281,15 +297,15 @@ export default function DmDashboard({ slug }: { slug: string }) {
                     <dl className="dm-member-specs">
                       <div className="dm-spec-row">
                         <dt className="dm-spec-label">Work No:</dt>
-                        <dd className="dm-spec-value">{mpv.employeeId ?? "-"}</dd>
+                        <dd className="dm-spec-value">{displayMpv.employeeId ?? "-"}</dd>
                       </div>
                       <div className="dm-spec-row">
                         <dt className="dm-spec-label">Dept:</dt>
-                        <dd className="dm-spec-value">{mpv.dept ?? "-"}</dd>
+                        <dd className="dm-spec-value">{displayMpv.dept ?? "-"}</dd>
                       </div>
                       <div className="dm-spec-row">
                         <dt className="dm-spec-label">Position:</dt>
-                        <dd className="dm-spec-value">{mpv.position ?? "-"}</dd>
+                        <dd className="dm-spec-value">{displayMpv.position ?? "-"}</dd>
                       </div>
                     </dl>
                   </div>

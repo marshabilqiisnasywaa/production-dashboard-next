@@ -5,6 +5,7 @@ export type DmMember = {
   name: string | null;
   employeeId: string | null;
   dept?: string | null;
+  role?: string | null;
   position: string | null;
   supervisor?: string | null;
   workPhone?: string | null;

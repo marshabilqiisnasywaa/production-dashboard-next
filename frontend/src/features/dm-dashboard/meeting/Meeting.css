@@ -123,7 +123,8 @@
 
 .dm-btn:focus-visible,
 .dm-check input:focus-visible,
-.dm-field input:focus-visible {
+.dm-field input:focus-visible,
+.dm-field select:focus-visible {
   outline: 3px solid #008a4f;
   outline-offset: 2px;
 }
@@ -340,7 +341,8 @@
   gap: 0.3rem;
 }
 
-.dm-field input {
+.dm-field input,
+.dm-field select {
   min-height: 44px;
   padding: 0.5rem 0.8rem;
   border: 1.5px solid #bcd5c6;
@@ -351,7 +353,8 @@
   font-weight: 600;
 }
 
-.dm-field input:focus {
+.dm-field input:focus,
+.dm-field select:focus {
   border-color: #008a4f;
 }
 

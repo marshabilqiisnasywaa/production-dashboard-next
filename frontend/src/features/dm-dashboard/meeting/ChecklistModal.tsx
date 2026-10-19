@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import LoginForm from "./LoginForm";
+import type { DmMember } from "../dmData";
+import NamePicker from "./NamePicker";
 import Modal from "./Modal";
 import { clock, dmChecklist, dmMorningUntilHour } from "./meetingData";
 import type { DmChecklistRecord } from "./meetingData";
@@ -38,17 +39,18 @@ function ChecklistForm({ user, saved, onLogout, onSave }: { user: string; saved:
   );
 }
 
-export default function ChecklistModal({ open, morning, user, saved, onLogin, onLogout, onSave, onClose }: {
+export default function ChecklistModal({ open, morning, members, user, saved, onLogin, onLogout, onSave, onClose }: {
   open: boolean;
   morning: boolean;
+  members: readonly DmMember[];
   user: string | null;
   saved: DmChecklistRecord | null;
-  onLogin: (employeeId: string) => void;
+  onLogin: (name: string) => void;
   onLogout: () => void;
   onSave: (record: DmChecklistRecord) => void;
   onClose: () => void;
 }) {
-  let body = <LoginForm onLogin={onLogin} />;
+  let body = <NamePicker members={members} onPick={onLogin} />;
   if (user && !morning) {
     body = <p className="dm-note">Checklist sheet hanya diisi pada pagi hari, sebelum pukul {String(dmMorningUntilHour).padStart(2, "0")}.00. Buka lagi besok pagi.</p>;
   } else if (user) {

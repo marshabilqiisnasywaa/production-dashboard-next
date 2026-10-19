@@ -1,25 +1,30 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { ApiError, adminApi, getToken, setToken } from "../api";
+import { ApiError, accountApi, adminApi, getToken, setToken } from "../api";
 import type { DmLine, DmLineInput, DmWorkshop } from "../api";
 import type { DmLineStatus } from "../dmData";
+import { homeFor } from "../account/homeFor";
 import AttendanceRecap from "../meeting/AttendanceRecap";
-import AdminLogin from "./AdminLogin";
 import DmAdminSidebar from "./DmAdminSidebar";
 import type { DmAdminTabKey } from "./DmAdminSidebar";
 import DashboardTab from "./DashboardTab";
 import LineDetailModal from "./LineDetailModal";
 import type { TabKey } from "./LineDetailModal";
+import LineTeamModal from "./LineTeamModal";
 import MpvManager from "./MpvManager";
+import UserManager from "./UserManager";
 import { AlertIcon, CopyIcon, ExternalIcon, GearIcon, PlusIcon, UsersIcon } from "./AdminIcons";
+import { IconLogout } from "@/components/ui/icons";
 import WorkshopManager from "./WorkshopManager";
+import PapercardTemplateManager from "./PapercardTemplateManager";
 import "./AdminPanel.css";
 
 type Auth =
   | { kind: "checking" }
   | { kind: "offline"; message: string }
-  | { kind: "anon"; notice: string | null }
-  | { kind: "in"; username: string };
+  | { kind: "anon" }
+  | { kind: "in"; username: string; isAdmin: boolean };
 
 type Banner = { type: "success" | "info" | "error"; message: string };
 
@@ -32,19 +37,26 @@ function dashboardPath(line: DmLine) {
 }
 
 export default function DmAdminPage() {
+  const router = useRouter();
   const [auth, setAuth] = useState<Auth>({ kind: "checking" });
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!getToken()) {
-      setAuth({ kind: "anon", notice: null });
+      setAuth({ kind: "anon" });
+      router.replace("/dm-dashboard/masuk");
       return;
     }
     let cancelled = false;
-    adminApi
+    accountApi
       .me()
       .then((me) => {
-        if (!cancelled) setAuth({ kind: "in", username: me.username });
+        if (cancelled) return;
+        if (me.kind !== "admin") {
+          router.replace(homeFor(me));
+          return;
+        }
+        setAuth({ kind: "in", username: me.name ?? me.username, isAdmin: true });
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -53,22 +65,27 @@ export default function DmAdminPage() {
           return;
         }
         setToken(null);
-        setAuth({ kind: "anon", notice: "Sesi berakhir, silakan login lagi." });
+        setAuth({ kind: "anon" });
+        router.replace("/dm-dashboard/masuk?expired=1");
       });
     return () => {
       cancelled = true;
     };
-  }, [attempt]);
+  }, [attempt, router]);
 
-  const logout = useCallback((notice: string | null) => {
-    setToken(null);
-    setAuth({ kind: "anon", notice });
-  }, []);
+  const logout = useCallback(
+    (notice: string | null) => {
+      setToken(null);
+      setAuth({ kind: "anon" });
+      router.replace(notice ? "/dm-dashboard/masuk?expired=1" : "/dm-dashboard/masuk");
+    },
+    [router]
+  );
 
-  if (auth.kind === "checking") {
+  if (auth.kind === "checking" || auth.kind === "anon") {
     return (
       <main className="dm-admin-login-screen" aria-busy="true">
-        <p role="status">Memeriksa sesi...</p>
+        <p role="status">{auth.kind === "anon" ? "Mengalihkan ke halaman masuk..." : "Memeriksa sesi..."}</p>
       </main>
     );
   }
@@ -87,22 +104,28 @@ export default function DmAdminPage() {
     );
   }
 
-  if (auth.kind === "anon") {
-    return <AdminLogin notice={auth.notice} onLoggedIn={(username) => setAuth({ kind: "in", username })} />;
-  }
-
-  return <AdminWorkspace username={auth.username} onLogout={logout} />;
+  return <AdminWorkspace username={auth.username} isAdmin={auth.isAdmin} onLogout={logout} />;
 }
 
 const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
   dashboard: { crumb: "Dashboard", title: "Dashboard Lini: KPI, Absensi, dan Meeting" },
   workshop: { crumb: "Lini, Workshop & Tim", title: "Pengaturan Workshop, Lini Produksi, dan Anggota Tim" },
+  users: { crumb: "User", title: "Daftar User: Role dan Departemen" },
+  papercard: { crumb: "Template Papercard", title: "Pengaturan Template Papercard per Lini & Departemen" },
   mpv: { crumb: "MPV of The Month", title: "MPV of The Month per Lini dan Riwayatnya" },
   attendance: { crumb: "Rekap Presensi", title: "Rekapitulasi Presensi & Riwayat Meeting per Tanggal" },
 };
 
-function AdminWorkspace({ username, onLogout }: { username: string; onLogout: (notice: string | null) => void }) {
-  const [activeTab, setActiveTab] = useState<DmAdminTabKey>("workshop");
+function AdminWorkspace({
+  username,
+  isAdmin,
+  onLogout,
+}: {
+  username: string;
+  isAdmin: boolean;
+  onLogout: (notice: string | null) => void;
+}) {
+  const [activeTab, setActiveTab] = useState<DmAdminTabKey>(isAdmin ? "workshop" : "dashboard");
   const [workshops, setWorkshops] = useState<DmWorkshop[]>([]);
   const [lines, setLines] = useState<DmLine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,6 +140,7 @@ function AdminWorkspace({ username, onLogout }: { username: string; onLogout: (n
     line: null,
     tab: "general",
   });
+  const [teamModalLine, setTeamModalLine] = useState<DmLine | null>(null);
 
   const call = useCallback(
     async <T,>(fn: () => Promise<T>): Promise<T> => {
@@ -133,10 +157,14 @@ function AdminWorkspace({ username, onLogout }: { username: string; onLogout: (n
   );
 
   const refreshAll = useCallback(async () => {
+    if (!isAdmin) {
+      setLines(await call(() => accountApi.lines()));
+      return;
+    }
     const [nextWorkshops, nextLines] = await call(() => Promise.all([adminApi.workshops(), adminApi.lines()]));
     setWorkshops(nextWorkshops);
     setLines(nextLines);
-  }, [call]);
+  }, [call, isAdmin]);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -185,17 +213,15 @@ function AdminWorkspace({ username, onLogout }: { username: string; onLogout: (n
     notify("success", `${workshop.name} dihapus.`);
   }
 
-  async function saveLine(data: DmLineInput) {
-    const editing = modal.line;
-    const saved = await call(() => (editing ? adminApi.updateLine(editing.id, data) : adminApi.createLine(data)));
+  async function saveLine(data: DmLineInput, lineId: number | null) {
+    const saved = await call(() => (lineId ? adminApi.updateLine(lineId, data) : adminApi.createLine(data)));
     await refreshAll();
-    if (editing) {
-      setModal({ open: false, line: null, tab: "general" });
-      notify("success", `Lini ${saved.code} diperbarui. Dashboard di layar ikut berubah dalam semenit.`);
-    } else {
-      setModal({ open: true, line: saved, tab: "team" });
-      notify("success", `Lini ${saved.code} dibuat. Link dashboard: ${dashboardPath(saved)}`);
-    }
+    return saved;
+  }
+
+  function finishLine(line: DmLine) {
+    setModal({ open: false, line: null, tab: "general" });
+    notify("success", `Lini ${line.code} diterbitkan. Link dashboard: ${dashboardPath(line)}`);
   }
 
   async function deleteLine(line: DmLine) {
@@ -242,12 +268,12 @@ function AdminWorkspace({ username, onLogout }: { username: string; onLogout: (n
 
   return (
     <div className="dm-admin-layout">
-      <DmAdminSidebar activeTab={activeTab} onSelectTab={setActiveTab} />
+      <DmAdminSidebar isAdmin={isAdmin} activeTab={activeTab} onSelectTab={setActiveTab} onLogout={() => onLogout(null)} />
 
       <div className="dm-admin-main-wrap">
         <header className="dm-admin-topbar-nav">
           <div className="dm-admin-topbar-left">
-            <span className="dm-admin-topbar-crumb">DM Admin &bull; {tabLabels[activeTab].crumb}</span>
+            <span className="dm-admin-topbar-crumb">{isAdmin ? "DM Admin" : "DM Dashboard"} &bull; {tabLabels[activeTab].crumb}</span>
             <h2 className="dm-admin-topbar-title">{tabLabels[activeTab].title}</h2>
           </div>
           <div className="dm-admin-topbar-actions">
@@ -255,8 +281,15 @@ function AdminWorkspace({ username, onLogout }: { username: string; onLogout: (n
             <button type="button" className="dm-admin-btn is-secondary" onClick={reload} disabled={loading}>
               Muat Ulang
             </button>
-            <button type="button" className="dm-admin-btn is-danger-outline" onClick={() => onLogout(null)}>
-              Keluar
+            <button
+              type="button"
+              className="dm-admin-btn is-danger-outline"
+              onClick={() => onLogout(null)}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+              title="Keluar dari sesi Admin"
+            >
+              <IconLogout size={14} />
+              <span>Keluar</span>
             </button>
           </div>
         </header>
@@ -276,7 +309,7 @@ function AdminWorkspace({ username, onLogout }: { username: string; onLogout: (n
             </div>
           )}
 
-          <div className={`dm-admin-panel-card${activeTab === "workshop" || activeTab === "dashboard" ? " is-bare" : ""}`}>
+          <div className={`dm-admin-panel-card${activeTab === "workshop" || activeTab === "dashboard" || activeTab === "users" ? " is-bare" : ""}`}>
             {activeTab === "dashboard" && (
               <div className="dm-admin-section dm-tab-lines">
                 {loading ? (
@@ -288,7 +321,7 @@ function AdminWorkspace({ username, onLogout }: { username: string; onLogout: (n
                     <button type="button" className="dm-admin-btn is-primary" onClick={reload}>Coba lagi</button>
                   </div>
                 ) : (
-                  <DashboardTab lines={lines} onGoToLines={() => setActiveTab("workshop")} />
+                  <DashboardTab lines={lines} onGoToLines={() => setActiveTab("workshop")} canManage={isAdmin} />
                 )}
               </div>
             )}
@@ -413,17 +446,30 @@ function AdminWorkspace({ username, onLogout }: { username: string; onLogout: (n
                                       </div>
                                       <span className="dm-line-name">{line.name}</span>
                                       <div className="dm-line-chips">
+                                        {line.published ? null : <span className="dm-chip is-warn">DRAFT</span>}
                                         {line.model ? <span className="dm-chip">{line.model}</span> : null}
                                         {line.memberCount > 0 ? (
-                                          <span className="dm-chip">
+                                          <button
+                                            type="button"
+                                            className="dm-chip"
+                                            onClick={() => setTeamModalLine(line)}
+                                            style={{ cursor: "pointer", border: "none", background: "inherit" }}
+                                            title="Klik untuk membuka manajemen tim lini ini"
+                                          >
                                             <UsersIcon size={13} />
                                             {line.memberCount} anggota
-                                          </span>
+                                          </button>
                                         ) : (
-                                          <span className="dm-chip is-warn">
+                                          <button
+                                            type="button"
+                                            className="dm-chip is-warn"
+                                            onClick={() => setTeamModalLine(line)}
+                                            style={{ cursor: "pointer", border: "none" }}
+                                            title="Klik untuk menambahkan anggota tim"
+                                          >
                                             <AlertIcon size={13} />
                                             0 anggota
-                                          </span>
+                                          </button>
                                         )}
                                       </div>
                                       <a
@@ -439,11 +485,30 @@ function AdminWorkspace({ username, onLogout }: { username: string; onLogout: (n
                                       <div className="dm-line-actions">
                                         <button
                                           type="button"
+                                          className="dm-admin-btn is-primary"
+                                          onClick={() => setTeamModalLine(line)}
+                                          style={{
+                                            background: "#008a4f",
+                                            color: "#ffffff",
+                                            fontWeight: 700,
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "6px",
+                                            boxShadow: "0 2px 6px rgba(0, 138, 79, 0.25)",
+                                          }}
+                                          title={`Buka Manajemen Tim khusus untuk Lini ${line.code}`}
+                                        >
+                                          <UsersIcon size={14} />
+                                          <span>Atur Tim ({line.memberCount}/4)</span>
+                                        </button>
+                                        <button
+                                          type="button"
                                           className="dm-admin-btn is-soft"
                                           onClick={() => setModal({ open: true, line, tab: "general" })}
+                                          title="Ubah informasi lini, model, atau status"
                                         >
                                           <GearIcon size={14} />
-                                          Kelola Lini &amp; Tim
+                                          Kelola Lini
                                         </button>
                                         <button type="button" className="dm-admin-btn is-tonal" onClick={() => copyLink(line)}>
                                           <CopyIcon size={14} />
@@ -461,6 +526,18 @@ function AdminWorkspace({ username, onLogout }: { username: string; onLogout: (n
                     </section>
                   </>
                 )}
+              </div>
+            )}
+
+            {activeTab === "users" && (
+              <div className="dm-admin-section dm-tab-lines">
+                <UserManager call={call} />
+              </div>
+            )}
+
+            {activeTab === "papercard" && (
+              <div className="dm-admin-section">
+                <PapercardTemplateManager workshops={workshops} lines={lines} />
               </div>
             )}
 
@@ -493,18 +570,34 @@ function AdminWorkspace({ username, onLogout }: { username: string; onLogout: (n
         </main>
       </div>
 
-      <LineDetailModal
-        open={modal.open}
-        line={modal.line}
-        initialTab={modal.tab}
-        workshops={workshops}
-        defaultWorkshopId={null}
-        call={call}
-        onTeamChanged={refreshQuietly}
-        onSave={saveLine}
-        onDelete={deleteLine}
-        onClose={() => setModal({ open: false, line: null, tab: "general" })}
-      />
+      {isAdmin ? (
+        <>
+          <LineTeamModal
+            open={Boolean(teamModalLine)}
+            line={teamModalLine}
+            call={call}
+            onChanged={refreshQuietly}
+            onClose={() => setTeamModalLine(null)}
+            onGoToMpv={() => {
+              setTeamModalLine(null);
+              setActiveTab("mpv");
+            }}
+          />
+          <LineDetailModal
+            open={modal.open}
+            line={modal.line}
+            initialTab={modal.tab}
+            workshops={workshops}
+            defaultWorkshopId={null}
+            call={call}
+            onTeamChanged={refreshQuietly}
+            onSave={saveLine}
+            onFinish={finishLine}
+            onDelete={deleteLine}
+            onClose={() => setModal({ open: false, line: null, tab: "general" })}
+          />
+        </>
+      ) : null}
     </div>
   );
 }

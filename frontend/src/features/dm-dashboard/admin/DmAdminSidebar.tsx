@@ -1,11 +1,15 @@
 "use client";
 import Link from "next/link";
+import { IconLogout } from "@/components/ui/icons";
+import { setToken } from "../api";
 
-export type DmAdminTabKey = "dashboard" | "workshop" | "mpv" | "attendance";
+export type DmAdminTabKey = "dashboard" | "workshop" | "users" | "papercard" | "mpv" | "attendance";
 
 interface DmAdminSidebarProps {
+  isAdmin: boolean;
   activeTab: DmAdminTabKey;
   onSelectTab: (tab: DmAdminTabKey) => void;
+  onLogout?: () => void;
 }
 
 function FactoryIcon() {
@@ -52,6 +56,17 @@ function ClipboardCheckIcon() {
   );
 }
 
+function UsersGroupIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
 function ArrowLeftIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -73,28 +88,26 @@ function GridIcon() {
 }
 
 export default function DmAdminSidebar({
+  isAdmin,
   activeTab,
   onSelectTab,
+  onLogout,
 }: DmAdminSidebarProps) {
   return (
     <aside className="dm-admin-sidebar">
       {/* Brand / Logo */}
       <div className="dm-admin-sidebar-brand">
-        <div className="dm-admin-brand-icon-box" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2v20" />
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-          </svg>
+        <div>
+          <img src="/assets/dm/oppo-green-logo.svg" alt="" width={50} height={38} />
         </div>
         <div>
-          <h1 className="dm-admin-brand-title">OPPO DM Admin</h1>
-          <span className="dm-admin-brand-subtitle">Digital Management</span>
+          <h2 className="dm-admin-brand-title">Admin Page</h2>
         </div>
       </div>
 
       {/* Menu Navigasi */}
       <nav className="dm-admin-sidebar-nav" aria-label="Menu Admin">
-        <div className="dm-admin-nav-heading">PENGATURAN LINI</div>
+        <div className="dm-admin-nav-heading">{isAdmin ? "PENGATURAN LINI" : "MENU"}</div>
 
         <button
           type="button"
@@ -105,6 +118,8 @@ export default function DmAdminSidebar({
           <span>Dashboard</span>
         </button>
 
+        {isAdmin ? (
+        <>
         <button
           type="button"
           className={`dm-admin-nav-btn ${activeTab === "workshop" ? "is-active" : ""}`}
@@ -112,6 +127,24 @@ export default function DmAdminSidebar({
         >
           <span className="dm-admin-nav-icon"><FactoryIcon /></span>
           <span>Lini, Workshop &amp; Tim</span>
+        </button>
+
+        <button
+          type="button"
+          className={`dm-admin-nav-btn ${activeTab === "users" ? "is-active" : ""}`}
+          onClick={() => onSelectTab("users")}
+        >
+          <span className="dm-admin-nav-icon"><UsersGroupIcon /></span>
+          <span>User</span>
+        </button>
+
+        <button
+          type="button"
+          className={`dm-admin-nav-btn ${activeTab === "papercard" ? "is-active" : ""}`}
+          onClick={() => onSelectTab("papercard")}
+        >
+          <span className="dm-admin-nav-icon"><ClipboardCheckIcon /></span>
+          <span>Template Papercard</span>
         </button>
 
         <button
@@ -132,18 +165,31 @@ export default function DmAdminSidebar({
           <span>Rekap Presensi</span>
           {/* <span className="dm-admin-nav-badge-pill" style={{ background: "#eaf3f9", color: "#1e5a7d" }}>3 Sesi</span> */}
         </button>
+        </>
+        ) : (
+          <Link href="/dm-dashboard/akun" className="dm-admin-nav-btn">
+            <span className="dm-admin-nav-icon"><UsersGroupIcon /></span>
+            <span>Akun saya</span>
+          </Link>
+        )}
 
-        <div className="dm-admin-nav-heading">NAVIGASI</div>
+        <div className="dm-admin-nav-heading">ROLE VIEW</div>
 
-        <Link href="/dm-dashboard" className="dm-admin-nav-btn">
-          <span className="dm-admin-nav-icon"><ArrowLeftIcon /></span>
-          <span>Daftar Dashboard DM</span>
+        <Link href="/dm-dashboard/leader" className="dm-admin-nav-btn">
+          <span className="dm-admin-nav-icon"><ClipboardCheckIcon /></span>
+          <span>Dashboard Leader</span>
         </Link>
 
-        <Link href="/dashboard" className="dm-admin-nav-btn">
-          <span className="dm-admin-nav-icon"><GridIcon /></span>
-          <span>Production Dashboard</span>
+        <Link href="/dm-dashboard/member" className="dm-admin-nav-btn">
+          <span className="dm-admin-nav-icon"><ClipboardCheckIcon /></span>
+          <span>Portal Member</span>
         </Link>
+
+        <Link href="/dm-dashboard/supervisor" className="dm-admin-nav-btn">
+          <span className="dm-admin-nav-icon"><UsersGroupIcon /></span>
+          <span>Supervisor</span>
+        </Link>
+
       </nav>
 
     </aside>

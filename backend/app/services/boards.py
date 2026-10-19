@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.models import Board, BoardMember, Employee, Line, MpvAward, Workshop
 from app.schemas import LineOut, MemberOut, MpvOut, PublicBoardOut
 
-RESERVED_SLUGS = {"admin"}
+RESERVED_SLUGS = {"admin", "masuk", "akun"}
 
 
 def slugify(text: str) -> str:
@@ -56,10 +56,11 @@ def member_out(member: BoardMember, employee: Employee) -> MemberOut:
         employee_id=employee.employee_no,
         name=employee.name,
         dept=employee.dept,
-        supervisor=employee.supervisor,
+        role=employee.role,
+        supervisor=employee.supervisor_name,
         work_phone=employee.work_phone,
         photo_url=employee.photo_url,
-        position=member.position,
+        position=employee.position,
         sort_order=member.sort_order,
     )
 
@@ -88,10 +89,10 @@ def mpv_out(award: MpvAward, employee: Employee) -> MpvOut:
         employee_id=employee.employee_no,
         name=employee.name,
         dept=employee.dept,
-        supervisor=employee.supervisor,
+        supervisor=employee.supervisor_name,
         work_phone=employee.work_phone,
         photo_url=employee.photo_url,
-        position=award.position,
+        position=employee.position,
     )
 
 
@@ -145,5 +146,6 @@ def line_out(db: Session, board: Board, line: Line, workshop: Workshop) -> LineO
         values=list(board.values or []),
         team_photo_url=board.team_photo_url,
         slug=board.slug,
+        published=board.is_active,
         member_count=count or 0,
     )
