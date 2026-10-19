@@ -2567,3 +2567,32 @@
 .dm-admin-modal :is(button, input, select, textarea) {
   font-family: inherit;
 }
+
+.dm-subtabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dm-subtab {
+  padding: 8px 14px;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.dm-subtab:hover {
+  color: #0f172a;
+}
+
+.dm-subtab.is-active {
+  color: #008a4f;
+  border-bottom-color: #008a4f;
+}

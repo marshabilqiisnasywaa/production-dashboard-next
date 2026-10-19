@@ -4,6 +4,7 @@ from app.models.employee import Employee
 from app.models.line import Line
 from app.models.meeting import (
     DmMeetingAttendance,
+    DmMeetingSchedule,
     DmMeetingSession,
     DmMeetingSummary,
     DmPostMeeting,
@@ -17,6 +18,7 @@ __all__ = [
     "Board",
     "BoardMember",
     "DmMeetingAttendance",
+    "DmMeetingSchedule",
     "DmMeetingSession",
     "DmMeetingSummary",
     "DmPostMeeting",

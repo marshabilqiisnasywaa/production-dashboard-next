@@ -156,6 +156,7 @@ export default function LeaderDashboardPage() {
         supervisorName={currentUser?.supervisor || "Belum diatur admin"}
         isPapercardSubmitted={Boolean(leaderSubmission)}
         completedSessionsCount={completedSessionsCount}
+        totalSessionsCount={todaySessions.length}
       />
 
       {/* 2. Compact Dual Grid: Papercard Leader & Presensi DM Meeting (Live DB) */}

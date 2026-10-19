@@ -144,7 +144,7 @@ export default function DmAdminSidebar({
           onClick={() => onSelectTab("papercard")}
         >
           <span className="dm-admin-nav-icon"><ClipboardCheckIcon /></span>
-          <span>Template Papercard</span>
+          <span>Papercard & Meeting</span>
         </button>
 
         <button

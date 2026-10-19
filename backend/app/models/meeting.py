@@ -1,8 +1,20 @@
 from datetime import date, datetime
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Index, Integer, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+
+class DmMeetingSchedule(Base):
+    __tablename__ = "dm_meeting_schedules"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    line_id: Mapped[int] = mapped_column(ForeignKey("lines.id", ondelete="CASCADE"), index=True)
+    label: Mapped[str] = mapped_column(String(60))
+    time: Mapped[str] = mapped_column(String(5))  # "HH:MM"
+    days: Mapped[str] = mapped_column(String(20), default="1,2,3,4,5,6,7", server_default="1,2,3,4,5,6,7")  # ISO weekdays
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class DmMeetingSession(Base):
@@ -18,6 +30,7 @@ class DmMeetingSession(Base):
     shift: Mapped[str] = mapped_column(String(16), default="Shift 1", server_default="Shift 1")
     session_type: Mapped[str] = mapped_column(String(16))  # "during_1", "during_2", "during_3"
     session_number: Mapped[int] = mapped_column(Integer)  # 1, 2, 3
+    label: Mapped[str | None] = mapped_column(String(60))
     scheduled_time: Mapped[str] = mapped_column(String(8))  # "10:00", "14:00", "16:00"
     status: Mapped[str] = mapped_column(String(16), default="pending", server_default="pending")  # "pending", "in_progress", "completed"
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

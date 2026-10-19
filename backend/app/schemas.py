@@ -374,6 +374,42 @@ class MeetingSessionStartIn(CamelModel):
     attendances: list[MeetingAttendanceIn] = Field(default_factory=list)
 
 
+class MeetingScheduleItemIn(CamelModel):
+    label: str = Field(min_length=1, max_length=60)
+    time: str = Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
+    days: list[int] = Field(default_factory=lambda: [1, 2, 3, 4, 5, 6, 7])
+    is_active: bool = True
+
+    @model_validator(mode="after")
+    def check_days(self):
+        if not self.days or any(d < 1 or d > 7 for d in self.days):
+            raise ValueError("Hari harus berupa angka 1 (Senin) sampai 7 (Minggu).")
+        return self
+
+
+class MeetingScheduleItemOut(CamelModel):
+    id: int | None = None
+    label: str
+    time: str
+    days: list[int]
+    is_active: bool
+
+
+class MeetingScheduleOut(CamelModel):
+    line_id: int
+    is_default: bool
+    items: list[MeetingScheduleItemOut]
+
+
+class MeetingScheduleSaveIn(CamelModel):
+    items: list[MeetingScheduleItemIn] = Field(max_length=12)
+
+
+class MeetingScheduleApplyIn(CamelModel):
+    line_ids: list[int] = Field(min_length=1)
+    items: list[MeetingScheduleItemIn] = Field(max_length=12)
+
+
 class MeetingSessionEndIn(CamelModel):
     summaries: list[MeetingSummaryIn] = Field(default_factory=list)
 
@@ -387,6 +423,7 @@ class MeetingSessionOut(CamelModel):
     shift: str
     session_type: str
     session_number: int
+    label: str | None = None
     scheduled_time: str
     status: str
     started_at: datetime | None

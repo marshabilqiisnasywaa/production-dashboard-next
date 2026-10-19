@@ -3,11 +3,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import Principal, get_principal
+from app.api.deps import Principal, get_current_admin, get_principal
 from app.db.session import get_db
 from app.models import (
     BoardMember,
     DmMeetingAttendance,
+    DmMeetingSchedule,
     DmMeetingSession,
     DmMeetingSummary,
     DmPostMeeting,
@@ -17,6 +18,11 @@ from app.models import (
 from app.schemas import (
     MeetingAttendanceIn,
     MeetingAttendanceOut,
+    MeetingScheduleApplyIn,
+    MeetingScheduleItemIn,
+    MeetingScheduleItemOut,
+    MeetingScheduleOut,
+    MeetingScheduleSaveIn,
     MeetingSessionEndIn,
     MeetingSessionOut,
     MeetingSessionStartIn,
@@ -26,14 +32,17 @@ from app.schemas import (
     PostMeetingOut,
 )
 from app.services.accounts import active_line
+from app.services.meeting_schedule import (
+    ALL_DAYS,
+    DEFAULT_SLOTS,
+    format_days,
+    line_schedule_rows,
+    parse_days,
+    slots_for_day,
+)
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
-SESSION_TIMES = {
-    1: {"type": "during_1", "time": "10:00"},
-    2: {"type": "during_2", "time": "14:00"},
-    3: {"type": "during_3", "time": "16:00"},
-}
 
 
 def _map_attendance(a: DmMeetingAttendance, emp: Employee | None) -> MeetingAttendanceOut:
@@ -91,6 +100,7 @@ def _map_session(s: DmMeetingSession, db: Session) -> MeetingSessionOut:
         shift=s.shift,
         session_type=s.session_type,
         session_number=s.session_number,
+        label=s.label,
         scheduled_time=s.scheduled_time,
         status=s.status,
         started_at=s.started_at,
@@ -104,6 +114,84 @@ def _map_session(s: DmMeetingSession, db: Session) -> MeetingSessionOut:
 # -----------------------------------------------------------------------------
 # During-Meeting Sessions (10:00, 14:00, 16:00)
 # -----------------------------------------------------------------------------
+
+def _schedule_out(db: Session, line_id: int) -> MeetingScheduleOut:
+    rows = line_schedule_rows(db, line_id)
+    if not rows:
+        return MeetingScheduleOut(
+            line_id=line_id,
+            is_default=True,
+            items=[
+                MeetingScheduleItemOut(label=label, time=time, days=list(ALL_DAYS), is_active=True)
+                for label, time in DEFAULT_SLOTS
+            ],
+        )
+    return MeetingScheduleOut(
+        line_id=line_id,
+        is_default=False,
+        items=[
+            MeetingScheduleItemOut(id=r.id, label=r.label, time=r.time, days=parse_days(r.days), is_active=r.is_active)
+            for r in rows
+        ],
+    )
+
+
+def _replace_schedule(db: Session, line_id: int, items: list[MeetingScheduleItemIn]) -> None:
+    for row in line_schedule_rows(db, line_id):
+        db.delete(row)
+    db.flush()
+    for item in items:
+        db.add(
+            DmMeetingSchedule(
+                line_id=line_id,
+                label=item.label.strip(),
+                time=item.time,
+                days=format_days(item.days),
+                is_active=item.is_active,
+            )
+        )
+
+
+@router.get("/schedule", response_model=MeetingScheduleOut)
+def get_schedule(
+    line_id: int,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_principal),
+) -> MeetingScheduleOut:
+    if not db.get(Line, line_id):
+        raise HTTPException(status_code=404, detail="Lini tidak ditemukan.")
+    return _schedule_out(db, line_id)
+
+
+@router.put("/schedule/{line_id}", response_model=MeetingScheduleOut)
+def save_schedule(
+    line_id: int,
+    payload: MeetingScheduleSaveIn,
+    db: Session = Depends(get_db),
+    _admin=Depends(get_current_admin),
+) -> MeetingScheduleOut:
+    if not db.get(Line, line_id):
+        raise HTTPException(status_code=404, detail="Lini tidak ditemukan.")
+    _replace_schedule(db, line_id, payload.items)
+    db.commit()
+    return _schedule_out(db, line_id)
+
+
+@router.post("/schedule/apply", response_model=list[MeetingScheduleOut])
+def apply_schedule(
+    payload: MeetingScheduleApplyIn,
+    db: Session = Depends(get_db),
+    _admin=Depends(get_current_admin),
+) -> list[MeetingScheduleOut]:
+    applied: list[int] = []
+    for line_id in payload.line_ids:
+        if not db.get(Line, line_id):
+            continue
+        _replace_schedule(db, line_id, payload.items)
+        applied.append(line_id)
+    db.commit()
+    return [_schedule_out(db, line_id) for line_id in applied]
+
 
 @router.get("/sessions", response_model=list[MeetingSessionOut])
 def list_sessions(
@@ -135,23 +223,37 @@ def list_sessions(
     )
     sessions = list(db.scalars(stmt).all())
 
-    if len(sessions) < 3:
-        existing_nums = {s.session_number for s in sessions}
-        for num in (1, 2, 3):
-            if num not in existing_nums:
-                cfg = SESSION_TIMES[num]
-                new_session = DmMeetingSession(
+    slots = {slot.number: slot for slot in slots_for_day(db, line_id, date_val)}
+    changed = False
+    for s in sessions:
+        slot = slots.get(s.session_number)
+        if s.status == "pending":
+            if slot is None:
+                db.delete(s)
+                changed = True
+            elif s.scheduled_time != slot.time or s.label != slot.label:
+                s.scheduled_time = slot.time
+                s.label = slot.label
+                changed = True
+    existing_nums = {s.session_number for s in sessions}
+    for num, slot in slots.items():
+        if num not in existing_nums:
+            db.add(
+                DmMeetingSession(
                     line_id=line_id,
                     leader_id=principal.employee.id if principal.employee else None,
                     date=date_val,
                     shift=shift,
-                    session_type=cfg["type"],
+                    session_type=f"during_{num}",
                     session_number=num,
-                    scheduled_time=cfg["time"],
+                    label=slot.label,
+                    scheduled_time=slot.time,
                     status="pending",
                     duration_seconds=0,
                 )
-                db.add(new_session)
+            )
+            changed = True
+    if changed:
         db.commit()
         sessions = list(db.scalars(stmt).all())
 
@@ -181,15 +283,18 @@ def start_session(
     )
     session = db.scalars(stmt).first()
     if not session:
-        cfg = SESSION_TIMES.get(payload.session_number, {"type": f"during_{payload.session_number}", "time": "10:00"})
+        slot = next((x for x in slots_for_day(db, payload.line_id, payload.date) if x.number == payload.session_number), None)
+        if slot is None:
+            raise HTTPException(status_code=404, detail="Sesi ini tidak ada pada jadwal meeting lini untuk hari tersebut.")
         session = DmMeetingSession(
             line_id=payload.line_id,
             leader_id=principal.employee.id if principal.employee else None,
             date=payload.date,
             shift=payload.shift,
-            session_type=cfg["type"],
+            session_type=f"during_{payload.session_number}",
             session_number=payload.session_number,
-            scheduled_time=cfg["time"],
+            label=slot.label,
+            scheduled_time=slot.time,
             status="in_progress",
             started_at=datetime.now(),
             duration_seconds=0,
