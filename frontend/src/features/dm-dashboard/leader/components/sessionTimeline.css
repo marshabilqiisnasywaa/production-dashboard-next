@@ -1,0 +1,176 @@
+/* Timeline hari ini. Prefix: dml-tl / dml-role. Tokens come from components/ui/ui.css (.dm-theme). */
+
+.dml-tl-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dm-green);
+  white-space: nowrap;
+}
+.dml-tl-loading {
+  padding: 24px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--dm-muted);
+}
+
+/* 4-segment progress, one segment per session */
+.dml-tl-segs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.dml-tl-seg {
+  height: 4px;
+  border-radius: 999px;
+  background: #eef0f2;
+}
+.dml-tl-seg.is-done {
+  background: var(--dm-green);
+}
+.dml-tl-seg.is-live {
+  background: rgba(4, 106, 56, 0.4);
+}
+.dml-tl-seg.is-overdue {
+  background: var(--dm-amber);
+}
+
+.dml-tl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dml-tl__item {
+  padding: 12px 14px;
+  border: 1px solid var(--dm-border);
+  border-radius: var(--dm-radius-sm);
+  background: #fff;
+}
+.dml-tl__item.is-focus {
+  background: var(--dm-green-50);
+  border-color: var(--dm-green);
+}
+.dml-tl__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dml-tl__badge {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: 1.5px solid var(--dm-border);
+  border-radius: 50%;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dm-muted);
+}
+.dml-tl__item--done .dml-tl__badge {
+  background: var(--dm-green);
+  border-color: var(--dm-green);
+  color: #fff;
+}
+.dml-tl__item--live .dml-tl__badge {
+  border-color: var(--dm-green);
+  color: var(--dm-green);
+}
+.dml-tl__item--overdue .dml-tl__badge {
+  border-color: var(--dm-amber);
+  color: var(--dm-amber-text);
+}
+.dml-tl__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.dml-tl__main strong {
+  font-size: 14px;
+}
+.dml-tl__time {
+  font-size: 12px;
+  color: var(--dm-muted);
+}
+
+/* content under the title lines up with the title (badge 26px + gap 12px) */
+.dml-tl__summary,
+.dml-tl__detail,
+.dml-tl__cta,
+.dml-tl__link {
+  margin-left: 38px;
+}
+.dml-tl__summary {
+  margin-top: 6px;
+  margin-bottom: 0;
+  font-size: 12px;
+  color: var(--dm-muted);
+}
+.dml-tl__detail {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.dml-tl__roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dml-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--dm-border);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12px;
+  color: var(--dm-muted);
+}
+.dml-role.is-sent {
+  border-color: var(--dm-green-100);
+  color: var(--dm-green);
+  font-weight: 600;
+}
+.dml-tl__caption {
+  margin: 0;
+  font-size: 12px;
+  color: var(--dm-muted);
+}
+.dml-tl__caption strong {
+  color: var(--dm-text);
+}
+
+.dml-tl__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  margin-top: 12px;
+  padding: 0 14px;
+  border-radius: var(--dm-radius-sm);
+  background: var(--dm-green);
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+}
+.dml-tl__cta:hover {
+  background: #035a2f;
+}
+.dml-tl__link {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dm-green);
+  text-decoration: none;
+}
+.dml-tl__link:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,32 @@
+.dml-lh {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dml-lh__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--dm-text, #111827);
+}
+.dml-lh__title span {
+  font-weight: 500;
+  color: var(--dm-muted, #6b7280);
+}
+.dml-lh__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin: 0;
+  font-size: 13px;
+  color: var(--dm-muted, #6b7280);
+}
+.dml-lh__meta span + span::before {
+  content: "·";
+  margin: 0 8px;
+}
+.dml-lh__meta strong {
+  font-weight: 600;
+  color: var(--dm-text, #111827);
+}

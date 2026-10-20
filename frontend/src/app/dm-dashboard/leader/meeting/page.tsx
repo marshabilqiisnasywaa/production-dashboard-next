@@ -1,11 +1,7 @@
-import type { Metadata } from "next";
-import LeaderMeetingPage from "@/features/dm-dashboard/leader/meeting/LeaderMeetingPage";
+import MeetingPage from "@/features/dm-dashboard/leader/meeting/MeetingPage";
 
-export const metadata: Metadata = {
-  title: "Presensi & Notulensi DM Meeting · DM Digital",
-  description: "Presensi meeting harian tim 5 lini produksi dan notulensi koordinasi",
-};
+export const metadata = { title: "DM Meeting · DM Digital" };
 
 export default function Page() {
-  return <LeaderMeetingPage />;
+  return <MeetingPage />;
 }

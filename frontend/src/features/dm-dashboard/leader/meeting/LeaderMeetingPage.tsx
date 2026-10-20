@@ -142,7 +142,7 @@ export default function LeaderMeetingPage() {
           }
         }
 
-        const subs = await papercardApi.listSubmissions({ lineId, date: todayStr }).catch(() => []);
+        const subs: DmPapercardSubmission[] = await papercardApi.listSubmissions({ lineId, date: todayStr }).catch(() => []);
         setNgSubmissions(subs.filter((s) => s.status === "NG"));
 
         // Load sessions from API
@@ -1217,6 +1217,8 @@ export default function LeaderMeetingPage() {
                       </select>
                     </div>
 
+                    
+
                     <div>
                       <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "3px" }}>
                         Due Date / Target Waktu:
@@ -1241,6 +1243,8 @@ export default function LeaderMeetingPage() {
                         }}
                       />
                     </div>
+
+                    
                   </div>
                 </div>
               ))}
