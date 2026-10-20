@@ -18,26 +18,26 @@ import { PresensiResultCard } from "./components/PresensiResultCard";
 import { SummaryForm } from "./components/SummaryForm";
 import { useMeetingFlow } from "./hooks/useMeetingFlow";
 import { useMeetingMembers } from "./hooks/useMeetingMembers";
-import {
-  MEETING_AREA,
-  MEETING_CONFIG,
-  MEETING_LINES,
-  MEETING_LOCATION,
-  MEETING_SESSIONS,
-} from "./mockData";
+import { useMeetingSessions } from "./hooks/useMeetingSessions";
+import { MEETING_AREA, MEETING_CONFIG, MEETING_LINES, MEETING_LOCATION } from "./mockData";
 import type { ItemErrors } from "./types";
 import { endTimeOf, formatDuration, isBlank, pickSessionId, validateItem } from "./utils";
-
-const SESSION_OPTIONS = MEETING_SESSIONS.map((s) => ({ value: s.id, label: s.start }));
 
 /** Composition only: state machine in hooks/useMeetingFlow, every card in components/. */
 export default function MeetingPage() {
   const now = useNow(60_000);
   const members = useMeetingMembers();
+  const { sessions, loading: sessionsLoading } = useMeetingSessions();
+  const sessionOptions = useMemo(() => sessions.map((s) => ({ value: s.id, label: s.start })), [sessions]);
 
   const [pickedId, setPickedId] = useState<string | null>(null);
-  const sessionId = pickedId ?? (now ? pickSessionId(now, MEETING_SESSIONS) : null);
-  const session = MEETING_SESSIONS.find((s) => s.id === sessionId) ?? MEETING_SESSIONS[0];
+  const sessionId =
+    pickedId && sessions.some((s) => s.id === pickedId)
+      ? pickedId
+      : now && sessions.length > 0
+        ? pickSessionId(now, sessions)
+        : null;
+  const session = sessions.find((s) => s.id === sessionId) ?? null;
 
   const { state, hydrated, counts, actions } = useMeetingFlow(sessionId, members);
   const [showErrors, setShowErrors] = useState(false);
@@ -75,6 +75,24 @@ export default function MeetingPage() {
       ? undefined
       : "Member yang belum scan saat presensi ditutup dicatat tidak hadir.";
 
+  if (!session) {
+    return (
+      <div className="dml-mt">
+        <div className="dml-page-head">
+          <div>
+            <h1>DM Meeting</h1>
+            <p>During-Management · {MEETING_LOCATION}</p>
+          </div>
+        </div>
+        <div className="dml-empty">
+          {sessionsLoading
+            ? "Memuat jadwal meeting…"
+            : "Belum ada jadwal meeting untuk lini ini hari ini. Admin bisa mengaturnya di Papercard & Meeting > Jadwal Meeting."}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="dml-mt">
       <div className="dml-page-head">
@@ -84,7 +102,7 @@ export default function MeetingPage() {
         </div>
         <SegmentedControl
           ariaLabel="Pilih sesi meeting"
-          options={SESSION_OPTIONS}
+          options={sessionOptions}
           value={session.id}
           onChange={(id) => {
             setPickedId(id);

@@ -16,12 +16,24 @@ interface ScheduleEntry {
   start: string; // HH:mm
 }
 
-const SCHEDULE: ScheduleEntry[] = [
-  { id: "pre", name: "Pre-Management", label: "07:45–08:00", start: "07:45" },
-  { id: "during-1", name: "During-Management 1", label: "10:00", start: "10:00" },
-  { id: "during-2", name: "During-Management 2", label: "14:00", start: "14:00" },
-  { id: "post", name: "Post-Management", label: "16:00", start: "16:00" },
-];
+const PRE_ENTRY: ScheduleEntry = { id: "pre", name: "Pre-Management", label: "07:45–08:00", start: "07:45" };
+
+/** Pre-Management is fixed; every other entry is a meeting session from the line's schedule (set by admin). */
+function buildSchedule(sessions: DmMeetingSession[]): { schedule: ScheduleEntry[]; sessionFor: Map<string, DmMeetingSession> } {
+  const sessionFor = new Map<string, DmMeetingSession>();
+  const entries: ScheduleEntry[] = sessions.map((s) => {
+    const entry = {
+      id: `session-${s.id}`,
+      name: s.label || `Sesi ${s.sessionNumber}`,
+      label: s.scheduledTime,
+      start: s.scheduledTime,
+    };
+    sessionFor.set(entry.id, s);
+    return entry;
+  });
+  const schedule = [PRE_ENTRY, ...entries].sort((a, b) => a.start.localeCompare(b.start));
+  return { schedule, sessionFor };
+}
 
 /** Papercard can be sent until this time, after that it counts as NG (Telat) */
 const PAPERCARD_DEADLINE = "09:00";
@@ -37,7 +49,7 @@ interface Input {
   now: Date;
   leaderSubmitted: boolean;
   submissions: DmPapercardSubmission[];
-  /** Today's meeting sessions from the API, in order: During 1, During 2, Post */
+  /** Today's meeting sessions of the Leader's line, from the API (times follow the admin's schedule) */
   sessions: DmMeetingSession[];
 }
 
@@ -58,7 +70,8 @@ function getAttendance(_session: DmMeetingSession | undefined): { present: numbe
 }
 
 export function buildTimeline({ now, leaderSubmitted, submissions, sessions }: Input): TimelineModel {
-  const built: TimelineSession[] = SCHEDULE.map((entry, index) => {
+  const { schedule, sessionFor } = buildSchedule(sessions);
+  const built: TimelineSession[] = schedule.map((entry, index) => {
     const base = { id: entry.id, order: index + 1, name: entry.name, time: entry.label };
 
     /* ---------- Pre-Management: driven by the Leader's own papercard ---------- */
@@ -91,10 +104,9 @@ export function buildTimeline({ now, leaderSubmitted, submissions, sessions }: I
     }
 
     /* ---------- During / Post: driven by meeting sessions ---------- */
-    // Sessions come from the API in order (During 1, During 2, Post)
-    const session = sessions[index - 1];
+    const session = sessionFor.get(entry.id);
     const completed = session?.status === "completed";
-    const next = SCHEDULE[index + 1];
+    const next = schedule[index + 1];
     const cta = { label: "Buka ruang sesi", href: LEADER_ROUTES.meeting };
 
     if (completed) {
@@ -119,7 +131,7 @@ export function buildTimeline({ now, leaderSubmitted, submissions, sessions }: I
   const nextHint =
     !live && upcoming
       ? `Berikutnya: ${upcoming.name} · dalam ${formatDuration(
-          msUntil(now, SCHEDULE.find((s) => s.id === upcoming.id)!.start),
+          msUntil(now, schedule.find((s) => s.id === upcoming.id)!.start),
         )}`
       : null;
 
