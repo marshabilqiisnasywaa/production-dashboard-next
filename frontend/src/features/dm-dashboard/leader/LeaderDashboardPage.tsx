@@ -45,7 +45,7 @@ export default function LeaderDashboardPage() {
   return (
     <div className="dms-container">
       <LeaderPageHeader
-        userName={currentUser?.name || LEADER_USER.name}
+        // userName={currentUser?.name || LEADER_USER.name}
         lineName={currentUser?.line?.name || LEADER_USER.lineName}
         lineCode={currentUser?.line?.code || LEADER_USER.line}
         workshopName={currentUser?.line?.workshopName || LEADER_USER.workshop}

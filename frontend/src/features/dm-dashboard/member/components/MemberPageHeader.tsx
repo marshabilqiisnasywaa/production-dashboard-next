@@ -1,12 +1,13 @@
-import "../../leader/components/leaderPageHeader.css"; // same heading style as the Leader dashboard
+
+import "../../leader/components/leaderPageHeader.css";
 import type { MemberProfile } from "../memberProfile";
 
-/** Plain heading: who + which line + who approves. */
+/** Plain heading: line information + department + supervisor. */
 export function MemberPageHeader({ profile }: { profile: MemberProfile }) {
   return (
     <header className="dml-lh">
       <h1 className="dml-lh__title">
-        Dashboard Member <span>— {profile.name}</span>
+        Dashboard Member
       </h1>
       <p className="dml-lh__meta">
         <span>

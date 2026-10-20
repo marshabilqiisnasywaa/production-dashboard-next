@@ -1,19 +1,24 @@
+
 import "./leaderPageHeader.css";
 
 interface Props {
-  userName: string;
   lineName: string;
   lineCode: string;
   workshopName: string;
   supervisorName: string;
 }
 
-/** Plain page heading (no card): who + which line + who approves. */
-export function LeaderPageHeader({ userName, lineName, lineCode, workshopName, supervisorName }: Props) {
+/** Plain page heading: line information + supervisor. */
+export function LeaderPageHeader({
+  lineName,
+  lineCode,
+  workshopName,
+  supervisorName,
+}: Props) {
   return (
     <header className="dml-lh">
       <h1 className="dml-lh__title">
-        Dashboard Leader <span>— {userName}</span>
+        Dashboard Leader
       </h1>
       <p className="dml-lh__meta">
         <span>
