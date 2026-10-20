@@ -31,32 +31,78 @@ export function SupervisorReviewModal({
   const groupedCategories = useMemo(() => {
     if (!reviewTarget?.submission?.answers) return [];
 
-    const map = new Map<string, { answer: any; originalIndex: number }[]>();
+    type Entry = { answer: any; originalIndex: number };
+    type Pos = { key: string; number: number | null; title: string; entries: Entry[] };
+    type Subject = { title: string; positions: Pos[] };
+    const cats = new Map<string, { subjects: Subject[]; entries: Entry[] }>();
 
-    reviewTarget.submission.answers.forEach((ans: any, idx: number) => {
-      const catName =
-        ans.categoryName ||
-        ans.category ||
-        ITEM_CATEGORY_MAP[ans.itemId] ||
-        "Pemeriksaan Umum";
-
-      if (!map.has(catName)) {
-        map.set(catName, []);
+    reviewTarget.submission.answers.forEach((raw: any, idx: number) => {
+      const ans = { ...raw };
+      if (String(ans.itemId ?? "").includes("#")) {
+        const sep = typeof ans.title === "string" ? ans.title.indexOf(": ") : -1;
+        if (!ans.ruleText) ans.ruleText = sep >= 0 ? ans.title.slice(sep + 2) : ans.title;
+        if (!ans.itemTitle && sep >= 0) ans.itemTitle = ans.title.slice(0, sep);
       }
-      map.get(catName)!.push({ answer: ans, originalIndex: idx });
+      const catName = ans.categoryName || ans.category || ITEM_CATEGORY_MAP[ans.itemId] || "Pemeriksaan Umum";
+      if (!cats.has(catName)) cats.set(catName, { subjects: [], entries: [] });
+      const cat = cats.get(catName)!;
+      const entry: Entry = { answer: ans, originalIndex: idx };
+      cat.entries.push(entry);
+
+      const subjectTitle = ans.groupTitle || "";
+      let subject = cat.subjects.find((sj) => sj.title === subjectTitle);
+      if (!subject) {
+        subject = { title: subjectTitle, positions: [] };
+        cat.subjects.push(subject);
+      }
+      const posKey = String(ans.itemId ?? idx).split("#")[0];
+      let pos = subject.positions.find((ps) => ps.key === posKey);
+      if (!pos) {
+        pos = {
+          key: posKey,
+          number: ans.number ?? null,
+          title: ans.itemTitle || ans.title || PRESET_TITLES[ans.itemId] || `Poin Cek ${ans.itemId}`,
+          entries: [],
+        };
+        subject.positions.push(pos);
+      }
+      pos.entries.push(entry);
     });
 
-    return Array.from(map.entries()).map(([categoryName, items]) => {
-      const hasNg = items.some((it) => it.answer.status === "NG");
-      const okCount = items.filter((it) => it.answer.status === "OK").length;
-      return {
-        categoryName,
-        items,
-        hasNg,
-        okCount,
-      };
-    });
+    return Array.from(cats.entries()).map(([categoryName, { subjects, entries }]) => ({
+      categoryName,
+      subjects,
+      total: entries.length,
+      hasNg: entries.some((e) => e.answer.status === "NG"),
+      okCount: entries.filter((e) => e.answer.status === "OK").length,
+    }));
   }, [reviewTarget]);
+
+  const renderStatus = (answer: any) => {
+    const isNG = answer.status === "NG";
+    const isText = answer.textValue && !isNG;
+    return (
+      <span
+        className={`spv-status-badge ${isNG ? "spv-status-badge--ng" : isText ? "spv-status-badge--info" : "spv-status-badge--approved"}`}
+      >
+        {isNG ? "NG" : isText ? `Nilai: ${answer.textValue}` : "OK"}
+      </span>
+    );
+  };
+
+  const renderNg = (answer: any) =>
+    answer.status === "NG" && (
+      <div className="spv-modal-ng-box">
+        <div>
+          <strong>Penyebab:</strong> {answer.cause || "Tidak ada keterangan penyebab."}
+        </div>
+        {answer.solution && (
+          <div>
+            <strong>Tindakan Perbaikan:</strong> {answer.solution}
+          </div>
+        )}
+      </div>
+    );
 
   return (
     <div
@@ -77,9 +123,9 @@ export function SupervisorReviewModal({
               <span className={`spv-chip spv-chip--dept-${reviewTarget.dept.toLowerCase()}`}>
                 {reviewTarget.dept}
               </span>
-              <span className="spv-chip spv-chip--neutral">
-                {reviewTarget.role === "leader" ? "Leader" : "Operator"}
-              </span>
+                {/* <span className="spv-chip spv-chip--neutral">
+                  {reviewTarget.role === "leader" ? "Leader" : "Operator"}
+                </span> */}
               {reviewTarget.lineName && (
                 <span className="spv-chip spv-chip--line">{reviewTarget.lineName}</span>
               )}
@@ -136,7 +182,6 @@ export function SupervisorReviewModal({
                   <div key={group.categoryName} className="spv-modal-cat-group">
                     <div className="spv-modal-cat-header">
                       <div className="spv-modal-cat-left">
-                        {/* <span className="spv-modal-cat-tag">KATEGORI</span> */}
                         <h5 className="spv-modal-cat-name">{group.categoryName}</h5>
                       </div>
                       <span
@@ -144,56 +189,71 @@ export function SupervisorReviewModal({
                           group.hasNg ? "spv-modal-cat-badge--ng" : "spv-modal-cat-badge--ok"
                         }`}
                       >
-                        {group.hasNg ? "Ada Temuan (NG)" : `${group.okCount}/${group.items.length} OK`}
+                        {group.hasNg ? "Ada Temuan (NG)" : `${group.okCount}/${group.total} OK`}
                       </span>
                     </div>
 
-                    <div className="spv-modal-answers-list">
-                      {group.items.map(({ answer, originalIndex: aIdx }) => {
-                        const isNG = answer.status === "NG";
-                        const isText = answer.textValue && !isNG;
+                    {group.subjects.map((subject, si) => (
+                      <div key={`${subject.title}-${si}`} className="spv-modal-subject">
+                        {subject.title && <div className="spv-modal-subject-title">{subject.title}</div>}
 
-                        return (
-                          <div
-                            key={answer.itemId || aIdx}
-                            className={`spv-modal-answer-item ${isNG ? "is-ng" : ""}`}
-                          >
-                            <div className="spv-modal-answer-main">
-                              <span className="spv-modal-answer-title">
-                                <span className="spv-modal-answer-num">#{answer.number ?? aIdx + 1}</span>{" "}
-                                {answer.title || answer.itemTitle || PRESET_TITLES[answer.itemId] || `Poin Cek ${answer.itemId}`}
-                              </span>
-
-                              <span
-                                className={`spv-status-badge ${
-                                  isNG
-                                    ? "spv-status-badge--ng"
-                                    : isText
-                                    ? "spv-status-badge--info"
-                                    : "spv-status-badge--approved"
-                                }`}
-                              >
-                                {isNG ? "NG (Abnormal)" : isText ? `Nilai: ${answer.textValue}` : "OK"}
-                              </span>
-                            </div>
-
-                            {/* If NG, show Cause & Solution entered by employee */}
-                            {isNG && (
-                              <div className="spv-modal-ng-box">
-                                <div>
-                                  <strong>Penyebab:</strong> {answer.cause || "Tidak ada keterangan penyebab."}
+                        {subject.positions.map((pos) => {
+                          const perRule = pos.entries.some((e) => e.answer.ruleText);
+                          if (!perRule) {
+                            const { answer } = pos.entries[0];
+                            const isNG = answer.status === "NG";
+                            return (
+                              <div key={pos.key} className={`spv-modal-pos${isNG ? " is-ng" : ""}`}>
+                                <div className="spv-modal-pos-head">
+                                  <span className="spv-modal-pos-title">
+                                    {pos.number != null && <span className="spv-modal-answer-num">{pos.number}.</span>} {pos.title}
+                                  </span>
+                                  {renderStatus(answer)}
                                 </div>
-                                {answer.solution && (
-                                  <div>
-                                    <strong>Tindakan Perbaikan:</strong> {answer.solution}
-                                  </div>
+                                {Array.isArray(answer.rules) && answer.rules.length > 0 && (
+                                  <ol className="spv-modal-rules spv-modal-rules--plain">
+                                    {answer.rules.map((line: string, ri: number) => (
+                                      <li key={ri} className="spv-modal-rule">
+                                        <span className="spv-modal-rule-text">{line}</span>
+                                      </li>
+                                    ))}
+                                  </ol>
                                 )}
+                                {renderNg(answer)}
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
+                            );
+                          }
+
+                          const ngInPos = pos.entries.filter((e) => e.answer.status === "NG").length;
+                          return (
+                            <div key={pos.key} className={`spv-modal-pos${ngInPos ? " is-ng" : ""}`}>
+                              <div className="spv-modal-pos-head">
+                                <span className="spv-modal-pos-title">
+                                  {pos.number != null && <span className="spv-modal-answer-num">{pos.number}.</span>} {pos.title}
+                                </span>
+                                <span className="spv-modal-pos-count">
+                                  {ngInPos ? `${ngInPos} NG dari ${pos.entries.length}` : `${pos.entries.length} aturan OK`}
+                                </span>
+                              </div>
+                              <ol className="spv-modal-rules">
+                                {pos.entries.map(({ answer, originalIndex }) => (
+                                  <li
+                                    key={answer.itemId || originalIndex}
+                                    className={`spv-modal-rule${answer.status === "NG" ? " is-ng" : ""}`}
+                                  >
+                                    <div className="spv-modal-rule-main">
+                                      <span className="spv-modal-rule-text">{answer.ruleText}</span>
+                                      {renderStatus(answer)}
+                                    </div>
+                                    {renderNg(answer)}
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
