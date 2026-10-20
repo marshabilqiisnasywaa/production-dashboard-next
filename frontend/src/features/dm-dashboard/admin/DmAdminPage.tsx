@@ -19,6 +19,7 @@ import { AlertIcon, CopyIcon, ExternalIcon, GearIcon, PlusIcon, UsersIcon } from
 import { IconLogout } from "@/components/ui/icons";
 import WorkshopManager from "./WorkshopManager";
 import PapercardTemplateManager from "./PapercardTemplateManager";
+import { NotificationBellButton } from "../notifications/NotificationBellButton";
 import "./AdminPanel.css";
 
 type Auth =
@@ -311,17 +312,19 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
   </h2>
           </div>
           <div className="dm-admin-topbar-actions">
-            <div className="dm-admin-user">
-              <span className="dm-admin-user__avatar" aria-hidden="true">
-                {username.trim().charAt(0).toUpperCase() || "A"}
-              </span>
-              <span className="dm-admin-user__meta">
-                <strong>{username}</strong>
-                <small>{isAdmin ? "Administrator" : "Pengguna"}</small>
-              </span>
-            </div>
-            <button type="button" className="dm-admin-logout" onClick={() => onLogout(null)} title="Keluar dari sesi ini">
-              <IconLogout size={15} />
+            <span className="dm-admin-topbar-crumb">Masuk sebagai {username}</span>
+            <NotificationBellButton lineId={0} role="admin" lineName="Semua Lini" lines={lines} />
+            <button type="button" className="dm-admin-btn is-secondary" onClick={reload} disabled={loading}>
+              Muat Ulang
+            </button>
+            <button
+              type="button"
+              className="dm-admin-btn is-danger-outline"
+              onClick={() => onLogout(null)}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+              title="Keluar dari sesi Admin"
+            >
+              <IconLogout size={14} />
               <span>Keluar</span>
             </button>
           </div>
@@ -587,7 +590,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                     className={`dm-subtab${papercardSub === "meeting" ? " is-active" : ""}`}
                     onClick={() => setPapercardSub("meeting")}
                   >
-                    Jadwal Meeting
+                    Jadwalkan Meeting
                   </button>
                 </div>
                 {papercardSub === "template" ? (

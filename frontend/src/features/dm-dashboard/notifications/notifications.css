@@ -1,0 +1,1060 @@
+/* ==========================================================================
+   DM Dashboard Notification System - Liquid Glass Design (Simple, Padat, Soft)
+   ========================================================================== */
+
+.dm-notif-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+/* ==========================================================================
+   Bell Trigger Button
+   ========================================================================== */
+.dm-notif-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dm-notif-trigger:hover {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.dm-notif-trigger.is-active {
+  background: rgba(240, 253, 244, 0.92);
+  border-color: #86efac;
+  color: #166534;
+}
+
+/* Bell Badge Indicator - Soft Red for Telat, Soft Yellow for Pengingat */
+.dm-notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px #ffffff;
+  animation: notif-subtle-pulse 2.2s infinite ease-in-out;
+}
+
+.dm-notif-badge.dm-notif-badge--late {
+  background: #f87171;
+  color: #ffffff;
+}
+
+.dm-notif-badge.dm-notif-badge--reminder {
+  background: #fbbf24;
+  color: #78350f;
+}
+
+.dm-notif-badge.dm-notif-badge--info {
+  background: #94a3b8;
+  color: #ffffff;
+}
+
+@keyframes notif-subtle-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* ==========================================================================
+   Liquid Glass Dropdown Popover (Compact, Padat, Clean)
+   ========================================================================== */
+.dm-notif-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 330px;
+  max-width: 92vw;
+  max-height: 480px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 14px;
+  box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.14), inset 0 1px 1px rgba(255, 255, 255, 0.95);
+  z-index: 999;
+  overflow: hidden;
+  animation: notif-slide-down 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes notif-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Popover Header */
+.dm-notif-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(248, 250, 252, 0.55);
+}
+
+.dm-notif-head-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dm-notif-head-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.05);
+  color: #475569;
+}
+
+.dm-notif-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.dm-notif-btn-icon {
+  background: none;
+  border: none;
+  padding: 3px;
+  border-radius: 5px;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+
+.dm-notif-btn-icon:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #0f172a;
+}
+
+/* Popover List */
+.dm-notif-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 360px;
+}
+
+/* Notification Item Card - Liquid Glass & Soft Tones */
+.dm-notif-item {
+  position: relative;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-left-width: 3px;
+  transition: all 0.15s ease;
+}
+
+.dm-notif-item:hover {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Soft Red for Telat */
+.dm-notif-item.dm-notif-item--late {
+  border-left-color: #f87171;
+  background: rgba(254, 242, 242, 0.7);
+  border-color: rgba(248, 113, 113, 0.22);
+}
+
+.dm-notif-item.dm-notif-item--late .dm-notif-status-badge {
+  background: rgba(254, 226, 226, 0.95);
+  color: #b91c1c;
+  border: 1px solid rgba(248, 113, 113, 0.28);
+}
+
+.dm-notif-item.dm-notif-item--late .dm-notif-action-btn {
+  background: #f87171;
+  color: #ffffff;
+}
+
+.dm-notif-item.dm-notif-item--late .dm-notif-action-btn:hover {
+  background: #ef4444;
+}
+
+/* Soft Yellow for Pengingat */
+.dm-notif-item.dm-notif-item--reminder {
+  border-left-color: #fbbf24;
+  background: rgba(255, 251, 235, 0.72);
+  border-color: rgba(251, 191, 36, 0.25);
+}
+
+.dm-notif-item.dm-notif-item--reminder .dm-notif-status-badge {
+  background: rgba(254, 243, 199, 0.95);
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+}
+
+.dm-notif-item.dm-notif-item--reminder .dm-notif-action-btn {
+  background: #d97706;
+  color: #ffffff;
+}
+
+.dm-notif-item.dm-notif-item--reminder .dm-notif-action-btn:hover {
+  background: #b45309;
+}
+
+/* Neutral Info */
+.dm-notif-item.dm-notif-item--info {
+  border-left-color: #94a3b8;
+  background: rgba(248, 250, 252, 0.7);
+}
+
+/* Item Top Meta */
+.dm-notif-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.dm-notif-item-tags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dm-notif-status-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  line-height: 1.2;
+}
+
+.dm-notif-type-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.dm-notif-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dm-notif-time {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.dm-notif-dismiss {
+  background: none;
+  border: none;
+  font-size: 14px;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 1px 3px;
+  border-radius: 3px;
+  transition: all 0.12s ease;
+}
+
+.dm-notif-dismiss:hover {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Full Text Display - No Truncation */
+.dm-notif-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.dm-notif-msg {
+  font-size: 11px;
+  color: #475569;
+  margin: 0 0 5px 0;
+  line-height: 1.4;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.dm-notif-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.dm-notif-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.12s ease;
+}
+
+/* Empty State */
+.dm-notif-empty {
+  padding: 20px 12px;
+  text-align: center;
+  color: #64748b;
+}
+
+.dm-notif-empty-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 2px;
+}
+
+.dm-notif-empty-desc {
+  font-size: 10.5px;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+/* Popover Footer (Admin Only) */
+.dm-notif-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 7px 11px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(248, 250, 252, 0.55);
+}
+
+.dm-notif-foot-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.dm-notif-foot-btn:hover {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+/* ==========================================================================
+   Floating Liquid Glass Notification Toast
+   Simple, Padat, Soft Tone, Full Message Display
+   ========================================================================== */
+.dm-liquid-toast-portal {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  width: 350px;
+  max-width: calc(100vw - 28px);
+}
+
+.dm-liquid-toast {
+  position: relative;
+  pointer-events: auto;
+  overflow: hidden;
+  border-radius: 12px;
+  padding: 10px 12px 11px 12px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 14px 32px -6px rgba(15, 23, 42, 0.13),
+    inset 0 1px 1px rgba(255, 255, 255, 0.95);
+  animation: liquidToastEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dm-liquid-toast:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 18px 36px -6px rgba(15, 23, 42, 0.16),
+    inset 0 1px 1px #ffffff;
+}
+
+.dm-liquid-toast.is-exiting {
+  animation: liquidToastExit 0.28s cubic-bezier(0.4, 0, 1, 1) forwards;
+  pointer-events: none;
+}
+
+/* Telat: Soft Red Theme */
+.dm-liquid-toast--late {
+  background: rgba(255, 247, 247, 0.9);
+  border-color: rgba(248, 113, 113, 0.32);
+  box-shadow:
+    0 14px 32px -6px rgba(239, 68, 68, 0.12),
+    inset 0 1px 1px rgba(255, 255, 255, 0.95);
+}
+
+.dm-liquid-toast--late .dm-toast-dot {
+  background: #f87171;
+  box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.25);
+}
+
+.dm-liquid-toast--late .dm-toast-status-badge {
+  background: rgba(254, 226, 226, 0.95);
+  color: #b91c1c;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.dm-liquid-toast--late .dm-toast-time-badge {
+  background: rgba(254, 242, 242, 0.85);
+  color: #dc2626;
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+.dm-liquid-toast--late .dm-toast-cta {
+  background: #f87171;
+  color: #ffffff;
+}
+
+.dm-liquid-toast--late .dm-toast-cta:hover {
+  background: #ef4444;
+}
+
+.dm-liquid-toast--late .dm-toast-progress-bar {
+  background: #f87171;
+}
+
+/* Pengingat: Soft Yellow / Amber Theme */
+.dm-liquid-toast--reminder {
+  background: rgba(255, 253, 242, 0.9);
+  border-color: rgba(251, 191, 36, 0.35);
+  box-shadow:
+    0 14px 32px -6px rgba(245, 158, 11, 0.12),
+    inset 0 1px 1px rgba(255, 255, 255, 0.95);
+}
+
+.dm-liquid-toast--reminder .dm-toast-dot {
+  background: #fbbf24;
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.25);
+}
+
+.dm-liquid-toast--reminder .dm-toast-status-badge {
+  background: rgba(254, 243, 199, 0.95);
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.dm-liquid-toast--reminder .dm-toast-time-badge {
+  background: rgba(254, 252, 232, 0.85);
+  color: #b45309;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.dm-liquid-toast--reminder .dm-toast-cta {
+  background: #d97706;
+  color: #ffffff;
+}
+
+.dm-liquid-toast--reminder .dm-toast-cta:hover {
+  background: #b45309;
+}
+
+.dm-liquid-toast--reminder .dm-toast-progress-bar {
+  background: #fbbf24;
+}
+
+/* Info Theme */
+.dm-liquid-toast--info {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(226, 232, 240, 0.85);
+}
+
+.dm-liquid-toast--info .dm-toast-dot {
+  background: #94a3b8;
+}
+
+.dm-liquid-toast--info .dm-toast-status-badge {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.dm-liquid-toast--info .dm-toast-progress-bar {
+  background: #94a3b8;
+}
+
+/* Toast Top Meta Bar */
+.dm-toast-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.dm-toast-meta-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dm-toast-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dm-toast-status-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  line-height: 1.2;
+}
+
+.dm-toast-category {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.dm-toast-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dm-toast-time-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.dm-toast-close-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+
+.dm-toast-close-btn:hover {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+/* Toast Body - FULL TEXT DISPLAY */
+.dm-toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dm-toast-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.35;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.dm-toast-message {
+  margin: 0;
+  font-size: 11px;
+  color: #334155;
+  line-height: 1.45;
+  word-break: break-word;
+  white-space: normal;
+}
+
+/* Toast Action Bar */
+.dm-toast-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.dm-toast-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: all 0.12s ease;
+}
+
+.dm-toast-cta-arrow {
+  transition: transform 0.12s ease;
+}
+
+.dm-toast-cta:hover .dm-toast-cta-arrow {
+  transform: translateX(2px);
+}
+
+/* Auto-dismiss Progress Bar */
+.dm-toast-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  animation: liquidToastProgress linear forwards;
+}
+
+.dm-toast-progress-bar.is-paused {
+  animation-play-state: paused;
+}
+
+@keyframes liquidToastProgress {
+  0% { width: 100%; }
+  100% { width: 0%; }
+}
+
+@keyframes liquidToastEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.96);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes liquidToastExit {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
+    filter: blur(4px);
+  }
+}
+
+/* ==========================================================================
+   Liquid Glass Modal (Ultra-Simple, Padat, Zero Waste)
+   ========================================================================== */
+.dm-notif-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  animation: notif-fade-in 0.14s ease-out;
+}
+
+@keyframes notif-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dm-liquid-modal {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  width: 100%;
+  max-width: 340px;
+  border-radius: 15px;
+  box-shadow:
+    0 20px 42px -10px rgba(15, 23, 42, 0.18),
+    inset 0 1px 1px rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: liquidModalEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes liquidModalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dm-liquid-modal-head {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(248, 250, 252, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dm-liquid-modal-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dm-liquid-modal-line {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #0369a1;
+  background: rgba(14, 165, 233, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.dm-liquid-modal-line.is-all {
+  color: #15803d;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  font-weight: 700;
+}
+
+.dm-liquid-modal-close {
+  background: none;
+  border: none;
+  font-size: 17px;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.dm-liquid-modal-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+}
+
+/* Modal Body */
+.dm-liquid-modal-body {
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.dm-liquid-scope-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.035);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dm-liquid-scope-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.dm-liquid-scope-select {
+  flex: 1;
+  max-width: 210px;
+  height: 25px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+  cursor: pointer;
+  outline: none;
+}
+
+.dm-liquid-scope-select:focus {
+  border-color: #008a4f;
+}
+
+.dm-liquid-setting-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dm-liquid-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dm-liquid-setting-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dm-setting-icon {
+  font-size: 13px;
+}
+
+.dm-liquid-subtext {
+  font-size: 10px;
+  color: #64748b;
+  margin-bottom: 3px;
+  display: block;
+}
+
+.dm-liquid-segmented-wrap {
+  padding-left: 20px;
+}
+
+.dm-liquid-segmented {
+  display: flex;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 2px;
+  border-radius: 7px;
+  gap: 2px;
+}
+
+.dm-liquid-seg-btn {
+  flex: 1;
+  padding: 3px 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.dm-liquid-seg-btn:hover {
+  color: #0f172a;
+}
+
+.dm-liquid-seg-btn.is-active {
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.dm-liquid-custom-box {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.dm-liquid-custom-input {
+  width: 48px;
+  height: 24px;
+  padding: 1px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  text-align: center;
+}
+
+.dm-liquid-custom-box span {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.dm-liquid-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Test Button */
+.dm-liquid-btn-test {
+  padding: 2px 7px;
+  font-size: 10.5px;
+  font-weight: 600;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.04);
+  color: #334155;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.dm-liquid-btn-test:hover {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+/* Switch Toggle (Compact 30x16) */
+.dm-liquid-switch {
+  position: relative;
+  display: inline-block;
+  width: 30px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+.dm-liquid-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.dm-liquid-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: 0.18s;
+  border-radius: 999px;
+}
+
+.dm-liquid-slider:before {
+  position: absolute;
+  content: "";
+  height: 11px;
+  width: 11px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.18s;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.dm-liquid-switch input:checked + .dm-liquid-slider {
+  background-color: #008a4f;
+}
+
+.dm-liquid-switch input:checked + .dm-liquid-slider:before {
+  transform: translateX(13px);
+}
+
+/* Modal Foot */
+.dm-liquid-modal-foot {
+  padding: 9px 13px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(248, 250, 252, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dm-liquid-modal-status {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.dm-liquid-btn-primary {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  background: #008a4f;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.dm-liquid-btn-primary:hover {
+  background: #00703f;
+}
+
+.dm-liquid-btn-ghost {
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #475569;
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  cursor: pointer;
+}
+
+.dm-liquid-btn-ghost:hover {
+  background: #ffffff;
+  color: #0f172a;
+}

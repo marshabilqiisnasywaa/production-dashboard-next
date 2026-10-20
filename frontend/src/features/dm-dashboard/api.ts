@@ -527,4 +527,31 @@ export const meetingApi = {
   }) => request<DmPostMeeting>("/meetings/post-meeting", json("POST", input), true),
 };
 
+export type DmNotificationSetting = {
+  lineId: number;
+  papercardReminderMinutes: number;
+  papercardEnabled: boolean;
+  meetingReminderMinutes: number;
+  meetingEnabled: boolean;
+  updatedAt?: string | null;
+};
+
+export type DmNotificationSettingInput = {
+  papercardReminderMinutes: number;
+  papercardEnabled: boolean;
+  meetingReminderMinutes: number;
+  meetingEnabled: boolean;
+};
+
+export const notificationApi = {
+  getSettings: (lineId?: number | null) =>
+    request<DmNotificationSetting>(
+      `/notifications/settings${lineId && lineId > 0 ? `?line_id=${lineId}` : ""}`,
+      {},
+      true
+    ),
+  saveSettings: (lineId: number, data: DmNotificationSettingInput) =>
+    request<DmNotificationSetting>(`/notifications/settings/${lineId}`, json("PUT", data), true),
+};
+
 
