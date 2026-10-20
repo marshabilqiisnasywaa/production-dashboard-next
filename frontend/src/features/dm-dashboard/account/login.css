@@ -1,0 +1,378 @@
+/* Login page (split layout). Prefix: dml-login. Self-contained: tokens are declared here. */
+
+.dml-login {
+  --green: #046a38;
+  --green-50: #e8f1ec;
+  --green-100: #d3e6db;
+  --red: #d92d20;
+  --red-50: #fef0ee;
+  --amber-50: #fff6e0;
+  --amber-100: #fce2a8;
+  --amber-text: #b54708;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, 1fr);
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #fff;
+  font-family: var(--font-inter, "Inter"), system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--text);
+}
+.dml-login *,
+.dml-login *::before,
+.dml-login *::after {
+  box-sizing: border-box;
+}
+
+/* ---------- Left: brand ---------- */
+.dml-login__brand {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 40px 48px;
+  color: #fff;
+  background:
+    radial-gradient(90% 70% at 90% 0%, rgba(255, 255, 255, 0.1) 0%, transparent 60%),
+    linear-gradient(165deg, #0d7b47 0%, #066b39 50%, #055e30 100%);
+}
+/* real content sits above the decoration */
+.dml-login__brand > :not(.dml-login__shape) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- decoration ---------- */
+.dml-login__shape {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+}
+/* big rounded block, top right */
+.dml-login__shape--a {
+  top: -30%;
+  right: -15%;
+  width: 50%;
+  height: 70%;
+  border-radius: 0 0 0 120px;
+  background: rgba(255, 255, 255, 0.035);
+}
+/* circle arc, top right corner */
+.dml-login__shape--b {
+  top: -45%;
+  right: -32%;
+  width: 70%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+/* circle arc, bottom left */
+.dml-login__shape--c {
+  bottom: -35%;
+  left: -25%;
+  width: 66%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+/* small rounded block, bottom middle */
+.dml-login__shape--d {
+  bottom: -8%;
+  left: 31%;
+  width: 28%;
+  height: 22%;
+  border-radius: 0 28px 0 0;
+  background: rgba(255, 255, 255, 0.03);
+}
+/* circle arc, bottom right */
+.dml-login__shape--e {
+  bottom: -45%;
+  right: -25%;
+  width: 66%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+.dml-login__brandbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 18px;
+}
+.dml-login__logo {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--green);
+}
+.dml-login__pitch {
+  max-width: 540px;
+}
+.dml-login__oppo {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 36px;
+}
+.dml-login__oppo span {
+  font-size: 14px;
+  opacity: 0.95;
+}
+.dml-login__pitch h2 {
+  margin: 0 0 16px;
+  font-size: clamp(28px, 2.9vw, 42px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.dml-login__pitch p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+  opacity: 0.88;
+}
+.dml-login__copy {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  opacity: 0.7;
+}
+.dml-login__copy::before {
+  content: "";
+  width: 48px;
+  height: 1px;
+  background: currentColor;
+}
+
+/* ---------- Right: form ---------- */
+.dml-login__panel {
+  display: grid;
+  place-items: center;
+  padding: 40px 24px;
+}
+.dml-login__form {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 380px);
+}
+.dml-login__formlogo {
+  align-self: flex-start;
+  margin-bottom: 44px;
+  color: var(--green);
+}
+.dml-login__form h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.dml-login__lead {
+  margin: 8px 0 32px;
+  font-size: 15px;
+  color: var(--muted);
+}
+.dml-login__notice {
+  margin: -8px 0 20px;
+  padding: 10px 14px;
+  border: 1px solid var(--amber-100);
+  border-radius: 10px;
+  background: var(--amber-50);
+  font-size: 13px;
+  color: var(--amber-text);
+}
+
+.dml-login__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.dml-login__field label {
+  font-size: 14px;
+  font-weight: 600;
+}
+.dml-login__field input {
+  width: 100%;
+  height: 46px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.dml-login__field input::placeholder {
+  color: #9ca3af;
+}
+.dml-login__field input:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(4, 106, 56, 0.14);
+}
+.dml-login__field input[aria-invalid="true"] {
+  border-color: var(--red);
+}
+.dml-login__pw {
+  position: relative;
+}
+.dml-login__pw input {
+  padding-right: 110px;
+}
+.dml-login__pwtoggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  padding: 6px 8px;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--green);
+  cursor: pointer;
+}
+.dml-login__pwtoggle:hover {
+  background: var(--green-50);
+}
+.dml-login__error {
+  margin: -4px 0 16px;
+  padding: 10px 14px;
+  border: 1px solid #fbd0cb;
+  border-radius: 10px;
+  background: var(--red-50);
+  font-size: 13px;
+  color: var(--red);
+}
+
+.dml-login__submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 50px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--green);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dml-login__submit:hover:not(:disabled) {
+  background: #035a2f;
+}
+.dml-login__submit:disabled {
+  background: #8fbfa5;
+  cursor: not-allowed;
+}
+.dml-login :focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.dml-login__role {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #f7f8f9;
+  font-size: 14px;
+  color: var(--muted);
+}
+.dml-login__role svg {
+  flex-shrink: 0;
+  color: var(--green);
+}
+.dml-login__role strong {
+  color: var(--text);
+}
+
+/* ---------- Quick access (demo) ---------- */
+.dml-login__demo {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--border);
+}
+.dml-login__demotitle {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.dml-login__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dml-login__chip {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+.dml-login__chip span {
+  margin-left: 4px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.dml-login__chip:hover {
+  border-color: var(--green-100);
+  background: var(--green-50);
+}
+.dml-login__back {
+  align-self: flex-start;
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.dml-login__back:hover {
+  color: var(--green);
+  text-decoration: underline;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 899px) {
+    .dml-login__shape {
+    display: none;
+  }
+  .dml-login {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+  .dml-login__brand {
+    padding: 20px 24px;
+  }
+  .dml-login__pitch,
+  .dml-login__copy {
+    display: none;
+  }
+  .dml-login__formlogo {
+    margin-bottom: 28px;
+  }
+}
