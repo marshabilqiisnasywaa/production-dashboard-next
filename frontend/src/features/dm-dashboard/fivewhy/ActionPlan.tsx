@@ -3,54 +3,54 @@ import { useState } from "react";
 import type { DragEvent } from "react";
 import { IconClose } from "@/components/ui/icons";
 import {
-  ACTION_STATUS_OPTIONS,
-  ACTION_TYPE_OPTIONS,
   PDCA_STAGE_BY_STATUS,
+  PDCA_STAGES,
+  RECURRENCE_LABELS,
   RECURRENCE_OPTIONS,
-  createFiveWhyId,
+  SOLUTION_STATUS_LABELS,
+  SOLUTION_STATUS_OPTIONS,
+  SOLUTION_TYPE_LABELS,
+  SOLUTION_TYPE_OPTIONS,
+  createEmptySolution,
   readImageAsDataUrl,
 } from "./fiveWhyData";
 import type {
-  ActionRow,
-  ActionStatus,
-  ActionType,
   PdcaStage,
   RecurrenceStatus,
+  Solution,
+  SolutionStatus,
+  SolutionType,
+  WhyNode,
 } from "./fiveWhyData";
 
 type ActionPlanProps = {
-  actions: ActionRow[];
+  solutions: Solution[];
+  rootCause: WhyNode | null;
   canEdit: boolean;
-  onChange: (next: ActionRow[]) => void;
+  onChange: (next: Solution[]) => void;
   onSave: () => void;
+  onNotify: (message: string) => void;
+  onGoToWhy: () => void;
+  onShowRootCause: () => void;
+};
+
+type PhotoFieldProps = {
+  label: string;
+  photos: string[];
+  canEdit: boolean;
+  ariaLabel: string;
+  onAdd: (photos: string[]) => void;
+  onRemove: (index: number) => void;
+  onPreview: (url: string) => void;
   onNotify: (message: string) => void;
 };
 
-const PDCA_STAGES: readonly PdcaStage[] = ["Plan", "Do", "Check", "Act"];
-
-const STATUS_BY_STAGE: Record<PdcaStage, ActionStatus> = {
-  Plan: "Rencana",
-  Do: "Selesai",
-  Check: "Monitoring",
-  Act: "Standar",
+const STATUS_BY_STAGE: Record<PdcaStage, SolutionStatus> = {
+  Plan: "rencana",
+  Do: "dikerjakan",
+  Check: "dipantau",
+  Act: "standar",
 };
-
-function createEmptyAction(): ActionRow {
-  return {
-    id: createFiveWhyId("action"),
-    rootCause: "",
-    solution: "",
-    actionType: "Short term",
-    pic: "",
-    department: "",
-    deadline: "",
-    status: "Rencana",
-    recurrence: "Belum dipantau",
-    remark: "",
-    beforePhotoUrl: null,
-    afterPhotoUrl: null,
-  };
-}
 
 function stageClass(stage: PdcaStage) {
   return `is-${stage.toLowerCase()}`;
@@ -67,85 +67,113 @@ function formatDeadline(value: string) {
   });
 }
 
-function PhotoSlot({
+function PhotoField({
   label,
-  value,
+  photos,
   canEdit,
-  onChange,
-  onNotify,
   ariaLabel,
-}: {
-  label: string;
-  value: string | null;
-  canEdit: boolean;
-  onChange: (value: string | null) => void;
-  onNotify: (message: string) => void;
-  ariaLabel: string;
-}) {
-  async function handleFile(file: File | null) {
-    if (!file) return;
+  onAdd,
+  onRemove,
+  onPreview,
+  onNotify,
+}: PhotoFieldProps) {
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
     try {
-      const url = await readImageAsDataUrl(file);
-      onChange(url);
+      const urls = await Promise.all(
+        Array.from(files).map((file) => readImageAsDataUrl(file))
+      );
+      onAdd(urls);
     } catch {
       onNotify("Foto tidak bisa dibaca.");
     }
   }
 
   return (
-    <div className="dm-5w-photo-slot">
-      <span className="dm-5w-photo-slot-label">{label}</span>
-      {value ? (
-        <img src={value} alt={`${label} ${ariaLabel}`} />
-      ) : (
-        <span className="dm-5w-photo-slot-empty">Kosong</span>
-      )}
-      <label className="dm-5w-photo-upload dm-5w-photo-upload-sm">
-        <input
-          type="file"
-          accept="image/*"
-          className="dm-5w-sr-only"
-          disabled={!canEdit}
-          aria-label={`Unggah foto ${label} ${ariaLabel}`}
-          onChange={(event) => {
-            const file = event.target.files?.[0] ?? null;
-            event.target.value = "";
-            void handleFile(file);
-          }}
-        />
-        <span>{value ? "Ganti" : "Unggah"}</span>
-      </label>
+    <div className="dm-5w-photo-field">
+      <span className="dm-5w-photo-field-label">{label}</span>
+      <div className="dm-5w-evidence-photos">
+        {photos.map((photo, index) => (
+          <div className="dm-5w-evidence-thumb" key={`${label}-photo-${index}`}>
+            <button
+              type="button"
+              className="dm-5w-evidence-thumb-open"
+              onClick={() => onPreview(photo)}
+              aria-label={`Lihat foto ${label} lebih besar`}
+            >
+              <img src={photo} alt="" />
+            </button>
+            <button
+              type="button"
+              className="dm-5w-evidence-thumb-remove"
+              onClick={() => onRemove(index)}
+              disabled={!canEdit}
+              aria-label={`Hapus foto ${label}`}
+            >
+              <IconClose size={9} />
+            </button>
+          </div>
+        ))}
+        <label className="dm-5w-evidence-upload">
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            className="dm-5w-sr-only"
+            disabled={!canEdit}
+            aria-label={`Unggah foto ${label} ${ariaLabel}`}
+            onChange={(event) => {
+              const files = event.target.files;
+              event.target.value = "";
+              void handleFiles(files);
+            }}
+          />
+          <span>Unggah foto</span>
+        </label>
+      </div>
     </div>
   );
 }
 
 export default function ActionPlan({
-  actions,
+  solutions,
+  rootCause,
   canEdit,
   onChange,
   onSave,
   onNotify,
+  onGoToWhy,
+  onShowRootCause,
 }: ActionPlanProps) {
-  const [view, setView] = useState<"table" | "board">("table");
-  const [showErrors, setShowErrors] = useState(false);
+  const [view, setView] = useState<"list" | "board">("list");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<PdcaStage | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  function updateAction(id: string, patch: Partial<ActionRow>) {
+  function updateSolution(id: string, patch: Partial<Solution>) {
     onChange(
-      actions.map((action) =>
-        action.id === id ? { ...action, ...patch } : action
+      solutions.map((solution) =>
+        solution.id === id ? { ...solution, ...patch } : solution
       )
     );
   }
 
-  function addAction() {
-    onChange([...actions, createEmptyAction()]);
-    setShowErrors(false);
+  function addSolution() {
+    onChange([...solutions, createEmptySolution()]);
+    setView("list");
   }
 
-  function removeAction(id: string) {
-    onChange(actions.filter((action) => action.id !== id));
+  function removeSolution(solution: Solution) {
+    const filled = Boolean(
+      solution.text.trim() || solution.pic.trim() || solution.dept.trim()
+    );
+    if (
+      filled &&
+      !window.confirm("Hapus solusi ini? Isian solusi akan dibuang.")
+    ) {
+      return;
+    }
+    onChange(solutions.filter((item) => item.id !== solution.id));
   }
 
   function handleDragStart(event: DragEvent<HTMLElement>, id: string) {
@@ -165,424 +193,551 @@ export default function ActionPlan({
     setDragOverStage(null);
     setDraggingId(null);
     if (!id) return;
-    updateAction(id, { status: STATUS_BY_STAGE[stage] });
+    updateSolution(id, { status: STATUS_BY_STAGE[stage] });
+  }
+
+  function isSolutionComplete(solution: Solution) {
+    return Boolean(
+      solution.text.trim() &&
+        solution.pic.trim() &&
+        solution.dept.trim() &&
+        solution.deadline.trim()
+    );
   }
 
   function handleSave() {
-    setShowErrors(true);
-    const missing = actions.some(
-      (action) => !action.pic.trim() || !action.department.trim()
+    if (!rootCause) {
+      onNotify("Tandai Root Cause sebelum menyimpan PDCA.");
+      return;
+    }
+    const incomplete = solutions.some(
+      (solution) => !isSolutionComplete(solution)
     );
-    if (missing) {
-      setView("table");
-      onNotify("Lengkapi PIC dan Departemen sebelum menyimpan PDCA.");
+    if (incomplete) {
+      setView("list");
+      onNotify("Lengkapi Solusi, PIC, Departemen, dan Deadline.");
       return;
     }
     onSave();
   }
 
   return (
-    <div className="dm-5w-card">
-      <div className="dm-5w-action-head">
-        <div>
-          <h2 className="dm-5w-card-title">Solusi &amp; Pencegahan Terulang</h2>
-          <p className="dm-5w-card-sub">
-            Kelola tindak lanjut, PIC, dan status PDCA.
+    <div className="dm-5w-action-plan">
+      {rootCause ? (
+        <section className="dm-5w-card dm-5w-root-cause-card">
+          <header className="dm-5w-root-cause-head">
+            <h2 className="dm-5w-card-title">Root Cause</h2>
+            <span className="dm-5w-why-badge">Why {rootCause.level}</span>
+          </header>
+          <p className="dm-5w-root-cause-text">
+            {rootCause.statement.trim() || "Pernyataan Why belum diisi."}
           </p>
-        </div>
-        <div className="dm-5w-view-toggle" role="group" aria-label="Pilih tampilan">
           <button
             type="button"
-            className={`dm-5w-view-btn ${view === "table" ? "is-active" : ""}`}
-            aria-pressed={view === "table"}
-            onClick={() => setView("table")}
+            className="dm-5w-add-field"
+            onClick={onShowRootCause}
           >
-            Tabel
+            Lihat di Analisis 5Why
           </button>
+        </section>
+      ) : (
+        <section className="dm-5w-card dm-5w-root-cause-empty">
+          <p>
+            Belum ada Root Cause. Tandai satu Why sebagai Root Cause di tab
+            Analisis 5Why
+          </p>
           <button
             type="button"
-            className={`dm-5w-view-btn ${view === "board" ? "is-active" : ""}`}
-            aria-pressed={view === "board"}
-            onClick={() => setView("board")}
+            className="dm-5w-btn dm-5w-btn-secondary dm-5w-btn-sm"
+            onClick={onGoToWhy}
           >
-            Board
+            Ke Analisis 5Why
           </button>
-        </div>
-      </div>
+        </section>
+      )}
 
-      {view === "table" ? (
-        <div className="dm-5w-table-wrap">
-          <table className="dm-5w-table dm-5w-action-table">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Root Cause</th>
-                <th>Solusi</th>
-                <th>Tipe Aksi</th>
-                <th>PIC</th>
-                <th>Departemen</th>
-                <th>Deadline</th>
-                <th>Status</th>
-                <th>Apakah terulang?</th>
-                <th>Monitoring &amp; Remark</th>
-                <th>PDCA</th>
-                <th>
-                  <span className="dm-5w-sr-only">Aksi</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {actions.map((action, index) => {
-                const picInvalid = showErrors && !action.pic.trim();
-                const departmentInvalid =
-                  showErrors && !action.department.trim();
+      {rootCause ? (
+        <section className="dm-5w-card">
+          <div className="dm-5w-action-head">
+            <div>
+              <h2 className="dm-5w-card-title">
+                Solusi &amp; Pencegahan Terulang
+              </h2>
+              <p className="dm-5w-card-sub">
+                Susun rencana perbaikan dan pantau penerapannya.
+              </p>
+            </div>
+            <div
+              className="dm-5w-view-toggle"
+              role="group"
+              aria-label="Pilih tampilan solusi"
+            >
+              <button
+                type="button"
+                className={`dm-5w-view-btn ${
+                  view === "list" ? "is-active" : ""
+                }`}
+                aria-pressed={view === "list"}
+                onClick={() => setView("list")}
+              >
+                Daftar
+              </button>
+              <button
+                type="button"
+                className={`dm-5w-view-btn ${
+                  view === "board" ? "is-active" : ""
+                }`}
+                aria-pressed={view === "board"}
+                onClick={() => setView("board")}
+              >
+                Board
+              </button>
+            </div>
+          </div>
+
+          {view === "list" ? (
+            <div className="dm-5w-solution-list">
+              {solutions.map((solution, index) => {
+                const stage = PDCA_STAGE_BY_STATUS[solution.status];
+                const textMissing = !solution.text.trim();
+                const picMissing = !solution.pic.trim();
+                const deptMissing = !solution.dept.trim();
+                const deadlineMissing = !solution.deadline.trim();
                 return (
-                  <tr key={action.id}>
-                    <td>{index + 1}</td>
-                    <td>
-                      <input
-                        className="dm-5w-input is-wide"
-                        value={action.rootCause}
-                        onChange={(event) =>
-                          updateAction(action.id, {
-                            rootCause: event.target.value,
-                          })
-                        }
-                        disabled={!canEdit}
-                        aria-label={`Root cause baris ${index + 1}`}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        className="dm-5w-input is-wide"
-                        value={action.solution}
-                        onChange={(event) =>
-                          updateAction(action.id, {
-                            solution: event.target.value,
-                          })
-                        }
-                        disabled={!canEdit}
-                        aria-label={`Solusi baris ${index + 1}`}
-                      />
-                    </td>
-                    <td>
-                      <select
-                        className="dm-5w-select"
-                        value={action.actionType}
-                        onChange={(event) =>
-                          updateAction(action.id, {
-                            actionType: event.target.value as ActionType,
-                          })
-                        }
-                        disabled={!canEdit}
-                        aria-label={`Tipe aksi baris ${index + 1}`}
-                      >
-                        {ACTION_TYPE_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      <input
-                        className={`dm-5w-input ${
-                          picInvalid ? "is-invalid" : ""
-                        }`}
-                        value={action.pic}
-                        onChange={(event) =>
-                          updateAction(action.id, { pic: event.target.value })
-                        }
-                        disabled={!canEdit}
-                        aria-label={`PIC baris ${index + 1}`}
-                        aria-invalid={picInvalid}
-                        aria-describedby={
-                          picInvalid ? `dm-5w-pic-error-${action.id}` : undefined
-                        }
-                      />
-                      {picInvalid ? (
+                  <article className="dm-5w-solution-card" key={solution.id}>
+                    <header className="dm-5w-solution-head">
+                      <div className="dm-5w-solution-head-left">
+                        <h3 className="dm-5w-solution-title">
+                          Solusi {index + 1}
+                        </h3>
                         <span
-                          className="dm-5w-field-error"
-                          id={`dm-5w-pic-error-${action.id}`}
+                          className={`dm-5w-pdca-badge ${stageClass(stage)}`}
                         >
-                          Wajib diisi
+                          {stage}
                         </span>
-                      ) : null}
-                    </td>
-                    <td>
-                      <input
-                        className={`dm-5w-input ${
-                          departmentInvalid ? "is-invalid" : ""
-                        }`}
-                        value={action.department}
-                        onChange={(event) =>
-                          updateAction(action.id, {
-                            department: event.target.value,
-                          })
-                        }
-                        disabled={!canEdit}
-                        aria-label={`Departemen baris ${index + 1}`}
-                        aria-invalid={departmentInvalid}
-                        aria-describedby={
-                          departmentInvalid
-                            ? `dm-5w-dept-error-${action.id}`
-                            : undefined
-                        }
-                      />
-                      {departmentInvalid ? (
-                        <span
-                          className="dm-5w-field-error"
-                          id={`dm-5w-dept-error-${action.id}`}
-                        >
-                          Wajib diisi
-                        </span>
-                      ) : null}
-                    </td>
-                    <td>
-                      <input
-                        type="date"
-                        className="dm-5w-input"
-                        value={action.deadline}
-                        onChange={(event) =>
-                          updateAction(action.id, {
-                            deadline: event.target.value,
-                          })
-                        }
-                        disabled={!canEdit}
-                        aria-label={`Deadline baris ${index + 1}`}
-                      />
-                    </td>
-                    <td>
-                      <select
-                        className="dm-5w-select"
-                        value={action.status}
-                        onChange={(event) =>
-                          updateAction(action.id, {
-                            status: event.target.value as ActionStatus,
-                          })
-                        }
-                        disabled={!canEdit}
-                        aria-label={`Status baris ${index + 1}`}
-                      >
-                        {ACTION_STATUS_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      <select
-                        className="dm-5w-select"
-                        value={action.recurrence}
-                        onChange={(event) =>
-                          updateAction(action.id, {
-                            recurrence: event.target.value as RecurrenceStatus,
-                          })
-                        }
-                        disabled={!canEdit}
-                        aria-label={`Apakah terulang baris ${index + 1}`}
-                      >
-                        {RECURRENCE_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      <textarea
-                        className="dm-5w-textarea"
-                        rows={2}
-                        value={action.remark}
-                        onChange={(event) =>
-                          updateAction(action.id, {
-                            remark: event.target.value,
-                          })
-                        }
-                        disabled={!canEdit}
-                        aria-label={`Monitoring dan remark baris ${index + 1}`}
-                      />
-                      <div className="dm-5w-photo-slots">
-                        <PhotoSlot
-                          label="Before"
-                          value={action.beforePhotoUrl}
-                          canEdit={canEdit}
-                          onChange={(value) =>
-                            updateAction(action.id, { beforePhotoUrl: value })
-                          }
-                          onNotify={onNotify}
-                          ariaLabel={`baris ${index + 1}`}
-                        />
-                        <PhotoSlot
-                          label="After"
-                          value={action.afterPhotoUrl}
-                          canEdit={canEdit}
-                          onChange={(value) =>
-                            updateAction(action.id, { afterPhotoUrl: value })
-                          }
-                          onNotify={onNotify}
-                          ariaLabel={`baris ${index + 1}`}
-                        />
                       </div>
-                    </td>
-                    <td>
-                      <span
-                        className={`dm-5w-pdca-badge ${stageClass(
-                          PDCA_STAGE_BY_STATUS[action.status]
-                        )}`}
-                      >
-                        {PDCA_STAGE_BY_STATUS[action.status]}
-                      </span>
-                    </td>
-                    <td>
                       <button
                         type="button"
                         className="dm-5w-icon-btn"
-                        onClick={() => removeAction(action.id)}
+                        onClick={() => removeSolution(solution)}
                         disabled={!canEdit}
-                        aria-label={`Hapus aksi baris ${index + 1}`}
+                        aria-label={`Hapus solusi ${index + 1}`}
                       >
                         <IconClose size={13} />
                       </button>
-                    </td>
-                  </tr>
-                );
-              })}
-              {actions.length === 0 ? (
-                <tr>
-                  <td colSpan={12}>
-                    <p className="dm-5w-hint">Belum ada baris aksi.</p>
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="dm-5w-board">
-          {PDCA_STAGES.map((stage) => {
-            const items = actions.filter(
-              (action) => PDCA_STAGE_BY_STATUS[action.status] === stage
-            );
-            return (
-              <section
-                key={stage}
-                className={`dm-5w-board-col ${
-                  dragOverStage === stage ? "is-dragover" : ""
-                }`}
-                aria-label={`Tahap ${stage}`}
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  event.dataTransfer.dropEffect = "move";
-                  setDragOverStage(stage);
-                }}
-                onDragLeave={() =>
-                  setDragOverStage((current) =>
-                    current === stage ? null : current
-                  )
-                }
-                onDrop={(event) => handleDrop(event, stage)}
-              >
-                <header className="dm-5w-board-head">
-                  <span className={`dm-5w-pdca-badge ${stageClass(stage)}`}>
-                    {stage}
-                  </span>
-                  <span className="dm-5w-board-count">{items.length}</span>
-                </header>
-                <div className="dm-5w-board-list">
-                  {items.map((action) => (
-                    <article
-                      key={action.id}
-                      className={`dm-5w-board-card ${
-                        draggingId === action.id ? "is-dragging" : ""
-                      } ${canEdit ? "" : "is-static"}`}
-                      draggable={canEdit}
-                      onDragStart={(event) =>
-                        handleDragStart(event, action.id)
-                      }
-                      onDragEnd={handleDragEnd}
-                      tabIndex={0}
-                      aria-label={`${action.solution || "Aksi"} untuk ${
-                        action.pic || "PIC belum diisi"
-                      }`}
-                    >
-                      <p className="dm-5w-board-solution">
-                        {action.solution || "Solusi belum diisi"}
-                      </p>
-                      <div className="dm-5w-board-meta">
-                        <span>{action.pic || "PIC belum diisi"}</span>
-                        <span>{formatDeadline(action.deadline)}</span>
-                      </div>
-                      <div className="dm-5w-board-foot">
-                        <span
-                          className={`dm-5w-pdca-badge ${stageClass(
-                            PDCA_STAGE_BY_STATUS[action.status]
-                          )}`}
-                        >
-                          {PDCA_STAGE_BY_STATUS[action.status]}
-                        </span>
-                        {canEdit ? (
-                          <select
-                            className="dm-5w-board-move"
-                            value={stage}
+                    </header>
+
+                    <div className="dm-5w-pdca-section">
+                      <span className="dm-5w-pdca-tag" aria-hidden="true">
+                        P
+                      </span>
+                      <div className="dm-5w-pdca-body">
+                        <label className="dm-5w-field">
+                          <span className="dm-5w-label">Solusi</span>
+                          <textarea
+                            className="dm-5w-textarea"
+                            rows={2}
+                            value={solution.text}
+                            placeholder="Tulis solusi yang akan dijalankan"
                             onChange={(event) =>
-                              updateAction(action.id, {
-                                status:
-                                  STATUS_BY_STAGE[
-                                    event.target.value as PdcaStage
-                                  ],
+                              updateSolution(solution.id, {
+                                text: event.target.value,
                               })
                             }
-                            aria-label={`Pindahkan ${
-                              action.solution || "aksi"
-                            } ke tahap`}
-                          >
-                            {PDCA_STAGES.map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
-                        ) : null}
-                      </div>
-                    </article>
-                  ))}
-                  {items.length === 0 ? (
-                    <p className="dm-5w-board-empty">Belum ada aksi</p>
-                  ) : null}
-                </div>
-              </section>
-            );
-          })}
-        </div>
-      )}
+                            disabled={!canEdit}
+                            aria-label={`Solusi ${index + 1}`}
+                          />
+                          {textMissing ? (
+                            <span className="dm-5w-field-error">
+                              Wajib diisi
+                            </span>
+                          ) : null}
+                        </label>
 
-      <div className="dm-5w-actions-footer">
-        <span className="dm-5w-actions-footer-note">
-          {actions.length} baris aksi
-        </span>
-        <div className="dm-5w-actions-footer-actions">
-          {canEdit ? (
-            <button
-              type="button"
-              className="dm-5w-btn dm-5w-btn-secondary dm-5w-btn-sm"
-              onClick={addAction}
-            >
-              + Tambah aksi
-            </button>
-          ) : null}
-          {canEdit ? (
-            <button
-              type="button"
-              className="dm-5w-btn dm-5w-btn-primary"
-              onClick={handleSave}
-            >
-              Simpan PDCA
-            </button>
-          ) : null}
+                        <div className="dm-5w-solution-grid">
+                          <label className="dm-5w-field">
+                            <span className="dm-5w-label">Tipe Aksi</span>
+                            <select
+                              className="dm-5w-select"
+                              value={solution.type}
+                              onChange={(event) =>
+                                updateSolution(solution.id, {
+                                  type: event.target.value as SolutionType,
+                                })
+                              }
+                              disabled={!canEdit}
+                              aria-label={`Tipe aksi solusi ${index + 1}`}
+                            >
+                              {SOLUTION_TYPE_OPTIONS.map((option) => (
+                                <option key={option} value={option}>
+                                  {SOLUTION_TYPE_LABELS[option]}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+
+                          <label className="dm-5w-field">
+                            <span className="dm-5w-label">PIC</span>
+                            <input
+                              className="dm-5w-input"
+                              value={solution.pic}
+                              placeholder="Nama penanggung jawab"
+                              onChange={(event) =>
+                                updateSolution(solution.id, {
+                                  pic: event.target.value,
+                                })
+                              }
+                              disabled={!canEdit}
+                              aria-label={`PIC solusi ${index + 1}`}
+                            />
+                            {picMissing ? (
+                              <span className="dm-5w-field-error">
+                                Wajib diisi
+                              </span>
+                            ) : null}
+                          </label>
+
+                          <label className="dm-5w-field">
+                            <span className="dm-5w-label">Departemen</span>
+                            <input
+                              className="dm-5w-input"
+                              value={solution.dept}
+                              placeholder="Departemen terkait"
+                              onChange={(event) =>
+                                updateSolution(solution.id, {
+                                  dept: event.target.value,
+                                })
+                              }
+                              disabled={!canEdit}
+                              aria-label={`Departemen solusi ${index + 1}`}
+                            />
+                            {deptMissing ? (
+                              <span className="dm-5w-field-error">
+                                Wajib diisi
+                              </span>
+                            ) : null}
+                          </label>
+
+                          <label className="dm-5w-field">
+                            <span className="dm-5w-label">Deadline</span>
+                            <input
+                              type="date"
+                              className="dm-5w-input"
+                              value={solution.deadline}
+                              onChange={(event) =>
+                                updateSolution(solution.id, {
+                                  deadline: event.target.value,
+                                })
+                              }
+                              disabled={!canEdit}
+                              aria-label={`Deadline solusi ${index + 1}`}
+                            />
+                            {deadlineMissing ? (
+                              <span className="dm-5w-field-error">
+                                Wajib diisi
+                              </span>
+                            ) : null}
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="dm-5w-dc-grid">
+                      <div className="dm-5w-pdca-section">
+                        <span className="dm-5w-pdca-tag" aria-hidden="true">
+                          D
+                        </span>
+                        <div className="dm-5w-pdca-body">
+                          <label className="dm-5w-field">
+                            <span className="dm-5w-label">Status</span>
+                            <select
+                              className="dm-5w-select"
+                              value={solution.status}
+                              onChange={(event) =>
+                                updateSolution(solution.id, {
+                                  status: event.target.value as SolutionStatus,
+                                })
+                              }
+                              disabled={!canEdit}
+                              aria-label={`Status solusi ${index + 1}`}
+                            >
+                              {SOLUTION_STATUS_OPTIONS.map((option) => (
+                                <option key={option} value={option}>
+                                  {SOLUTION_STATUS_LABELS[option]}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="dm-5w-pdca-section">
+                        <span className="dm-5w-pdca-tag" aria-hidden="true">
+                          C
+                        </span>
+                        <div className="dm-5w-pdca-body">
+                          <label className="dm-5w-field">
+                            <span className="dm-5w-label">
+                              Apakah masalah terulang kembali?
+                            </span>
+                            <select
+                              className="dm-5w-select"
+                              value={solution.recurred}
+                              onChange={(event) =>
+                                updateSolution(solution.id, {
+                                  recurred: event.target
+                                    .value as RecurrenceStatus,
+                                })
+                              }
+                              disabled={!canEdit}
+                              aria-label={`Apakah masalah terulang untuk solusi ${
+                                index + 1
+                              }`}
+                            >
+                              {RECURRENCE_OPTIONS.map((option) => (
+                                <option key={option} value={option}>
+                                  {RECURRENCE_LABELS[option]}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="dm-5w-pdca-section">
+                      <span className="dm-5w-pdca-tag" aria-hidden="true">
+                        A
+                      </span>
+                      <div className="dm-5w-pdca-body">
+                        <label className="dm-5w-field">
+                          <span className="dm-5w-label">
+                            Monitoring &amp; Remark
+                          </span>
+                          <textarea
+                            className="dm-5w-textarea"
+                            rows={2}
+                            value={solution.remark}
+                            placeholder="Catatan monitoring dan tindak lanjut"
+                            onChange={(event) =>
+                              updateSolution(solution.id, {
+                                remark: event.target.value,
+                              })
+                            }
+                            disabled={!canEdit}
+                            aria-label={`Monitoring dan remark solusi ${
+                              index + 1
+                            }`}
+                          />
+                        </label>
+                        <div className="dm-5w-photo-row">
+                          <PhotoField
+                            label="Before"
+                            photos={solution.photosBefore}
+                            canEdit={canEdit}
+                            ariaLabel={`solusi ${index + 1}`}
+                            onAdd={(photos) =>
+                              updateSolution(solution.id, {
+                                photosBefore: [
+                                  ...solution.photosBefore,
+                                  ...photos,
+                                ],
+                              })
+                            }
+                            onRemove={(photoIndex) =>
+                              updateSolution(solution.id, {
+                                photosBefore: solution.photosBefore.filter(
+                                  (_, current) => current !== photoIndex
+                                ),
+                              })
+                            }
+                            onPreview={setPreviewUrl}
+                            onNotify={onNotify}
+                          />
+                          <PhotoField
+                            label="After"
+                            photos={solution.photosAfter}
+                            canEdit={canEdit}
+                            ariaLabel={`solusi ${index + 1}`}
+                            onAdd={(photos) =>
+                              updateSolution(solution.id, {
+                                photosAfter: [
+                                  ...solution.photosAfter,
+                                  ...photos,
+                                ],
+                              })
+                            }
+                            onRemove={(photoIndex) =>
+                              updateSolution(solution.id, {
+                                photosAfter: solution.photosAfter.filter(
+                                  (_, current) => current !== photoIndex
+                                ),
+                              })
+                            }
+                            onPreview={setPreviewUrl}
+                            onNotify={onNotify}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+              {solutions.length === 0 ? (
+                <p className="dm-5w-hint">
+                  Belum ada solusi. Tambahkan solusi untuk menindaklanjuti Root
+                  Cause.
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <div className="dm-5w-board">
+              {PDCA_STAGES.map((stage) => {
+                const items = solutions.filter(
+                  (solution) => PDCA_STAGE_BY_STATUS[solution.status] === stage
+                );
+                return (
+                  <section
+                    key={stage}
+                    className={`dm-5w-board-col ${
+                      dragOverStage === stage ? "is-dragover" : ""
+                    }`}
+                    aria-label={`Tahap ${stage}`}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      event.dataTransfer.dropEffect = "move";
+                      setDragOverStage(stage);
+                    }}
+                    onDragLeave={() =>
+                      setDragOverStage((current) =>
+                        current === stage ? null : current
+                      )
+                    }
+                    onDrop={(event) => handleDrop(event, stage)}
+                  >
+                    <header className="dm-5w-board-head">
+                      <span
+                        className={`dm-5w-pdca-badge ${stageClass(stage)}`}
+                      >
+                        {stage}
+                      </span>
+                      <span className="dm-5w-board-count">{items.length}</span>
+                    </header>
+                    <div className="dm-5w-board-list">
+                      {items.map((solution) => (
+                        <article
+                          key={solution.id}
+                          className={`dm-5w-board-card ${
+                            draggingId === solution.id ? "is-dragging" : ""
+                          } ${canEdit ? "" : "is-static"}`}
+                          draggable={canEdit}
+                          onDragStart={(event) =>
+                            handleDragStart(event, solution.id)
+                          }
+                          onDragEnd={handleDragEnd}
+                          tabIndex={0}
+                          aria-label={`${solution.text || "Solusi"} untuk ${
+                            solution.pic || "PIC belum diisi"
+                          }`}
+                        >
+                          <p className="dm-5w-board-solution">
+                            {solution.text || "Solusi belum diisi"}
+                          </p>
+                          <div className="dm-5w-board-meta">
+                            <span>{solution.pic || "PIC belum diisi"}</span>
+                            <span>{formatDeadline(solution.deadline)}</span>
+                          </div>
+                          <div className="dm-5w-board-foot">
+                            <span className="dm-5w-board-type">
+                              {SOLUTION_TYPE_LABELS[solution.type]}
+                            </span>
+                            {canEdit ? (
+                              <select
+                                className="dm-5w-board-move"
+                                value={stage}
+                                onChange={(event) =>
+                                  updateSolution(solution.id, {
+                                    status:
+                                      STATUS_BY_STAGE[
+                                        event.target.value as PdcaStage
+                                      ],
+                                  })
+                                }
+                                aria-label={`Pindahkan ${
+                                  solution.text || "solusi"
+                                } ke tahap`}
+                              >
+                                {PDCA_STAGES.map((option) => (
+                                  <option key={option} value={option}>
+                                    {option}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : null}
+                          </div>
+                        </article>
+                      ))}
+                      {items.length === 0 ? (
+                        <p className="dm-5w-board-empty">Belum ada solusi</p>
+                      ) : null}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="dm-5w-actions-footer">
+            <span className="dm-5w-actions-footer-note">
+              {solutions.length} solusi
+            </span>
+            <div className="dm-5w-actions-footer-actions">
+              {canEdit ? (
+                <button
+                  type="button"
+                  className="dm-5w-btn dm-5w-btn-secondary dm-5w-btn-sm"
+                  onClick={addSolution}
+                >
+                  + Tambah solusi
+                </button>
+              ) : null}
+              {canEdit ? (
+                <button
+                  type="button"
+                  className="dm-5w-btn dm-5w-btn-primary"
+                  onClick={handleSave}
+                >
+                  Simpan PDCA
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {previewUrl ? (
+        <div
+          className="dm-5w-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Foto solusi"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <button
+            type="button"
+            className="dm-5w-lightbox-close"
+            onClick={() => setPreviewUrl(null)}
+            aria-label="Tutup foto"
+          >
+            <IconClose size={16} />
+          </button>
+          <img
+            src={previewUrl}
+            alt="Foto solusi diperbesar"
+            onClick={(event) => event.stopPropagation()}
+          />
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

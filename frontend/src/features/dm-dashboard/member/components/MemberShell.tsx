@@ -5,10 +5,15 @@ import "../../leader/dmSoft.css";
 import { MemberHeader } from "./MemberHeader";
 import { MemberSidebar } from "./MemberSidebar";
 
-export default function MemberShell({ children }: { children: ReactNode }) {
+type MemberShellProps = {
+  children: ReactNode;
+  basePath?: string;
+};
+
+export default function MemberShell({ children, basePath }: MemberShellProps) {
   return (
     <div className="dm-theme dml-shell">
-      <MemberSidebar />
+      <MemberSidebar basePath={basePath} />
       <div className="dml-main">
         <MemberHeader />
         <main className="dml-content member-content">
