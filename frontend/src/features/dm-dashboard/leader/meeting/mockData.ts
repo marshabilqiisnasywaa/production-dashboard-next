@@ -15,6 +15,12 @@ export const MEETING_CONFIG = {
 
 export const MEETING_AREA = "DM 3";
 export const MEETING_LINES = ["TAC20601", "TAC20602", "TAC20603", "TAC20604"];
+export const MEETING_SESSIONS = [
+  { id: "pre", label: "Pre-Management" },
+  { id: "during-1", label: "During-Management 1" },
+  { id: "during-2", label: "During-Management 2" },
+  { id: "post", label: "Post-Management" },
+];
 export const MEETING_LOCATION = "Leader Line";
 
 export const FALLBACK_MEMBERS: MeetingMember[] = [
