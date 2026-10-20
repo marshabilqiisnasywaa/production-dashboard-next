@@ -1,0 +1,168 @@
+/* Member-only additions. Prefix: dmm. Shell, header, KPI and card styles come from leader.css + ui.css. */
+
+.dmm-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.dmm-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.dmm-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+/* logout button in the header */
+.dmm-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid var(--dm-red-100);
+  border-radius: var(--dm-radius-sm);
+  background: var(--dm-red-50);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dm-red);
+  cursor: pointer;
+}
+.dmm-logout:hover {
+  background: #fde4e0;
+}
+
+/* papercard today card */
+.dmm-pc {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 24px 24px;
+  border: 1px solid var(--dm-border);
+  border-radius: var(--dm-radius-md);
+  background: #fff;
+}
+.dmm-pc__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+.dmm-pc__top h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: #4b5563;
+}
+.dmm-pc__big {
+  margin: 10px 0 0;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.dmm-pc__text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dm-muted);
+}
+.dmm-pc a.ui-btn {
+  margin-top: auto;
+  text-decoration: none;
+}
+
+.dmm-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dm-green);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.dmm-link:hover {
+  text-decoration: underline;
+}
+
+/* my problems list */
+.dmm-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dmm-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--dm-border);
+}
+.dmm-list__main {
+  flex: 1;
+  min-width: 0;
+}
+.dmm-list__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.dmm-list__meta {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--dm-muted);
+}
+.dmm-list__late {
+  font-weight: 600;
+  color: var(--dm-red);
+}
+
+/* 7-day history */
+.dmm-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dmm-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 4px;
+  border: 1px solid var(--dm-border);
+  border-radius: var(--dm-radius-sm);
+  font-size: 12px;
+  color: var(--dm-muted);
+}
+.dmm-day.is-last {
+  border-color: var(--dm-green);
+  background: var(--dm-green-50);
+  color: var(--dm-text);
+  font-weight: 600;
+}
+
+.dmm-note {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dm-muted);
+}
+
+@media (max-width: 767px) {
+  .dmm-days {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .dmm-list li {
+    padding: 14px 16px;
+  }
+}

@@ -2,8 +2,11 @@ import type { ReactNode } from "react";
 import "@/components/ui/ui.css";
 import "../../leader/leader.css";
 import "../../leader/dmSoft.css";
+import "../member.css";
+
 import { MemberHeader } from "./MemberHeader";
 import { MemberSidebar } from "./MemberSidebar";
+import { MemberProvider } from "../MemberProvider";
 
 type MemberShellProps = {
   children: ReactNode;
@@ -12,14 +15,16 @@ type MemberShellProps = {
 
 export default function MemberShell({ children, basePath }: MemberShellProps) {
   return (
-    <div className="dm-theme dml-shell">
-      <MemberSidebar basePath={basePath} />
-      <div className="dml-main">
-        <MemberHeader />
-        <main className="dml-content member-content">
-          {children}
-        </main>
+    <MemberProvider>
+      <div className="dm-theme dml-shell">
+        <MemberSidebar basePath={basePath} />
+        <div className="dml-main">
+          <MemberHeader />
+          <main className="dml-content member-content">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </MemberProvider>
   );
 }

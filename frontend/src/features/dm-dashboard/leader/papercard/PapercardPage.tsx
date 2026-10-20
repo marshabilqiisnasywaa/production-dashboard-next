@@ -217,16 +217,20 @@ export default function PapercardPage() {
   return (
     <div className="dml-pc">
 
-      <div className="dml-page-head" style={{ marginBottom: 10 }}>
-        <div>
-          <h1 className="dml-pc__title" style={{ fontSize: 18, fontWeight: 700, margin: "0 0 3px" }}>
-            Papercard Leader
-          </h1>
-          <p className="dml-pc__intro" style={{ fontSize: 12.5, color: "#64748b", margin: 0, lineHeight: 1.45 }}>
-            Isi checklist harian sebelum DM Meeting tepat waktu untuk <strong>{lineDisplayName}</strong>. Hasil pemeriksaan otomatis dikirim ke Supervisor <strong>{supervisorName}</strong> untuk persetujuan.
-          </p>
-        </div>
-      </div>
+
+<div className="dml-page-head dml-pc-page-head">
+  <div>
+    <h1 className="dml-pc__title">
+      Papercard Leader
+    </h1>
+    <p className="dml-pc__intro">
+      Isi checklist harian sebelum DM Meeting tepat waktu untuk{" "}
+      <strong>{lineDisplayName}</strong>. Hasil pemeriksaan otomatis dikirim
+      ke Supervisor <strong>{supervisorName}</strong> untuk persetujuan.
+    </p>
+  </div>
+</div>
+
 
       <PapercardMetaCard
         lines={PAPERCARD_LINES}

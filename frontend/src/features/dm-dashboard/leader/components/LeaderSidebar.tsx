@@ -37,18 +37,7 @@ export function LeaderSidebar() {
         </>
       }
       sections={SECTIONS}
-      footer={
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="ui-sidebar__link ui-sidebar__link--button"
-          style={{ cursor: "pointer", color: "#f43f5e" }}
-          title="Keluar dari akun Leader"
-        >
-          <IconLogout />
-          <span>Keluar</span>
-        </button>
-      }
+      
     />
   );
 }
