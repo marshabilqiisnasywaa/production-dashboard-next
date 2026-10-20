@@ -413,6 +413,7 @@ export type DmMeetingSession = {
   shift: string;
   sessionType: string;
   sessionNumber: number;
+  label?: string | null;
   scheduledTime: string;
   status: "pending" | "in_progress" | "completed";
   startedAt?: string | null;
@@ -420,6 +421,20 @@ export type DmMeetingSession = {
   durationSeconds: number;
   attendances: DmMeetingAttendance[];
   summaries: DmMeetingSummary[];
+};
+
+export type DmMeetingScheduleItem = {
+  id?: number | null;
+  label: string;
+  time: string;
+  days: number[];
+  isActive: boolean;
+};
+
+export type DmMeetingSchedule = {
+  lineId: number;
+  isDefault: boolean;
+  items: DmMeetingScheduleItem[];
 };
 
 export type DmPostMeeting = {
@@ -441,6 +456,11 @@ export type DmPostMeeting = {
 };
 
 export const meetingApi = {
+  getSchedule: (lineId: number) => request<DmMeetingSchedule>(`/meetings/schedule?line_id=${lineId}`, {}, true),
+  saveSchedule: (lineId: number, items: DmMeetingScheduleItem[]) =>
+    request<DmMeetingSchedule>(`/meetings/schedule/${lineId}`, json("PUT", { items }), true),
+  applySchedule: (lineIds: number[], items: DmMeetingScheduleItem[]) =>
+    request<DmMeetingSchedule[]>("/meetings/schedule/apply", json("POST", { lineIds, items }), true),
   listSessions: (lineId: number, date: string, shift = "Shift 1") =>
     request<DmMeetingSession[]>(`/meetings/sessions?line_id=${lineId}&date=${date}&shift=${encodeURIComponent(shift)}`, {}, true),
   startSession: (input: {

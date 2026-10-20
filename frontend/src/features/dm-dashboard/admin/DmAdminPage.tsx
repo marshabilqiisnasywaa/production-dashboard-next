@@ -9,6 +9,7 @@ import AttendanceRecap from "../meeting/AttendanceRecap";
 import DmAdminSidebar from "./DmAdminSidebar";
 import type { DmAdminTabKey } from "./DmAdminSidebar";
 import DashboardTab from "./DashboardTab";
+import MeetingScheduleManager from "./MeetingScheduleManager";
 import LineDetailModal from "./LineDetailModal";
 import type { TabKey } from "./LineDetailModal";
 import LineTeamModal from "./LineTeamModal";
@@ -111,7 +112,7 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
   dashboard: { crumb: "Dashboard", title: "Dashboard Lini: KPI, Absensi, dan Meeting" },
   workshop: { crumb: "Lini, Workshop & Tim", title: "Pengaturan Workshop, Lini Produksi, dan Anggota Tim" },
   users: { crumb: "User", title: "Daftar User: Role dan Departemen" },
-  papercard: { crumb: "Template Papercard", title: "Pengaturan Template Papercard per Lini & Departemen" },
+  papercard: { crumb: "Papercard & Meeting", title: "Template Papercard dan Jadwal DM Meeting per Lini" },
   mpv: { crumb: "MPV of The Month", title: "MPV of The Month per Lini dan Riwayatnya" },
   attendance: { crumb: "Rekap Presensi", title: "Rekapitulasi Presensi & Riwayat Meeting per Tanggal" },
 };
@@ -126,6 +127,7 @@ function AdminWorkspace({
   onLogout: (notice: string | null) => void;
 }) {
   const [activeTab, setActiveTab] = useState<DmAdminTabKey>(isAdmin ? "workshop" : "dashboard");
+  const [papercardSub, setPapercardSub] = useState<"template" | "meeting">("template");
   const [workshops, setWorkshops] = useState<DmWorkshop[]>([]);
   const [lines, setLines] = useState<DmLine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -537,7 +539,31 @@ function AdminWorkspace({
 
             {activeTab === "papercard" && (
               <div className="dm-admin-section">
-                <PapercardTemplateManager workshops={workshops} lines={lines} />
+                <div className="dm-subtabs" role="tablist" aria-label="Pengaturan lini">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={papercardSub === "template"}
+                    className={`dm-subtab${papercardSub === "template" ? " is-active" : ""}`}
+                    onClick={() => setPapercardSub("template")}
+                  >
+                    Template Papercard
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={papercardSub === "meeting"}
+                    className={`dm-subtab${papercardSub === "meeting" ? " is-active" : ""}`}
+                    onClick={() => setPapercardSub("meeting")}
+                  >
+                    Jadwal Meeting
+                  </button>
+                </div>
+                {papercardSub === "template" ? (
+                  <PapercardTemplateManager workshops={workshops} lines={lines} />
+                ) : (
+                  <MeetingScheduleManager lines={lines} />
+                )}
               </div>
             )}
 

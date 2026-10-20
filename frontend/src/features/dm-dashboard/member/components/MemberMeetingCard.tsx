@@ -3,9 +3,10 @@ import { IconUsers } from "@/components/ui/icons";
 interface MemberMeetingCardProps {
   leaderName: string;
   supervisorName: string;
+  meetingTimes?: string[];
 }
 
-export function MemberMeetingCard({ leaderName, supervisorName }: MemberMeetingCardProps) {
+export function MemberMeetingCard({ leaderName, supervisorName, meetingTimes = [] }: MemberMeetingCardProps) {
   return (
     <div className="member-card">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -29,7 +30,7 @@ export function MemberMeetingCard({ leaderName, supervisorName }: MemberMeetingC
         </div>
 
         <span style={{ fontSize: "11px", background: "#eef2ff", color: "#4338ca", padding: "2px 8px", borderRadius: "999px", fontWeight: 600 }}>
-          10:00 - 14:00 - 16:00 WIB
+          {meetingTimes.length > 0 ? `${meetingTimes.join(" - ")} WIB` : "Jadwal belum diatur"}
         </span>
       </div>
 

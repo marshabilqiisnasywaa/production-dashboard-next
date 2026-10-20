@@ -27,7 +27,6 @@ import {
 import { LEADER_ROUTES } from "../routes";
 import type { AttendanceStatus, TeamMember } from "../types";
 
-type SessionTab = "during1" | "during2" | "during3";
 
 interface SummaryFormItem {
   problem: string;
@@ -35,33 +34,16 @@ interface SummaryFormItem {
   dueDate: string;
 }
 
-const SESSION_META: Record<
-  "during1" | "during2" | "during3",
-  { number: number; label: string; time: string; desc: string }
-> = {
-  during1: {
-    number: 1,
-    label: "During-Meeting 1",
-    time: "10:00",
-    desc: "Monitoring awal shift & verifikasi abnormalitas temuan papercard pagi.",
-  },
-  during2: {
-    number: 2,
-    label: "During-Meeting 2",
-    time: "14:00",
-    desc: "Evaluasi tengah shift, progress output, dan kendala operasional siang.",
-  },
-  during3: {
-    number: 3,
-    label: "During-Meeting 3",
-    time: "16:00",
-    desc: "Evaluasi akhir shift, rekonsiliasi output harian, & persiapan serah terima.",
-  },
-};
+interface SessionMeta {
+  number: number;
+  label: string;
+  time: string;
+  desc: string;
+}
 
 export default function LeaderMeetingPage() {
   const [currentUser, setCurrentUser] = useState<DmMe | null>(null);
-  const [activeTab, setActiveTab] = useState<SessionTab>("during1");
+  const [activeTab, setActiveTab] = useState<number | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [ngSubmissions, setNgSubmissions] = useState<DmPapercardSubmission[]>([]);
   const [dbSessions, setDbSessions] = useState<DmMeetingSession[]>([]);
@@ -142,7 +124,9 @@ export default function LeaderMeetingPage() {
           }
         }
 
-        const subs: DmPapercardSubmission[] = await papercardApi.listSubmissions({ lineId, date: todayStr }).catch(() => []);
+        const subs = await papercardApi
+          .listSubmissions({ lineId, date: todayStr })
+          .catch((): DmPapercardSubmission[] => []);
         setNgSubmissions(subs.filter((s) => s.status === "NG"));
 
         // Load sessions from API
@@ -161,25 +145,28 @@ export default function LeaderMeetingPage() {
   }, [loadData]);
 
   // Active Session info
-  const activeSessionMeta = SESSION_META[activeTab];
-  const activeSessionDb = useMemo(() => {
-    if (!activeSessionMeta) return null;
-    return (
-      dbSessions.find((s) => s.sessionNumber === activeSessionMeta.number) || {
-        id: activeSessionMeta.number,
-        lineId: currentUser?.line?.id || 1,
-        date: todayStr,
-        shift: "Shift 1",
-        sessionType: `during_${activeSessionMeta.number}`,
-        sessionNumber: activeSessionMeta.number,
-        scheduledTime: activeSessionMeta.time,
-        status: "pending" as const,
-        durationSeconds: 0,
-        attendances: [],
-        summaries: [],
+  const sortedSessions = useMemo(
+    () => [...dbSessions].sort((x, y) => x.sessionNumber - y.sessionNumber),
+    [dbSessions]
+  );
+  const activeNumber = useMemo(() => {
+    if (activeTab !== null && sortedSessions.some((x) => x.sessionNumber === activeTab)) return activeTab;
+    const live = sortedSessions.find((x) => x.status === "in_progress");
+    const upcoming = sortedSessions.find((x) => x.status === "pending");
+    return (live ?? upcoming ?? sortedSessions[sortedSessions.length - 1])?.sessionNumber ?? null;
+  }, [activeTab, sortedSessions]);
+  const activeSessionDb = useMemo(
+    () => sortedSessions.find((x) => x.sessionNumber === activeNumber) ?? null,
+    [sortedSessions, activeNumber]
+  );
+  const activeSessionMeta: SessionMeta | null = activeSessionDb
+    ? {
+        number: activeSessionDb.sessionNumber,
+        label: activeSessionDb.label || `Sesi ${activeSessionDb.sessionNumber}`,
+        time: activeSessionDb.scheduledTime,
+        desc: "Presensi tim, stopwatch durasi, dan notulensi kendala sesi ini.",
       }
-    );
-  }, [activeSessionMeta, dbSessions, currentUser?.line?.id, todayStr]);
+    : null;
 
   // Sync Timer with Active Session
   useEffect(() => {
@@ -454,7 +441,7 @@ export default function LeaderMeetingPage() {
             Daily Management (DM) Meeting &amp; Evaluasi Lini
           </h1>
           <p style={{ margin: "4px 0 0", fontSize: "13.5px", color: "#64748b" }}>
-            Pelaksanaan 3 sesi pertemuan harian (10:00, 14:00, 16:00), presensi tim Face ID, stopwatch durasi meeting, serta modal action item &amp; notulensi kendala lini.
+            Pelaksanaan sesi pertemuan harian sesuai jadwal lini ({sortedSessions.map((x) => x.scheduledTime).join(", ") || "belum diatur"}), presensi tim Face ID, stopwatch durasi meeting, serta modal action item &amp; notulensi kendala lini.
           </p>
         </div>
 
@@ -502,7 +489,7 @@ export default function LeaderMeetingPage() {
         </div>
       )}
 
-      {/* 3. Session Navigation Tabs (10:00, 14:00, 16:00, Post-Met) */}
+      {/* 3. Session Navigation Tabs (dari jadwal lini) */}
       <div
         style={{
           display: "flex",
@@ -516,18 +503,22 @@ export default function LeaderMeetingPage() {
           width: "fit-content",
         }}
       >
-        {(["during1", "during2", "during3"] as const).map((key) => {
-          const meta = SESSION_META[key];
-          const isSelected = activeTab === key;
-          const sDb = dbSessions.find((s) => s.sessionNumber === meta.number);
-          const isDone = sDb?.status === "completed";
-          const isRunning = sDb?.status === "in_progress";
+        {sortedSessions.length === 0 && !loading && (
+          <span style={{ padding: "8px 14px", fontSize: "13px", color: "#64748b" }}>
+            Belum ada jadwal meeting untuk lini ini hari ini. Admin bisa mengaturnya di Papercard &amp; Meeting &gt; Jadwal Meeting.
+          </span>
+        )}
+        {sortedSessions.map((sDb) => {
+          const isSelected = activeNumber === sDb.sessionNumber;
+          const isDone = sDb.status === "completed";
+          const isRunning = sDb.status === "in_progress";
+          const label = sDb.label || `Sesi ${sDb.sessionNumber}`;
 
           return (
             <button
-              key={key}
+              key={sDb.id}
               type="button"
-              onClick={() => setActiveTab(key)}
+              onClick={() => setActiveTab(sDb.sessionNumber)}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -546,7 +537,7 @@ export default function LeaderMeetingPage() {
             >
               <IconClock size={15} />
               <span>
-                {meta.label} ({meta.time})
+                {label} ({sDb.scheduledTime})
               </span>
               {isDone ? (
                 <span

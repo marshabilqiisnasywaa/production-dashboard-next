@@ -5,7 +5,7 @@ import "../leader/dmSoft.css";
 import "../leader/papercard/papercard.css";
 
 import { IconCheckCircle } from "@/components/ui/icons";
-import { accountApi, papercardApi, publicApi, setToken } from "../api";
+import { accountApi, meetingApi, papercardApi, publicApi, setToken } from "../api";
 import type { DmMe, DmPapercardSubmission } from "../api";
 import type { DmBoard } from "../dmData";
 import type { DepartmentKey } from "../leader/types";
@@ -54,6 +54,7 @@ export default function MemberDashboardPage({ initialTab = "dashboard" }: Member
     start: "08:00",
     end: "09:00",
   });
+  const [meetingTimes, setMeetingTimes] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [loginBusy, setLoginBusy] = useState(false);
 
@@ -194,6 +195,33 @@ export default function MemberDashboardPage({ initialTab = "dashboard" }: Member
       cancelled = true;
     };
   }, [activeProfile.lineId, selectedDept]);
+
+  useEffect(() => {
+    const lineId = activeProfile.lineId;
+    if (!lineId) {
+      setMeetingTimes([]);
+      return;
+    }
+    let cancelled = false;
+    const weekday = new Date().getDay() || 7;
+    meetingApi
+      .getSchedule(lineId)
+      .then((res) => {
+        if (cancelled) return;
+        setMeetingTimes(
+          res.items
+            .filter((i) => i.isActive && i.days.includes(weekday))
+            .map((i) => i.time)
+            .sort()
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setMeetingTimes([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeProfile.lineId]);
 
   // 4. Today's submission status for active department
   const todaySubmission = useMemo(() => {
@@ -420,6 +448,7 @@ export default function MemberDashboardPage({ initialTab = "dashboard" }: Member
         <MemberMeetingCard
           leaderName={leaderName}
           supervisorName={activeProfile.supervisorName}
+          meetingTimes={meetingTimes}
         />
       </section>
 

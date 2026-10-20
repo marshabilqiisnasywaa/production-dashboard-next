@@ -12,6 +12,7 @@ export interface HeroLeaderBannerProps {
   supervisorName?: string;
   isPapercardSubmitted?: boolean;
   completedSessionsCount?: number;
+  totalSessionsCount?: number;
 }
 
 export function HeroLeaderBanner({
@@ -22,6 +23,7 @@ export function HeroLeaderBanner({
   supervisorName = "Belum diatur admin",
   isPapercardSubmitted = false,
   completedSessionsCount = 0,
+  totalSessionsCount = 0,
 }: HeroLeaderBannerProps) {
   return (
     <div className="dms-hero-compact">
@@ -69,7 +71,7 @@ export function HeroLeaderBanner({
         >
           <IconUsers size={14} />
           <span>DM Meeting</span>
-          <span className="dms-counter-badge">{completedSessionsCount}/3 Selesai</span>
+          <span className="dms-counter-badge">{completedSessionsCount}/{totalSessionsCount} Selesai</span>
         </Link>
       </div>
     </div>

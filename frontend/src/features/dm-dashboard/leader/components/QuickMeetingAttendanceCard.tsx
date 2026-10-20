@@ -25,10 +25,7 @@ export function QuickMeetingAttendanceCard({
     );
   }
 
-  // 3 daily scheduled sessions
-  const s1 = sessions.find((s) => s.sessionNumber === 1);
-  const s2 = sessions.find((s) => s.sessionNumber === 2);
-  const s3 = sessions.find((s) => s.sessionNumber === 3);
+  const ordered = [...sessions].sort((a, b) => a.sessionNumber - b.sessionNumber);
 
   const completedCount = sessions.filter((s) => s.status === "completed").length;
 
@@ -39,10 +36,12 @@ export function QuickMeetingAttendanceCard({
     : 0;
   const totalCount = members.length;
 
-  const renderSessionPill = (sess: DmMeetingSession | undefined, num: number, defaultTime: string, label: string) => {
+  const renderSessionPill = (sess: DmMeetingSession) => {
+    const num = sess.sessionNumber;
+    const label = sess.label || `Sesi ${num}`;
     const isCompleted = sess?.status === "completed";
     const isInProgress = sess?.status === "in_progress";
-    const time = sess?.scheduledTime || defaultTime;
+    const time = sess.scheduledTime;
 
     let itemClass = "dms-session-item";
     let tagClass = "dms-session-tag dms-session-tag--pending";
@@ -79,20 +78,22 @@ export function QuickMeetingAttendanceCard({
           </div>
           <div>
             <h2 className="dms-card-title">Presensi &amp; Sesi DM Meeting</h2>
-            <p className="dms-card-subtitle">3 Sesi Harian Lini: 10:00 · 14:00 · 16:00 WIB</p>
+            <p className="dms-card-subtitle">
+              {ordered.length > 0
+                ? `${ordered.length} sesi hari ini: ${ordered.map((x) => x.scheduledTime).join(" · ")} WIB`
+                : "Belum ada jadwal meeting hari ini"}
+            </p>
           </div>
         </div>
         <span className="dms-status-badge dms-status-badge--approved" style={{ fontSize: "11px", padding: "2px 8px" }}>
           <IconCheckCircle size={12} />
-          {completedCount} / 3 Selesai
+          {completedCount} / {ordered.length} Selesai
         </span>
       </div>
 
       {/* 3 Session Stepper Bar */}
       <div className="dms-session-stepper">
-        {renderSessionPill(s1, 1, "10:00", "Sesi 1")}
-        {renderSessionPill(s2, 2, "14:00", "Sesi 2")}
-        {renderSessionPill(s3, 3, "16:00", "Sesi 3")}
+        {ordered.map((sess) => renderSessionPill(sess))}
       </div>
 
       {/* Attendance summary footer & link */}
