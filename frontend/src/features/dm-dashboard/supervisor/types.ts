@@ -1,6 +1,5 @@
 // Types and Preset Constants for Supervisor Portal
 
-export type ActiveTab = "approvals" | "lines" | "log";
 export type ViewMode = "grouped" | "list";
 
 export interface SupervisorInfo {

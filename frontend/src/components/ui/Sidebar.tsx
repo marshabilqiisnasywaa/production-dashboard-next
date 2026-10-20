@@ -10,6 +10,7 @@ export interface SidebarItem {
   icon: ReactNode;
   /** Active only when pathname === href (use for root pages like /leader) */
   exact?: boolean;
+  badge?: number;
 }
 
 export interface SidebarSection {
@@ -49,6 +50,7 @@ export function Sidebar({ brand, sections, footer }: SidebarProps) {
                 >
                   {item.icon}
                   <span>{item.label}</span>
+                  {item.badge ? <span className="ui-sidebar__badge">{item.badge}</span> : null}
                 </Link>
               );
             })}

@@ -1,107 +1,76 @@
 "use client";
 
-import Link from "next/link";
 import {
   IconClipboardCheck,
+  IconDashboard,
+  IconGauge,
   IconHistory,
-  IconLogout,
   IconPulse,
-  IconShield,
 } from "@/components/ui/icons";
-import type { ActiveTab, SupervisorInfo } from "../types";
+import { Sidebar, type SidebarSection } from "@/components/ui/Sidebar";
+import { SUPERVISOR_ROUTES } from "../routes";
 
 interface SupervisorSidebarProps {
-  activeTab: ActiveTab;
-  setActiveTab: (tab: ActiveTab) => void;
-  currentSupervisor: SupervisorInfo;
   pendingApprovalsCount: number;
-  onLogout: () => void;
 }
 
-export function SupervisorSidebar({
-  activeTab,
-  setActiveTab,
-  currentSupervisor,
-  pendingApprovalsCount,
-  onLogout,
-}: SupervisorSidebarProps) {
-  const avatarInitials = currentSupervisor.name
-    ? currentSupervisor.name.slice(0, 2).toUpperCase()
-    : "SP";
+export function SupervisorSidebar({ pendingApprovalsCount }: SupervisorSidebarProps) {
+  const sections: SidebarSection[] = [
+    {
+      items: [
+        {
+          label: "Dashboard",
+          href: SUPERVISOR_ROUTES.dashboard,
+          icon: <IconDashboard />,
+          exact: true,
+        },
+      ],
+    },
+    {
+      title: "Pre Management",
+      items: [
+        {
+          label: "Persetujuan Checklist",
+          href: SUPERVISOR_ROUTES.approvals,
+          icon: <IconClipboardCheck />,
+          badge: pendingApprovalsCount,
+        },
+      ],
+    },
+    {
+      title: "Monitoring",
+      items: [
+        {
+          label: "Monitoring Lini",
+          href: SUPERVISOR_ROUTES.lines,
+          icon: <IconPulse />,
+        },
+      ],
+    },
+    {
+      title: "History",
+      items: [
+        {
+          label: "Riwayat Checklist",
+          href: SUPERVISOR_ROUTES.history,
+          icon: <IconHistory />,
+        },
+      ],
+    },
+  ];
 
   return (
-    <aside className="spv-sidebar" aria-label="Sidebar Supervisor">
-      <div className="spv-sidebar__header">
-        <div className="spv-sidebar__brand">
-<div>
-          <img src="/assets/dm/oppo-green-logo.svg" alt="" width={50} height={38} />
-        </div>
-          <div className="spv-sidebar__brand-text">
-            {/* <strong>DM Digital</strong> */}
-            <span>Dashboard Supervisor</span>
-          </div>
-        </div>
-
-        {/* <div className="spv-sidebar__user">
-          <div className="spv-sidebar__user-avatar">{avatarInitials}</div>
-          <div className="spv-sidebar__user-info">
-            <span className="spv-sidebar__user-name" title={currentSupervisor.name}>
-              {currentSupervisor.name}
-            </span>
-            <span className="spv-sidebar__user-role">
-              NIK: {currentSupervisor.employeeNo} · {currentSupervisor.dept}
-            </span>
-          </div>
-        </div> */}
-      </div>
-
-      <nav className="spv-sidebar__nav">
-        <span className="spv-sidebar__section-label">Menu Supervisor</span>
-
-        <button
-          type="button"
-          className={`spv-sidebar__nav-item ${activeTab === "approvals" ? "is-active" : ""}`}
-          onClick={() => setActiveTab("approvals")}
-        >
-          <div className="spv-sidebar__nav-left">
-            <IconClipboardCheck size={18} />
-            <span>Persetujuan Checklist</span>
-          </div>
-          {pendingApprovalsCount > 0 && (
-            <span className="spv-sidebar__nav-badge">{pendingApprovalsCount}</span>
-          )}
-        </button>
-
-        <button
-          type="button"
-          className={`spv-sidebar__nav-item ${activeTab === "lines" ? "is-active" : ""}`}
-          onClick={() => setActiveTab("lines")}
-        >
-          <div className="spv-sidebar__nav-left">
-            <IconPulse size={18} />
-            <span>Monitoring Lini</span>
-          </div>
-        </button>
-
-        <button
-          type="button"
-          className={`spv-sidebar__nav-item ${activeTab === "log" ? "is-active" : ""}`}
-          onClick={() => setActiveTab("log")}
-        >
-          <div className="spv-sidebar__nav-left">
-            <IconHistory size={18} />
-            <span>Riwayat Checklist</span>
-          </div>
-        </button>
-      </nav>
-
-      <div className="spv-sidebar__footer">
-        <button type="button" onClick={onLogout} className="spv-sidebar__logout-btn">
-          <IconLogout size={16} />
-          <span>Keluar Akun</span>
-        </button>
-      </div>
-    </aside>
+    <Sidebar
+      brand={
+        <>
+          <span className="dml-logo">
+            <IconGauge size={22} />
+          </span>
+          <strong>DM Digital</strong>
+        </>
+      }
+      sections={sections}
+    />
   );
 }
 

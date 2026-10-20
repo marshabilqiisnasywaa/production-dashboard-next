@@ -22,12 +22,6 @@ export function SupervisorReviewModal({
   onClose,
   onApprove,
 }: SupervisorReviewModalProps) {
-  if (!reviewTarget) return null;
-
-  const isApproved = reviewTarget.submission?.approvalStatus === "approved";
-  const okAnswers = reviewTarget.submission?.answers?.filter((a: any) => a.status === "OK") || [];
-  const ngAnswers = reviewTarget.submission?.answers?.filter((a: any) => a.status === "NG") || [];
-
   const groupedCategories = useMemo(() => {
     if (!reviewTarget?.submission?.answers) return [];
 
@@ -77,6 +71,12 @@ export function SupervisorReviewModal({
       okCount: entries.filter((e) => e.answer.status === "OK").length,
     }));
   }, [reviewTarget]);
+
+  if (!reviewTarget) return null;
+
+  const isApproved = reviewTarget.submission?.approvalStatus === "approved";
+  const okAnswers = reviewTarget.submission?.answers?.filter((a: any) => a.status === "OK") || [];
+  const ngAnswers = reviewTarget.submission?.answers?.filter((a: any) => a.status === "NG") || [];
 
   const renderStatus = (answer: any) => {
     const isNG = answer.status === "NG";

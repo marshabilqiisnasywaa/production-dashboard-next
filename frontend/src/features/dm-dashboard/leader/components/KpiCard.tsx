@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { TARGET, TONE_LABEL, toneFor } from "../utils";
+import { TARGET, TONE_LABEL, toneFor, type Tone } from "../utils";
 
 interface KpiCardProps {
   title: string;
@@ -9,10 +9,22 @@ interface KpiCardProps {
   target?: number;
   /** Change in % points vs previous period. Omit to hide the line. */
   delta?: number | null;
+  unit?: string;
+  tone?: Tone;
+  showTarget?: boolean;
 }
 
-export function KpiCard({ title, value, icon, target = TARGET, delta }: KpiCardProps) {
-  const tone = toneFor(value, target);
+export function KpiCard({
+  title,
+  value,
+  icon,
+  target = TARGET,
+  delta,
+  unit = "%",
+  tone: toneProp,
+  showTarget = true,
+}: KpiCardProps) {
+  const tone = toneProp ?? toneFor(value, target);
 
   return (
     <article className="dml-kpi">
@@ -21,7 +33,10 @@ export function KpiCard({ title, value, icon, target = TARGET, delta }: KpiCardP
         <span className={`dml-kpi__icon dml-kpi__icon--${tone}`}>{icon}</span>
       </div>
 
-      <p className="dml-kpi__value">{value}%</p>
+      <p className="dml-kpi__value">
+        {value}
+        {unit}
+      </p>
 
       {delta !== undefined && delta !== null && (
         <p className={`dml-kpi__delta ${delta > 0 ? "is-up" : delta < 0 ? "is-down" : ""}`}>
@@ -29,10 +44,14 @@ export function KpiCard({ title, value, icon, target = TARGET, delta }: KpiCardP
         </p>
       )}
 
-      <p className="dml-kpi__hint">
-        Target {target}% · {TONE_LABEL[tone]}
-      </p>
-      <ProgressBar value={value} target={target} tone={tone} />
+      {showTarget && (
+        <>
+          <p className="dml-kpi__hint">
+            Target {target}% · {TONE_LABEL[tone]}
+          </p>
+          <ProgressBar value={value} target={target} tone={tone} />
+        </>
+      )}
     </article>
   );
 }
