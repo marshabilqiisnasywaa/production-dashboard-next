@@ -35,14 +35,43 @@ export function MemberSidebar() {
 
   return (
     <Sidebar
-      brand={
-        <>
-          <span>
-            <img src="/assets/dm/oppo-green-logo.svg" alt="" width={50} height={38} />
-          </span>
-          <strong>DM Digital</strong>
-        </>
-      }
+    brand={
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 10,
+          lineHeight: 1,
+        }}
+      >
+        <img
+          src="/assets/dm/oppo-green-logo.svg"
+          alt="OPPO"
+          style={{ height: 20, width: 'auto', display: 'block' }}
+        />
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '5px 10px',
+            borderRadius: 999,
+            background: 'rgba(0, 138, 74, 0.10)',
+            color: '#008A4A',
+            WebkitTextFillColor: '#008A4A',
+            backgroundClip: 'padding-box',
+            fontFamily:
+              "'Plus Jakarta Sans', 'Inter', 'Segoe UI', system-ui, sans-serif",
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          DM Digital
+        </span>
+      </div>
+    }
       sections={SECTIONS}
       footer={
         <button

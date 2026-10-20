@@ -268,6 +268,31 @@ function AdminWorkspace({
     setWorkshopFilter("all");
   }
 
+  const [currentTime, setCurrentTime] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(()  => {
+    setCurrentTime(new Date());
+
+  }, 1000);
+  return () => clearInterval(timer);
+}, []);
+
+const formattedDate = currentTime.toLocaleDateString("id-ID", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
+const formattedTime = currentTime.toLocaleTimeString("id-ID", {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+})
+.replace(/\./g, ":"); // Ganti titik dengan titik dua
+
+
   return (
     <div className="dm-admin-layout">
       <DmAdminSidebar isAdmin={isAdmin} activeTab={activeTab} onSelectTab={setActiveTab} onLogout={() => onLogout(null)} />
@@ -275,22 +300,28 @@ function AdminWorkspace({
       <div className="dm-admin-main-wrap">
         <header className="dm-admin-topbar-nav">
           <div className="dm-admin-topbar-left">
-            <span className="dm-admin-topbar-crumb">{isAdmin ? "DM Admin" : "DM Dashboard"} &bull; {tabLabels[activeTab].crumb}</span>
-            <h2 className="dm-admin-topbar-title">{tabLabels[activeTab].title}</h2>
+            <nav className="dm-admin-crumbs" aria-label="Hari dan Tanggal">
+              <span>{formattedDate}</span>
+            </nav>
+            <h2
+    className="dm-admin-topbar-title"
+    style={{ fontVariantNumeric: "tabular-nums", letterSpacing: "0.5px" }}
+  >
+    {formattedTime} WIB
+  </h2>
           </div>
           <div className="dm-admin-topbar-actions">
-            <span className="dm-admin-topbar-crumb">Masuk sebagai {username}</span>
-            <button type="button" className="dm-admin-btn is-secondary" onClick={reload} disabled={loading}>
-              Muat Ulang
-            </button>
-            <button
-              type="button"
-              className="dm-admin-btn is-danger-outline"
-              onClick={() => onLogout(null)}
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-              title="Keluar dari sesi Admin"
-            >
-              <IconLogout size={14} />
+            <div className="dm-admin-user">
+              <span className="dm-admin-user__avatar" aria-hidden="true">
+                {username.trim().charAt(0).toUpperCase() || "A"}
+              </span>
+              <span className="dm-admin-user__meta">
+                <strong>{username}</strong>
+                <small>{isAdmin ? "Administrator" : "Pengguna"}</small>
+              </span>
+            </div>
+            <button type="button" className="dm-admin-logout" onClick={() => onLogout(null)} title="Keluar dari sesi ini">
+              <IconLogout size={15} />
               <span>Keluar</span>
             </button>
           </div>

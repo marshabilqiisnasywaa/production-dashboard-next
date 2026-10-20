@@ -1278,3 +1278,93 @@
   background: #ffffff;
 }
 
+.spv-modal-subject {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.spv-modal-subject-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #475569;
+  padding-left: 2px;
+}
+
+.spv-modal-pos {
+  padding: 6px 9px;
+  background: #ffffff;
+  border: 1px solid #e8edf2;
+  border-radius: 6px;
+}
+
+.spv-modal-pos.is-ng {
+  border-color: #fecdd3;
+}
+
+.spv-modal-pos-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.spv-modal-pos-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.spv-modal-pos-count {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.spv-modal-rules {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0 0 0 12px;
+  border-left: 2px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  counter-reset: spvrule;
+}
+
+.spv-modal-rule {
+  counter-increment: spvrule;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.spv-modal-rule.is-ng {
+  background: #fff1f2;
+}
+
+.spv-modal-rule-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.spv-modal-rule-text {
+  font-size: 11.5px;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.spv-modal-rule-text::before {
+  content: counter(spvrule) ". ";
+  color: #94a3b8;
+  font-weight: 600;
+}
+.spv-modal-rules--plain {
+  border-left-color: #eef2f6;
+}
