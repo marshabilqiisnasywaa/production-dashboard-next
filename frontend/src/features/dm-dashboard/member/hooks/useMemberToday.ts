@@ -49,5 +49,11 @@ export function useMemberToday() {
     [submissions, profile],
   );
 
-  return { mySubmission, sessions, loading: meLoading || loading };
+  return {
+  mySubmission,
+  sessions,
+  loading: meLoading || loading,
+  lineId: me?.line?.id ?? null,
+  department: me?.dept?.toUpperCase() ?? null,
+};
 }

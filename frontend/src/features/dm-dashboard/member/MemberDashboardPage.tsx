@@ -16,6 +16,8 @@ import { useMyProblems } from "./hooks/useMyProblems";
 import { useMemberToday } from "./hooks/useMemberToday";
 import { toMemberTimeline } from "./memberTimeline";
 import { useMember } from "./MemberProvider";
+import { ReminderModal } from "../shared/ReminderModal";
+import { MEMBER_ROUTES } from "./routes";
 
 /**
  * Member dashboard = the Leader's, narrowed to "my part":
@@ -23,7 +25,13 @@ import { useMember } from "./MemberProvider";
  */
 export default function MemberDashboardPage() {
   const { profile } = useMember();
-  const { mySubmission, sessions, loading } = useMemberToday();
+  const {
+  mySubmission,
+  sessions,
+  loading,
+  lineId,
+  department,
+} = useMemberToday();
   const mine = useMyInspection(profile.roleKey);
   const problems = useMyProblems(profile.name);
   const now = useNow(30_000);
@@ -37,6 +45,15 @@ export default function MemberDashboardPage() {
   return (
     <div className="dmm-page">
       <MemberPageHeader profile={profile} />
+      <ReminderModal
+  lineId={lineId}
+  department={department}
+  sessions={sessions}
+  papercardSubmitted={Boolean(mySubmission)}
+  papercardHref={MEMBER_ROUTES.papercard}
+  meetingHref={MEMBER_ROUTES.dashboard}
+  enabled={!loading && Boolean(lineId && department)}
+/>
 
       <div className="dmm-kpis">
         <PapercardTodayCard roleLabel={profile.roleLabel} submitted={Boolean(mySubmission)} loading={loading} />

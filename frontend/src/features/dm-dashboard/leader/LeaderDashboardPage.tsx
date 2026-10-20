@@ -15,6 +15,8 @@ import { useLeaderToday } from "./hooks/useLeaderToday";
 import { useNow } from "./hooks/useNow";
 import { LEADER_USER, OTHER_KPIS, TIME_SHARES } from "./mockData";
 import type { DateRangeKey } from "./types";
+import { ReminderModal } from "../shared/ReminderModal";
+import { LEADER_ROUTES } from "./routes";
 
 const KPI_ICON = {
   clipboard: <IconClipboardCheck size={20} />,
@@ -49,6 +51,15 @@ export default function LeaderDashboardPage() {
         workshopName={currentUser?.line?.workshopName || LEADER_USER.workshop}
         supervisorName={currentUser?.supervisor || LEADER_USER.supervisor.name}
       />
+      <ReminderModal
+  lineId={currentUser?.line?.id ?? null}
+  department={currentUser?.dept ?? "PROD"}
+  sessions={sessions}
+  papercardSubmitted={Boolean(leaderSubmission)}
+  papercardHref={LEADER_ROUTES.papercard}
+  meetingHref={LEADER_ROUTES.meeting}
+  enabled={!loading && Boolean(currentUser?.line?.id)}
+/>
 
       <div style={{ marginTop: "10px" }}>
         <div className="dml-page-head">
