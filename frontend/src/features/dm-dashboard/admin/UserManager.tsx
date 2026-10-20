@@ -90,12 +90,16 @@ export default function UserManager({ call }: UserManagerProps) {
 
   async function save(input: DmEmployeeInput) {
     const editing = form.user;
+    let saved: DmEmployee;
     if (editing) {
-      await call(() => adminApi.updateEmployee(editing.id, input));
+      saved = await call(() => adminApi.updateEmployee(editing.id, input));
       ok(`Data ${input.name} disimpan.`);
     } else {
-      await call(() => adminApi.createEmployee(input));
+      saved = await call(() => adminApi.createEmployee(input));
       ok(`${input.name} ditambahkan.`);
+    }
+    if (saved.faceMessage) {
+      setNotice({ type: "error", text: `${input.name} tersimpan, tetapi Face ID belum aktif: ${saved.faceMessage}` });
     }
     setForm({ open: false, user: null });
     await load();
@@ -244,6 +248,7 @@ export default function UserManager({ call }: UserManagerProps) {
                     <th>Departemen</th>
                     <th>Line</th>
                     <th>Supervisor</th>
+                    <th>Face ID</th>
                     <th>Login</th>
                     <th className="ut-col-action"><span className="ut-sr">Aksi</span></th>
                   </tr>
@@ -293,6 +298,15 @@ export default function UserManager({ call }: UserManagerProps) {
                         </td>
                         <td>{user.lineLabel ?? <span className="ut-muted">Belum ada lini</span>}</td>
                         <td>{user.supervisor ?? <span className="ut-muted">-</span>}</td>
+                        <td>
+                          {user.faceEnrolled ? (
+                            <span className="ut-badge is-leader">Aktif</span>
+                          ) : user.photoUrl ? (
+                            <span className="ut-badge is-warn">Belum aktif</span>
+                          ) : (
+                            <span className="ut-muted">Tanpa foto</span>
+                          )}
+                        </td>
                         <td>
                           {user.mustChangePassword ? (
                             <span className="ut-badge is-warn">Password awal</span>

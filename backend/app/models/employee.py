@@ -3,6 +3,8 @@ from datetime import datetime
 from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.models.face_template import FaceTemplate
+
 from app.db.base import Base
 
 
