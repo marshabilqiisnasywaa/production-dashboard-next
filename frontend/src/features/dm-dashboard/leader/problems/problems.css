@@ -1,0 +1,41 @@
+/* Tracking Masalah. Prefix: dml-pb. The table itself reuses .dml-table / .dml-table-wrap from leader.css. */
+
+.dml-pb {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.dml-pb > .dml-page-head {
+  margin-bottom: 8px;
+}
+.dml-pb .ui-card__header {
+  flex-wrap: wrap;
+}
+
+.dml-pb-table {
+  min-width: 980px;
+}
+/* the long text column may wrap (default table cells do not) */
+.dml-pb-table td.dml-pb-problem {
+  min-width: 260px;
+  max-width: 380px;
+  white-space: normal;
+  line-height: 1.4;
+}
+.dml-pb-sample {
+  font-size: 12px;
+  color: var(--dm-muted);
+}
+.dml-pb-overdue {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dm-red);
+}
+/* red edge on rows that were escalated */
+.dml-pb-table tr.is-escalated td:first-child {
+  box-shadow: inset 3px 0 0 var(--dm-red);
+}
+.dml-pb-table tr.is-escalated td {
+  background: #fffafa;
+}
