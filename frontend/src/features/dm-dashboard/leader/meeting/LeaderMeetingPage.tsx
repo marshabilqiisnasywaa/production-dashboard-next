@@ -168,6 +168,20 @@ export default function LeaderMeetingPage() {
       }
     : null;
 
+  useEffect(() => {
+    if (isSummaryModalOpen) return;
+    const summaries = activeSessionDb?.summaries ?? [];
+    setSummaryItems(
+      summaries.length > 0
+        ? summaries.map((summary) => ({
+            problem: summary.problem,
+            picName: summary.picName,
+            dueDate: summary.dueDate ?? "",
+          }))
+        : [{ problem: "", picName: teamMembers[0]?.name || "", dueDate: "" }]
+    );
+  }, [activeSessionDb?.id, activeSessionDb?.summaries, isSummaryModalOpen]);
+
   // Sync Timer with Active Session
   useEffect(() => {
     if (activeSessionDb?.status === "in_progress") {
@@ -306,15 +320,23 @@ export default function LeaderMeetingPage() {
   // SUBMIT SUMMARY MODAL
   const handleSaveSummary = async () => {
     if (!activeSessionMeta || !activeSessionDb) return;
+    const summaries = summaryItems
+      .map((item) => ({
+        problem: item.problem.trim(),
+        picName: item.picName.trim(),
+        dueDate: item.dueDate.trim(),
+      }))
+      .filter((item) => item.problem.length > 0);
+    if (summaries.length === 0) {
+      setNotice("Isi minimal satu masalah sebelum menyelesaikan sesi.");
+      setTimeout(() => setNotice(null), 3500);
+      return;
+    }
     setIsTimerRunning(false);
 
     try {
       const updatedSession = await meetingApi.endSession(activeSessionDb.id, {
-        summaries: summaryItems.map((si) => ({
-          problem: si.problem,
-          picName: si.picName,
-          dueDate: si.dueDate,
-        })),
+        summaries,
       });
 
       setDbSessions((prev) => {
@@ -335,14 +357,14 @@ export default function LeaderMeetingPage() {
                 ...s,
                 status: "completed",
                 durationSeconds: timerSeconds,
-                summaries: summaryItems.map((si, idx) => ({
+                summaries: summaries.map((item, idx) => ({
                   id: idx + 1,
                   sessionId: s.id,
                   lineId: s.lineId,
-                  problem: si.problem,
-                  picName: si.picName,
+                  problem: item.problem,
+                  picName: item.picName,
                   picId: null,
-                  dueDate: si.dueDate,
+                  dueDate: item.dueDate,
                   status: "open",
                   createdAt: new Date().toISOString(),
                 })),
@@ -736,6 +758,23 @@ export default function LeaderMeetingPage() {
                 >
                   Lihat / Edit Summary
                 </button>
+                <Link
+                  href={LEADER_ROUTES.fiveWhy}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    padding: "8px 14px",
+                    background: "#0f766e",
+                    border: "1px solid #0f766e",
+                    borderRadius: "10px",
+                    fontSize: "12.5px",
+                    color: "#ffffff",
+                    fontWeight: 700,
+                    textDecoration: "none",
+                  }}
+                >
+                  Buka 5Why &amp; PDCA
+                </Link>
               </div>
             ) : (
               <button
