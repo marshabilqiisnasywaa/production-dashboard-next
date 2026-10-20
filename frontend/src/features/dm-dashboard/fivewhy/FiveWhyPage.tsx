@@ -1,24 +1,38 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { IconCheck } from "@/components/ui/icons";
-import { accountApi, meetingApi, type DmMe } from "../api";
+import { useEffect, useRef, useState } from "react";
+import { ClipboardList, MoreHorizontal } from "lucide-react";
+import { IconCheck, IconClock } from "@/components/ui/icons";
+import { accountApi } from "../api";
+import type { DmMe } from "../api";
 import {
+  CURRENT_USER,
   FIVE_WHY_ANALYSIS_LABELS,
   FIVE_WHY_STORAGE_KEY,
-  PDCA_STAGE_BY_STATUS,
-  normalizeWhyTree,
+  analysisStatusTone,
+  createEmptySummary,
+  createEmptyWhyNodes,
+  createFiveWhyId,
+  findRootCause,
+  getTabStatus,
+  hasStandardSolution,
+  isMajorProblem,
+  nextFiveWhyNumber,
+  normalizeFiveWhyStore,
+  toDateTimeValue,
 } from "./fiveWhyData";
-import type { FiveWhyRecord, FiveWhyStore } from "./fiveWhyData";
-import {
-  mergeMeetingRecords,
-  recordsFromSessions,
-} from "./fiveWhyMeeting";
+import type {
+  FiveWhyAnalysisStatus,
+  FiveWhyRecord,
+  FiveWhyStore,
+  FiveWhyTabKey,
+  TabStatus,
+  WhyNode,
+} from "./fiveWhyData";
 import ProblemSummary from "./ProblemSummary";
 import WhyTree from "./WhyTree";
 import ActionPlan from "./ActionPlan";
+import HistoryDrawer from "./HistoryDrawer";
 import "./FiveWhy.css";
-
-type FiveWhyTabKey = 1 | 2 | 3;
 
 const TABS: readonly { key: FiveWhyTabKey; label: string }[] = [
   { key: 1, label: "Ringkasan Masalah" },
@@ -26,88 +40,46 @@ const TABS: readonly { key: FiveWhyTabKey; label: string }[] = [
   { key: 3, label: "Solusi & PDCA" },
 ];
 
-function isFiveWhyRecord(value: unknown): value is FiveWhyRecord {
-  if (typeof value !== "object" || value === null) return false;
-  const candidate = value as Partial<FiveWhyRecord>;
-  const abnormal = candidate.abnormal;
-  if (typeof abnormal !== "object" || abnormal === null) return false;
-  const abnormalCandidate = abnormal as { id?: unknown };
-  return (
-    typeof abnormalCandidate.id === "string" &&
-    Array.isArray(candidate.whys) &&
-    Array.isArray(candidate.actions)
-  );
-}
-
-function parseStore(value: unknown): FiveWhyStore | null {
-  if (typeof value !== "object" || value === null) return null;
-  const candidate = value as {
-    selectedAbnormalId?: unknown;
-    records?: unknown;
-  };
-  if (
-    typeof candidate.selectedAbnormalId !== "string" ||
-    !Array.isArray(candidate.records)
-  ) {
-    return null;
-  }
-  const records = candidate.records.filter(isFiveWhyRecord).map((record) => ({
-    abnormal: record.abnormal,
-    analysisStatus: record.analysisStatus,
-    whys: normalizeWhyTree(record.whys),
-    actions: record.actions,
-    updatedAt: record.updatedAt,
-  }));
-  if (records.length === 0) return null;
-  return {
-    selectedAbnormalId: candidate.selectedAbnormalId,
-    records,
-  };
-}
-
 function readSavedStore(): FiveWhyStore | null {
   try {
     const raw = window.localStorage.getItem(FIVE_WHY_STORAGE_KEY);
     if (!raw) return null;
-    return parseStore(JSON.parse(raw));
+    return normalizeFiveWhyStore(JSON.parse(raw));
   } catch {
     return null;
   }
 }
 
-function isSummaryComplete(record: FiveWhyRecord) {
-  return Object.values(record.abnormal.summary).every(
-    (value) => value.trim().length > 0
-  );
+function byNewest(a: FiveWhyRecord, b: FiveWhyRecord) {
+  const byCreated = b.createdAt.localeCompare(a.createdAt);
+  return byCreated !== 0 ? byCreated : b.nomor.localeCompare(a.nomor);
 }
 
-function isWhyComplete(record: FiveWhyRecord) {
-  return (
-    record.whys.length === 5 &&
-    record.whys.every((why) => why.statement.trim().length > 0) &&
-    record.whys.filter((why) => why.verification === "root").length === 1
-  );
+function stepClass(status: TabStatus) {
+  if (status === "selesai") return "is-done";
+  if (status === "sebagian") return "is-partial";
+  return "";
 }
 
-function isPdcaComplete(record: FiveWhyRecord) {
-  return (
-    record.actions.length > 0 &&
-    record.actions.every(
-      (action) =>
-        action.pic.trim().length > 0 && action.department.trim().length > 0
-    ) &&
-    record.actions.some(
-      (action) => PDCA_STAGE_BY_STATUS[action.status] === "Act"
-    )
-  );
+function initialsFor(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
-function analysisChipClass(status: FiveWhyRecord["analysisStatus"]) {
-  if (status === "waiting_approval") return "is-warning";
-  if (status === "done") return "is-success";
-  if (status === "in_analysis") return "is-success";
-  return "is-neutral";
+function roleLabelFor(user: DmMe | null) {
+  if (!user) return CURRENT_USER.role;
+  if (user.role === "leader") return "Leader Line";
+  if (user.role === "supervisor") return "Supervisor";
+  if (user.dept) return `Anggota ${user.dept}`;
+  return "Anggota Tim";
 }
+
+type WhyFocus = {
+  id: string | null;
+  token: number;
+};
 
 export default function FiveWhyPage() {
   const [store, setStore] = useState<FiveWhyStore>({
@@ -115,79 +87,46 @@ export default function FiveWhyPage() {
     records: [],
   });
   const [selectedAbnormalId, setSelectedAbnormalId] = useState("");
-  const [activeTab, setActiveTab] = useState<FiveWhyTabKey>(2);
-  const [currentUser, setCurrentUser] = useState<DmMe | null>(null);
+  const [activeTab, setActiveTab] = useState<FiveWhyTabKey>(1);
+  const [hydrated, setHydrated] = useState(false);
+  const [user, setUser] = useState<DmMe | null>(null);
+  const [lineCode, setLineCode] = useState("");
   const [toast, setToast] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [reloadToken, setReloadToken] = useState(0);
-  const dirtyRef = useRef(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [focusTitleToken, setFocusTitleToken] = useState(0);
+  const [whyFocus, setWhyFocus] = useState<WhyFocus>({ id: null, token: 0 });
   const hydratedRef = useRef(false);
+  const dirtyRef = useRef(false);
   const storageErrorRef = useRef(false);
-  const sourcesRef = useRef<FiveWhyRecord[]>([]);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const historyButtonRef = useRef<HTMLButtonElement | null>(null);
+  const lastTabRef = useRef<Map<string, FiveWhyTabKey>>(new Map());
 
-  const loadMeetingData = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
+  const displayName =
+    user?.name?.trim() || user?.username?.trim() || CURRENT_USER.name;
+  const initials = initialsFor(displayName);
+  const roleLabel = roleLabelFor(user);
+  const canEdit = user?.role === "leader" || user?.role === "member";
+
+  useEffect(() => {
     const saved = readSavedStore();
-    try {
-      const me = await accountApi.me();
-      setCurrentUser(me);
-      const today = new Date().toISOString().slice(0, 10);
-      const sessions = me.line
-        ? await meetingApi.listSessions(me.line.id, today)
-        : [];
-      const sources = recordsFromSessions(sessions, me);
-      sourcesRef.current = sources;
-      const merged = mergeMeetingRecords(saved, sources);
-      dirtyRef.current = false;
-      setStore(merged);
-      setSelectedAbnormalId(merged.selectedAbnormalId);
-      hydratedRef.current = true;
-    } catch (error) {
-      const fallback = saved ?? {
-        selectedAbnormalId: "",
-        records: [],
-      };
-      sourcesRef.current = [];
-      setStore(fallback);
-      setSelectedAbnormalId(fallback.selectedAbnormalId);
-      setLoadError(
-        error instanceof Error
-          ? error.message
-          : "Data meeting tidak bisa dimuat."
-      );
-      hydratedRef.current = true;
-    } finally {
-      setLoading(false);
+    if (saved) {
+      setStore(saved);
+      setSelectedAbnormalId(saved.selectedAbnormalId);
     }
+    hydratedRef.current = true;
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
-    void loadMeetingData();
-  }, [loadMeetingData, reloadToken]);
-
-  useEffect(() => {
-    function loadSaved() {
-      if (dirtyRef.current) return;
-      const next = readSavedStore();
-      if (!next) return;
-      const merged = mergeMeetingRecords(next, sourcesRef.current);
-      if (merged.records.length === 0) return;
-      setStore(merged);
-      setSelectedAbnormalId((current) =>
-        merged.records.some((record) => record.abnormal.id === current)
-          ? current
-          : merged.selectedAbnormalId
-      );
-    }
-
-    window.addEventListener("focus", loadSaved);
-    window.addEventListener("storage", loadSaved);
-    return () => {
-      window.removeEventListener("focus", loadSaved);
-      window.removeEventListener("storage", loadSaved);
-    };
+    accountApi
+      .me()
+      .then((me) => {
+        setUser(me);
+        setLineCode(me.line?.code ?? "");
+      })
+      .catch(() => setLineCode(""));
   }, []);
 
   useEffect(() => {
@@ -217,45 +156,49 @@ export default function FiveWhyPage() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handlePointer(event: MouseEvent) {
+      if (menuRef.current?.contains(event.target as Node)) return;
+      setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", handlePointer);
+    return () => document.removeEventListener("mousedown", handlePointer);
+  }, [menuOpen]);
+
+  const analysisOptions = [...store.records].sort(byNewest);
   const record =
-    store.records.find((item) => item.abnormal.id === selectedAbnormalId) ??
+    analysisOptions.find((item) => item.abnormal.id === selectedAbnormalId) ??
+    analysisOptions[0] ??
     null;
-  const canEdit =
-    currentUser?.kind === "admin" || currentUser?.role === "leader";
-  const stepDone: Record<FiveWhyTabKey, boolean> = {
-    1: record ? isSummaryComplete(record) : false,
-    2: record ? isWhyComplete(record) : false,
-    3: record ? isPdcaComplete(record) : false,
-  };
-  const hasAct = record
-    ? record.actions.some(
-        (action) => PDCA_STAGE_BY_STATUS[action.status] === "Act"
-      )
-    : false;
-  const abnormalOptions = store.records.map((item) => ({
-    id: item.abnormal.id,
-    label: item.abnormal.label,
-  }));
+  const recordId = record?.abnormal.id ?? "";
+  const rootCause = findRootCause(record);
+  const canSubmitChecklist = hasStandardSolution(record);
+  const majorProblem = isMajorProblem(record);
+
   function notify(message: string) {
     setToast(message);
   }
 
   function updateRecord(patch: Partial<FiveWhyRecord>) {
+    if (!recordId) return;
     dirtyRef.current = true;
     setStore((current) => ({
       ...current,
       records: current.records.map((item) =>
-        item.abnormal.id === selectedAbnormalId ? { ...item, ...patch } : item
+        item.abnormal.id === recordId
+          ? { ...item, ...patch, updatedAt: new Date().toISOString() }
+          : item
       ),
     }));
   }
 
   function persist(message: string) {
-    if (!canEdit || !record) return;
+    if (!canEdit || !recordId) return;
     const next: FiveWhyStore = {
-      selectedAbnormalId,
+      selectedAbnormalId: recordId,
       records: store.records.map((item) =>
-        item.abnormal.id === selectedAbnormalId
+        item.abnormal.id === recordId
           ? { ...item, updatedAt: new Date().toISOString() }
           : item
       ),
@@ -271,85 +214,319 @@ export default function FiveWhyPage() {
     }
   }
 
-  function handleAbnormalChange(id: string) {
-    dirtyRef.current = true;
+  function handleAnalysisChange(id: string) {
     setSelectedAbnormalId(id);
     setStore((current) => ({ ...current, selectedAbnormalId: id }));
-    setActiveTab(2);
+    setMenuOpen(false);
+  }
+
+  function handleHistorySelect(target: FiveWhyRecord) {
+    const targetId = target.abnormal.id;
+    setSelectedAbnormalId(targetId);
+    setStore((current) => ({ ...current, selectedAbnormalId: targetId }));
+    setActiveTab(lastTabRef.current.get(targetId) ?? 1);
+    setHistoryOpen(false);
+  }
+
+  function openTab(tab: FiveWhyTabKey) {
+    setActiveTab(tab);
+    if (recordId) lastTabRef.current.set(recordId, tab);
+  }
+
+  function createAnalysis() {
+    if (!canEdit) return;
+    const now = new Date();
+    const id = createFiveWhyId("analysis");
+    const next: FiveWhyRecord = {
+      nomor: nextFiveWhyNumber(
+        store.records.map((item) => item.nomor),
+        now
+      ),
+      abnormal: {
+        id,
+        label: "",
+        line: lineCode,
+        pengusul: displayName,
+        jenis: "",
+        sumberAbnormal: [],
+        sumberLainnya: "",
+        tingkatPengaruh: [],
+        pengaruhLainnya: "",
+        summary: {
+          ...createEmptySummary(),
+          when: toDateTimeValue(now),
+          where: lineCode,
+        },
+      },
+      analysisStatus: "draft",
+      whys: createEmptyWhyNodes(id),
+      solutions: [],
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+    dirtyRef.current = true;
+    lastTabRef.current.set(id, 1);
+    setStore((current) => ({
+      selectedAbnormalId: id,
+      records: [next, ...current.records],
+    }));
+    setSelectedAbnormalId(id);
+    setMenuOpen(false);
+    setActiveTab(1);
+    setFocusTitleToken((token) => token + 1);
+    notify("Analisis baru dibuat.");
+  }
+
+  function duplicateRecord(source: FiveWhyRecord) {
+    if (!canEdit) return;
+    const now = new Date();
+    const id = createFiveWhyId("analysis");
+    const copy = JSON.parse(JSON.stringify(source)) as FiveWhyRecord;
+    const duplicate: FiveWhyRecord = {
+      ...copy,
+      nomor: nextFiveWhyNumber(
+        store.records.map((item) => item.nomor),
+        now
+      ),
+      abnormal: { ...copy.abnormal, id },
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+    dirtyRef.current = true;
+    lastTabRef.current.set(id, activeTab);
+    setStore((current) => ({
+      selectedAbnormalId: id,
+      records: [duplicate, ...current.records],
+    }));
+    setSelectedAbnormalId(id);
+    notify("Analisis diduplikat.");
+  }
+
+  function duplicateAnalysis() {
+    if (record) duplicateRecord(record);
+    setMenuOpen(false);
+  }
+
+  function handleHistoryDuplicate(target: FiveWhyRecord) {
+    duplicateRecord(target);
+    setHistoryOpen(false);
+  }
+
+  function deleteRecord(source: FiveWhyRecord) {
+    if (!canEdit) return;
+    if (
+      !window.confirm(
+        `Hapus analisis ${source.nomor}? Analisis akan dihapus permanen.`
+      )
+    ) {
+      return;
+    }
+    const remaining = store.records
+      .filter((item) => item.abnormal.id !== source.abnormal.id)
+      .sort(byNewest);
+    const nextId = remaining.some(
+      (item) => item.abnormal.id === selectedAbnormalId
+    )
+      ? selectedAbnormalId
+      : remaining[0]?.abnormal.id ?? "";
+    dirtyRef.current = true;
+    lastTabRef.current.delete(source.abnormal.id);
+    setStore({ selectedAbnormalId: nextId, records: remaining });
+    setSelectedAbnormalId(nextId);
+    notify("Analisis dihapus.");
+  }
+
+  function deleteAnalysis() {
+    if (record) deleteRecord(record);
+    setMenuOpen(false);
+  }
+
+  function showRootCause(node: WhyNode) {
+    openTab(2);
+    setWhyFocus((current) => ({ id: node.id, token: current.token + 1 }));
   }
 
   return (
     <div className="dm-5w-root">
       <div className="dm-5w-page">
-            <header className="dm-5w-page-head">
-              <div>
-                <h1 className="dm-5w-page-title">5Why + PDCA</h1>
-                <p className="dm-5w-page-sub">
-                  Analisis akar masalah dari summary End Meeting dan rencana
-                  tindak lanjutnya.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="dm-5w-btn dm-5w-btn-secondary"
-                disabled={!canEdit || !hasAct}
-                title={
-                  hasAct
-                    ? "Ajukan perubahan checklist"
-                    : "Aktif setelah ada baris aksi bertahap Act"
-                }
-                onClick={() =>
-                  notify("Pengajuan perubahan checklist dikirim.")
-                }
-              >
-                Ajukan perubahan checklist
-              </button>
-            </header>
+        <header className="dm-5w-page-head">
+          <div>
+            <h1 className="dm-5w-page-title">5Why + PDCA</h1>
+            <p className="dm-5w-page-sub">
+              Analisis akar masalah dan rencana tindak lanjutnya.
+            </p>
+          </div>
+          <div className="dm-5w-page-head-actions">
+            <div className="dm-5w-role">
+              <span className="dm-5w-avatar">{initials}</span>
+              <span className="dm-5w-user-name">{displayName}</span>
+              <span className="dm-5w-role-chip">{roleLabel}</span>
+            </div>
+            <button
+              type="button"
+              ref={historyButtonRef}
+              className="dm-5w-btn dm-5w-btn-secondary"
+              aria-haspopup="dialog"
+              aria-expanded={historyOpen}
+              aria-controls="dm-5w-history-drawer"
+              onClick={() => setHistoryOpen(true)}
+            >
+              <IconClock size={14} />
+              Riwayat
+            </button>
+            <button
+              type="button"
+              className="dm-5w-btn dm-5w-btn-secondary"
+              disabled={!canEdit || !canSubmitChecklist}
+              title={
+                canSubmitChecklist
+                  ? "Ajukan perubahan checklist"
+                  : "Aktif setelah minimal satu solusi berstatus Selesai & standar"
+              }
+              onClick={() => notify("Pengajuan perubahan checklist dikirim.")}
+            >
+              Ajukan perubahan checklist
+            </button>
+          </div>
+        </header>
 
+        {!hydrated ? (
+          <div className="dm-5w-empty dm-5w-card">Memuat analisis...</div>
+        ) : store.records.length === 0 ? (
+          <div className="dm-5w-empty dm-5w-card">
+            <span className="dm-5w-empty-icon" aria-hidden="true">
+              <ClipboardList size={24} />
+            </span>
+            <p className="dm-5w-empty-title">Belum ada analisis</p>
+            <button
+              type="button"
+              className="dm-5w-btn dm-5w-btn-primary"
+              onClick={createAnalysis}
+              disabled={!canEdit}
+            >
+              + Analisis baru
+            </button>
+          </div>
+        ) : (
+          <>
             <section
               className="dm-5w-picker dm-5w-card"
               aria-labelledby="dm-5w-picker-title"
             >
-              <div className="dm-5w-field dm-5w-picker-field">
-                <label
-                  className="dm-5w-label"
-                  htmlFor="dm-5w-abnormal-select"
-                  id="dm-5w-picker-title"
+              <div className="dm-5w-picker-head">
+                <h2 className="dm-5w-card-title" id="dm-5w-picker-title">
+                  Analisis 5Why
+                </h2>
+                {record ? (
+                  <div className="dm-5w-menu" ref={menuRef}>
+                    <button
+                      type="button"
+                      className="dm-5w-menu-trigger"
+                      aria-label="Aksi analisis"
+                      aria-haspopup="menu"
+                      aria-expanded={menuOpen}
+                      disabled={!canEdit}
+                      onClick={() => setMenuOpen((open) => !open)}
+                    >
+                      <MoreHorizontal size={16} />
+                    </button>
+                    {menuOpen ? (
+                      <div className="dm-5w-menu-panel" role="menu">
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className="dm-5w-menu-item"
+                          onClick={duplicateAnalysis}
+                        >
+                          Duplikat analisis
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className="dm-5w-menu-item is-danger"
+                          onClick={deleteAnalysis}
+                        >
+                          Hapus analisis
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="dm-5w-picker-row">
+                <div className="dm-5w-field dm-5w-picker-field">
+                  <label
+                    className="dm-5w-label"
+                    htmlFor="dm-5w-analysis-select"
+                  >
+                    Pilih analisis
+                  </label>
+                  <select
+                    id="dm-5w-analysis-select"
+                    className="dm-5w-select"
+                    value={recordId}
+                    disabled={!hydrated}
+                    onChange={(event) =>
+                      handleAnalysisChange(event.target.value)
+                    }
+                  >
+                    {analysisOptions.map((option) => (
+                      <option key={option.abnormal.id} value={option.abnormal.id}>
+                        {`${option.nomor} — ${
+                          option.abnormal.label.trim() || "Tanpa judul"
+                        }`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  className="dm-5w-btn dm-5w-btn-primary"
+                  onClick={createAnalysis}
+                  disabled={!canEdit}
                 >
-                  Pilih abnormal dari End Meeting hari ini
-                </label>
-                <select
-                  id="dm-5w-abnormal-select"
-                  className="dm-5w-select"
-                  value={selectedAbnormalId}
-                  disabled={loading}
-                  onChange={(event) => handleAbnormalChange(event.target.value)}
-                >
-                  <option value="">Pilih abnormal</option>
-                  {abnormalOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  + Analisis baru
+                </button>
               </div>
 
               {record ? (
                 <div className="dm-5w-picker-meta">
-                  <span className="dm-5w-chip is-danger">Kendala meeting</span>
-                  <span className="dm-5w-hint">
-                    Diambil dari summary End Meeting hari ini
-                  </span>
-                  <span className="dm-5w-chip is-neutral">
-                    {record.abnormal.sumber || "Summary meeting"}
-                  </span>
-                  <span
-                    className={`dm-5w-chip ${analysisChipClass(
+                  <span className="dm-5w-chip is-neutral">{record.nomor}</span>
+                  <select
+                    className={`dm-5w-chip dm-5w-chip-select ${analysisStatusTone(
                       record.analysisStatus
                     )}`}
+                    value={record.analysisStatus}
+                    onChange={(event) =>
+                      updateRecord({
+                        analysisStatus: event.target
+                          .value as FiveWhyAnalysisStatus,
+                      })
+                    }
+                    disabled={!canEdit}
+                    aria-label="Status analisis"
                   >
-                    {FIVE_WHY_ANALYSIS_LABELS[record.analysisStatus]}
-                  </span>
+                    {(
+                      Object.keys(
+                        FIVE_WHY_ANALYSIS_LABELS
+                      ) as FiveWhyAnalysisStatus[]
+                    ).map((status) => (
+                      <option key={status} value={status}>
+                        {FIVE_WHY_ANALYSIS_LABELS[status]}
+                      </option>
+                    ))}
+                  </select>
+                  {majorProblem ? (
+                    <span className="dm-5w-major">
+                      <span className="dm-5w-chip is-danger">
+                        Major problem
+                      </span>
+                      <span className="dm-5w-major-note">
+                        Terpicu oleh downtime ≥ 30 menit
+                      </span>
+                    </span>
+                  ) : null}
                 </div>
               ) : null}
             </section>
@@ -361,34 +538,37 @@ export default function FiveWhyPage() {
                   role="tablist"
                   aria-label="Langkah analisis 5Why dan PDCA"
                 >
-                  {TABS.map((tab) => (
-                    <button
-                      key={tab.key}
-                      type="button"
-                      role="tab"
-                      id={`dm-5w-tab-${tab.key}`}
-                      aria-selected={activeTab === tab.key}
-                      aria-controls="dm-5w-panel"
-                      className={`dm-5w-step ${
-                        activeTab === tab.key ? "is-active" : ""
-                      }`}
-                      onClick={() => setActiveTab(tab.key)}
-                    >
-                      <span
-                        className={`dm-5w-step-circle ${
-                          stepDone[tab.key] ? "is-done" : ""
+                  {TABS.map((tab) => {
+                    const status = getTabStatus(record, tab.key);
+                    return (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        role="tab"
+                        id={`dm-5w-tab-${tab.key}`}
+                        aria-selected={activeTab === tab.key}
+                        aria-controls="dm-5w-panel"
+                        className={`dm-5w-step ${
+                          activeTab === tab.key ? "is-active" : ""
                         }`}
-                        aria-hidden="true"
+                        onClick={() => openTab(tab.key)}
                       >
-                        {stepDone[tab.key] ? (
-                          <IconCheck size={12} />
-                        ) : (
-                          tab.key
-                        )}
-                      </span>
-                      <span className="dm-5w-step-label">{tab.label}</span>
-                    </button>
-                  ))}
+                        <span
+                          className={`dm-5w-step-circle ${stepClass(status)}`}
+                          aria-hidden="true"
+                        >
+                          {status === "selesai" ? (
+                            <IconCheck size={12} />
+                          ) : status === "sebagian" ? (
+                            <span className="dm-5w-step-dot" />
+                          ) : (
+                            tab.key
+                          )}
+                        </span>
+                        <span className="dm-5w-step-label">{tab.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <section
@@ -401,6 +581,7 @@ export default function FiveWhyPage() {
                     <ProblemSummary
                       abnormal={record.abnormal}
                       canEdit={canEdit}
+                      focusTitleToken={focusTitleToken}
                       onChange={(abnormal) => updateRecord({ abnormal })}
                     />
                   ) : null}
@@ -409,6 +590,8 @@ export default function FiveWhyPage() {
                       whys={record.whys}
                       problemLabel={record.abnormal.label}
                       canEdit={canEdit}
+                      focusWhyId={whyFocus.id}
+                      focusToken={whyFocus.token}
                       onChange={(whys) => updateRecord({ whys })}
                       onSave={() => persist("Analisis 5Why disimpan.")}
                       onNotify={notify}
@@ -416,41 +599,39 @@ export default function FiveWhyPage() {
                   ) : null}
                   {activeTab === 3 ? (
                     <ActionPlan
-                      actions={record.actions}
+                      solutions={record.solutions}
+                      rootCause={rootCause}
                       canEdit={canEdit}
-                      onChange={(actions) => updateRecord({ actions })}
+                      onChange={(solutions) => updateRecord({ solutions })}
                       onSave={() => persist("PDCA dan solusi disimpan.")}
                       onNotify={notify}
+                      onGoToWhy={() => openTab(2)}
+                      onShowRootCause={() => {
+                        if (rootCause) showRootCause(rootCause);
+                      }}
                     />
                   ) : null}
                 </section>
               </>
-            ) : loading ? (
-              <div className="dm-5w-empty dm-5w-card">
-                Memuat summary End Meeting...
-              </div>
-            ) : loadError ? (
-              <div className="dm-5w-empty dm-5w-card">
-                <p>{loadError}</p>
-                <button
-                  type="button"
-                  className="dm-5w-btn dm-5w-btn-secondary"
-                  onClick={() => setReloadToken((value) => value + 1)}
-                >
-                  Muat ulang
-                </button>
-              </div>
-            ) : store.records.length === 0 ? (
-              <div className="dm-5w-empty dm-5w-card">
-                Belum ada summary End Meeting hari ini. Selesaikan DM Meeting
-                dan isi summary untuk mulai analisis.
-              </div>
             ) : (
               <div className="dm-5w-empty dm-5w-card">
-                Pilih abnormal untuk mulai analisis
+                Pilih analisis untuk mulai.
               </div>
             )}
+          </>
+        )}
       </div>
+
+      <HistoryDrawer
+        open={historyOpen}
+        records={store.records}
+        activeId={recordId}
+        triggerRef={historyButtonRef}
+        onClose={() => setHistoryOpen(false)}
+        onSelect={handleHistorySelect}
+        onDuplicate={handleHistoryDuplicate}
+        onDelete={deleteRecord}
+      />
 
       {toast ? (
         <div className="dm-5w-toast" role="status" aria-live="polite">

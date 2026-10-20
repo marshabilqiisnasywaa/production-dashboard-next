@@ -1,33 +1,47 @@
 "use client";
 
-import { IconClipboardCheck, IconDashboard, IconGauge, IconLogout, IconUsers } from "@/components/ui/icons";
+import { IconClipboardCheck, IconDashboard, IconGauge, IconLogout, IconPulse } from "@/components/ui/icons";
 import { Sidebar, type SidebarSection } from "@/components/ui/Sidebar";
 import { setToken } from "../../api";
 
-const SECTIONS: SidebarSection[] = [
-  {
-    items: [
-      {
-        label: "Dashboard",
-        href: "/dm-dashboard/member",
-        icon: <IconDashboard />,
-        exact: true,
-      },
-    ],
-  },
-  {
-    title: "Pre Management",
-    items: [
-      {
-        label: "Papercard",
-        href: "/dm-dashboard/member/papercard",
-        icon: <IconClipboardCheck />,
-      },
-    ],
-  },
-];
+type MemberSidebarProps = {
+  basePath?: string;
+};
 
-export function MemberSidebar() {
+export function MemberSidebar({ basePath = "/dm-dashboard/member" }: MemberSidebarProps) {
+  const sections: SidebarSection[] = [
+    {
+      items: [
+        {
+          label: "Dashboard",
+          href: basePath,
+          icon: <IconDashboard />,
+          exact: true,
+        },
+      ],
+    },
+    {
+      title: "Pre Management",
+      items: [
+        {
+          label: "Papercard",
+          href: `${basePath}/papercard`,
+          icon: <IconClipboardCheck />,
+        },
+      ],
+    },
+    {
+      title: "Post Management",
+      items: [
+        {
+          label: "5Why & PDCA",
+          href: `${basePath}/5why`,
+          icon: <IconPulse />,
+        },
+      ],
+    },
+  ];
+
   const handleLogout = () => {
     setToken(null);
     window.location.href = "/dm-dashboard/masuk";
@@ -72,7 +86,7 @@ export function MemberSidebar() {
         </span>
       </div>
     }
-      sections={SECTIONS}
+      sections={sections}
       footer={
         <button
           type="button"

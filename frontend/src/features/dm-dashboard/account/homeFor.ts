@@ -23,8 +23,12 @@ export function homeFor(user: Partial<DmMe | DmLoginResult> | null | undefined):
     return "/dm-dashboard/supervisor";
   }
 
-  // 3. Member -> Member Portal
+  // 3. Member -> Member Portal per department
   if (role === "member") {
+    const dept = (user.dept || "").trim().toUpperCase();
+    if (dept === "ME") return "/dm-dashboard/me";
+    if (dept === "PE") return "/dm-dashboard/pe";
+    if (dept === "QC") return "/dm-dashboard/qc";
     return "/dm-dashboard/member";
   }
 

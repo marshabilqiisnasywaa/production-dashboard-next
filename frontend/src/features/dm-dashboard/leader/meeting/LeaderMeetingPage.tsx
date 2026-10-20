@@ -168,20 +168,6 @@ export default function LeaderMeetingPage() {
       }
     : null;
 
-  useEffect(() => {
-    if (isSummaryModalOpen) return;
-    const summaries = activeSessionDb?.summaries ?? [];
-    setSummaryItems(
-      summaries.length > 0
-        ? summaries.map((summary) => ({
-            problem: summary.problem,
-            picName: summary.picName,
-            dueDate: summary.dueDate ?? "",
-          }))
-        : [{ problem: "", picName: teamMembers[0]?.name || "", dueDate: "" }]
-    );
-  }, [activeSessionDb?.id, activeSessionDb?.summaries, isSummaryModalOpen]);
-
   // Sync Timer with Active Session
   useEffect(() => {
     if (activeSessionDb?.status === "in_progress") {

@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { IconCheck, IconClose } from "@/components/ui/icons";
 import {
   BRANCH_VERIFICATION_LABELS,
@@ -20,6 +21,8 @@ type WhyTreeProps = {
   whys: WhyNode[];
   problemLabel: string;
   canEdit: boolean;
+  focusWhyId?: string | null;
+  focusToken?: number;
   onChange: (next: WhyNode[]) => void;
   onSave: () => void;
   onNotify: (message: string) => void;
@@ -28,6 +31,13 @@ type WhyTreeProps = {
 type EvidenceOwner = {
   nodeId: string;
   branchId?: string;
+};
+
+type VerificationMenuProps = {
+  value: WhyVerification;
+  canEdit: boolean;
+  ariaLabel: string;
+  onChange: (next: WhyVerification) => void;
 };
 
 const MAIN_VERIFICATION_ORDER: readonly WhyVerification[] = [
@@ -65,17 +75,103 @@ function photoCountLabel(count: number) {
   return `${count} foto`;
 }
 
+function VerificationMenu({
+  value,
+  canEdit,
+  ariaLabel,
+  onChange,
+}: VerificationMenuProps) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handlePointer(event: MouseEvent) {
+      if (containerRef.current?.contains(event.target as Node)) return;
+      setOpen(false);
+    }
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", handlePointer);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handlePointer);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="dm-5w-verify" ref={containerRef}>
+      <button
+        type="button"
+        className="dm-5w-verify-btn"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={ariaLabel}
+        disabled={!canEdit}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span
+          className={`dm-5w-verify-dot is-${value}`}
+          aria-hidden="true"
+        />
+        <span>{WHY_VERIFICATION_LABELS[value]}</span>
+        <ChevronDown size={12} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="dm-5w-verify-menu" role="menu" aria-label={ariaLabel}>
+          {MAIN_VERIFICATION_ORDER.map((status) => (
+            <button
+              key={status}
+              type="button"
+              role="menuitemradio"
+              aria-checked={status === value}
+              className={`dm-5w-verify-item ${
+                status === value ? "is-active" : ""
+              }`}
+              onClick={() => {
+                onChange(status);
+                setOpen(false);
+              }}
+            >
+              <span
+                className={`dm-5w-verify-dot is-${status}`}
+                aria-hidden="true"
+              />
+              <span>{WHY_VERIFICATION_LABELS[status]}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function WhyTree({
   whys,
   problemLabel,
   canEdit,
+  focusWhyId = null,
+  focusToken = 0,
   onChange,
   onSave,
   onNotify,
 }: WhyTreeProps) {
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const [customLabelFor, setCustomLabelFor] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!focusWhyId) return;
+    setActiveNodeId(focusWhyId);
+    setHighlightId(focusWhyId);
+    const target = document.getElementById(`dm-5w-node-${focusWhyId}`);
+    target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const timer = window.setTimeout(() => setHighlightId(null), 2400);
+    return () => window.clearTimeout(timer);
+  }, [focusWhyId, focusToken]);
 
   function updateNode(id: string, patch: Partial<WhyNode>) {
     onChange(whys.map((node) => (node.id === id ? { ...node, ...patch } : node)));
@@ -307,12 +403,6 @@ export default function WhyTree({
   }
 
   const ordered = [...whys].sort((a, b) => a.level - b.level);
-  const statements = ordered
-    .filter((why) => why.statement.trim())
-    .map((why) => why.statement.trim());
-  const chainText = statements.length
-    ? `Karena ${statements.join(", maka ")}.`
-    : "Rantai sebab akan muncul setelah Why diisi.";
   const filled = whys.filter((why) => why.statement.trim()).length;
   const rootCount = whys.filter((why) => why.verification === "root").length;
   const rejectedCount = whys.reduce(
@@ -322,6 +412,18 @@ export default function WhyTree({
         .length,
     0
   );
+  const deepestFilled = [...ordered]
+    .reverse()
+    .find((why) => why.statement.trim());
+  const chainRows = deepestFilled
+    ? ordered
+        .filter((why) => why.level <= deepestFilled.level)
+        .sort((a, b) => b.level - a.level)
+        .map((why) => ({
+          level: why.level,
+          text: why.statement.trim(),
+        }))
+    : [];
 
   function questionFor(node: WhyNode) {
     if (node.level === 1) {
@@ -470,9 +572,10 @@ export default function WhyTree({
               ) : null}
               <div className="dm-5w-why-node-wrap">
                 <article
+                  id={`dm-5w-node-${node.id}`}
                   className={`dm-5w-why-node ${
                     activeNodeId === node.id ? "is-active" : ""
-                  }`}
+                  } ${highlightId === node.id ? "is-highlight" : ""}`}
                   onFocus={() => setActiveNodeId(node.id)}
                   onClick={() => setActiveNodeId(node.id)}
                 >
@@ -492,24 +595,12 @@ export default function WhyTree({
                         </span>
                       ) : null}
                     </div>
-                    <select
-                      className="dm-5w-select dm-5w-verify-select"
+                    <VerificationMenu
                       value={node.verification}
-                      onChange={(event) =>
-                        setNodeVerification(
-                          node.id,
-                          event.target.value as WhyVerification
-                        )
-                      }
-                      disabled={!canEdit}
-                      aria-label={`Status verifikasi Why ${node.level}`}
-                    >
-                      {MAIN_VERIFICATION_ORDER.map((status) => (
-                        <option key={status} value={status}>
-                          {WHY_VERIFICATION_LABELS[status]}
-                        </option>
-                      ))}
-                    </select>
+                      canEdit={canEdit}
+                      ariaLabel={`Status verifikasi Why ${node.level}`}
+                      onChange={(next) => setNodeVerification(node.id, next)}
+                    />
                   </header>
 
                   <label className="dm-5w-field dm-5w-why-question">
@@ -767,7 +858,45 @@ export default function WhyTree({
       <aside className="dm-5w-why-rail" aria-label="Ringkasan rantai sebab">
         <div className="dm-5w-card dm-5w-why-summary">
           <h2 className="dm-5w-card-title">Ringkasan rantai sebab</h2>
-          <p className="dm-5w-chain-text">{chainText}</p>
+          {chainRows.length > 0 ? (
+            <div className="dm-5w-chain-list">
+              {chainRows.map((row, index) => (
+                <div className="dm-5w-chain-row" key={`chain-${row.level}`}>
+                  {index > 0 ? (
+                    <span className="dm-5w-chain-arrow" aria-hidden="true">
+                      ↑
+                    </span>
+                  ) : null}
+                  <p
+                    className={`dm-5w-chain-line ${
+                      row.text ? "" : "is-empty"
+                    }`}
+                  >
+                    <strong>{index === 0 ? "Karena" : "maka"}</strong>{" "}
+                    {row.text || `(Why ${row.level} belum diisi)`}
+                  </p>
+                </div>
+              ))}
+              <div className="dm-5w-chain-row">
+                <span className="dm-5w-chain-arrow" aria-hidden="true">
+                  ↑
+                </span>
+                <p className="dm-5w-chain-line">
+                  <strong>sehingga terjadi</strong>{" "}
+                  {problemLabel.trim() || "(judul abnormal belum diisi)"}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="dm-5w-chain-text">
+              Rantai sebab akan muncul setelah Why diisi.
+            </p>
+          )}
+          {rootCount === 0 ? (
+            <p className="dm-5w-chain-warn">
+              Tandai satu Why sebagai Root Cause
+            </p>
+          ) : null}
           <p className="dm-5w-progress">
             {filled}/5 Why terisi · {rootCount} Root Cause · {rejectedCount}{" "}
             hipotesis ditolak
