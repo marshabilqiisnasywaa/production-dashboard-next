@@ -80,6 +80,7 @@ class DmMeetingSummary(Base):
     pic_name: Mapped[str] = mapped_column(String(120))  # PIC
     pic_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id", ondelete="SET NULL"), index=True)
     due_date: Mapped[str | None] = mapped_column(String(32))  # Target Waktu / Jam
+    line_code: Mapped[str | None] = mapped_column(String(32))
     status: Mapped[str] = mapped_column(String(16), default="open", server_default="open")  # "open", "in_progress", "resolved"
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

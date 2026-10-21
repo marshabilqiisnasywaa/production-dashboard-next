@@ -7,6 +7,10 @@ export interface MeetingMember {
   /** Short role shown under the name and next to the PIC, e.g. "Leader Line", "PE", "IPQC" */
   roleLabel: string;
   employeeNo?: string;
+  dept?: string;
+  position?: string;
+  lineCode?: string;
+  photoUrl?: string | null;
 }
 
 export interface AttendanceRecord {
@@ -26,9 +30,19 @@ export interface SummaryItem {
 
 export type ItemErrors = Partial<Record<"line" |"problem" | "picId" | "due", string>>;
 
+export interface GuestRecord {
+  employeeNo: string;
+  name: string;
+  line: string | null;
+  dept: string | null;
+  position: string | null;
+  at: string;
+}
+
 export interface MeetingFlowState {
   phase: MeetingPhase;
   attendance: Record<string, AttendanceRecord>;
+  guests: Record<string, GuestRecord>;
   startedAt: string | null;
   endedAt: string | null;
   items: SummaryItem[];
@@ -36,8 +50,14 @@ export interface MeetingFlowState {
 
 export interface MeetingSessionInfo {
   id: string;
-  label: string; // "Sesi 10:00"
-  start: string; // "HH:mm"
+  label: string;
+  start: string;
   durationMin: number;
   dbId: number;
+  lineId: number;
+  date: string;
+  shift: string;
+  sessionNumber: number;
 }
+
+

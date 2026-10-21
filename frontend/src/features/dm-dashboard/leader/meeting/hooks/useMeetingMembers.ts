@@ -22,6 +22,7 @@ export function useMeetingMembers(): MeetingMember[] {
         const board = await publicApi.board(me.line.slug);
         if (!alive || !board?.members?.length) return;
 
+        const lineCode = me.line.code;
         const mapped: MeetingMember[] = board.members.map((bm) => {
           const name = bm.name || "Anggota Tim";
           return {
@@ -30,6 +31,10 @@ export function useMeetingMembers(): MeetingMember[] {
             initials: initialsOf(name),
             roleLabel: DEPT_LABEL[String(bm.dept ?? "")] ?? (bm.position || "Anggota"),
             employeeNo: bm.employeeId ?? undefined,
+            dept: bm.dept ?? undefined,
+            position: bm.position ?? undefined,
+            lineCode,
+            photoUrl: bm.photoUrl ?? null,
           };
         });
 
@@ -37,7 +42,13 @@ export function useMeetingMembers(): MeetingMember[] {
         const leaderName = me.name || "";
         const meName = leaderName.toLowerCase();
         if (meName && !mapped.some((m) => m.name.toLowerCase() === meName)) {
-          mapped.unshift({ id: "leader", name: leaderName, initials: initialsOf(leaderName), roleLabel: "Leader Line" });
+          mapped.unshift({ id: "leader", name: leaderName, initials: initialsOf(leaderName), roleLabel: "Leader Line",
+            employeeNo: me.username,
+            dept: me.dept ?? undefined,
+            position: me.position ?? undefined,
+            lineCode,
+            photoUrl: me.photoUrl ?? null,
+          });
         }
         setMembers(mapped);
       } catch {

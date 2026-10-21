@@ -347,6 +347,8 @@ class MeetingAttendanceOut(CamelModel):
     face_confidence: float | None
     attended_at: datetime
     notes: str | None
+    employee_line: str | None = None
+
 
 class FaceScanOut(CamelModel):
     recognized: bool
@@ -368,6 +370,7 @@ class MeetingSummaryIn(CamelModel):
     pic_name: str
     pic_id: int | None = None
     due_date: str | None = None
+    line_code: str | None = None
 
 
 class MeetingSummaryOut(CamelModel):
@@ -378,9 +381,16 @@ class MeetingSummaryOut(CamelModel):
     pic_name: str
     pic_id: int | None
     due_date: str | None
+    line_code: str | None = None
     status: str
     created_at: datetime
 
+class EmployeePhotoOut(CamelModel):
+    photo_url: str | None = None
+
+
+class PresensiCloseIn(CamelModel):
+    absent_employee_nos: list[str] = Field(default_factory=list)
 
 class MeetingSessionStartIn(CamelModel):
     line_id: int

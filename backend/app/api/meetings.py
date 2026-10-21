@@ -16,6 +16,7 @@ from app.models import (
     Line,
 )
 from app.schemas import (
+    EmployeePhotoOut,
     MeetingAttendanceIn,
     MeetingAttendanceOut,
     MeetingScheduleApplyIn,
@@ -30,8 +31,10 @@ from app.schemas import (
     MeetingSummaryOut,
     PostMeetingIn,
     PostMeetingOut,
+    PresensiCloseIn,
 )
 from app.services.accounts import active_line
+from app.services.meeting_attendance import home_line_code
 from app.services.meeting_schedule import (
     ALL_DAYS,
     DEFAULT_SLOTS,
@@ -45,7 +48,7 @@ router = APIRouter(prefix="/meetings", tags=["meetings"])
 
 
 
-def _map_attendance(a: DmMeetingAttendance, emp: Employee | None) -> MeetingAttendanceOut:
+def _map_attendance(a: DmMeetingAttendance, emp: Employee | None, home_line: str | None = None) -> MeetingAttendanceOut:
     return MeetingAttendanceOut(
         id=a.id,
         session_id=a.session_id,
@@ -59,6 +62,7 @@ def _map_attendance(a: DmMeetingAttendance, emp: Employee | None) -> MeetingAtte
         face_confidence=a.face_confidence,
         attended_at=a.attended_at,
         notes=a.notes,
+        employee_line=home_line,
     )
 
 
@@ -71,7 +75,8 @@ def _map_session(s: DmMeetingSession, db: Session) -> MeetingSessionOut:
     mapped_attendances = []
     for a in attendances:
         emp = db.get(Employee, a.employee_id)
-        mapped_attendances.append(_map_attendance(a, emp))
+        mapped_attendances.append(_map_attendance(a, emp, home_line_code(db, a.employee_id)))
+
 
     # Load summaries
     sum_stmt = select(DmMeetingSummary).where(DmMeetingSummary.session_id == s.id)
@@ -85,6 +90,7 @@ def _map_session(s: DmMeetingSession, db: Session) -> MeetingSessionOut:
             pic_name=sm.pic_name,
             pic_id=sm.pic_id,
             due_date=sm.due_date,
+            line_code=sm.line_code,
             status=sm.status,
             created_at=sm.created_at,
         )
@@ -259,6 +265,33 @@ def list_sessions(
 
     return [_map_session(s, db) for s in sessions]
 
+@router.get("/employees/{employee_no}/photo", response_model=EmployeePhotoOut)
+def employee_photo(
+    employee_no: str,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_principal),
+) -> EmployeePhotoOut:
+    if principal.role == "member":
+        raise HTTPException(status_code=403, detail="Hanya Leader yang berwenang melihat foto peserta.")
+    employee = db.scalars(select(Employee).where(Employee.employee_no == employee_no)).first()
+    return EmployeePhotoOut(photo_url=employee.photo_url if employee else None)
+
+
+@router.get("/sessions/{session_id}", response_model=MeetingSessionOut)
+def get_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_principal),
+) -> MeetingSessionOut:
+    session = db.get(DmMeetingSession, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Sesi meeting tidak ditemukan.")
+    if principal.role in ("leader", "member") and principal.employee:
+        al = active_line(db, principal.employee.id)
+        if al and al[1].id != session.line_id:
+            raise HTTPException(status_code=403, detail="Akses ditolak: Anda hanya dapat mengakses meeting pada lini penugasan Anda.")
+    return _map_session(session, db)
+
 
 @router.post("/sessions/start", response_model=MeetingSessionOut)
 def start_session(
@@ -338,6 +371,45 @@ def start_session(
     db.refresh(session)
     return _map_session(session, db)
 
+@router.post("/sessions/{session_id}/presensi/close", response_model=MeetingSessionOut)
+def close_presensi(
+    session_id: int,
+    payload: PresensiCloseIn,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_principal),
+) -> MeetingSessionOut:
+    if principal.role == "member":
+        raise HTTPException(status_code=403, detail="Hanya Leader yang berwenang menutup presensi.")
+    session = db.get(DmMeetingSession, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Sesi meeting tidak ditemukan.")
+    if session.status == "completed":
+        raise HTTPException(status_code=409, detail="Sesi ini sudah selesai.")
+    if principal.employee:
+        al = active_line(db, principal.employee.id)
+        if al and al[1].id != session.line_id:
+            raise HTTPException(status_code=403, detail="Anda hanya dapat menutup presensi pada lini Anda sendiri.")
+
+    employees = db.scalars(select(Employee).where(Employee.employee_no.in_(payload.absent_employee_nos))).all()
+    for employee in employees:
+        attendance = db.scalars(
+            select(DmMeetingAttendance).where(
+                DmMeetingAttendance.session_id == session.id,
+                DmMeetingAttendance.employee_id == employee.id,
+            )
+        ).first()
+        if attendance is not None and attendance.status != "absent":
+            continue
+        if attendance is None:
+            attendance = DmMeetingAttendance(session_id=session.id, employee_id=employee.id)
+            db.add(attendance)
+        attendance.status = "absent"
+        attendance.verification_method = "manual"
+        attendance.face_confidence = None
+    db.commit()
+    db.refresh(session)
+    return _map_session(session, db)
+
 
 @router.post("/sessions/{session_id}/end", response_model=MeetingSessionOut)
 def end_session(
@@ -376,6 +448,7 @@ def end_session(
             pic_name=sm.pic_name,
             pic_id=sm.pic_id,
             due_date=sm.due_date,
+            line_code=sm.line_code,
             status="open",
         )
         db.add(new_sm)

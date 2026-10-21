@@ -1,19 +1,58 @@
 import { Button } from "@/components/ui/Button";
 import { IconCheckCircle } from "@/components/ui/icons";
-import type { AttendanceRecord, MeetingMember } from "../types";
+import type { AttendanceRecord, GuestRecord, MeetingMember } from "../types";
+import { formatClock } from "../utils";
+import { MeetingAvatar } from "./MeetingAvatar";
 import { IconPlay } from "./MeetingIcons";
 
 interface Props {
   members: MeetingMember[];
   attendance: Record<string, AttendanceRecord>;
+  guests: Record<string, GuestRecord>;
+  photoFor: (employeeNo: string) => string | null;
   onRedo: () => void;
   onStart: () => void;
 }
 
-/** Step 3: presensi is closed, absent members are recorded, the Leader starts the meeting. */
-export function PresensiResultCard({ members, attendance, onRedo, onStart }: Props) {
+interface PresentRow {
+  key: string;
+  name: string;
+  nik: string;
+  detail: string;
+  line: string | null;
+  photo: string | null;
+  at: string | null;
+  guest: boolean;
+}
+
+const timeOf = (iso: string | null) => (iso ? new Date(iso).getTime() : 0);
+
+/** Step 3: presensi is closed, everyone who came (team and guests) is listed, absent members are recorded, the Leader starts the meeting. */
+export function PresensiResultCard({ members, attendance, guests, photoFor, onRedo, onStart }: Props) {
   const absent = members.filter((m) => attendance[m.id]?.status === "absent");
-  const present = members.length - absent.length;
+  const teamRows: PresentRow[] = members
+    .filter((m) => attendance[m.id]?.status === "present")
+    .map((m) => ({
+      key: m.id,
+      name: m.name,
+      nik: m.employeeNo ?? "",
+      detail: [m.dept, m.position].filter(Boolean).join(" · ") || m.roleLabel,
+      line: m.lineCode ?? null,
+      photo: m.photoUrl ?? (m.employeeNo ? photoFor(m.employeeNo) : null),
+      at: attendance[m.id]?.at ?? null,
+      guest: false,
+    }));
+  const guestRows: PresentRow[] = Object.values(guests).map((g) => ({
+    key: "tamu-" + g.employeeNo,
+    name: g.name,
+    nik: g.employeeNo,
+    detail: [g.dept, g.position].filter(Boolean).join(" · "),
+    line: g.line,
+    photo: photoFor(g.employeeNo),
+    at: g.at,
+    guest: true,
+  }));
+  const present = [...teamRows, ...guestRows].sort((a, b) => timeOf(a.at) - timeOf(b.at));
 
   return (
     <section className="ui-card dml-mt-ready">
@@ -22,18 +61,44 @@ export function PresensiResultCard({ members, attendance, onRedo, onStart }: Pro
       </span>
       <h2>Presensi selesai</h2>
       <p>
-        <strong>{present}</strong> dari {members.length} member hadir
+        <strong>{teamRows.length}</strong> dari {members.length} member hadir
+        {guestRows.length > 0 && <> · {guestRows.length} tamu</>}
         {absent.length > 0 && <> · {absent.length} tercatat tidak hadir</>}
       </p>
 
-      {absent.length > 0 && (
-        <ul className="dml-mt-ready__absent" aria-label="Member tidak hadir">
-          {absent.map((m) => (
-            <li key={m.id}>
-              {m.name} <span>({m.roleLabel})</span>
+      <div className="dml-mt-ready__section">
+        <h3>Hadir ({present.length})</h3>
+        <ul className="dml-mt-ready__present" aria-label="Yang hadir">
+          {present.map((row) => (
+            <li key={row.key}>
+              <MeetingAvatar className="dml-mt-avatar" name={row.name} photo={row.photo} />
+              <div className="dml-mt-roster__who">
+                <strong>
+                  {row.name}
+                  {row.guest && <span className="dml-mt-tag">Tamu</span>}
+                </strong>
+                <span>{[row.nik, row.detail].filter(Boolean).join(" · ")}</span>
+              </div>
+              <div className="dml-mt-ready__when">
+                {row.at && <time dateTime={row.at}>{formatClock(row.at)}</time>}
+                {row.line && <span className="dml-mt-ready__line">{row.line}</span>}
+              </div>
             </li>
           ))}
         </ul>
+      </div>
+
+      {absent.length > 0 && (
+        <div className="dml-mt-ready__section">
+          <h3>Tidak hadir ({absent.length})</h3>
+          <ul className="dml-mt-ready__absent" aria-label="Member tidak hadir">
+            {absent.map((m) => (
+              <li key={m.id}>
+                {m.name} <span>({m.roleLabel})</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <div className="dml-mt-ready__actions">

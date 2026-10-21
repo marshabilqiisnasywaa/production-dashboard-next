@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { MeetingFlowState, MeetingMember, SummaryItem } from "../types";
+import type { GuestRecord, MeetingFlowState, MeetingMember, SummaryItem } from "../types";
 import { isBlank, localDate, makeEmptyItem, uid } from "../utils";
 
 const emptyState = (): MeetingFlowState => ({
   phase: "idle",
   attendance: {},
+  guests: {},
   startedAt: null,
   endedAt: null,
   items: [makeEmptyItem()],
@@ -50,13 +51,18 @@ export function useMeetingFlow(sessionId: string | null, members: MeetingMember[
   /* ---------- attendance ---------- */
   const openPresensi = useCallback(() => setState((s) => ({ ...s, phase: "presensi" })), []);
 
-  const markPresent = useCallback((memberId: string) => {
+  const markPresent = useCallback((memberId: string, at?: string) => {
     setState((s) =>
       s.attendance[memberId]?.status === "present"
         ? s
-        : { ...s, attendance: { ...s.attendance, [memberId]: { status: "present", at: new Date().toISOString() } } },
+        : { ...s, attendance: { ...s.attendance, [memberId]: { status: "present", at: at ?? new Date().toISOString() } } },
     );
   }, []);
+
+  const markGuest = useCallback((guest: GuestRecord) => {
+    setState((s) => (s.guests[guest.employeeNo] ? s : { ...s, guests: { ...s.guests, [guest.employeeNo]: guest } }));
+  }, []);
+
 
   /** Closes presensi: everyone who did not scan is recorded as absent. */
   const closePresensi = useCallback(() => {
@@ -122,6 +128,6 @@ export function useMeetingFlow(sessionId: string | null, members: MeetingMember[
     state,
     hydrated,
     counts,
-    actions: { openPresensi, markPresent, closePresensi, reopenPresensi, startMeeting, endMeeting, addItem, updateItem, removeItem, reset },
+    actions: { openPresensi, markPresent, markGuest, closePresensi, reopenPresensi, startMeeting, endMeeting, addItem, updateItem, removeItem, reset },
   };
 }

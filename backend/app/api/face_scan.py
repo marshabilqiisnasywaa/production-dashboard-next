@@ -12,6 +12,7 @@ from app.schemas import FaceChallengeOut, FaceScanOut
 from app.services.face import liveness
 from app.services.face.engine import FaceError, FaceResult, extract_face
 from app.services.face.matcher import matcher
+from app.services.meeting_attendance import home_line_code, mirror_attendance
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
@@ -75,7 +76,7 @@ def scan_attendance(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_active_principal),
 ) -> FaceScanOut:
-    open_session(db, principal, session_id)
+    session = open_session(db, principal, session_id)
     if not 1 <= len(frames) <= MAX_FRAMES:
         raise HTTPException(status_code=400, detail=f"Kirim 1 sampai {MAX_FRAMES} gambar.")
 
@@ -96,9 +97,10 @@ def scan_attendance(
     result = min(results, key=lambda r: abs(r.yaw))
     match = matcher.identify(result.embedding)
     if match is None:
-        return not_recognized("Wajah tidak dikenali. Pilih nama secara manual.")
+        return not_recognized("Wajah tidak dikenali. Coba scan lagi.")
 
     employee = db.get(Employee, match.employee_id)
+    home_line = home_line_code(db, match.employee_id)
     attendance = db.scalars(
         select(DmMeetingAttendance).where(
             DmMeetingAttendance.session_id == session_id,
@@ -106,7 +108,11 @@ def scan_attendance(
         )
     ).first()
     if attendance is not None and attendance.status == "present":
-        return FaceScanOut(recognized=True, already_present=True, attendance=_map_attendance(attendance, employee))
+        mirror_attendance(db, session, employee, match.score)
+        db.commit()
+        return FaceScanOut(
+            recognized=True, already_present=True, attendance=_map_attendance(attendance, employee, home_line)
+        )
 
     if attendance is None:
         attendance = DmMeetingAttendance(session_id=session_id, employee_id=match.employee_id)
@@ -114,6 +120,8 @@ def scan_attendance(
     attendance.status = "present"
     attendance.verification_method = "face_id"
     attendance.face_confidence = match.score
+    mirror_attendance(db, session, employee, match.score)
+
 
     if match.score >= settings.face_update_threshold:
         camera_count = db.scalar(
@@ -133,4 +141,4 @@ def scan_attendance(
     db.commit()
     db.refresh(attendance)
     matcher.reload(db)
-    return FaceScanOut(recognized=True, attendance=_map_attendance(attendance, employee))
+    return FaceScanOut(recognized=True, attendance=_map_attendance(attendance, employee, home_line))

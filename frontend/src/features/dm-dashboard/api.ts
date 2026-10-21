@@ -392,6 +392,7 @@ export type DmMeetingAttendance = {
   faceConfidence?: number | null;
   attendedAt: string;
   notes?: string | null;
+  employeeLine?: string | null;
 };
 
 export type DmMeetingSummary = {
@@ -402,6 +403,7 @@ export type DmMeetingSummary = {
   picName: string;
   picId?: number | null;
   dueDate?: string | null;
+  lineCode?: string | null;
   status: string;
   createdAt: string;
 };
@@ -480,6 +482,11 @@ export const meetingApi = {
     request<DmMeetingSchedule[]>("/meetings/schedule/apply", json("POST", { lineIds, items }), true),
   listSessions: (lineId: number, date: string, shift = "Shift 1") =>
     request<DmMeetingSession[]>(`/meetings/sessions?line_id=${lineId}&date=${date}&shift=${encodeURIComponent(shift)}`, {}, true),
+  getSession: (sessionId: number) => request<DmMeetingSession>(`/meetings/sessions/${sessionId}`, {}, true),
+  employeePhoto: (employeeNo: string) =>
+    request<{ photoUrl: string | null }>("/meetings/employees/" + encodeURIComponent(employeeNo) + "/photo", {}, true),
+  closePresensi: (sessionId: number, absentEmployeeNos: string[]) =>
+    request<DmMeetingSession>(`/meetings/sessions/${sessionId}/presensi/close`, json("POST", { absentEmployeeNos }), true),
   startSession: (input: {
     lineId: number;
     date: string;
@@ -501,6 +508,7 @@ export const meetingApi = {
         picName: string;
         picId?: number | null;
         dueDate?: string | null;
+        lineCode?: string | null;
       }[];
     }
   ) => request<DmMeetingSession>(`/meetings/sessions/${sessionId}/end`, json("POST", input), true),

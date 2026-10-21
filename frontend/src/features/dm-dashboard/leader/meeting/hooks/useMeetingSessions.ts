@@ -24,11 +24,15 @@ export function useMeetingSessions(): { sessions: MeetingSessionInfo[]; loading:
           [...list]
             .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime))
             .map((s) => ({
-              id: `session-${s.sessionNumber}`,
+              id: "session-" + s.id,
               label: `${s.label || `Sesi ${s.sessionNumber}`} ${s.scheduledTime}`,
               start: s.scheduledTime,
               durationMin: MEETING_CONFIG.sessionDurationMin,
               dbId: s.id,
+              lineId: s.lineId,
+              date: s.date,
+              shift: s.shift,
+              sessionNumber: s.sessionNumber,
             })),
         );
       } catch {

@@ -1,5 +1,6 @@
 "use client";
 
+import { meetingApi } from "../../api";
 import { useMemo, useState } from "react";
 import "./meeting.css";
 import { Button } from "@/components/ui/Button";
@@ -19,6 +20,8 @@ import { SummaryForm } from "./components/SummaryForm";
 import { useMeetingFlow } from "./hooks/useMeetingFlow";
 import { useMeetingMembers } from "./hooks/useMeetingMembers";
 import { useMeetingSessions } from "./hooks/useMeetingSessions";
+import { useGuestPhotos } from "./hooks/useGuestPhotos";
+import { useSessionAttendance } from "./hooks/useSessionAttendance";
 import { MEETING_AREA, MEETING_CONFIG, MEETING_LINES, MEETING_LOCATION } from "./mockData";
 import type { ItemErrors } from "./types";
 import { endTimeOf, formatDuration, isBlank, pickSessionId, validateItem } from "./utils";
@@ -42,6 +45,8 @@ export default function MeetingPage() {
   const { state, hydrated, counts, actions } = useMeetingFlow(sessionId, members);
   const [showErrors, setShowErrors] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
 
   const errors = useMemo(() => {
     const result: Record<string, ItemErrors> = {};
@@ -61,11 +66,66 @@ export default function MeetingPage() {
     setConfirmOpen(true);
   }
 
-  function handleConfirmEnd() {
+  async function handleStartMeeting() {
+    if (session) {
+      try {
+        await meetingApi.startSession({
+          lineId: session.lineId,
+          date: session.date,
+          shift: session.shift,
+          sessionNumber: session.sessionNumber,
+          attendances: [],
+        });
+        setSyncError(null);
+      } catch (err) {
+        setSyncError(err instanceof Error ? err.message : "Gagal memulai meeting. Coba lagi.");
+        return;
+      }
+    }
+    actions.startMeeting();
+  }
+
+  async function handleConfirmEnd() {
+    if (session) {
+      const summaries = state.items
+        .filter((i) => !isBlank(i))
+        .map((i) => ({
+          problem: i.problem.trim(),
+          picName: members.find((m) => m.id === i.picId)?.name ?? "-",
+          dueDate: i.due || null,
+          lineCode: i.line || null,
+        }));
+      try {
+        await meetingApi.endSession(session.dbId, { summaries });
+        setSyncError(null);
+      } catch (err) {
+        setConfirmOpen(false);
+        setSyncError(err instanceof Error ? err.message : "Gagal mengakhiri meeting. Coba lagi.");
+        return;
+      }
+    }
     actions.endMeeting();
     setConfirmOpen(false);
     setShowErrors(false);
   }
+
+
+  async function handleFinishPresensi() {
+    if (session) {
+      const absentNos = members
+        .filter((m) => m.employeeNo && state.attendance[m.id]?.status !== "present")
+        .map((m) => m.employeeNo as string);
+      try {
+        await meetingApi.closePresensi(session.dbId, absentNos);
+        setSyncError(null);
+      } catch (err) {
+        setSyncError(err instanceof Error ? err.message : "Gagal menyimpan presensi. Coba lagi.");
+        return;
+      }
+    }
+    actions.closePresensi();
+  }
+
 
   const phase = state.phase;
   const rosterTitle = phase === "running" || phase === "done" ? "Kehadiran" : "Daftar Member DM";
@@ -75,6 +135,17 @@ export default function MeetingPage() {
       ? undefined
       : "Member yang belum scan saat presensi ditutup dicatat tidak hadir.";
 
+      useSessionAttendance({
+        sessionDbId: session?.dbId ?? null,
+        active: hydrated && (phase === "presensi" || phase === "ready" || phase === "running"),
+        members,
+        onMember: actions.markPresent,
+        onGuest: actions.markGuest,
+      });
+  const guestPhotos = useGuestPhotos(Object.keys(state.guests).join("|"));
+  const photoFor = (employeeNo: string): string | null =>
+    members.find((m) => m.employeeNo === employeeNo)?.photoUrl ?? guestPhotos[employeeNo] ?? null;
+    
   if (!session) {
     return (
       <div className="dml-mt">
@@ -120,6 +191,12 @@ export default function MeetingPage() {
         location={MEETING_LOCATION}
       />
 
+{syncError && (
+        <div className="dml-empty" role="alert">
+          {syncError}
+        </div>
+      )}
+
       {!hydrated ? (
         <div className="dml-empty">Memuat sesi…</div>
       ) : (
@@ -133,10 +210,12 @@ export default function MeetingPage() {
               <AttendanceScanner
               members={members}
               attendance={state.attendance}
+              onGuest={actions.markGuest}
+              photoFor={photoFor}
               requireAllPresent={MEETING_CONFIG.requireAllPresent}
               sessionDbId={session.dbId}
               onRecognized={actions.markPresent}
-              onFinish={actions.closePresensi}
+              onFinish={handleFinishPresensi}
             />
             )}
 
@@ -144,8 +223,10 @@ export default function MeetingPage() {
               <PresensiResultCard
                 members={members}
                 attendance={state.attendance}
+                guests={state.guests}
+                photoFor={photoFor}
                 onRedo={actions.reopenPresensi}
-                onStart={actions.startMeeting}
+                onStart={handleStartMeeting}
               />
             )}
 
@@ -181,7 +262,7 @@ export default function MeetingPage() {
           </div>
 
           <aside className="dml-mt__aside">
-            <AttendanceRoster title={rosterTitle} members={members} attendance={state.attendance} note={rosterNote} />
+            <AttendanceRoster title={rosterTitle} members={members} attendance={state.attendance} guests={state.guests} note={rosterNote} />
             {(phase === "running" || phase === "done") && <MeetingMaterials />}
           </aside>
         </div>
