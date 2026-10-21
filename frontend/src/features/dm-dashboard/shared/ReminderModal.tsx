@@ -284,7 +284,7 @@ export function ReminderModal({
             </div>
 
             <p className="dm-reminder-eyebrow">
-              {current.type === "papercard" ? "PRE-MANAGEMENT" : "DAILY MANAGEMENT"}
+              {current.type === "papercard" ? "PRE-MANAGEMENT" : "DURING MANAGEMENT"}
             </p>
 
             <h2 id="dm-reminder-title">{current.title}</h2>

@@ -166,7 +166,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
 .dml-kpi__top h3 {
   margin: 0;
@@ -195,7 +195,7 @@
   color: var(--dm-red);
 }
 .dml-kpi__value {
-  margin: 16px 0 4px;
+  margin: 0 0 2px;
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -256,7 +256,7 @@
 }
 .dml-chart__axis {
   fill: var(--dm-muted);
-  font-size: 13px;
+  font-size: 11px;
 }
 .dml-chart__area {
   fill: var(--dm-green-50);
