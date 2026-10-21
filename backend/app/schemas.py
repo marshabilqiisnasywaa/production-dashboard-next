@@ -202,6 +202,8 @@ class EmployeeOut(CamelModel):
     is_active: bool
     must_change_password: bool
     line_label: str | None
+    face_enrolled: bool = False
+    face_message: str | None = None
 
 
 class MpvIn(EmployeeRef):
@@ -345,6 +347,20 @@ class MeetingAttendanceOut(CamelModel):
     face_confidence: float | None
     attended_at: datetime
     notes: str | None
+
+class FaceScanOut(CamelModel):
+    recognized: bool
+    already_present: bool = False
+    message: str | None = None
+    attendance: MeetingAttendanceOut | None = None
+
+class FaceChallengeOut(CamelModel):
+    required: bool
+    token: str | None = None
+    direction: Literal["left", "right"] | None = None
+    expires_in: int = 0
+
+
 
 
 class MeetingSummaryIn(CamelModel):

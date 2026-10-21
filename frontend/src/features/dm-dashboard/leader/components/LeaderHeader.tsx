@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IconBell, IconLogout } from "@/components/ui/icons";
-import { accountApi, setToken } from "../../api";
+import { IconLogout } from "@/components/ui/icons";
+import { accountApi, setToken, type DmMe } from "../../api";
+import { NotificationBellButton } from "../../notifications/NotificationBellButton";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export function LeaderHeader() {
   // null on first render so server and client markup match (no hydration warning)
   const [now, setNow] = useState<Date | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
+  const [user, setUser] = useState<DmMe | null>(null);
 
   useEffect(() => {
     setNow(new Date());
@@ -21,8 +22,7 @@ export function LeaderHeader() {
     accountApi
       .me()
       .then((me) => {
-        if (me?.name) setUserName(me.name);
-        else if (me?.username) setUserName(me.username);
+        if (me) setUser(me);
       })
       .catch(() => {});
   }, []);
@@ -37,7 +37,7 @@ export function LeaderHeader() {
     ? now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
     : "";
 
-  const displayName = userName || "Leader";
+  const displayName = user?.name || user?.username || "Leader";
   const initials = displayName
     .split(" ")
     .map((n) => n[0])
@@ -55,6 +55,12 @@ export function LeaderHeader() {
       </div>
 
       <div className="dml-header__right">
+        <NotificationBellButton
+          lineId={user?.line?.id}
+          dept={user?.dept || "PROD"}
+          role="leader"
+          lineName={user?.line?.name}
+        />
         <span className="dml-role-badge">LEADER</span>
         <div className="dml-user">
           <span className="dml-avatar">{initials}</span>

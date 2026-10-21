@@ -1,6 +1,7 @@
 from app.models.board import Board
 from app.models.board_member import BoardMember
 from app.models.employee import Employee
+from app.models.face_template import FaceTemplate
 from app.models.line import Line
 from app.models.meeting import (
     DmMeetingAttendance,
@@ -25,6 +26,7 @@ __all__ = [
     "DmNotificationSetting",
     "DmPostMeeting",
     "Employee",
+    "FaceTemplate",
     "Line",
     "MpvAward",
     "PapercardSubmission",

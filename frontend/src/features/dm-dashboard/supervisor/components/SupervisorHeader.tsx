@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { IconLogout } from "@/components/ui/icons";
 import { setToken } from "../../api";
 import { useSupervisor } from "../SupervisorProvider";
+import { NotificationBellButton } from "../../notifications/NotificationBellButton";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -50,6 +51,12 @@ export function SupervisorHeader() {
       </div>
 
       <div className="dml-header__right">
+        <NotificationBellButton
+          role="supervisor"
+          dept={currentSupervisor.dept}
+          lineId={0}
+          lineName="Semua Lini"
+        />
         <span className="dml-role-badge">SUPERVISOR</span>
         <div className="dml-user">
           <span className="dml-avatar">{initials}</span>

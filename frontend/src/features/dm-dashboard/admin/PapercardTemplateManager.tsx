@@ -33,7 +33,7 @@ export interface DepartmentTemplate {
 const EMPTY_TEMPLATE: DepartmentTemplate = {
   dept: "PROD",
   name: "Papercard Departemen",
-  version: "v1.0",
+  version: "",  
   windowStart: "08:00",
   windowEnd: "09:00",
   okRule: "OK jika seluruh item normal sesuai standar SOP.",
@@ -693,8 +693,8 @@ export default function PapercardTemplateManager({
               title="Klik untuk mengubah nama template"
             />
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span className="ptm-meta-badge">{activeTemplate.version}</span>
-              <span className="ptm-meta-badge">{totalQuestionsCount} Butir Total</span>
+              {/* <span className="ptm-meta-badge">{activeTemplate.version}</span>   */}
+              <span className="ptm-meta-badge">{totalQuestionsCount} Pengecekan</span>
             </div>
           </div>
 

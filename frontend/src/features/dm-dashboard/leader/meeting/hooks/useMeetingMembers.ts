@@ -29,6 +29,7 @@ export function useMeetingMembers(): MeetingMember[] {
             name,
             initials: initialsOf(name),
             roleLabel: DEPT_LABEL[String(bm.dept ?? "")] ?? (bm.position || "Anggota"),
+            employeeNo: bm.employeeId ?? undefined,
           };
         });
 

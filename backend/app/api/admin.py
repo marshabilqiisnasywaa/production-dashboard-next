@@ -32,6 +32,8 @@ from app.services.boards import (
     slug_taken,
     slugify,
 )
+from app.services.face.enrollment import has_photo_template, photo_template_ids, sync_photo
+from app.services.face.matcher import matcher
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(get_current_admin)])
 
@@ -394,7 +396,9 @@ def employee_lines(db: Session) -> dict[int, str]:
     return {row[0]: f"{row[1]} ({row[2]})" for row in rows}
 
 
-def employee_out(employee: Employee, line_label: str | None) -> EmployeeOut:
+def employee_out(
+    employee: Employee, line_label: str | None, face_enrolled: bool = False, face_message: str | None = None
+) -> EmployeeOut:
     return EmployeeOut(
         id=employee.id,
         employee_id=employee.employee_no,
@@ -409,6 +413,8 @@ def employee_out(employee: Employee, line_label: str | None) -> EmployeeOut:
         is_active=employee.is_active,
         must_change_password=employee.must_change_password,
         line_label=line_label,
+        face_enrolled=face_enrolled,
+        face_message=face_message,
     )
 
 
@@ -440,8 +446,9 @@ def nik_taken(db: Session, employee_no: str, exclude_id: int | None = None) -> b
 @router.get("/employees", response_model=list[EmployeeOut])
 def list_employees(db: Session = Depends(get_db)) -> list[EmployeeOut]:
     lines = employee_lines(db)
+    enrolled = photo_template_ids(db)
     employees = db.scalars(select(Employee).order_by(Employee.name, Employee.id))
-    return [employee_out(e, lines.get(e.id)) for e in employees]
+    return [employee_out(e, lines.get(e.id), e.id in enrolled) for e in employees]
 
 
 @router.post("/employees", response_model=EmployeeOut, status_code=status.HTTP_201_CREATED)
@@ -461,8 +468,11 @@ def create_employee(body: EmployeeIn, db: Session = Depends(get_db)) -> Employee
         photo_url=body.photo_url,
     )
     db.add(employee)
+    db.flush()
+    face_message = sync_photo(db, employee) if employee.photo_url else None
     db.commit()
-    return employee_out(employee, None)
+    matcher.reload(db)
+    return employee_out(employee, None, bool(employee.photo_url) and face_message is None, face_message)
 
 
 @router.patch("/employees/{employee_pk}", response_model=EmployeeOut)
@@ -503,8 +513,10 @@ def update_employee(employee_pk: int, body: EmployeeUpdate, db: Session = Depend
         if not body.is_active and line_label:
             raise conflict(f"{employee.name} masih aktif di lini {line_label}. Lepas dulu dari sana.")
         employee.is_active = body.is_active
+    face_message = sync_photo(db, employee) if "photo_url" in sent else None
     db.commit()
-    return employee_out(employee, line_label)
+    matcher.reload(db)
+    return employee_out(employee, line_label, has_photo_template(db, employee.id), face_message)
 
 
 @router.post("/employees/{employee_pk}/reset-password", response_model=EmployeeOut)
@@ -516,7 +528,7 @@ def reset_employee_password(
         raise not_found("Pengguna")
     reset_password(employee, body.password if body else None)
     db.commit()
-    return employee_out(employee, employee_lines(db).get(employee.id))
+    return employee_out(employee, employee_lines(db).get(employee.id), has_photo_template(db, employee.id))
 
 
 @router.delete("/employees/{employee_pk}", status_code=status.HTTP_204_NO_CONTENT)
@@ -535,4 +547,5 @@ def delete_employee(employee_pk: int, db: Session = Depends(get_db)) -> Response
     db.execute(delete(BoardMember).where(BoardMember.employee_id == employee.id))
     db.delete(employee)
     db.commit()
+    matcher.reload(db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

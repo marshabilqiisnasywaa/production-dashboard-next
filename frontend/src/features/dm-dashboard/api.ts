@@ -86,6 +86,8 @@ export type DmEmployee = {
   isActive: boolean;
   mustChangePassword: boolean;
   lineLabel: string | null;
+  faceEnrolled: boolean;
+  faceMessage: string | null;
 };
 
 export type DmEmployeeInput = {
@@ -146,7 +148,7 @@ function errorMessage(body: unknown, status: number): string {
 
 async function request<T>(path: string, init: RequestInit = {}, auth = false): Promise<T> {
   const headers = new Headers(init.headers);
-  if (init.body) headers.set("Content-Type", "application/json");
+  if (init.body && !(init.body instanceof FormData)) headers.set("Content-Type", "application/json");
   if (auth) {
     const token = getToken();
     if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -423,6 +425,21 @@ export type DmMeetingSession = {
   summaries: DmMeetingSummary[];
 };
 
+export type DmFaceChallenge = {
+  required: boolean;
+  token: string | null;
+  direction: "left" | "right" | null;
+  expiresIn: number;
+};
+
+export type DmFaceScan = {
+  recognized: boolean;
+  alreadyPresent: boolean;
+  message: string | null;
+  attendance: DmMeetingAttendance | null;
+};
+
+
 export type DmMeetingScheduleItem = {
   id?: number | null;
   label: string;
@@ -487,6 +504,14 @@ export const meetingApi = {
       }[];
     }
   ) => request<DmMeetingSession>(`/meetings/sessions/${sessionId}/end`, json("POST", input), true),
+  faceChallenge: (sessionId: number) =>
+    request<DmFaceChallenge>(`/meetings/sessions/${sessionId}/challenge`, { method: "POST" }, true),
+  faceScan: (sessionId: number, frames: Blob[], token: string | null) => {
+    const form = new FormData();
+    frames.forEach((blob, i) => form.append("frames", blob, `frame-${i}.jpg`));
+    if (token) form.append("token", token);
+    return request<DmFaceScan>(`/meetings/sessions/${sessionId}/scan`, { method: "POST", body: form }, true);
+  },
   getPostMeeting: (lineId: number, date: string, shift = "Shift 1") =>
     request<DmPostMeeting | null>(`/meetings/post-meeting?line_id=${lineId}&date=${date}&shift=${encodeURIComponent(shift)}`, {}, true),
   savePostMeeting: (input: {
@@ -500,6 +525,33 @@ export const meetingApi = {
     pdcaAct: string;
     followUpUpdate?: string | null;
   }) => request<DmPostMeeting>("/meetings/post-meeting", json("POST", input), true),
+};
+
+export type DmNotificationSetting = {
+  lineId: number;
+  papercardReminderMinutes: number;
+  papercardEnabled: boolean;
+  meetingReminderMinutes: number;
+  meetingEnabled: boolean;
+  updatedAt?: string | null;
+};
+
+export type DmNotificationSettingInput = {
+  papercardReminderMinutes: number;
+  papercardEnabled: boolean;
+  meetingReminderMinutes: number;
+  meetingEnabled: boolean;
+};
+
+export const notificationApi = {
+  getSettings: (lineId?: number | null) =>
+    request<DmNotificationSetting>(
+      `/notifications/settings${lineId && lineId > 0 ? `?line_id=${lineId}` : ""}`,
+      {},
+      true
+    ),
+  saveSettings: (lineId: number, data: DmNotificationSettingInput) =>
+    request<DmNotificationSetting>(`/notifications/settings/${lineId}`, json("PUT", data), true),
 };
 
 

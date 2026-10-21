@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { meetingApi } from "../api";
-import type { DmLine, DmMeetingSchedule, DmMeetingScheduleItem } from "../api";
+import { meetingApi, notificationApi } from "../api";
+import type { DmLine, DmMeetingSchedule, DmMeetingScheduleItem, DmNotificationSetting } from "../api";
+import { NotificationSettingsModal } from "../notifications/NotificationSettingsModal";
+import { playNotificationChime } from "../notifications/sound";
 import "./MeetingScheduleManager.css";
 
 interface MeetingScheduleManagerProps {
@@ -39,7 +41,27 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
   const [showApply, setShowApply] = useState(false);
   const [applyTargets, setApplyTargets] = useState<number[]>([]);
   const [filter, setFilter] = useState("");
+  const [showNotifModal, setShowNotifModal] = useState(false);
+  const [notifSettings, setNotifSettings] = useState<DmNotificationSetting>({
+    lineId: lines[0]?.id || 1,
+    papercardReminderMinutes: 15,
+    papercardEnabled: true,
+    meetingReminderMinutes: 15,
+    meetingEnabled: true,
+    updatedAt: null,
+  });
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const keyCounter = useRef(0);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    notificationApi
+      .getSettings(selectedId)
+      .then((res) => {
+        if (res) setNotifSettings(res);
+      })
+      .catch(() => {});
+  }, [selectedId]);
 
   const nextKey = () => `r${++keyCounter.current}`;
   const toRows = useCallback((items: DmMeetingScheduleItem[]): Row[] => {
@@ -320,7 +342,15 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
                 {saving ? "Menyimpan..." : "Simpan jadwal"}
               </button>
               <button type="button" className="msm-btn" onClick={() => setRows(toRows(DEFAULT_ROWS))} disabled={saving}>
-                Isi dengan jadwal bawaan
+                Isi Dengan Jadwal Standar
+              </button>
+              <button
+                type="button"
+                className="msm-btn msm-btn--ghost"
+                onClick={() => setShowNotifModal(true)}
+                title="Atur berapa menit sebelum meeting dan papercard notifikasi dikirimkan ke Member & Leader"
+              >
+                🔔 Pengaturan Pengingat ({notifSettings.meetingReminderMinutes}m)
               </button>
               <button
                 type="button"
@@ -380,6 +410,26 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
           </>
         )}
       </section>
+
+      {showNotifModal && (
+        <NotificationSettingsModal
+          isOpen={showNotifModal}
+          onClose={() => setShowNotifModal(false)}
+          currentSettings={notifSettings}
+          onSave={async (val, targetLineId) => {
+            const saveId = typeof targetLineId === "number" ? targetLineId : 0;
+            const res = await notificationApi.saveSettings(saveId, val);
+            setNotifSettings(res);
+          }}
+          role="admin"
+          lineId={0}
+          lineName="Semua Lini"
+          lines={lines}
+          soundEnabled={soundEnabled}
+          onToggleSound={setSoundEnabled}
+          onTestNotification={() => playNotificationChime()}
+        />
+      )}
     </div>
   );
 }

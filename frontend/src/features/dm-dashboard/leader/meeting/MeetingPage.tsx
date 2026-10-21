@@ -131,12 +131,13 @@ export default function MeetingPage() {
 
             {phase === "presensi" && (
               <AttendanceScanner
-                members={members}
-                attendance={state.attendance}
-                requireAllPresent={MEETING_CONFIG.requireAllPresent}
-                onRecognized={actions.markPresent}
-                onFinish={actions.closePresensi}
-              />
+              members={members}
+              attendance={state.attendance}
+              requireAllPresent={MEETING_CONFIG.requireAllPresent}
+              sessionDbId={session.dbId}
+              onRecognized={actions.markPresent}
+              onFinish={actions.closePresensi}
+            />
             )}
 
             {phase === "ready" && (

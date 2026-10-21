@@ -28,6 +28,7 @@ export function useMeetingSessions(): { sessions: MeetingSessionInfo[]; loading:
               label: `${s.label || `Sesi ${s.sessionNumber}`} ${s.scheduledTime}`,
               start: s.scheduledTime,
               durationMin: MEETING_CONFIG.sessionDurationMin,
+              dbId: s.id,
             })),
         );
       } catch {

@@ -6,6 +6,7 @@ export interface MeetingMember {
   initials: string;
   /** Short role shown under the name and next to the PIC, e.g. "Leader Line", "PE", "IPQC" */
   roleLabel: string;
+  employeeNo?: string;
 }
 
 export interface AttendanceRecord {
@@ -38,4 +39,5 @@ export interface MeetingSessionInfo {
   label: string; // "Sesi 10:00"
   start: string; // "HH:mm"
   durationMin: number;
+  dbId: number;
 }

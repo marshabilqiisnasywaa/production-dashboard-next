@@ -3,6 +3,8 @@ from datetime import datetime
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.models.face_template import FaceTemplate
+
 from app.db.base import Base
 
 
