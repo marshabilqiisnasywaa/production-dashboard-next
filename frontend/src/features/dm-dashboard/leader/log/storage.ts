@@ -3,6 +3,8 @@
  * TODO: replace with an API call (GET meetings, GET activity) once the backend stores them.
  */
 export { readStatusMap } from "../problems/storage";
+import type { AbsenceNote } from "../meeting/types";
+
 
 const MEETING_PREFIX = "dm-meeting:v1:"; // key = prefix + date + ":" + sessionId
 
@@ -12,6 +14,7 @@ export interface StoredMeeting {
   state: {
     phase: string;
     attendance?: Record<string, { status: "present" | "absent"; at: string | null }>;
+    absences?: Record<string, AbsenceNote>;
     startedAt?: string | null;
     endedAt?: string | null;
     items?: { id: string; line?: string; problem?: string; picId?: string; due?: string }[];

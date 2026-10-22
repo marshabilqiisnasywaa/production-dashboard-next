@@ -1,4 +1,6 @@
-import type { ActivityEntry } from "./types";
+
+import type { ActivityEntry, AttendanceEntry } from "./types";
+
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
@@ -42,4 +44,28 @@ export function activityToCsv(rows: ActivityEntry[]): string {
       .join(","),
   );
   return [head.join(","), ...lines].join("\n");
+}
+export function attendanceCounts(entries: AttendanceEntry[]) {
+  const count = { present: 0, represented: 0, permit: 0, sick: 0, absent: 0 };
+  for (const a of entries) {
+    if (a.present) count.present += 1;
+    else if (a.absenceReason === "represented") count.represented += 1;
+    else if (a.absenceReason === "permit") count.permit += 1;
+    else if (a.absenceReason === "sick") count.sick += 1;
+    else count.absent += 1;
+  }
+  return count;
+}
+
+export function breakdownText(entries: AttendanceEntry[]): string {
+  const c = attendanceCounts(entries);
+  return [
+    c.present + " hadir",
+    c.represented ? c.represented + " diwakilkan" : "",
+    c.permit ? c.permit + " izin" : "",
+    c.sick ? c.sick + " sakit" : "",
+    c.absent ? c.absent + " tidak hadir" : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }

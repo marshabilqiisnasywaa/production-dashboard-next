@@ -66,6 +66,8 @@ class DmMeetingAttendance(Base):
     face_confidence: Mapped[float | None] = mapped_column(Float)
     attended_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     notes: Mapped[str | None] = mapped_column(Text)
+    note_by_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id", ondelete="SET NULL"))
+    note_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     session: Mapped["DmMeetingSession"] = relationship("DmMeetingSession", back_populates="attendances")
 

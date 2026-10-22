@@ -3,95 +3,109 @@
  *   buildMeetingRecords -> one row per meeting (done / running / missed)
  *   buildActivity       -> the audit trail (who did what, when)
  */
-import type { MeetingSessionInfo } from "../meeting/types";
-import type { StatusEntry } from "../problems/types";
+import type { DmMeetingSession } from "../../api";
+import type { AbsenceNote, AbsenceReason, MeetingSessionInfo } from "../meeting/types";
+import { absenceDetail, absenceLabel } from "../meeting/utils";
 import { SESSION_NAME } from "./sampleData";
-import type { StoredMeeting } from "./storage";
 import type { ActivityEntry, MeetingRecord } from "./types";
 import { addDays, formatDate, localDate, slotEndMs } from "./utils";
+
+
 
 interface Member {
   id: string;
   name: string;
   roleLabel: string;
+  employeeNo?: string;
 }
 
 interface BuildInput {
-  stored: StoredMeeting[];
+  server: DmMeetingSession[];
   samples: MeetingRecord[];
   members: Member[];
   leaderName: string;
-  statusMap: Record<string, StatusEntry>;
   sessions: MeetingSessionInfo[];
   now: Date;
 }
 
+
 const MAX_BACKFILL_DAYS = 60;
 
-function fromStored(st: StoredMeeting, session: MeetingSessionInfo, input: BuildInput): MeetingRecord | null {
-  const { phase, attendance = {}, startedAt = null, endedAt = null, items = [] } = st.state;
-  if (phase !== "done" && phase !== "running") return null;
+const sessionKey = (number: number) => "session-" + number;
 
-  const scheduled = new Date(`${st.date}T${session.start}:00`).getTime();
-  const picName = (id?: string) => input.members.find((m) => m.id === id)?.name ?? "-";
+function fromServer(s: DmMeetingSession, input: BuildInput): MeetingRecord | null {
+  if (s.status === "pending") return null;
+
+  const scheduled = new Date(s.date + "T" + s.scheduledTime + ":00").getTime();
+  const rows = new Map<string, DmMeetingSession["attendances"][number]>();
+  for (const a of s.attendances) if (a.employeeNo) rows.set(a.employeeNo, a);
+
+  const startedAt = s.startedAt ?? null;
+  const endedAt = s.endedAt ?? null;
 
   return {
-    id: `${st.date}:${st.sessionId}`,
-    date: st.date,
-    sessionId: st.sessionId,
-    sessionName: SESSION_NAME[st.sessionId] ?? session.label,
-    scheduledStart: session.start,
-    status: phase === "done" ? "done" : "running",
+    id: s.date + ":" + s.sessionNumber,
+    date: s.date,
+    sessionId: sessionKey(s.sessionNumber),
+    sessionName: (s.label || "Sesi " + s.sessionNumber) + " " + s.scheduledTime,
+    scheduledStart: s.scheduledTime,
+    status: s.status === "completed" ? "done" : "running",
     startedAt,
     endedAt,
-    durationMin: startedAt && endedAt ? Math.max(1, Math.round((new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 60_000)) : null,
+    durationMin: s.status === "completed" && s.durationSeconds > 0 ? Math.max(1, Math.round(s.durationSeconds / 60)) : null,
     lateMin: startedAt ? Math.max(0, Math.round((new Date(startedAt).getTime() - scheduled) / 60_000)) : 0,
-    attendance: input.members.map((m) => ({
-      name: m.name,
-      roleLabel: m.roleLabel,
-      present: attendance[m.id]?.status === "present",
-      at: attendance[m.id]?.at ?? null,
-    })),
-    leaderName: input.leaderName,
-    items: items.map((it) => {
-      const entry = input.statusMap[it.id];
+    attendance: input.members.map((m) => {
+      const row = m.employeeNo ? rows.get(m.employeeNo) : undefined;
+      const present = row?.status === "present";
+      const note: AbsenceNote | undefined = present
+        ? undefined
+        : { reason: (row?.absenceReason ?? "none") as AbsenceReason, note: row?.absenceNote ?? "" };
       return {
-        id: it.id,
-        problem: it.problem ?? "",
-        line: it.line ?? "-",
-        picName: picName(it.picId),
-        due: it.due ?? "",
-        solved: Boolean(entry?.solved),
-        solvedAt: entry?.solved ? entry.at : null,
+        name: m.name,
+        roleLabel: m.roleLabel,
+        present,
+        at: present ? (row?.attendedAt ?? null) : null,
+        absenceLabel: note ? absenceLabel(note) : undefined,
+        absenceDetail: note ? absenceDetail(note) : undefined,
+        absenceReason: note?.reason,
       };
     }),
+    leaderName: s.leaderName ?? input.leaderName,
+    items: s.summaries.map((it) => ({
+      id: String(it.id),
+      problem: it.problem,
+      line: it.lineCode ?? "-",
+      picName: it.picName,
+      due: it.dueDate ?? "",
+      solved: it.status === "resolved",
+      solvedAt: null,
+    })),
     sample: false,
   };
 }
+
 
 export function buildMeetingRecords(input: BuildInput): MeetingRecord[] {
   const map = new Map<string, MeetingRecord>();
 
   for (const s of input.samples) map.set(s.id, s);
-  for (const st of input.stored) {
-    const session = input.sessions.find((s) => s.id === st.sessionId);
-    const record = session ? fromStored(st, session, input) : null;
-    if (record) map.set(record.id, record); // real data wins over a sample for the same slot
+  for (const s of input.server) {
+    const record = fromServer(s, input);
+    if (record) map.set(record.id, record);
   }
 
-  // Sessions whose slot already ended with no meeting on record = "Tidak Dilaksanakan"
   const today = localDate(input.now);
   const earliest = [...map.values()].reduce((min, r) => (r.date < min ? r.date : min), today);
   const startDate = earliest < addDays(today, -MAX_BACKFILL_DAYS) ? addDays(today, -MAX_BACKFILL_DAYS) : earliest;
 
   for (let date = startDate; date <= today; date = addDays(date, 1)) {
     for (const s of input.sessions) {
-      const id = `${date}:${s.id}`;
+      const id = date + ":" + s.sessionNumber;
       if (map.has(id) || slotEndMs(date, s.start, s.durationMin) > input.now.getTime()) continue;
       map.set(id, {
         id,
         date,
-        sessionId: s.id,
+        sessionId: sessionKey(s.sessionNumber),
         sessionName: SESSION_NAME[s.id] ?? s.label,
         scheduledStart: s.start,
         status: "missed",
@@ -107,9 +121,10 @@ export function buildMeetingRecords(input: BuildInput): MeetingRecord[] {
     }
   }
 
-  const order = (id: string) => input.sessions.findIndex((s) => s.id === id);
+  const order = (id: string) => input.sessions.findIndex((s) => sessionKey(s.sessionNumber) === id);
   return [...map.values()].sort((a, b) => (a.date !== b.date ? b.date.localeCompare(a.date) : order(b.sessionId) - order(a.sessionId)));
 }
+
 
 export function buildActivity(records: MeetingRecord[]): ActivityEntry[] {
   const out: ActivityEntry[] = [];

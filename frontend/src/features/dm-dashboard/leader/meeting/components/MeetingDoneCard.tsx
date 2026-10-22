@@ -53,7 +53,7 @@ export function MeetingDoneCard({ startedAt, endedAt, present, total, items, mem
             <li key={i.id}>
               <strong>{i.problem}</strong>
               <span>
-                {i.line} · PIC {picName(i.picId)} · due {formatDue(i.due)}
+                {i.line} · PIC {i.picName ?? picName(i.picId)} · due {formatDue(i.due)}
               </span>
             </li>
           ))}

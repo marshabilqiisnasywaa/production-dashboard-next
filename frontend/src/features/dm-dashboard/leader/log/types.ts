@@ -1,3 +1,5 @@
+import type { AbsenceReason } from "../meeting/types";
+
 export type LogTab = "meetings" | "activity";
 
 export type MeetingStatus = "done" | "running" | "missed";
@@ -8,6 +10,10 @@ export interface AttendanceEntry {
   present: boolean;
   /** ISO time of the face scan */
   at: string | null;
+  absenceLabel?: string;
+  absenceDetail?: string;
+  absenceReason?: AbsenceReason;
+
 }
 
 export interface MeetingItem {

@@ -348,6 +348,9 @@ class MeetingAttendanceOut(CamelModel):
     attended_at: datetime
     notes: str | None
     employee_line: str | None = None
+    absence_reason: str | None = None
+    absence_note: str | None = None
+
 
 
 class FaceScanOut(CamelModel):
@@ -391,6 +394,17 @@ class EmployeePhotoOut(CamelModel):
 
 class PresensiCloseIn(CamelModel):
     absent_employee_nos: list[str] = Field(default_factory=list)
+
+
+class AbsenceNoteIn(CamelModel):
+    employee_no: str
+    reason: Literal["none", "represented", "permit", "sick"] = "none"
+    note: str | None = Field(default=None, max_length=200)
+
+
+class AbsenceNotesIn(CamelModel):
+    items: list[AbsenceNoteIn] = Field(default_factory=list)
+
 
 class MeetingSessionStartIn(CamelModel):
     line_id: int

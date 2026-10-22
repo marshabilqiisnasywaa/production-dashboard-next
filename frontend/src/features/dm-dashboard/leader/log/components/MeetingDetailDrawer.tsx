@@ -10,7 +10,8 @@ import { IconCalendar, IconInfo } from "../../meeting/components/MeetingIcons";
 import { getStatus } from "../../problems/utils";
 import { LEADER_ROUTES } from "../../routes";
 import type { MeetingRecord, MeetingStatus } from "../types";
-import { formatDate, formatHm } from "../utils";
+import { breakdownText, formatDate, formatHm } from "../utils";
+
 
 export const STATUS_VIEW: Record<MeetingStatus, { tone: ChipTone; label: string }> = {
   done: { tone: "ok", label: "Selesai" },
@@ -147,10 +148,8 @@ function DrawerBody({ record, now, onClose }: { record: MeetingRecord; now: Date
               <section className="dml-lg-box">
                 <h3>Kehadiran</h3>
                 <p className="dml-lg-attsum">
-                  <strong>
-                    {present} dari {total}
-                  </strong>{" "}
-                  hadir
+                <p className="dml-lg-attsplit">{breakdownText(record.attendance)}</p>
+
                 </p>
                 <ProgressBar value={total ? (present / total) * 100 : 0} tone={present === total ? "ok" : "warn"} />
                 <p className="dml-lg-note">
@@ -178,8 +177,12 @@ function DrawerBody({ record, now, onClose }: { record: MeetingRecord; now: Date
                       {a.at && <time>{formatHm(a.at)}</time>}
                     </div>
                   ) : (
-                    <StatusChip tone="wait">Tidak hadir</StatusChip>
+                    <div className="dml-lg-people__state">
+                      <StatusChip tone="wait">{a.absenceLabel ?? "Tidak hadir"}</StatusChip>
+                      {a.absenceDetail && <span>{a.absenceDetail}</span>}
+                    </div>
                   )}
+
                 </li>
               ))}
             </ul>

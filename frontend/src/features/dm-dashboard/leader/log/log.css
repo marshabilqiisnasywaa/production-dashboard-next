@@ -287,6 +287,12 @@
   margin: 0 0 10px;
   font-size: 14px;
 }
+.dml-lg-attsplit {
+  margin: -4px 0 10px;
+  font-size: 13px;
+  color: var(--dm-muted);
+}
+
 .dml-lg-note {
   display: flex;
   gap: 8px;
@@ -341,6 +347,12 @@
   font-variant-numeric: tabular-nums;
   color: var(--dm-muted);
 }
+.dml-lg-people__state span {
+  max-width: 14rem;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
 .dml-lg-empty {
   padding: 28px 8px;
   text-align: center;

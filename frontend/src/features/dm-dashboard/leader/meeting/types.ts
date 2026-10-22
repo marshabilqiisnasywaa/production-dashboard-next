@@ -26,6 +26,8 @@ export interface SummaryItem {
   picId: string;
   /** datetime-local value, e.g. "2025-06-17T12:00" */
   due: string;
+  picName?: string;
+
 }
 
 export type ItemErrors = Partial<Record<"line" |"problem" | "picId" | "due", string>>;
@@ -39,9 +41,17 @@ export interface GuestRecord {
   at: string;
 }
 
+export type AbsenceReason = "none" | "represented" | "permit" | "sick";
+
+export interface AbsenceNote {
+  reason: AbsenceReason;
+  note: string;
+}
+
 export interface MeetingFlowState {
   phase: MeetingPhase;
   attendance: Record<string, AttendanceRecord>;
+  absences: Record<string, AbsenceNote>;
   guests: Record<string, GuestRecord>;
   startedAt: string | null;
   endedAt: string | null;

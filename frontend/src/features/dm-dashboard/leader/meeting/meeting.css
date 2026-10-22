@@ -533,6 +533,57 @@
 .dml-mt-ready__absent li span {
   opacity: 0.8;
 }
+.dml-mt-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.dml-mt-absence {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dml-mt-absence li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--dm-amber-100);
+  border-radius: var(--dm-radius-sm);
+  background: var(--dm-amber-50);
+}
+.dml-mt-absence__who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.dml-mt-absence__fields {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: 8px;
+}
+.dml-mt-absence .dml-mt-roster__who span {
+  color: #4b5563;
+}
+.dml-mt-roster__reason {
+  color: var(--dm-amber-text);
+  font-weight: 600;
+}
+@media (max-width: 640px) {
+  .dml-mt-absence li {
+    grid-template-columns: 1fr;
+  }
+  .dml-mt-absence__fields {
+    grid-template-columns: 1fr;
+  }
+}
 .dml-mt-ready__actions {
   display: flex;
   flex-wrap: wrap;
@@ -776,6 +827,29 @@
   font-variant-numeric: tabular-nums;
   color: var(--dm-muted);
 }
+.dml-mt-roster__list li.is-editing {
+  flex-wrap: wrap;
+}
+.dml-mt-roster__edit {
+  padding: 6px 4px;
+  border: 0;
+  background: none;
+  color: var(--dm-green);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.dml-mt-roster__editor {
+  display: grid;
+  flex: 0 0 100%;
+  gap: 8px;
+}
+.dml-mt-roster__editor-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .dml-mt-roster__note {
   display: flex;
   gap: 8px;

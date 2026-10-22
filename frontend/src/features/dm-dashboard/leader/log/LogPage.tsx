@@ -17,7 +17,7 @@ const TABS: { id: LogTab; label: string; icon: React.ReactNode }[] = [
 /** Composition only: data in hooks/useLogData + buildLog.ts, each tab in components/. */
 export default function LogPage() {
   const [tab, setTab] = useState<LogTab>("meetings");
-  const { records, activity, now, ready } = useLogData();
+  const { records, activity, now, ready, error } = useLogData();
 
   return (
     <div className="dml-lg">
@@ -46,7 +46,9 @@ export default function LogPage() {
       </div>
 
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="dml-lg-panel">
-        {!ready || !now ? (
+      {error ? (
+          <div className="dml-empty" role="alert">{error}</div>
+        ) : !ready || !now ? (
           <div className="dml-empty">Memuat riwayat…</div>
         ) : tab === "meetings" ? (
           <MeetingHistoryTab records={records} now={now} />

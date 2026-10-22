@@ -4,9 +4,8 @@ import { useMemo, useState } from "react";
 import { Pagination } from "@/components/ui/Pagination";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { IconCheck, IconClock, IconClose, IconUsers } from "@/components/ui/icons";
-import { MEETING_SESSIONS } from "../../meeting/mockData";
 import type { MeetingRecord, MeetingStatus } from "../types";
-import { formatDate, formatHm } from "../utils";
+import { attendanceCounts, formatDate, formatHm } from "../utils";
 import { DateRangeFilter } from "./DateRangeFilter";
 import { MeetingDetailDrawer, STATUS_VIEW } from "./MeetingDetailDrawer";
 
@@ -23,6 +22,13 @@ export function MeetingHistoryTab({ records, now }: Props) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [openId, setOpenId] = useState<string | null>(null);
+
+  const sessionOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const r of records) if (!seen.has(r.sessionId)) seen.set(r.sessionId, r.sessionName);
+    return [...seen.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [records]);
+
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -98,9 +104,9 @@ export function MeetingHistoryTab({ records, now }: Props) {
             }}
           >
             <option value="all">Semua sesi</option>
-            {MEETING_SESSIONS.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label}
+            {sessionOptions.map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
               </option>
             ))}
           </select>
@@ -145,6 +151,7 @@ export function MeetingHistoryTab({ records, now }: Props) {
                 const v = STATUS_VIEW[r.status];
                 const present = r.attendance.filter((a) => a.present).length;
                 const held = r.status !== "missed";
+                const represented = attendanceCounts(r.attendance).represented;
                 return (
                   <tr key={r.id} className={r.id === openId ? "is-selected" : undefined} onClick={() => setOpenId(r.id)}>
                     <td className="is-strong">{formatDate(r.date)}</td>
@@ -167,7 +174,11 @@ export function MeetingHistoryTab({ records, now }: Props) {
                         <div className="dml-lg-sub">jadwal {r.scheduledStart}</div>
                       )}
                     </td>
-                    <td>{held ? `${present}/${r.attendance.length}` : "—"}</td>
+                    <td>
+                      {held ? present + "/" + r.attendance.length : "—"}
+                      {held && represented > 0 && <div className="dml-lg-sub">{represented} diwakilkan</div>}
+                    </td>
+
                     <td>{held ? r.leaderName : "—"}</td>
                     <td>
                       <StatusChip tone={v.tone}>{v.label}</StatusChip>

@@ -393,6 +393,9 @@ export type DmMeetingAttendance = {
   attendedAt: string;
   notes?: string | null;
   employeeLine?: string | null;
+  absenceReason?: string | null;
+  absenceNote?: string | null;
+
 };
 
 export type DmMeetingSummary = {
@@ -483,6 +486,14 @@ export const meetingApi = {
   listSessions: (lineId: number, date: string, shift = "Shift 1") =>
     request<DmMeetingSession[]>(`/meetings/sessions?line_id=${lineId}&date=${date}&shift=${encodeURIComponent(shift)}`, {}, true),
   getSession: (sessionId: number) => request<DmMeetingSession>(`/meetings/sessions/${sessionId}`, {}, true),
+  history: (lineId: number, from: string, to: string, shift = "Shift 1") =>
+    request<DmMeetingSession[]>(
+      "/meetings/history?line_id=" + lineId + "&from=" + from + "&to=" + to + "&shift=" + encodeURIComponent(shift),
+      {},
+      true,
+    ),
+  saveAbsenceNotes: (sessionId: number, items: { employeeNo: string; reason: string; note?: string | null }[]) =>
+    request<DmMeetingSession>("/meetings/sessions/" + sessionId + "/absence-notes", json("PUT", { items }), true),
   employeePhoto: (employeeNo: string) =>
     request<{ photoUrl: string | null }>("/meetings/employees/" + encodeURIComponent(employeeNo) + "/photo", {}, true),
   closePresensi: (sessionId: number, absentEmployeeNos: string[]) =>

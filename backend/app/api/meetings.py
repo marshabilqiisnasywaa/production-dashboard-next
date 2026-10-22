@@ -16,6 +16,7 @@ from app.models import (
     Line,
 )
 from app.schemas import (
+    AbsenceNotesIn,
     EmployeePhotoOut,
     MeetingAttendanceIn,
     MeetingAttendanceOut,
@@ -46,9 +47,21 @@ from app.services.meeting_schedule import (
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
+def _absence_fields(a: DmMeetingAttendance) -> tuple[str | None, str | None]:
+    if a.status == "present":
+        return None, None
+    notes = a.notes or ""
+    if a.status == "permit":
+        return "permit", notes.removeprefix("Izin").removeprefix(": ")
+    if a.status == "sick":
+        return "sick", notes.removeprefix("Sakit").removeprefix(": ")
+    if notes.startswith("Diwakilkan"):
+        return "represented", notes.removeprefix("Diwakilkan").removeprefix(" oleh ")
+    return "none", notes
 
 
-def _map_attendance(a: DmMeetingAttendance, emp: Employee | None, home_line: str | None = None) -> MeetingAttendanceOut:
+def _map_attendance(a: DmMeetingAttendance, emp: Employee | None, home_line: str | None = None) -> MeetingAttendanceOut: 
+    reason, note = _absence_fields(a)
     return MeetingAttendanceOut(
         id=a.id,
         session_id=a.session_id,
@@ -63,6 +76,9 @@ def _map_attendance(a: DmMeetingAttendance, emp: Employee | None, home_line: str
         attended_at=a.attended_at,
         notes=a.notes,
         employee_line=home_line,
+        absence_reason=reason,
+        absence_note=note,
+
     )
 
 
@@ -265,6 +281,35 @@ def list_sessions(
 
     return [_map_session(s, db) for s in sessions]
 
+@router.get("/history", response_model=list[MeetingSessionOut])
+def meeting_history(
+    line_id: int,
+    date_from: date = Query(..., alias="from"),
+    date_to: date = Query(..., alias="to"),
+    shift: str = "Shift 1",
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_principal),
+) -> list[MeetingSessionOut]:
+    if date_to < date_from or (date_to - date_from).days > 62:
+        raise HTTPException(status_code=400, detail="Rentang tanggal tidak valid (maksimal 62 hari).")
+    if principal.role in ("leader", "member") and principal.employee:
+        al = active_line(db, principal.employee.id)
+        if al and al[1].id != line_id:
+            raise HTTPException(status_code=403, detail="Akses ditolak: Anda hanya dapat melihat riwayat lini penugasan Anda.")
+    stmt = (
+        select(DmMeetingSession)
+        .where(
+            DmMeetingSession.line_id == line_id,
+            DmMeetingSession.date >= date_from,
+            DmMeetingSession.date <= date_to,
+            DmMeetingSession.shift == shift,
+            DmMeetingSession.status != "pending",
+        )
+        .order_by(DmMeetingSession.date.desc(), DmMeetingSession.session_number)
+    )
+    return [_map_session(s, db) for s in db.scalars(stmt).all()]
+
+
 @router.get("/employees/{employee_no}/photo", response_model=EmployeePhotoOut)
 def employee_photo(
     employee_no: str,
@@ -406,6 +451,67 @@ def close_presensi(
         attendance.status = "absent"
         attendance.verification_method = "manual"
         attendance.face_confidence = None
+    db.commit()
+    db.refresh(session)
+    return _map_session(session, db)
+
+
+@router.put("/sessions/{session_id}/absence-notes", response_model=MeetingSessionOut)
+def save_absence_notes(
+    session_id: int,
+    payload: AbsenceNotesIn,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_principal),
+) -> MeetingSessionOut:
+    if principal.role == "member":
+        raise HTTPException(status_code=403, detail="Hanya Leader yang berwenang mengisi keterangan.")
+    session = db.get(DmMeetingSession, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Sesi meeting tidak ditemukan.")
+    if session.status == "completed":
+        raise HTTPException(status_code=409, detail="Sesi ini sudah selesai.")
+    if principal.employee:
+        al = active_line(db, principal.employee.id)
+        if al and al[1].id != session.line_id:
+            raise HTTPException(status_code=403, detail="Anda hanya dapat mengisi keterangan pada lini Anda sendiri.")
+
+    employees = {
+        e.employee_no: e
+        for e in db.scalars(select(Employee).where(Employee.employee_no.in_([i.employee_no for i in payload.items])))
+    }
+    now = datetime.now()
+    for item in payload.items:
+        employee = employees.get(item.employee_no)
+        if employee is None:
+            continue
+        attendance = db.scalars(
+            select(DmMeetingAttendance).where(
+                DmMeetingAttendance.session_id == session.id,
+                DmMeetingAttendance.employee_id == employee.id,
+            )
+        ).first()
+        if attendance is not None and attendance.status == "present":
+            continue
+        if attendance is None:
+            attendance = DmMeetingAttendance(session_id=session.id, employee_id=employee.id)
+            db.add(attendance)
+        text = (item.note or "").strip()
+        if item.reason == "represented":
+            attendance.status = "absent"
+            attendance.notes = "Diwakilkan oleh " + text if text else "Diwakilkan"
+        elif item.reason == "permit":
+            attendance.status = "permit"
+            attendance.notes = "Izin: " + text if text else "Izin"
+        elif item.reason == "sick":
+            attendance.status = "sick"
+            attendance.notes = "Sakit: " + text if text else "Sakit"
+        else:
+            attendance.status = "absent"
+            attendance.notes = text or None
+        attendance.verification_method = "manual"
+        attendance.face_confidence = None
+        attendance.note_by_id = principal.employee.id if principal.employee else None
+        attendance.note_at = now
     db.commit()
     db.refresh(session)
     return _map_session(session, db)

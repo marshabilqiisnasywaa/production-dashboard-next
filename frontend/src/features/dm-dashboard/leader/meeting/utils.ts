@@ -1,4 +1,4 @@
-import type { ItemErrors, MeetingSessionInfo, SummaryItem } from "./types";
+import type { AbsenceNote, AbsenceReason, ItemErrors, MeetingSessionInfo, SummaryItem } from "./types";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -63,3 +63,26 @@ export function validateItem(i: SummaryItem): ItemErrors {
 export const formatDue = (due: string) =>
   new Date(due).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
+
+/* ---------- absence notes ---------- */
+
+export const ABSENCE_REASONS: { value: AbsenceReason; label: string }[] = [
+  { value: "none", label: "Tanpa keterangan" },
+  { value: "represented", label: "Diwakilkan" },
+  { value: "permit", label: "Izin" },
+  { value: "sick", label: "Sakit" },
+];
+
+export function absenceLabel(entry?: AbsenceNote): string {
+  if (entry?.reason === "represented") return "Diwakilkan";
+  if (entry?.reason === "permit") return "Izin";
+  if (entry?.reason === "sick") return "Sakit";
+  return "Tidak hadir";
+}
+
+export function absenceDetail(entry?: AbsenceNote): string {
+  const note = entry?.note.trim() ?? "";
+  if (entry?.reason === "represented") return note ? "Diwakilkan oleh " + note : "Diwakilkan";
+  if (entry?.reason === "permit" || entry?.reason === "sick") return note;
+  return note;
+}

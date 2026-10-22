@@ -3,7 +3,7 @@ import { MEETING_SESSIONS } from "../meeting/mockData";
 import type { MeetingItem, MeetingRecord } from "./types";
 import { addDays, localDate } from "./utils";
 
-export const SHOW_SAMPLE_LOG = true;
+export const SHOW_SAMPLE_LOG = false;
 
 export const SESSION_NAME: Record<string, string> = {
   "during-1": "During-Management 1",

@@ -1,7 +1,7 @@
 "use client";
 
 import { meetingApi } from "../../api";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./meeting.css";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -23,7 +23,7 @@ import { useMeetingSessions } from "./hooks/useMeetingSessions";
 import { useGuestPhotos } from "./hooks/useGuestPhotos";
 import { useSessionAttendance } from "./hooks/useSessionAttendance";
 import { MEETING_AREA, MEETING_CONFIG, MEETING_LINES, MEETING_LOCATION } from "./mockData";
-import type { ItemErrors } from "./types";
+import type { AbsenceNote, ItemErrors } from "./types";
 import { endTimeOf, formatDuration, isBlank, pickSessionId, validateItem } from "./utils";
 
 /** Composition only: state machine in hooks/useMeetingFlow, every card in components/. */
@@ -66,9 +66,35 @@ export default function MeetingPage() {
     setConfirmOpen(true);
   }
 
+  async function handleSaveAbsence(memberId: string, next: AbsenceNote): Promise<boolean> {
+    const member = members.find((m) => m.id === memberId);
+    if (!session || !member?.employeeNo) return false;
+    try {
+      await meetingApi.saveAbsenceNotes(session.dbId, [
+        { employeeNo: member.employeeNo, reason: next.reason, note: next.note },
+      ]);
+      actions.setAbsence(memberId, next);
+      setSyncError(null);
+      return true;
+    } catch (err) {
+      setSyncError(err instanceof Error ? err.message : "Gagal menyimpan keterangan. Coba lagi.");
+      return false;
+    }
+  }
+
+
   async function handleStartMeeting() {
     if (session) {
+      const notes = members
+        .filter((m) => m.employeeNo && state.attendance[m.id]?.status === "absent")
+        .map((m) => ({
+          employeeNo: m.employeeNo as string,
+          reason: state.absences[m.id]?.reason ?? "none",
+          note: state.absences[m.id]?.note ?? "",
+        }))
+        .filter((n) => n.reason !== "none" || n.note.trim() !== "");
       try {
+        if (notes.length > 0) await meetingApi.saveAbsenceNotes(session.dbId, notes);
         await meetingApi.startSession({
           lineId: session.lineId,
           date: session.date,
@@ -137,11 +163,44 @@ export default function MeetingPage() {
 
       useSessionAttendance({
         sessionDbId: session?.dbId ?? null,
-        active: hydrated && (phase === "presensi" || phase === "ready" || phase === "running"),
+        active: hydrated && (phase === "presensi" || phase === "ready" || phase === "running" || phase === "done"),
+        once: phase === "done",
+        restoreAbsent: phase === "ready" || phase === "running" || phase === "done",
         members,
         onMember: actions.markPresent,
         onGuest: actions.markGuest,
+        onAbsent: actions.restoreAbsence,
       });
+    
+      const restoreFromServer = actions.restoreFromServer;
+      const sessionDbId = session?.dbId ?? null;
+      useEffect(() => {
+        if (!hydrated || sessionDbId === null) return;
+        let alive = true;
+        meetingApi
+          .getSession(sessionDbId)
+          .then((server) => {
+            if (!alive) return;
+            restoreFromServer({
+              status: server.status,
+              startedAt: server.startedAt ?? null,
+              endedAt: server.endedAt ?? null,
+              items: server.summaries.map((s) => ({
+                id: String(s.id),
+                line: s.lineCode ?? "",
+                problem: s.problem,
+                picId: "",
+                picName: s.picName,
+                due: s.dueDate ?? "",
+              })),
+            });
+          })
+          .catch(() => undefined);
+        return () => {
+          alive = false;
+        };
+      }, [hydrated, sessionDbId, restoreFromServer]);
+    
   const guestPhotos = useGuestPhotos(Object.keys(state.guests).join("|"));
   const photoFor = (employeeNo: string): string | null =>
     members.find((m) => m.employeeNo === employeeNo)?.photoUrl ?? guestPhotos[employeeNo] ?? null;
@@ -225,6 +284,8 @@ export default function MeetingPage() {
                 attendance={state.attendance}
                 guests={state.guests}
                 photoFor={photoFor}
+                absences={state.absences}
+                onAbsenceChange={actions.setAbsence}
                 onRedo={actions.reopenPresensi}
                 onStart={handleStartMeeting}
               />
@@ -262,7 +323,7 @@ export default function MeetingPage() {
           </div>
 
           <aside className="dml-mt__aside">
-            <AttendanceRoster title={rosterTitle} members={members} attendance={state.attendance} guests={state.guests} note={rosterNote} />
+            <AttendanceRoster title={rosterTitle} members={members} attendance={state.attendance} absences={state.absences} guests={state.guests} note={rosterNote} editable={phase === "running"} onSaveAbsence={handleSaveAbsence} />
             {(phase === "running" || phase === "done") && <MeetingMaterials />}
           </aside>
         </div>

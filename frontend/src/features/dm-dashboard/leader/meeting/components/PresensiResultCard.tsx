@@ -1,15 +1,18 @@
 import { Button } from "@/components/ui/Button";
 import { IconCheckCircle } from "@/components/ui/icons";
-import type { AttendanceRecord, GuestRecord, MeetingMember } from "../types";
+import type { AbsenceNote, AttendanceRecord, GuestRecord, MeetingMember } from "../types";
 import { formatClock } from "../utils";
 import { MeetingAvatar } from "./MeetingAvatar";
 import { IconPlay } from "./MeetingIcons";
+import { AbsenceFields } from "./AbsenceFields";
 
 interface Props {
   members: MeetingMember[];
   attendance: Record<string, AttendanceRecord>;
   guests: Record<string, GuestRecord>;
   photoFor: (employeeNo: string) => string | null;
+  absences: Record<string, AbsenceNote>;
+  onAbsenceChange: (memberId: string, next: AbsenceNote) => void;
   onRedo: () => void;
   onStart: () => void;
 }
@@ -28,7 +31,7 @@ interface PresentRow {
 const timeOf = (iso: string | null) => (iso ? new Date(iso).getTime() : 0);
 
 /** Step 3: presensi is closed, everyone who came (team and guests) is listed, absent members are recorded, the Leader starts the meeting. */
-export function PresensiResultCard({ members, attendance, guests, photoFor, onRedo, onStart }: Props) {
+export function PresensiResultCard({ members, attendance, guests, photoFor, absences, onAbsenceChange, onRedo, onStart }: Props) {
   const absent = members.filter((m) => attendance[m.id]?.status === "absent");
   const teamRows: PresentRow[] = members
     .filter((m) => attendance[m.id]?.status === "present")
@@ -53,6 +56,7 @@ export function PresensiResultCard({ members, attendance, guests, photoFor, onRe
     guest: true,
   }));
   const present = [...teamRows, ...guestRows].sort((a, b) => timeOf(a.at) - timeOf(b.at));
+  const representedCount = absent.filter((m) => absences[m.id]?.reason === "represented").length;
 
   return (
     <section className="ui-card dml-mt-ready">
@@ -64,6 +68,7 @@ export function PresensiResultCard({ members, attendance, guests, photoFor, onRe
         <strong>{teamRows.length}</strong> dari {members.length} member hadir
         {guestRows.length > 0 && <> · {guestRows.length} tamu</>}
         {absent.length > 0 && <> · {absent.length} tercatat tidak hadir</>}
+        {representedCount > 0 && <> · {representedCount} diwakilkan</>}
       </p>
 
       <div className="dml-mt-ready__section">
@@ -91,12 +96,24 @@ export function PresensiResultCard({ members, attendance, guests, photoFor, onRe
       {absent.length > 0 && (
         <div className="dml-mt-ready__section">
           <h3>Tidak hadir ({absent.length})</h3>
-          <ul className="dml-mt-ready__absent" aria-label="Member tidak hadir">
-            {absent.map((m) => (
-              <li key={m.id}>
-                {m.name} <span>({m.roleLabel})</span>
-              </li>
-            ))}
+          <ul className="dml-mt-absence" aria-label="Member tidak hadir">
+            {absent.map((m) => {
+              const entry: AbsenceNote = absences[m.id] ?? { reason: "none", note: "" };
+              return (
+                <li key={m.id}>
+                  <div className="dml-mt-absence__who">
+                    <MeetingAvatar className="dml-mt-avatar" name={m.name} photo={m.photoUrl ?? null} />
+                    <div className="dml-mt-roster__who">
+                      <strong>{m.name}</strong>
+                      <span>{[m.employeeNo, m.roleLabel].filter(Boolean).join(" · ")}</span>
+                    </div>
+                  </div>
+                  <div className="dml-mt-absence__fields">
+                  <AbsenceFields idPrefix={"ar-" + m.id} name={m.name} value={entry} onChange={(next) => onAbsenceChange(m.id, next)} />
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

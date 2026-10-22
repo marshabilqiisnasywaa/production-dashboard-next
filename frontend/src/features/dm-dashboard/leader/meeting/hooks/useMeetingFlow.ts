@@ -1,17 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { GuestRecord, MeetingFlowState, MeetingMember, SummaryItem } from "../types";
+import type { AbsenceNote, GuestRecord, MeetingFlowState, MeetingMember, SummaryItem } from "../types";
 import { isBlank, localDate, makeEmptyItem, uid } from "../utils";
 
 const emptyState = (): MeetingFlowState => ({
   phase: "idle",
   attendance: {},
+  absences: {},
   guests: {},
   startedAt: null,
   endedAt: null,
   items: [makeEmptyItem()],
 });
+
+export interface ServerMeeting {
+  status: "pending" | "in_progress" | "completed";
+  startedAt: string | null;
+  endedAt: string | null;
+  items: SummaryItem[];
+}
+
 
 /**
  * The whole meeting flow as a small state machine:
@@ -64,6 +73,23 @@ export function useMeetingFlow(sessionId: string | null, members: MeetingMember[
   }, []);
 
 
+  const setAbsence = useCallback((memberId: string, next: AbsenceNote) => {
+    setState((s) => ({ ...s, absences: { ...s.absences, [memberId]: next } }));
+  }, []);
+
+  const restoreAbsence = useCallback((memberId: string, note: AbsenceNote) => {
+    setState((s) => {
+      if (s.attendance[memberId]?.status === "present") return s;
+      const attendance =
+        s.attendance[memberId]?.status === "absent"
+          ? s.attendance
+          : { ...s.attendance, [memberId]: { status: "absent" as const, at: null } };
+      const absences = s.absences[memberId] ? s.absences : { ...s.absences, [memberId]: note };
+      return attendance === s.attendance && absences === s.absences ? s : { ...s, attendance, absences };
+    });
+  }, []);
+
+
   /** Closes presensi: everyone who did not scan is recorded as absent. */
   const closePresensi = useCallback(() => {
     setState((s) => {
@@ -101,6 +127,19 @@ export function useMeetingFlow(sessionId: string | null, members: MeetingMember[
     [],
   );
 
+  const restoreFromServer = useCallback((server: ServerMeeting) => {
+    setState((s) => {
+      if (server.status === "completed" && s.phase !== "done" && server.startedAt && server.endedAt) {
+        return { ...s, phase: "done", startedAt: server.startedAt, endedAt: server.endedAt, items: server.items };
+      }
+      if (server.status === "in_progress" && ["idle", "presensi", "ready"].includes(s.phase) && server.startedAt) {
+        return { ...s, phase: "running", startedAt: server.startedAt };
+      }
+      return s;
+    });
+  }, []);
+
+
   /* ---------- summary items ---------- */
   const addItem = useCallback(() => setState((s) => ({ ...s, items: [...s.items, { ...makeEmptyItem(), id: uid() }] })), []);
 
@@ -128,6 +167,6 @@ export function useMeetingFlow(sessionId: string | null, members: MeetingMember[
     state,
     hydrated,
     counts,
-    actions: { openPresensi, markPresent, markGuest, closePresensi, reopenPresensi, startMeeting, endMeeting, addItem, updateItem, removeItem, reset },
+    actions: { openPresensi, markPresent, markGuest, setAbsence, restoreAbsence, closePresensi, reopenPresensi, startMeeting, endMeeting, restoreFromServer, addItem, updateItem, removeItem, reset },
   };
 }
