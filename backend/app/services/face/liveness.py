@@ -8,21 +8,22 @@ from app.core.config import settings
 @dataclass
 class Challenge:
     session_id: int
-    direction: str
+    direction: str | None
     expires_at: float
 
 
 _challenges: dict[str, Challenge] = {}
 
 
-def issue(session_id: int) -> tuple[str, str]:
+def issue(session_id: int) -> tuple[str, str | None]:
     now = time.monotonic()
     for token in [t for t, c in _challenges.items() if c.expires_at < now]:
         _challenges.pop(token, None)
     token = secrets.token_urlsafe(16)
-    direction = secrets.choice(["left", "right"])
+    direction = secrets.choice(["left", "right"]) if settings.face_liveness_mode == "turn" else None
     _challenges[token] = Challenge(session_id, direction, now + settings.face_challenge_seconds)
     return token, direction
+
 
 
 def consume(token: str, session_id: int) -> Challenge | None:
@@ -37,3 +38,8 @@ def consume(token: str, session_id: int) -> Challenge | None:
 def turned_enough(first_yaw: float, last_yaw: float, direction: str) -> bool:
     sign = settings.face_left_yaw_sign if direction == "left" else -settings.face_left_yaw_sign
     return sign * (last_yaw - first_yaw) >= settings.face_min_yaw_delta
+
+def moved_enough(poses: list[tuple[float, float]]) -> bool:
+    first_pitch, first_yaw = poses[0]
+    shift = max(max(abs(pitch - first_pitch), abs(yaw - first_yaw)) for pitch, yaw in poses[1:])
+    return shift >= settings.face_min_motion

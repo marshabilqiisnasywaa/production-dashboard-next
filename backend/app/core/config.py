@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     face_left_yaw_sign: int = 1
     face_crowd_ratio: float = 0.6
     face_liveness_same_person: float = 0.3
+    face_liveness_mode: str = "motion"
+    face_min_motion: float = 8.0
+    face_antispoof_enabled: bool = True
+    face_antispoof_min_real: float = 0.5
+
 
 
 

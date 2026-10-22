@@ -12,6 +12,9 @@ class FaceResult:
     embedding: np.ndarray
     quality: float
     yaw: float
+    pitch: float
+    bbox: tuple[float, float, float, float]
+    image: np.ndarray
 
 class FaceError(Exception):
     pass
@@ -35,7 +38,8 @@ def _area(face) -> float:
 
 
 def extract_face(data: bytes) -> FaceResult:
-    faces = get_model().get(decode_image(data))
+    image = decode_image(data)
+    faces = get_model().get(image)
     if not faces:
         raise FaceError("Wajah tidak terdeteksi.")
     faces = sorted(faces, key=_area, reverse=True)
@@ -46,4 +50,7 @@ def extract_face(data: bytes) -> FaceResult:
         embedding=face.normed_embedding.astype(np.float32),
         quality=float(face.det_score),
         yaw=float(face.pose[1]),
+        pitch=float(face.pose[0]),
+        bbox=(float(face.bbox[0]), float(face.bbox[1]), float(face.bbox[2]), float(face.bbox[3])),
+        image=image,
     )

@@ -294,8 +294,7 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
         <section className="mpv-card mpv-card-focus">
           <div className="mpv-card-head">
             <div className="mpv-head-title-wrap">
-              <span className="mpv-trophy-symbol">🏆</span>
-              <h4 className="mpv-card-title">Pemenang {formatPeriod(period)}</h4>
+              <h4 className="mpv-card-title">MVP {formatPeriod(period)}</h4>
             </div>
             {existing ? (
               shownOnDashboard?.id === existing.id ? (
@@ -431,7 +430,7 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
         <section className="mpv-card mpv-card-history">
           <div className="mpv-card-head">
             <div className="mpv-head-title-wrap">
-              <h4 className="mpv-card-title">Riwayat MPV Lini {line.code}</h4>
+              <h4 className="mpv-card-title">Riwayat MVP Line {line.code}</h4>
               <span className="mpv-count-pill">{history.length} Periode</span>
             </div>
           </div>
@@ -439,7 +438,7 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
           <div className="mpv-card-body mpv-history-scroll">
             {history.length === 0 ? (
               <div className="mpv-empty-notice">
-                Belum ada riwayat MPV untuk lini ini. Tetapkan pemenang pada form di samping.
+                Belum ada riwayat MPV untuk lini ini. Tetapkan MVP pada form di samping.
               </div>
             ) : (
               <table className="mpv-mini-table">

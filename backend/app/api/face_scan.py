@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy import func, select
@@ -9,12 +11,13 @@ from app.core.config import settings
 from app.db.session import get_db
 from app.models import DmMeetingAttendance, DmMeetingSession, Employee, FaceTemplate
 from app.schemas import FaceChallengeOut, FaceScanOut
-from app.services.face import liveness
+from app.services.face import antispoof, liveness
 from app.services.face.engine import FaceError, FaceResult, extract_face
 from app.services.face.matcher import matcher
 from app.services.meeting_attendance import home_line_code, mirror_attendance
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
+logger = logging.getLogger("uvicorn.error")
 
 MAX_FRAME_BYTES = 2 * 1024 * 1024
 MAX_FRAMES = 4
@@ -48,9 +51,13 @@ def check_liveness(results: list[FaceResult], token: str | None, session_id: int
     for other in results[1:]:
         if float(other.embedding @ first.embedding) < settings.face_liveness_same_person:
             return "Wajah berubah selama verifikasi. Ulangi."
-    if not liveness.turned_enough(first.yaw, results[-1].yaw, challenge.direction):
+    if challenge.direction is None:
+        if not liveness.moved_enough([(r.pitch, r.yaw) for r in results]):
+            return "Gerakan kepala tidak terdeteksi. Gerakkan kepala sedikit."
+    elif not liveness.turned_enough(first.yaw, results[-1].yaw, challenge.direction):
         return "Gerakan kepala tidak sesuai arah yang diminta. Ulangi."
     return None
+
 
 
 @router.post("/sessions/{session_id}/challenge", response_model=FaceChallengeOut)
@@ -95,6 +102,11 @@ def scan_attendance(
         return not_recognized(failure)
 
     result = min(results, key=lambda r: abs(r.yaw))
+    if settings.face_antispoof_enabled:
+        real = antispoof.real_score(result)
+        logger.info("antispoof real=%.3f yaw=%.1f min=%.2f", real, result.yaw, settings.face_antispoof_min_real)
+        if real < settings.face_antispoof_min_real:
+            return not_recognized("Terdeteksi bukan wajah asli. Hadapkan wajah langsung ke kamera.")
     match = matcher.identify(result.embedding)
     if match is None:
         return not_recognized("Wajah tidak dikenali. Coba scan lagi.")

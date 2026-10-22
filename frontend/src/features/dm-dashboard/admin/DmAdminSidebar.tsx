@@ -153,7 +153,7 @@ export default function DmAdminSidebar({
           onClick={() => onSelectTab("mpv")}
         >
           <span className="dm-admin-nav-icon"><TrophyIcon /></span>
-          <span>MPV of The Month</span>
+          <span>MVP of The Month</span>
         </button>
 
         <button

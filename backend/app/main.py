@@ -7,6 +7,7 @@ from app.core.config import settings
 app = FastAPI(title="Production Dashboard API")
 
 from app.db.session import SessionLocal
+from app.services.face.antispoof import load_models
 from app.services.face.engine import get_model
 from app.services.face.matcher import matcher
 
@@ -14,6 +15,8 @@ from app.services.face.matcher import matcher
 @app.on_event("startup")
 def load_faces() -> None:
     get_model()
+    if settings.face_antispoof_enabled:
+        load_models()
     with SessionLocal() as db:
         matcher.reload(db)
 

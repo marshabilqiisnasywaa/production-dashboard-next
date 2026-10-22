@@ -36,7 +36,9 @@ export async function scanFace(
     await wait(STRAIGHT_MS);
     frames.push(await captureFrame(video));
     onStep({ kind: "turn", direction: challenge.direction });
-    await wait(TURN_MS);
+    await wait(TURN_MS / 2);
+    frames.push(await captureFrame(video));
+    await wait(TURN_MS / 2);
     frames.push(await captureFrame(video));
   } else {
     frames.push(await captureFrame(video));
