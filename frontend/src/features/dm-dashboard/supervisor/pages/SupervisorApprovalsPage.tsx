@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { SupervisorApprovalsTab, SupervisorPageHeader } from "../components";
 import { useSupervisor } from "../SupervisorProvider";
-import type { ViewMode } from "../types";
 
 export default function SupervisorApprovalsPage() {
   const {
@@ -19,48 +18,10 @@ export default function SupervisorApprovalsPage() {
     handleBatchApproveLine,
     openReview,
   } = useSupervisor();
-  const [viewMode, setViewMode] = useState<ViewMode>("grouped");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLineFilter, setSelectedLineFilter] = useState("ALL");
   const [selectedDeptFilter, setSelectedDeptFilter] = useState("ALL");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("ALL");
-
-  const filteredListItems = useMemo(() => {
-    return allListItems.filter((item) => {
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matches =
-          item.name.toLowerCase().includes(q) ||
-          item.employeeNo.toLowerCase().includes(q) ||
-          item.dept.toLowerCase().includes(q) ||
-          (item.lineName && item.lineName.toLowerCase().includes(q));
-        if (!matches) return false;
-      }
-      if (selectedLineFilter !== "ALL") {
-        if (String(item.lineId) !== selectedLineFilter) return false;
-      }
-      if (selectedDeptFilter !== "ALL") {
-        if (item.dept.toUpperCase() !== selectedDeptFilter.toUpperCase()) return false;
-      }
-      if (selectedStatusFilter !== "ALL") {
-        const approval = item.submission?.approvalStatus;
-        const hasSubmitted = Boolean(item.submission);
-
-        if (selectedStatusFilter === "NOT_SUBMITTED" && hasSubmitted) return false;
-        if (selectedStatusFilter === "PENDING" && approval !== "pending") return false;
-        if (selectedStatusFilter === "APPROVED" && approval !== "approved") return false;
-        if (selectedStatusFilter === "REVISION" && approval !== "rejected") return false;
-        if (selectedStatusFilter === "NG" && !item.submission?.hasNg) return false;
-      }
-      return true;
-    });
-  }, [
-    allListItems,
-    searchQuery,
-    selectedLineFilter,
-    selectedDeptFilter,
-    selectedStatusFilter,
-  ]);
 
   const totalCount = allListItems.length;
   const meta = `Dept ${currentSupervisor.dept} · ${dbLines.length} lini · ${totalCount} anggota tim`;
@@ -115,11 +76,7 @@ export default function SupervisorApprovalsPage() {
       </div>
 
       <SupervisorApprovalsTab
-        viewMode={viewMode}
-        setViewMode={setViewMode}
         dbLines={dbLines}
-        allListItems={allListItems}
-        filteredListItems={filteredListItems}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         selectedLineFilter={selectedLineFilter}

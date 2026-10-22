@@ -4,20 +4,12 @@ import {
   IconAlert,
   IconCheckCircle,
   IconClock,
-  IconEye,
-  IconGrid,
-  IconList,
   IconSearch,
 } from "@/components/ui/icons";
 import type { DmSupervisorLine, DmSupervisorSubordinate } from "../../../api";
-import type { ViewMode } from "../../types";
 
 interface SupervisorApprovalsTabProps {
-  viewMode: ViewMode;
-  setViewMode: (mode: ViewMode) => void;
   dbLines: DmSupervisorLine[];
-  allListItems: DmSupervisorSubordinate[];
-  filteredListItems: DmSupervisorSubordinate[];
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   selectedLineFilter: string;
@@ -32,11 +24,7 @@ interface SupervisorApprovalsTabProps {
 }
 
 export function SupervisorApprovalsTab({
-  viewMode,
-  setViewMode,
   dbLines,
-  allListItems,
-  filteredListItems,
   searchQuery,
   setSearchQuery,
   selectedLineFilter,
@@ -52,32 +40,10 @@ export function SupervisorApprovalsTab({
   return (
     <div>
       {/* ------------------------------------------------------------
-          Compact Toolbar: Filters & View Switcher
+          Compact Toolbar: Filters
           ------------------------------------------------------------ */}
       <div className="spv-toolbar">
         <div className="spv-toolbar__left">
-          {/* View Mode Toggle */}
-          <div className="spv-view-switch" role="group" aria-label="Tampilan">
-            <button
-              type="button"
-              className={`spv-view-switch__btn ${viewMode === "grouped" ? "is-active" : ""}`}
-              onClick={() => setViewMode("grouped")}
-              title="Kelompokkan berdasarkan lini"
-            >
-              <IconGrid size={14} />
-              <span>Kelompok Lini</span>
-            </button>
-            <button
-              type="button"
-              className={`spv-view-switch__btn ${viewMode === "list" ? "is-active" : ""}`}
-              onClick={() => setViewMode("list")}
-              title="Tabel daftar detail"
-            >
-              <IconList size={14} />
-              <span>Daftar Tabel</span>
-            </button>
-          </div>
-
           {/* Search Box */}
           <div className="spv-search-box">
             <IconSearch size={14} style={{ color: "#94a3b8", flexShrink: 0 }} />
@@ -144,24 +110,15 @@ export function SupervisorApprovalsTab({
         </div>
 
         <div className="spv-toolbar__right">
-          <span>
-            {viewMode === "grouped"
-              ? `${dbLines.length} Lini Produksi`
-              : `${filteredListItems.length} dari ${allListItems.length} Anggota Tim`}
-          </span>
+          <span>{dbLines.length} Lini Produksi</span>
         </div>
       </div>
 
-      {/* ------------------------------------------------------------
-          MODE A: KELOMPOK LINI (Grouped by Assembly Line)
-          ------------------------------------------------------------ */}
-      {viewMode === "grouped" && (
-        <div>
-          {dbLines.length === 0 ? (
-            <div className="spv-empty-box">
-              Belum ada data lini di database.
-            </div>
-          ) : (
+      {dbLines.length === 0 ? (
+        <div className="spv-empty-box">
+          Belum ada data lini di database.
+        </div>
+      ) : (
             dbLines.map((line) => {
               const subs = line.members.map((m) => m.submission).filter(Boolean);
               const hasAbnormal = subs.some((s) => s?.hasNg);
@@ -171,6 +128,12 @@ export function SupervisorApprovalsTab({
               const pendingLineCount = line.members.filter(
                 (m) => m.submission && m.submission.approvalStatus === "pending"
               ).length;
+              const canApprove = pendingLineCount > 0 && !isSubmittingApproval;
+              const approveTitle = allApproved
+                ? "Semua papercard sudah disetujui"
+                : pendingLineCount === 0
+                ? "Belum ada papercard yang disubmit"
+                : `Setujui serentak seluruh papercard ${line.lineName}`;
 
               return (
                 <div
@@ -223,17 +186,18 @@ export function SupervisorApprovalsTab({
                         </span>
                       )}
 
-                      {!allApproved && (
-                        <button
-                          type="button"
-                          disabled={isSubmittingApproval}
-                          onClick={() => onBatchApproveLine(line)}
-                          className="spv-btn spv-btn--primary spv-btn--sm"
-                          title={`Setujui serentak seluruh papercard ${line.lineName}`}
-                        >
-                          ✓ Setujui Semua Lini
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        disabled={!canApprove}
+                        aria-disabled={!canApprove}
+                        onClick={() => onBatchApproveLine(line)}
+                        className="spv-btn spv-btn--primary spv-btn--sm"
+                        title={approveTitle}
+                      >
+                        {canApprove
+                          ? `✓ Setujui Semua (${pendingLineCount})`
+                          : "✓ Setujui Semua"}
+                      </button>
                     </div>
                   </div>
 
@@ -332,152 +296,6 @@ export function SupervisorApprovalsTab({
                 </div>
               );
             })
-          )}
-        </div>
-      )}
-
-      {/* ------------------------------------------------------------
-          MODE B: PER-LIST / HIGH-DENSITY TABLE VIEW
-          ------------------------------------------------------------ */}
-      {viewMode === "list" && (
-        <div className="spv-table-container">
-          {filteredListItems.length === 0 ? (
-            <div className="spv-empty-box" style={{ margin: "16px" }}>
-              Tidak ada data yang sesuai dengan filter pencarian.
-            </div>
-          ) : (
-            <table className="spv-table">
-              <thead>
-                <tr>
-                  <th>Karyawan</th>
-                  <th>Departemen</th>
-                  <th>Line Kerja</th>
-                  <th>Waktu Submit</th>
-                  <th>Checklist</th>
-                  <th>Status Verifikasi</th>
-                  <th style={{ textAlign: "right" }}>Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredListItems.map((item, idx) => {
-                  const sub = item.submission;
-                  const isSubmitted = Boolean(sub);
-                  const isApproved = sub?.approvalStatus === "approved";
-                  const isRevision = sub?.approvalStatus === "rejected";
-                  const isNG = Boolean(sub?.hasNg);
-                  const isWaiting = isSubmitted && sub?.approvalStatus === "pending";
-
-                  const okCount = sub?.answers?.filter((a: any) => a.status === "OK").length || 0;
-                  const ngCount = sub?.answers?.filter((a: any) => a.status === "NG").length || 0;
-                  const initials = item.name.slice(0, 2).toUpperCase();
-
-                  return (
-                    <tr
-                      key={`${item.id}-${idx}`}
-                      className={isNG ? "has-ng" : ""}
-                    >
-                      {/* Karyawan */}
-                      <td>
-                        <div className="spv-table-emp">
-                          <div className="spv-table-emp-avatar">{initials}</div>
-                          <div>
-                            <div className="spv-table-emp-name">{item.name}</div>
-                            <div className="spv-table-emp-meta">
-                              NIK: {item.employeeNo} · {item.position}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Departemen & Peran */}
-                      <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                          <span className={`spv-chip spv-chip--dept-${item.dept.toLowerCase()}`}>
-                            {item.dept}
-                          </span>
-                          {item.role === "leader" && (
-                            <span className="spv-chip spv-chip--neutral">Leader</span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Lini Kerja */}
-                      <td>
-                        <strong>{item.lineName || "Line 1"}</strong>
-                      </td>
-
-                      {/* Waktu Submit */}
-                      <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: "4px", color: isSubmitted ? "#0f172a" : "#94a3b8" }}>
-                          <IconClock size={12} />
-                          <span>
-                            {sub?.submittedAt
-                              ? `${new Date(sub.submittedAt).toLocaleTimeString("id-ID", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })} WIB`
-                              : "Belum Submit"}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Hasil Checklist */}
-                      <td>
-                        {isSubmitted ? (
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                            <span className="spv-mini-badge spv-mini-badge--ok">{okCount} OK</span>
-                            {ngCount > 0 && (
-                              <span className="spv-mini-badge spv-mini-badge--ng">{ngCount} NG</span>
-                            )}
-                          </div>
-                        ) : (
-                          <span style={{ fontSize: "11px", color: "#94a3b8" }}>-</span>
-                        )}
-                      </td>
-
-                      {/* Status Verifikasi */}
-                      <td>
-                        {isApproved ? (
-                          <span className="spv-status-badge spv-status-badge--approved">
-                            <IconCheckCircle size={12} /> Disetujui
-                          </span>
-                        ) : isRevision ? (
-                          <span className="spv-status-badge spv-status-badge--revision">
-                            Minta Revisi
-                          </span>
-                        ) : isNG ? (
-                          <span className="spv-status-badge spv-status-badge--ng">
-                            <IconAlert size={12} /> Ada Temuan NG
-                          </span>
-                        ) : isWaiting ? (
-                          <span className="spv-status-badge spv-status-badge--waiting">
-                            Menunggu Review
-                          </span>
-                        ) : (
-                          <span className="spv-status-badge spv-status-badge--empty">
-                            Belum Submit
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Aksi */}
-                      <td style={{ textAlign: "right" }}>
-                        <button
-                          type="button"
-                          onClick={() => onSelectReview(item)}
-                          className="spv-btn spv-btn--secondary spv-btn--sm"
-                        >
-                          <IconEye size={12} />
-                          <span>{isSubmitted ? "Tinjau & Setujui" : "Detail"}</span>
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
       )}
     </div>
   );

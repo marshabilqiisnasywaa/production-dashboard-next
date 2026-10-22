@@ -200,13 +200,10 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
         .map((member) => member.submission)
         .filter(
           (submission): submission is NonNullable<typeof submission> =>
-            Boolean(submission && submission.approvalStatus !== "approved"),
+            Boolean(submission && submission.approvalStatus === "pending"),
         );
 
-      if (pendingSubs.length === 0) {
-        showToast(`Seluruh papercard di ${line.lineName} sudah disetujui.`, "info");
-        return;
-      }
+      if (pendingSubs.length === 0) return;
 
       setIsSubmittingApproval(true);
       try {

@@ -1,7 +1,5 @@
 // Types and Preset Constants for Supervisor Portal
 
-export type ViewMode = "grouped" | "list";
-
 export interface SupervisorInfo {
   name: string;
   employeeNo: string;
