@@ -423,6 +423,39 @@
   color: #8d2d2d;
 }
 
+.dm-recap-status-pill.is-diwakilkan {
+  background: #e8eefb;
+  color: #23407a;
+}
+
+.dm-recap-status-pill.is-sakit {
+  background: #f4edf9;
+  color: #68358d;
+}
+
+.dm-recap-status-pill.is-tidak-hadir {
+  background: #eef0ef;
+  color: #55635b;
+}
+
+.dm-recap-guest-tag {
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: #fcf5e6;
+  color: #7d5917;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.dm-recap-status-note {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.76rem;
+  color: #4b5563;
+}
+
+
 .dm-recap-dot {
   width: 5px;
   height: 5px;

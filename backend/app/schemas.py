@@ -405,6 +405,42 @@ class AbsenceNoteIn(CamelModel):
 class AbsenceNotesIn(CamelModel):
     items: list[AbsenceNoteIn] = Field(default_factory=list)
 
+class RecapSessionOut(CamelModel):
+    id: int
+    line_id: int
+    line_code: str
+    session_number: int
+    label: str | None = None
+    scheduled_time: str
+    status: str
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
+    team_size: int
+
+
+class RecapRowOut(CamelModel):
+    session_id: int
+    line_id: int
+    line_code: str
+    session_number: int
+    employee_no: str
+    name: str
+    dept: str | None = None
+    position: str | None = None
+    status: str
+    absence_reason: str | None = None
+    absence_note: str | None = None
+    attended_at: datetime
+    is_guest: bool
+    home_line: str | None = None
+
+
+class AttendanceRecapOut(CamelModel):
+    date: date
+    sessions: list[RecapSessionOut]
+    rows: list[RecapRowOut]
+
+
 
 class MeetingSessionStartIn(CamelModel):
     line_id: int

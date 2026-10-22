@@ -114,7 +114,7 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
   workshop: { crumb: "Lini, Workshop & Tim", title: "Pengaturan Workshop, Lini Produksi, dan Anggota Tim" },
   users: { crumb: "User", title: "Daftar User: Role dan Departemen" },
   papercard: { crumb: "Papercard & Meeting", title: "Template Papercard dan Jadwal DM Meeting per Lini" },
-  mpv: { crumb: "MPV of The Month", title: "MPV of The Month per Lini dan Riwayatnya" },
+  mpv: { crumb: "MVP of The Month", title: "MVP of The Month per Lini dan Riwayatnya" },
   attendance: { crumb: "Rekap Presensi", title: "Rekapitulasi Presensi & Riwayat Meeting per Tanggal" },
 };
 
@@ -623,7 +623,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                   <h3 className="dm-admin-sec-title">Rekapitulasi Presensi</h3>
                   <span className="dm-admin-sec-sub">Pantau kehadiran tim.</span>
                 </div>
-                <AttendanceRecap />
+                <AttendanceRecap lines={lines} call={call} />
               </div>
             )}
           </div>

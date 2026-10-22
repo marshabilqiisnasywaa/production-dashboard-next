@@ -205,6 +205,43 @@ export const accountApi = {
     request<void>("/auth/change-password", json("POST", { currentPassword, newPassword }), true),
 };
 
+export type DmRecapSession = {
+  id: number;
+  lineId: number;
+  lineCode: string;
+  sessionNumber: number;
+  label: string | null;
+  scheduledTime: string;
+  status: "pending" | "in_progress" | "completed";
+  startedAt: string | null;
+  endedAt: string | null;
+  teamSize: number;
+};
+
+export type DmRecapRow = {
+  sessionId: number;
+  lineId: number;
+  lineCode: string;
+  sessionNumber: number;
+  employeeNo: string;
+  name: string;
+  dept: string | null;
+  position: string | null;
+  status: "present" | "absent" | "permit" | "sick";
+  absenceReason: string | null;
+  absenceNote: string | null;
+  attendedAt: string;
+  isGuest: boolean;
+  homeLine: string | null;
+};
+
+export type DmAttendanceRecap = {
+  date: string;
+  sessions: DmRecapSession[];
+  rows: DmRecapRow[];
+};
+
+
 export const adminApi = {
   workshops: () => request<DmWorkshop[]>("/admin/workshops", {}, true),
   createWorkshop: (name: string) => request<DmWorkshop>("/admin/workshops", json("POST", { name }), true),
@@ -234,6 +271,12 @@ export const adminApi = {
     request<DmMpv>(`/admin/lines/${lineId}/mpv/${period}`, json("PUT", data), true),
   deleteMpv: (lineId: number, period: string) =>
     request<void>(`/admin/lines/${lineId}/mpv/${period}`, { method: "DELETE" }, true),
+  attendanceRecap: (date: string, lineId?: number) =>
+    request<DmAttendanceRecap>(
+      "/admin/attendance-recap?date=" + date + (lineId ? "&line_id=" + lineId : ""),
+      {},
+      true,
+    ),
 };
 
 export type DmPapercardTemplate = {

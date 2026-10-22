@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Path, Response, status
+from datetime import date
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response, status
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_admin
+from app.api.meetings import _absence_fields
 from app.db.session import get_db
-from app.models import Board, BoardMember, Employee, Line, MpvAward, Workshop
+from app.models import Board, BoardMember, DmMeetingAttendance, DmMeetingSession, Employee, Line, MpvAward, Workshop
 from app.schemas import (
     EmployeeIn,
     EmployeeOut,
@@ -20,6 +22,9 @@ from app.schemas import (
     ResetPasswordIn,
     WorkshopIn,
     WorkshopOut,
+    AttendanceRecapOut,
+    RecapRowOut,
+    RecapSessionOut,
 )
 from app.services.accounts import new_employee, reset_password
 from app.services.boards import (
@@ -549,3 +554,87 @@ def delete_employee(employee_pk: int, db: Session = Depends(get_db)) -> Response
     db.commit()
     matcher.reload(db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.get("/attendance-recap", response_model=AttendanceRecapOut)
+def attendance_recap(
+    date_val: date = Query(..., alias="date"),
+    line_id: int | None = None,
+    db: Session = Depends(get_db),
+) -> AttendanceRecapOut:
+    stmt = (
+        select(DmMeetingSession, Line.code)
+        .join(Line, Line.id == DmMeetingSession.line_id)
+        .where(DmMeetingSession.date == date_val)
+        .order_by(Line.code, DmMeetingSession.session_number)
+    )
+    if line_id is not None:
+        stmt = stmt.where(DmMeetingSession.line_id == line_id)
+    found = db.execute(stmt).all()
+
+    team_size = dict(
+        db.execute(
+            select(Board.line_id, func.count(BoardMember.id))
+            .join(BoardMember, BoardMember.board_id == Board.id)
+            .where(BoardMember.ended_at.is_(None))
+            .group_by(Board.line_id)
+        ).all()
+    )
+    home_line = {
+        row[0]: (row[1], row[2])
+        for row in db.execute(
+            select(BoardMember.employee_id, Line.id, Line.code)
+            .join(Board, Board.id == BoardMember.board_id)
+            .join(Line, Line.id == Board.line_id)
+            .where(BoardMember.ended_at.is_(None))
+        ).all()
+    }
+
+    sessions = [
+        RecapSessionOut(
+            id=s.id,
+            line_id=s.line_id,
+            line_code=code,
+            session_number=s.session_number,
+            label=s.label,
+            scheduled_time=s.scheduled_time,
+            status=s.status,
+            started_at=s.started_at,
+            ended_at=s.ended_at,
+            team_size=team_size.get(s.line_id, 0),
+        )
+        for s, code in found
+    ]
+
+    by_session = {s.id: (s, code) for s, code in found}
+    rows: list[RecapRowOut] = []
+    if by_session:
+        attendances = db.execute(
+            select(DmMeetingAttendance, Employee)
+            .join(Employee, Employee.id == DmMeetingAttendance.employee_id)
+            .where(DmMeetingAttendance.session_id.in_(list(by_session)))
+            .order_by(DmMeetingAttendance.attended_at)
+        ).all()
+        for a, emp in attendances:
+            session, code = by_session[a.session_id]
+            home = home_line.get(emp.id)
+            reason, note = _absence_fields(a)
+            rows.append(
+                RecapRowOut(
+                    session_id=session.id,
+                    line_id=session.line_id,
+                    line_code=code,
+                    session_number=session.session_number,
+                    employee_no=emp.employee_no,
+                    name=emp.name,
+                    dept=emp.dept,
+                    position=emp.position,
+                    status=a.status,
+                    absence_reason=reason,
+                    absence_note=note,
+                    attended_at=a.attended_at,
+                    is_guest=a.status == "present" and (home is None or home[0] != session.line_id),
+                    home_line=home[1] if home else None,
+                )
+            )
+
+    return AttendanceRecapOut(date=date_val, sessions=sessions, rows=rows)
