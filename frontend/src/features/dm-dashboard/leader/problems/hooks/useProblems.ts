@@ -1,27 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useNow } from "../../hooks/useNow";
 import { useMeetingMembers } from "../../meeting/hooks/useMeetingMembers";
 import { MEETING_SESSIONS } from "../../meeting/mockData";
-import { makeSampleProblems, SHOW_SAMPLE_DATA } from "../sampleData";
-import { readMeetingProblems, readStatusMap, writeStatusMap } from "../storage";
-import type { ProblemRow, StatusEntry, StoredProblem } from "../types";
+import { writeStatusMap } from "../storage";
+import type { ProblemRow } from "../types";
 import { countByStatus, getStatus, sortRows } from "../utils";
+import { useStoredProblems } from "./useStoredProblems";
 
 /** All problems from DM meetings, with their status (unsolved / escalated / solved). */
 export function useProblems() {
   const now = useNow(60_000); // re-checks "past due" every minute
   const members = useMeetingMembers();
-  const [stored, setStored] = useState<StoredProblem[] | null>(null);
-  const [statusMap, setStatusMap] = useState<Record<string, StatusEntry>>({});
-
-  // localStorage only exists in the browser, so read it after mount
-  useEffect(() => {
-    const real = readMeetingProblems();
-    setStored(SHOW_SAMPLE_DATA ? [...real, ...makeSampleProblems(new Date())] : real);
-    setStatusMap(readStatusMap());
-  }, []);
+  const { stored, statusMap, setStatusMap } = useStoredProblems();
 
   const rows = useMemo<ProblemRow[]>(() => {
     if (!now || !stored) return [];

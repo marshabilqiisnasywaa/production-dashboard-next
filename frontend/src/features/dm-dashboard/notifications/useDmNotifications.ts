@@ -46,9 +46,16 @@ interface UseDmNotificationsProps {
   dept?: string | null;
   role?: string | null;
   lineName?: string | null;
+  extraNotifications?: DmAppNotification[];
 }
 
-export function useDmNotifications({ lineId, dept, role, lineName }: UseDmNotificationsProps) {
+export function useDmNotifications({
+  lineId,
+  dept,
+  role,
+  lineName,
+  extraNotifications,
+}: UseDmNotificationsProps) {
   const [settings, setSettings] = useState<DmNotificationSetting>({
     lineId: lineId || 1,
     papercardReminderMinutes: 15,
@@ -148,7 +155,7 @@ export function useDmNotifications({ lineId, dept, role, lineName }: UseDmNotifi
   // Compute Active Notifications
   // Compute Active Notifications (Comprehensive 4-Stage Lifecycle)
   const notifications = useMemo(() => {
-    const list: DmAppNotification[] = [];
+    const list: DmAppNotification[] = [...(extraNotifications ?? [])];
     const now = new Date();
     const curYear = now.getFullYear();
     const curMonth = now.getMonth();
@@ -352,6 +359,7 @@ export function useDmNotifications({ lineId, dept, role, lineName }: UseDmNotifi
     role,
     lineName,
     lastCheck,
+    extraNotifications,
   ]);
 
   // Play audio chime and trigger floating toasts for all unalerted notifications

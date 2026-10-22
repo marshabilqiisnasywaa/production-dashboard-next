@@ -50,7 +50,12 @@ function LiquidToastItem({ toast, onDismiss }: LiquidToastItemProps) {
     };
   }, [isPaused, durationMs, onDismiss]);
 
-  const isMeeting = notification.type === "meeting";
+  const typeLabel =
+    notification.type === "meeting"
+      ? "👥 Meeting"
+      : notification.type === "escalation"
+        ? "⚠️ Eskalasi"
+        : "📝 Papercard";
   const isLate = notification.severity === "urgent"; // Telat -> Soft Merah
   const isReminder = notification.severity === "warning"; // Pengingat -> Soft Kuning
 
@@ -74,9 +79,7 @@ function LiquidToastItem({ toast, onDismiss }: LiquidToastItemProps) {
           <span className="dm-toast-status-badge">
             {isLate ? "TELAT" : isReminder ? "PENGINGAT" : "INFO"}
           </span>
-          <span className="dm-toast-category">
-            {isMeeting ? "👥 Meeting" : "📝 Papercard"}
-          </span>
+          <span className="dm-toast-category">{typeLabel}</span>
         </div>
 
         <div className="dm-toast-meta-right">

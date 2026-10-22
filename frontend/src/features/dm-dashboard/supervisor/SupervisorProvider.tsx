@@ -18,6 +18,8 @@ import {
   type DmSupervisorOverview,
   type DmSupervisorSubordinate,
 } from "../api";
+import type { ProblemRow } from "../leader/problems/types";
+import { useEscalations } from "./hooks/useEscalations";
 import type { SupervisorInfo, ToastMessage } from "./types";
 
 interface SupervisorContextValue {
@@ -29,6 +31,8 @@ interface SupervisorContextValue {
   currentSupervisor: SupervisorInfo;
   dbLines: DmSupervisorLine[];
   allListItems: DmSupervisorSubordinate[];
+  escalatedRows: ProblemRow[];
+  escalatedCount: number;
   totalCount: number;
   submittedCount: number;
   pendingApprovalsCount: number;
@@ -128,6 +132,11 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
   const allListItems = useMemo<DmSupervisorSubordinate[]>(() => {
     return overviewData?.mySubordinates || [];
   }, [overviewData]);
+
+  const { rows: escalatedRows, count: escalatedCount } = useEscalations(
+    allListItems,
+    dbLines,
+  );
 
   const totalCount = allListItems.length;
   const submittedCount = allListItems.filter((item) => Boolean(item.submission)).length;
@@ -237,6 +246,8 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
       currentSupervisor,
       dbLines,
       allListItems,
+      escalatedRows,
+      escalatedCount,
       totalCount,
       submittedCount,
       pendingApprovalsCount,
@@ -262,6 +273,8 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
       currentSupervisor,
       dbLines,
       allListItems,
+      escalatedRows,
+      escalatedCount,
       totalCount,
       submittedCount,
       pendingApprovalsCount,

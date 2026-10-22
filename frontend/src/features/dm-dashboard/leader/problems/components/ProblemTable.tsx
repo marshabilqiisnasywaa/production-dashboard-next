@@ -12,9 +12,13 @@ const STATUS_VIEW: Record<ProblemStatus, { tone: ChipTone; label: string }> = {
 
 interface Props {
   rows: ProblemRow[];
+  emptyMessage?: string;
 }
 
-export function ProblemTable({ rows }: Props) {
+export function ProblemTable({
+  rows,
+  emptyMessage = "Tidak ada masalah yang sesuai dengan filter.",
+}: Props) {
   return (
     <div className="dml-table-wrap dml-pb-table-wrap">
       <table className="dml-table dml-pb-table">
@@ -34,7 +38,7 @@ export function ProblemTable({ rows }: Props) {
           {rows.length === 0 ? (
             <tr>
               <td colSpan={7} className="dml-empty">
-                Tidak ada masalah yang sesuai dengan filter.
+                {emptyMessage}
               </td>
             </tr>
           ) : (

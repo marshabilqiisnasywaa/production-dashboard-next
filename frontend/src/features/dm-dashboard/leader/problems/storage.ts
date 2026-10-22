@@ -5,8 +5,10 @@
  */
 import type { StatusEntry, StoredProblem } from "./types";
 
+export const PROBLEMS_STATUS_STORAGE_KEY = "dm-problems:v1:status";
+
 const MEETING_PREFIX = "dm-meeting:v1:"; // key = prefix + date + ":" + sessionId
-const STATUS_KEY = "dm-problems:v1:status";
+const STATUS_KEY = PROBLEMS_STATUS_STORAGE_KEY;
 
 /** Follow-up items of every FINISHED meeting (drafts of a running meeting are ignored). */
 export function readMeetingProblems(): StoredProblem[] {
