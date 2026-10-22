@@ -50,6 +50,8 @@ const statusOptions: { value: DmLineStatus; label: string }[] = [
   { value: "stopped", label: "STOPPED: berhenti atau maintenance" },
 ];
 
+const DEFAULT_VALUES = "Benfen, Orientasi Pengguna, Mengejar Keunggulan, Keterbukaan";
+
 function blank(defaultWorkshopId: number | null): FormState {
   return {
     workshopId: defaultWorkshopId,
@@ -61,7 +63,7 @@ function blank(defaultWorkshopId: number | null): FormState {
     lineLabelZh: "",
     slug: "",
     slogan: "",
-    values: "",
+    values: DEFAULT_VALUES, // <-- Otomatis terisi saat buat lini baru
     teamPhotoUrl: "",
   };
 }
@@ -77,7 +79,8 @@ function fromLine(line: DmLine): FormState {
     lineLabelZh: line.lineLabelZh ?? "",
     slug: line.slug,
     slogan: line.slogan ?? "",
-    values: line.values.join(", "),
+    // Kalau data values dari database masih kosong, otomatis pakai DEFAULT_VALUES
+    values: line.values.length > 0 ? line.values.join(", ") : DEFAULT_VALUES,
     teamPhotoUrl: line.teamPhotoUrl ?? "",
   };
 }

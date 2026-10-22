@@ -2,7 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { papercardApi, type DmMeetingSession } from "../api";
+import { notificationApi, papercardApi, type DmMeetingSession } from "../api";
 import "./ReminderModal.css";
 
 type ReminderType = "papercard" | "meeting";
@@ -25,9 +25,24 @@ interface ReminderItem {
   startTime: string;
   endTime?: string;
   href: string;
+  leadMinutes: number;
+  enabled: boolean;
 }
 
-const REMINDER_LEAD_MINUTES = 15;
+interface ReminderSettings {
+  papercardReminderMinutes: number;
+  papercardEnabled: boolean;
+  meetingReminderMinutes: number;
+  meetingEnabled: boolean;
+}
+
+const DEFAULT_SETTINGS: ReminderSettings = {
+  papercardReminderMinutes: 15,
+  papercardEnabled: true,
+  meetingReminderMinutes: 15,
+  meetingEnabled: true,
+};
+
 
 function localDateKey(date: Date): string {
   const year = date.getFullYear();
@@ -96,6 +111,8 @@ export function ReminderModal({
   const [active, setActive] = useState<ReminderItem | null>(null);
   const [demo, setDemo] = useState(false);
   const [demoError, setDemoError] = useState("");
+  const [settings, setSettings] = useState<ReminderSettings>(DEFAULT_SETTINGS);
+
 
   // Keep the clock current while the dashboard is open.
   useEffect(() => {
@@ -105,6 +122,35 @@ export function ReminderModal({
     const interval = window.setInterval(tick, 15_000);
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!lineId) return;
+
+    let cancelled = false;
+    const load = () => {
+      notificationApi
+        .getSettings(lineId)
+        .then((result) => {
+          if (cancelled) return;
+          setSettings({
+            papercardReminderMinutes: result.papercardReminderMinutes,
+            papercardEnabled: result.papercardEnabled,
+            meetingReminderMinutes: result.meetingReminderMinutes,
+            meetingEnabled: result.meetingEnabled,
+          });
+        })
+        .catch(() => undefined);
+    };
+
+    load();
+    const interval = window.setInterval(load, 60_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [lineId]);
+
 
   // Load the saved Papercard window for this line and department.
   useEffect(() => {
@@ -161,10 +207,13 @@ export function ReminderModal({
         startTime: windowStart,
         endTime: windowEnd || undefined,
         href: papercardHref,
+        leadMinutes: settings.papercardReminderMinutes,
+        enabled: settings.papercardEnabled,  
       });
     }
 
     for (const session of sessions) {
+      if (session.status !== "pending") continue;
       items.push({
         id: `meeting-${session.id}`,
         type: "meeting",
@@ -172,11 +221,14 @@ export function ReminderModal({
         description: `${session.label || `Sesi ${session.sessionNumber}`} akan segera dimulai. Persiapkan diri untuk Daily Management Meeting.`,
         startTime: session.scheduledTime,
         href: meetingHref,
+        leadMinutes: settings.meetingReminderMinutes,
+        enabled: settings.meetingEnabled,  
       });
     }
 
     return items;
-  }, [windowStart, windowEnd, sessions, papercardHref, meetingHref]);
+  }, [windowStart, windowEnd, sessions, papercardHref, meetingHref, settings]);
+
 
   const dismiss = useCallback((item: ReminderItem) => {
     markDismissed(new Date(), item.id);
@@ -193,13 +245,15 @@ export function ReminderModal({
 
     const due = reminders.find((item) => {
       if (item.type === "papercard" && papercardSubmitted) return false;
+      if (!item.enabled) return false;
+
 
       const startMinute = parseTime(item.startTime);
       if (startMinute === null) return false;
 
       // If the user opens the dashboard during the 15-minute lead window,
       // still show the reminder, rather than requiring an exact page-open minute.
-      const reminderMinute = startMinute - REMINDER_LEAD_MINUTES;
+      const reminderMinute = startMinute - item.leadMinutes;
       const isInReminderWindow =
         currentMinute >= reminderMinute && currentMinute < startMinute;
 
@@ -302,7 +356,7 @@ export function ReminderModal({
               </strong>
 
               <span className="dm-reminder-time-note">
-                Pengingat 15 menit sebelum waktu dimulai
+                Pengingat {current.leadMinutes} menit sebelum waktu dimulai
               </span>
             </div>
 
