@@ -6,6 +6,7 @@
 import type { StatusEntry, StoredProblem } from "./types";
 
 export const PROBLEMS_STATUS_STORAGE_KEY = "dm-problems:v1:status";
+export const PROBLEMS_CHANGED_EVENT = "dm-problems:changed";
 
 const MEETING_PREFIX = "dm-meeting:v1:"; // key = prefix + date + ":" + sessionId
 const STATUS_KEY = PROBLEMS_STATUS_STORAGE_KEY;
@@ -49,6 +50,9 @@ export function readStatusMap(): Record<string, StatusEntry> {
 export function writeStatusMap(map: Record<string, StatusEntry>) {
   try {
     localStorage.setItem(STATUS_KEY, JSON.stringify(map));
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(PROBLEMS_CHANGED_EVENT));
+    }
   } catch {
     // ignore
   }

@@ -1,23 +1,45 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useNow } from "../../hooks/useNow";
 import { useMeetingMembers } from "../../meeting/hooks/useMeetingMembers";
 import { MEETING_SESSIONS } from "../../meeting/mockData";
-import { writeStatusMap } from "../storage";
-import type { ProblemRow } from "../types";
+import {
+  PROBLEMS_CHANGED_EVENT,
+  PROBLEMS_STATUS_STORAGE_KEY,
+  readStatusMap,
+  writeStatusMap,
+} from "../storage";
+import type { ProblemRow, StoredProblem } from "../types";
 import { countByStatus, getStatus, sortRows } from "../utils";
 import { useStoredProblems } from "./useStoredProblems";
 
+const NO_EXTRA_PROBLEMS: StoredProblem[] = [];
+
 /** All problems from DM meetings, with their status (unsolved / escalated / solved). */
-export function useProblems() {
+export function useProblems(extraProblems: StoredProblem[] = NO_EXTRA_PROBLEMS) {
   const now = useNow(60_000); // re-checks "past due" every minute
   const members = useMeetingMembers();
   const { stored, statusMap, setStatusMap } = useStoredProblems();
 
+  useEffect(() => {
+    const sync = () => setStatusMap(readStatusMap());
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === PROBLEMS_STATUS_STORAGE_KEY || event.key === null) sync();
+    };
+
+    window.addEventListener(PROBLEMS_CHANGED_EVENT, sync);
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      window.removeEventListener(PROBLEMS_CHANGED_EVENT, sync);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [setStatusMap]);
+
   const rows = useMemo<ProblemRow[]>(() => {
     if (!now || !stored) return [];
-    const built = stored.map((p): ProblemRow => {
+    const source = extraProblems.length > 0 ? [...stored, ...extraProblems] : stored;
+    const built = source.map((p): ProblemRow => {
       const entry = statusMap[p.id];
       const solved = entry ? entry.solved : Boolean(p.defaultSolved);
       const status = getStatus(solved, p.due, now);
@@ -37,7 +59,7 @@ export function useProblems() {
       };
     });
     return sortRows(built);
-  }, [now, stored, statusMap, members]);
+  }, [now, stored, statusMap, members, extraProblems]);
 
   const counts = useMemo(() => countByStatus(rows), [rows]);
 

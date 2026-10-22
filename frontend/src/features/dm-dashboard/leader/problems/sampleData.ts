@@ -5,6 +5,7 @@ import type { StoredProblem } from "./types";
 
 export const SHOW_SAMPLE_DATA = true;
 export const ESCALATION_SAMPLE_PREFIX = "esc-sample-";
+export const MEMBER_SAMPLE_PREFIX = "my-sample-";
 
 const dayOffset = (now: Date, days: number) => {
   const d = new Date(now);
@@ -147,4 +148,47 @@ export function makeEscalationSamples(
     sample: true,
     defaultSolved: draft.solved,
   }));
+}
+
+/** Demo problems for "Masalah Saya", attributed to the signed-in member only. */
+export function makeMemberSamples(now: Date, memberName: string): StoredProblem[] {
+  const name = memberName.trim();
+  if (!name) return [];
+
+  return [
+    {
+      id: `${MEMBER_SAMPLE_PREFIX}1`,
+      date: dayOffset(now, -1),
+      sessionId: "during-1",
+      line: "TAC20601",
+      problem: "Jig fixture belum diverifikasi ulang setelah change model",
+      picId: "",
+      picName: name,
+      due: localDateTime(new Date(now.getTime() + 2 * 86_400_000)),
+      sample: true,
+    },
+    {
+      id: `${MEMBER_SAMPLE_PREFIX}2`,
+      date: dayOffset(now, -2),
+      sessionId: "during-2",
+      line: "TAC20602",
+      problem: "Parameter mesin dispensing bergeser dari standar",
+      picId: "",
+      picName: name,
+      due: localDateTime(new Date(now.getTime() - 5 * 3_600_000)),
+      sample: true,
+    },
+    {
+      id: `${MEMBER_SAMPLE_PREFIX}3`,
+      date: dayOffset(now, -3),
+      sessionId: "during-1",
+      line: "TAC20603",
+      problem: "Kalibrasi alat ukur belum diperbarui",
+      picId: "",
+      picName: name,
+      due: localDateTime(new Date(now.getTime() - 30 * 3_600_000)),
+      sample: true,
+      defaultSolved: true,
+    },
+  ];
 }

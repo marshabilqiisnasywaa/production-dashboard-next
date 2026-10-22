@@ -328,7 +328,7 @@ export function SupervisorReviewModal({
                 className="spv-btn spv-btn--primary"
               >
                 <IconCheck size={14} />
-                <span>✓ Setujui Papercard</span>
+                <span>Setujui Papercard</span>
               </button>
             </>
           )}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import "../leader/problems/problems.css"; // table styles shared with the Leader's Tracking Masalah
 import { Card } from "@/components/ui/Card";
 import { ProblemTable } from "../leader/problems/components/ProblemTable";
@@ -9,7 +10,19 @@ import { useMember } from "./MemberProvider";
 /** "Masalah Saya": the Leader's Tracking Masalah table, but only the rows where this member is the PIC. */
 export default function MyProblemsPage() {
   const { profile } = useMember();
-  const { mine, open, escalated, ready, toggleSolved } = useMyProblems(profile.name);
+  const { mine, open, escalated, solved, ready, toggleSolved } = useMyProblems(profile.name);
+  const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 2500);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  function handleToggleSolved(id: string, currentlySolved: boolean) {
+    toggleSolved(id, currentlySolved);
+    setToast(currentlySolved ? "Masalah dibuka kembali" : "Masalah ditandai selesai");
+  }
 
   return (
     <div className="dml-pb">
@@ -23,9 +36,27 @@ export default function MyProblemsPage() {
         </div>
       </div>
 
-      <Card flush title="Daftar masalah" subtitle={`${open.length} terbuka · ${escalated} eskalasi SPV`}>
-        {ready ? <ProblemTable rows={mine} /> : <div className="dml-empty">Memuat masalah…</div>}
+      <Card
+        flush
+        title="Daftar masalah"
+        subtitle={`${open.length} terbuka · ${escalated} eskalasi SPV · ${solved} selesai`}
+      >
+        {ready ? (
+          <ProblemTable rows={mine} onToggleSolved={handleToggleSolved} />
+        ) : (
+          <div className="dml-empty">Memuat masalah…</div>
+        )}
       </Card>
+
+      {toast && (
+        <div
+          role="status"
+          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-md px-3.5 py-2 text-xs font-medium text-white shadow-md"
+          style={{ background: "#286b46" }}
+        >
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

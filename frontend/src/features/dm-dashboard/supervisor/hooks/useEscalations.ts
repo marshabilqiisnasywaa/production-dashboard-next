@@ -12,6 +12,7 @@ import {
   SHOW_SAMPLE_DATA,
 } from "../../leader/problems/sampleData";
 import {
+  PROBLEMS_CHANGED_EVENT,
   PROBLEMS_STATUS_STORAGE_KEY,
   readStatusMap,
 } from "../../leader/problems/storage";
@@ -26,14 +27,17 @@ export function useEscalations(
   const { stored, statusMap, setStatusMap } = useStoredProblems();
 
   useEffect(() => {
+    const sync = () => setStatusMap(readStatusMap());
     const handleStorage = (event: StorageEvent) => {
-      if (event.key === PROBLEMS_STATUS_STORAGE_KEY || event.key === null) {
-        setStatusMap(readStatusMap());
-      }
+      if (event.key === PROBLEMS_STATUS_STORAGE_KEY || event.key === null) sync();
     };
 
+    window.addEventListener(PROBLEMS_CHANGED_EVENT, sync);
     window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    return () => {
+      window.removeEventListener(PROBLEMS_CHANGED_EVENT, sync);
+      window.removeEventListener("storage", handleStorage);
+    };
   }, [setStatusMap]);
 
   const rows = useMemo<ProblemRow[]>(() => {

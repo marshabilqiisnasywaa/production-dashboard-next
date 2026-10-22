@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useProblems } from "../../leader/problems/hooks/useProblems";
+import { makeMemberSamples, SHOW_SAMPLE_DATA } from "../../leader/problems/sampleData";
 
 /**
  * Problems where the member is the PIC. Reuses the Leader's problem list and keeps only their rows.
@@ -9,7 +10,11 @@ import { useProblems } from "../../leader/problems/hooks/useProblems";
  * until the backend stores them. Matching is by name for now (TODO: by user id).
  */
 export function useMyProblems(name: string) {
-  const { rows, ready, toggleSolved } = useProblems();
+  const samples = useMemo(
+    () => (SHOW_SAMPLE_DATA && name.trim() ? makeMemberSamples(new Date(), name) : []),
+    [name],
+  );
+  const { rows, ready, toggleSolved } = useProblems(samples);
 
   return useMemo(() => {
     const me = name.trim().toLowerCase();
@@ -18,6 +23,7 @@ export function useMyProblems(name: string) {
       mine,
       open: mine.filter((r) => r.status !== "solved"),
       escalated: mine.filter((r) => r.status === "escalated").length,
+      solved: mine.filter((r) => r.status === "solved").length,
       ready,
       toggleSolved,
     };
