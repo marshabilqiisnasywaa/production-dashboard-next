@@ -75,7 +75,7 @@ export default function SupervisorDashboard() {
           title="Menunggu persetujuan"
           value={pendingApprovalsCount}
           icon={<IconClock size={20} />}
-          unit={" Berkas"}
+          unit={""}
           tone={pendingApprovalsCount > 0 ? "warn" : "ok"}
           showTarget={false}
         />
@@ -83,7 +83,7 @@ export default function SupervisorDashboard() {
           title="Temuan NG"
           value={abnormalCount}
           icon={<IconAlert size={20} />}
-          unit={" Temuan"}
+          unit={""}
           tone={abnormalCount > 0 ? "bad" : "ok"}
           showTarget={false}
         />

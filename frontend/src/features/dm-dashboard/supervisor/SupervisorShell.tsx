@@ -13,6 +13,7 @@ import { SupervisorHeader } from "./components/SupervisorHeader";
 function SupervisorFrame({ children }: { children: ReactNode }) {
   const {
     pendingApprovalsCount,
+    escalatedCount,
     toastMessage,
     dismissToast,
     reviewTarget,
@@ -25,7 +26,10 @@ function SupervisorFrame({ children }: { children: ReactNode }) {
 
   return (
     <div className="dm-theme dml-shell">
-      <SupervisorSidebar pendingApprovalsCount={pendingApprovalsCount} />
+      <SupervisorSidebar
+        pendingApprovalsCount={pendingApprovalsCount}
+        escalationCount={escalatedCount}
+      />
       <div className="dml-main">
         <SupervisorHeader />
         <main className="dml-content">

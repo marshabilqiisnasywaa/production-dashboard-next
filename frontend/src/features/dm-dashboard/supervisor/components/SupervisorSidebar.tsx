@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  IconAlert,
   IconClipboardCheck,
   IconDashboard,
   IconGauge,
@@ -12,9 +13,13 @@ import { SUPERVISOR_ROUTES } from "../routes";
 
 interface SupervisorSidebarProps {
   pendingApprovalsCount: number;
+  escalationCount: number;
 }
 
-export function SupervisorSidebar({ pendingApprovalsCount }: SupervisorSidebarProps) {
+export function SupervisorSidebar({
+  pendingApprovalsCount,
+  escalationCount,
+}: SupervisorSidebarProps) {
   const sections: SidebarSection[] = [
     {
       items: [
@@ -44,6 +49,17 @@ export function SupervisorSidebar({ pendingApprovalsCount }: SupervisorSidebarPr
           label: "Monitoring Lini",
           href: SUPERVISOR_ROUTES.lines,
           icon: <IconPulse />,
+        },
+      ],
+    },
+    {
+      title: "Post Management",
+      items: [
+        {
+          label: "Eskalasi",
+          href: SUPERVISOR_ROUTES.escalations,
+          icon: <IconAlert />,
+          badge: escalationCount,
         },
       ],
     },

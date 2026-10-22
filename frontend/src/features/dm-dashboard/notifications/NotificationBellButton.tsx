@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { IconBell } from "@/components/ui/icons";
 import { GlassToastContainer } from "./GlassToastContainer";
 import { NotificationSettingsModal } from "./NotificationSettingsModal";
+import type { DmAppNotification } from "./types";
 import { useDmNotifications } from "./useDmNotifications";
 import "./notifications.css";
 
@@ -14,9 +15,17 @@ interface NotificationBellButtonProps {
   role?: string | null;
   lineName?: string | null;
   lines?: Array<{ id: number; name: string }>;
+  extraNotifications?: DmAppNotification[];
 }
 
-export function NotificationBellButton({ lineId, dept, role, lineName, lines }: NotificationBellButtonProps) {
+export function NotificationBellButton({
+  lineId,
+  dept,
+  role,
+  lineName,
+  lines,
+  extraNotifications,
+}: NotificationBellButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -33,7 +42,7 @@ export function NotificationBellButton({ lineId, dept, role, lineName, lines }: 
     markAllAsRead,
     toggleSound,
     triggerTestNotification,
-  } = useDmNotifications({ lineId, dept, role, lineName });
+  } = useDmNotifications({ lineId, dept, role, lineName, extraNotifications });
 
   // Close popover when clicking outside
   useEffect(() => {
@@ -136,7 +145,11 @@ export function NotificationBellButton({ lineId, dept, role, lineName, lines }: 
                           {isLate ? "TELAT" : isReminder ? "PENGINGAT" : "INFO"}
                         </span>
                         <span className="dm-notif-type-label">
-                          {item.type === "meeting" ? "👥 Meeting" : "📝 Papercard"}
+                          {item.type === "meeting"
+                            ? "👥 Meeting"
+                            : item.type === "escalation"
+                              ? "⚠️ Eskalasi"
+                              : "📝 Papercard"}
                         </span>
                       </div>
                       <div className="dm-notif-item-meta">

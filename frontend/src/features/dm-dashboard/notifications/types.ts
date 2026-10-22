@@ -1,4 +1,4 @@
-export type NotificationType = "papercard" | "meeting" | "system";
+export type NotificationType = "papercard" | "meeting" | "escalation" | "system";
 
 export type NotificationSeverity = "urgent" | "warning" | "info" | "success";
 

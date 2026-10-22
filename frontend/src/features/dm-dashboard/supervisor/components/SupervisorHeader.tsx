@@ -1,16 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { IconLogout } from "@/components/ui/icons";
 import { setToken } from "../../api";
-import { useSupervisor } from "../SupervisorProvider";
+import { formatOverdue } from "../../leader/problems/utils";
 import { NotificationBellButton } from "../../notifications/NotificationBellButton";
+import type { DmAppNotification } from "../../notifications/types";
+import { useSupervisor } from "../SupervisorProvider";
+import { SUPERVISOR_ROUTES } from "../routes";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export function SupervisorHeader() {
   const [now, setNow] = useState<Date | null>(null);
-  const { currentSupervisor } = useSupervisor();
+  const { currentSupervisor, escalatedRows } = useSupervisor();
+
+  const escalationNotifications = useMemo<DmAppNotification[]>(
+    () =>
+      escalatedRows.map((row) => ({
+        id: `escalation_${row.id}`,
+        type: "escalation",
+        severity: "urgent",
+        title: "Masalah melewati due date",
+        message: `${row.problem} · ${row.line} · PIC ${row.picName} · terlambat ${formatOverdue(row.overdueMs)}`,
+        timeLabel: `Terlambat ${formatOverdue(row.overdueMs)}`,
+        actionLabel: "Lihat Eskalasi",
+        actionUrl: SUPERVISOR_ROUTES.escalations,
+        createdAt: new Date(row.due).getTime(),
+      })),
+    [escalatedRows],
+  );
 
   useEffect(() => {
     setNow(new Date());
@@ -56,6 +75,7 @@ export function SupervisorHeader() {
           dept={currentSupervisor.dept}
           lineId={0}
           lineName="Semua Lini"
+          extraNotifications={escalationNotifications}
         />
         <span className="dml-role-badge">SUPERVISOR</span>
         <div className="dml-user">
