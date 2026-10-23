@@ -412,40 +412,6 @@ export default function PapercardTemplateManager({
     }
   };
 
-  // Reset template to factory preset
-  const handleReset = async () => {
-    if (!currentLine) return;
-    if (window.confirm(`Kembalikan template ${selectedDept} lini ${currentLine.name} ke standar default pabrik?`)) {
-      try {
-        const res = await papercardApi.resetToFactory(currentLine.id, selectedDept);
-        setTemplates((prev) => ({
-          ...prev,
-          [currentKey]: {
-            dept: selectedDept,
-            name: res.name,
-            version: res.version,
-            windowStart: res.windowStart,
-            windowEnd: res.windowEnd,
-            okRule: res.templateData?.okRule ?? "",
-            ngRule: res.templateData?.ngRule ?? "",
-            categories: normalizeCategories(res.templateData?.categories),
-          },
-        }));
-        setSavedNotice({
-          type: "success",
-          message: `Template ${selectedDept} berhasil di-reset ke standar default.`,
-        });
-      } catch (err) {
-        setSavedNotice({
-          type: "error",
-          message: err instanceof Error ? err.message : "Gagal me-reset template.",
-        });
-      } finally {
-        setTimeout(() => setSavedNotice(null), 3500);
-      }
-    }
-  };
-
   return (
     <div className="ptm-root">
       {/* 1. Header Toolbar (Compact, Clean & Calm) */}
@@ -529,15 +495,6 @@ export default function PapercardTemplateManager({
 
           <button
             type="button"
-            className="ptm-btn ptm-btn-ghost"
-            onClick={handleReset}
-            title="Reset ke standar awal"
-          >
-            Reset
-          </button>
-
-          <button
-            type="button"
             className="ptm-btn ptm-btn-primary"
             onClick={handleSaveToDatabase}
             disabled={saving || loadingTemplate}
@@ -589,30 +546,6 @@ export default function PapercardTemplateManager({
                 />
                 <span style={{ fontSize: "11px", color: "#64748b" }}>WIB</span>
               </div>
-            </div>
-
-            <div className="ptm-form-group">
-              <label className="ptm-input-label">Kriteria OK</label>
-              <input
-                type="text"
-                value={activeTemplate.okRule}
-                onChange={(e) => handleUpdateTemplateMeta({ okRule: e.target.value })}
-                className="ptm-input"
-                style={{ color: "#047857" }}
-                placeholder="Standar normal..."
-              />
-            </div>
-
-            <div className="ptm-form-group">
-              <label className="ptm-input-label">Kriteria NG</label>
-              <input
-                type="text"
-                value={activeTemplate.ngRule}
-                onChange={(e) => handleUpdateTemplateMeta({ ngRule: e.target.value })}
-                className="ptm-input"
-                style={{ color: "#be123c" }}
-                placeholder="Standar deviasi / abnormal..."
-              />
             </div>
           </div>
 
