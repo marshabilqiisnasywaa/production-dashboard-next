@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { ClipboardCheck, TriangleAlert, Users } from "lucide-react";
 import type { ActiveGlassToast } from "./types";
 import "./notifications.css";
 
@@ -51,11 +52,22 @@ function LiquidToastItem({ toast, onDismiss }: LiquidToastItemProps) {
   }, [isPaused, durationMs, onDismiss]);
 
   const typeLabel =
-    notification.type === "meeting"
-      ? "👥 Meeting"
-      : notification.type === "escalation"
-        ? "⚠️ Eskalasi"
-        : "📝 Papercard";
+    notification.type === "meeting" ? (
+      <>
+        <Users size={12} strokeWidth={1.8} />
+        <span>Meeting</span>
+      </>
+    ) : notification.type === "escalation" ? (
+      <>
+        <TriangleAlert size={12} strokeWidth={1.8} />
+        <span>Eskalasi</span>
+      </>
+    ) : (
+      <>
+        <ClipboardCheck size={12} strokeWidth={1.8} />
+        <span>Papercard</span>
+      </>
+    );
   const isLate = notification.severity === "urgent"; // Telat -> Soft Merah
   const isReminder = notification.severity === "warning"; // Pengingat -> Soft Kuning
 
@@ -79,7 +91,12 @@ function LiquidToastItem({ toast, onDismiss }: LiquidToastItemProps) {
           <span className="dm-toast-status-badge">
             {isLate ? "TELAT" : isReminder ? "PENGINGAT" : "INFO"}
           </span>
-          <span className="dm-toast-category">{typeLabel}</span>
+          <span
+            className="dm-toast-category"
+            style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
+          >
+            {typeLabel}
+          </span>
         </div>
 
         <div className="dm-toast-meta-right">

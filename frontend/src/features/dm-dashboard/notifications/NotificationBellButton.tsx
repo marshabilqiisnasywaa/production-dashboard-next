@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { ClipboardCheck, Settings, TriangleAlert, Users } from "lucide-react";
 import { IconBell } from "@/components/ui/icons";
 import { GlassToastContainer } from "./GlassToastContainer";
 import { NotificationSettingsModal } from "./NotificationSettingsModal";
@@ -112,7 +113,7 @@ export function NotificationBellButton({
                   }}
                   title="Pengaturan waktu pengingat (Admin)"
                 >
-                  <span style={{ fontSize: "14px" }}>⚙️</span>
+                  <Settings size={14} strokeWidth={1.8} />
                 </button>
               )}
             </div>
@@ -144,12 +145,26 @@ export function NotificationBellButton({
                         <span className="dm-notif-status-badge">
                           {isLate ? "TELAT" : isReminder ? "PENGINGAT" : "INFO"}
                         </span>
-                        <span className="dm-notif-type-label">
-                          {item.type === "meeting"
-                            ? "👥 Meeting"
-                            : item.type === "escalation"
-                              ? "⚠️ Eskalasi"
-                              : "📝 Papercard"}
+                        <span
+                          className="dm-notif-type-label"
+                          style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
+                        >
+                          {item.type === "meeting" ? (
+                            <>
+                              <Users size={12} strokeWidth={1.8} />
+                              <span>Meeting</span>
+                            </>
+                          ) : item.type === "escalation" ? (
+                            <>
+                              <TriangleAlert size={12} strokeWidth={1.8} />
+                              <span>Eskalasi</span>
+                            </>
+                          ) : (
+                            <>
+                              <ClipboardCheck size={12} strokeWidth={1.8} />
+                              <span>Papercard</span>
+                            </>
+                          )}
                         </span>
                       </div>
                       <div className="dm-notif-item-meta">
@@ -198,7 +213,7 @@ export function NotificationBellButton({
                   setIsSettingsOpen(true);
                 }}
               >
-                <span>⚙️</span>
+                <Settings size={14} strokeWidth={1.8} />
                 <span>Atur Pengingat</span>
               </button>
             </div>

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { Bell, Check, ClipboardCheck, Users } from "lucide-react";
 import type { DmNotificationSetting, DmNotificationSettingInput } from "../api";
 import "./notifications.css";
 
@@ -42,8 +44,31 @@ export function NotificationSettingsModal({
   const [targetLineId, setTargetLineId] = useState<number>(0); // 0 = Semua Lini
   const [saving, setSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+  const [mounted, setMounted] = useState<boolean>(false);
 
   const isAdmin = role === "admin";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (isOpen) {
@@ -61,7 +86,7 @@ export function NotificationSettingsModal({
     }
   }, [isOpen, currentSettings, isAdmin, lineId]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleSave = async () => {
     setSaving(true);
@@ -92,7 +117,7 @@ export function NotificationSettingsModal({
       ? "Semua Lini"
       : selectedLineObj?.name || lineName || `Lini ${targetLineId}`;
 
-  return (
+  return createPortal(
     <div className="dm-notif-modal-backdrop" onClick={onClose}>
       <div
         className="dm-liquid-modal"
@@ -143,7 +168,9 @@ export function NotificationSettingsModal({
           <div className="dm-liquid-setting-block">
             <div className="dm-liquid-setting-row">
               <span className="dm-liquid-setting-name">
-                <span className="dm-setting-icon">📝</span>
+                <span className="dm-setting-icon">
+                  <ClipboardCheck size={16} strokeWidth={1.8} />
+                </span>
                 <span>Pengingat Papercard</span>
               </span>
               <label className="dm-liquid-switch" title="Aktif / Nonaktif">
@@ -209,7 +236,9 @@ export function NotificationSettingsModal({
           <div className="dm-liquid-setting-block">
             <div className="dm-liquid-setting-row">
               <span className="dm-liquid-setting-name">
-                <span className="dm-setting-icon">👥</span>
+                <span className="dm-setting-icon">
+                  <Users size={16} strokeWidth={1.8} />
+                </span>
                 <span>Pengingat Meeting</span>
               </span>
               <label className="dm-liquid-switch" title="Aktif / Nonaktif">
@@ -275,7 +304,9 @@ export function NotificationSettingsModal({
           <div className="dm-liquid-setting-block">
             <div className="dm-liquid-setting-row">
               <span className="dm-liquid-setting-name">
-                <span className="dm-setting-icon">🔔</span>
+                <span className="dm-setting-icon">
+                  <Bell size={16} strokeWidth={1.8} />
+                </span>
                 <span>Suara Notifikasi</span>
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -304,8 +335,21 @@ export function NotificationSettingsModal({
         <div className="dm-liquid-modal-foot">
           <div className="dm-liquid-modal-status">
             {saveSuccess ? (
-              <span style={{ color: "#16a34a", fontWeight: 700 }}>
-                {targetLineId === 0 ? "✓ Tersimpan ke semua lini" : `✓ Tersimpan untuk ${activeLabel}`}
+              <span
+                style={{
+                  color: "#16a34a",
+                  fontWeight: 700,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                <Check size={13} strokeWidth={1.8} />
+                <span>
+                  {targetLineId === 0
+                    ? "Tersimpan ke semua lini"
+                    : `Tersimpan untuk ${activeLabel}`}
+                </span>
               </span>
             ) : !isAdmin ? (
               <span>Pengaturan hanya dapat diubah oleh Admin</span>
@@ -329,6 +373,7 @@ export function NotificationSettingsModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
