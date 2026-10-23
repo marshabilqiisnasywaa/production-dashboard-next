@@ -19,6 +19,7 @@ import { buildAnswerPayload, formatDateId, groupItemsBySubject } from "../../lea
 import type { DepartmentKey } from "../../leader/types";
 import { accountApi, papercardApi } from "../../api";
 import type { DmMe, DmPapercardSubmission } from "../../api";
+import { PAPERCARD_CHANGED_EVENT } from "../../notifications/revisions";
 
 const EMPTY_MEMBER_TEMPLATE: ChecklistTemplate = {
   id: "0",
@@ -253,6 +254,20 @@ export default function MemberPapercardPage({
     ? (form.progress.byCategory[active.id] ?? { done: 0, total: 0 })
     : { done: 0, total: 0 };
 
+  const bannerProps = {
+    state: win.state,
+    start: dynamicTemplate.window?.start || "07:30",
+    end: dynamicTemplate.window?.end || "08:15",
+    remainingMs: win.remainingMs,
+    supervisorName: realSubmission?.approvedByName || activeProfile.supervisor.name,
+    supervisorNotes: realSubmission?.supervisorNotes,
+    submittedAt: realSubmission?.submittedAt
+      ? (realSubmission.submittedAt.includes("T")
+          ? new Date(realSubmission.submittedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+          : realSubmission.submittedAt) + " WIB"
+      : null,
+  };
+
   const handleSubmit = async () => {
     if (!form.progress.complete || !win.now || readOnly) return;
     const now = win.now;
@@ -271,6 +286,7 @@ export default function MemberPapercardPage({
         abnormalNotes: null,
       });
       loadDailySubmissions();
+      window.dispatchEvent(new Event(PAPERCARD_CHANGED_EVENT));
     } catch (e: any) {
       console.warn("Papercard API submission warning:", e);
       alert(e?.message || "Gagal mengirimkan papercard.");
@@ -294,6 +310,12 @@ export default function MemberPapercardPage({
           </p>
         </div>
       </div>
+
+      {isRejected && (
+        <div className="dml-pc-revision">
+          <WindowBanner {...bannerProps} submissionStatus="rejected" />
+        </div>
+      )}
 
       {/* Meta Card with Countdown or Approval Banner */}
       <PapercardMetaCard
@@ -322,24 +344,12 @@ export default function MemberPapercardPage({
         date={win.now ? formatDateId(win.now) : ""}
         lineLocked={!(currentUser?.lines && currentUser.lines.length > 1)}
       >
-        <WindowBanner
-          state={win.state}
-          start={dynamicTemplate.window?.start || "07:30"}
-          end={dynamicTemplate.window?.end || "08:15"}
-          remainingMs={win.remainingMs}
-          submissionStatus={
-            isApproved ? "approved" : isRejected ? "rejected" : isPending ? "pending" : null
-          }
-          supervisorName={realSubmission?.approvedByName || activeProfile.supervisor.name}
-          supervisorNotes={realSubmission?.supervisorNotes}
-          submittedAt={
-            realSubmission?.submittedAt
-              ? (realSubmission.submittedAt.includes("T")
-                  ? new Date(realSubmission.submittedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
-                  : realSubmission.submittedAt) + " WIB"
-              : null
-          }
-        />
+        {!isRejected && (
+          <WindowBanner
+            {...bannerProps}
+            submissionStatus={isApproved ? "approved" : isPending ? "pending" : null}
+          />
+        )}
       </PapercardMetaCard>
 
       {/* 6. Dynamic Database Template Checklist Section */}

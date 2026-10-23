@@ -11,25 +11,64 @@ import { SUPERVISOR_ROUTES } from "../routes";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+function parseTime(value: string): Date | null {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export function SupervisorHeader() {
   const [now, setNow] = useState<Date | null>(null);
-  const { currentSupervisor, escalatedRows } = useSupervisor();
+  const { currentSupervisor, escalatedRows, allListItems } = useSupervisor();
 
-  const escalationNotifications = useMemo<DmAppNotification[]>(
-    () =>
-      escalatedRows.map((row) => ({
-        id: `escalation_${row.id}`,
-        type: "escalation",
-        severity: "urgent",
-        title: "Masalah melewati due date",
-        message: `${row.problem} · ${row.line} · PIC ${row.picName} · terlambat ${formatOverdue(row.overdueMs)}`,
-        timeLabel: `Terlambat ${formatOverdue(row.overdueMs)}`,
-        actionLabel: "Lihat Eskalasi",
-        actionUrl: SUPERVISOR_ROUTES.escalations,
-        createdAt: new Date(row.due).getTime(),
-      })),
-    [escalatedRows],
-  );
+  const headerNotifications = useMemo<DmAppNotification[]>(() => {
+    const escalationNotifications: DmAppNotification[] = escalatedRows.map((row) => ({
+      id: `escalation_${row.id}`,
+      type: "escalation",
+      severity: "urgent",
+      title: "Masalah melewati due date",
+      message: `${row.problem} · ${row.line} · PIC ${row.picName} · terlambat ${formatOverdue(row.overdueMs)}`,
+      timeLabel: `Terlambat ${formatOverdue(row.overdueMs)}`,
+      actionLabel: "Lihat Eskalasi",
+      actionUrl: SUPERVISOR_ROUTES.escalations,
+      createdAt: new Date(row.due).getTime(),
+    }));
+
+    const approvalNotifications = allListItems.flatMap<DmAppNotification>((item) => {
+      const submission = item.submission;
+      if (!submission || submission.approvalStatus !== "pending" || !submission.submittedAt) {
+        return [];
+      }
+
+      const submittedAt = parseTime(submission.submittedAt);
+      if (!submittedAt) return [];
+
+      const timeLabel = `${pad(submittedAt.getHours())}:${pad(submittedAt.getMinutes())}`;
+      const lineLabel = item.lineName || "Lini";
+      const wasRevised = Boolean(submission.supervisorNotes?.trim() || submission.approvedAt);
+
+      return [
+        {
+          id: `approval_${submission.id}_${submission.submittedAt}`,
+          type: "papercard",
+          severity: submission.hasNg ? "warning" : "info",
+          title: wasRevised
+            ? `Papercard ${item.dept} dikirim ulang setelah revisi`
+            : `Papercard ${item.dept} menunggu persetujuan`,
+          message: `${item.name} (${lineLabel}) sudah submit papercard pukul ${timeLabel}.${
+            submission.hasNg ? " Ada temuan NG." : ""
+          }`,
+          timeLabel,
+          actionLabel: "Tinjau Papercard",
+          actionUrl: SUPERVISOR_ROUTES.approvals,
+          createdAt: submittedAt.getTime(),
+        },
+      ];
+    });
+
+    return [...approvalNotifications, ...escalationNotifications].sort(
+      (a, b) => b.createdAt - a.createdAt,
+    );
+  }, [allListItems, escalatedRows]);
 
   useEffect(() => {
     setNow(new Date());
@@ -75,7 +114,7 @@ export function SupervisorHeader() {
           dept={currentSupervisor.dept}
           lineId={0}
           lineName="Semua Lini"
-          extraNotifications={escalationNotifications}
+          extraNotifications={headerNotifications}
         />
         <span className="dml-role-badge">SUPERVISOR</span>
         <div className="dml-user">

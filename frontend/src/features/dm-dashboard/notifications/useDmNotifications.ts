@@ -12,6 +12,7 @@ import {
   type DmPapercardSubmission,
   type DmPapercardTemplate,
 } from "../api";
+import { PAPERCARD_CHANGED_EVENT, revisionSubmissionsFor } from "./revisions";
 import { playNotificationChime } from "./sound";
 import type { DmAppNotification, NotificationLocalPrefs } from "./types";
 
@@ -40,6 +41,12 @@ function saveLocalPrefs(prefs: Partial<NotificationLocalPrefs>) {
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
+
+function parseTime(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
 interface UseDmNotificationsProps {
   lineId?: number | null;
@@ -146,9 +153,23 @@ export function useDmNotifications({
       fetchData();
     }, 45_000);
 
+    const refreshOnFocus = () => {
+      fetchData();
+    };
+    const refreshOnVisible = () => {
+      if (document.visibilityState === "visible") fetchData();
+    };
+
+    window.addEventListener("focus", refreshOnFocus);
+    document.addEventListener("visibilitychange", refreshOnVisible);
+    window.addEventListener(PAPERCARD_CHANGED_EVENT, refreshOnFocus);
+
     return () => {
       clearInterval(interval);
       clearInterval(fetchInterval);
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener("visibilitychange", refreshOnVisible);
+      window.removeEventListener(PAPERCARD_CHANGED_EVENT, refreshOnFocus);
     };
   }, [fetchData]);
 
@@ -257,6 +278,13 @@ export function useDmNotifications({
 
       relevantTemplates.forEach((tmpl) => {
         const d = tmpl.department.toUpperCase();
+        const hasRejected = submissions.some(
+          (s) => s.department.toUpperCase() === d && s.approvalStatus === "rejected"
+        );
+        if (hasRejected) {
+          return;
+        }
+
         // Check if submitted today
         const hasSubmitted = submissions.some(
           (s) => s.department.toUpperCase() === d && s.status !== "rejected"
@@ -346,6 +374,32 @@ export function useDmNotifications({
       });
     }
 
+    if (role === "leader" || role === "member") {
+      revisionSubmissionsFor(submissions, dept, role).forEach((submission) => {
+        const approvedAt = parseTime(submission.approvedAt);
+        const supervisorName = submission.approvedByName?.trim() || "Supervisor";
+        const notes = submission.supervisorNotes?.trim() ?? "";
+        const message = notes
+          ? `${supervisorName} meminta revisi: "${notes}". Perbaiki poin yang diminta lalu kirim ulang.`
+          : `${supervisorName} meminta revisi. Perbaiki poin yang diminta lalu kirim ulang.`;
+
+        list.push({
+          id: `papercard_revision_${submission.id}_${submission.approvedAt ?? submission.id}`,
+          type: "papercard",
+          severity: "urgent",
+          title: `Papercard ${submission.department.toUpperCase()} diminta revisi`,
+          message,
+          timeLabel: approvedAt
+            ? `${pad(approvedAt.getHours())}:${pad(approvedAt.getMinutes())}`
+            : "Baru saja",
+          actionLabel: "Perbaiki Papercard",
+          actionUrl:
+            role === "leader" ? "/dm-dashboard/leader/papercard" : "/dm-dashboard/member/papercard",
+          createdAt: approvedAt?.getTime() ?? Date.now(),
+        });
+      });
+    }
+
     // Filter out dismissed
     return list.filter((n) => !dismissedIds.includes(n.id));
   }, [
@@ -368,7 +422,11 @@ export function useDmNotifications({
 
     let chimePlayed = false;
     notifications.forEach((n) => {
-      if ((n.severity === "urgent" || n.severity === "warning") && !alertedIdsRef.current.has(n.id)) {
+      const shouldAlert =
+        n.severity === "urgent" ||
+        n.severity === "warning" ||
+        (n.type === "papercard" && n.id.startsWith("approval_"));
+      if (shouldAlert && !alertedIdsRef.current.has(n.id)) {
         alertedIdsRef.current.add(n.id);
 
         if (soundEnabled && !chimePlayed) {
