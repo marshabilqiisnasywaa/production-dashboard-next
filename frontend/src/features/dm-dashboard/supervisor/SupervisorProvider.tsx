@@ -121,9 +121,35 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
     }
   }, [showToast, todayStr]);
 
+  const refreshQuietly = useCallback(async () => {
+    try {
+      const data = await papercardApi.supervisorOverview(todayStr);
+      setOverviewData(data);
+    } catch {}
+  }, [todayStr]);
+
   useEffect(() => {
     loadOverview();
   }, [loadOverview]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshQuietly();
+    }, 30_000);
+
+    const refreshOnVisible = () => {
+      if (document.visibilityState === "visible") refreshQuietly();
+    };
+
+    window.addEventListener("focus", refreshQuietly);
+    document.addEventListener("visibilitychange", refreshOnVisible);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", refreshQuietly);
+      document.removeEventListener("visibilitychange", refreshOnVisible);
+    };
+  }, [refreshQuietly]);
 
   const dbLines = useMemo<DmSupervisorLine[]>(() => {
     return overviewData?.lines || [];

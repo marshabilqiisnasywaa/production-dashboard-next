@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { RefreshCw } from "lucide-react";
 import type { DmLine, DmRecapRow } from "../api";
-import { addDays, localDate } from "../leader/log/utils";
+import { localDate } from "../leader/log/utils";
 import type { AbsenceReason } from "../leader/meeting/types";
 import { absenceDetail } from "../leader/meeting/utils";
 import { useAttendanceRecap } from "./useAttendanceRecap";
@@ -77,7 +78,6 @@ export default function AttendanceRecap({ lines, call }: Props) {
     [rows, selectedMeeting],
   );
 
-  const dates = today ? [today, addDays(today, -1), addDays(today, -2)] : [];
   const selectedLabel = selectedMeeting === 0 ? "Semua Sesi" : cards.find((c) => c.n === selectedMeeting)?.title ?? "Sesi " + selectedMeeting;
 
   return (
@@ -85,25 +85,13 @@ export default function AttendanceRecap({ lines, call }: Props) {
       <div className="dm-recap-filters-bar">
         <div className="dm-recap-filter-group">
           <span className="dm-recap-filter-label">TANGGAL:</span>
-          <div className="dm-recap-pills">
-            {dates.map((d) => (
-              <button
-                key={d}
-                type="button"
-                className={"dm-recap-pill " + (selectedDate === d ? "is-active" : "")}
-                onClick={() => setSelectedDate(d)}
-              >
-                {formatDateLabel(d, today)}
-              </button>
-            ))}
-            <input
-              type="date"
-              className="dm-recap-date-input"
-              value={selectedDate}
-              aria-label="Pilih tanggal kustom"
-              onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-            />
-          </div>
+          <input
+            type="date"
+            className="dm-recap-date-input"
+            value={selectedDate}
+            aria-label="Pilih tanggal"
+            onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+          />
         </div>
 
         <div className="dm-recap-filter-group">
@@ -147,8 +135,19 @@ export default function AttendanceRecap({ lines, call }: Props) {
         </div>
 
         <div className="dm-recap-action-group">
-          <button type="button" className="dm-btn is-primary" disabled={loading} onClick={reload}>
-            {loading ? "Memuat…" : "Muat ulang"}
+          <button
+            type="button"
+            className="dm-recap-icon-btn"
+            disabled={loading}
+            onClick={reload}
+            aria-label="Muat ulang data"
+            title="Muat ulang data"
+          >
+            <RefreshCw
+              size={16}
+              aria-hidden="true"
+              className={"dm-recap-refresh-icon" + (loading ? " is-spinning" : "")}
+            />
           </button>
         </div>
       </div>

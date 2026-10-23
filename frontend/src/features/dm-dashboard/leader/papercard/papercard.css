@@ -80,6 +80,16 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+.dml-pc-revision .dml-banner {
+  align-items: flex-start;
+  border: 1px solid #fecaca;
+  border-radius: var(--dm-radius-md);
+  overflow: hidden;
+}
+.dml-pc-revision .dml-banner__sub {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
 
 /* ---------- Overall progress ---------- */
 .dml-pc-progress {

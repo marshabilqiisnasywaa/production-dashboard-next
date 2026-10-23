@@ -10,6 +10,10 @@ import type { DmSupervisorLine, DmSupervisorSubordinate } from "../../../api";
 
 interface SupervisorApprovalsTabProps {
   dbLines: DmSupervisorLine[];
+  filteredLines: DmSupervisorLine[];
+  hasActiveFilters: boolean;
+  totalMemberCount: number;
+  onResetFilters: () => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   selectedLineFilter: string;
@@ -25,6 +29,10 @@ interface SupervisorApprovalsTabProps {
 
 export function SupervisorApprovalsTab({
   dbLines,
+  filteredLines,
+  hasActiveFilters,
+  totalMemberCount,
+  onResetFilters,
   searchQuery,
   setSearchQuery,
   selectedLineFilter,
@@ -37,6 +45,11 @@ export function SupervisorApprovalsTab({
   onBatchApproveLine,
   onSelectReview,
 }: SupervisorApprovalsTabProps) {
+  const filteredMemberCount = filteredLines.reduce(
+    (total, line) => total + line.members.length,
+    0,
+  );
+
   return (
     <div>
       {/* ------------------------------------------------------------
@@ -110,7 +123,11 @@ export function SupervisorApprovalsTab({
         </div>
 
         <div className="spv-toolbar__right">
-          <span>{dbLines.length} Lini Produksi</span>
+          <span>
+            {hasActiveFilters
+              ? `${filteredLines.length} lini · ${filteredMemberCount} dari ${totalMemberCount} anggota`
+              : `${dbLines.length} Lini Produksi`}
+          </span>
         </div>
       </div>
 
@@ -118,14 +135,34 @@ export function SupervisorApprovalsTab({
         <div className="spv-empty-box">
           Belum ada data lini di database.
         </div>
+      ) : filteredLines.length === 0 ? (
+        <div
+          className="spv-empty-box"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "10px",
+          }}
+        >
+          <span>Tidak ada anggota yang cocok dengan filter</span>
+          <button
+            type="button"
+            onClick={onResetFilters}
+            className="spv-btn spv-btn--secondary spv-btn--sm"
+          >
+            Reset filter
+          </button>
+        </div>
       ) : (
-            dbLines.map((line) => {
-              const subs = line.members.map((m) => m.submission).filter(Boolean);
+            filteredLines.map((line) => {
+              const originalLine = dbLines.find((item) => item.lineId === line.lineId) ?? line;
+              const subs = originalLine.members.map((m) => m.submission).filter(Boolean);
               const hasAbnormal = subs.some((s) => s?.hasNg);
               const allApproved =
-                line.members.length > 0 &&
-                line.members.every((m) => m.submission && m.submission.approvalStatus === "approved");
-              const pendingLineCount = line.members.filter(
+                originalLine.members.length > 0 &&
+                originalLine.members.every((m) => m.submission && m.submission.approvalStatus === "approved");
+              const pendingLineCount = originalLine.members.filter(
                 (m) => m.submission && m.submission.approvalStatus === "pending"
               ).length;
               const canApprove = pendingLineCount > 0 && !isSubmittingApproval;
@@ -133,7 +170,7 @@ export function SupervisorApprovalsTab({
                 ? "Semua papercard sudah disetujui"
                 : pendingLineCount === 0
                 ? "Belum ada papercard yang disubmit"
-                : `Setujui serentak seluruh papercard ${line.lineName}`;
+                : `Setujui serentak seluruh papercard ${originalLine.lineName}`;
 
               return (
                 <div
@@ -150,19 +187,19 @@ export function SupervisorApprovalsTab({
                           hasAbnormal ? "has-ng" : allApproved ? "is-all-approved" : ""
                         }`}
                       >
-                        {line.lineCode ? line.lineCode.slice(-3) : `L${line.lineId}`}
+                        {originalLine.lineCode ? originalLine.lineCode.slice(-3) : `L${originalLine.lineId}`}
                       </div>
                       <div>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                           <h3 className="spv-line-header__title">
-                            {line.lineName}
+                            {originalLine.lineName}
                           </h3>
-                          <span className="spv-chip spv-chip--neutral">{line.shift}</span>
-                          <span className="spv-chip spv-chip--neutral">{line.workshopName}</span>
+                          <span className="spv-chip spv-chip--neutral">{originalLine.shift}</span>
+                          <span className="spv-chip spv-chip--neutral">{originalLine.workshopName}</span>
                         </div>
                         <div className="spv-line-header__meta">
-                          Leader: <strong>{line.leader?.name || "Belum Ditentukan"}</strong> ({line.leader?.employeeNo || "-"})
-                          {" · "}{line.members.length} Anggota
+                          Leader: <strong>{originalLine.leader?.name || "Belum Ditentukan"}</strong> ({originalLine.leader?.employeeNo || "-"})
+                          {" · "}{originalLine.members.length} Anggota
                         </div>
                       </div>
                     </div>
@@ -190,7 +227,7 @@ export function SupervisorApprovalsTab({
                         type="button"
                         disabled={!canApprove}
                         aria-disabled={!canApprove}
-                        onClick={() => onBatchApproveLine(line)}
+                        onClick={() => onBatchApproveLine(originalLine)}
                         className="spv-btn spv-btn--primary spv-btn--sm"
                         title={approveTitle}
                       >
@@ -217,8 +254,8 @@ export function SupervisorApprovalsTab({
                           onClick={() => {
                             onSelectReview({
                               ...member,
-                              lineId: line.lineId,
-                              lineName: line.lineName,
+                              lineId: originalLine.lineId,
+                              lineName: originalLine.lineName,
                             });
                           }}
                           className={`spv-member-card ${

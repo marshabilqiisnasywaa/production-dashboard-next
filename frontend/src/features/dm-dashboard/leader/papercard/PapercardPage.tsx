@@ -15,6 +15,7 @@ import type { Answer, ChecklistCategory, ChecklistTemplate, Submission } from ".
 import { buildAnswerPayload, formatDateId, groupItemsBySubject } from "./utils";
 import { accountApi, papercardApi } from "../../api";
 import type { DmMe, DmPapercardSubmission } from "../../api";
+import { PAPERCARD_CHANGED_EVENT } from "../../notifications/revisions";
 
 // Fallback empty template if neither LEADER_TEMPLATE nor database template exists
 const EMPTY_LEADER_TEMPLATE: ChecklistTemplate = {
@@ -203,6 +204,7 @@ export default function PapercardPage() {
         abnormalNotes: null,
       });
       setDbSubmission(res);
+      window.dispatchEvent(new Event(PAPERCARD_CHANGED_EVENT));
     } catch (e: any) {
       console.warn("Papercard API submission warning:", e);
       alert(e?.message || "Gagal mengirimkan papercard. Pastikan server aktif.");
@@ -213,6 +215,20 @@ export default function PapercardPage() {
 
   const supervisorName = currentUser?.supervisor || "Belum diatur admin";
   const lineDisplayName = currentUser?.line?.name || `Line ${line}`;
+
+  const bannerProps = {
+    state: win.state,
+    start: dynamicTemplate.window?.start || "07:30",
+    end: dynamicTemplate.window?.end || "08:15",
+    remainingMs: win.remainingMs,
+    supervisorName: dbSubmission?.approvedByName || supervisorName,
+    supervisorNotes: dbSubmission?.supervisorNotes,
+    submittedAt: dbSubmission?.submittedAt
+      ? (dbSubmission.submittedAt.includes("T")
+          ? new Date(dbSubmission.submittedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+          : dbSubmission.submittedAt) + " WIB"
+      : null,
+  };
 
   return (
     <div className="dml-pc">
@@ -231,6 +247,11 @@ export default function PapercardPage() {
   </div>
 </div>
 
+      {isRejected && (
+        <div className="dml-pc-revision">
+          <WindowBanner {...bannerProps} submissionStatus="rejected" />
+        </div>
+      )}
 
       <PapercardMetaCard
         lines={PAPERCARD_LINES}
@@ -241,24 +262,12 @@ export default function PapercardPage() {
         date={win.now ? formatDateId(win.now) : ""}
         lineLocked={true}
       >
-        <WindowBanner
-          state={win.state}
-          start={dynamicTemplate.window?.start || "07:30"}
-          end={dynamicTemplate.window?.end || "08:15"}
-          remainingMs={win.remainingMs}
-          submissionStatus={
-            isApproved ? "approved" : isRejected ? "rejected" : isPending ? "pending" : null
-          }
-          supervisorName={dbSubmission?.approvedByName || supervisorName}
-          supervisorNotes={dbSubmission?.supervisorNotes}
-          submittedAt={
-            dbSubmission?.submittedAt
-              ? (dbSubmission.submittedAt.includes("T")
-                  ? new Date(dbSubmission.submittedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
-                  : dbSubmission.submittedAt) + " WIB"
-              : null
-          }
-        />
+        {!isRejected && (
+          <WindowBanner
+            {...bannerProps}
+            submissionStatus={isApproved ? "approved" : isPending ? "pending" : null}
+          />
+        )}
       </PapercardMetaCard>
 
       {/* Dynamic Database Template Checklist Section */}
