@@ -51,6 +51,7 @@ class MeOut(CamelModel):
     name: str | None
     must_change_password: bool
     line: LineRef | None
+    lines: list[LineRef] = []
     dept: str | None = None
     position: str | None = None
     supervisor: str | None = None
@@ -202,6 +203,7 @@ class EmployeeOut(CamelModel):
     is_active: bool
     must_change_password: bool
     line_label: str | None
+    line_labels: list[str] = []
     face_enrolled: bool = False
     face_message: str | None = None
 

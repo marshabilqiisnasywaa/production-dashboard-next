@@ -51,7 +51,10 @@ export default function MemberPapercardPage({
   const [isEditing, setIsEditing] = useState(false);
   const [realSubmission, setRealSubmission] = useState<DmPapercardSubmission | null>(null);
 
-  const effectiveLineId = currentUser?.line?.id || (line === "502" ? 2 : line === "503" ? 3 : 1);
+  const [selectedLineOverride, setSelectedLineOverride] = useState<DmMe["line"] | null>(null);
+
+  const activeLine = selectedLineOverride ?? currentUser?.line ?? null;
+  const effectiveLineId = activeLine?.id || (line === "502" ? 2 : line === "503" ? 3 : 1);
 
   // 1. Fetch authenticated user profile if token exists
   useEffect(() => {
@@ -67,7 +70,13 @@ export default function MemberPapercardPage({
             rawDept === "QA" ? "QC" : ["PROD", "ME", "PE", "QC"].includes(rawDept) ? (rawDept as DepartmentKey) : "PROD";
           setSelectedDept(mappedDept);
         }
-        if (me.line?.name) {
+        if (me.lines && me.lines.length > 0) {
+          const savedId = typeof window !== "undefined" ? localStorage.getItem("dm_member_line_id") : null;
+          const matched = savedId ? me.lines.find((l) => l.id === Number(savedId)) : null;
+          const chosen = matched || me.lines[0];
+          setSelectedLineOverride(chosen);
+          setLine(chosen.name);
+        } else if (me.line?.name) {
           setLine(me.line.name);
         }
       })
@@ -104,16 +113,16 @@ export default function MemberPapercardPage({
       position: currentUser.position || `${deptLabel} Operator`,
       dept,
       deptLabel,
-      line: currentUser.line?.code || line,
-      lineName: currentUser.line?.name || "Lini belum diatur",
-      workshop: currentUser.line?.workshopName || "Workshop belum diatur",
+      line: activeLine?.code || currentUser.line?.code || line,
+      lineName: activeLine?.name || currentUser.line?.name || "Lini belum diatur",
+      workshop: activeLine?.workshopName || currentUser.line?.workshopName || "Workshop belum diatur",
       supervisor: {
         name: currentUser.supervisor || "Belum diatur admin",
         employeeId: "SPV-019",
         role: "Supervisor Lini",
       },
     };
-  }, [currentUser, line, effectiveLineId, selectedDept]);
+  }, [currentUser, line, activeLine, effectiveLineId, selectedDept]);
 
   // 2. Fetch template strictly from PostgreSQL database
   useEffect(() => {
@@ -288,14 +297,30 @@ export default function MemberPapercardPage({
 
       {/* Meta Card with Countdown or Approval Banner */}
       <PapercardMetaCard
-        lines={PAPERCARD_LINES}
-        line={activeProfile.lineName.replace(/^Line\s+/i, "")}
-        onLineChange={() => {}}
+        lines={
+          currentUser?.lines && currentUser.lines.length > 0
+            ? currentUser.lines.map((l) => l.name.replace(/^Line\s+/i, ""))
+            : PAPERCARD_LINES
+        }
+        line={(activeLine?.name || line).replace(/^Line\s+/i, "")}
+        onLineChange={(newLineVal) => {
+          if (!currentUser?.lines) return;
+          const found = currentUser.lines.find(
+            (l) => l.name.replace(/^Line\s+/i, "").toLowerCase() === newLineVal.replace(/^Line\s+/i, "").toLowerCase()
+          );
+          if (found) {
+            setSelectedLineOverride(found);
+            setLine(found.name);
+            try {
+              localStorage.setItem("dm_member_line_id", String(found.id));
+            } catch {}
+          }
+        }}
         leader={`${activeProfile.name} (${selectedDept})`}
         operatorLabel="Operator / Anggota"
         shift={PAPERCARD_CONFIG.shift}
         date={win.now ? formatDateId(win.now) : ""}
-        lineLocked={true}
+        lineLocked={!(currentUser?.lines && currentUser.lines.length > 1)}
       >
         <WindowBanner
           state={win.state}

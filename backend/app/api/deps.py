@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.security import decode_access_token
 from app.db.session import get_db
 from app.models import Employee, User
-from app.services.accounts import active_line, forbidden
+from app.services.accounts import active_line, active_lines, forbidden
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -71,6 +71,6 @@ def authorize_line(db: Session, principal: Principal, line_id: int) -> None:
     assert employee is not None
     if employee.role == "supervisor":
         raise forbidden("Cakupan supervisor belum diatur. Hubungi admin.")
-    active = active_line(db, employee.id)
-    if active is None or active[1].id != line_id:
+    lines = active_lines(db, employee.id)
+    if not any(l.id == line_id for _, l, _ in lines):
         raise forbidden()

@@ -10,7 +10,7 @@ from app.core.security import create_access_token, hash_password, verify_passwor
 from app.db.session import get_db
 from app.models import Employee, User
 from app.schemas import ChangePasswordIn, LineRef, LoginIn, MeOut, TokenOut
-from app.services.accounts import active_line
+from app.services.accounts import active_line, active_lines
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -75,28 +75,32 @@ def me(principal: Principal = Depends(get_principal), db: Session = Depends(get_
             name=None,
             must_change_password=False,
             line=None,
+            lines=[],
             dept=None,
         )
     employee = principal.employee
     assert employee is not None
-    found = active_line(db, employee.id)
-    line = None
-    if found:
-        board, line_row, workshop = found
-        line = LineRef(
+    found_lines = active_lines(db, employee.id)
+    lines_ref = [
+        LineRef(
             id=line_row.id,
             code=line_row.code,
             name=line_row.name,
             workshop_name=workshop.name,
             slug=board.slug,
         )
+        for board, line_row, workshop in found_lines
+    ]
+    primary_line = lines_ref[0] if lines_ref else None
+
     return MeOut(
         username=employee.employee_no,
         role=employee.role,
         kind="employee",
         name=employee.name,
         must_change_password=employee.must_change_password,
-        line=line,
+        line=primary_line,
+        lines=lines_ref,
         dept=employee.dept,
         position=employee.position,
         supervisor=employee.supervisor_name,

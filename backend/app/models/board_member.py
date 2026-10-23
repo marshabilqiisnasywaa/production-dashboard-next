@@ -10,7 +10,8 @@ class BoardMember(Base):
     __tablename__ = "board_members"
     __table_args__ = (
         Index(
-            "uq_board_members_active_employee",
+            "uq_board_members_active_board_employee",
+            "board_id",
             "employee_id",
             unique=True,
             postgresql_where=text("ended_at IS NULL"),

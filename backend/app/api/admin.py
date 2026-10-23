@@ -251,9 +251,6 @@ def add_member(line_id: int, body: MemberIn, db: Session = Depends(get_db)) -> M
     board, _, _ = line_row(db, line_id)
     if body.employee_pk is not None:
         employee = employee_by_pk(db, body.employee_pk)
-        busy = employee_board_name(db, employee.id)
-        if busy:
-            raise conflict(f"{employee.name} masih aktif di lini {busy}. Lepas dulu dari sana.")
     else:
         employee_no = (body.employee_id or "").strip()
         name = (body.name or "").strip()
@@ -263,9 +260,6 @@ def add_member(line_id: int, body: MemberIn, db: Session = Depends(get_db)) -> M
             db.add(employee)
             db.flush()
         else:
-            busy = employee_board_name(db, employee.id)
-            if busy:
-                raise conflict(f"{employee.name} masih aktif di lini {busy}. Lepas dulu dari sana.")
             employee.name = name
         employee.dept = body.dept
         employee.supervisor = body.supervisor
@@ -274,6 +268,16 @@ def add_member(line_id: int, body: MemberIn, db: Session = Depends(get_db)) -> M
             employee.position = body.position
         if body.photo_url is not None:
             employee.photo_url = body.photo_url
+
+    already_in_board = db.scalar(
+        select(BoardMember.id).where(
+            BoardMember.board_id == board.id,
+            BoardMember.employee_id == employee.id,
+            BoardMember.ended_at.is_(None),
+        )
+    )
+    if already_in_board:
+        raise conflict(f"{employee.name} sudah terdaftar aktif di lini ini.")
     member = BoardMember(
         board_id=board.id,
         employee_id=employee.id,
@@ -390,20 +394,30 @@ def delete_mpv(line_id: int, period: str = PERIOD_PATH, db: Session = Depends(ge
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-def employee_lines(db: Session) -> dict[int, str]:
+def employee_lines(db: Session) -> dict[int, list[str]]:
     rows = db.execute(
         select(BoardMember.employee_id, Line.code, Workshop.name)
         .join(Board, Board.id == BoardMember.board_id)
         .join(Line, Line.id == Board.line_id)
         .join(Workshop, Workshop.id == Line.workshop_id)
         .where(BoardMember.ended_at.is_(None))
+        .order_by(Line.code)
     ).all()
-    return {row[0]: f"{row[1]} ({row[2]})" for row in rows}
+    res: dict[int, list[str]] = {}
+    for emp_id, line_code, workshop_name in rows:
+        label = f"{line_code} ({workshop_name})"
+        res.setdefault(emp_id, []).append(label)
+    return res
 
 
 def employee_out(
-    employee: Employee, line_label: str | None, face_enrolled: bool = False, face_message: str | None = None
+    employee: Employee,
+    line_labels: list[str] | None = None,
+    face_enrolled: bool = False,
+    face_message: str | None = None,
 ) -> EmployeeOut:
+    labels = line_labels or []
+    line_label = ", ".join(labels) if labels else None
     return EmployeeOut(
         id=employee.id,
         employee_id=employee.employee_no,
@@ -418,6 +432,7 @@ def employee_out(
         is_active=employee.is_active,
         must_change_password=employee.must_change_password,
         line_label=line_label,
+        line_labels=labels,
         face_enrolled=face_enrolled,
         face_message=face_message,
     )
@@ -453,7 +468,7 @@ def list_employees(db: Session = Depends(get_db)) -> list[EmployeeOut]:
     lines = employee_lines(db)
     enrolled = photo_template_ids(db)
     employees = db.scalars(select(Employee).order_by(Employee.name, Employee.id))
-    return [employee_out(e, lines.get(e.id), e.id in enrolled) for e in employees]
+    return [employee_out(e, lines.get(e.id, []), e.id in enrolled) for e in employees]
 
 
 @router.post("/employees", response_model=EmployeeOut, status_code=status.HTTP_201_CREATED)
@@ -477,7 +492,7 @@ def create_employee(body: EmployeeIn, db: Session = Depends(get_db)) -> Employee
     face_message = sync_photo(db, employee) if employee.photo_url else None
     db.commit()
     matcher.reload(db)
-    return employee_out(employee, None, bool(employee.photo_url) and face_message is None, face_message)
+    return employee_out(employee, [], bool(employee.photo_url) and face_message is None, face_message)
 
 
 @router.patch("/employees/{employee_pk}", response_model=EmployeeOut)
@@ -486,7 +501,7 @@ def update_employee(employee_pk: int, body: EmployeeUpdate, db: Session = Depend
     if employee is None:
         raise not_found("Pengguna")
     sent = body.model_fields_set
-    line_label = employee_lines(db).get(employee.id)
+    emp_lines = employee_lines(db).get(employee.id, [])
     if "employee_id" in sent and body.employee_id is not None:
         employee_no = body.employee_id.strip()
         if nik_taken(db, employee_no, employee.id):
@@ -515,13 +530,13 @@ def update_employee(employee_pk: int, body: EmployeeUpdate, db: Session = Depend
     if "photo_url" in sent:
         employee.photo_url = body.photo_url
     if "is_active" in sent and body.is_active is not None:
-        if not body.is_active and line_label:
-            raise conflict(f"{employee.name} masih aktif di lini {line_label}. Lepas dulu dari sana.")
+        if not body.is_active and emp_lines:
+            raise conflict(f"{employee.name} masih aktif di lini {', '.join(emp_lines)}. Lepas dulu dari sana.")
         employee.is_active = body.is_active
     face_message = sync_photo(db, employee) if "photo_url" in sent else None
     db.commit()
     matcher.reload(db)
-    return employee_out(employee, line_label, has_photo_template(db, employee.id), face_message)
+    return employee_out(employee, emp_lines, has_photo_template(db, employee.id), face_message)
 
 
 @router.post("/employees/{employee_pk}/reset-password", response_model=EmployeeOut)
@@ -533,7 +548,7 @@ def reset_employee_password(
         raise not_found("Pengguna")
     reset_password(employee, body.password if body else None)
     db.commit()
-    return employee_out(employee, employee_lines(db).get(employee.id), has_photo_template(db, employee.id))
+    return employee_out(employee, employee_lines(db).get(employee.id, []), has_photo_template(db, employee.id))
 
 
 @router.delete("/employees/{employee_pk}", status_code=status.HTTP_204_NO_CONTENT)
@@ -544,9 +559,9 @@ def delete_employee(employee_pk: int, db: Session = Depends(get_db)) -> Response
     count = subordinate_count(db, employee.id)
     if count:
         raise conflict(f"{employee.name} masih jadi supervisor {count} orang. Pindahkan mereka dulu.")
-    active_in = employee_lines(db).get(employee.id)
+    active_in = employee_lines(db).get(employee.id, [])
     if active_in:
-        raise conflict(f"{employee.name} masih aktif di lini {active_in}. Lepas dulu dari lini itu, baru bisa dihapus.")
+        raise conflict(f"{employee.name} masih aktif di lini {', '.join(active_in)}. Lepas dulu dari lini itu, baru bisa dihapus.")
     if db.scalar(select(MpvAward.id).where(MpvAward.employee_id == employee.id).limit(1)):
         raise conflict(f"{employee.name} pernah jadi MPV, jadi riwayatnya harus tetap ada. Nonaktifkan saja.")
     db.execute(delete(BoardMember).where(BoardMember.employee_id == employee.id))
@@ -554,6 +569,7 @@ def delete_employee(employee_pk: int, db: Session = Depends(get_db)) -> Response
     db.commit()
     matcher.reload(db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 
 @router.get("/attendance-recap", response_model=AttendanceRecapOut)
 def attendance_recap(
@@ -579,15 +595,17 @@ def attendance_recap(
             .group_by(Board.line_id)
         ).all()
     )
-    home_line = {
-        row[0]: (row[1], row[2])
-        for row in db.execute(
-            select(BoardMember.employee_id, Line.id, Line.code)
-            .join(Board, Board.id == BoardMember.board_id)
-            .join(Line, Line.id == Board.line_id)
-            .where(BoardMember.ended_at.is_(None))
-        ).all()
-    }
+    home_lines_set: dict[int, set[int]] = {}
+    home_lines_code: dict[int, list[str]] = {}
+    for emp_id, l_id, l_code in db.execute(
+        select(BoardMember.employee_id, Line.id, Line.code)
+        .join(Board, Board.id == BoardMember.board_id)
+        .join(Line, Line.id == Board.line_id)
+        .where(BoardMember.ended_at.is_(None))
+        .order_by(Line.code)
+    ).all():
+        home_lines_set.setdefault(emp_id, set()).add(l_id)
+        home_lines_code.setdefault(emp_id, []).append(l_code)
 
     sessions = [
         RecapSessionOut(
@@ -616,7 +634,8 @@ def attendance_recap(
         ).all()
         for a, emp in attendances:
             session, code = by_session[a.session_id]
-            home = home_line.get(emp.id)
+            is_member_of_session_line = session.line_id in home_lines_set.get(emp.id, set())
+            home_label = ", ".join(home_lines_code.get(emp.id, [])) or None
             reason, note = _absence_fields(a)
             rows.append(
                 RecapRowOut(
@@ -632,8 +651,8 @@ def attendance_recap(
                     absence_reason=reason,
                     absence_note=note,
                     attended_at=a.attended_at,
-                    is_guest=a.status == "present" and (home is None or home[0] != session.line_id),
-                    home_line=home[1] if home else None,
+                    is_guest=a.status == "present" and not is_member_of_session_line,
+                    home_line=home_label,
                 )
             )
 

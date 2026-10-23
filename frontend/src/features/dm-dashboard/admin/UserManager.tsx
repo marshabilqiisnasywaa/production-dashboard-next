@@ -296,7 +296,19 @@ export default function UserManager({ call }: UserManagerProps) {
                             {user.position ? <span className="ut-muted">{user.position}</span> : null}
                           </div>
                         </td>
-                        <td>{user.lineLabel ?? <span className="ut-muted">Belum ada lini</span>}</td>
+                        <td>
+                          {user.lineLabels && user.lineLabels.length > 0 ? (
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                              {user.lineLabels.map((l) => (
+                                <span key={l} className="ut-badge" style={{ fontSize: "11px", background: "#f1f5f9", color: "#334155" }}>
+                                  {l}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            user.lineLabel ?? <span className="ut-muted">Belum ada lini</span>
+                          )}
+                        </td>
                         <td>{user.supervisor ?? <span className="ut-muted">-</span>}</td>
                         <td>
                           {user.faceEnrolled ? (

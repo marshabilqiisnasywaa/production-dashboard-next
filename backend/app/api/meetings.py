@@ -34,7 +34,7 @@ from app.schemas import (
     PostMeetingOut,
     PresensiCloseIn,
 )
-from app.services.accounts import active_line
+from app.services.accounts import active_line, active_lines
 from app.services.meeting_attendance import home_line_code
 from app.services.meeting_schedule import (
     ALL_DAYS,
@@ -229,8 +229,8 @@ def list_sessions(
 
     # Restrict leader/member to their own line if not admin/supervisor
     if principal.role in ("leader", "member") and principal.employee:
-        al = active_line(db, principal.employee.id)
-        if al and al[1].id != line_id:
+        user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
+        if user_line_ids and line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Akses ditolak: Anda hanya dapat mengakses meeting pada lini penugasan Anda.")
 
     # Check if sessions exist for this line & date, auto-initialize if not
@@ -293,8 +293,8 @@ def meeting_history(
     if date_to < date_from or (date_to - date_from).days > 62:
         raise HTTPException(status_code=400, detail="Rentang tanggal tidak valid (maksimal 62 hari).")
     if principal.role in ("leader", "member") and principal.employee:
-        al = active_line(db, principal.employee.id)
-        if al and al[1].id != line_id:
+        user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
+        if user_line_ids and line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Akses ditolak: Anda hanya dapat melihat riwayat lini penugasan Anda.")
     stmt = (
         select(DmMeetingSession)
@@ -332,8 +332,8 @@ def get_session(
     if not session:
         raise HTTPException(status_code=404, detail="Sesi meeting tidak ditemukan.")
     if principal.role in ("leader", "member") and principal.employee:
-        al = active_line(db, principal.employee.id)
-        if al and al[1].id != session.line_id:
+        user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
+        if user_line_ids and session.line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Akses ditolak: Anda hanya dapat mengakses meeting pada lini penugasan Anda.")
     return _map_session(session, db)
 
@@ -348,8 +348,8 @@ def start_session(
         raise HTTPException(status_code=403, detail="Hanya Leader yang berwenang memulai sesi DM Meeting.")
 
     if principal.employee:
-        al = active_line(db, principal.employee.id)
-        if al and al[1].id != payload.line_id:
+        user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
+        if user_line_ids and payload.line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Anda hanya dapat memimpin meeting pada lini Anda sendiri.")
 
     # Find session
@@ -431,8 +431,8 @@ def close_presensi(
     if session.status == "completed":
         raise HTTPException(status_code=409, detail="Sesi ini sudah selesai.")
     if principal.employee:
-        al = active_line(db, principal.employee.id)
-        if al and al[1].id != session.line_id:
+        user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
+        if user_line_ids and session.line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Anda hanya dapat menutup presensi pada lini Anda sendiri.")
 
     employees = db.scalars(select(Employee).where(Employee.employee_no.in_(payload.absent_employee_nos))).all()
@@ -471,8 +471,8 @@ def save_absence_notes(
     if session.status == "completed":
         raise HTTPException(status_code=409, detail="Sesi ini sudah selesai.")
     if principal.employee:
-        al = active_line(db, principal.employee.id)
-        if al and al[1].id != session.line_id:
+        user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
+        if user_line_ids and session.line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Anda hanya dapat mengisi keterangan pada lini Anda sendiri.")
 
     employees = {
@@ -532,8 +532,8 @@ def end_session(
         raise HTTPException(status_code=404, detail="Sesi meeting tidak ditemukan.")
 
     if principal.employee:
-        al = active_line(db, principal.employee.id)
-        if al and al[1].id != session.line_id:
+        user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
+        if user_line_ids and session.line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Anda hanya dapat memimpin meeting pada lini Anda sendiri.")
 
     now = datetime.now()
@@ -615,8 +615,8 @@ def save_post_meeting(
         raise HTTPException(status_code=403, detail="Hanya Leader yang berwenang mengisi Post-Meeting.")
 
     if principal.employee:
-        al = active_line(db, principal.employee.id)
-        if al and al[1].id != payload.line_id:
+        user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
+        if user_line_ids and payload.line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Anda hanya dapat mengisi Post-Meeting pada lini Anda sendiri.")
 
     # Verify that all 3 during sessions are completed

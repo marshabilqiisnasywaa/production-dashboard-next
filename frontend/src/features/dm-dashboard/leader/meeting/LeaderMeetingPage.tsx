@@ -43,6 +43,7 @@ interface SessionMeta {
 
 export default function LeaderMeetingPage() {
   const [currentUser, setCurrentUser] = useState<DmMe | null>(null);
+  const [selectedLineId, setSelectedLineId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<number | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [ngSubmissions, setNgSubmissions] = useState<DmPapercardSubmission[]>([]);
@@ -71,6 +72,15 @@ export default function LeaderMeetingPage() {
 
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
 
+  const activeLineObj = useMemo(() => {
+    if (!currentUser?.lines || currentUser.lines.length === 0) return currentUser?.line ?? null;
+    if (selectedLineId !== null) {
+      const found = currentUser.lines.find((l) => l.id === selectedLineId);
+      if (found) return found;
+    }
+    return currentUser.lines[0];
+  }, [currentUser, selectedLineId]);
+
   // 1. Fetch user & load sessions
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -78,12 +88,19 @@ export default function LeaderMeetingPage() {
       const me = await accountApi.me();
       if (me) {
         setCurrentUser(me);
-        const lineId = me.line?.id || 1;
+        const savedLineId = typeof window !== "undefined" ? localStorage.getItem("dm_leader_line_id") : null;
+        const currentActiveLineId =
+          selectedLineId ??
+          (savedLineId && me.lines?.some((l) => l.id === Number(savedLineId))
+            ? Number(savedLineId)
+            : me.line?.id || 1);
+        const targetLine = me.lines?.find((l) => l.id === currentActiveLineId) ?? me.line;
+        const lineId = targetLine?.id || 1;
 
         // Fetch team members from line board if available
-        if (me.line?.slug) {
+        if (targetLine?.slug) {
           try {
-            const board = await publicApi.board(me.line.slug);
+            const board = await publicApi.board(targetLine.slug);
             if (board && board.members) {
               const mapped: TeamMember[] = board.members.map((bm) => {
                 const memberName = bm.name || "Anggota Tim";
@@ -395,19 +412,50 @@ export default function LeaderMeetingPage() {
           <span className="dms-pill dms-pill--supervisor" style={{ fontSize: "12px" }}>
             Dilaporkan ke Supervisor: <strong>{currentUser?.supervisor || "Belum diatur admin"}</strong>
           </span>
-          <span
-            style={{
-              fontSize: "12px",
-              background: "#f0fdfa",
-              color: "#0f766e",
-              border: "1px solid #ccfbf1",
-              padding: "4px 12px",
-              borderRadius: "999px",
-              fontWeight: 700,
-            }}
-          >
-            📍 {currentUser?.line?.name || "Lini belum diatur"} ({currentUser?.line?.code || "-"}) · Shift 1
-          </span>
+          {currentUser?.lines && currentUser.lines.length > 1 ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <select
+                value={activeLineObj?.id ?? ""}
+                onChange={(e) => {
+                  const nId = Number(e.target.value);
+                  setSelectedLineId(nId);
+                  try {
+                    localStorage.setItem("dm_leader_line_id", String(nId));
+                  } catch {}
+                }}
+                style={{
+                  fontSize: "12px",
+                  background: "#f0fdfa",
+                  color: "#0f766e",
+                  border: "1px solid #ccfbf1",
+                  padding: "4px 10px",
+                  borderRadius: "999px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                {currentUser.lines.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    📍 {l.name} ({l.code}) · Shift 1
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <span
+              style={{
+                fontSize: "12px",
+                background: "#f0fdfa",
+                color: "#0f766e",
+                border: "1px solid #ccfbf1",
+                padding: "4px 12px",
+                borderRadius: "999px",
+                fontWeight: 700,
+              }}
+            >
+              📍 {activeLineObj?.name || "Lini belum diatur"} ({activeLineObj?.code || "-"}) · Shift 1
+            </span>
+          )}
         </div>
       </div>
 

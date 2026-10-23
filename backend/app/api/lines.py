@@ -6,7 +6,7 @@ from app.api.deps import Principal, authorize_line, get_active_principal
 from app.db.session import get_db
 from app.models import Board, Line, Workshop
 from app.schemas import LineOut, PublicBoardOut
-from app.services.accounts import active_line
+from app.services.accounts import active_line, active_lines
 from app.services.boards import line_out, public_board
 
 router = APIRouter(prefix="/lines", tags=["lines"])
@@ -45,6 +45,6 @@ def list_my_lines(
         return [line_out(db, board, line, workshop) for board, line, workshop in rows]
     employee = principal.employee
     assert employee is not None
-    found = active_line(db, employee.id)
-    return [line_out(db, *found)] if found else []
+    found_lines = active_lines(db, employee.id)
+    return [line_out(db, board, line, workshop) for board, line, workshop in found_lines]
 

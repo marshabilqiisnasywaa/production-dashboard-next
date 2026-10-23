@@ -18,7 +18,7 @@ from app.schemas import (
     SupervisorApproveIn,
 )
 from app.seed_papercards import FACTORY_PRESETS
-from app.services.accounts import active_line
+from app.services.accounts import active_line, active_lines
 
 router = APIRouter(prefix="/papercards", tags=["papercards"])
 
@@ -287,11 +287,14 @@ def list_templates(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_principal),
 ) -> list[PapercardTemplate]:
-    # Restrict member and leader strictly to their assigned line and department
+    # Restrict member and leader strictly to their assigned lines and department
     if principal.role in ("member", "leader") and principal.employee:
-        al = active_line(db, principal.employee.id)
-        if al:
-            line_id = al[1].id
+        user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
+        if line_id is not None:
+            if user_line_ids and line_id not in user_line_ids:
+                return []
+        elif user_line_ids:
+            line_id = user_line_ids[0]
         if principal.employee.dept:
             department = principal.employee.dept
 
@@ -411,11 +414,14 @@ def list_submissions(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_principal),
 ) -> list[PapercardSubmissionOut]:
-    # Restrict member and leader strictly to their assigned line
+    # Restrict member and leader strictly to their assigned lines
     if principal.role in ("member", "leader") and principal.employee:
-        al = active_line(db, principal.employee.id)
-        if al:
-            line_id = al[1].id
+        user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
+        if line_id is not None:
+            if user_line_ids and line_id not in user_line_ids:
+                return []
+        elif user_line_ids:
+            line_id = user_line_ids[0]
         if principal.role == "member" and principal.employee.dept:
             department = principal.employee.dept
 
@@ -471,10 +477,10 @@ def submit_papercard(
 ) -> PapercardSubmissionOut:
     dept = payload.department.upper()
 
-    # Enforce strict boundary for member and leader role: only assigned line & department
+    # Enforce strict boundary for member and leader role: only assigned lines & department
     if principal.role in ("member", "leader") and principal.employee:
-        al = active_line(db, principal.employee.id)
-        if al and payload.line_id != al[1].id:
+        user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
+        if user_line_ids and payload.line_id not in user_line_ids:
             role_label = "Leader" if principal.role == "leader" else "Anggota"
             raise HTTPException(
                 status_code=403,

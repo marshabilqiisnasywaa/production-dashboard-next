@@ -86,6 +86,7 @@ export type DmEmployee = {
   isActive: boolean;
   mustChangePassword: boolean;
   lineLabel: string | null;
+  lineLabels?: string[];
   faceEnrolled: boolean;
   faceMessage: string | null;
 };
@@ -194,6 +195,7 @@ export type DmMe = {
   workPhone?: string | null;
   photoUrl?: string | null;
   line: { id: number; code: string; name: string; workshopName: string; slug: string } | null;
+  lines?: { id: number; code: string; name: string; workshopName: string; slug: string }[];
 };
 
 export const accountApi = {

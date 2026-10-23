@@ -43,8 +43,9 @@ const str = (v: unknown) => (typeof v === "string" ? v : "");
  * The department/NIK field names are not typed in DmMe yet, so they are read defensively here.
  * TODO: once DmMe has them, replace the `rec` lookups with typed fields.
  */
-export function profileFromMe(me: DmMe | null): MemberProfile {
+export function profileFromMe(me: DmMe | null, lineOverride?: DmMe["line"]): MemberProfile {
   if (!me) return MEMBER_FALLBACK;
+  const targetLine = lineOverride ?? me.line;
   const rec = me as unknown as Record<string, unknown>;
   const dept = (str(rec.department) || str(rec.dept) || str(rec.departmentCode) || MEMBER_FALLBACK.dept).toUpperCase();
   const role = DEPT_ROLE[dept] ?? { key: MEMBER_FALLBACK.roleKey, label: dept };
@@ -55,9 +56,9 @@ export function profileFromMe(me: DmMe | null): MemberProfile {
     dept,
     roleKey: role.key,
     roleLabel: role.label,
-    lineName: me.line?.name || MEMBER_FALLBACK.lineName,
-    lineCode: me.line?.code || MEMBER_FALLBACK.lineCode,
-    workshop: me.line?.workshopName || MEMBER_FALLBACK.workshop,
+    lineName: targetLine?.name || MEMBER_FALLBACK.lineName,
+    lineCode: targetLine?.code || MEMBER_FALLBACK.lineCode,
+    workshop: targetLine?.workshopName || MEMBER_FALLBACK.workshop,
     supervisor: me.supervisor || MEMBER_FALLBACK.supervisor,
   };
 }

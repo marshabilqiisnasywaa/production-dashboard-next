@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { adminApi } from "../api";
 import type { DmEmployee, DmLine } from "../api";
 import type { DmMember } from "../dmData";
@@ -26,7 +26,6 @@ export default function LineTeamModal({
   call,
   onChanged,
   onClose,
-  onGoToMpv,
 }: LineTeamModalProps) {
   const [members, setMembers] = useState<DmMember[]>([]);
   const [employees, setEmployees] = useState<DmEmployee[]>([]);
@@ -35,6 +34,10 @@ export default function LineTeamModal({
 
   const [pickEmployeeId, setPickEmployeeId] = useState("");
   const [pickSlotOrder, setPickSlotOrder] = useState("1");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [savingAction, setSavingAction] = useState(false);
   const [banner, setBanner] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
 
@@ -56,10 +59,11 @@ export default function LineTeamModal({
       setEmployees(nextEmployees);
 
       // Default next slot order
-      const nextSlot = sorted.length < 4 ? String(sorted.length + 1) : "1";
-      setPickSlotOrder(nextSlot);
+      const taken = new Set(sorted.map((m) => m.sortOrder));
+      const firstFree = [1, 2, 3, 4].find((n) => !taken.has(n));
+      setPickSlotOrder(firstFree !== undefined ? String(firstFree) : "1");
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "Gagal memuat data tim lini.");
+      setLoadError(err instanceof Error ? err.message : "Gagal memuat data tim line.");
     } finally {
       setLoading(false);
     }
@@ -69,10 +73,53 @@ export default function LineTeamModal({
     if (open && line) {
       loadData();
       setBanner(null);
+      setPickEmployeeId("");
+      setSearchTerm("");
+      setIsDropdownOpen(false);
     }
   }, [open, line, loadData]);
 
-  // Available free employees (or active employees not in this line)
+  // Determine which slots 1..4 are currently unoccupied
+  const takenSlots = useMemo(() => new Set(members.map((m) => m.sortOrder)), [members]);
+  const freeSlots = useMemo(() => [1, 2, 3, 4].filter((n) => !takenSlots.has(n)), [takenSlots]);
+
+  // Auto-focus search input when dropdown opens
+  useEffect(() => {
+    if (isDropdownOpen) {
+      const t = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 60);
+      return () => clearTimeout(t);
+    }
+  }, [isDropdownOpen]);
+
+  // Click outside listener for custom dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
+  // Escape key listener for custom dropdown
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && isDropdownOpen) {
+        setIsDropdownOpen(false);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isDropdownOpen]);
+
+  // Available free employees (active employees not yet in this line)
   const availableEmployees = useMemo(() => {
     const currentMemberIds = new Set(members.map((m) => m.employeeId));
     return employees.filter(
@@ -80,10 +127,32 @@ export default function LineTeamModal({
     );
   }, [employees, members]);
 
+  // Filtered employees by search query (name, NIK, dept, position, or existing lines)
+  const filteredEmployees = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return availableEmployees;
+    return availableEmployees.filter((emp) => {
+      const lines = emp.lineLabels ?? (emp.lineLabel ? [emp.lineLabel] : []);
+      return [
+        emp.name,
+        emp.employeeId,
+        emp.dept ?? "",
+        emp.position ?? "",
+        emp.role,
+        ...lines,
+      ].some((v) => v.toLowerCase().includes(q));
+    });
+  }, [availableEmployees, searchTerm]);
+
+  const chosenEmployee = useMemo(
+    () => employees.find((e) => e.id === Number(pickEmployeeId)) ?? null,
+    [employees, pickEmployeeId]
+  );
+
   // Handle release member
   const handleRelease = async (member: DmMember) => {
     if (!line || member.id === undefined) return;
-    if (!window.confirm(`Lepas ${member.name ?? "anggota ini"} dari Lini ${line.code}?`)) {
+    if (!window.confirm(`Lepas ${member.name ?? "anggota ini"} dari Line ${line.code}?`)) {
       return;
     }
     setSavingAction(true);
@@ -116,24 +185,23 @@ export default function LineTeamModal({
   // Handle add member from form
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!line || !pickEmployeeId) return;
-
-    const chosenEmp = employees.find((emp) => emp.id === Number(pickEmployeeId));
-    if (!chosenEmp) return;
+    if (!line || !chosenEmployee || members.length >= 4) return;
 
     setSavingAction(true);
     try {
       await call(() =>
         adminApi.addMember(line.id, {
-          employeePk: chosenEmp.id,
+          employeePk: chosenEmployee.id,
           sortOrder: Number(pickSlotOrder) || 1,
         })
       );
-      setPickEmployeeId("");
       setBanner({
         type: "success",
-        message: `${chosenEmp.name} berhasil ditambahkan ke Slot #${pickSlotOrder}!`,
+        message: `${chosenEmployee.name} berhasil ditambahkan ke Slot #${pickSlotOrder}!`,
       });
+      setPickEmployeeId("");
+      setSearchTerm("");
+      setIsDropdownOpen(false);
       await Promise.all([loadData(), onChanged()]);
     } catch (err) {
       setBanner({ type: "error", message: err instanceof Error ? err.message : "Gagal menambahkan anggota." });
@@ -154,13 +222,13 @@ export default function LineTeamModal({
           <div className="ltm-header-left">
             <div className="ltm-header-title-row">
               <h2 className="ltm-title">
-                <span>Manajemen Tim Inti Lini</span>
+                <span>Manajemen DM Triangle Team</span>
                 <span className="ltm-badge-line">{line.code}</span>
                 <span className="ltm-badge-workshop">{line.workshopName}</span>
               </h2>
             </div>
             <p className="ltm-subtitle">
-              Atur 4 personil tim inti untuk lini <strong>{line.name}</strong>. Slot #1 selalu Leader.
+              Line <strong>{line.name}</strong>. Slot 1 selalu Leader.
             </p>
           </div>
           <button
@@ -196,7 +264,7 @@ export default function LineTeamModal({
               <div>
                 <strong>Standar Tim Inti: Tepat 4 Personil</strong>
                 <div style={{ fontSize: "12px", color: "#64748b" }}>
-                  Slot #1 wajib  <strong>Leader</strong> + 3 Personil Departemen (PROD, ME, PE, QC).
+                  Slot #1 wajib <strong>Leader</strong> + 3 Personil Departemen (PROD, ME, PE, QC).
                 </div>
               </div>
             </div>
@@ -209,7 +277,7 @@ export default function LineTeamModal({
           {/* Loading / Error States */}
           {loading ? (
             <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
-              Memuat data personil lini {line.code}...
+              Memuat data personil line {line.code}...
             </div>
           ) : loadError ? (
             <div className="ltm-alert is-error">
@@ -288,7 +356,7 @@ export default function LineTeamModal({
                           className="ltm-btn-release"
                           onClick={() => handleRelease(member)}
                           disabled={savingAction}
-                          title="Lepas anggota dari lini ini agar bebas dipasang ke lini lain"
+                          title="Lepas anggota dari line ini"
                         >
                           Lepas
                         </button>
@@ -298,126 +366,293 @@ export default function LineTeamModal({
                 })}
 
                 {/* Placeholders for remaining slots if team has < 4 members */}
-                {Array.from({ length: Math.max(0, 4 - members.length) }).map((_, i) => {
-                  const slotNum = members.length + i + 1;
-                  return (
-                    <div key={`empty-${slotNum}`} className="ltm-slot-card is-empty">
-                      <div style={{ fontSize: "24px", color: "#cbd5e1" }}>+</div>
-                      <div style={{ fontSize: "13px", fontWeight: 700, color: "#64748b" }}>
-                        Slot #{slotNum} Masih Kosong
-                      </div>
-                      <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px" }}>
-                        Tambahkan personil dari form di bawah.
-                      </div>
-                    </div>
-                  );
-                })}
+                {freeSlots.map((slotNum) => (
+                  <button
+                    key={`empty-${slotNum}`}
+                    type="button"
+                    className={`ltm-slot-card is-empty ${pickSlotOrder === String(slotNum) ? "is-active-target" : ""}`}
+                    onClick={() => {
+                      setPickSlotOrder(String(slotNum));
+                      setIsDropdownOpen(true);
+                    }}
+                    disabled={savingAction}
+                    title={`Pilih untuk mengisi Slot #${slotNum}`}
+                  >
+                    <span className="ltm-slot-plus" aria-hidden="true">+</span>
+                    <span className="ltm-slot-empty-title">
+                      Slot #{slotNum}{slotNum === 1 ? " (Leader)" : ""} Masih Kosong
+                    </span>
+                    <span className="ltm-slot-empty-hint">Klik untuk pasang personil</span>
+                  </button>
+                ))}
               </div>
 
-              {/* Fast Add / Assign Member Form */}
-              <section className="ltm-add-section">
-                <h3 className="ltm-add-title">
-                  <span>➕ Tambah / Pasang Personil ke Lini {line.code}</span>
-                </h3>
-                <form className="ltm-add-form" onSubmit={handleAddMember}>
-                  <div className="ltm-field">
-                    <label htmlFor="pick-employee" className="ltm-label">
-                      Pilih Karyawan
-                    </label>
-                    <select
-                      id="pick-employee"
-                      className="ltm-select"
-                      value={pickEmployeeId}
-                      onChange={(e) => setPickEmployeeId(e.target.value)}
-                      disabled={savingAction}
-                      required
-                    >
-                      <option value="">
-                        {availableEmployees.length === 0
-                          ? "Semua karyawan sudah terpasang di lini"
-                          : "-- Pilih dari daftar karyawan aktif --"}
-                      </option>
-                      {availableEmployees.map((emp) => (
-                        <option key={emp.id} value={emp.id}>
-                          {emp.name} (NIK: {emp.employeeId} · Dept: {emp.dept ?? "-"} · {emp.lineLabel ? `di ${emp.lineLabel}` : "Bebas"})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="ltm-field is-narrow">
-                    <label htmlFor="pick-slot" className="ltm-label">
-                      Pasang di Slot
-                    </label>
-                    <select
-                      id="pick-slot"
-                      className="ltm-select"
-                      value={pickSlotOrder}
-                      onChange={(e) => setPickSlotOrder(e.target.value)}
-                      disabled={savingAction}
-                    >
-                      <option value="1">Slot #1 (Leader)</option>
-                      <option value="2">Slot #2</option>
-                      <option value="3">Slot #3</option>
-                      <option value="4">Slot #4</option>
-                    </select>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="ltm-btn-add"
-                    disabled={savingAction || !pickEmployeeId}
-                  >
-                    <span>{savingAction ? "Menyimpan..." : "Tambahkan ke Tim"}</span>
-                  </button>
-                </form>
-              </section>
-
-              {/* MPV Direction Card */}
-              {/* <div
-                style={{
-                  padding: "12px 16px",
-                  background: "#fefce8",
-                  border: "1px solid #fef08a",
-                  borderRadius: "10px",
-                  fontSize: "12.5px",
-                  color: "#854d0e",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: "10px",
-                }}
-              >
-                <div>
-                  <strong>🏆 Ingin Mengatur Operator MPV of The Month?</strong>
-                  <div style={{ marginTop: "2px" }}>
-                    Penghargaan MPV bulanan beserta riwayat pemenang diatur pada tab khusus <strong>MPV of The Month</strong>.
+              {/* Add / Assign Personnel Section or Complete Notice */}
+              {isComplete ? (
+                <div className="ltm-complete-notice">
+                  <div className="ltm-complete-notice-icon">✓</div>
+                  <div className="ltm-complete-notice-body">
+                    <strong className="ltm-complete-notice-title">
+                      DM Triangle Team Line {line.code} Sudah Lengkap (4 / 4 Team)
+                    </strong>
+                    <p className="ltm-complete-notice-text">
+                      Team telah terpenuhi sehingga penambahan personil ditutup. Jika ingin mengganti anggota, klik tombol <strong>Lepas</strong> pada salah satu personil di atas terlebih dahulu.
+                    </p>
                   </div>
                 </div>
+              ) : (
+                <section className="ltm-add-section">
+                  <div className="ltm-add-header">
+                    <h3 className="ltm-add-title">
+                      <span>Tambah / Pasang team ke Line {line.code}</span>
+                    </h3>
+                    <span className="ltm-add-desc">
+                      Pilih karyawan dari daftar. Karyawan yang sudah terdaftar di line lain tetap dapat dipasang secara bebas (multi-line).
+                    </span>
+                  </div>
 
-                {onGoToMpv && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClose();
-                      onGoToMpv();
-                    }}
-                    style={{
-                      background: "#f59e0b",
-                      color: "#ffffff",
-                      border: "none",
-                      borderRadius: "6px",
-                      padding: "6px 12px",
-                      fontSize: "12px",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Buka Tab MPV →
-                  </button>
-                )}
-              </div> */}
+                  <form className="ltm-add-form" onSubmit={handleAddMember}>
+                    {/* Field 1: Custom Searchable Employee Picker */}
+                    <div className="ltm-field" style={{ flex: "2 1 360px", position: "relative" }} ref={dropdownRef}>
+                      <label className="ltm-label" htmlFor="employee-select-trigger">
+                        Pilih Karyawan <span style={{ color: "#dc2626" }}>*</span>
+                      </label>
+
+                      {/* Trigger Button */}
+                      <div
+                        id="employee-select-trigger"
+                        tabIndex={0}
+                        role="combobox"
+                        aria-expanded={isDropdownOpen}
+                        aria-haspopup="listbox"
+                        className={`ltm-select-trigger ${isDropdownOpen ? "is-focused" : ""} ${chosenEmployee ? "has-value" : ""}`}
+                        onClick={() => {
+                          if (!savingAction) {
+                            setIsDropdownOpen((prev) => !prev);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+                            e.preventDefault();
+                            setIsDropdownOpen(true);
+                          }
+                        }}
+                      >
+                        {chosenEmployee ? (
+                          <div className="ltm-trigger-selected">
+                            <span className="ltm-trigger-avatar">
+                              {chosenEmployee.photoUrl ? (
+                                <img src={chosenEmployee.photoUrl} alt="" className="ltm-avatar-img" />
+                              ) : (
+                                getInitials(chosenEmployee.name)
+                              )}
+                            </span>
+                            <div className="ltm-trigger-info">
+                              <div className="ltm-trigger-name-row">
+                                <span className="ltm-trigger-name">
+                                  {chosenEmployee.name}
+                                </span>
+                                {chosenEmployee.role === "leader" && (
+                                  <span className="ltm-item-role-badge">Leader</span>
+                                )}
+                                {chosenEmployee.dept && (
+                                  <span className={`ltm-item-dept dept-${chosenEmployee.dept.toUpperCase()}`}>
+                                    {chosenEmployee.dept}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="ltm-trigger-meta-row">
+                                <span>NIK: <strong>{chosenEmployee.employeeId}</strong></span>
+                                {chosenEmployee.position && <span> · {chosenEmployee.position}</span>}
+                              </div>
+                              {(() => {
+                                const lines = chosenEmployee.lineLabels && chosenEmployee.lineLabels.length > 0
+                                  ? chosenEmployee.lineLabels
+                                  : (chosenEmployee.lineLabel ? [chosenEmployee.lineLabel] : []);
+                                return (
+                                  <div className={`ltm-item-lines-text ${lines.length === 0 ? "is-free" : ""}`}>
+                                    <span className="ltm-item-lines-icon">{lines.length > 0 ? "🔗" : "✓"}</span>
+                                    <span>
+                                      {lines.length > 0 ? (
+                                        <>Aktif di line: <strong>{lines.join(", ")}</strong></>
+                                      ) : (
+                                        "Belum ada line"
+                                      )}
+                                    </span>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="ltm-trigger-placeholder">
+                            <span className="ltm-trigger-icon">🔍</span>
+                            <span>
+                              {availableEmployees.length === 0
+                                ? "Semua karyawan sudah terpasang di line ini"
+                                : "-- Cari & Pilih Karyawan --"}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="ltm-trigger-actions">
+                          {chosenEmployee && (
+                            <button
+                              type="button"
+                              className="ltm-trigger-clear"
+                              title="Batalkan pilihan"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPickEmployeeId("");
+                              }}
+                            >
+                              ✕
+                            </button>
+                          )}
+                          <span className={`ltm-trigger-chevron ${isDropdownOpen ? "is-open" : ""}`}>▼</span>
+                        </div>
+                      </div>
+
+                      {/* Popover Dropdown */}
+                      {isDropdownOpen && (
+                        <div className="ltm-dropdown-popover" role="listbox">
+                          {/* Search Box Header */}
+                          <div className="ltm-dropdown-header">
+                            <div className="ltm-search-wrap">
+                              <span className="ltm-search-icon">🔍</span>
+                              <input
+                                ref={searchInputRef}
+                                type="text"
+                                className="ltm-search-input"
+                                placeholder="Cari nama, NIK, dept, posisi, atau line..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              {searchTerm && (
+                                <button
+                                  type="button"
+                                  className="ltm-search-clear"
+                                  onClick={() => setSearchTerm("")}
+                                  title="Hapus pencarian"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+                            <div className="ltm-search-count">
+                              <span>{filteredEmployees.length} karyawan tersedia</span>
+                            </div>
+                          </div>
+
+                          {/* List of Candidates */}
+                          <div className="ltm-dropdown-list">
+                            {filteredEmployees.length === 0 ? (
+                              <div className="ltm-dropdown-empty">
+                                {availableEmployees.length === 0
+                                  ? "Semua karyawan aktif sudah menjadi personil di line ini."
+                                  : "Tidak ada karyawan yang cocok dengan pencarian."}
+                              </div>
+                            ) : (
+                              filteredEmployees.map((emp) => {
+                                const isSelected = String(emp.id) === pickEmployeeId;
+                                const lines = emp.lineLabels && emp.lineLabels.length > 0
+                                  ? emp.lineLabels
+                                  : (emp.lineLabel ? [emp.lineLabel] : []);
+                                const isLeader = emp.role === "leader";
+
+                                return (
+                                  <div
+                                    key={emp.id}
+                                    role="option"
+                                    aria-selected={isSelected}
+                                    className={`ltm-dropdown-item ${isSelected ? "is-selected" : ""}`}
+                                    onClick={() => {
+                                      setPickEmployeeId(String(emp.id));
+                                      setIsDropdownOpen(false);
+                                      setSearchTerm("");
+                                    }}
+                                  >
+                                    <span className="ltm-item-avatar">
+                                      {emp.photoUrl ? (
+                                        <img src={emp.photoUrl} alt="" className="ltm-avatar-img" />
+                                      ) : (
+                                        getInitials(emp.name)
+                                      )}
+                                    </span>
+
+                                    <div className="ltm-item-content">
+                                      <div className="ltm-item-name-row">
+                                        <strong className="ltm-item-name">{emp.name}</strong>
+                                        {isLeader && (
+                                          <span className="ltm-item-role-badge">Leader</span>
+                                        )}
+                                        {emp.dept && (
+                                          <span className={`ltm-item-dept dept-${emp.dept.toUpperCase()}`}>
+                                            {emp.dept}
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <div className="ltm-item-sub">
+                                        <span>NIK: <strong>{emp.employeeId}</strong></span>
+                                        {emp.position && <span> · {emp.position}</span>}
+                                      </div>
+
+                                      <div className={`ltm-item-lines-text ${lines.length === 0 ? "is-free" : ""}`}>
+                                        <span className="ltm-item-lines-icon">{lines.length > 0 ? "🔗" : "✓"}</span>
+                                        <span>
+                                          {lines.length > 0 ? (
+                                            <>Aktif di line: <strong>{lines.join(", ")}</strong></>
+                                          ) : (
+                                            "Belum ada line"
+                                          )}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {isSelected && <span className="ltm-item-check">✓</span>}
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Field 2: Target Slot */}
+                    <div className="ltm-field" style={{ flex: "1 1 180px" }}>
+                      <label htmlFor="pick-slot-order" className="ltm-label">
+                        Posisi Slot <span style={{ color: "#dc2626" }}>*</span>
+                      </label>
+                      <select
+                        id="pick-slot-order"
+                        className="ltm-select"
+                        value={pickSlotOrder}
+                        onChange={(e) => setPickSlotOrder(e.target.value)}
+                        disabled={savingAction}
+                      >
+                        <option value="1">Slot #1 (Leader Tim)</option>
+                        <option value="2">Slot #2 (Anggota)</option>
+                        <option value="3">Slot #3 (Anggota)</option>
+                        <option value="4">Slot #4 (Anggota)</option>
+                      </select>
+                    </div>
+
+                    {/* Submit button */}
+                    <div className="ltm-add-actions">
+                      <button
+                        type="submit"
+                        className="ltm-btn-add"
+                        disabled={savingAction || !chosenEmployee}
+                      >
+                        {savingAction ? "Menyimpan..." : "Tambahkan ke Tim"}
+                      </button>
+                    </div>
+                  </form>
+                </section>
+              )}
             </>
           )}
         </div>
@@ -425,7 +660,7 @@ export default function LineTeamModal({
         {/* Modal Footer */}
         <footer className="ltm-footer">
           <div style={{ fontSize: "12px", color: "#64748b" }}>
-            Perubahan langsung tersimpan otomatis ke database PostgreSQL dan tayang di DM Dashboard Lini.
+            {isComplete ? "Team sudah mencapai kuota lengkap 4 personil." : `Masih ada ${4 - members.length} slot kosong.`}
           </div>
           <button type="button" className="ltm-btn-done" onClick={onClose}>
             Selesai

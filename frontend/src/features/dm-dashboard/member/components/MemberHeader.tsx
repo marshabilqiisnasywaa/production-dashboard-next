@@ -11,7 +11,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 /** Same header as the Leader (time + date on the left, role + user on the right) plus the logout button. */
 export function MemberHeader() {
-  const { me, profile } = useMember();
+  const { me, profile, activeLine, setActiveLine, availableLines } = useMember();
   const now = useNow(30_000); // null on the first render so server and client markup match
 
   const time = now ? `${pad(now.getHours())}:${pad(now.getMinutes())}` : "--:--";
@@ -36,11 +36,40 @@ export function MemberHeader() {
       </div>
 
       <div className="dml-header__right">
+        {availableLines.length > 1 && (
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "12px", color: "var(--text-secondary, #64748b)" }}>Lini:</span>
+            <select
+              value={activeLine?.id ?? ""}
+              onChange={(e) => {
+                const found = availableLines.find((l) => l.id === Number(e.target.value));
+                if (found) setActiveLine(found);
+              }}
+              style={{
+                fontSize: "12px",
+                fontWeight: 600,
+                padding: "4px 8px",
+                borderRadius: "6px",
+                border: "1px solid #cbd5e1",
+                background: "#ffffff",
+                color: "#1e293b",
+                cursor: "pointer",
+              }}
+            >
+              {availableLines.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.code} ({l.name})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <NotificationBellButton
-          lineId={me?.line?.id}
+          lineId={activeLine?.id ?? me?.line?.id}
           dept={dept}
           role="member"
-          lineName={me?.line?.name}
+          lineName={activeLine?.name ?? me?.line?.name}
         />
 
         <span className="dml-role-badge">MEMBER &bull; {profile.roleLabel}</span>

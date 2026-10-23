@@ -23,16 +23,22 @@ def reset_password(employee: Employee, password: str | None = None) -> None:
     employee.must_change_password = True
 
 
-def active_line(db: Session, employee_id: int) -> tuple[Board, Line, Workshop] | None:
-    row = db.execute(
+def active_lines(db: Session, employee_id: int) -> list[tuple[Board, Line, Workshop]]:
+    rows = db.execute(
         select(Board, Line, Workshop)
         .select_from(BoardMember)
         .join(Board, Board.id == BoardMember.board_id)
         .join(Line, Line.id == Board.line_id)
         .join(Workshop, Workshop.id == Line.workshop_id)
         .where(BoardMember.employee_id == employee_id, BoardMember.ended_at.is_(None))
-    ).first()
-    return (row[0], row[1], row[2]) if row else None
+        .order_by(Line.code)
+    ).all()
+    return [(r[0], r[1], r[2]) for r in rows]
+
+
+def active_line(db: Session, employee_id: int) -> tuple[Board, Line, Workshop] | None:
+    lines = active_lines(db, employee_id)
+    return lines[0] if lines else None
 
 
 def forbidden(message: str = "Kamu tidak punya akses ke data ini.") -> HTTPException:

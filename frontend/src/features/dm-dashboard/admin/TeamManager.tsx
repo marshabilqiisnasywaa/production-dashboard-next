@@ -163,7 +163,10 @@ export default function TeamManager({ line, call, onChanged }: TeamManagerProps)
     await afterChange(`${member.name ?? "Anggota"} dilepas dari lini.`);
   }
 
-  const available = employees.filter((employee) => employee.isActive && !employee.lineLabel);
+  const currentMemberIds = new Set(members.map((m) => m.employeeId));
+  const available = employees.filter(
+    (employee) => employee.isActive && !currentMemberIds.has(employee.employeeId)
+  );
 
   if (loading && members.length === 0 && employees.length === 0) {
     return <p role="status" className="lw-muted">Memuat anggota...</p>;
@@ -184,12 +187,19 @@ export default function TeamManager({ line, call, onChanged }: TeamManagerProps)
         <div className="lw-field lw-grow">
           <label htmlFor="team-pick" className="lw-label">Tambah anggota</label>
           <select id="team-pick" className="lw-input" value={pick} onChange={(event) => setPick(event.target.value)}>
-            <option value="">{available.length === 0 ? "Tidak ada User yang bebas" : "Pilih dari daftar User"}</option>
-            {available.map((employee) => (
-              <option key={employee.id} value={employee.id}>
-                {employee.name} ({[employee.employeeId, employee.dept].filter(Boolean).join(", ")})
-              </option>
-            ))}
+            <option value="">{available.length === 0 ? "Semua user aktif sudah ada di lini ini" : "Pilih dari daftar User"}</option>
+            {available.map((employee) => {
+              const details = [
+                employee.employeeId,
+                employee.dept,
+                employee.lineLabel ? `aktif di ${employee.lineLabel}` : null,
+              ].filter(Boolean).join(" · ");
+              return (
+                <option key={employee.id} value={employee.id}>
+                  {employee.name} ({details})
+                </option>
+              );
+            })}
           </select>
         </div>
         <div className="lw-field lw-order">
@@ -201,7 +211,7 @@ export default function TeamManager({ line, call, onChanged }: TeamManagerProps)
         </button>
       </form>
       {available.length === 0 ? (
-        <p className="lw-hint">Tambahkan orang baru di menu User, atau lepas seseorang dari lini lain.</p>
+        <p className="lw-hint">Semua user aktif sudah terdaftar sebagai anggota di lini {line.code}.</p>
       ) : null}
       {addError ? <p className="lw-error" role="alert">{addError}</p> : null}
 
