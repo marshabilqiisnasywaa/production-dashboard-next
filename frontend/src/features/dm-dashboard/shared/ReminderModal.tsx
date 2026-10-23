@@ -298,7 +298,7 @@ export function ReminderModal({
 
   return (
     <>
-      {process.env.NODE_ENV === "development" && (
+      {/* {process.env.NODE_ENV === "development" && (
         <div className="dm-reminder-demo">
           <span>Preview reminder</span>
           <button type="button" onClick={() => openDemo("papercard")}>
@@ -309,7 +309,7 @@ export function ReminderModal({
           </button>
           {demoError && <span className="dm-reminder-demo-error">{demoError}</span>}
         </div>
-      )}
+      )} */}
 
       {current && (
         <div

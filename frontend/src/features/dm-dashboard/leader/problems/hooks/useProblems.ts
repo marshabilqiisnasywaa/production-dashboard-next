@@ -1,79 +1,90 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { meetingApi, type DmMyProblem } from "../../../api";
 import { useNow } from "../../hooks/useNow";
-import { useMeetingMembers } from "../../meeting/hooks/useMeetingMembers";
-import { MEETING_SESSIONS } from "../../meeting/mockData";
-import {
-  PROBLEMS_CHANGED_EVENT,
-  PROBLEMS_STATUS_STORAGE_KEY,
-  readStatusMap,
-  writeStatusMap,
-} from "../storage";
-import type { ProblemRow, StoredProblem } from "../types";
+import type { ProblemRow } from "../types";
 import { countByStatus, getStatus, sortRows } from "../utils";
-import { useStoredProblems } from "./useStoredProblems";
 
-const NO_EXTRA_PROBLEMS: StoredProblem[] = [];
+/** Mengambil seluruh masalah meeting dari backend database dan menyinkronkan statusnya */
+export function useProblems(lineId?: number) {
+  const now = useNow(60_000); // Evaluasi ulang status 'overdue' setiap menit
+  const [items, setItems] = useState<DmMyProblem[] | null>(null);
+  const [loading, setLoading] = useState(true);
 
-/** All problems from DM meetings, with their status (unsolved / escalated / solved). */
-export function useProblems(extraProblems: StoredProblem[] = NO_EXTRA_PROBLEMS) {
-  const now = useNow(60_000); // re-checks "past due" every minute
-  const members = useMeetingMembers();
-  const { stored, statusMap, setStatusMap } = useStoredProblems();
+  // Load data dari backend
+  const fetchProblems = useCallback(async () => {
+    try {
+      setLoading(true);
+      const list = await meetingApi.problems(lineId);
+      setItems(list);
+    } catch {
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [lineId]);
 
   useEffect(() => {
-    const sync = () => setStatusMap(readStatusMap());
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === PROBLEMS_STATUS_STORAGE_KEY || event.key === null) sync();
-    };
+    fetchProblems();
+  }, [fetchProblems]);
 
-    window.addEventListener(PROBLEMS_CHANGED_EVENT, sync);
-    window.addEventListener("storage", handleStorage);
-    return () => {
-      window.removeEventListener(PROBLEMS_CHANGED_EVENT, sync);
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, [setStatusMap]);
-
+  // Transformasi data API ke format baris tabel
   const rows = useMemo<ProblemRow[]>(() => {
-    if (!now || !stored) return [];
-    const source = extraProblems.length > 0 ? [...stored, ...extraProblems] : stored;
-    const built = source.map((p): ProblemRow => {
-      const entry = statusMap[p.id];
-      const solved = entry ? entry.solved : Boolean(p.defaultSolved);
-      const status = getStatus(solved, p.due, now);
-      const dueTime = new Date(p.due).getTime();
+    if (!now || !items) return [];
+    const built = items.map((p): ProblemRow => {
+      const due = p.dueDate ?? "";
+      const isSolved = p.status === "resolved";
+      const status = getStatus(isSolved, due, now);
+      const dueTime = due ? new Date(due).getTime() : 0;
+
       return {
-        id: p.id,
+        id: String(p.id),
         date: p.date,
-        sessionLabel: MEETING_SESSIONS.find((s) => s.id === p.sessionId)?.label ?? p.sessionId,
-        line: p.line || "-",
+        sessionLabel: p.sessionLabel ?? "-",
+        line: p.lineCode ?? "-",
         problem: p.problem,
-        picName: p.picName ?? members.find((m) => m.id === p.picId)?.name ?? "-",
-        due: p.due,
+        picName: p.picName ?? "-",
+        due,
         status,
-        overdueMs: status === "escalated" ? now.getTime() - dueTime : 0,
-        solvedAt: entry?.at ?? null,
-        sample: Boolean(p.sample),
+        overdueMs: status === "escalated" && dueTime ? now.getTime() - dueTime : 0,
+        solvedAt: null,
+        sample: false,
       };
     });
     return sortRows(built);
-  }, [now, stored, statusMap, members, extraProblems]);
+  }, [now, items]);
 
   const counts = useMemo(() => countByStatus(rows), [rows]);
 
+  // Toggle checklist selesai/buka kembali via API backend
   const toggleSolved = useCallback(
-    (id: string, currentlySolved: boolean) => {
-      const next = {
-        ...statusMap,
-        [id]: { solved: !currentlySolved, at: currentlySolved ? null : new Date().toISOString() },
-      };
-      setStatusMap(next);
-      writeStatusMap(next);
+    async (id: string, currentlySolved: boolean) => {
+      const nextStatus = currentlySolved ? "open" : "resolved";
+      const prevStatus = currentlySolved ? "resolved" : "open";
+
+      // Update optimistik di UI agar langsung berubah tanpa jeda
+      setItems((prev) =>
+        prev ? prev.map((p) => (String(p.id) === id ? { ...p, status: nextStatus } : p)) : prev
+      );
+
+      try {
+        await meetingApi.setProblemStatus(Number(id), nextStatus);
+      } catch {
+        // Rollback jika request jaringan gagal
+        setItems((prev) =>
+          prev ? prev.map((p) => (String(p.id) === id ? { ...p, status: prevStatus } : p)) : prev
+        );
+      }
     },
-    [statusMap],
+    []
   );
 
-  return { rows, counts, ready: now !== null && stored !== null, toggleSolved };
+  return {
+    rows,
+    counts,
+    ready: !loading && now !== null && items !== null,
+    toggleSolved,
+    refresh: fetchProblems,
+  };
 }

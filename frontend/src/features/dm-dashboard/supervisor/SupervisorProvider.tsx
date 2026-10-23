@@ -159,10 +159,11 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
     return overviewData?.mySubordinates || [];
   }, [overviewData]);
 
-  const { rows: escalatedRows, count: escalatedCount } = useEscalations(
-    allListItems,
-    dbLines,
-  );
+  const {
+    rows: escalatedRows,
+    count: escalatedCount,
+    refresh: refreshEscalations,
+  } = useEscalations(allListItems, dbLines);
 
   const totalCount = allListItems.length;
   const submittedCount = allListItems.filter((item) => Boolean(item.submission)).length;
@@ -259,13 +260,17 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
     setReviewTarget(null);
   }, []);
 
+  const refreshAll = useCallback(async () => {
+    await Promise.allSettled([loadOverview(), refreshEscalations()]);
+  }, [loadOverview, refreshEscalations]);
+
   const value = useMemo<SupervisorContextValue>(
     () => ({
       me,
       loadingAccount,
       overviewData,
       isLoading,
-      refresh: loadOverview,
+      refresh: refreshAll,
       currentSupervisor,
       dbLines,
       allListItems,

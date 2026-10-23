@@ -523,17 +523,17 @@ export type DmPostMeeting = {
 };
 
 export type DmMyProblem = {
-  id : number;
-  sessionId : number;
-  lineId : number;
-  lineCode : string | null;
-  date :  string;
+  id: number;
+  sessionId: number;
+  lineId: number;
+  lineCode: string | null;
+  date: string;
   sessionLabel?: string | null;
-  problem : string;
-  picName : string;
+  problem: string;
+  picName: string;
   picId?: number | null;
   dueDate?: string | null;
-  status : string;
+  status: string;
 };
 
 export const meetingApi = {
@@ -608,6 +608,12 @@ export const meetingApi = {
   myProblems: () => request<DmMyProblem[]>("/meetings/problems/mine", {}, true),
   setProblemStatus: (id: number, status: "open" | "in_progress" | "resolved") =>
     request<DmMyProblem>(`/meetings/problems/${id}`, json("PATCH", { status }), true),
+  problems: (lineId?: number) => {
+    const query = lineId ? `?line_id=${lineId}` : "";
+    return request<DmMyProblem[]>("/meetings/problems" + query, {}, true);
+  },
+  supervisorEscalations: () =>
+    request<DmMyProblem[]>("/meetings/problems/escalations", {}, true)
 };
 
 export type DmNotificationSetting = {

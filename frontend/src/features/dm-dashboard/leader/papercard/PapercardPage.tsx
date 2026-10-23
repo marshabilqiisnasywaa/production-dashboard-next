@@ -317,10 +317,10 @@ export default function PapercardPage() {
         >
           <div style={{ fontSize: "36px", marginBottom: "12px" }}>📋</div>
           <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
-            Belum Ada Template Papercard di Database
+            Belum Ada Papercard yang harus anda checklist.
           </h3>
           <p style={{ fontSize: "13px", color: "#64748b", maxWidth: "480px", margin: "0 auto 16px", lineHeight: "1.5" }}>
-            Database belum memiliki konfigurasi checklist pertanyaan papercard untuk Lini <strong>{lineDisplayName}</strong> dan Departemen <strong>PROD</strong>.
+            Database belum memiliki konfigurasi checklist pertanyaan papercard untuk Line <strong>{lineDisplayName}</strong> dan Departemen <strong>PROD</strong>.
           </p>
           <div
             style={{
@@ -334,7 +334,7 @@ export default function PapercardPage() {
               fontWeight: 500,
             }}
           >
-            💡 Silakan buat template terlebih dahulu melalui menu <strong>Admin Panel &gt; Papercard Template</strong>.
+           Silakan Hubungi <strong>Admin</strong>.
           </div>
         </div>
       ) : (

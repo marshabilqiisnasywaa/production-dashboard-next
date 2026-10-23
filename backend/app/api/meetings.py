@@ -617,6 +617,99 @@ def my_problems(
     )
     return [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
 
+@router.get("/problems", response_model=list[myProblemOut])
+def list_problems(
+    line_id: int | None = Query(None, description="Filter masalah berdasarkan ID lini"),
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> list[myProblemOut]:
+    """
+    Mengambil seluruh daftar masalah dari meeting lini yang dipimpin oleh Leader (atau semua lini bagi SPV/Admin).
+    Mendukung multi-line assignment.
+    """
+    employee = principal.employee
+
+    # 1. Tentukan lini apa saja yang boleh diakses oleh user ini
+    if principal.role in ("leader", "member"):
+        if not employee:
+            return []
+        user_line_ids = [l.id for _, l, _ in active_lines(db, employee.id)]
+        if not user_line_ids:
+            return []
+        
+        # Jika difilter per lini tertentu, pastikan lini tersebut memang milik user
+        if line_id is not None:
+            if line_id not in user_line_ids:
+                raise HTTPException(status_code=403, detail="Akses ditolak: Anda tidak memiliki akses ke lini ini.")
+            target_line_ids = [line_id]
+        else:
+            target_line_ids = user_line_ids
+    else:
+        # Role Admin / Supervisor / Manager: bisa melihat semua atau difilter
+        target_line_ids = [line_id] if line_id is not None else None
+
+    # 2. Query masalah meeting dari database
+    stmt = (
+        select(DmMeetingSummary, DmMeetingSession)
+        .join(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
+    )
+    if target_line_ids is not None:
+        stmt = stmt.where(DmMeetingSummary.line_id.in_(target_line_ids))
+
+    stmt = stmt.order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
+    return [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
+
+@router.get("/problems/escalations", response_model=list[myProblemOut])
+def list_supervisor_escalations(
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> list[myProblemOut]:
+    """
+    Mengambil daftar masalah meeting milik bawahan supervisor yang belum selesai.
+    Filter eskalasi waktu dilakukan berdasarkan due_date.
+    """
+    spv_emp = principal.employee
+
+    # 1. Jika role supervisor, cari siapa saja bawahan langsungnya di tabel employees
+    if principal.role == "supervisor":
+        if not spv_emp:
+            return []
+        
+        # Subordinate filter: cek supervisor_id atau supervisor name
+        sub_stmt = select(Employee.id, Employee.name).where(
+            or_(
+                Employee.supervisor_id == spv_emp.id,
+                func.lower(func.trim(Employee.supervisor)) == spv_emp.name.strip().lower(),
+            )
+        )
+        subordinates = db.execute(sub_stmt).all()
+        if not subordinates:
+            return []
+        
+        sub_ids = [sub.id for sub in subordinates]
+        sub_names = [sub.name.strip().lower() for sub in subordinates if sub.name]
+
+        pic_filter = or_(
+            DmMeetingSummary.pic_id.in_(sub_ids),
+            func.lower(func.trim(DmMeetingSummary.pic_name)).in_(sub_names),
+        )
+    else:
+        # Jika Admin / Manager, dapat melihat seluruh eskalasi
+        pic_filter = None
+
+    # 2. Query masalah yang statusnya belum selesai (bukan 'resolved')
+    stmt = (
+        select(DmMeetingSummary, DmMeetingSession)
+        .join(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
+        .where(DmMeetingSummary.status != "resolved")
+    )
+
+    if pic_filter is not None:
+        stmt = stmt.where(pic_filter)
+
+    stmt = stmt.order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
+    return [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
+
 
 @router.patch("/problems/{summary_id}", response_model=myProblemOut)
 def set_problem_status(
@@ -631,11 +724,8 @@ def set_problem_status(
 
     employee = principal.employee
     if employee is not None:
-        if employee.role == "member":
-            if not _is_pic(sm, employee):
-                raise HTTPException(status_code=403, detail="Hanya Pic yang bisa mengubah status problem.")
-        else:
-            authorize_line(db, principal, sm.line_id)
+        if not _is_pic(sm, employee):
+            raise HTTPException(status_code=403, detail="Hanya PIC yang bisa mengubah status problem.")
 
     sm.status = payload.status
     db.commit()

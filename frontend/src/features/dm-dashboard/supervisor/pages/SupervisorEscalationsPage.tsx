@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ProblemTable } from "../../leader/problems/components/ProblemTable";
 import { formatOverdue } from "../../leader/problems/utils";
 import "../../leader/problems/problems.css";
@@ -40,7 +40,6 @@ export default function SupervisorEscalationsPage() {
   }, [escalatedRows, search, lineFilter]);
 
   const hasFilters = search !== "" || lineFilter !== "all";
-
   const lateOverDay = escalatedRows.filter((row) => row.overdueMs > DAY_MS).length;
   const overdueMax = escalatedRows.reduce((max, row) => Math.max(max, row.overdueMs), 0);
 
@@ -53,8 +52,8 @@ export default function SupervisorEscalationsPage() {
     <div className="dml-pb">
       <div className="dml-page-head dml-pb-heading">
         <div>
-          <h1>Eskalasi</h1>
-          <p>Masalah dari DM meeting yang melewati tenggat dan belum diselesaikan.</p>
+          <h1>Eskalasi Masalah</h1>
+          <p>Daftar masalah bawahan yang melewati tenggat waktu (due date) dan belum diselesaikan.</p>
         </div>
       </div>
 
@@ -107,30 +106,21 @@ export default function SupervisorEscalationsPage() {
             </select>
 
             {hasFilters && (
-              <button type="button" className="dml-pb-reset" onClick={resetFilters}>
+              <button
+                type="button"
+                className="dml-pb-reset"
+                onClick={resetFilters}
+              >
                 Reset
               </button>
             )}
           </div>
         </div>
 
-        <div className="dml-pb-result-count">
-          Menampilkan <strong>{visible.length}</strong> dari{" "}
-          <strong>{escalatedRows.length}</strong> masalah
-        </div>
-
         <ProblemTable
           rows={visible}
-          emptyMessage={
-            escalatedRows.length === 0
-              ? "Tidak ada masalah yang melewati due date"
-              : undefined
-          }
+          emptyMessage="Tidak ada masalah bawahan yang tereskalasi saat ini."
         />
-
-        <p className="border-t border-slate-100 px-3.5 py-2.5 text-xs text-slate-500">
-          Data masalah dibaca dari browser ini sampai endpoint masalah tersedia.
-        </p>
       </section>
     </div>
   );
