@@ -254,6 +254,33 @@
   background: #ffffff;
 }
 
+.lw-dm-select,
+.lw-dm-select > div {
+  width: 100%;
+}
+
+.lw-dm-select > div > button {
+  min-height: 42px !important;
+  border: 1.5px solid var(--lw-line) !important;
+  border-radius: 11px !important;
+  background: #fbfdfc !important;
+  color: var(--lw-ink) !important;
+  font-family: inherit !important;
+  font-size: 0.92rem !important;
+}
+
+.lw-dm-select > div > button:focus-visible {
+  outline: 2px solid rgba(0, 139, 71, 0.35);
+  outline-offset: 2px;
+}
+
+.lw-dm-success {
+  color: var(--lw-green-ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .lw-input.is-mono,
 .is-mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

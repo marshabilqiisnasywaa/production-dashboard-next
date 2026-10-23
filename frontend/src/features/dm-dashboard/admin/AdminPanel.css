@@ -2327,6 +2327,10 @@
   margin-top: 1.3rem;
 }
 
+.dm-lines-group.is-dm + .dm-lines-group {
+  margin-top: 8px;
+}
+
 .dm-lines-group-title {
   display: flex;
   align-items: center;
@@ -2335,6 +2339,88 @@
   color: var(--dm-admin-text);
   font-size: 0.98rem;
   font-weight: 700;
+}
+
+.dm-lines-group.is-dm > .dm-lines-group-title {
+  margin-bottom: 12px;
+}
+
+.dm-dm-groups {
+  display: flex;
+  flex-direction: column;
+}
+
+.dm-dm-group {
+  box-sizing: border-box;
+  min-width: 0;
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid #dbe7df;
+  border-radius: 12px;
+  background: #f7faf8;
+}
+
+.dm-dm-group.is-other {
+  background: #f5f7f6;
+}
+
+.dm-dm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.9rem;
+  padding: 0 0 8px;
+  border: 0;
+  border-bottom: 1px solid #e3ece6;
+  border-radius: 0;
+  background: transparent;
+  color: var(--dm-admin-text);
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+}
+
+.dm-dm-head-main,
+.dm-dm-head-side {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.dm-dm-head-side {
+  margin-left: auto;
+}
+
+.dm-dm-icon {
+  display: inline-grid;
+  flex: none;
+  place-content: center;
+  width: 16px;
+  height: 16px;
+  color: #286b46;
+}
+
+.dm-dm-name {
+  color: var(--dm-admin-text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.dm-dm-range {
+  color: var(--dm-admin-text-sub);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.dm-dm-head .rm-trigger {
+  width: 32px;
+  height: 32px;
+}
+
+.dm-dm-group > .dm-line-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(24rem, 100%), 1fr));
+  padding-top: 12px;
 }
 
 .dm-line-grid {
@@ -2462,6 +2548,28 @@
 
 .dm-ws .dm-admin-inline-error {
   margin: 0.7rem 0 0;
+}
+
+@media (max-width: 760px) {
+  .dm-dm-group {
+    padding: 8px;
+  }
+
+  .dm-dm-group > .dm-line-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .dm-dm-head-side {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+  }
+
+  .dm-dm-range {
+    white-space: normal;
+  }
 }
 
 @media (max-width: 560px) {

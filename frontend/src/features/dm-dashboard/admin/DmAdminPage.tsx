@@ -17,9 +17,14 @@ import MpvManager from "./MpvManager";
 import UserManager from "./UserManager";
 import { AlertIcon, CopyIcon, ExternalIcon, GearIcon, PlusIcon, UsersIcon } from "./AdminIcons";
 import { IconLogout } from "@/components/ui/icons";
+import { Layers, Pencil, Trash2 } from "lucide-react";
 import WorkshopManager from "./WorkshopManager";
 import PapercardTemplateManager from "./PapercardTemplateManager";
 import { NotificationBellButton } from "../notifications/NotificationBellButton";
+import DmGroupDialog from "./DmGroupDialog";
+import RowMenu from "./RowMenu";
+import { useDmGroups } from "./dmGroupsStore";
+import type { DmGroup } from "./dmGroupsStore";
 import "./AdminPanel.css";
 
 type Auth =
@@ -36,6 +41,14 @@ function messageOf(error: unknown) {
 
 function dashboardPath(line: DmLine) {
   return `/dm-dashboard/${line.slug}`;
+}
+
+function lineCodeRange(items: DmLine[]) {
+  if (items.length === 0) return "";
+  const codes = items
+    .map((line) => line.code)
+    .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+  return codes.length === 1 ? `Line: ${codes[0]}` : `Line: ${codes[0]} - ${codes[codes.length - 1]}`;
 }
 
 export default function DmAdminPage() {
@@ -144,6 +157,8 @@ function AdminWorkspace({
     tab: "general",
   });
   const [teamModalLine, setTeamModalLine] = useState<DmLine | null>(null);
+  const { groups, lineGroupMap, deleteGroup } = useDmGroups();
+  const [dmEditGroup, setDmEditGroup] = useState<DmGroup | null>(null);
 
   const call = useCallback(
     async <T,>(fn: () => Promise<T>): Promise<T> => {
@@ -244,6 +259,16 @@ function AdminWorkspace({
     }
   }
 
+  async function removeDmGroup(group: DmGroup) {
+    if (!window.confirm(`Hapus ${group.name}? Line di dalamnya akan dipindah ke DM Lainnya.`)) return;
+    try {
+      await deleteGroup(group.id);
+      notify("success", `${group.name} dihapus. Line di dalamnya dipindah ke DM Lainnya.`);
+    } catch (error) {
+      notify("error", messageOf(error));
+    }
+  }
+
   const query = searchQuery.toLowerCase().trim();
   const filteredLines = lines.filter((line) => {
     const matchesSearch =
@@ -257,10 +282,12 @@ function AdminWorkspace({
   });
 
   const groupedLines = Array.from(
-    filteredLines.reduce((groups, line) => {
-      groups.set(line.workshopName, [...(groups.get(line.workshopName) ?? []), line]);
-      return groups;
-    }, new Map<string, DmLine[]>())
+    filteredLines.reduce((byWorkshop, line) => {
+      const current = byWorkshop.get(line.workshopId);
+      if (current) current.items.push(line);
+      else byWorkshop.set(line.workshopId, { name: line.workshopName, items: [line] });
+      return byWorkshop;
+    }, new Map<number, { name: string; items: DmLine[] }>())
   );
 
   function resetFilters() {
@@ -293,6 +320,94 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
 })
 .replace(/\./g, ":"); // Ganti titik dengan titik dua
 
+  function renderLineCards(items: DmLine[]) {
+    return (
+      <ul className="dm-line-grid">
+        {items.map((line) => (
+          <li key={line.id} className="dm-line-card">
+            <div className="dm-line-card-top">
+              <span className="dm-line-code">{line.code}</span>
+              <span className={`dm-status-badge is-${line.status}`}>
+                <span className="dm-status-dot" aria-hidden="true" />
+                {line.status.toUpperCase()}
+              </span>
+            </div>
+            <span className="dm-line-name">{line.name}</span>
+            <div className="dm-line-chips">
+              {line.published ? null : <span className="dm-chip is-warn">DRAFT</span>}
+              {line.model ? <span className="dm-chip">{line.model}</span> : null}
+              {line.memberCount > 0 ? (
+                <button
+                  type="button"
+                  className="dm-chip"
+                  onClick={() => setTeamModalLine(line)}
+                  style={{ cursor: "pointer", border: "none", background: "inherit" }}
+                  title="Klik untuk membuka manajemen tim line ini"
+                >
+                  <UsersIcon size={13} />
+                  {line.memberCount} anggota
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="dm-chip is-warn"
+                  onClick={() => setTeamModalLine(line)}
+                  style={{ cursor: "pointer", border: "none" }}
+                  title="Klik untuk menambahkan anggota tim"
+                >
+                  <AlertIcon size={13} />
+                  0 anggota
+                </button>
+              )}
+            </div>
+            <a
+              className="dm-line-link"
+              href={dashboardPath(line)}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Buka dashboard line ini di tab baru"
+            >
+              <span>{dashboardPath(line)}</span>
+              <ExternalIcon size={14} />
+            </a>
+            <div className="dm-line-actions">
+              <button
+                type="button"
+                className="dm-admin-btn is-primary"
+                onClick={() => setTeamModalLine(line)}
+                style={{
+                  background: "#008a4f",
+                  color: "#ffffff",
+                  fontWeight: 700,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 2px 6px rgba(0, 138, 79, 0.25)",
+                }}
+                title={`Buka Manajemen Tim khusus untuk Line ${line.code}`}
+              >
+                <UsersIcon size={14} />
+                <span>Atur Tim ({line.memberCount}/4)</span>
+              </button>
+              <button
+                type="button"
+                className="dm-admin-btn is-soft"
+                onClick={() => setModal({ open: true, line, tab: "general" })}
+                title="Ubah informasi line, model, atau status"
+              >
+                <GearIcon size={14} />
+                Kelola line
+              </button>
+              <button type="button" className="dm-admin-btn is-tonal" onClick={() => copyLink(line)}>
+                <CopyIcon size={14} />
+                Salin Link
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    );
+  }
 
   return (
     <div className="dm-admin-layout">
@@ -386,7 +501,8 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                         <div>
                           <h3 id="lines-title" className="dm-panel-title">Daftar Line Produksi</h3>
                           <p className="dm-panel-sub">
-                            Tiap Line punya satu dashboard dengan link sendiri untuk dipasang di layar Line.
+                            Tiap Line punya satu dashboard dengan link sendiri untuk dipasang di layar Line. Lini
+                            dikelompokkan berdasarkan DM Meeting.
                           </p>
                         </div>
                         <button
@@ -464,98 +580,101 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                               </button>
                             </div>
                           ) : (
-                            groupedLines.map(([workshopName, items]) => (
-                              <section key={workshopName} className="dm-lines-group" aria-label={workshopName}>
-                                <h4 className="dm-lines-group-title">
-                                  {workshopName}
-                                  <span className="dm-pill">{items.length} line</span>
-                                </h4>
-                                <ul className="dm-line-grid">
-                                  {items.map((line) => (
-                                    <li key={line.id} className="dm-line-card">
-                                      <div className="dm-line-card-top">
-                                        <span className="dm-line-code">{line.code}</span>
-                                        <span className={`dm-status-badge is-${line.status}`}>
-                                          <span className="dm-status-dot" aria-hidden="true" />
-                                          {line.status.toUpperCase()}
-                                        </span>
+                            groupedLines.map(([workshopId, workshop]) => {
+                              const workshopDms = groups
+                                .filter((group) => group.workshopId === workshopId)
+                                .sort((left, right) => left.id - right.id);
+
+                              if (workshopDms.length === 0) {
+                                return (
+                                  <section key={workshopId} className="dm-lines-group" aria-label={workshop.name}>
+                                    <h4 className="dm-lines-group-title">
+                                      {workshop.name}
+                                      <span className="dm-pill">{workshop.items.length} line</span>
+                                    </h4>
+                                    {renderLineCards(workshop.items)}
+                                  </section>
+                                );
+                              }
+
+                              const dmSections = workshopDms
+                                .map((group) => ({
+                                  group,
+                                  visible: workshop.items.filter((line) => lineGroupMap[line.id] === group.id),
+                                  all: lines.filter(
+                                    (line) => line.workshopId === workshopId && lineGroupMap[line.id] === group.id
+                                  ),
+                                }))
+                                .filter((entry) => entry.visible.length > 0 || entry.all.length === 0);
+                              const otherVisible = workshop.items.filter(
+                                (line) => !workshopDms.some((group) => group.id === lineGroupMap[line.id])
+                              );
+
+                              return (
+                                <section key={workshopId} className="dm-lines-group is-dm" aria-label={workshop.name}>
+                                  <h4 className="dm-lines-group-title">
+                                    {workshop.name}
+                                    <span className="dm-pill">{workshop.items.length} line</span>
+                                  </h4>
+                                  <div className="dm-dm-groups">
+                                    {dmSections.map(({ group, visible, all }) => (
+                                      <div key={group.id} className="dm-dm-group">
+                                        <div className="dm-dm-head">
+                                          <div className="dm-dm-head-main">
+                                            <span className="dm-dm-icon">
+                                              <Layers size={16} strokeWidth={1.8} aria-hidden="true" />
+                                            </span>
+                                            <span className="dm-dm-name">{group.name}</span>
+                                            <span className="dm-pill">{visible.length} line</span>
+                                          </div>
+                                          <div className="dm-dm-head-side">
+                                            {all.length > 0 ? (
+                                              <span className="dm-dm-range">{lineCodeRange(all)}</span>
+                                            ) : null}
+                                            <RowMenu
+                                              label={`Aksi ${group.name}`}
+                                              items={[
+                                                {
+                                                  key: "edit",
+                                                  label: "Ubah DM",
+                                                  icon: <Pencil size={16} strokeWidth={1.8} />,
+                                                  onSelect: () => setDmEditGroup(group),
+                                                },
+                                                {
+                                                  key: "delete",
+                                                  label: "Hapus DM",
+                                                  icon: <Trash2 size={16} strokeWidth={1.8} />,
+                                                  danger: true,
+                                                  onSelect: () => {
+                                                    void removeDmGroup(group);
+                                                  },
+                                                },
+                                              ]}
+                                            />
+                                          </div>
+                                        </div>
+                                        {visible.length > 0 ? renderLineCards(visible) : null}
                                       </div>
-                                      <span className="dm-line-name">{line.name}</span>
-                                      <div className="dm-line-chips">
-                                        {line.published ? null : <span className="dm-chip is-warn">DRAFT</span>}
-                                        {line.model ? <span className="dm-chip">{line.model}</span> : null}
-                                        {line.memberCount > 0 ? (
-                                          <button
-                                            type="button"
-                                            className="dm-chip"
-                                            onClick={() => setTeamModalLine(line)}
-                                            style={{ cursor: "pointer", border: "none", background: "inherit" }}
-                                            title="Klik untuk membuka manajemen tim line ini"
-                                          >
-                                            <UsersIcon size={13} />
-                                            {line.memberCount} anggota
-                                          </button>
-                                        ) : (
-                                          <button
-                                            type="button"
-                                            className="dm-chip is-warn"
-                                            onClick={() => setTeamModalLine(line)}
-                                            style={{ cursor: "pointer", border: "none" }}
-                                            title="Klik untuk menambahkan anggota tim"
-                                          >
-                                            <AlertIcon size={13} />
-                                            0 anggota
-                                          </button>
-                                        )}
+                                    ))}
+
+                                    {otherVisible.length > 0 ? (
+                                      <div className="dm-dm-group is-other">
+                                        <div className="dm-dm-head">
+                                          <div className="dm-dm-head-main">
+                                            <span className="dm-dm-icon">
+                                              <Layers size={16} strokeWidth={1.8} aria-hidden="true" />
+                                            </span>
+                                            <span className="dm-dm-name">DM Lainnya</span>
+                                            <span className="dm-pill">{otherVisible.length} line</span>
+                                          </div>
+                                        </div>
+                                        {renderLineCards(otherVisible)}
                                       </div>
-                                      <a
-                                        className="dm-line-link"
-                                        href={dashboardPath(line)}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        title="Buka dashboard line ini di tab baru"
-                                      >
-                                        <span>{dashboardPath(line)}</span>
-                                        <ExternalIcon size={14} />
-                                      </a>
-                                      <div className="dm-line-actions">
-                                        <button
-                                          type="button"
-                                          className="dm-admin-btn is-primary"
-                                          onClick={() => setTeamModalLine(line)}
-                                          style={{
-                                            background: "#008a4f",
-                                            color: "#ffffff",
-                                            fontWeight: 700,
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            gap: "6px",
-                                            boxShadow: "0 2px 6px rgba(0, 138, 79, 0.25)",
-                                          }}
-                                          title={`Buka Manajemen Tim khusus untuk Line ${line.code}`}
-                                        >
-                                          <UsersIcon size={14} />
-                                          <span>Atur Tim ({line.memberCount}/4)</span>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          className="dm-admin-btn is-soft"
-                                          onClick={() => setModal({ open: true, line, tab: "general" })}
-                                          title="Ubah informasi line, model, atau status"
-                                        >
-                                          <GearIcon size={14} />
-                                          Kelola line
-                                        </button>
-                                        <button type="button" className="dm-admin-btn is-tonal" onClick={() => copyLink(line)}>
-                                          <CopyIcon size={14} />
-                                          Salin Link
-                                        </button>
-                                      </div>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </section>
-                            ))
+                                    ) : null}
+                                  </div>
+                                </section>
+                              );
+                            })
                           )}
                         </>
                       )}
@@ -655,6 +774,19 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
             onFinish={finishLine}
             onDelete={deleteLine}
             onClose={() => setModal({ open: false, line: null, tab: "general" })}
+          />
+          <DmGroupDialog
+            open={Boolean(dmEditGroup)}
+            mode="edit"
+            group={dmEditGroup}
+            workshops={workshops}
+            initialWorkshopId={dmEditGroup?.workshopId ?? null}
+            workshopLocked
+            onClose={() => setDmEditGroup(null)}
+            onSaved={(group) => {
+              setDmEditGroup(null);
+              notify("success", `DM ${group.name} berhasil diperbarui.`);
+            }}
           />
         </>
       ) : null}
