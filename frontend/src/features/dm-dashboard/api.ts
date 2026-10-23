@@ -643,4 +643,42 @@ export const notificationApi = {
     request<DmNotificationSetting>(`/notifications/settings/${lineId}`, json("PUT", data), true),
 };
 
+export type DmGroup = {
+  id: number;
+  workshopId: number;
+  name: string;
+  description: string;
+  lineIds?: number[];
+};
+
+export type DmGroupInput = {
+  workshopId: number;
+  name: string;
+  description: string;
+};
+
+export type DmGroupUpdateInput = {
+  name: string;
+  description: string;
+};
+
+export const dmGroupApi = {
+  list: (workshopId?: number) => {
+    const q = workshopId ? `?workshop_id=${workshopId}` : "";
+    return request<DmGroup[]>(`/dm-groups${q}`, {}, true);
+  },
+  lineMap: () => request<Record<number, number>>("/dm-groups/line-map", {}, true),
+  create: (input: DmGroupInput) => request<DmGroup>("/dm-groups", json("POST", input), true),
+  update: (id: number, input: DmGroupUpdateInput) =>
+    request<DmGroup>(`/dm-groups/${id}`, json("PUT", input), true),
+  delete: (id: number) => request<void>(`/dm-groups/${id}`, { method: "DELETE" }, true),
+  assignLine: (lineId: number, groupId: number | null) =>
+    request<{ success: boolean; lineId: number; dmGroupId: number | null }>(
+      `/dm-groups/lines/${lineId}`,
+      json("PATCH", { groupId }),
+      true
+    ),
+};
+
+
 

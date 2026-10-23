@@ -576,3 +576,27 @@ class NotificationSettingOut(CamelModel):
     updated_at: datetime | None = None
 
 
+class DmGroupIn(CamelModel):
+    workshop_id: int
+    name: str
+    description: str = ""
+
+
+class DmGroupUpdateIn(CamelModel):
+    name: str
+    description: str = ""
+
+
+class DmGroupOut(CamelModel):
+    id: int
+    workshop_id: int
+    name: str
+    description: str = ""
+    line_ids: list[int] = []
+
+
+class DmGroupLineAssignIn(CamelModel):
+    group_id: int | None = None
+
+
+

@@ -1,24 +1,28 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import admin, auth, face, face_scan, health, lines, meetings, notifications, papercards, public
+from app.api import admin, auth, dm_groups, face, face_scan, health, lines, meetings, notifications, papercards, public
 from app.core.config import settings
 
 app = FastAPI(title="Production Dashboard API")
+
+import asyncio
 
 from app.db.session import SessionLocal
 from app.services.face.antispoof import load_models
 from app.services.face.engine import get_model
 from app.services.face.matcher import matcher
+from app.services.teamtalk_scheduler import run_teamtalk_scheduler
 
 
 @app.on_event("startup")
-def load_faces() -> None:
+async def startup() -> None:
     get_model()
     if settings.face_antispoof_enabled:
         load_models()
     with SessionLocal() as db:
         matcher.reload(db)
+    asyncio.create_task(run_teamtalk_scheduler())
 
 
 app.add_middleware(
@@ -29,5 +33,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for module in (health, auth, face, face_scan, public, lines, admin, papercards, meetings, notifications):
+for module in (health, auth, face, face_scan, public, lines, admin, papercards, meetings, notifications, dm_groups):
     app.include_router(module.router, prefix="/api")

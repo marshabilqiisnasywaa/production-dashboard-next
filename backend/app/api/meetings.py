@@ -1,7 +1,8 @@
 from datetime import date, datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
+from app.services.teamtalk import notify_new_problems
 
 from app.api.deps import Principal, authorize_line, get_active_principal, get_current_admin, get_principal
 from app.db.session import get_db
@@ -523,6 +524,7 @@ def save_absence_notes(
 def end_session(
     session_id: int,
     payload: MeetingSessionEndIn,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_principal),
 ) -> MeetingSessionOut:
@@ -573,6 +575,18 @@ def end_session(
 
     db.commit()
     db.refresh(session)
+
+    line = db.get(Line, session.line_id)
+    line_code = line.code if line else "-"
+
+    if payload.summaries:
+        background_tasks.add_task(
+            notify_new_problems,
+            line_code=line_code,
+            session_label=session.label,
+            summaries=payload.summaries,
+        )
+
     return _map_session(session, db)
 
 def _my_problem_out(sm : DmMeetingSummary, session: DmMeetingSession) -> myProblemOut:
