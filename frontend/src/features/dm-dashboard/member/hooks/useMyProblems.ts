@@ -1,31 +1,74 @@
 "use client";
 
-import { useMemo } from "react";
-import { useProblems } from "../../leader/problems/hooks/useProblems";
-import { makeMemberSamples, SHOW_SAMPLE_DATA } from "../../leader/problems/sampleData";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { meetingApi, type DmMyProblem } from "../../api";
+import { useNow } from "../../leader/hooks/useNow";
+import type { ProblemRow } from "../../leader/problems/types";
+import { getStatus, sortRows } from "../../leader/problems/utils";
 
-/**
- * Problems where the member is the PIC. Reuses the Leader's problem list and keeps only their rows.
- * NOTE: problems are saved in the browser that ran the meeting, so on another device this stays empty
- * until the backend stores them. Matching is by name for now (TODO: by user id).
- */
-export function useMyProblems(name: string) {
-  const samples = useMemo(
-    () => (SHOW_SAMPLE_DATA && name.trim() ? makeMemberSamples(new Date(), name) : []),
-    [name],
-  );
-  const { rows, ready, toggleSolved } = useProblems(samples);
+export function useMyProblems() {
+  const now = useNow(60_000);
+  const [items, setItems] = useState<DmMyProblem[] | null>(null);
 
-  return useMemo(() => {
-    const me = name.trim().toLowerCase();
-    const mine = rows.filter((r) => r.picName.trim().toLowerCase() === me);
-    return {
-      mine,
-      open: mine.filter((r) => r.status !== "solved"),
-      escalated: mine.filter((r) => r.status === "escalated").length,
-      solved: mine.filter((r) => r.status === "solved").length,
-      ready,
-      toggleSolved,
+  useEffect(() => {
+    let alive = true;
+    meetingApi
+      .myProblems()
+      .then((list) => {
+        if (alive) setItems(list);
+      })
+      .catch(() => {
+        if (alive) setItems([]);
+      });
+    return () => {
+      alive = false;
     };
-  }, [rows, name, ready, toggleSolved]);
+  }, []);
+
+  const rows = useMemo<ProblemRow[]>(() => {
+    if (!now || !items) return [];
+    const built = items.map((p): ProblemRow => {
+      const due = p.dueDate ?? "";
+      const status = getStatus(p.status === "resolved", due, now);
+      return {
+        id: String(p.id),
+        date: p.date,
+        sessionLabel: p.sessionLabel ?? "-",
+        line: p.lineCode ?? "-",
+        problem: p.problem,
+        picName: p.picName,
+        due,
+        status,
+        overdueMs: status === "escalated" ? now.getTime() - new Date(due).getTime() : 0,
+        solvedAt: null,
+        sample: false,
+      };
+    });
+    return sortRows(built);
+  }, [now, items]);
+
+  const toggleSolved = useCallback(async (id: string, currentlySolved: boolean) => {
+    const next = currentlySolved ? "open" : "resolved";
+    const previous = currentlySolved ? "resolved" : "open";
+    const apply = (status: string) =>
+      setItems((prev) => prev && prev.map((p) => (String(p.id) === id ? { ...p, status } : p)));
+    apply(next);
+    try {
+      await meetingApi.setProblemStatus(Number(id), next);
+    } catch {
+      apply(previous);
+    }
+  }, []);
+
+  return useMemo(
+    () => ({
+      mine: rows,
+      open: rows.filter((r) => r.status !== "solved"),
+      escalated: rows.filter((r) => r.status === "escalated").length,
+      solved: rows.filter((r) => r.status === "solved").length,
+      ready: now !== null && items !== null,
+      toggleSolved,
+    }),
+    [rows, now, items, toggleSolved],
+  );
 }

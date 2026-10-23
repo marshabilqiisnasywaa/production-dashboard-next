@@ -31,8 +31,10 @@ import type { AttendanceStatus, TeamMember } from "../types";
 interface SummaryFormItem {
   problem: string;
   picName: string;
+  picEmployeeNo: string;
   dueDate: string;
 }
+
 
 interface SessionMeta {
   number: number;
@@ -67,7 +69,7 @@ export default function LeaderMeetingPage() {
 
   // Summary Form Items in Modal (Problem, PIC, Due Date)
   const [summaryItems, setSummaryItems] = useState<SummaryFormItem[]>([
-    { problem: "", picName: "", dueDate: "" },
+    { problem: "", picName: "", picEmployeeNo: "", dueDate: "" },
   ]);
 
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
@@ -324,14 +326,21 @@ export default function LeaderMeetingPage() {
   const handleSaveSummary = async () => {
     if (!activeSessionMeta || !activeSessionDb) return;
     const summaries = summaryItems
-      .map((item) => ({
-        problem: item.problem.trim(),
-        picName: item.picName.trim(),
-        dueDate: item.dueDate.trim(),
-      }))
+    .map((item) => ({
+      problem: item.problem.trim(),
+      picName: item.picName.trim(),
+      picEmployeeNo: item.picEmployeeNo || null,
+      dueDate: item.dueDate.trim(),
+    }))
+
       .filter((item) => item.problem.length > 0);
     if (summaries.length === 0) {
       setNotice("Isi minimal satu masalah sebelum menyelesaikan sesi.");
+      setTimeout(() => setNotice(null), 3500);
+      return;
+    }
+    if (summaries.some((item) => !item.picEmployeeNo)) {
+      setNotice("Pilih PIC untuk setiap masalah.");
       setTimeout(() => setNotice(null), 3500);
       return;
     }
@@ -1256,13 +1265,17 @@ export default function LeaderMeetingPage() {
                         PIC (Penanggung Jawab):
                       </label>
                       <select
-                        value={item.picName}
+                        value={item.picEmployeeNo}
                         onChange={(e) => {
-                          const val = e.target.value;
+                          const no = e.target.value;
+                          const picked = teamMembers.find((m) => m.employeeId === no);
                           setSummaryItems((prev) =>
-                            prev.map((it, i) => (i === idx ? { ...it, picName: val } : it))
+                            prev.map((it, i) =>
+                              i === idx ? { ...it, picEmployeeNo: no, picName: picked?.name ?? "" } : it
+                            )
                           );
                         }}
+
                         style={{
                           width: "100%",
                           padding: "8px 12px",
@@ -1273,15 +1286,16 @@ export default function LeaderMeetingPage() {
                           background: "#ffffff",
                         }}
                       >
+                        <option value="">Pilih PIC</option>
                         {teamMembers.map((m) => (
-                          <option key={m.id} value={m.name}>
+                          <option key={m.id} value={m.employeeId}>
                             {m.name} ({m.deptLabel})
                           </option>
                         ))}
                       </select>
                     </div>
 
-                    
+
 
                     <div>
                       <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "3px" }}>
@@ -1318,7 +1332,7 @@ export default function LeaderMeetingPage() {
                 onClick={() =>
                   setSummaryItems((prev) => [
                     ...prev,
-                    { problem: "", picName: teamMembers[0]?.name || "Operator Lini", dueDate: "Hari ini" },
+                    { problem: "", picName: "", picEmployeeNo: "", dueDate: "Hari ini" },
                   ])
                 }
                 style={{

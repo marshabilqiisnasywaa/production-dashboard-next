@@ -374,6 +374,7 @@ class MeetingSummaryIn(CamelModel):
     problem: str
     pic_name: str
     pic_id: int | None = None
+    pic_employee_no: str | None = None
     due_date: str | None = None
     line_code: str | None = None
 
@@ -389,6 +390,24 @@ class MeetingSummaryOut(CamelModel):
     line_code: str | None = None
     status: str
     created_at: datetime
+
+ProblemStatus = Literal["open", "in_progress", "resolved"]
+
+class myProblemOut(CamelModel):
+    id : int
+    session_id : int
+    line_id : int
+    line_code : str | None = None
+    date : date
+    session_label : str | None = None
+    problem : str
+    pic_name : str
+    pic_id : int | None
+    due_date : str | None
+    status : str
+
+class problemStatusIn(CamelModel):
+    status : ProblemStatus
 
 class EmployeePhotoOut(CamelModel):
     photo_url: str | None = None

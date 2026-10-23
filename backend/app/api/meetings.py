@@ -1,9 +1,9 @@
 from datetime import date, datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import Principal, get_current_admin, get_principal
+from app.api.deps import Principal, authorize_line, get_active_principal, get_current_admin, get_principal
 from app.db.session import get_db
 from app.models import (
     BoardMember,
@@ -33,6 +33,8 @@ from app.schemas import (
     PostMeetingIn,
     PostMeetingOut,
     PresensiCloseIn,
+    myProblemOut,
+    problemStatusIn,
 )
 from app.services.accounts import active_line, active_lines
 from app.services.meeting_attendance import home_line_code
@@ -547,21 +549,99 @@ def end_session(
 
     # Insert summaries (Problem, PIC, Due Date)
     for sm in payload.summaries:
+        pic_id = sm.pic_id
+        pic_name = sm.pic_name
+        if pic_id is None and sm.pic_employee_no:
+            pic = db.scalars(
+                select(Employee).where(Employee.employee_no == sm.pic_employee_no)
+            ).first()
+            if pic is not None:
+                pic_id = pic.id
+                pic_name = pic.name
         new_sm = DmMeetingSummary(
             session_id=session.id,
             line_id=session.line_id,
             problem=sm.problem,
-            pic_name=sm.pic_name,
-            pic_id=sm.pic_id,
+            pic_name=pic_name,
+            pic_id=pic_id,
             due_date=sm.due_date,
             line_code=sm.line_code,
             status="open",
         )
         db.add(new_sm)
 
+
     db.commit()
     db.refresh(session)
     return _map_session(session, db)
+
+def _my_problem_out(sm : DmMeetingSummary, session: DmMeetingSession) -> myProblemOut:
+    return myProblemOut(
+        id=sm.id,
+        session_id=sm.session_id,
+        line_id=sm.line_id,
+        line_code=sm.line_code,
+        date=session.date,
+        session_label=session.label,
+        problem=sm.problem,
+        pic_name=sm.pic_name,
+        pic_id=sm.pic_id,
+        due_date=sm.due_date,
+        status=sm.status,
+    )
+
+def _is_pic(sm: DmMeetingSummary, employee: Employee) -> bool:
+    if sm.pic_id is not None and sm.pic_id == employee.id:
+        return True
+    return sm.pic_name.strip().lower() == employee.name.strip().lower()
+
+
+@router.get("/problems/mine", response_model=list[myProblemOut])
+def my_problems(
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> list[myProblemOut]:
+    employee = principal.employee
+    if employee is None:
+        return []
+    stmt = (
+        select(DmMeetingSummary, DmMeetingSession)
+        .join(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
+        .where(
+            or_(
+                DmMeetingSummary.pic_id == employee.id,
+                func.lower(func.trim(DmMeetingSummary.pic_name)) == employee.name.strip().lower(),
+            )
+        )
+        .order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
+    )
+    return [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
+
+
+@router.patch("/problems/{summary_id}", response_model=myProblemOut)
+def set_problem_status(
+    summary_id: int,
+    payload: problemStatusIn,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> myProblemOut:
+    sm = db.get(DmMeetingSummary, summary_id)
+    if sm is None:
+        raise HTTPException(status_code=404, detail="Problem tidak ditemukan.")
+
+    employee = principal.employee
+    if employee is not None:
+        if employee.role == "member":
+            if not _is_pic(sm, employee):
+                raise HTTPException(status_code=403, detail="Hanya Pic yang bisa mengubah status problem.")
+        else:
+            authorize_line(db, principal, sm.line_id)
+
+    sm.status = payload.status
+    db.commit()
+    db.refresh(sm)
+    session = db.get(DmMeetingSession, sm.session_id)
+    return _my_problem_out(sm, session)
 
 
 # -----------------------------------------------------------------------------

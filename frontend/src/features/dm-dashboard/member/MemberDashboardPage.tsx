@@ -33,7 +33,7 @@ export default function MemberDashboardPage() {
   department,
 } = useMemberToday();
   const mine = useMyInspection(profile.roleKey);
-  const problems = useMyProblems(profile.name);
+  const problems = useMyProblems();
   const now = useNow(30_000);
 
   const timeline = useMemo(() => {

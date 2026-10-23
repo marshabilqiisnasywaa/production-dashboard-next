@@ -522,6 +522,20 @@ export type DmPostMeeting = {
   updatedAt: string;
 };
 
+export type DmMyProblem = {
+  id : number;
+  sessionId : number;
+  lineId : number;
+  lineCode : string | null;
+  date :  string;
+  sessionLabel?: string | null;
+  problem : string;
+  picName : string;
+  picId?: number | null;
+  dueDate?: string | null;
+  status : string;
+};
+
 export const meetingApi = {
   getSchedule: (lineId: number) => request<DmMeetingSchedule>(`/meetings/schedule?line_id=${lineId}`, {}, true),
   saveSchedule: (lineId: number, items: DmMeetingScheduleItem[]) =>
@@ -556,6 +570,7 @@ export const meetingApi = {
       notes?: string;
     }[];
   }) => request<DmMeetingSession>("/meetings/sessions/start", json("POST", input), true),
+
   endSession: (
     sessionId: number,
     input: {
@@ -565,6 +580,7 @@ export const meetingApi = {
         picId?: number | null;
         dueDate?: string | null;
         lineCode?: string | null;
+        picEmployeeNo?: string | null;
       }[];
     }
   ) => request<DmMeetingSession>(`/meetings/sessions/${sessionId}/end`, json("POST", input), true),
@@ -589,6 +605,9 @@ export const meetingApi = {
     pdcaAct: string;
     followUpUpdate?: string | null;
   }) => request<DmPostMeeting>("/meetings/post-meeting", json("POST", input), true),
+  myProblems: () => request<DmMyProblem[]>("/meetings/problems/mine", {}, true),
+  setProblemStatus: (id: number, status: "open" | "in_progress" | "resolved") =>
+    request<DmMyProblem>(`/meetings/problems/${id}`, json("PATCH", { status }), true),
 };
 
 export type DmNotificationSetting = {

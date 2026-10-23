@@ -224,14 +224,14 @@ function AdminWorkspace({
 
   function finishLine(line: DmLine) {
     setModal({ open: false, line: null, tab: "general" });
-    notify("success", `Lini ${line.code} diterbitkan. Link dashboard: ${dashboardPath(line)}`);
+    notify("success", `Line ${line.code} diterbitkan. Link dashboard: ${dashboardPath(line)}`);
   }
 
   async function deleteLine(line: DmLine) {
     await call(() => adminApi.deleteLine(line.id));
     await refreshAll();
     setModal({ open: false, line: null, tab: "general" });
-    notify("success", `Lini ${line.code} dan dashboard-nya dihapus.`);
+    notify("success", `Line ${line.code} dan dashboard-nya dihapus.`);
   }
 
   async function copyLink(line: DmLine) {
@@ -313,7 +313,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
           </div>
           <div className="dm-admin-topbar-actions">
             <span className="dm-admin-topbar-crumb">Masuk sebagai {username}</span>
-            <NotificationBellButton lineId={0} role="admin" lineName="Semua Lini" lines={lines} />
+            <NotificationBellButton lineId={0} role="admin" lineName="Semua Line" lines={lines} />
             <button type="button" className="dm-admin-btn is-secondary" onClick={reload} disabled={loading}>
               Muat Ulang
             </button>
@@ -349,7 +349,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
             {activeTab === "dashboard" && (
               <div className="dm-admin-section dm-tab-lines">
                 {loading ? (
-                  <p role="status">Memuat lini...</p>
+                  <p role="status">Memuat line...</p>
                 ) : loadError ? (
                   <div className="dm-admin-state-block">
                     <h3>Data belum bisa dimuat</h3>
@@ -365,7 +365,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
             {activeTab === "workshop" && (
               <div className="dm-admin-section dm-tab-lines">
                 {loading ? (
-                  <p role="status">Memuat workshop dan lini...</p>
+                  <p role="status">Memuat workshop dan line...</p>
                 ) : loadError ? (
                   <div className="dm-admin-state-block">
                     <h3>Data belum bisa dimuat</h3>
@@ -384,9 +384,9 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                     <section className="dm-panel dm-lines-card" aria-labelledby="lines-title">
                       <div className="dm-panel-head">
                         <div>
-                          <h3 id="lines-title" className="dm-panel-title">Daftar Lini Produksi</h3>
+                          <h3 id="lines-title" className="dm-panel-title">Daftar Line Produksi</h3>
                           <p className="dm-panel-sub">
-                            Tiap lini punya satu dashboard dengan link sendiri untuk dipasang di layar lini.
+                            Tiap Line punya satu dashboard dengan link sendiri untuk dipasang di layar Line.
                           </p>
                         </div>
                         <button
@@ -397,21 +397,21 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                           onClick={() => setModal({ open: true, line: null, tab: "general" })}
                         >
                           <PlusIcon size={14} />
-                          Tambah Lini Baru
+                          Tambah Line Baru
                         </button>
                       </div>
 
                       {lines.length === 0 ? (
                         <p className="dm-lines-empty">
                           {workshops.length === 0
-                            ? "Belum ada lini. Tambahkan workshop lebih dulu, lalu buat lini di dalamnya."
-                            : "Belum ada lini. Klik \"Tambah Lini Baru\" untuk membuat lini dan dashboard pertama."}
+                            ? "Belum ada line. Tambahkan workshop lebih dulu, lalu buat line di dalamnya."
+                            : "Belum ada line. Klik \"Tambah Line Baru\" untuk membuat line dan dashboard pertama."}
                         </p>
                       ) : (
                         <>
                           <div className="dm-lines-toolbar">
                             <div className="dm-table-search-box">
-                              <label className="dm-admin-sr-only" htmlFor="line-search">Cari lini</label>
+                              <label className="dm-admin-sr-only" htmlFor="line-search">Cari line</label>
                               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="dm-table-search-icon" aria-hidden="true">
                                 <circle cx="11" cy="11" r="8" />
                                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -420,7 +420,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                                 id="line-search"
                                 type="search"
                                 className="dm-table-search-input"
-                                placeholder="Cari kode lini, nama tim, atau model"
+                                placeholder="Cari kode line, nama tim, atau model"
                                 value={searchQuery}
                                 onChange={(event) => setSearchQuery(event.target.value)}
                               />
@@ -452,15 +452,15 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                               <option value="stopped">STOPPED</option>
                             </select>
                             <span className="dm-pill dm-lines-count" role="status">
-                              {filteredLines.length} dari {lines.length} lini
+                              {filteredLines.length} dari {lines.length} line
                             </span>
                           </div>
 
                           {filteredLines.length === 0 ? (
                             <div className="dm-lines-none">
-                              <p>Tidak ada lini yang cocok dengan pencarian atau filter ini.</p>
+                              <p>Tidak ada line yang cocok dengan pencarian atau filter ini.</p>
                               <button type="button" className="dm-admin-btn is-tonal" onClick={resetFilters}>
-                                Tampilkan semua lini
+                                Tampilkan semua line
                               </button>
                             </div>
                           ) : (
@@ -468,7 +468,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                               <section key={workshopName} className="dm-lines-group" aria-label={workshopName}>
                                 <h4 className="dm-lines-group-title">
                                   {workshopName}
-                                  <span className="dm-pill">{items.length} lini</span>
+                                  <span className="dm-pill">{items.length} line</span>
                                 </h4>
                                 <ul className="dm-line-grid">
                                   {items.map((line) => (
@@ -490,7 +490,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                                             className="dm-chip"
                                             onClick={() => setTeamModalLine(line)}
                                             style={{ cursor: "pointer", border: "none", background: "inherit" }}
-                                            title="Klik untuk membuka manajemen tim lini ini"
+                                            title="Klik untuk membuka manajemen tim line ini"
                                           >
                                             <UsersIcon size={13} />
                                             {line.memberCount} anggota
@@ -513,7 +513,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                                         href={dashboardPath(line)}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        title="Buka dashboard lini ini di tab baru"
+                                        title="Buka dashboard line ini di tab baru"
                                       >
                                         <span>{dashboardPath(line)}</span>
                                         <ExternalIcon size={14} />
@@ -532,7 +532,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                                             gap: "6px",
                                             boxShadow: "0 2px 6px rgba(0, 138, 79, 0.25)",
                                           }}
-                                          title={`Buka Manajemen Tim khusus untuk Lini ${line.code}`}
+                                          title={`Buka Manajemen Tim khusus untuk Line ${line.code}`}
                                         >
                                           <UsersIcon size={14} />
                                           <span>Atur Tim ({line.memberCount}/4)</span>
@@ -541,10 +541,10 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                                           type="button"
                                           className="dm-admin-btn is-soft"
                                           onClick={() => setModal({ open: true, line, tab: "general" })}
-                                          title="Ubah informasi lini, model, atau status"
+                                          title="Ubah informasi line, model, atau status"
                                         >
                                           <GearIcon size={14} />
-                                          Kelola Lini
+                                          Kelola line
                                         </button>
                                         <button type="button" className="dm-admin-btn is-tonal" onClick={() => copyLink(line)}>
                                           <CopyIcon size={14} />
@@ -573,7 +573,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
 
             {activeTab === "papercard" && (
               <div className="dm-admin-section">
-                <div className="dm-subtabs" role="tablist" aria-label="Pengaturan lini">
+                <div className="dm-subtabs" role="tablist" aria-label="Pengaturan line">
                   <button
                     type="button"
                     role="tab"
@@ -604,7 +604,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
             {activeTab === "mpv" && (
               <div className="dm-admin-section">
                 {loading ? (
-                  <p role="status">Memuat lini...</p>
+                  <p role="status">Memuat line...</p>
                 ) : loadError ? (
                   <div className="dm-admin-state-block">
                     <h3>Data belum bisa dimuat</h3>

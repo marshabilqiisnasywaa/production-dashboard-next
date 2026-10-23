@@ -5,12 +5,10 @@ import "../leader/problems/problems.css"; // table styles shared with the Leader
 import { Card } from "@/components/ui/Card";
 import { ProblemTable } from "../leader/problems/components/ProblemTable";
 import { useMyProblems } from "./hooks/useMyProblems";
-import { useMember } from "./MemberProvider";
 
 /** "Masalah Saya": the Leader's Tracking Masalah table, but only the rows where this member is the PIC. */
 export default function MyProblemsPage() {
-  const { profile } = useMember();
-  const { mine, open, escalated, solved, ready, toggleSolved } = useMyProblems(profile.name);
+  const { mine, open, escalated, solved, ready, toggleSolved } = useMyProblems();
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
