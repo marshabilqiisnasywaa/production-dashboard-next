@@ -14,6 +14,7 @@ export type DmWorkshop = { id: number; name: string; lineCount: number };
 export type DmLine = {
   id: number;
   boardId: number;
+  dmGroupId?: number | null;
   workshopId: number;
   workshopName: string;
   code: string;
@@ -31,6 +32,7 @@ export type DmLine = {
 };
 
 export type DmLineInput = {
+  dmGroupId?: number | null;
   workshopId: number;
   code: string;
   name: string;
@@ -456,7 +458,25 @@ export type DmMeetingSummary = {
   createdAt: string;
 };
 
+export type DmMeetingParticipant = {
+  employeeId: number;
+  employeeNo: string;
+  name: string;
+  dept: string | null;
+  position: string | null;
+  lineIds: number[];
+  lineCodes: string[];
+  photoUrl: string | null;
+};
+
 export type DmMeetingSession = {
+  meetingScope?: "line" | "dm";
+  meetingLineCodes?: string[];
+  sourceSessionId?: number | null;
+  dmGroupName?: string | null;
+  participants?: DmMeetingParticipant[];
+  rosterPrepared?: boolean;
+  leaderEmployeeNo?: string | null;
   id: number;
   lineId: number;
   leaderId?: number | null;
@@ -537,6 +557,8 @@ export type DmMyProblem = {
 };
 
 export const meetingApi = {
+  prepare: (sessionId: number, scope: "line" | "dm") =>
+    request<DmMeetingSession>(`/meetings/sessions/${sessionId}/prepare`, json("POST", { scope }), true),
   getSchedule: (lineId: number) => request<DmMeetingSchedule>(`/meetings/schedule?line_id=${lineId}`, {}, true),
   saveSchedule: (lineId: number, items: DmMeetingScheduleItem[]) =>
     request<DmMeetingSchedule>(`/meetings/schedule/${lineId}`, json("PUT", { items }), true),
@@ -649,6 +671,7 @@ export type DmGroup = {
   name: string;
   description: string;
   lineIds?: number[];
+  lineCodes?: string[];
 };
 
 export type DmGroupInput = {

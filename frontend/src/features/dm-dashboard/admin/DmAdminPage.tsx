@@ -157,7 +157,9 @@ function AdminWorkspace({
     tab: "general",
   });
   const [teamModalLine, setTeamModalLine] = useState<DmLine | null>(null);
-  const { groups, lineGroupMap, deleteGroup } = useDmGroups();
+  const { groups, lineGroupMap, deleteGroup, refresh: refreshDmGroups } = useDmGroups();
+  const [dmCreateWorkshopId, setDmCreateWorkshopId] = useState<number | null>(null);
+  const [lineDefaults, setLineDefaults] = useState<{ workshopId: number; dmGroupId: number } | null>(null);
   const [dmEditGroup, setDmEditGroup] = useState<DmGroup | null>(null);
 
   const call = useCallback(
@@ -234,6 +236,7 @@ function AdminWorkspace({
   async function saveLine(data: DmLineInput, lineId: number | null) {
     const saved = await call(() => (lineId ? adminApi.updateLine(lineId, data) : adminApi.createLine(data)));
     await refreshAll();
+    await refreshDmGroups();
     return saved;
   }
 
@@ -260,10 +263,10 @@ function AdminWorkspace({
   }
 
   async function removeDmGroup(group: DmGroup) {
-    if (!window.confirm(`Hapus ${group.name}? Line di dalamnya akan dipindah ke DM Lainnya.`)) return;
+    if (!window.confirm(`Hapus ${group.name}?`)) return;
     try {
       await deleteGroup(group.id);
-      notify("success", `${group.name} dihapus. Line di dalamnya dipindah ke DM Lainnya.`);
+      notify("success", `${group.name} dihapus.`);
     } catch (error) {
       notify("error", messageOf(error));
     }
@@ -281,14 +284,9 @@ function AdminWorkspace({
     return matchesSearch && matchesStatus && matchesWorkshop;
   });
 
-  const groupedLines = Array.from(
-    filteredLines.reduce((byWorkshop, line) => {
-      const current = byWorkshop.get(line.workshopId);
-      if (current) current.items.push(line);
-      else byWorkshop.set(line.workshopId, { name: line.workshopName, items: [line] });
-      return byWorkshop;
-    }, new Map<number, { name: string; items: DmLine[] }>())
-  );
+  const groupedLines: [number, { name: string; items: DmLine[] }][] = workshops
+    .filter((workshop) => workshopFilter === "all" || workshop.id === workshopFilter)
+    .map((workshop) => [workshop.id, { name: workshop.name, items: filteredLines.filter((line) => line.workshopId === workshop.id) }]);
 
   function resetFilters() {
     setSearchQuery("");
@@ -491,6 +489,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                   <>
                     <WorkshopManager
                       workshops={workshops}
+                      onAddDm={(workshop) => setDmCreateWorkshopId(workshop.id)}
                       onCreate={createWorkshop}
                       onRename={renameWorkshop}
                       onDelete={deleteWorkshop}
@@ -508,16 +507,16 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                         <button
                           type="button"
                           className="dm-admin-btn is-primary dm-btn-add"
-                          disabled={workshops.length === 0}
-                          title={workshops.length === 0 ? "Tambahkan workshop dulu" : undefined}
-                          onClick={() => setModal({ open: true, line: null, tab: "general" })}
+                          disabled={groups.length === 0}
+                          title={groups.length === 0 ? "Tambahkan workshop dan DM dulu" : undefined}
+                          onClick={() => { setLineDefaults(null); setModal({ open: true, line: null, tab: "general" }); }}
                         >
                           <PlusIcon size={14} />
                           Tambah Line Baru
                         </button>
                       </div>
 
-                      {lines.length === 0 ? (
+                      {workshops.length === 0 ? (
                         <p className="dm-lines-empty">
                           {workshops.length === 0
                             ? "Belum ada line. Tambahkan workshop lebih dulu, lalu buat line di dalamnya."
@@ -572,7 +571,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                             </span>
                           </div>
 
-                          {filteredLines.length === 0 ? (
+                          {filteredLines.length === 0 && (query !== "" || statusFilter !== "all") ? (
                             <div className="dm-lines-none">
                               <p>Tidak ada line yang cocok dengan pencarian atau filter ini.</p>
                               <button type="button" className="dm-admin-btn is-tonal" onClick={resetFilters}>
@@ -592,6 +591,8 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                                       {workshop.name}
                                       <span className="dm-pill">{workshop.items.length} line</span>
                                     </h4>
+                                    <p className="dm-lines-empty">Belum ada DM. Tambahkan DM sebelum membuat lini.</p>
+                                    <button type="button" className="dm-admin-btn is-primary" onClick={() => setDmCreateWorkshopId(workshopId)}><PlusIcon size={14} /> Tambah DM</button>
                                     {renderLineCards(workshop.items)}
                                   </section>
                                 );
@@ -615,6 +616,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                                   <h4 className="dm-lines-group-title">
                                     {workshop.name}
                                     <span className="dm-pill">{workshop.items.length} line</span>
+                                    <button type="button" className="dm-admin-btn is-tonal" onClick={() => setDmCreateWorkshopId(workshopId)}><PlusIcon size={14} /> Tambah DM</button>
                                   </h4>
                                   <div className="dm-dm-groups">
                                     {dmSections.map(({ group, visible, all }) => (
@@ -628,6 +630,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                                             <span className="dm-pill">{visible.length} line</span>
                                           </div>
                                           <div className="dm-dm-head-side">
+                                            <button type="button" className="dm-admin-btn is-tonal" onClick={() => { setLineDefaults({ workshopId, dmGroupId: group.id }); setModal({ open: true, line: null, tab: "general" }); }}><PlusIcon size={14} /> Tambah Lini</button>
                                             {all.length > 0 ? (
                                               <span className="dm-dm-range">{lineCodeRange(all)}</span>
                                             ) : null}
@@ -664,7 +667,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                                             <span className="dm-dm-icon">
                                               <Layers size={16} strokeWidth={1.8} aria-hidden="true" />
                                             </span>
-                                            <span className="dm-dm-name">DM Lainnya</span>
+                                            <span className="dm-dm-name">Belum masuk DM</span>
                                             <span className="dm-pill">{otherVisible.length} line</span>
                                           </div>
                                         </div>
@@ -767,13 +770,24 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
             line={modal.line}
             initialTab={modal.tab}
             workshops={workshops}
-            defaultWorkshopId={null}
+            defaultWorkshopId={lineDefaults?.workshopId ?? null}
+            defaultDmGroupId={lineDefaults?.dmGroupId ?? null}
             call={call}
             onTeamChanged={refreshQuietly}
             onSave={saveLine}
             onFinish={finishLine}
             onDelete={deleteLine}
             onClose={() => setModal({ open: false, line: null, tab: "general" })}
+          />
+          <DmGroupDialog
+            open={dmCreateWorkshopId !== null}
+            mode="create"
+            group={null}
+            workshops={workshops}
+            initialWorkshopId={dmCreateWorkshopId}
+            workshopLocked
+            onClose={() => setDmCreateWorkshopId(null)}
+            onSaved={(group) => { setDmCreateWorkshopId(null); notify("success", `DM ${group.name} ditambahkan. Tambahkan lini di dalam DM ini.`); }}
           />
           <DmGroupDialog
             open={Boolean(dmEditGroup)}

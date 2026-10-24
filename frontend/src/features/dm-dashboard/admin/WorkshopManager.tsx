@@ -6,6 +6,7 @@ import { FactoryIcon, PlusIcon } from "./AdminIcons";
 
 interface WorkshopManagerProps {
   workshops: DmWorkshop[];
+  onAddDm: (workshop: DmWorkshop) => void;
   onCreate: (name: string) => Promise<void>;
   onRename: (id: number, name: string) => Promise<void>;
   onDelete: (workshop: DmWorkshop) => Promise<void>;
@@ -15,7 +16,7 @@ function messageOf(error: unknown) {
   return error instanceof Error ? error.message : "Terjadi kesalahan.";
 }
 
-export default function WorkshopManager({ workshops, onCreate, onRename, onDelete }: WorkshopManagerProps) {
+export default function WorkshopManager({ workshops, onCreate, onRename, onDelete, onAddDm }: WorkshopManagerProps) {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -82,7 +83,7 @@ export default function WorkshopManager({ workshops, onCreate, onRename, onDelet
             <h3 id="ws-manager-title" className="dm-panel-title">Workshop</h3>
             <span className="dm-pill">{workshops.length} Terdaftar</span>
           </div>
-          <p className="dm-panel-sub">Nama workshop tampil di rail kanan dashboard</p>
+          <p className="dm-panel-sub">Buat workshop, tambahkan DM, lalu buat lini dan atur timnya.</p>
         </div>
         {!adding ? (
           <button type="button" className="dm-admin-btn is-primary dm-btn-add" onClick={openAdd}>
@@ -106,6 +107,9 @@ export default function WorkshopManager({ workshops, onCreate, onRename, onDelet
                   autoFocus
                 />
                 <div className="dm-ws-actions">
+                  <button type="button" className="dm-admin-btn is-primary" onClick={() => onAddDm(workshop)}>
+                    <PlusIcon size={14} /> Tambah DM
+                  </button>
                   <button type="submit" className="dm-admin-btn is-primary" disabled={busy}>Simpan</button>
                   <button type="button" className="dm-admin-btn is-tonal" onClick={() => setEditingId(null)}>
                     Batal
@@ -131,6 +135,9 @@ export default function WorkshopManager({ workshops, onCreate, onRename, onDelet
                   </div>
                 </div>
                 <div className="dm-ws-actions">
+                  <button type="button" className="dm-admin-btn is-primary" onClick={() => onAddDm(workshop)}>
+                    <PlusIcon size={14} /> Tambah DM
+                  </button>
                   <button
                     type="button"
                     className="dm-admin-btn is-tonal"

@@ -5,8 +5,7 @@ import { adminApi } from "../api";
 import type { DmLine, DmLineInput, DmWorkshop } from "../api";
 import type { DmLineStatus, DmMember } from "../dmData";
 import CustomSelect from "@/components/shell/CustomSelect";
-import DmGroupDialog from "./DmGroupDialog";
-import { getLineGroupMap, useDmGroups } from "./dmGroupsStore";
+import { useDmGroups } from "./dmGroupsStore";
 import TeamManager from "./TeamManager";
 import WizardStepper from "./WizardStepper";
 import "./LineWizard.css";
@@ -25,6 +24,7 @@ interface LineDetailModalProps {
   initialTab: TabKey;
   workshops: DmWorkshop[];
   defaultWorkshopId: number | null;
+  defaultDmGroupId?: number | null;
   call: <T>(fn: () => Promise<T>) => Promise<T>;
   onTeamChanged: () => Promise<void>;
   onSave: (data: DmLineInput, lineId: number | null) => Promise<DmLine>;
@@ -108,6 +108,7 @@ export default function LineDetailModal({
   initialTab,
   workshops,
   defaultWorkshopId,
+  defaultDmGroupId = null,
   call,
   onTeamChanged,
   onSave,
@@ -117,7 +118,7 @@ export default function LineDetailModal({
 }: LineDetailModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
-  const { groups, setLineGroup } = useDmGroups();
+  const { groups } = useDmGroups();
   const [form, setForm] = useState<FormState>(blank(defaultWorkshopId, null));
   const [savedLine, setSavedLine] = useState<DmLine | null>(line);
   const [snapshot, setSnapshot] = useState("");
@@ -127,15 +128,12 @@ export default function LineDetailModal({
   const [error, setError] = useState<string | null>(null);
   const [members, setMembers] = useState<DmMember[] | null>(null);
   const [membersError, setMembersError] = useState<string | null>(null);
-  const [dmDialogOpen, setDmDialogOpen] = useState(false);
-  const [dmNotice, setDmNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    let cancelled = false;
     const fallback = line
-      ? fromLine(line, null)
-      : blank(defaultWorkshopId ?? workshops[0]?.id ?? null, null);
+      ? fromLine(line, line.dmGroupId ?? null)
+      : blank(defaultWorkshopId ?? workshops[0]?.id ?? null, defaultDmGroupId);
     setForm(fallback);
     setSnapshot(JSON.stringify(fallback));
     setSavedLine(line);
@@ -145,26 +143,7 @@ export default function LineDetailModal({
     setBusy(false);
     setMembers(null);
     setMembersError(null);
-    setDmDialogOpen(false);
-    setDmNotice(null);
-    getLineGroupMap()
-      .then((map) => {
-        if (cancelled) return;
-        const initial = { ...fallback, dmGroupId: line ? map[line.id] ?? null : null };
-        setForm(initial);
-        setSnapshot(JSON.stringify(initial));
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [open, line?.id, initialTab]);
-
-  useEffect(() => {
-    if (!dmNotice) return;
-    const timer = window.setTimeout(() => setDmNotice(null), 3500);
-    return () => window.clearTimeout(timer);
-  }, [dmNotice]);
+  }, [open, line?.id, initialTab, defaultWorkshopId, defaultDmGroupId]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -205,9 +184,8 @@ export default function LineDetailModal({
     .sort((left, right) => left.id - right.id);
   const selectedDm = groups.find((group) => group.id === form.dmGroupId) ?? null;
   const dmOptions = [
-    { value: "none", label: "Tanpa DM" },
+    { value: "none", label: "Pilih DM" },
     ...availableGroups.map((group) => ({ value: String(group.id), label: group.name })),
-    ...(form.workshopId !== null ? [{ value: "new", label: "+ Tambah DM baru" }] : []),
   ];
 
   function change<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -220,15 +198,9 @@ export default function LineDetailModal({
       workshopId: value ? Number(value) : null,
       dmGroupId: null,
     }));
-    setDmNotice(null);
   }
 
   function selectDm(value: string) {
-    setDmNotice(null);
-    if (value === "new") {
-      setDmDialogOpen(true);
-      return;
-    }
     if (value === "none") {
       change("dmGroupId", null);
       return;
@@ -262,6 +234,7 @@ export default function LineDetailModal({
     if (form.workshopId === null) return null;
     return {
       workshopId: form.workshopId,
+      dmGroupId: form.dmGroupId,
       code: form.code.trim(),
       name: form.name.trim(),
       model: nullable(form.model),
@@ -280,6 +253,7 @@ export default function LineDetailModal({
     if (form.workshopId === null) {
       return "Pilih workshop dulu. Kalau daftarnya kosong, tambahkan workshop di halaman sebelumnya.";
     }
+    if (form.dmGroupId === null) return "Pilih DM terlebih dahulu. Tambahkan DM dari workshop jika belum tersedia.";
     if (!form.code.trim() || !form.name.trim()) return "Kode lini dan nama tim wajib diisi.";
     return null;
   }
@@ -295,7 +269,6 @@ export default function LineDetailModal({
     if (!data) return null;
     const saved = await onSave(data, savedLine?.id ?? null);
     setSavedLine(saved);
-    await setLineGroup(saved.id, form.dmGroupId);
     setSnapshot(JSON.stringify(form));
     return saved;
   }
@@ -423,7 +396,7 @@ export default function LineDetailModal({
                 </select>
               </div>
               <div className="lw-field">
-                <span className="lw-label">DM Meeting <span className="lw-hint">opsional</span></span>
+                <span className="lw-label">DM Meeting <span className="lw-req">*</span></span>
                 <div className="lw-dm-select">
                   <CustomSelect
                     value={form.dmGroupId === null ? "none" : String(form.dmGroupId)}
@@ -432,7 +405,7 @@ export default function LineDetailModal({
                     ariaLabel="DM Meeting"
                   />
                 </div>
-                {dmNotice ? <span className="lw-dm-success" role="status">{dmNotice}</span> : null}
+                {availableGroups.length === 0 ? <span className="lw-hint">Tambahkan DM dari workshop terlebih dahulu.</span> : null}
               </div>
               <div className="lw-field">
                 <label htmlFor="line-code" className="lw-label">Kode lini <span className="lw-req">*</span></label>
@@ -659,20 +632,6 @@ export default function LineDetailModal({
           </div>
         </footer>
       </div>
-      <DmGroupDialog
-        open={dmDialogOpen}
-        mode="create"
-        group={null}
-        workshops={workshops}
-        initialWorkshopId={form.workshopId}
-        workshopLocked
-        onClose={() => setDmDialogOpen(false)}
-        onSaved={(group) => {
-          setDmDialogOpen(false);
-          change("dmGroupId", group.id);
-          setDmNotice(`DM ${group.name} berhasil ditambahkan.`);
-        }}
-      />
     </dialog>
   );
 }

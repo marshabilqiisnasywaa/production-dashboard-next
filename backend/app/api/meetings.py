@@ -29,6 +29,7 @@ from app.schemas import (
     MeetingSessionEndIn,
     MeetingSessionOut,
     MeetingSessionStartIn,
+    MeetingPrepareIn,
     MeetingSummaryIn,
     MeetingSummaryOut,
     PostMeetingIn,
@@ -39,6 +40,7 @@ from app.schemas import (
 )
 from app.services.accounts import active_line, active_lines
 from app.services.meeting_attendance import home_line_code
+from app.services import joint_meetings
 from app.services.meeting_schedule import (
     ALL_DAYS,
     DEFAULT_SLOTS,
@@ -94,11 +96,13 @@ def _map_session(s: DmMeetingSession, db: Session) -> MeetingSessionOut:
     mapped_attendances = []
     for a in attendances:
         emp = db.get(Employee, a.employee_id)
-        mapped_attendances.append(_map_attendance(a, emp, home_line_code(db, a.employee_id)))
+        mapped_attendances.append(_map_attendance(a, emp, joint_meetings.participant_line(s, a.employee_id) or home_line_code(db, a.employee_id)))
 
 
     # Load summaries
-    sum_stmt = select(DmMeetingSummary).where(DmMeetingSummary.session_id == s.id)
+    sum_stmt = select(DmMeetingSummary).where(DmMeetingSummary.session_id.in_(
+        select(DmMeetingSession.id).where(or_(DmMeetingSession.id == s.id, DmMeetingSession.source_session_id == s.id))
+    ))
     summaries = list(db.scalars(sum_stmt).all())
     mapped_summaries = [
         MeetingSummaryOut(
@@ -116,11 +120,16 @@ def _map_session(s: DmMeetingSession, db: Session) -> MeetingSessionOut:
         for sm in summaries
     ]
 
+    source = db.get(DmMeetingSession, s.source_session_id) if s.source_session_id else s
+    meeting_roster = source.roster if source and source.roster is not None else joint_meetings.build_roster(db, [s.line_id])
+    meeting_line_codes = sorted({code for item in meeting_roster for code in item["line_codes"]})
+
     return MeetingSessionOut(
         id=s.id,
         line_id=s.line_id,
         leader_id=s.leader_id,
         leader_name=leader.name if leader else None,
+        leader_employee_no=leader.employee_no if leader else None,
         date=s.date,
         shift=s.shift,
         session_type=s.session_type,
@@ -131,6 +140,12 @@ def _map_session(s: DmMeetingSession, db: Session) -> MeetingSessionOut:
         started_at=s.started_at,
         ended_at=s.ended_at,
         duration_seconds=s.duration_seconds,
+        meeting_scope=s.meeting_scope,
+        source_session_id=s.source_session_id,
+        dm_group_name=s.dm_group_name,
+        meeting_line_codes=meeting_line_codes,
+        participants=joint_meetings.participants(db, s),
+        roster_prepared=s.roster is not None,
         attendances=mapped_attendances,
         summaries=mapped_summaries,
     )
@@ -233,7 +248,7 @@ def list_sessions(
     # Restrict leader/member to their own line if not admin/supervisor
     if principal.role in ("leader", "member") and principal.employee:
         user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
-        if user_line_ids and line_id not in user_line_ids:
+        if line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Akses ditolak: Anda hanya dapat mengakses meeting pada lini penugasan Anda.")
 
     # Check if sessions exist for this line & date, auto-initialize if not
@@ -252,7 +267,7 @@ def list_sessions(
     changed = False
     for s in sessions:
         slot = slots.get(s.session_number)
-        if s.status == "pending":
+        if s.status == "pending" and s.roster is None and s.source_session_id is None:
             if slot is None:
                 db.delete(s)
                 changed = True
@@ -297,7 +312,7 @@ def meeting_history(
         raise HTTPException(status_code=400, detail="Rentang tanggal tidak valid (maksimal 62 hari).")
     if principal.role in ("leader", "member") and principal.employee:
         user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
-        if user_line_ids and line_id not in user_line_ids:
+        if line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Akses ditolak: Anda hanya dapat melihat riwayat lini penugasan Anda.")
     stmt = (
         select(DmMeetingSession)
@@ -336,8 +351,23 @@ def get_session(
         raise HTTPException(status_code=404, detail="Sesi meeting tidak ditemukan.")
     if principal.role in ("leader", "member") and principal.employee:
         user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
-        if user_line_ids and session.line_id not in user_line_ids:
+        if session.line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Akses ditolak: Anda hanya dapat mengakses meeting pada lini penugasan Anda.")
+    return _map_session(session, db)
+
+
+@router.post("/sessions/{session_id}/prepare", response_model=MeetingSessionOut)
+def prepare_session(
+    session_id: int,
+    payload: MeetingPrepareIn,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> MeetingSessionOut:
+    session = db.get(DmMeetingSession, session_id)
+    if session is None:
+        raise HTTPException(404, "Sesi meeting tidak ditemukan.")
+    joint_meetings.prepare(db, principal, session, payload.scope)
+    db.commit()
     return _map_session(session, db)
 
 
@@ -382,14 +412,20 @@ def start_session(
         )
         db.add(session)
         db.flush()
-    else:
+    joint_meetings.authorize_host(db, principal, session)
+    if session.roster is None:
+        session.status = "pending"
+        joint_meetings.prepare(db, principal, session, "line")
+    if session.status == "completed":
+        raise HTTPException(409, "Sesi ini sudah selesai.")
+    if session.status != "in_progress":
         session.status = "in_progress"
         session.started_at = datetime.now()
-        if principal.employee:
-            session.leader_id = principal.employee.id
+    joint_meetings.sync_sessions(db, session)
 
     # Record / update attendances
     for att in payload.attendances:
+        joint_meetings.require_participant(db, session, att.employee_id)
         existing_att = db.scalars(
             select(DmMeetingAttendance).where(
                 DmMeetingAttendance.session_id == session.id,
@@ -414,6 +450,8 @@ def start_session(
                 notes=att.notes,
             )
             db.add(new_att)
+        db.flush()
+        joint_meetings.sync_attendance(db, session, existing_att if existing_att is not None else new_att)
 
     db.commit()
     db.refresh(session)
@@ -431,15 +469,17 @@ def close_presensi(
     session = db.get(DmMeetingSession, session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Sesi meeting tidak ditemukan.")
+    joint_meetings.authorize_host(db, principal, session)
     if session.status == "completed":
         raise HTTPException(status_code=409, detail="Sesi ini sudah selesai.")
     if principal.employee:
         user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
-        if user_line_ids and session.line_id not in user_line_ids:
+        if session.line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Anda hanya dapat menutup presensi pada lini Anda sendiri.")
 
     employees = db.scalars(select(Employee).where(Employee.employee_no.in_(payload.absent_employee_nos))).all()
     for employee in employees:
+        joint_meetings.require_participant(db, session, employee.id)
         attendance = db.scalars(
             select(DmMeetingAttendance).where(
                 DmMeetingAttendance.session_id == session.id,
@@ -454,6 +494,8 @@ def close_presensi(
         attendance.status = "absent"
         attendance.verification_method = "manual"
         attendance.face_confidence = None
+        db.flush()
+        joint_meetings.sync_attendance(db, session, attendance)
     db.commit()
     db.refresh(session)
     return _map_session(session, db)
@@ -471,11 +513,12 @@ def save_absence_notes(
     session = db.get(DmMeetingSession, session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Sesi meeting tidak ditemukan.")
+    joint_meetings.authorize_host(db, principal, session)
     if session.status == "completed":
         raise HTTPException(status_code=409, detail="Sesi ini sudah selesai.")
     if principal.employee:
         user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
-        if user_line_ids and session.line_id not in user_line_ids:
+        if session.line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Anda hanya dapat mengisi keterangan pada lini Anda sendiri.")
 
     employees = {
@@ -486,7 +529,8 @@ def save_absence_notes(
     for item in payload.items:
         employee = employees.get(item.employee_no)
         if employee is None:
-            continue
+            raise HTTPException(400, "Peserta tidak ditemukan.")
+        joint_meetings.require_participant(db, session, employee.id)
         attendance = db.scalars(
             select(DmMeetingAttendance).where(
                 DmMeetingAttendance.session_id == session.id,
@@ -515,6 +559,8 @@ def save_absence_notes(
         attendance.face_confidence = None
         attendance.note_by_id = principal.employee.id if principal.employee else None
         attendance.note_at = now
+        db.flush()
+        joint_meetings.sync_attendance(db, session, attendance)
     db.commit()
     db.refresh(session)
     return _map_session(session, db)
@@ -534,12 +580,15 @@ def end_session(
     session = db.get(DmMeetingSession, session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Sesi meeting tidak ditemukan.")
+    joint_meetings.authorize_host(db, principal, session)
 
     if principal.employee:
         user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
-        if user_line_ids and session.line_id not in user_line_ids:
+        if session.line_id not in user_line_ids:
             raise HTTPException(status_code=403, detail="Anda hanya dapat memimpin meeting pada lini Anda sendiri.")
 
+    if session.status != "in_progress":
+        raise HTTPException(409, "Meeting belum dimulai atau sudah selesai.")
     now = datetime.now()
     session.ended_at = now
     session.status = "completed"
@@ -548,6 +597,8 @@ def end_session(
         session.duration_seconds = max(1, int((now - session.started_at.replace(tzinfo=None)).total_seconds()))
     else:
         session.duration_seconds = 900  # Default 15 minutes if started_at was missing
+
+    joint_meetings.sync_sessions(db, session)
 
     # Insert summaries (Problem, PIC, Due Date)
     for sm in payload.summaries:
@@ -560,9 +611,19 @@ def end_session(
             if pic is not None:
                 pic_id = pic.id
                 pic_name = pic.name
+        summary_line_id = session.line_id
+        if sm.line_code:
+            allowed_lines = {code: line_id for item in session.roster or [] for line_id, code in zip(item["line_ids"], item["line_codes"])}
+            if sm.line_code not in allowed_lines:
+                raise HTTPException(400, "Lini masalah tidak termasuk peserta meeting.")
+            summary_line_id = allowed_lines[sm.line_code]
+        summary_session = db.scalar(select(DmMeetingSession).where(
+            DmMeetingSession.source_session_id == session.id,
+            DmMeetingSession.line_id == summary_line_id,
+        )) if summary_line_id != session.line_id else session
         new_sm = DmMeetingSummary(
-            session_id=session.id,
-            line_id=session.line_id,
+            session_id=summary_session.id,
+            line_id=summary_line_id,
             problem=sm.problem,
             pic_name=pic_name,
             pic_id=pic_id,

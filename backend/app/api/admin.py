@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_admin
 from app.api.meetings import _absence_fields
 from app.db.session import get_db
-from app.models import Board, BoardMember, DmMeetingAttendance, DmMeetingSession, Employee, Line, MpvAward, Workshop
+from app.models import DmGroup, Board, BoardMember, DmMeetingAttendance, DmMeetingSession, Employee, Line, MpvAward, Workshop
 from app.schemas import (
     EmployeeIn,
     EmployeeOut,
@@ -95,6 +95,8 @@ def delete_workshop(workshop_id: int, db: Session = Depends(get_db)) -> Response
         raise not_found("Workshop")
     if workshop_out(db, workshop).line_count:
         raise conflict("Workshop masih punya lini. Pindahkan atau hapus lininya dulu.")
+    if db.scalar(select(DmGroup.id).where(DmGroup.workshop_id == workshop_id).limit(1)):
+        raise conflict("Workshop masih punya DM. Hapus DM kosong terlebih dahulu.")
     db.delete(workshop)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -135,12 +137,16 @@ def create_line(body: LineIn, db: Session = Depends(get_db)) -> LineOut:
     workshop = db.get(Workshop, body.workshop_id)
     if workshop is None:
         raise not_found("Workshop")
+    group = db.get(DmGroup, body.dm_group_id) if body.dm_group_id is not None else None
+    if group is None or group.workshop_id != workshop.id:
+        raise HTTPException(400, "Pilih DM dalam workshop ini sebelum membuat lini.")
     code = body.code.strip()
     if code_taken(db, code):
         raise conflict(f"Kode lini '{code}' sudah dipakai.")
     slug = pick_slug(db, body.slug, f"{workshop.name} {code}")
     line = Line(
         workshop_id=workshop.id,
+        dm_group_id=group.id,
         code=code,
         name=body.name.strip(),
         model=body.model,
@@ -167,6 +173,13 @@ def create_line(body: LineIn, db: Session = Depends(get_db)) -> LineOut:
 def update_line(line_id: int, body: LineUpdate, db: Session = Depends(get_db)) -> LineOut:
     board, line, workshop = line_row(db, line_id)
     sent = body.model_fields_set
+    target_workshop_id = body.workshop_id if body.workshop_id is not None else line.workshop_id
+    group_id = body.dm_group_id if "dm_group_id" in sent else line.dm_group_id
+    group = db.get(DmGroup, group_id) if group_id is not None else None
+    if group_id is not None and (group is None or group.workshop_id != target_workshop_id):
+        raise HTTPException(400, "DM harus berada di workshop yang sama dengan lini.")
+    if "dm_group_id" in sent:
+        line.dm_group_id = group_id
     if "workshop_id" in sent and body.workshop_id is not None:
         new_workshop = db.get(Workshop, body.workshop_id)
         if new_workshop is None:
@@ -618,7 +631,7 @@ def attendance_recap(
             status=s.status,
             started_at=s.started_at,
             ended_at=s.ended_at,
-            team_size=team_size.get(s.line_id, 0),
+            team_size=sum(s.line_id in item["line_ids"] for item in s.roster) if s.roster is not None else team_size.get(s.line_id, 0),
         )
         for s, code in found
     ]
@@ -634,8 +647,15 @@ def attendance_recap(
         ).all()
         for a, emp in attendances:
             session, code = by_session[a.session_id]
-            is_member_of_session_line = session.line_id in home_lines_set.get(emp.id, set())
-            home_label = ", ".join(home_lines_code.get(emp.id, [])) or None
+            snapshot = next((item for item in session.roster or [] if item["employee_id"] == emp.id), None)
+            if session.roster is not None:
+                if snapshot is None or session.line_id not in snapshot["line_ids"]:
+                    continue
+                is_member_of_session_line = True
+                home_label = ", ".join(snapshot["line_codes"])
+            else:
+                is_member_of_session_line = session.line_id in home_lines_set.get(emp.id, set())
+                home_label = ", ".join(home_lines_code.get(emp.id, [])) or None
             reason, note = _absence_fields(a)
             rows.append(
                 RecapRowOut(

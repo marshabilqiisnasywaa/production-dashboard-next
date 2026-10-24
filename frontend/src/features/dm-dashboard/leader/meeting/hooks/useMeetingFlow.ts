@@ -19,6 +19,7 @@ export interface ServerMeeting {
   startedAt: string | null;
   endedAt: string | null;
   items: SummaryItem[];
+  prepared?: boolean;
 }
 
 
@@ -135,6 +136,7 @@ export function useMeetingFlow(sessionId: string | null, members: MeetingMember[
       if (server.status === "in_progress" && ["idle", "presensi", "ready"].includes(s.phase) && server.startedAt) {
         return { ...s, phase: "running", startedAt: server.startedAt };
       }
+      if (server.prepared && server.status === "pending" && s.phase === "idle") return { ...s, phase: "presensi" };
       return s;
     });
   }, []);

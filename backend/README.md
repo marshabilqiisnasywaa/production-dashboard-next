@@ -47,6 +47,12 @@ After changing a model, generate a new migration with `alembic revision --autoge
 
 Docs: http://localhost:8000/docs, health check: http://localhost:8000/api/health
 
+## TeamTalk
+
+TeamTalk defaults to disabled. On a personal PC, use `TEAMTALK_ENABLED=false` in `.env`; the backend skips TeamTalk delivery and its reminder scheduler, and does not need `httpx` to import the application.
+
+To enable it on the office PC, install the dependencies from `requirements.txt`, set `TEAMTALK_ENABLED=true` and `TEAMTALK_WEBHOOK_URL` to the office webhook URL, then restart the backend. The reminder scheduler only starts when both settings are configured.
+
 ## API
 
 - `POST /api/auth/login`, `GET /api/auth/me`: login for the superadmin (username) and for employees (NIK as username). The initial employee password is the NIK, and `mustChangePassword` stays true until `POST /api/auth/change-password` succeeds. Employees with `mustChangePassword` can only call `/auth/me` and `/auth/change-password`. Login is limited to 5 wrong attempts per IP and username, then locked for 5 minutes (in memory, per process).
@@ -119,3 +125,15 @@ Browsers only allow the camera on `localhost` or over HTTPS. A kiosk that opens 
 ### Data and privacy
 
 The face template cannot be turned back into a photo, but it identifies a person, so treat it as biometric data: collect consent, keep the server local, and delete a template when someone leaves (`DELETE /api/face/{employeeId}`; deleting the employee removes it too). The profile photo itself is a separate field (`employees.photo_url`) and is not deleted by that call.
+
+## Meeting per lini dan gabungan DM
+
+Admin membuat Workshop, menambahkan DM di dalam workshop, lalu membuat lini dalam DM dan mengatur tim/leader tiap lini. DM yang masih memiliki lini tidak dapat dihapus. Penempatan lini dan DM disimpan dalam satu transaksi.
+
+Di halaman DM Meeting, leader memilih lini penugasannya lalu memilih `Lini Saya` atau `Gabungan DM` sebelum membuka presensi. Meeting gabungan memakai jadwal sesi dari lini yang dipilih. Satu leader mengelola sesi tersebut; lini lain dalam DM menerima sesi dan presensi yang tersinkron. Anggota yang terdaftar di beberapa lini hanya perlu scan sekali. Rekap admin tetap memisahkan hasil per lini.
+
+Saat presensi dibuka, daftar peserta dan asal lini disimpan sebagai snapshot. Perpindahan tim atau leader minggu berikutnya tidak mengubah snapshot meeting sebelumnya. Mode dan peserta dikunci selama sesi, dan meeting gabungan ditolak jika salah satu lini sudah membuka sesi pada tanggal, shift, dan nomor sesi yang sama.
+
+Jalankan `alembic upgrade head` sebelum menggunakan perubahan ini (migrasi `0017`). Di PC lain, jalankan migrasi setelah menarik kode terbaru, lalu restart backend.
+
+Tes integrasi PostgreSQL: `.venv/bin/python -m unittest discover -s tests -v`. Tes memerlukan izin membuat schema sementara; semua data tes di-rollback dan tidak memakai tabel operasional.

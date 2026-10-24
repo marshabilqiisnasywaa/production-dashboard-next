@@ -22,7 +22,8 @@ async def startup() -> None:
         load_models()
     with SessionLocal() as db:
         matcher.reload(db)
-    asyncio.create_task(run_teamtalk_scheduler())
+    if settings.teamtalk_enabled and settings.teamtalk_webhook_url:
+        asyncio.create_task(run_teamtalk_scheduler())
 
 
 app.add_middleware(

@@ -26,6 +26,7 @@ interface BuildInput {
   leaderName: string;
   sessions: MeetingSessionInfo[];
   now: Date;
+  lineCodes?: string[];
 }
 
 
@@ -39,6 +40,12 @@ function fromServer(s: DmMeetingSession, input: BuildInput): MeetingRecord | nul
   const scheduled = new Date(s.date + "T" + s.scheduledTime + ":00").getTime();
   const rows = new Map<string, DmMeetingSession["attendances"][number]>();
   for (const a of s.attendances) if (a.employeeNo) rows.set(a.employeeNo, a);
+
+  const roster = s.participants !== undefined
+    ? s.participants.map((member) => ({ name: member.name, roleLabel: member.position || member.dept || "Anggota", employeeNo: member.employeeNo, lineCodes: member.lineCodes }))
+    : s.attendances.length > 0
+      ? s.attendances.map((row) => ({ name: row.employeeName ?? "-", roleLabel: row.position || row.department || "Anggota", employeeNo: row.employeeNo ?? undefined, lineCodes: row.employeeLine ? row.employeeLine.split(", ") : [] }))
+      : input.members.map((member) => ({ ...member, lineCodes: [] as string[] }));
 
   const startedAt = s.startedAt ?? null;
   const endedAt = s.endedAt ?? null;
@@ -54,7 +61,10 @@ function fromServer(s: DmMeetingSession, input: BuildInput): MeetingRecord | nul
     endedAt,
     durationMin: s.status === "completed" && s.durationSeconds > 0 ? Math.max(1, Math.round(s.durationSeconds / 60)) : null,
     lateMin: startedAt ? Math.max(0, Math.round((new Date(startedAt).getTime() - scheduled) / 60_000)) : 0,
-    attendance: input.members.map((m) => {
+    meetingScope: s.meetingScope ?? "line",
+    dmGroupName: s.dmGroupName,
+    lineCodes: Array.from(new Set(s.meetingLineCodes ?? roster.flatMap((member) => member.lineCodes))).sort((left, right) => left.localeCompare(right, undefined, { numeric: true })),
+    attendance: roster.map((m) => {
       const row = m.employeeNo ? rows.get(m.employeeNo) : undefined;
       const present = row?.status === "present";
       const note: AbsenceNote | undefined = present
@@ -62,6 +72,8 @@ function fromServer(s: DmMeetingSession, input: BuildInput): MeetingRecord | nul
         : { reason: (row?.absenceReason ?? "none") as AbsenceReason, note: row?.absenceNote ?? "" };
       return {
         name: m.name,
+        employeeNo: m.employeeNo,
+        lineCodes: m.lineCodes,
         roleLabel: m.roleLabel,
         present,
         at: present ? (row?.attendedAt ?? null) : null,
@@ -114,6 +126,8 @@ export function buildMeetingRecords(input: BuildInput): MeetingRecord[] {
         durationMin: null,
         lateMin: 0,
         attendance: [],
+        meetingScope: "line",
+        lineCodes: input.lineCodes ?? [],
         leaderName: "-",
         items: [],
         sample: false,

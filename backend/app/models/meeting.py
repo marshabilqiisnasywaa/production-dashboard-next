@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Index, Integer, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Index, Integer, JSON, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -36,6 +36,10 @@ class DmMeetingSession(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     duration_seconds: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    meeting_scope: Mapped[str] = mapped_column(String(8), default="line", server_default="line")
+    source_session_id: Mapped[int | None] = mapped_column(ForeignKey("dm_meeting_sessions.id", ondelete="SET NULL"), index=True)
+    dm_group_name: Mapped[str | None] = mapped_column(String(120))
+    roster: Mapped[list | None] = mapped_column(JSON)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

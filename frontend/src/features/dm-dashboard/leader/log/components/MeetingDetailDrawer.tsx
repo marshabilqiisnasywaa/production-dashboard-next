@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import { IconClose } from "@/components/ui/icons";
-import { MEETING_AREA, MEETING_LINES } from "../../meeting/mockData";
 import { IconCalendar, IconInfo } from "../../meeting/components/MeetingIcons";
 import { getStatus } from "../../problems/utils";
 import { LEADER_ROUTES } from "../../routes";
@@ -67,6 +66,7 @@ function DrawerBody({ record, now, onClose }: { record: MeetingRecord; now: Date
   const present = record.attendance.filter((a) => a.present).length;
   const total = record.attendance.length;
   const held = record.status !== "missed";
+  const meetingLabel = record.meetingScope === "dm" ? `Gabungan ${record.dmGroupName ?? "DM"}` : "Per Lini";
 
   return (
     <div className="dml-lg-drawer__inner">
@@ -87,7 +87,7 @@ function DrawerBody({ record, now, onClose }: { record: MeetingRecord; now: Date
               <strong>{record.sessionName}</strong> <StatusChip tone={status.tone}>{status.label}</StatusChip>
             </p>
             <span>
-              {formatDate(record.date)} · {MEETING_AREA}
+              {formatDate(record.date)} · {meetingLabel}
             </span>
             {held && <span>Dipimpin oleh {record.leaderName}</span>}
           </div>
@@ -115,13 +115,16 @@ function DrawerBody({ record, now, onClose }: { record: MeetingRecord; now: Date
               <dl className="dml-lg-dl">
                 <dt>Sesi</dt>
                 <dd>{record.sessionName}</dd>
-                <dt>Area</dt>
+                <dt>Mode Meeting</dt>
+                <dd>{meetingLabel}</dd>
+                {record.meetingScope === "dm" && <><dt>DM</dt><dd>{record.dmGroupName ?? "-"}</dd></>}
+                <dt>Lini Peserta</dt>
                 <dd>
-                  {MEETING_AREA}
                   <span className="dml-lg-chips">
-                    {MEETING_LINES.map((l) => (
-                      <i key={l}>{l}</i>
+                    {(record.lineCodes ?? []).map((line) => (
+                      <i key={line}>Line {line}</i>
                     ))}
+                    {!record.lineCodes?.length && "-"}
                   </span>
                 </dd>
                 <dt>Tanggal</dt>
@@ -147,10 +150,7 @@ function DrawerBody({ record, now, onClose }: { record: MeetingRecord; now: Date
             {held && (
               <section className="dml-lg-box">
                 <h3>Kehadiran</h3>
-                <p className="dml-lg-attsum">
                 <p className="dml-lg-attsplit">{breakdownText(record.attendance)}</p>
-
-                </p>
                 <ProgressBar value={total ? (present / total) * 100 : 0} tone={present === total ? "ok" : "warn"} />
                 <p className="dml-lg-note">
                   <IconInfo size={16} /> Presensi dilakukan menggunakan face recognition di lokasi meeting.
@@ -166,10 +166,10 @@ function DrawerBody({ record, now, onClose }: { record: MeetingRecord; now: Date
           (held ? (
             <ul className="dml-lg-people">
               {record.attendance.map((a) => (
-                <li key={a.name}>
+                <li key={a.employeeNo ?? a.name}>
                   <div>
                     <strong>{a.name}</strong>
-                    <span>{a.roleLabel}</span>
+                    <span>{a.roleLabel}{a.lineCodes?.length ? ` · Line ${a.lineCodes.join(", ")}` : ""}</span>
                   </div>
                   {a.present ? (
                     <div className="dml-lg-people__state">

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import Principal, get_principal
+from app.api.deps import Principal, get_current_admin, get_principal
 from app.db.session import get_db
 from app.models import DmGroup, Line, Workshop
 from app.schemas import DmGroupIn, DmGroupLineAssignIn, DmGroupOut, DmGroupUpdateIn
@@ -31,6 +31,7 @@ def list_dm_groups(
                 name=g.name,
                 description=g.description or "",
                 line_ids=line_ids,
+                line_codes=[line.code for line in g.lines],
             )
         )
     return result
@@ -50,7 +51,7 @@ def get_line_group_map(
 def create_dm_group(
     payload: DmGroupIn,
     db: Session = Depends(get_db),
-    _principal: Principal = Depends(get_principal),
+    _admin=Depends(get_current_admin),
 ) -> DmGroupOut:
     name = payload.name.strip()
     if not name:
@@ -92,7 +93,7 @@ def update_dm_group(
     id: int,
     payload: DmGroupUpdateIn,
     db: Session = Depends(get_db),
-    _principal: Principal = Depends(get_principal),
+    _admin=Depends(get_current_admin),
 ) -> DmGroupOut:
     group = db.get(DmGroup, id)
     if not group:
@@ -124,6 +125,7 @@ def update_dm_group(
         name=group.name,
         description=group.description or "",
         line_ids=line_ids,
+        line_codes=[line.code for line in group.lines],
     )
 
 
@@ -131,15 +133,14 @@ def update_dm_group(
 def delete_dm_group(
     id: int,
     db: Session = Depends(get_db),
-    _principal: Principal = Depends(get_principal),
+    _admin=Depends(get_current_admin),
 ) -> None:
     group = db.get(DmGroup, id)
     if not group:
         raise HTTPException(status_code=404, detail="DM tidak ditemukan.")
 
-    # Unassign all lines belonging to this group
-    for l in group.lines:
-        l.dm_group_id = None
+    if group.lines:
+        raise HTTPException(409, "DM masih punya lini. Pindahkan atau hapus lininnya terlebih dahulu.")
 
     db.delete(group)
     db.commit()
@@ -150,7 +151,7 @@ def assign_line_to_group(
     line_id: int,
     payload: DmGroupLineAssignIn,
     db: Session = Depends(get_db),
-    _principal: Principal = Depends(get_principal),
+    _admin=Depends(get_current_admin),
 ) -> dict:
     line = db.get(Line, line_id)
     if not line:
@@ -160,6 +161,8 @@ def assign_line_to_group(
         group = db.get(DmGroup, payload.group_id)
         if not group:
             raise HTTPException(status_code=404, detail="DM tidak ditemukan.")
+        if group.workshop_id != line.workshop_id:
+            raise HTTPException(400, "DM harus berada di workshop yang sama dengan lini.")
         line.dm_group_id = group.id
     else:
         line.dm_group_id = None

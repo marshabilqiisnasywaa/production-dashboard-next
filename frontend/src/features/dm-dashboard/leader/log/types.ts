@@ -5,6 +5,8 @@ export type LogTab = "meetings" | "activity";
 export type MeetingStatus = "done" | "running" | "missed";
 
 export interface AttendanceEntry {
+  employeeNo?: string;
+  lineCodes?: string[];
   name: string;
   roleLabel: string;
   present: boolean;
@@ -27,6 +29,9 @@ export interface MeetingItem {
 }
 
 export interface MeetingRecord {
+  meetingScope?: "line" | "dm";
+  dmGroupName?: string | null;
+  lineCodes?: string[];
   /** `${date}:${sessionId}`: one meeting per session per day */
   id: string;
   date: string; // yyyy-mm-dd

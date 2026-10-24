@@ -1,4 +1,5 @@
-from datetime import date, datetime
+from datetime import date, datetime, time
+from zoneinfo import ZoneInfo
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -142,8 +143,12 @@ def get_supervisor_overview(
 
         sub = sub_map.get((line_id, emp.id)) or sub_emp_map.get(emp.id)
         has_ng = False
-        if sub and sub.answers:
-            has_ng = any(isinstance(a, dict) and a.get("status") == "NG" for a in sub.answers)
+
+        if sub:
+            has_ng = sub.status == "NG" or any(
+                isinstance(answer, dict) and answer.get("status") == "NG"
+                for answer in (sub.answers or [])
+            )
 
         sub_data = None
         if sub:
@@ -504,6 +509,52 @@ def submit_papercard(
         )
     ).first()
 
+    if tmpl is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Template papercard belum tersedia untukLine dan depoartemen ini"
+        )
+    jakarta = ZoneInfo("Asia/Jakarta")
+    submitted_at = datetime.now(jakarta)
+
+    if payload.date > submitted_at.date():
+        raise HTTPExeption(
+            sattus_code=400,
+            detail="Tanggal papercard tidak boleh di masa depan"
+        )
+
+    deadline = datetime.combine(
+        payload.date,
+        time.fromisoformat(tmpl.window_end),
+        tzinfo=jakarta,
+    )
+
+    is_late = submitted_at > deadline
+
+
+    has_abnormal = any(
+        answer.get("status") == " NG" 
+        for answer in payload.answers
+    )
+
+    result_status = "NG" if is_late or has_abnormal else "OK"
+    reasons = []
+
+    if is_late:
+        reasons.append(
+            f"Terlambat mengirim papercard. "
+            f"Batas {deadline:%d-%m-%Y %H:%M} WIB,"
+            f"dikirim {submitted_at:%d-%m-%Y %H:%M:%S} WIB."
+        )
+
+    if has_abnormal:
+        reasons.append("Ada temuan abnormal pada checklist inpeksi.")
+
+    if payload.abnormal_notes:
+        reasons.append(payload.abnormal_notes.strip())
+
+    result_notes = "\n".join(reasons) or None
+
     # Upsert submission for today & shift
     stmt = select(PapercardSubmission).where(
         PapercardSubmission.line_id == payload.line_id,
@@ -520,9 +571,9 @@ def submit_papercard(
                 detail="Papercard hari ini sudah disetujui oleh Supervisor dan tidak dapat diubah lagi.",
             )
         existing.answers = payload.answers
-        existing.abnormal_notes = payload.abnormal_notes
-        existing.status = "submitted"
-        existing.submitted_at = datetime.now()
+        existing.abnormal_notes = result_notes
+        existing.status = result_status
+        existing.submitted_at = submitted_at
         existing.approval_status = "pending"
         db.commit()
         db.refresh(existing)
@@ -536,9 +587,9 @@ def submit_papercard(
             date=payload.date,
             shift=payload.shift,
             answers=payload.answers,
-            abnormal_notes=payload.abnormal_notes,
-            status="submitted",
-            submitted_at=datetime.now(),
+            abnormal_notes=result_notes,
+            status=result_status,
+            submitted_at=submitted_at,
             approval_status="pending",
         )
         db.add(target)

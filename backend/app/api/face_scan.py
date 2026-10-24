@@ -14,7 +14,8 @@ from app.schemas import FaceChallengeOut, FaceScanOut
 from app.services.face import antispoof, liveness
 from app.services.face.engine import FaceError, FaceResult, extract_face
 from app.services.face.matcher import matcher
-from app.services.meeting_attendance import home_line_code, mirror_attendance
+from app.services.meeting_attendance import home_line_code
+from app.services import joint_meetings
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 logger = logging.getLogger("uvicorn.error")
@@ -36,6 +37,9 @@ def open_session(db: Session, principal: Principal, session_id: int) -> DmMeetin
         raise HTTPException(status_code=404, detail="Sesi tidak ditemukan.")
     if session.status == "completed":
         raise HTTPException(status_code=409, detail="Sesi ini sudah selesai.")
+    joint_meetings.authorize_host(db, principal, session)
+    if session.roster is None:
+        raise HTTPException(409, "Buka presensi meeting terlebih dahulu.")
     return session
 
 
@@ -112,7 +116,8 @@ def scan_attendance(
         return not_recognized("Wajah tidak dikenali. Coba scan lagi.")
 
     employee = db.get(Employee, match.employee_id)
-    home_line = home_line_code(db, match.employee_id)
+    joint_meetings.require_participant(db, session, match.employee_id)
+    home_line = joint_meetings.participant_line(session, match.employee_id) or home_line_code(db, match.employee_id)
     attendance = db.scalars(
         select(DmMeetingAttendance).where(
             DmMeetingAttendance.session_id == session_id,
@@ -120,7 +125,7 @@ def scan_attendance(
         )
     ).first()
     if attendance is not None and attendance.status == "present":
-        mirror_attendance(db, session, employee, match.score)
+        joint_meetings.sync_attendance(db, session, attendance)
         db.commit()
         return FaceScanOut(
             recognized=True, already_present=True, attendance=_map_attendance(attendance, employee, home_line)
@@ -132,7 +137,8 @@ def scan_attendance(
     attendance.status = "present"
     attendance.verification_method = "face_id"
     attendance.face_confidence = match.score
-    mirror_attendance(db, session, employee, match.score)
+    db.flush()
+    joint_meetings.sync_attendance(db, session, attendance)
 
 
     if match.score >= settings.face_update_threshold:

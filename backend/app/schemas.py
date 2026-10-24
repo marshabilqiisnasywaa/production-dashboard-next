@@ -71,6 +71,7 @@ class WorkshopOut(CamelModel):
 
 class LineBase(CamelModel):
     workshop_id: int
+    dm_group_id: int | None = None
     code: str = Field(min_length=1, max_length=32)
     name: str = Field(min_length=1, max_length=120)
     model: str | None = Field(default=None, max_length=64)
@@ -89,6 +90,7 @@ class LineIn(LineBase):
 
 class LineUpdate(CamelModel):
     workshop_id: int | None = None
+    dm_group_id: int | None = None
     code: str | None = Field(default=None, min_length=1, max_length=32)
     name: str | None = Field(default=None, min_length=1, max_length=120)
     model: str | None = Field(default=None, max_length=64)
@@ -107,6 +109,7 @@ class LineOut(CamelModel):
     board_id: int
     workshop_id: int
     workshop_name: str
+    dm_group_id: int | None = None
     code: str
     name: str
     model: str | None
@@ -471,6 +474,21 @@ class MeetingSessionStartIn(CamelModel):
     attendances: list[MeetingAttendanceIn] = Field(default_factory=list)
 
 
+class MeetingPrepareIn(CamelModel):
+    scope: Literal["line", "dm"] = "line"
+
+
+class MeetingParticipantOut(CamelModel):
+    employee_id: int
+    employee_no: str
+    name: str
+    dept: str | None = None
+    position: str | None = None
+    line_ids: list[int]
+    line_codes: list[str]
+    photo_url: str | None = None
+
+
 class MeetingScheduleItemIn(CamelModel):
     label: str = Field(min_length=1, max_length=60)
     time: str = Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
@@ -516,6 +534,7 @@ class MeetingSessionOut(CamelModel):
     line_id: int
     leader_id: int | None
     leader_name: str | None = None
+    leader_employee_no: str | None = None
     date: date
     shift: str
     session_type: str
@@ -526,6 +545,12 @@ class MeetingSessionOut(CamelModel):
     started_at: datetime | None
     ended_at: datetime | None
     duration_seconds: int
+    meeting_scope: Literal["line", "dm"] = "line"
+    source_session_id: int | None = None
+    dm_group_name: str | None = None
+    meeting_line_codes: list[str] = Field(default_factory=list)
+    roster_prepared: bool = False
+    participants: list[MeetingParticipantOut] = Field(default_factory=list)
     attendances: list[MeetingAttendanceOut] = Field(default_factory=list)
     summaries: list[MeetingSummaryOut] = Field(default_factory=list)
 
@@ -593,6 +618,7 @@ class DmGroupOut(CamelModel):
     name: str
     description: str = ""
     line_ids: list[int] = []
+    line_codes: list[str] = Field(default_factory=list)
 
 
 class DmGroupLineAssignIn(CamelModel):

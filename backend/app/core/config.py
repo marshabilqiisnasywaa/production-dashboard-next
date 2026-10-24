@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     )
     seed_admin_username: str | None = None
     seed_admin_password: str | None = None
+    teamtalk_enabled: bool = False
     teamtalk_webhook_url: str | None = None
 
     # treshold setting similarity

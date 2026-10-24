@@ -134,6 +134,7 @@ def line_out(db: Session, board: Board, line: Line, workshop: Workshop) -> LineO
     return LineOut(
         id=line.id,
         board_id=board.id,
+        dm_group_id=line.dm_group_id,
         workshop_id=workshop.id,
         workshop_name=workshop.name,
         code=line.code,

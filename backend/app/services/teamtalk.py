@@ -1,5 +1,4 @@
 import logging
-import httpx
 from typing import Any
 from app.core.config import settings
 
@@ -11,6 +10,9 @@ async def send_teamtalk_message(content: str) -> bool:
     Mengirim pesan teks ke Robot TeamTalk OPPO melalui Incoming Webhook.
     Tidak akan menyebabkan aplikasi crash jika ada kegagalan jaringan.
     """
+    if not settings.teamtalk_enabled:
+        return False
+
     url = settings.teamtalk_webhook_url
     if not url:
         logger.debug("TeamTalk webhook URL belum dikonfigurasi di .env")
@@ -24,6 +26,8 @@ async def send_teamtalk_message(content: str) -> bool:
     }
 
     try:
+        import httpx
+
         async with httpx.AsyncClient(timeout=8.0) as client:
             response = await client.post(url, json=payload, headers=headers)
             if response.status_code == 200:

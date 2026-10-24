@@ -33,7 +33,7 @@ export function MeetingHeaderCard({ title, phase, lines, dateText, timeText, loc
         </div>
         <ul className="dml-mt-head__lines" aria-label="Line yang dibahas">
           {lines.map((l) => (
-            <li key={l}>{l}</li>
+            <li key={l}>Line {l}</li>
           ))}
         </ul>
       </div>
