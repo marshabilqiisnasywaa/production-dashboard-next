@@ -22,7 +22,10 @@ export function useMyInspection(roleKey: RoleKey) {
       .map((r) => ({ date: r.date, status: r.statuses[roleKey] }))
       .sort((a, b) => a.date.localeCompare(b.date));
     const required = days.filter((d) => d.status !== "LIBUR").length;
-    const done = days.filter((d) => d.status === "OK" || d.status === "NG").length;
-    return { days, rate: required === 0 ? 0 : Math.round((done / required) * 100) };
+    const done = days.filter((d) => d.status === "OK").length;
+    return {
+      days,
+      rate: required === 0 ? 0 : Math.round((done / required) * 100),
+    };
   }, [rows, roleKey]);
 }

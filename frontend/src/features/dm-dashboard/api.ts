@@ -3,7 +3,8 @@ import type { DmBoard, DmLineStatus, DmMember, DmMpv } from "./dmData";
 function apiBase(): string {
   const configured = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (configured) return configured.replace(/\/$/, "");
-  if (typeof window !== "undefined") return `${window.location.protocol}//${window.location.hostname}:8000`;
+  if (typeof window !== "undefined")
+    return `${window.location.protocol}//${window.location.hostname}:8000`;
   return "http://localhost:8000";
 }
 
@@ -66,7 +67,10 @@ export type DmMpvPick = { employeePk: number };
 
 export type DmEmployeeRole = "member" | "leader" | "supervisor";
 
-export const dmEmployeeRoles: readonly { value: DmEmployeeRole; label: string }[] = [
+export const dmEmployeeRoles: readonly {
+  value: DmEmployeeRole;
+  label: string;
+}[] = [
   { value: "member", label: "Member" },
   { value: "leader", label: "Leader" },
   { value: "supervisor", label: "Supervisor" },
@@ -144,35 +148,54 @@ function errorMessage(body: unknown, status: number): string {
   if (Array.isArray(detail) && detail.length > 0) {
     const first = detail[0] as { loc?: unknown[]; msg?: string };
     const field = first.loc?.[first.loc.length - 1];
-    return field ? `${String(field)}: ${first.msg ?? "tidak valid"}` : (first.msg ?? "Data tidak valid.");
+    return field
+      ? `${String(field)}: ${first.msg ?? "tidak valid"}`
+      : (first.msg ?? "Data tidak valid.");
   }
   return `Permintaan gagal (${status}).`;
 }
 
-async function request<T>(path: string, init: RequestInit = {}, auth = false): Promise<T> {
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  auth = false,
+): Promise<T> {
   const headers = new Headers(init.headers);
-  if (init.body && !(init.body instanceof FormData)) headers.set("Content-Type", "application/json");
+  if (init.body && !(init.body instanceof FormData))
+    headers.set("Content-Type", "application/json");
   if (auth) {
     const token = getToken();
     if (token) headers.set("Authorization", `Bearer ${token}`);
   }
   let response: Response;
   try {
-    response = await fetch(`${apiBase()}/api${path}`, { ...init, headers, cache: "no-store" });
+    response = await fetch(`${apiBase()}/api${path}`, {
+      ...init,
+      headers,
+      cache: "no-store",
+    });
   } catch {
-    throw new ApiError(0, "Server tidak bisa dihubungi. Pastikan backend sudah berjalan.");
+    throw new ApiError(
+      0,
+      "Server tidak bisa dihubungi. Pastikan backend sudah berjalan.",
+    );
   }
   if (response.status === 204) return undefined as T;
   const body = await response.json().catch(() => null);
-  if (!response.ok) throw new ApiError(response.status, errorMessage(body, response.status));
+  if (!response.ok)
+    throw new ApiError(response.status, errorMessage(body, response.status));
   return body as T;
 }
 
-const json = (method: string, data: unknown): RequestInit => ({ method, body: JSON.stringify(data) });
+const json = (method: string, data: unknown): RequestInit => ({
+  method,
+  body: JSON.stringify(data),
+});
 
 export const publicApi = {
   boards: () => request<DmBoardListItem[]>("/public/boards"),
-  board: (slug: string) => request<DmBoard>(`/public/boards/${encodeURIComponent(slug)}`),
+  board: (slug: string) =>
+    request<DmBoard>(`/public/boards/${encodeURIComponent(slug)}`),
 };
 
 export type DmLoginResult = {
@@ -196,8 +219,20 @@ export type DmMe = {
   supervisor?: string | null;
   workPhone?: string | null;
   photoUrl?: string | null;
-  line: { id: number; code: string; name: string; workshopName: string; slug: string } | null;
-  lines?: { id: number; code: string; name: string; workshopName: string; slug: string }[];
+  line: {
+    id: number;
+    code: string;
+    name: string;
+    workshopName: string;
+    slug: string;
+  } | null;
+  lines?: {
+    id: number;
+    code: string;
+    name: string;
+    workshopName: string;
+    slug: string;
+  }[];
 };
 
 export const accountApi = {
@@ -206,7 +241,11 @@ export const accountApi = {
   me: () => request<DmMe>("/auth/me", {}, true),
   lines: () => request<DmLine[]>("/lines", {}, true),
   changePassword: (currentPassword: string, newPassword: string) =>
-    request<void>("/auth/change-password", json("POST", { currentPassword, newPassword }), true),
+    request<void>(
+      "/auth/change-password",
+      json("POST", { currentPassword, newPassword }),
+      true,
+    ),
 };
 
 export type DmRecapSession = {
@@ -245,39 +284,71 @@ export type DmAttendanceRecap = {
   rows: DmRecapRow[];
 };
 
-
 export const adminApi = {
   workshops: () => request<DmWorkshop[]>("/admin/workshops", {}, true),
-  createWorkshop: (name: string) => request<DmWorkshop>("/admin/workshops", json("POST", { name }), true),
+  createWorkshop: (name: string) =>
+    request<DmWorkshop>("/admin/workshops", json("POST", { name }), true),
   renameWorkshop: (id: number, name: string) =>
-    request<DmWorkshop>(`/admin/workshops/${id}`, json("PATCH", { name }), true),
-  deleteWorkshop: (id: number) => request<void>(`/admin/workshops/${id}`, { method: "DELETE" }, true),
+    request<DmWorkshop>(
+      `/admin/workshops/${id}`,
+      json("PATCH", { name }),
+      true,
+    ),
+  deleteWorkshop: (id: number) =>
+    request<void>(`/admin/workshops/${id}`, { method: "DELETE" }, true),
   lines: () => request<DmLine[]>("/admin/lines", {}, true),
-  createLine: (data: DmLineInput) => request<DmLine>("/admin/lines", json("POST", data), true),
+  createLine: (data: DmLineInput) =>
+    request<DmLine>("/admin/lines", json("POST", data), true),
   updateLine: (id: number, data: Partial<DmLineInput>) =>
     request<DmLine>(`/admin/lines/${id}`, json("PATCH", data), true),
-  deleteLine: (id: number) => request<void>(`/admin/lines/${id}`, { method: "DELETE" }, true),
-  members: (lineId: number) => request<DmMember[]>(`/admin/lines/${lineId}/members`, {}, true),
+  deleteLine: (id: number) =>
+    request<void>(`/admin/lines/${id}`, { method: "DELETE" }, true),
+  members: (lineId: number) =>
+    request<DmMember[]>(`/admin/lines/${lineId}/members`, {}, true),
   addMember: (lineId: number, data: DmMemberInput | DmMemberPick) =>
-    request<DmMember>(`/admin/lines/${lineId}/members`, json("POST", data), true),
+    request<DmMember>(
+      `/admin/lines/${lineId}/members`,
+      json("POST", data),
+      true,
+    ),
   updateMember: (memberId: number, data: Partial<DmMemberInput>) =>
     request<DmMember>(`/admin/members/${memberId}`, json("PATCH", data), true),
-  releaseMember: (memberId: number) => request<void>(`/admin/members/${memberId}`, { method: "DELETE" }, true),
+  releaseMember: (memberId: number) =>
+    request<void>(`/admin/members/${memberId}`, { method: "DELETE" }, true),
   employees: () => request<DmEmployee[]>("/admin/employees", {}, true),
-  createEmployee: (data: DmEmployeeInput) => request<DmEmployee>("/admin/employees", json("POST", data), true),
-  updateEmployee: (id: number, data: Partial<DmEmployeeInput> & { isActive?: boolean }) =>
-    request<DmEmployee>(`/admin/employees/${id}`, json("PATCH", data), true),
+  createEmployee: (data: DmEmployeeInput) =>
+    request<DmEmployee>("/admin/employees", json("POST", data), true),
+  updateEmployee: (
+    id: number,
+    data: Partial<DmEmployeeInput> & { isActive?: boolean },
+  ) => request<DmEmployee>(`/admin/employees/${id}`, json("PATCH", data), true),
   resetEmployeePassword: (id: number, password?: string) =>
-    request<DmEmployee>(`/admin/employees/${id}/reset-password`, json("POST", password ? { password } : {}), true),
-  deleteEmployee: (id: number) => request<void>(`/admin/employees/${id}`, { method: "DELETE" }, true),
-  mpvHistory: (lineId: number) => request<DmMpv[]>(`/admin/lines/${lineId}/mpv`, {}, true),
+    request<DmEmployee>(
+      `/admin/employees/${id}/reset-password`,
+      json("POST", password ? { password } : {}),
+      true,
+    ),
+  deleteEmployee: (id: number) =>
+    request<void>(`/admin/employees/${id}`, { method: "DELETE" }, true),
+  mpvHistory: (lineId: number) =>
+    request<DmMpv[]>(`/admin/lines/${lineId}/mpv`, {}, true),
   saveMpv: (lineId: number, period: string, data: DmMpvInput | DmMpvPick) =>
-    request<DmMpv>(`/admin/lines/${lineId}/mpv/${period}`, json("PUT", data), true),
+    request<DmMpv>(
+      `/admin/lines/${lineId}/mpv/${period}`,
+      json("PUT", data),
+      true,
+    ),
   deleteMpv: (lineId: number, period: string) =>
-    request<void>(`/admin/lines/${lineId}/mpv/${period}`, { method: "DELETE" }, true),
+    request<void>(
+      `/admin/lines/${lineId}/mpv/${period}`,
+      { method: "DELETE" },
+      true,
+    ),
   attendanceRecap: (date: string, lineId?: number) =>
     request<DmAttendanceRecap>(
-      "/admin/attendance-recap?date=" + date + (lineId ? "&line_id=" + lineId : ""),
+      "/admin/attendance-recap?date=" +
+        date +
+        (lineId ? "&line_id=" + lineId : ""),
       {},
       true,
     ),
@@ -319,13 +390,53 @@ export type DmPapercardSubmission = {
   createdAt: string;
 };
 
+export type DmInspectionRow = {
+  id: string;
+  date: string;
+  line: string;
+  type: string;
+  statuses: Record<
+    "leader" | "me" | "pe" | "ipqc",
+    "OK" | "NG" | "PENDING" | "LIBUR"
+  >;
+  total: number;
+  submitted: number;
+};
+
 export const papercardApi = {
-  listTemplates: (params: { workshopId?: number; lineId?: number; department?: string }) => {
+  inspection: (params: {
+    lineId: number;
+    from: string;
+    to: string;
+    shift: string;
+  }) => {
+    const q = new URLSearchParams({
+      line_id: String(params.lineId),
+      from: params.from,
+      to: params.to,
+      shift: params.shift,
+    });
+
+    return request<DmInspectionRow[]>(
+      `/papercards/inspection?${q.toString()}`,
+      {},
+      true,
+    );
+  },
+  listTemplates: (params: {
+    workshopId?: number;
+    lineId?: number;
+    department?: string;
+  }) => {
     const q = new URLSearchParams();
     if (params.workshopId) q.set("workshop_id", String(params.workshopId));
     if (params.lineId) q.set("line_id", String(params.lineId));
     if (params.department) q.set("department", params.department);
-    return request<DmPapercardTemplate[]>(`/papercards/templates?${q.toString()}`, {}, true);
+    return request<DmPapercardTemplate[]>(
+      `/papercards/templates?${q.toString()}`,
+      {},
+      true,
+    );
   },
   saveTemplate: (input: {
     workshopId: number;
@@ -336,7 +447,12 @@ export const papercardApi = {
     windowStart?: string;
     windowEnd?: string;
     templateData: any;
-  }) => request<DmPapercardTemplate>("/papercards/templates", json("POST", input), true),
+  }) =>
+    request<DmPapercardTemplate>(
+      "/papercards/templates",
+      json("POST", input),
+      true,
+    ),
   bulkApplyTemplates: (input: {
     targetLineIds: number[];
     department: string;
@@ -345,17 +461,36 @@ export const papercardApi = {
     windowStart?: string;
     windowEnd?: string;
     templateData: any;
-  }) => request<DmPapercardTemplate[]>("/papercards/templates/bulk-apply", json("POST", input), true),
-  getPresets: () => request<Record<string, any>>("/papercards/templates/presets", {}, true),
+  }) =>
+    request<DmPapercardTemplate[]>(
+      "/papercards/templates/bulk-apply",
+      json("POST", input),
+      true,
+    ),
+  getPresets: () =>
+    request<Record<string, any>>("/papercards/templates/presets", {}, true),
   resetToFactory: (lineId: number, department: string) =>
-    request<DmPapercardTemplate>(`/papercards/templates/reset-to-factory?line_id=${lineId}&department=${department}`, json("POST", {}), true),
-  listSubmissions: (params: { lineId?: number; department?: string; date?: string; shift?: string }) => {
+    request<DmPapercardTemplate>(
+      `/papercards/templates/reset-to-factory?line_id=${lineId}&department=${department}`,
+      json("POST", {}),
+      true,
+    ),
+  listSubmissions: (params: {
+    lineId?: number;
+    department?: string;
+    date?: string;
+    shift?: string;
+  }) => {
     const q = new URLSearchParams();
     if (params.lineId) q.set("line_id", String(params.lineId));
     if (params.department) q.set("department", params.department);
     if (params.date) q.set("date", params.date);
     if (params.shift) q.set("shift", params.shift);
-    return request<DmPapercardSubmission[]>(`/papercards/submissions?${q.toString()}`, {}, true);
+    return request<DmPapercardSubmission[]>(
+      `/papercards/submissions?${q.toString()}`,
+      {},
+      true,
+    );
   },
   submit: (input: {
     lineId: number;
@@ -364,12 +499,28 @@ export const papercardApi = {
     shift: string;
     answers: any[];
     abnormalNotes?: string | null;
-  }) => request<DmPapercardSubmission>("/papercards/submissions", json("POST", input), true),
-  approve: (submissionId: number, input: { approvalStatus: string; supervisorNotes?: string | null }) =>
-    request<DmPapercardSubmission>(`/papercards/submissions/${submissionId}/approve`, json("POST", input), true),
+  }) =>
+    request<DmPapercardSubmission>(
+      "/papercards/submissions",
+      json("POST", input),
+      true,
+    ),
+  approve: (
+    submissionId: number,
+    input: { approvalStatus: string; supervisorNotes?: string | null },
+  ) =>
+    request<DmPapercardSubmission>(
+      `/papercards/submissions/${submissionId}/approve`,
+      json("POST", input),
+      true,
+    ),
   supervisorOverview: (date?: string) => {
     const q = date ? `?date=${date}` : "";
-    return request<DmSupervisorOverview>(`/papercards/supervisor/overview${q}`, {}, true);
+    return request<DmSupervisorOverview>(
+      `/papercards/supervisor/overview${q}`,
+      {},
+      true,
+    );
   },
 };
 
@@ -442,7 +593,6 @@ export type DmMeetingAttendance = {
   employeeLine?: string | null;
   absenceReason?: string | null;
   absenceNote?: string | null;
-
 };
 
 export type DmMeetingSummary = {
@@ -509,7 +659,6 @@ export type DmFaceScan = {
   attendance: DmMeetingAttendance | null;
 };
 
-
 export type DmMeetingScheduleItem = {
   id?: number | null;
   label: string;
@@ -558,27 +707,71 @@ export type DmMyProblem = {
 
 export const meetingApi = {
   prepare: (sessionId: number, scope: "line" | "dm") =>
-    request<DmMeetingSession>(`/meetings/sessions/${sessionId}/prepare`, json("POST", { scope }), true),
-  getSchedule: (lineId: number) => request<DmMeetingSchedule>(`/meetings/schedule?line_id=${lineId}`, {}, true),
-  saveSchedule: (lineId: number, items: DmMeetingScheduleItem[]) =>
-    request<DmMeetingSchedule>(`/meetings/schedule/${lineId}`, json("PUT", { items }), true),
-  applySchedule: (lineIds: number[], items: DmMeetingScheduleItem[]) =>
-    request<DmMeetingSchedule[]>("/meetings/schedule/apply", json("POST", { lineIds, items }), true),
-  listSessions: (lineId: number, date: string, shift = "Shift 1") =>
-    request<DmMeetingSession[]>(`/meetings/sessions?line_id=${lineId}&date=${date}&shift=${encodeURIComponent(shift)}`, {}, true),
-  getSession: (sessionId: number) => request<DmMeetingSession>(`/meetings/sessions/${sessionId}`, {}, true),
-  history: (lineId: number, from: string, to: string, shift = "Shift 1") =>
-    request<DmMeetingSession[]>(
-      "/meetings/history?line_id=" + lineId + "&from=" + from + "&to=" + to + "&shift=" + encodeURIComponent(shift),
+    request<DmMeetingSession>(
+      `/meetings/sessions/${sessionId}/prepare`,
+      json("POST", { scope }),
+      true,
+    ),
+  getSchedule: (lineId: number) =>
+    request<DmMeetingSchedule>(
+      `/meetings/schedule?line_id=${lineId}`,
       {},
       true,
     ),
-  saveAbsenceNotes: (sessionId: number, items: { employeeNo: string; reason: string; note?: string | null }[]) =>
-    request<DmMeetingSession>("/meetings/sessions/" + sessionId + "/absence-notes", json("PUT", { items }), true),
+  saveSchedule: (lineId: number, items: DmMeetingScheduleItem[]) =>
+    request<DmMeetingSchedule>(
+      `/meetings/schedule/${lineId}`,
+      json("PUT", { items }),
+      true,
+    ),
+  applySchedule: (lineIds: number[], items: DmMeetingScheduleItem[]) =>
+    request<DmMeetingSchedule[]>(
+      "/meetings/schedule/apply",
+      json("POST", { lineIds, items }),
+      true,
+    ),
+  listSessions: (lineId: number, date: string, shift = "Shift 1") =>
+    request<DmMeetingSession[]>(
+      `/meetings/sessions?line_id=${lineId}&date=${date}&shift=${encodeURIComponent(shift)}`,
+      {},
+      true,
+    ),
+  getSession: (sessionId: number) =>
+    request<DmMeetingSession>(`/meetings/sessions/${sessionId}`, {}, true),
+  history: (lineId: number, from: string, to: string, shift = "Shift 1") =>
+    request<DmMeetingSession[]>(
+      "/meetings/history?line_id=" +
+        lineId +
+        "&from=" +
+        from +
+        "&to=" +
+        to +
+        "&shift=" +
+        encodeURIComponent(shift),
+      {},
+      true,
+    ),
+  saveAbsenceNotes: (
+    sessionId: number,
+    items: { employeeNo: string; reason: string; note?: string | null }[],
+  ) =>
+    request<DmMeetingSession>(
+      "/meetings/sessions/" + sessionId + "/absence-notes",
+      json("PUT", { items }),
+      true,
+    ),
   employeePhoto: (employeeNo: string) =>
-    request<{ photoUrl: string | null }>("/meetings/employees/" + encodeURIComponent(employeeNo) + "/photo", {}, true),
+    request<{ photoUrl: string | null }>(
+      "/meetings/employees/" + encodeURIComponent(employeeNo) + "/photo",
+      {},
+      true,
+    ),
   closePresensi: (sessionId: number, absentEmployeeNos: string[]) =>
-    request<DmMeetingSession>(`/meetings/sessions/${sessionId}/presensi/close`, json("POST", { absentEmployeeNos }), true),
+    request<DmMeetingSession>(
+      `/meetings/sessions/${sessionId}/presensi/close`,
+      json("POST", { absentEmployeeNos }),
+      true,
+    ),
   startSession: (input: {
     lineId: number;
     date: string;
@@ -591,7 +784,12 @@ export const meetingApi = {
       faceConfidence?: number;
       notes?: string;
     }[];
-  }) => request<DmMeetingSession>("/meetings/sessions/start", json("POST", input), true),
+  }) =>
+    request<DmMeetingSession>(
+      "/meetings/sessions/start",
+      json("POST", input),
+      true,
+    ),
 
   endSession: (
     sessionId: number,
@@ -604,18 +802,35 @@ export const meetingApi = {
         lineCode?: string | null;
         picEmployeeNo?: string | null;
       }[];
-    }
-  ) => request<DmMeetingSession>(`/meetings/sessions/${sessionId}/end`, json("POST", input), true),
+    },
+  ) =>
+    request<DmMeetingSession>(
+      `/meetings/sessions/${sessionId}/end`,
+      json("POST", input),
+      true,
+    ),
   faceChallenge: (sessionId: number) =>
-    request<DmFaceChallenge>(`/meetings/sessions/${sessionId}/challenge`, { method: "POST" }, true),
+    request<DmFaceChallenge>(
+      `/meetings/sessions/${sessionId}/challenge`,
+      { method: "POST" },
+      true,
+    ),
   faceScan: (sessionId: number, frames: Blob[], token: string | null) => {
     const form = new FormData();
     frames.forEach((blob, i) => form.append("frames", blob, `frame-${i}.jpg`));
     if (token) form.append("token", token);
-    return request<DmFaceScan>(`/meetings/sessions/${sessionId}/scan`, { method: "POST", body: form }, true);
+    return request<DmFaceScan>(
+      `/meetings/sessions/${sessionId}/scan`,
+      { method: "POST", body: form },
+      true,
+    );
   },
   getPostMeeting: (lineId: number, date: string, shift = "Shift 1") =>
-    request<DmPostMeeting | null>(`/meetings/post-meeting?line_id=${lineId}&date=${date}&shift=${encodeURIComponent(shift)}`, {}, true),
+    request<DmPostMeeting | null>(
+      `/meetings/post-meeting?line_id=${lineId}&date=${date}&shift=${encodeURIComponent(shift)}`,
+      {},
+      true,
+    ),
   savePostMeeting: (input: {
     lineId: number;
     date: string;
@@ -626,16 +841,21 @@ export const meetingApi = {
     pdcaCheck: string;
     pdcaAct: string;
     followUpUpdate?: string | null;
-  }) => request<DmPostMeeting>("/meetings/post-meeting", json("POST", input), true),
+  }) =>
+    request<DmPostMeeting>("/meetings/post-meeting", json("POST", input), true),
   myProblems: () => request<DmMyProblem[]>("/meetings/problems/mine", {}, true),
   setProblemStatus: (id: number, status: "open" | "in_progress" | "resolved") =>
-    request<DmMyProblem>(`/meetings/problems/${id}`, json("PATCH", { status }), true),
+    request<DmMyProblem>(
+      `/meetings/problems/${id}`,
+      json("PATCH", { status }),
+      true,
+    ),
   problems: (lineId?: number) => {
     const query = lineId ? `?line_id=${lineId}` : "";
     return request<DmMyProblem[]>("/meetings/problems" + query, {}, true);
   },
   supervisorEscalations: () =>
-    request<DmMyProblem[]>("/meetings/problems/escalations", {}, true)
+    request<DmMyProblem[]>("/meetings/problems/escalations", {}, true),
 };
 
 export type DmNotificationSetting = {
@@ -659,10 +879,14 @@ export const notificationApi = {
     request<DmNotificationSetting>(
       `/notifications/settings${lineId && lineId > 0 ? `?line_id=${lineId}` : ""}`,
       {},
-      true
+      true,
     ),
   saveSettings: (lineId: number, data: DmNotificationSettingInput) =>
-    request<DmNotificationSetting>(`/notifications/settings/${lineId}`, json("PUT", data), true),
+    request<DmNotificationSetting>(
+      `/notifications/settings/${lineId}`,
+      json("PUT", data),
+      true,
+    ),
 };
 
 export type DmGroup = {
@@ -690,18 +914,18 @@ export const dmGroupApi = {
     const q = workshopId ? `?workshop_id=${workshopId}` : "";
     return request<DmGroup[]>(`/dm-groups${q}`, {}, true);
   },
-  lineMap: () => request<Record<number, number>>("/dm-groups/line-map", {}, true),
-  create: (input: DmGroupInput) => request<DmGroup>("/dm-groups", json("POST", input), true),
+  lineMap: () =>
+    request<Record<number, number>>("/dm-groups/line-map", {}, true),
+  create: (input: DmGroupInput) =>
+    request<DmGroup>("/dm-groups", json("POST", input), true),
   update: (id: number, input: DmGroupUpdateInput) =>
     request<DmGroup>(`/dm-groups/${id}`, json("PUT", input), true),
-  delete: (id: number) => request<void>(`/dm-groups/${id}`, { method: "DELETE" }, true),
+  delete: (id: number) =>
+    request<void>(`/dm-groups/${id}`, { method: "DELETE" }, true),
   assignLine: (lineId: number, groupId: number | null) =>
     request<{ success: boolean; lineId: number; dmGroupId: number | null }>(
       `/dm-groups/lines/${lineId}`,
       json("PATCH", { groupId }),
-      true
+      true,
     ),
 };
-
-
-

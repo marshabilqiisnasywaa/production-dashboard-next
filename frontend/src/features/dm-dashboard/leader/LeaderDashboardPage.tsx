@@ -2,7 +2,11 @@
 
 import { useMemo, useState } from "react";
 import "./dmSoft.css";
-import { IconAlert, IconCheckCircle, IconClipboardCheck } from "@/components/ui/icons";
+import {
+  IconAlert,
+  IconCheckCircle,
+  IconClipboardCheck,
+} from "@/components/ui/icons";
 import { buildTimeline } from "./buildTimeline";
 import { DateRangeSelect } from "./components/DateRangeSelect";
 import { InspectionSection } from "./components/InspectionSection";
@@ -28,16 +32,27 @@ const KPI_ICON = {
 export default function LeaderDashboardPage() {
   // Analisis Kepatuhan & Waktu (unchanged)
   const [range, setRange] = useState<DateRangeKey>("7d");
-  const { rows, summary } = useInspection(range);
+  const {
+    rows,
+    summary,
+    loading: inspectionLoading,
+    error: inspectionError,
+  } = useInspection(range, "Shift 1");
 
   // Today (live database)
-  const { currentUser, submissions, sessions, leaderSubmission, loading } = useLeaderToday();
+  const { currentUser, submissions, sessions, leaderSubmission, loading } =
+    useLeaderToday();
   const now = useNow(30_000);
 
   const timeline = useMemo(
     () =>
       now && !loading
-        ? buildTimeline({ now, leaderSubmitted: Boolean(leaderSubmission), submissions, sessions })
+        ? buildTimeline({
+            now,
+            leaderSubmitted: Boolean(leaderSubmission),
+            submissions,
+            sessions,
+          })
         : null,
     [now, loading, leaderSubmission, submissions, sessions],
   );
@@ -52,14 +67,14 @@ export default function LeaderDashboardPage() {
         supervisorName={currentUser?.supervisor || LEADER_USER.supervisor.name}
       />
       <ReminderModal
-  lineId={currentUser?.line?.id ?? null}
-  department={currentUser?.dept ?? "PROD"}
-  sessions={sessions}
-  papercardSubmitted={Boolean(leaderSubmission)}
-  papercardHref={LEADER_ROUTES.papercard}
-  meetingHref={LEADER_ROUTES.meeting}
-  enabled={!loading && Boolean(currentUser?.line?.id)}
-/>
+        lineId={currentUser?.line?.id ?? null}
+        department={currentUser?.dept ?? "PROD"}
+        sessions={sessions}
+        papercardSubmitted={Boolean(leaderSubmission)}
+        papercardHref={LEADER_ROUTES.papercard}
+        meetingHref={LEADER_ROUTES.meeting}
+        enabled={!loading && Boolean(currentUser?.line?.id)}
+      />
 
       <div style={{ marginTop: "10px" }}>
         <div className="dml-page-head">
@@ -75,14 +90,34 @@ export default function LeaderDashboardPage() {
         </div>
 
         <div className="dml-kpis">
-          <KpiCard title="Inspection Rate" value={summary.rate} delta={summary.delta} icon={KPI_ICON.clipboard} />
+          {inspectionLoading ? (
+            <p role="status">Memuat inspection...</p>
+          ) : inspectionError ? (
+            <p role="alert">{inspectionError}</p>
+          ) : rows.length === 0 ? (
+            <p>Belum ada pengisian pada periode ini.</p>
+          ) : (
+            <KpiCard
+              title="Inspection Rate"
+              value={summary.rate}
+              delta={summary.delta}
+              icon={KPI_ICON.clipboard}
+            />
+          )}
           {OTHER_KPIS.map((k) => (
-            <KpiCard key={k.id} title={k.title} value={k.value} icon={KPI_ICON[k.icon]} />
+            <KpiCard
+              key={k.id}
+              title={k.title}
+              value={k.value}
+              icon={KPI_ICON[k.icon]}
+            />
           ))}
         </div>
 
         <div className="dml-grid">
-          <InspectionSection rows={rows} />
+          {!inspectionLoading && !inspectionError && rows.length > 0 && (
+            <InspectionSection rows={rows} />
+          )}
           <aside className="dml-aside">
             {/* "Today" first: it is the only card the Leader can act on */}
             <SessionTimeline model={timeline} />

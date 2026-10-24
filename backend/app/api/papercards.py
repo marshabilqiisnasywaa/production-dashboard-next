@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
-from app.api.deps import Principal, get_principal
+from app.api.deps import Principal, authorize_line, get_principal
 from app.db.session import get_db
 from app.models import Board, BoardMember, Employee, Line, PapercardSubmission, PapercardTemplate, Workshop
 from app.schemas import (
@@ -23,6 +23,160 @@ from app.services.accounts import active_line, active_lines
 
 router = APIRouter(prefix="/papercards", tags=["papercards"])
 
+@router.get("/inspection")
+def get_inspection(
+    line_id: int,
+    from_date: date = Query(alias="from"),
+    to_date: date = Query(alias="to"),
+    shift: str = "Shift 1",
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_principal),
+) -> list[dict[str, Any]]:
+    authorize_line(db, principal, line_id)
+
+    jakarta = ZoneInfo("Asia/Jakarta")
+    now = datetime.now(jakarta)
+    today = now.date()
+
+    if from_date > to_date:
+        raise HTTPException(
+            status_code=400,
+            detail="Tanggal awal tidak boleh melewati tanggal akhir.",
+        )
+
+    if to_date > today:
+        raise HTTPException(
+            status_code=400,
+            detail="Tanggal akhir tidak boleh di masa depan.",
+        )
+
+    if (to_date - from_date).days > 365:
+        raise HTTPException(
+            status_code=400,
+            detail="Rentang maksimal 366 hari.",
+        )
+
+    line = db.get(Line, line_id)
+
+    if line is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Lini tidak ditemukan.",
+        )
+
+    department_roles = {
+        "PROD": "leader",
+        "ME": "me",
+        "PE": "pe",
+        "QC": "ipqc",
+    }
+
+    visible_departments = set(department_roles)
+
+    if principal.role == "member":
+        department = (principal.employee.dept or "").upper()
+
+        if department not in department_roles:
+            raise HTTPException(
+                status_code=403,
+                detail="Departemen akun tidak mendukung inspection.",
+            )
+
+        visible_departments = {department}
+
+    submissions = db.scalars(
+        select(PapercardSubmission).where(
+            PapercardSubmission.line_id == line_id,
+            PapercardSubmission.date >= from_date,
+            PapercardSubmission.date <= to_date,
+            PapercardSubmission.shift == shift,
+            PapercardSubmission.department.in_(
+                list(department_roles)
+            ),
+        )
+    ).all()
+
+    active_dates = sorted({
+        submission.date
+        for submission in submissions
+    })
+
+    submission_map = {
+        (submission.date, submission.department): submission
+        for submission in submissions
+        if submission.department in visible_departments
+    }
+
+    templates = db.scalars(
+        select(PapercardTemplate).where(
+            PapercardTemplate.line_id == line_id,
+            PapercardTemplate.department.in_(
+                list(visible_departments)
+            ),
+        )
+    ).all()
+
+    template_map = {
+        template.department: template
+        for template in templates
+    }
+
+    rows = []
+
+    for inspection_date in active_dates:
+        statuses = {
+            role: "PENDING"
+            for role in department_roles.values()
+        }
+
+        for department in visible_departments:
+            submission = submission_map.get(
+                (inspection_date, department)
+            )
+
+            if submission is None:
+                template = template_map.get(department)
+
+                if template is not None:
+                    deadline = datetime.combine(
+                        inspection_date,
+                        time.fromisoformat(template.window_end),
+                        tzinfo=jakarta,
+                    )
+
+                    if now > deadline:
+                        statuses[department_roles[department]] = "NG"
+
+                continue
+            
+            submission_status = submission.status.upper()
+
+            if submission_status in ("OK", "NG"):
+                statuses[department_roles[department]] = (
+                    submission_status
+                )
+
+
+            submitted = sum(
+                statuses[department_roles[department]] == "OK"
+                for department in visible_departments
+            )
+
+        rows.append({
+            "id": (
+                f"{line.id}-"
+                f"{inspection_date.isoformat()}-"
+                f"{shift}"
+            ),
+            "date": inspection_date.isoformat(),
+            "line": line.code,
+            "type": line.model or "-",
+            "statuses": statuses,
+            "total": len(visible_departments),
+            "submitted": submitted,
+        })
+
+    return rows
 
 # -----------------------------------------------------------------------------
 # Supervisor Subordinates Overview (100% Real PostgreSQL Data)
@@ -518,8 +672,8 @@ def submit_papercard(
     submitted_at = datetime.now(jakarta)
 
     if payload.date > submitted_at.date():
-        raise HTTPExeption(
-            sattus_code=400,
+        raise HTTPException(
+            status_code=400,
             detail="Tanggal papercard tidak boleh di masa depan"
         )
 
@@ -533,7 +687,7 @@ def submit_papercard(
 
 
     has_abnormal = any(
-        answer.get("status") == " NG" 
+        answer.get("status") == "NG" 
         for answer in payload.answers
     )
 
