@@ -128,39 +128,47 @@ def get_inspection(
             role: "PENDING"
             for role in department_roles.values()
         }
+        on_time = 0
 
         for department in visible_departments:
+            role = department_roles[department]
+            template = template_map.get(department)
             submission = submission_map.get(
                 (inspection_date, department)
             )
 
+            if template is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"Template {department} untuk line "
+                        f"{line.code} belum tersedia."
+                    ),
+                )
+
+            deadline = datetime.combine(
+                inspection_date,
+                time.fromisoformat(template.window_end),
+                tzinfo=jakarta,
+            )
+
             if submission is None:
-                template = template_map.get(department)
-
-                if template is not None:
-                    deadline = datetime.combine(
-                        inspection_date,
-                        time.fromisoformat(template.window_end),
-                        tzinfo=jakarta,
-                    )
-
-                    if now > deadline:
-                        statuses[department_roles[department]] = "NG"
-
+                if now > deadline:
+                    statuses[role] = "NG"
                 continue
-            
+
             submission_status = submission.status.upper()
 
             if submission_status in ("OK", "NG"):
-                statuses[department_roles[department]] = (
-                    submission_status
-                )
+                statuses[role] = submission_status
 
+                if submission.submitted_at <= deadline:
+                    on_time += 1
 
-            submitted = sum(
-                statuses[department_roles[department]] == "OK"
-                for department in visible_departments
-            )
+        submitted = sum(
+            statuses[department_roles[department]] == "OK"
+            for department in visible_departments
+        )
 
         rows.append({
             "id": (
@@ -174,6 +182,7 @@ def get_inspection(
             "statuses": statuses,
             "total": len(visible_departments),
             "submitted": submitted,
+            "onTime": on_time,
         })
 
     return rows

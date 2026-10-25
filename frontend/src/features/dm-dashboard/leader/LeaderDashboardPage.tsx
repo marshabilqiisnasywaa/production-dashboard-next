@@ -32,12 +32,6 @@ const KPI_ICON = {
 export default function LeaderDashboardPage() {
   // Analisis Kepatuhan & Waktu (unchanged)
   const [range, setRange] = useState<DateRangeKey>("7d");
-  const {
-    rows,
-    summary,
-    loading: inspectionLoading,
-    error: inspectionError,
-  } = useInspection(range, "Shift 1");
 
   // Today (live database)
   const { currentUser, submissions, sessions, leaderSubmission, loading } =
@@ -56,6 +50,14 @@ export default function LeaderDashboardPage() {
         : null,
     [now, loading, leaderSubmission, submissions, sessions],
   );
+
+  const {
+    rows,
+    summary,
+    onTimeRate,
+    loading: inspectionLoading,
+    error: inspectionError,
+  } = useInspection(range, "Shift 1");
 
   return (
     <div className="dms-container">
@@ -90,21 +92,30 @@ export default function LeaderDashboardPage() {
         </div>
 
         <div className="dml-kpis">
-          {inspectionLoading ? (
-            <p role="status">Memuat inspection...</p>
-          ) : inspectionError ? (
-            <p role="alert">{inspectionError}</p>
-          ) : rows.length === 0 ? (
-            <p>Belum ada pengisian pada periode ini.</p>
+          {inspectionLoading || inspectionError || rows.length === 0 ? (
+            <article className="dml-kpi" style={{ gridColumn: "span 2" }}>
+              <p role={inspectionError ? "alert" : "status"}>
+                {inspectionLoading
+                  ? "Memuat inspection..."
+                  : inspectionError || "Belum ada pengisian pada periode ini."}
+              </p>
+            </article>
           ) : (
-            <KpiCard
-              title="Inspection Rate"
-              value={summary.rate}
-              delta={summary.delta}
-              icon={KPI_ICON.clipboard}
-            />
+            <>
+              <KpiCard
+                title="Inspection Rate"
+                value={summary.rate}
+                delta={summary.delta}
+                icon={KPI_ICON.clipboard}
+              />
+              <KpiCard
+                title="Papercard tepat waktu"
+                value={onTimeRate}
+                icon={KPI_ICON.clipboard}
+              />
+            </>
           )}
-          {OTHER_KPIS.map((k) => (
+          {OTHER_KPIS.filter((k) => k.id !== "ontime").map((k) => (
             <KpiCard
               key={k.id}
               title={k.title}
@@ -115,9 +126,19 @@ export default function LeaderDashboardPage() {
         </div>
 
         <div className="dml-grid">
-          {!inspectionLoading && !inspectionError && rows.length > 0 && (
+          <div style={{ minWidth: 0 }}>
+            {inspectionLoading && (
+              <p role="status">Memuat detail inspection...</p>
+            )}
+
+            {inspectionError && <p role="alert">{inspectionError}</p>}
+
+            {!inspectionLoading && !inspectionError && rows.length === 0 && (
+              <p>Belum ada pengisian pada periode ini.</p>
+            )}
+
             <InspectionSection rows={rows} />
-          )}
+          </div>
           <aside className="dml-aside">
             {/* "Today" first: it is the only card the Leader can act on */}
             <SessionTimeline model={timeline} />

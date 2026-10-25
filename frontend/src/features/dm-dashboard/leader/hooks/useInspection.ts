@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { accountApi, papercardApi } from "../../api";
+import { accountApi, papercardApi, type DmInspectionRow } from "../../api";
 import type { DateRangeKey, InspectionRow, InspectionSummary } from "../types";
 import {
   addDays,
@@ -14,6 +14,7 @@ import {
 interface Result {
   rows: InspectionRow[];
   summary: InspectionSummary;
+  onTimeRate: number;
   loading: boolean;
   error: string | null;
 }
@@ -28,7 +29,7 @@ function jakartaToday(): string {
 }
 
 export function useInspection(range: DateRangeKey, shift = "Shift 1"): Result {
-  const [allRows, setAllRows] = useState<InspectionRow[]>([]);
+  const [allRows, setAllRows] = useState<DmInspectionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,8 +102,20 @@ export function useInspection(range: DateRangeKey, shift = "Shift 1"): Result {
     const current = sumRate(rows);
     const previous = sumRate(previousRows);
 
+    const currentRows = allRows.filter(
+      (row) => row.date >= from && row.date <= to,
+    );
+
+    const totalRequired = currentRows.reduce((sum, row) => sum + row.total, 0);
+
+    const totalOnTime = currentRows.reduce((sum, row) => sum + row.onTime, 0);
+
+    const onTimeRate =
+      totalRequired === 0 ? 0 : Math.round((totalOnTime / totalRequired) * 100);
+
     return {
       rows,
+      onTimeRate,
       summary: {
         rate: current ?? 0,
         delta:

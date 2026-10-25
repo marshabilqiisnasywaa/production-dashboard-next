@@ -401,6 +401,7 @@ export type DmInspectionRow = {
   >;
   total: number;
   submitted: number;
+  onTime: number;
 };
 
 export const papercardApi = {
