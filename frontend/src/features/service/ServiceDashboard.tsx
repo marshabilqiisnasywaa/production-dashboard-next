@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { serviceOverviewGroups, servicePages, type ServiceKpiDefinition, type ServicePageKey } from "@/data/serviceData";
+import ChartTooltip from "@/components/shell/ChartTooltip";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
 import PeriodControl, { periodView, type PeriodKey } from "@/components/shell/PeriodControl";
 
@@ -43,12 +44,6 @@ function Sparkline({ success }: { success: boolean }) {
 
 type ServiceChartPoint = ServiceChartItem & { higherIsBetter: boolean };
 
-function ServiceTooltip({ active, payload, label, unit }: { active?: boolean; payload?: readonly { payload?: ServiceChartPoint }[]; label?: string; unit: string }) {
-  if (!active || !payload?.[0]?.payload) return null;
-  const point = payload[0].payload;
-  return <div className="repair-tooltip"><strong>{label}</strong><div><span>Target</span><b>{point.target.toFixed(2)}{unit}</b></div><div><span>Actual</span><b>{point.actual.toFixed(2)}{unit}</b></div><div><span>Gap</span><b>{(point.actual - point.target).toFixed(2)}{unit}</b></div></div>;
-}
-
 function ServiceStatusDot(props: { cx?: number; cy?: number; payload?: ServiceChartPoint }) {
   if (props.cx === undefined || props.cy === undefined || !props.payload) return <g />;
   const good = isOnTarget(props.payload.actual, props.payload.target, props.payload.higherIsBetter);
@@ -73,7 +68,7 @@ function ServiceKpiCard({
 
   return (
     <article
-      className={`repair-kpi status-${status} bg-white! border border-gray-200/80! rounded-xl! ${selected ? "service-selected" : ""}`}
+      className={`repair-kpi status-${status} bg-white dark:bg-slate-900! border border-gray-200/80! rounded-xl! ${selected ? "service-selected" : ""}`}
       onClick={() => onSelect(item.id)}
       style={{ textAlign: "left", cursor: "pointer" }}
     >
@@ -126,7 +121,7 @@ function ServiceLineChart({
           <h2>{title}</h2>
           <p>Actual performance vs target • 2025</p>
         </div>
-        <div className="flex items-center justify-end gap-4"><label className="label-toggle flex items-center gap-2 text-xs text-slate-500 font-medium"><input type="checkbox" checked={labels} onChange={(event) => setLabels(event.target.checked)} /><span />Show labels</label><PeriodControl value={period} onChange={setPeriod} /></div>
+        <div className="flex items-center justify-end gap-4"><label className="label-toggle flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium"><input type="checkbox" checked={labels} onChange={(event) => setLabels(event.target.checked)} /><span />Show labels</label><PeriodControl value={period} onChange={setPeriod} /></div>
       </div>
 
       <div className="line-chart-wrap service-chart-shell">
@@ -148,7 +143,7 @@ function ServiceLineChart({
               axisLine={false}
               tickLine={false}
             />
-            <Tooltip content={<ServiceTooltip unit={unit} />} cursor={{ stroke: "var(--line)" }} />
+            <Tooltip content={<ChartTooltip format={(value) => `${Number(value).toFixed(2)}${unit}`} />} cursor={{ stroke: "var(--line)" }} />
             <Legend
               verticalAlign="bottom"
               iconType="line"
@@ -302,7 +297,7 @@ function ServicePage({ pageKey }: { pageKey: ServicePageKey }) {
       <div className="repair-header">
         <div>
           <div className="repair-eyebrow">MONITORING • DEEP DIVE</div>
-          <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900">{page.title}</h1></div>
+          <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{page.title}</h1></div>
           <p>{page.subtitle}</p>
         </div>
         <div className="repair-actions">

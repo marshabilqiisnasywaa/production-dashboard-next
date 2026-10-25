@@ -15,6 +15,8 @@ import ShellContent from "@/components/shell/ShellContent";
 import { RepairPicProvider } from "@/features/pic-repair/RepairPicContext";
 import { ServicePicProvider } from "@/features/pic-service/ServicePicContext";
 import { QcPicProvider } from "@/features/pic-qc/QcPicContext";
+import { CostPicProvider } from "@/features/cost/CostPicContext";
+import { SafetyPicProvider } from "@/features/safety/SafetyPicContext";
 import PicRepairHome from "@/features/pic-repair/PicRepairHome";
 import PicRepairFollowup from "@/features/pic-repair/PicRepairFollowup";
 import PicRepairMonitoring from "@/features/pic-repair/PicRepairMonitoring";
@@ -27,9 +29,27 @@ import PicServicePlan from "@/features/pic-service/PicServicePlan";
 import PicQcHome from "@/features/pic-qc/PicQcHome";
 import PicQcFollowup from "@/features/pic-qc/PicQcFollowup";
 import PicQcMonitoring from "@/features/pic-qc/PicQcMonitoring";
+import SafetyDashboard from "@/features/safety/SafetyDashboard";
 import PicQcAbnormality from "@/features/pic-qc/PicQcAbnormality";
 import PicQcPlan from "@/features/pic-qc/PicQcPlan";
+import { AssemblyPicProvider } from "@/features/pic-assembly/AssemblyPicContext";
+import PicAssemblyAbnormality from "@/features/pic-assembly/PicAssemblyAbnormality";
+import PicAssemblyFollowup from "@/features/pic-assembly/PicAssemblyFollowup";
+import PicAssemblyHome from "@/features/pic-assembly/PicAssemblyHome";
+import PicAssemblyMonitoring from "@/features/pic-assembly/PicAssemblyMonitoring";
+import PicAssemblyPlan from "@/features/pic-assembly/PicAssemblyPlan";
 import PaiRobot from "@/features/morning-meeting/PaiRobot";
+import MeetingDashboard from "@/features/morning-meeting/MeetingDashboard";
+import FollowupPage from "@/features/morning-meeting/FollowupPage";
+import CostOverview from "@/features/cost/CostOverview";
+import CostProductivity from "@/features/cost/CostProductivity";
+import CostManpower from "@/features/cost/CostManpower";
+import CostBreakdown from "@/features/cost/CostBreakdown";
+import CostFinishGood from "@/features/cost/CostFinishGood";
+import PicCostAbnormality from "@/features/cost/PicCostAbnormality";
+import PicCostPlan from "@/features/cost/PicCostPlan";
+import PicSafetyAbnormality from "@/features/safety/PicSafetyAbnormality";
+import PicSafetyPlan from "@/features/safety/PicSafetyPlan";
 import type { CostNav } from "@/data/costData";
 import type { AppLanguage } from "@/components/providers/LanguageProvider";
 
@@ -72,7 +92,9 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
   const isRepairPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "repair";
   const isServicePicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "service";
   const isQcPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "qc";
+  const isAssemblyPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "assembly";
   const isCostPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "cost";
+  const isSafetyPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "safety";
 
   useEffect(() => {
     if (isRepairPicMeeting) {
@@ -90,8 +112,18 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
         setActive("meeting-home");
         router.push("/morning-meeting");
       }
+    } else if (isAssemblyPicMeeting) {
+      if (active !== "meeting-home" && active !== "followup" && active !== "assembly-monitor" && !active.startsWith("assembly-")) {
+        setActive("meeting-home");
+        router.push("/morning-meeting");
+      }
     } else if (isCostPicMeeting) {
-      if (active !== "meeting-home" && active !== "followup" && !active.startsWith("cost-") && active !== "cost-area-monitoring" && !active.startsWith("cost-")) {
+      if (active !== "meeting-home" && active !== "followup" && !active.startsWith("cost-") && active !== "cost-area-monitoring") {
+        setActive("meeting-home");
+        router.push("/morning-meeting");
+      }
+    } else if (isSafetyPicMeeting) {
+      if (active !== "meeting-home" && active !== "followup" && active !== "safety-area-monitoring" && !active.startsWith("safety-")) {
         setActive("meeting-home");
         router.push("/morning-meeting");
       }
@@ -99,13 +131,23 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
       setActive("Dashboard");
       router.push(dashboardHref);
     }
-  }, [isRepairPicMeeting, isServicePicMeeting, isQcPicMeeting, isCostPicMeeting, active, router]);
+  }, [isRepairPicMeeting, isServicePicMeeting, isQcPicMeeting, isAssemblyPicMeeting, isCostPicMeeting, isSafetyPicMeeting, active, router]);
 
   useEffect(() => {
     if (isRepairPicMeeting && (active === "repair-monitor" || active === "Preassembly" || active === "Rework" || active === "Warranty")) {
       setOpenMenu("Area Monitoring");
     }
   }, [isRepairPicMeeting, active]);
+  useEffect(() => {
+    if (isCostPicMeeting && (active === "cost-area-monitoring" || active.startsWith("cost-"))) {
+      setOpenMenu("Area Monitoring");
+    }
+  }, [isCostPicMeeting, active]);
+  useEffect(() => {
+    if (isSafetyPicMeeting && (active === "safety-area-monitoring" || active.startsWith("safety-"))) {
+      setOpenMenu("Area Monitoring");
+    }
+  }, [isSafetyPicMeeting, active]);
   const navigationGroups = useMemo(() => filterNavGroups({ role, picArea, mode }), [role, picArea, mode]);
   const visibleCommandLabels = useMemo(() => new Set(navigationGroups.flatMap((group) => group.items.flatMap((item) => [item.label, ...(item.aliases ?? []), ...(item.children?.flatMap((child) => [child.label, ...(child.aliases ?? [])]) ?? [])]))), [navigationGroups]);
 
@@ -275,6 +317,72 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
                   <PicQcHome />
                 )}
               </QcPicProvider>
+            </section>
+          ) : isAssemblyPicMeeting ? (
+            <section className="content repair-content">
+              <AssemblyPicProvider>
+                {active === "followup" ? (
+                  <PicAssemblyFollowup />
+                ) : active === "assembly-abnormality" ? (
+                  <PicAssemblyAbnormality />
+                ) : active === "assembly-plan" ? (
+                  <PicAssemblyPlan />
+                ) : active === "assembly-pack" ? (
+                  <PicAssemblyMonitoring module="packaging" />
+                ) : active === "assembly-prod" || active === "assembly-monitor" ? (
+                  <PicAssemblyMonitoring module="assembly" />
+                ) : (
+                  <PicAssemblyHome />
+                )}
+              </AssemblyPicProvider>
+            </section>
+          ) : isCostPicMeeting ? (
+            <section className="content repair-content">
+              <CostPicProvider>
+              {active === "followup" ? (
+                <FollowupPage role={role} picArea={picArea} />
+              ) : active === "cost-abnormality" ? (
+                <PicCostAbnormality />
+              ) : active === "cost-daily-plan" ? (
+                <PicCostPlan />
+              ) : active === "cost-productivity" ? (
+                <CostProductivity />
+              ) : active === "cost-manpower-hours" ? (
+                <CostManpower />
+              ) : active === "cost-breakdown" ? (
+                <CostBreakdown />
+              ) : active === "cost-finish-good" ? (
+                <CostFinishGood />
+              ) : active === "cost-data-source" ? (
+                <MeetingDashboard section="data-source" />
+              ) : active === "cost-overview" ? (
+                <CostOverview />
+              ) : (
+                <MeetingDashboard section="overview" />
+              )}
+              </CostPicProvider>
+            </section>
+          ) : isSafetyPicMeeting ? (
+            <section className="content repair-content">
+              <SafetyPicProvider>
+              {active === "followup" ? (
+                <FollowupPage role={role} picArea={picArea} />
+              ) : active === "safety-monitoring" ? (
+                <SafetyDashboard section="safety" onNavigate={selectMenu} />
+              ) : active === "safety-isc" ? (
+                <SafetyDashboard section="isc" onNavigate={selectMenu} />
+              ) : active === "safety-ga-admin" ? (
+                <SafetyDashboard section="ga-admin" onNavigate={selectMenu} />
+              ) : active === "safety-data-source" ? (
+                <SafetyDashboard section="data-source" onNavigate={selectMenu} />
+              ) : active === "safety-abnormality" ? (
+                <PicSafetyAbnormality />
+              ) : active === "safety-daily-plan" ? (
+                <PicSafetyPlan />
+              ) : (
+                <SafetyDashboard section="overview" onNavigate={selectMenu} />
+              )}
+              </SafetyPicProvider>
             </section>
           ) : (
             <ShellContent

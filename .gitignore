@@ -37,3 +37,5 @@ logs/
 /.agents/
 /.claude/
 /anti-slop/
+.env*
+!.env.example

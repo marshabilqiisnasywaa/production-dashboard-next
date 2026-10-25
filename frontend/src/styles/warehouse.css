@@ -71,3 +71,5 @@
   .wo-kpi-grid { grid-template-columns: 1fr; }
   .material-header { flex-direction: column; align-items: flex-start; }
 }
+
+.dark .material-kpi-card{background:linear-gradient(180deg,rgba(17,24,39,.92),rgba(13,23,20,.96))}

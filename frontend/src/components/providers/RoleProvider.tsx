@@ -2,7 +2,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import type { Role } from "@/types/morningMeeting";
 
-export type PicAreaKey = "assembly" | "packing" | "material" | "qc" | "service" | "repair" | "cost";
+export type PicAreaKey = "assembly" | "packing" | "material" | "qc" | "service" | "repair" | "cost" | "safety";
 
 export type AppUser = {
   id: string;
@@ -39,6 +39,7 @@ export const picAreaOptions: { key: PicAreaKey; label: string }[] = [
   { key: "service", label: "Service" },
   { key: "repair", label: "Repair" },
   { key: "cost", label: "Cost" },
+  { key: "safety", label: "Safety, ISC, GA" },
 ];
 
 export function RoleProvider({ children }: { children: ReactNode }) {

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import ChartTooltip from "@/components/shell/ChartTooltip";
 import {
   CartesianGrid,
   Legend,
@@ -69,14 +70,14 @@ function DailyTrend({ title, subtitle, series, target }: { title: string; subtit
   });
   return (
     <article className="repair-panel">
-      <div className="repair-card-head"><div><h2>{title}</h2><p>{subtitle}</p></div><div className="flex items-center justify-end gap-4"><PeriodControl value={period} onChange={setPeriod} /></div></div>
+      <div className="repair-card-head"><div><h2>{title}</h2><p>{subtitle}</p></div><div className="flex items-center justify-end gap-3"><PeriodControl value={period} onChange={setPeriod} /></div></div>
       <div className="warranty-chart">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="day" axisLine={false} tickLine={false} tickMargin={8} />
             <YAxis axisLine={false} tickLine={false} width={44} />
-            <Tooltip />
+            <Tooltip content={<ChartTooltip />} />
             <Legend />
             <Line type="natural" dataKey="Target" stroke="var(--success)" strokeDasharray="5 5" dot={false} strokeWidth={2} />
             {series.map((item) => (
@@ -98,7 +99,7 @@ function PreassemblyDeepDive() {
         <div>
           <div className="repair-eyebrow">MONITORING • DEEP DIVE</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Pre-Assembly</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Pre-Assembly</h1>
           </div>
           <p>Metric operasional dan tren histori harian area Pre-assembly.</p>
         </div>
@@ -118,7 +119,7 @@ function PreassemblyDeepDive() {
               <Sparkline success={good} />
               {!good && (
                 <div className="pic-kpi-actions">
-                  <button type="button" className="pic-ai-btn" onClick={() => setAiCard(card)}>Tanya AI</button>
+                  <button type="button" className="pic-ai-btn" onClick={() => setAiCard(card)}>Ask AI</button>
                 </div>
               )}
             </article>
@@ -131,7 +132,7 @@ function PreassemblyDeepDive() {
         <MetricChart id="pic-pre-input" title="Input Rate" values={inputRate} target={1} direction="lower" domain={[0, 2.1]} />
         <DailyTrend
           title="Assembly Output & QA Pass Rate"
-          subtitle="Histori harian 30 Sep - 6 Oct • target 99%"
+          subtitle="Daily history 30 Sep - 6 Oct • target 99%"
           target={99}
           series={[
             { key: "output", name: "Assembly Output", color: "var(--chart-1)", values: outputDaily },
@@ -140,7 +141,7 @@ function PreassemblyDeepDive() {
         />
         <DailyTrend
           title="Input Rate & NG Production Rate"
-          subtitle="Histori harian 30 Sep - 6 Oct • target max 1.00%"
+          subtitle="Daily history 30 Sep - 6 Oct • target max 1.00%"
           target={1}
           series={[
             { key: "input", name: "Input Rate", color: "var(--chart-1)", values: inputDaily },
@@ -150,7 +151,7 @@ function PreassemblyDeepDive() {
         <article className="repair-panel wide">
           <div className="repair-card-head">
             <div><h2>Breakdown WIP per Proses</h2><p>Stok per proses dan model Pre-assembly</p></div>
-            <button type="button" className={`chart-toggle ${showWipTable ? "active" : ""}`} onClick={() => setShowWipTable((value) => !value)}>{showWipTable ? "Sembunyikan Tabel" : "Tampilkan Tabel"}</button>
+            <button type="button" className={`chart-toggle ${showWipTable ? "active" : ""}`} onClick={() => setShowWipTable((value) => !value)}>{showWipTable ? "Hide table" : "Show table"}</button>
           </div>
           {showWipTable && <WipTable />}
         </article>

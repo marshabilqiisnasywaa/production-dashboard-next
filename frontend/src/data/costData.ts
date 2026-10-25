@@ -100,11 +100,11 @@ export const achievementByStrategy = improvementStrategies.reduce<Record<string,
   return result;
 }, {});
 
-export function getSeries(metric: "loss" | "transfer" | "saving", period: "Today" | "Week" | "Month" | "Year" | "8 Minggu" | "6 Bulan" | "1 Tahun" | "Custom") {
-  const length = period === "Today" ? 8 : period === "Year" || period === "1 Tahun" ? 12 : period === "Month" || period === "6 Bulan" ? 6 : 8;
+export function getSeries(metric: "loss" | "transfer" | "saving", period: "Daily" | "Week" | "Month" | "Year" | "8 Weeks" | "6 Months" | "1 Year" | "Custom") {
+  const length = period === "Daily" ? 8 : period === "Year" || period === "1 Year" ? 12 : period === "Month" || period === "6 Months" ? 6 : 8;
   return Array.from({ length }, (_, index) => {
     const factor = metric === "transfer" ? .38 : metric === "saving" ? .22 : 1;
     const base = metric === "saving" ? improvements.filter((item) => item.startMonth === (index % 8) + 1).reduce((sum, item) => sum + item.saving, 0) : lossRecords.filter((item) => item.week === (index % 8) + 1 && (metric !== "transfer" || item.transfer)).reduce((sum, item) => sum + item.cost, 0);
-    return { label: period === "Today" ? `${index + 1}:00` : period === "Year" || period === "1 Tahun" ? `Bulan ${index + 1}` : period === "Month" || period === "6 Bulan" ? `B${index + 1}` : `W${index + 1}`, value: Math.round(base * (metric === "transfer" ? 1 : factor || 1)) };
+    return { label: period === "Daily" ? `${index + 1}:00` : period === "Year" || period === "1 Year" ? `Month ${index + 1}` : period === "Month" || period === "6 Months" ? `B${index + 1}` : `W${index + 1}`, value: Math.round(base * (metric === "transfer" ? 1 : factor || 1)) };
   });
 }

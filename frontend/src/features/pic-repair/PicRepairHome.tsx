@@ -143,8 +143,8 @@ export default function PicRepairHome() {
               <p>Target: {card.targetLabel} <b className={good ? "good-text" : "bad-text"}>{good ? "↓" : "↑"} {gap}</b></p>
               <Sparkline success={good} />
               <div className="pic-kpi-actions">
-                <button type="button" className="repair-outline pic-mini" onClick={() => toggle(card.id)}>{active ? "Tutup Tren" : "Lihat Tren"}</button>
-                {!good && <button type="button" className="pic-ai-btn" onClick={() => setAiCard(card)}>Tanya AI</button>}
+                <button type="button" className="repair-outline pic-mini" onClick={() => toggle(card.id)}>{active ? "Hide Trend" : "View Trend"}</button>
+                {!good && <button type="button" className="pic-ai-btn" onClick={() => setAiCard(card)}>Ask AI</button>}
               </div>
             </article>
           );

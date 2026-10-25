@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import CustomSelect from "@/components/shell/CustomSelect";
+import ChartTooltip from "@/components/shell/ChartTooltip";
 import PeriodControl, { periodView, windowForPeriod, type PeriodKey } from "@/components/shell/PeriodControl";
 import {
   QC_AREAS,
@@ -49,11 +50,11 @@ function ChartShell({ title, subtitle, period, onPeriod, labels, onLabels, child
   children: ReactNode;
 }) {
   return (
-    <article className="bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl p-5 shadow-xs">
+    <article className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-2xl p-5 shadow-xs">
       <div className="repair-card-head">
         <div><h2>{title}</h2><p>{subtitle}</p></div>
         <div className="flex items-center justify-end gap-4">
-          <label className="label-toggle flex items-center gap-2 text-xs text-slate-500 font-medium">
+          <label className="label-toggle flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <input type="checkbox" checked={labels} onChange={(event) => onLabels(event.target.checked)} /><span />Show labels
           </label>
           <PeriodControl value={period} onChange={onPeriod} />
@@ -72,14 +73,14 @@ function RateByDateChart({ moduleKey, endIdx }: { moduleKey: QcModuleKey; endIdx
   const ngTaken = dataDef.dailyNg.slice(0, endIdx + 1).slice(-view.labels.length);
   const rows = view.labels.map((date, index) => ({ date, acc: view.values[index] ?? 0, ng: ngTaken[index] ?? 0 }));
   return (
-    <ChartShell title={`${moduleKey} Rate by Date`} subtitle="NG Rate & Acceptance Rate harian" period={period} onPeriod={setPeriod} labels={labels} onLabels={setLabels}>
+    <ChartShell title={`${moduleKey} Rate by Date`} subtitle="NG Rate & Acceptance Rate · Daily" period={period} onPeriod={setPeriod} labels={labels} onLabels={setLabels}>
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={rows} margin={{ top: 18, right: 6, left: 0, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--line)" />
           <XAxis dataKey="date" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 10 }} interval="preserveStartEnd" />
           <YAxis yAxisId="left" axisLine={false} tickLine={false} width={40} tick={{ fontSize: 10 }} domain={[0, "auto"]} />
           <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} width={44} tick={{ fontSize: 10 }} domain={[90, 100]} />
-          <Tooltip cursor={{ fill: "rgba(4,106,57,0.05)" }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(4,106,57,0.05)" }} />
           <Legend wrapperStyle={{ paddingTop: 8 }} />
           <Bar yAxisId="left" dataKey="ng" name="NG Rate" fill={RED} radius={[6, 6, 0, 0]} maxBarSize={26}>
             {labels && <LabelList dataKey="ng" position="top" fontSize={9} formatter={(value) => `${Number(value).toFixed(1)}`} />}
@@ -105,13 +106,13 @@ function ModelByDateChart({ moduleKey, endIdx, modelSel }: { moduleKey: QcModule
     return { model, ng: Number(mean(slice).toFixed(2)) };
   });
   return (
-    <ChartShell title={`${moduleKey} Model by Date`} subtitle="NG Rate per model (aggregat)" period={period} onPeriod={setPeriod} labels={labels} onLabels={setLabels}>
+    <ChartShell title={`${moduleKey} Model by Date`} subtitle="NG Rate per model (aggregate)" period={period} onPeriod={setPeriod} labels={labels} onLabels={setLabels}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={rows} margin={{ top: 18, right: 12, left: 0, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--line)" />
           <XAxis dataKey="model" axisLine={false} tickLine={false} tickMargin={8} tick={{ fontSize: 10 }} interval={0} />
           <YAxis axisLine={false} tickLine={false} width={40} tick={{ fontSize: 10 }} domain={[0, "auto"]} />
-          <Tooltip cursor={{ fill: "rgba(4,106,57,0.05)" }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(4,106,57,0.05)" }} />
           <Legend wrapperStyle={{ paddingTop: 8 }} />
           <Bar dataKey="ng" name="NG Rate" fill={EMERALD} radius={[6, 6, 0, 0]} maxBarSize={44}>
             {labels && <LabelList dataKey="ng" position="top" fontSize={10} formatter={(value) => `${Number(value).toFixed(1)}`} />}
@@ -140,7 +141,7 @@ function AreaChart({ moduleKey, endIdx, areaSel }: { moduleKey: QcModuleKey; end
           <CartesianGrid horizontal={false} stroke="var(--line)" />
           <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} domain={[90, 100]} />
           <YAxis type="category" dataKey="area" axisLine={false} tickLine={false} width={104} tick={{ fontSize: 10 }} />
-          <Tooltip cursor={{ fill: "rgba(4,106,57,0.05)" }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(4,106,57,0.05)" }} />
           <Legend wrapperStyle={{ paddingTop: 8 }} />
           <Bar dataKey="acc" name="Acc Rate" fill={EMERALD} radius={[0, 6, 6, 0]} maxBarSize={26}>
             {labels && <LabelList dataKey="acc" position="right" fontSize={10} formatter={(value) => `${Number(value).toFixed(1)}`} />}
@@ -167,13 +168,13 @@ function AreaDefectChart({ moduleKey, endIdx, areaSel }: { moduleKey: QcModuleKe
     return point;
   });
   return (
-    <ChartShell title={`${moduleKey} by Area Defect`} subtitle="Jenis defect per area (stacked)" period={period} onPeriod={setPeriod} labels={labels} onLabels={setLabels}>
+    <ChartShell title={`${moduleKey} by Area Defect`} subtitle="Defect types per area (stacked)" period={period} onPeriod={setPeriod} labels={labels} onLabels={setLabels}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
           <CartesianGrid horizontal={false} stroke="var(--line)" />
           <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
           <YAxis type="category" dataKey="area" axisLine={false} tickLine={false} width={104} tick={{ fontSize: 10 }} />
-          <Tooltip cursor={{ fill: "rgba(4,106,57,0.05)" }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(4,106,57,0.05)" }} />
           <Legend wrapperStyle={{ paddingTop: 8 }} />
           {QC_DEFECTS.map((defect, defectIndex) => (
             <Bar key={defect} dataKey={defect} stackId="defects" fill={QC_DEFECT_COLORS[defectIndex]} maxBarSize={26}>
@@ -219,7 +220,7 @@ export default function PicQcMonitoring({ module }: QcMonitoringProps) {
         <div>
           <div className="repair-eyebrow">MONITORING • DEEP DIVE</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{module} Monitoring</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{module} Monitoring</h1>
           </div>
           <p>Acceptance and defect monitoring with daily trend for {module} area.</p>
         </div>
@@ -231,19 +232,19 @@ export default function PicQcMonitoring({ module }: QcMonitoringProps) {
         </div>
       </div>
 
-      <article className="bg-white/80 backdrop-blur-md border border-white/60 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200 w-full max-w-[420px]">
+      <article className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200 w-full max-w-[420px]">
         <div className="flex justify-between items-start">
           <div>
             <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{module} RATE</div>
-            <div className="text-3xl font-semibold text-slate-900 tracking-tight">{acc.toFixed(1)}%</div>
+            <div className="text-3xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight">{acc.toFixed(1)}%</div>
             <div className="text-xs font-semibold text-emerald-600 mt-2">{trend >= 0 ? "↑" : "↓"} {Math.abs(trend).toFixed(2)} pp vs prev period</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
             <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-0.5 rounded-full text-[11px] font-semibold mb-3 inline-block">{good ? "On Target" : "Off Target"}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 4, textAlign: "right" }}>
-              <div className="text-xs text-gray-500">Total Sample : <span className="font-bold text-slate-900">{dataDef.totalSample.toLocaleString("en-US")} units</span></div>
-              <div className="text-xs text-gray-500">Actual NG : <span className="font-bold text-red-600">{ngCount} units</span></div>
-              <div className="text-xs text-gray-500">NG Rate : <span className="font-bold text-red-600">{ng.toFixed(1)}%</span></div>
+              <div className="text-xs text-gray-500 dark:text-slate-400">Total Sample : <span className="font-bold text-slate-900 dark:text-slate-100">{dataDef.totalSample.toLocaleString("en-US")} units</span></div>
+              <div className="text-xs text-gray-500 dark:text-slate-400">Actual NG : <span className="font-bold text-red-600">{ngCount} units</span></div>
+              <div className="text-xs text-gray-500 dark:text-slate-400">NG Rate : <span className="font-bold text-red-600">{ng.toFixed(1)}%</span></div>
             </div>
           </div>
         </div>

@@ -1,5 +1,7 @@
 "use client";
 import CustomSelect from "@/components/shell/CustomSelect";
+import ChartTimeTabs, { type ChartTimeTab } from "@/components/shell/ChartTimeTabs";
+import ChartTooltip from "@/components/shell/ChartTooltip";
 import { useEffect, useMemo, useState } from "react";
 import {
   Area,
@@ -129,7 +131,7 @@ function DonutChartCard({
                   <Cell key={entry.name} fill={entry.name === "Gores" ? "var(--chart-1)" : entry.name === "Penyok" ? "var(--chart-2)" : entry.name === "Warna" ? "var(--chart-3)" : entry.name === "Komponen" ? "var(--chart-4)" : "var(--chart-5)"} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => [`${value}%`, "Persentase"]} />
+              <Tooltip content={<ChartTooltip format={(value) => `${value}%`} />} />
             </PieChart>
           </ResponsiveContainer>
           <div className="qc-donut-center">
@@ -168,6 +170,8 @@ function AreaTrendCard({
   xLabel: string;
   color: string;
 }) {
+  const [activeTab, setActiveTab] = useState<ChartTimeTab>("Week");
+  const visible = activeTab === "Daily" ? data.slice(-1) : activeTab === "Week" ? data.slice(-7) : data;
   return (
     <article className="qc-card large-card">
       <div className="qc-card-header">
@@ -175,10 +179,11 @@ function AreaTrendCard({
           <h3>{title}</h3>
           <p>{subtitle}</p>
         </div>
+        <ChartTimeTabs activeTab={activeTab} onChange={setActiveTab} ariaLabel={`${title} period`} />
       </div>
       <div className="qc-chart-wrap">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 18, left: 0, bottom: 0 }}>
+          <AreaChart data={visible} margin={{ top: 10, right: 18, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id={`area-${title}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={color} stopOpacity={0.35} />
@@ -188,7 +193,7 @@ function AreaTrendCard({
             <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="date" tickLine={false} axisLine={false} label={{ value: xLabel, position: "insideBottom", offset: -4, fontSize: 11, fontFamily: "Montserrat", fill: "var(--muted)", fontWeight: 600 }} tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "Montserrat" }} />
             <YAxis tickLine={false} axisLine={false} label={{ value: yLabel, angle: -90, position: "insideLeft", offset: 8, fontSize: 11, fontFamily: "Montserrat", fill: "var(--muted)", fontWeight: 600 }} tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "Montserrat" }} domain={[0, "dataMax + 2"]} />
-            <Tooltip contentStyle={{ fontFamily: "Montserrat", fontSize: 12, background: "rgba(27, 43, 35, 0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#fff" }} />
+            <Tooltip content={<ChartTooltip />} />
             <Area type="monotone" dataKey="value" stroke={color} fill={`url(#area-${title})`} strokeWidth={3} />
           </AreaChart>
         </ResponsiveContainer>
@@ -214,6 +219,8 @@ function BarCard({
   valueKey: string;
   color: string;
 }) {
+  const [activeTab, setActiveTab] = useState<ChartTimeTab>("Week");
+  const visible = activeTab === "Daily" ? data.slice(-1) : activeTab === "Week" ? data.slice(-7) : data;
   return (
     <article className="qc-card large-card">
       <div className="qc-card-header">
@@ -221,14 +228,15 @@ function BarCard({
           <h3>{title}</h3>
           <p>{subtitle}</p>
         </div>
+        <ChartTimeTabs activeTab={activeTab} onChange={setActiveTab} ariaLabel={`${title} period`} />
       </div>
       <div className="qc-chart-wrap">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 10, right: 18, left: 0, bottom: 0 }}>
+          <BarChart data={visible} margin={{ top: 10, right: 18, left: 0, bottom: 0 }}>
             <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey={Object.keys(data[0] ?? {})[0]} tickLine={false} axisLine={false} label={{ value: xLabel, position: "insideBottom", offset: -4, fontSize: 11, fontFamily: "Montserrat", fill: "var(--muted)", fontWeight: 600 }} tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "Montserrat" }} />
+            <XAxis dataKey={Object.keys(visible[0] ?? {})[0]} tickLine={false} axisLine={false} label={{ value: xLabel, position: "insideBottom", offset: -4, fontSize: 11, fontFamily: "Montserrat", fill: "var(--muted)", fontWeight: 600 }} tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "Montserrat" }} />
             <YAxis tickLine={false} axisLine={false} label={{ value: yLabel, angle: -90, position: "insideLeft", offset: 8, fontSize: 11, fontFamily: "Montserrat", fill: "var(--muted)", fontWeight: 600 }} tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "Montserrat" }} />
-            <Tooltip contentStyle={{ fontFamily: "Montserrat", fontSize: 12, background: "rgba(27, 43, 35, 0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#fff" }} />
+            <Tooltip content={<ChartTooltip />} />
             <Bar dataKey={valueKey} fill={color} radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -363,12 +371,12 @@ function FqcPage() {
       </div>
 
       <div className="qc-grid-2">
-        <AreaTrendCard title="Tren NG FQC per Tanggal" subtitle="7 hari terakhir" data={fqcData.trend.map((point) => ({ date: point.date, value: point.value }))} yLabel="Jumlah NG (unit)" xLabel="Tanggal" color="var(--chart-1)" />
-        <BarCard title="NG Rate per Model" subtitle="Persentase NG" data={fqcData.modelRates.map((point) => ({ Model: point.model, "NG Rate": point.value }))} yLabel="NG Rate (%)" xLabel="Model" valueKey="NG Rate" color="var(--chart-2)" />
+        <AreaTrendCard title="FQC NG Trend by Date" subtitle="Last 7 days" data={fqcData.trend.map((point) => ({ date: point.date, value: point.value }))} yLabel="NG Count (units)" xLabel="Date" color="var(--chart-1)" />
+        <BarCard title="NG Rate per Model" subtitle="NG percentage" data={fqcData.modelRates.map((point) => ({ Model: point.model, "NG Rate": point.value }))} yLabel="NG Rate (%)" xLabel="Model" valueKey="NG Rate" color="var(--chart-2)" />
       </div>
 
       <div className="qc-grid-2">
-        <HBarCard title="Area Material" subtitle="Detil per area" data={fqcData.areaMaterial} />
+        <HBarCard title="Area Material" subtitle="Detail per area" data={fqcData.areaMaterial} />
         <DonutChartCard headline="54" sublabel="Total NG" items={fqcData.defectBreakdown} filterLabel="Semua Area" />
       </div>
 
@@ -430,12 +438,12 @@ function OqcPage() {
       </div>
 
       <div className="qc-grid-2">
-        <AreaTrendCard title="Tren NG OQC per Jam" subtitle="Real-time hari ini" data={oqcData.trend.map((point) => ({ date: point.date, value: point.value }))} yLabel="Jumlah NG (unit)" xLabel="Jam" color="var(--chart-1)" />
-        <BarCard title="NG OQC per Lini" subtitle="Hari ini" data={oqcData.lineRates.map((point) => ({ Lini: point.line, NG: point.value }))} yLabel="Jumlah NG (unit)" xLabel="Lini" valueKey="NG" color="var(--chart-4)" />
+        <AreaTrendCard title="OQC NG Trend by Hour" subtitle="Real-time today" data={oqcData.trend.map((point) => ({ date: point.date, value: point.value }))} yLabel="NG Count (units)" xLabel="Hour" color="var(--chart-1)" />
+        <BarCard title="OQC NG per Line" subtitle="Today" data={oqcData.lineRates.map((point) => ({ Line: point.line, NG: point.value }))} yLabel="NG Count (units)" xLabel="Line" valueKey="NG" color="var(--chart-4)" />
       </div>
 
       <div className="qc-grid-2">
-        <HBarCard title="Area Material" subtitle="Detil per area" data={oqcData.areaMaterial} />
+        <HBarCard title="Area Material" subtitle="Detail per area" data={oqcData.areaMaterial} />
         <DonutChartCard headline="74" sublabel="Total NG" items={oqcData.defectBreakdown} filterLabel="Semua Area" />
       </div>
 
