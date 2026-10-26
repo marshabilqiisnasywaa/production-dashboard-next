@@ -51,7 +51,7 @@ export function SupervisorApprovalsTab({
   );
 
   return (
-    <div>
+    <div className="spv-approvals">
       {/* ------------------------------------------------------------
           Compact Toolbar: Filters
           ------------------------------------------------------------ */}
@@ -266,7 +266,7 @@ export function SupervisorApprovalsTab({
                               : isWaiting
                               ? "is-waiting"
                               : ""
-                          }`}
+                          } ${isSubmitted ? "" : "is-not-submitted"}`}
                           title="Klik untuk membuka rincian checklist & persetujuan"
                         >
                           <div className="spv-member-card__top">
