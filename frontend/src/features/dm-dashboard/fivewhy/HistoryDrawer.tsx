@@ -1,20 +1,17 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
-import { MoreHorizontal } from "lucide-react";
-import { IconClock, IconClose, IconSearch } from "@/components/ui/icons";
+import { MoreHorizontal, Search, X } from "lucide-react";
+import { IconClock } from "@/components/ui/icons";
 import {
   FIVE_WHY_ANALYSIS_LABELS,
   analysisStatusTone,
   findRootCause,
-  getTabStatus,
   isMajorProblem,
 } from "./fiveWhyData";
 import type {
   FiveWhyAnalysisStatus,
   FiveWhyRecord,
-  FiveWhyTabKey,
-  TabStatus,
 } from "./fiveWhyData";
 
 type HistoryDrawerProps = {
@@ -32,8 +29,6 @@ type StatusFilter = "all" | FiveWhyAnalysisStatus;
 
 type SortMode = "recent" | "oldest" | "title";
 
-const TAB_KEYS: readonly FiveWhyTabKey[] = [1, 2, 3];
-
 const STATUS_FILTERS: readonly { value: StatusFilter; label: string }[] = [
   { value: "all", label: "Semua" },
   { value: "draft", label: FIVE_WHY_ANALYSIS_LABELS.draft },
@@ -44,12 +39,6 @@ const STATUS_FILTERS: readonly { value: StatusFilter; label: string }[] = [
   },
   { value: "done", label: FIVE_WHY_ANALYSIS_LABELS.done },
 ];
-
-function dotClass(status: TabStatus) {
-  if (status === "selesai") return "is-done";
-  if (status === "sebagian") return "is-partial";
-  return "";
-}
 
 function formatUpdated(value: string) {
   const date = new Date(value);
@@ -190,7 +179,7 @@ export default function HistoryDrawer({
         <header className="dm-5w-history-head">
           <h2 className="dm-5w-history-title" id="dm-5w-history-title">
             Riwayat analisis
-            <span className="dm-5w-chip is-neutral">{records.length}</span>
+            <span className="dm-5w-history-count">{records.length}</span>
           </h2>
           <button
             type="button"
@@ -198,13 +187,13 @@ export default function HistoryDrawer({
             onClick={onClose}
             aria-label="Tutup riwayat"
           >
-            <IconClose size={16} />
+            <X size={18} />
           </button>
         </header>
 
         <div className="dm-5w-history-tools">
           <div className="dm-5w-history-search">
-            <IconSearch size={14} />
+            <Search size={16} />
             <input
               ref={searchRef}
               className="dm-5w-input"
@@ -293,7 +282,7 @@ export default function HistoryDrawer({
                         {record.nomor}
                       </span>
                       <span
-                        className={`dm-5w-chip ${analysisStatusTone(
+                        className={`dm-5w-history-status ${analysisStatusTone(
                           record.analysisStatus
                         )}`}
                       >
@@ -371,33 +360,16 @@ export default function HistoryDrawer({
                     Line {record.abnormal.line.trim() || "-"} · Pengusul{" "}
                     {record.abnormal.pengusul.trim() || "-"}
                   </p>
-                  <p className="dm-5w-history-root">
-                    {rootCause?.statement.trim() || "Belum ada Root Cause"}
-                  </p>
 
                   <div className="dm-5w-history-foot">
-                    <span
-                      className="dm-5w-history-tabs"
-                      aria-label="Status tab analisis"
-                    >
-                      {TAB_KEYS.map((tab) => {
-                        const status = getTabStatus(record, tab);
-                        return (
-                          <span
-                            key={tab}
-                            className={`dm-5w-history-dot ${dotClass(
-                              status
-                            )}`}
-                            role="img"
-                            aria-label={`Tab ${tab}: ${status}`}
-                            title={`Tab ${tab}: ${status}`}
-                          />
-                        );
-                      })}
+                    <span className="dm-5w-history-root">
+                      {rootCause?.statement.trim()
+                        ? `Root Cause: ${rootCause.statement.trim()}`
+                        : "Belum ada Root Cause"}
                     </span>
                     <span className="dm-5w-history-foot-right">
                       {isMajorProblem(record) ? (
-                        <span className="dm-5w-chip is-danger">
+                        <span className="dm-5w-history-major">
                           Major problem
                         </span>
                       ) : null}
