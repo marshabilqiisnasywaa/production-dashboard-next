@@ -1,21 +1,13 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { IconCheck, IconClose } from "@/components/ui/icons";
+import { Flag, Plus, Trash2, X } from "lucide-react";
+import { IconClose } from "@/components/ui/icons";
 import {
-  BRANCH_VERIFICATION_LABELS,
   EVIDENCE_LABEL_OPTIONS,
-  WHY_VERIFICATION_LABELS,
   createFiveWhyId,
   readImageAsDataUrl,
 } from "./fiveWhyData";
-import type {
-  BranchVerification,
-  Evidence,
-  WhyBranch,
-  WhyNode,
-  WhyVerification,
-} from "./fiveWhyData";
+import type { Evidence, WhyBranch, WhyNode } from "./fiveWhyData";
 
 type WhyTreeProps = {
   whys: WhyNode[];
@@ -33,29 +25,48 @@ type EvidenceOwner = {
   branchId?: string;
 };
 
-type VerificationMenuProps = {
-  value: WhyVerification;
+type EvidenceKind = "single" | "pair-ok-ng" | "pair-standar-aktual";
+
+type EvidenceMenuProps = {
   canEdit: boolean;
   ariaLabel: string;
-  onChange: (next: WhyVerification) => void;
+  onAdd: (kind: EvidenceKind) => void;
 };
-
-const MAIN_VERIFICATION_ORDER: readonly WhyVerification[] = [
-  "unverified",
-  "verified",
-  "not_root",
-  "root",
-];
-
-const BRANCH_VERIFICATION_ORDER: readonly BranchVerification[] = [
-  "unverified",
-  "verified",
-  "not_root",
-];
 
 const PRESET_EVIDENCE_LABELS = EVIDENCE_LABEL_OPTIONS.filter(
   (label) => label !== "Lainnya..."
 );
+
+const EVIDENCE_PLACEHOLDERS: Record<string, string> = {
+  OK: "Tulis kondisi yang normal atau sesuai, misalnya: nomor COM tersedia",
+  NG: "Tulis kondisi yang tidak normal, misalnya: nomor COM tidak terdeteksi di file log",
+  Standar:
+    "Tulis nilai atau aturan yang seharusnya, misalnya: standar nomor COM port 0-256",
+  Aktual:
+    "Tulis nilai atau kondisi yang terjadi sekarang, misalnya: pada mesin NG sudah mencapai COM 300",
+  Sebelum:
+    "Tulis kondisi sebelum perbaikan, misalnya: cache COM hanya dibersihkan saat SMED",
+  Sesudah:
+    "Tulis kondisi setelah perbaikan, misalnya: setelah dibersihkan, PreCheck NG hilang",
+  Catatan:
+    "Tulis hal lain yang perlu dicatat, misalnya: PC ditukar dengan yang hasilnya OK, tetap NG",
+};
+
+const WHY_PLACEHOLDERS: Record<number, string> = {
+  1: "Tulis sebabnya, misalnya: software update PC tidak bisa dipakai",
+  2: "Tulis sebabnya, misalnya: banyak NG pada PreCheck (469 dari 510 unit)",
+  3: "Tulis sebabnya, misalnya: nomor COM port tidak terdeteksi saat proses upgrade",
+  4: "Tulis sebabnya, misalnya: nomor COM port melebihi batas",
+  5: "Tulis sebabnya, misalnya: frekuensi pembersihan cache COM kurang",
+};
+
+function getEvidencePlaceholder(label: string): string {
+  const normalized = label.trim().toLowerCase();
+  const match = Object.entries(EVIDENCE_PLACEHOLDERS).find(
+    ([key]) => key.toLowerCase() === normalized
+  );
+  return match ? match[1] : "Tulis temuan atau hasil pengecekan";
+}
 
 function evidenceTone(label: string) {
   if (label === "OK" || label === "Sesudah") return "is-ok";
@@ -71,16 +82,42 @@ function evidenceCountLabel(count: number) {
   return `${count} bukti`;
 }
 
-function photoCountLabel(count: number) {
-  return `${count} foto`;
+function evidenceLabelWidth(label: string) {
+  const text = label.trim() || "Lainnya...";
+  return `${Math.min(140, Math.max(30, text.length * 6.5 + 4))}px`;
 }
 
-function VerificationMenu({
-  value,
-  canEdit,
-  ariaLabel,
-  onChange,
-}: VerificationMenuProps) {
+function isFilledWhy(node: WhyNode) {
+  return Boolean(
+    node.statement.trim() ||
+      node.evidence.length > 0 ||
+      node.branches.length > 0 ||
+      node.verification === "root"
+  );
+}
+
+function initialVisibleLevel(nodes: WhyNode[]) {
+  const ordered = [...nodes].sort((a, b) => a.level - b.level);
+  const lastFilled = [...ordered].reverse().find(isFilledWhy);
+  return Math.min(5, Math.max(1, (lastFilled?.level ?? 0) + 1));
+}
+
+function ownerKey(owner: EvidenceOwner) {
+  return owner.branchId
+    ? `branch:${owner.nodeId}:${owner.branchId}`
+    : `node:${owner.nodeId}`;
+}
+
+function evidenceKey(owner: EvidenceOwner, evidenceId: string) {
+  return `${ownerKey(owner)}:${evidenceId}`;
+}
+
+function resizeTextarea(element: HTMLTextAreaElement) {
+  element.style.height = "auto";
+  element.style.height = `${element.scrollHeight}px`;
+}
+
+function EvidenceMenu({ canEdit, ariaLabel, onAdd }: EvidenceMenuProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -101,47 +138,55 @@ function VerificationMenu({
     };
   }, [open]);
 
+  function choose(kind: EvidenceKind) {
+    onAdd(kind);
+    setOpen(false);
+  }
+
   return (
-    <div className="dm-5w-verify" ref={containerRef}>
+    <div className="dm-5w-evidence-menu" ref={containerRef}>
       <button
         type="button"
-        className="dm-5w-verify-btn"
+        className="dm-5w-evidence-trigger"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={ariaLabel}
         disabled={!canEdit}
         onClick={() => setOpen((current) => !current)}
       >
-        <span
-          className={`dm-5w-verify-dot is-${value}`}
-          aria-hidden="true"
-        />
-        <span>{WHY_VERIFICATION_LABELS[value]}</span>
-        <ChevronDown size={12} aria-hidden="true" />
+        <Plus size={13} aria-hidden="true" />
+        <span>Bukti</span>
       </button>
       {open ? (
-        <div className="dm-5w-verify-menu" role="menu" aria-label={ariaLabel}>
-          {MAIN_VERIFICATION_ORDER.map((status) => (
-            <button
-              key={status}
-              type="button"
-              role="menuitemradio"
-              aria-checked={status === value}
-              className={`dm-5w-verify-item ${
-                status === value ? "is-active" : ""
-              }`}
-              onClick={() => {
-                onChange(status);
-                setOpen(false);
-              }}
-            >
-              <span
-                className={`dm-5w-verify-dot is-${status}`}
-                aria-hidden="true"
-              />
-              <span>{WHY_VERIFICATION_LABELS[status]}</span>
-            </button>
-          ))}
+        <div
+          className="dm-5w-evidence-menu-panel"
+          role="menu"
+          aria-label={ariaLabel}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="dm-5w-evidence-menu-item"
+            onClick={() => choose("single")}
+          >
+            Foto atau catatan
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="dm-5w-evidence-menu-item"
+            onClick={() => choose("pair-ok-ng")}
+          >
+            Pasangan OK / NG
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="dm-5w-evidence-menu-item"
+            onClick={() => choose("pair-standar-aktual")}
+          >
+            Pasangan Standar / Aktual
+          </button>
         </div>
       ) : null}
     </div>
@@ -162,9 +207,38 @@ export default function WhyTree({
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [customLabelFor, setCustomLabelFor] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [openEvidenceKeys, setOpenEvidenceKeys] = useState<string[]>([]);
+  const [visibleLevel, setVisibleLevel] = useState(() =>
+    initialVisibleLevel(whys)
+  );
+  const recordKeyRef = useRef(whys[0]?.id ?? "");
+
+  const ordered = [...whys].sort((a, b) => a.level - b.level);
+
+  useEffect(() => {
+    const recordKey = whys[0]?.id ?? "";
+    if (recordKeyRef.current === recordKey) return;
+    recordKeyRef.current = recordKey;
+    setVisibleLevel(initialVisibleLevel(whys));
+    setOpenEvidenceKeys([]);
+    setActiveNodeId(null);
+    setHighlightId(null);
+    setCustomLabelFor(null);
+  }, [whys]);
+
+  useEffect(() => {
+    const lastVisible = ordered.find((node) => node.level === visibleLevel);
+    if (lastVisible && isFilledWhy(lastVisible) && visibleLevel < 5) {
+      setVisibleLevel(visibleLevel + 1);
+    }
+  }, [ordered, visibleLevel]);
 
   useEffect(() => {
     if (!focusWhyId) return;
+    const targetNode = whys.find((node) => node.id === focusWhyId);
+    if (targetNode) {
+      setVisibleLevel((current) => Math.max(current, targetNode.level));
+    }
     setActiveNodeId(focusWhyId);
     setHighlightId(focusWhyId);
     const target = document.getElementById(`dm-5w-node-${focusWhyId}`);
@@ -225,18 +299,52 @@ export default function WhyTree({
     };
   }
 
+  function isEvidenceOpen(owner: EvidenceOwner, evidenceId: string) {
+    return openEvidenceKeys.includes(evidenceKey(owner, evidenceId));
+  }
+
+  function openManyEvidence(owner: EvidenceOwner, evidenceIds: string[]) {
+    setOpenEvidenceKeys((current) => {
+      const next = [...current];
+      evidenceIds.forEach((evidenceId) => {
+        const key = evidenceKey(owner, evidenceId);
+        if (!next.includes(key)) next.push(key);
+      });
+      return next;
+    });
+  }
+
+  function closeEvidence(owner: EvidenceOwner, evidenceId: string) {
+    const key = evidenceKey(owner, evidenceId);
+    setOpenEvidenceKeys((current) => current.filter((item) => item !== key));
+  }
+
   function addEvidence(owner: EvidenceOwner, label: string) {
     const entry = makeEvidence(label);
     setEvidence(owner, [...evidenceFor(owner), entry]);
+    openManyEvidence(owner, [entry.id]);
     return entry.id;
   }
 
   function addEvidencePair(owner: EvidenceOwner, first: string, second: string) {
-    setEvidence(owner, [
-      ...evidenceFor(owner),
-      makeEvidence(first),
-      makeEvidence(second),
-    ]);
+    const entries = [makeEvidence(first), makeEvidence(second)];
+    setEvidence(owner, [...evidenceFor(owner), ...entries]);
+    openManyEvidence(
+      owner,
+      entries.map((entry) => entry.id)
+    );
+  }
+
+  function handleAddEvidence(owner: EvidenceOwner, kind: EvidenceKind) {
+    if (kind === "single") {
+      addEvidence(owner, "Catatan");
+      return;
+    }
+    if (kind === "pair-ok-ng") {
+      addEvidencePair(owner, "OK", "NG");
+      return;
+    }
+    addEvidencePair(owner, "Standar", "Aktual");
   }
 
   function updateEvidence(
@@ -266,6 +374,7 @@ export default function WhyTree({
       owner,
       evidenceFor(owner).filter((item) => item.id !== evidenceId)
     );
+    closeEvidence(owner, evidenceId);
     setCustomLabelFor((current) => (current === evidenceId ? null : current));
   }
 
@@ -301,16 +410,6 @@ export default function WhyTree({
     }
   }
 
-  function handleAddEvidence(owner: EvidenceOwner, value: string) {
-    if (!value) return;
-    if (value === "Lainnya...") {
-      const evidenceId = addEvidence(owner, "");
-      setCustomLabelFor(evidenceId);
-      return;
-    }
-    addEvidence(owner, value);
-  }
-
   function handleEvidenceLabel(
     owner: EvidenceOwner,
     evidence: Evidence,
@@ -342,7 +441,7 @@ export default function WhyTree({
                 {
                   id: createFiveWhyId("why-branch"),
                   statement: "",
-                  verification: "unverified",
+                  verification: "not_root",
                   evidence: [],
                 },
               ],
@@ -380,36 +479,30 @@ export default function WhyTree({
           : item
       )
     );
+    const prefix = `${ownerKey({ nodeId, branchId })}:`;
+    setOpenEvidenceKeys((current) =>
+      current.filter((key) => !key.startsWith(prefix))
+    );
   }
 
-  function setNodeVerification(nodeId: string, next: WhyVerification) {
+  function setRootCause(nodeId: string, active: boolean) {
     onChange(
       whys.map((item) => {
-        if (item.id === nodeId) return { ...item, verification: next };
-        if (next === "root" && item.verification === "root") {
-          return { ...item, verification: "verified" };
+        if (item.id === nodeId) {
+          return { ...item, verification: active ? "root" : "unverified" };
+        }
+        if (active && item.verification === "root") {
+          return { ...item, verification: "unverified" };
         }
         return item;
       })
     );
   }
 
-  function setBranchVerification(
-    nodeId: string,
-    branchId: string,
-    next: BranchVerification
-  ) {
-    updateBranch(nodeId, branchId, { verification: next });
-  }
-
-  const ordered = [...whys].sort((a, b) => a.level - b.level);
   const filled = whys.filter((why) => why.statement.trim()).length;
   const rootCount = whys.filter((why) => why.verification === "root").length;
   const rejectedCount = whys.reduce(
-    (total, why) =>
-      total +
-      why.branches.filter((branch) => branch.verification === "not_root")
-        .length,
+    (total, why) => total + why.branches.length,
     0
   );
   const deepestFilled = [...ordered]
@@ -422,8 +515,13 @@ export default function WhyTree({
         .map((why) => ({
           level: why.level,
           text: why.statement.trim(),
+          isRoot: why.verification === "root",
         }))
     : [];
+  const displayedWhys = ordered.filter(
+    (node) => node.level <= visibleLevel || isFilledWhy(node)
+  );
+  const hasHiddenWhy = displayedWhys.length < ordered.length;
 
   function questionFor(node: WhyNode) {
     if (node.level === 1) {
@@ -435,11 +533,31 @@ export default function WhyTree({
     return `Kenapa ${subject}?`;
   }
 
-  function evidenceStats(evidence: Evidence[]) {
-    return {
-      blocks: evidence.length,
-      photos: evidence.reduce((total, entry) => total + entry.photos.length, 0),
-    };
+  function renderEvidenceStrip(
+    owner: EvidenceOwner,
+    evidence: Evidence[],
+    positionLabel: string
+  ) {
+    if (evidence.length === 0) return null;
+    if (evidence.some((entry) => isEvidenceOpen(owner, entry.id))) return null;
+    const labels = evidence
+      .map((entry) => entry.label.trim() || "Lainnya...")
+      .join(", ");
+    return (
+      <button
+        type="button"
+        className="dm-5w-evidence-summary"
+        aria-label={`Buka bukti ${positionLabel}`}
+        onClick={() =>
+          openManyEvidence(
+            owner,
+            evidence.map((entry) => entry.id)
+          )
+        }
+      >
+        {evidenceCountLabel(evidence.length)}: {labels}
+      </button>
+    );
   }
 
   function renderEvidence(
@@ -455,42 +573,51 @@ export default function WhyTree({
     return (
       <article className="dm-5w-evidence-block" key={evidence.id}>
         <header className="dm-5w-evidence-head">
-          {isCustomLabel ? (
-            <input
-              className="dm-5w-evidence-label-input"
-              value={evidence.label}
-              placeholder="Nama label"
-              onChange={(event) =>
-                updateEvidence(owner, evidence.id, {
-                  label: event.target.value,
-                })
-              }
-              onBlur={() => finishCustomLabel(owner, evidence)}
-              disabled={!canEdit}
-              autoFocus
-              aria-label={`Nama label bukti ${positionLabel}`}
-            />
-          ) : (
-            <select
-              className={`dm-5w-evidence-chip ${evidenceTone(evidence.label)}`}
-              value={evidence.label || "Lainnya..."}
-              onChange={(event) =>
-                handleEvidenceLabel(owner, evidence, event.target.value)
-              }
-              disabled={!canEdit}
-              aria-label={`Label bukti ${positionLabel}`}
-            >
-              {customOption ? (
-                <option value={customOption}>{customOption}</option>
-              ) : null}
-              {PRESET_EVIDENCE_LABELS.map((label) => (
-                <option key={label} value={label}>
-                  {label}
-                </option>
-              ))}
-              <option value="Lainnya...">Lainnya...</option>
-            </select>
-          )}
+          <span
+            className={`dm-5w-evidence-label ${evidenceTone(evidence.label)}`}
+          >
+            <span className="dm-5w-evidence-dot" aria-hidden="true" />
+            {isCustomLabel ? (
+              <input
+                className="dm-5w-evidence-label-input"
+                value={evidence.label}
+                style={{ width: evidenceLabelWidth(evidence.label) }}
+                placeholder="Nama label"
+                onChange={(event) =>
+                  updateEvidence(owner, evidence.id, {
+                    label: event.target.value,
+                  })
+                }
+                onBlur={() => finishCustomLabel(owner, evidence)}
+                disabled={!canEdit}
+                autoFocus
+                aria-label={`Nama label bukti ${positionLabel}`}
+              />
+            ) : (
+              <select
+                className="dm-5w-evidence-chip"
+                value={evidence.label || "Lainnya..."}
+                style={{
+                  width: evidenceLabelWidth(evidence.label || "Lainnya..."),
+                }}
+                onChange={(event) =>
+                  handleEvidenceLabel(owner, evidence, event.target.value)
+                }
+                disabled={!canEdit}
+                aria-label={`Label bukti ${positionLabel}`}
+              >
+                {customOption ? (
+                  <option value={customOption}>{customOption}</option>
+                ) : null}
+                {PRESET_EVIDENCE_LABELS.map((label) => (
+                  <option key={label} value={label}>
+                    {label}
+                  </option>
+                ))}
+                <option value="Lainnya...">Lainnya...</option>
+              </select>
+            )}
+          </span>
           <button
             type="button"
             className="dm-5w-evidence-remove"
@@ -498,18 +625,22 @@ export default function WhyTree({
             disabled={!canEdit}
             aria-label={`Hapus blok bukti ${positionLabel}`}
           >
-            <IconClose size={10} />
+            <IconClose size={14} />
           </button>
         </header>
 
         <textarea
           className="dm-5w-textarea dm-5w-evidence-text"
           rows={2}
+          ref={(element) => {
+            if (element) resizeTextarea(element);
+          }}
           value={evidence.text}
-          placeholder="Tulis kondisi atau temuan"
-          onChange={(event) =>
-            updateEvidence(owner, evidence.id, { text: event.target.value })
-          }
+          placeholder={getEvidencePlaceholder(evidence.label)}
+          onChange={(event) => {
+            resizeTextarea(event.currentTarget);
+            updateEvidence(owner, evidence.id, { text: event.target.value });
+          }}
           disabled={!canEdit}
           aria-label={`Isi bukti ${positionLabel}`}
         />
@@ -563,8 +694,11 @@ export default function WhyTree({
   return (
     <div className="dm-5w-why-layout">
       <div className="dm-5w-why-chain">
-        {ordered.map((node, index) => {
-          const nodeStats = evidenceStats(node.evidence);
+        {displayedWhys.map((node, index) => {
+          const rootActive = node.verification === "root";
+          const openNodeEvidence = node.evidence.filter((entry) =>
+            isEvidenceOpen({ nodeId: node.id }, entry.id)
+          );
           return (
             <div className="dm-5w-why-row" key={node.id}>
               {index > 0 ? (
@@ -575,7 +709,9 @@ export default function WhyTree({
                   id={`dm-5w-node-${node.id}`}
                   className={`dm-5w-why-node ${
                     activeNodeId === node.id ? "is-active" : ""
-                  } ${highlightId === node.id ? "is-highlight" : ""}`}
+                  } ${highlightId === node.id ? "is-highlight" : ""} ${
+                    rootActive ? "is-root-cause" : ""
+                  }`}
                   onFocus={() => setActiveNodeId(node.id)}
                   onClick={() => setActiveNodeId(node.id)}
                 >
@@ -584,23 +720,19 @@ export default function WhyTree({
                       <span className="dm-5w-why-badge">
                         Why {node.level}
                       </span>
-                      {nodeStats.blocks > 0 ? (
-                        <span className="dm-5w-why-stat">
-                          {evidenceCountLabel(nodeStats.blocks)}
-                        </span>
-                      ) : null}
-                      {nodeStats.photos > 0 ? (
-                        <span className="dm-5w-why-stat">
-                          {photoCountLabel(nodeStats.photos)}
-                        </span>
-                      ) : null}
                     </div>
-                    <VerificationMenu
-                      value={node.verification}
-                      canEdit={canEdit}
-                      ariaLabel={`Status verifikasi Why ${node.level}`}
-                      onChange={(next) => setNodeVerification(node.id, next)}
-                    />
+                    <button
+                      type="button"
+                      className={`dm-5w-root-toggle ${
+                        rootActive ? "is-on" : ""
+                      }`}
+                      aria-pressed={rootActive}
+                      onClick={() => setRootCause(node.id, !rootActive)}
+                      disabled={!canEdit}
+                    >
+                      <Flag size={12} aria-hidden="true" />
+                      <span>Root Cause</span>
+                    </button>
                   </header>
 
                   <label className="dm-5w-field dm-5w-why-question">
@@ -608,79 +740,53 @@ export default function WhyTree({
                     <textarea
                       className="dm-5w-textarea"
                       rows={2}
+                      ref={(element) => {
+                        if (element) resizeTextarea(element);
+                      }}
                       value={node.statement}
-                      placeholder="Tulis sebab pada tahap ini"
-                      onChange={(event) =>
-                        updateNode(node.id, { statement: event.target.value })
-                      }
+                      placeholder={WHY_PLACEHOLDERS[node.level] ?? "Tulis sebabnya"}
+                      onChange={(event) => {
+                        resizeTextarea(event.currentTarget);
+                        updateNode(node.id, { statement: event.target.value });
+                      }}
                       disabled={!canEdit}
                       aria-label={`Pernyataan Why ${node.level}`}
                     />
                   </label>
 
                   <div className="dm-5w-why-actions">
-                    <select
-                      className="dm-5w-add-field dm-5w-add-evidence-select"
-                      value=""
-                      onChange={(event) =>
-                        handleAddEvidence(
-                          { nodeId: node.id },
-                          event.target.value
-                        )
+                    <EvidenceMenu
+                      canEdit={canEdit}
+                      ariaLabel={`Tambah bukti Why ${node.level}`}
+                      onAdd={(kind) =>
+                        handleAddEvidence({ nodeId: node.id }, kind)
                       }
-                      disabled={!canEdit}
-                      aria-label={`Tambah bukti Why ${node.level}`}
-                    >
-                      <option value="">+ Tambah bukti</option>
-                      {PRESET_EVIDENCE_LABELS.map((label) => (
-                        <option key={label} value={label}>
-                          {label}
-                        </option>
-                      ))}
-                      <option value="Lainnya...">Lainnya...</option>
-                    </select>
-                    <button
-                      type="button"
-                      className="dm-5w-add-field"
-                      onClick={() =>
-                        addEvidencePair({ nodeId: node.id }, "OK", "NG")
-                      }
-                      disabled={!canEdit}
-                    >
-                      + Pasangan OK/NG
-                    </button>
-                    <button
-                      type="button"
-                      className="dm-5w-add-field"
-                      onClick={() =>
-                        addEvidencePair(
-                          { nodeId: node.id },
-                          "Standar",
-                          "Aktual"
-                        )
-                      }
-                      disabled={!canEdit}
-                    >
-                      + Pasangan Standar/Aktual
-                    </button>
+                    />
+                    {renderEvidenceStrip(
+                      { nodeId: node.id },
+                      node.evidence,
+                      `Why ${node.level}`
+                    )}
                     <button
                       type="button"
                       className="dm-5w-add-field dm-5w-why-actions-end"
                       onClick={() => addBranch(node.id)}
                       disabled={!canEdit}
                     >
-                      + Cabang hipotesis
+                      Hipotesis lain
                     </button>
                   </div>
 
-                  {node.evidence.length > 0 ? (
+                  {openNodeEvidence.length > 0 ? (
                     <div className="dm-5w-evidence-grid">
                       {node.evidence.map((entry, evidenceIndex) =>
-                        renderEvidence(
-                          { nodeId: node.id },
-                          entry,
-                          `Why ${node.level} bukti ${evidenceIndex + 1}`
-                        )
+                        isEvidenceOpen({ nodeId: node.id }, entry.id)
+                          ? renderEvidence(
+                              { nodeId: node.id },
+                              entry,
+                              `Why ${node.level} bukti ${evidenceIndex + 1}`
+                            )
+                          : null
                       )}
                     </div>
                   ) : null}
@@ -689,162 +795,88 @@ export default function WhyTree({
                 {node.branches.length > 0 ? (
                   <div
                     className="dm-5w-branches"
-                    aria-label={`Cabang hipotesis Why ${node.level}`}
+                    aria-label={`Hipotesis Why ${node.level}`}
                   >
                     {node.branches.map((branch) => {
-                      const branchStats = evidenceStats(branch.evidence);
-                      const statusClass =
-                        branch.verification === "not_root"
-                          ? "is-not_root"
-                          : branch.verification;
+                      const owner = {
+                        nodeId: node.id,
+                        branchId: branch.id,
+                      };
+                      const openBranchEvidence = branch.evidence.filter(
+                        (entry) => isEvidenceOpen(owner, entry.id)
+                      );
                       return (
-                        <article
-                          className={`dm-5w-branch-card ${
-                            activeNodeId === branch.id ? "is-active" : ""
-                          }`}
-                          key={branch.id}
-                          onFocus={() => setActiveNodeId(branch.id)}
-                          onClick={() => setActiveNodeId(branch.id)}
-                        >
-                          <header className="dm-5w-branch-head">
-                            <div className="dm-5w-branch-head-left">
-                              {branch.verification !== "unverified" ? (
-                                <span
-                                  className={`dm-5w-branch-status-icon ${statusClass}`}
-                                  aria-hidden="true"
-                                >
-                                  {branch.verification === "not_root" ? (
-                                    <IconClose size={10} />
-                                  ) : (
-                                    <IconCheck size={10} />
-                                  )}
-                                </span>
-                              ) : null}
-                              <span className="dm-5w-branch-badge">
-                                Hipotesis
-                              </span>
-                              {branchStats.blocks > 0 ? (
-                                <span className="dm-5w-why-stat">
-                                  {evidenceCountLabel(branchStats.blocks)}
-                                </span>
-                              ) : null}
-                              {branchStats.photos > 0 ? (
-                                <span className="dm-5w-why-stat">
-                                  {photoCountLabel(branchStats.photos)}
-                                </span>
-                              ) : null}
-                            </div>
-                            <select
-                              className={`dm-5w-select dm-5w-verify-select dm-5w-branch-status-chip ${statusClass}`}
-                              value={branch.verification}
-                              onChange={(event) =>
-                                setBranchVerification(
-                                  node.id,
-                                  branch.id,
-                                  event.target.value as BranchVerification
-                                )
-                              }
-                              disabled={!canEdit}
-                              aria-label={`Status verifikasi dugaan Why ${node.level}`}
+                        <div className="dm-5w-branch-row" key={branch.id}>
+                          <div className="dm-5w-branch-line">
+                            <span
+                              className="dm-5w-branch-reject"
+                              role="img"
+                              title="Hipotesis ditolak"
+                              aria-label="Hipotesis ditolak"
                             >
-                              {BRANCH_VERIFICATION_ORDER.map((status) => (
-                                <option key={status} value={status}>
-                                  {BRANCH_VERIFICATION_LABELS[status]}
-                                </option>
-                              ))}
-                            </select>
-                          </header>
-
-                          <label className="dm-5w-field">
-                            <span className="dm-5w-label">Dugaan</span>
+                              <X size={11} aria-hidden="true" />
+                            </span>
                             <textarea
-                              className="dm-5w-textarea"
-                              rows={2}
+                              className="dm-5w-branch-input"
+                              rows={1}
                               value={branch.statement}
-                              placeholder="Apa yang diduga menjadi penyebab"
-                              onChange={(event) =>
+                              placeholder="Tulis dugaan lain yang sudah dicek, misalnya: port USB PC sudah rusak"
+                              ref={(element) => {
+                                if (element) resizeTextarea(element);
+                              }}
+                              onChange={(event) => {
+                                resizeTextarea(event.currentTarget);
                                 updateBranch(node.id, branch.id, {
                                   statement: event.target.value,
-                                })
-                              }
+                                });
+                              }}
                               disabled={!canEdit}
                               aria-label={`Pernyataan dugaan Why ${node.level}`}
                             />
-                          </label>
-
-                          <div className="dm-5w-why-actions">
-                            <select
-                              className="dm-5w-add-field dm-5w-add-evidence-select"
-                              value=""
-                              onChange={(event) =>
-                                handleAddEvidence(
-                                  { nodeId: node.id, branchId: branch.id },
-                                  event.target.value
-                                )
-                              }
-                              disabled={!canEdit}
-                              aria-label={`Tambah bukti dugaan Why ${node.level}`}
-                            >
-                              <option value="">+ Tambah bukti</option>
-                              {PRESET_EVIDENCE_LABELS.map((label) => (
-                                <option key={label} value={label}>
-                                  {label}
-                                </option>
-                              ))}
-                              <option value="Lainnya...">Lainnya...</option>
-                            </select>
+                            <EvidenceMenu
+                              canEdit={canEdit}
+                              ariaLabel={`Tambah bukti dugaan Why ${node.level}`}
+                              onAdd={(kind) => handleAddEvidence(owner, kind)}
+                            />
                             <button
                               type="button"
-                              className="dm-5w-add-field"
-                              onClick={() =>
-                                addEvidencePair(
-                                  { nodeId: node.id, branchId: branch.id },
-                                  "OK",
-                                  "NG"
-                                )
-                              }
-                              disabled={!canEdit}
-                            >
-                              + Pasangan OK/NG
-                            </button>
-                            <button
-                              type="button"
-                              className="dm-5w-add-field"
-                              onClick={() =>
-                                addEvidencePair(
-                                  { nodeId: node.id, branchId: branch.id },
-                                  "Standar",
-                                  "Aktual"
-                                )
-                              }
-                              disabled={!canEdit}
-                            >
-                              + Pasangan Standar/Aktual
-                            </button>
-                            <button
-                              type="button"
-                              className="dm-5w-add-field dm-5w-add-field-danger dm-5w-why-actions-end"
+                              className="dm-5w-branch-remove"
                               onClick={() => removeBranch(node.id, branch.id)}
                               disabled={!canEdit}
+                              aria-label={`Hapus hipotesis Why ${node.level}`}
                             >
-                              Hapus hipotesis
+                              <Trash2 size={13} aria-hidden="true" />
                             </button>
                           </div>
 
-                          {branch.evidence.length > 0 ? (
-                            <div className="dm-5w-evidence-grid">
-                              {branch.evidence.map((entry, evidenceIndex) =>
-                                renderEvidence(
-                                  { nodeId: node.id, branchId: branch.id },
-                                  entry,
-                                  `dugaan Why ${node.level} bukti ${
-                                    evidenceIndex + 1
-                                  }`
-                                )
+                          {branch.evidence.length > 0 &&
+                          openBranchEvidence.length === 0 ? (
+                            <div className="dm-5w-branch-evidence">
+                              {renderEvidenceStrip(
+                                owner,
+                                branch.evidence,
+                                `dugaan Why ${node.level}`
                               )}
                             </div>
                           ) : null}
-                        </article>
+
+                          {openBranchEvidence.length > 0 ? (
+                            <div className="dm-5w-evidence-grid">
+                              {branch.evidence.map(
+                                (entry, evidenceIndex) =>
+                                  isEvidenceOpen(owner, entry.id)
+                                    ? renderEvidence(
+                                        owner,
+                                        entry,
+                                        `dugaan Why ${node.level} bukti ${
+                                          evidenceIndex + 1
+                                        }`
+                                      )
+                                    : null
+                              )}
+                            </div>
+                          ) : null}
+                        </div>
                       );
                     })}
                   </div>
@@ -853,6 +885,19 @@ export default function WhyTree({
             </div>
           );
         })}
+
+        {hasHiddenWhy ? (
+          <button
+            type="button"
+            className="dm-5w-reveal"
+            onClick={() =>
+              setVisibleLevel((current) => Math.min(5, current + 1))
+            }
+          >
+            <Plus size={13} aria-hidden="true" />
+            <span>Lanjutkan: Kenapa lagi?</span>
+          </button>
+        ) : null}
       </div>
 
       <aside className="dm-5w-why-rail" aria-label="Ringkasan rantai sebab">
@@ -870,7 +915,7 @@ export default function WhyTree({
                   <p
                     className={`dm-5w-chain-line ${
                       row.text ? "" : "is-empty"
-                    }`}
+                    } ${row.isRoot ? "is-root-cause" : ""}`}
                   >
                     <strong>{index === 0 ? "Karena" : "maka"}</strong>{" "}
                     {row.text || `(Why ${row.level} belum diisi)`}
@@ -897,10 +942,24 @@ export default function WhyTree({
               Tandai satu Why sebagai Root Cause
             </p>
           ) : null}
-          <p className="dm-5w-progress">
-            {filled}/5 Why terisi · {rootCount} Root Cause · {rejectedCount}{" "}
-            hipotesis ditolak
-          </p>
+          <div className="dm-5w-progress">
+            <div className="dm-5w-progress-item">
+              <span className="dm-5w-progress-label">Why terisi</span>
+              <span className="dm-5w-progress-value">{filled}/5</span>
+            </div>
+            <div
+              className={`dm-5w-progress-item ${
+                rootCount > 0 ? "is-root-cause" : ""
+              }`}
+            >
+              <span className="dm-5w-progress-label">Root Cause</span>
+              <span className="dm-5w-progress-value">{rootCount}</span>
+            </div>
+            <div className="dm-5w-progress-item">
+              <span className="dm-5w-progress-label">Hipotesis ditolak</span>
+              <span className="dm-5w-progress-value">{rejectedCount}</span>
+            </div>
+          </div>
           {canEdit ? (
             <button
               type="button"

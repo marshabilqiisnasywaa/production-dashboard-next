@@ -116,10 +116,12 @@ export function SupervisorHeader() {
           lineName="Semua Lini"
           extraNotifications={headerNotifications}
         />
-        <span className="dml-role-badge">SUPERVISOR</span>
-        <div className="dml-user">
+        <div className="dml-user dml-user--supervisor">
           <span className="dml-avatar">{initials}</span>
-          <strong>{displayName}</strong>
+          <div className="dml-user__text">
+            <strong>{displayName}</strong>
+            <span className="dml-user__role">Supervisor</span>
+          </div>
         </div>
         <button
           type="button"

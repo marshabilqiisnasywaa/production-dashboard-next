@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import { IconAlert, IconCheckCircle } from "@/components/ui/icons";
 import type { DmSupervisorLine } from "../../../api";
 
@@ -8,25 +9,37 @@ interface SupervisorLinesTabProps {
   onViewInApprovals: () => void;
 }
 
+function getLineLabel(line: DmSupervisorLine) {
+  const name = line.lineName.trim();
+  const code = line.lineCode.trim();
+  if (!name) return code;
+  return code && !name.includes(code) ? `${name} (${code})` : name;
+}
+
+function getLeaderLabel(line: DmSupervisorLine) {
+  const name = line.leader?.name.trim() ?? "";
+  return name && name !== "-"
+    ? `Leader: ${name} (${line.leader?.employeeNo.trim() || "-"})`
+    : "Leader belum ditentukan";
+}
+
 export function SupervisorLinesTab({ dbLines, onViewInApprovals }: SupervisorLinesTabProps) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-      <div style={{ padding: "14px 16px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+    <div className="spv-monitoring">
+      <div className="spv-readiness-card">
+        <div className="spv-readiness-head">
           <div>
-            <h2 style={{ fontSize: "15px", fontWeight: 700, margin: 0, color: "#0f172a" }}>
+            <h2 className="spv-readiness-title">
               Status Kesiapan &amp; Verifikasi Lini Produksi
             </h2>
-            <span style={{ fontSize: "11.5px", color: "#64748b" }}>
+            <span className="spv-readiness-subtitle">
               Monitoring kesiapan checklist dan kehadiran seluruh lini perakitan
             </span>
           </div>
-          <span className="spv-chip spv-chip--neutral">
-            {dbLines.length} Lini Terdaftar
-          </span>
+          <span className="spv-readiness-count">{dbLines.length} Lini Terdaftar</span>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div className="spv-readiness-list">
           {dbLines.length === 0 ? (
             <div className="spv-empty-box">
               Belum ada lini terdaftar.
@@ -40,33 +53,20 @@ export function SupervisorLinesTab({ dbLines, onViewInApprovals }: SupervisorLin
               const hasAbnormal = subs.some((s) => s?.hasNg);
 
               return (
-                <div
-                  key={line.lineId}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "10px 14px",
-                    background: "#f8fafc",
-                    border: `1px solid ${hasAbnormal ? "#fecdd3" : allApproved ? "#bbf7d0" : "#e2e8f0"}`,
-                    borderRadius: "7px",
-                    flexWrap: "wrap",
-                    gap: "8px",
-                  }}
-                >
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <strong style={{ fontSize: "13.5px", color: "#0f172a" }}>
-                        {line.lineName} ({line.lineCode})
+                <div key={line.lineId} className="spv-line-row">
+                  <div className="spv-line-row__main">
+                    <div className="spv-line-row__title">
+                      <strong className="spv-line-row__name">
+                        {getLineLabel(line)}
                       </strong>
-                      <span className="spv-chip spv-chip--neutral">{line.shift}</span>
+                      <span className="spv-line-row__shift">{line.shift}</span>
                     </div>
-                    <span style={{ display: "block", fontSize: "11.5px", color: "#64748b", marginTop: "2px" }}>
-                      Leader: {line.leader?.name || "-"} ({line.leader?.employeeNo || "-"}) · {line.workshopName} · {line.members.length} Anggota
+                    <span className="spv-line-row__meta">
+                      {getLeaderLabel(line)} · {line.workshopName} · {line.members.length} Anggota
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div className="spv-line-row__actions">
                     {allApproved ? (
                       <span className="spv-status-badge spv-status-badge--approved">
                         <IconCheckCircle size={12} /> Lengkap Disetujui
@@ -86,7 +86,8 @@ export function SupervisorLinesTab({ dbLines, onViewInApprovals }: SupervisorLin
                       onClick={onViewInApprovals}
                       className="spv-btn spv-btn--secondary spv-btn--sm"
                     >
-                      Buka di Persetujuan →
+                      Buka di Persetujuan
+                      <ArrowRight size={14} />
                     </button>
                   </div>
                 </div>

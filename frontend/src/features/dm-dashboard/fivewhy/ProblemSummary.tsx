@@ -46,6 +46,11 @@ const STATEMENT_FIELDS: readonly {
   },
 ];
 
+function resizeTextarea(element: HTMLTextAreaElement) {
+  element.style.height = "auto";
+  element.style.height = `${element.scrollHeight}px`;
+}
+
 export default function ProblemSummary({
   abnormal,
   canEdit,
@@ -105,30 +110,33 @@ export default function ProblemSummary({
 
   return (
     <>
-      <section className="dm-5w-card" aria-labelledby="dm-5w-metadata-title">
+      <section
+        className="dm-5w-card dm-5w-problem-card"
+        aria-labelledby="dm-5w-metadata-title"
+      >
         <h2 className="dm-5w-card-title" id="dm-5w-metadata-title">
           Metadata abnormal
         </h2>
 
-        <label className="dm-5w-field">
-          <span className="dm-5w-label">
-            Judul abnormal <span className="dm-5w-required">*</span>
-          </span>
-          <input
-            ref={titleRef}
-            className="dm-5w-input"
-            value={abnormal.label}
-            placeholder="Tulis ringkas masalahnya, misalnya: PC Upgrade fail"
-            onChange={(event) =>
-              onChange({ ...abnormal, label: event.target.value })
-            }
-            disabled={!canEdit}
-            aria-label="Judul abnormal"
-            aria-required="true"
-          />
-        </label>
-
         <div className="dm-5w-summary-grid">
+          <label className="dm-5w-field dm-5w-field-wide">
+            <span className="dm-5w-label">
+              Judul abnormal <span className="dm-5w-required">*</span>
+            </span>
+            <input
+              ref={titleRef}
+              className="dm-5w-input"
+              value={abnormal.label}
+              placeholder="Tulis ringkas masalahnya, misalnya: PC Upgrade fail"
+              onChange={(event) =>
+                onChange({ ...abnormal, label: event.target.value })
+              }
+              disabled={!canEdit}
+              aria-label="Judul abnormal"
+              aria-required="true"
+            />
+          </label>
+
           <label className="dm-5w-field">
             <span className="dm-5w-label">Teruntuk (Line)</span>
             <input
@@ -274,7 +282,10 @@ export default function ProblemSummary({
         </div>
       </section>
 
-      <section className="dm-5w-card" aria-labelledby="dm-5w-statement-title">
+      <section
+        className="dm-5w-card dm-5w-problem-card"
+        aria-labelledby="dm-5w-statement-title"
+      >
         <h2 className="dm-5w-card-title" id="dm-5w-statement-title">
           Pernyataan masalah (4W + 1H)
         </h2>
@@ -330,9 +341,15 @@ export default function ProblemSummary({
             <textarea
               className="dm-5w-textarea"
               rows={2}
+              ref={(element) => {
+                if (element) resizeTextarea(element);
+              }}
               value={abnormal.summary.how}
               placeholder="Kronologi singkat: bagaimana masalah ini terjadi"
-              onChange={(event) => updateSummary({ how: event.target.value })}
+              onChange={(event) => {
+                resizeTextarea(event.currentTarget);
+                updateSummary({ how: event.target.value });
+              }}
               disabled={!canEdit}
               aria-label="How"
             />

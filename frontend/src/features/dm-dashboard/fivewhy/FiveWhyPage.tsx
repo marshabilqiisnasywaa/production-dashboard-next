@@ -357,11 +357,6 @@ export default function FiveWhyPage() {
             </p>
           </div>
           <div className="dm-5w-page-head-actions">
-            <div className="dm-5w-role">
-              <span className="dm-5w-avatar">{initials}</span>
-              <span className="dm-5w-user-name">{displayName}</span>
-              <span className="dm-5w-role-chip">{roleLabel}</span>
-            </div>
             <button
               type="button"
               ref={historyButtonRef}
