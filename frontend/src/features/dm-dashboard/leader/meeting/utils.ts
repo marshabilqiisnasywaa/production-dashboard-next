@@ -86,3 +86,17 @@ export function absenceDetail(entry?: AbsenceNote): string {
   if (entry?.reason === "permit" || entry?.reason === "sick") return note;
   return note;
 }
+
+export function formatAttendanceLateness(at: string | null, startedAt?: string | null): string {
+  if (!at || !startedAt) return "";
+  const elapsed = new Date(at).getTime() - new Date(startedAt).getTime();
+  if (!Number.isFinite(elapsed) || elapsed <= 0) return "";
+  const minutes = Math.floor(elapsed / 60000);
+  if (minutes === 0) return "Terlambat <1 menit";
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  const duration = hours
+    ? `${hours} jam${remainingMinutes ? ` ${remainingMinutes} menit` : ""}`
+    : `${minutes} menit`;
+  return `Terlambat ${duration}`;
+}

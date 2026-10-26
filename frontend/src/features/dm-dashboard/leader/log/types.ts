@@ -62,4 +62,5 @@ export interface ActivityEntry {
   object: string;
   before: string | null;
   after: string | null;
+  attendanceLateness?: string;
 }

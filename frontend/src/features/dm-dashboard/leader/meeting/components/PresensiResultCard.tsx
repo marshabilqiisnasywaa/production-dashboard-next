@@ -109,7 +109,7 @@ export function PresensiResultCard({ members, attendance, guests, photoFor, abse
                     </div>
                   </div>
                   <div className="dml-mt-absence__fields">
-                  <AbsenceFields idPrefix={"ar-" + m.id} name={m.name} value={entry} onChange={(next) => onAbsenceChange(m.id, next)} />
+                  <AbsenceFields idPrefix={"ar-" + m.id} name={m.name} employeeNo={m.employeeNo} value={entry} onChange={(next) => onAbsenceChange(m.id, next)} />
                   </div>
                 </li>
               );

@@ -6,6 +6,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import { IconClose } from "@/components/ui/icons";
 import { IconCalendar, IconInfo } from "../../meeting/components/MeetingIcons";
+import { formatAttendanceLateness } from "../../meeting/utils";
 import { getStatus } from "../../problems/utils";
 import { LEADER_ROUTES } from "../../routes";
 import type { MeetingRecord, MeetingStatus } from "../types";
@@ -174,7 +175,10 @@ function DrawerBody({ record, now, onClose }: { record: MeetingRecord; now: Date
                   {a.present ? (
                     <div className="dml-lg-people__state">
                       <StatusChip tone="ok">Hadir</StatusChip>
-                      {a.at && <time>{formatHm(a.at)}</time>}
+                      {a.at && <time dateTime={a.at}>{formatHm(a.at)}</time>}
+                      {formatAttendanceLateness(a.at, record.startedAt) && (
+                        <span className="dml-lg-late">{formatAttendanceLateness(a.at, record.startedAt)}</span>
+                      )}
                     </div>
                   ) : (
                     <div className="dml-lg-people__state">

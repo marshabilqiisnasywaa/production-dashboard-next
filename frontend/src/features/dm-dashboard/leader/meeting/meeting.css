@@ -827,6 +827,14 @@
   font-variant-numeric: tabular-nums;
   color: var(--dm-muted);
 }
+.dml-mt-roster__late {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #fef9c3;
+  color: #a16207;
+  font-size: 12px;
+  font-weight: 600;
+}
 .dml-mt-roster__list li.is-editing {
   flex-wrap: wrap;
 }

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { StatusChip } from "@/components/ui/StatusChip";
 import type { AbsenceNote, AttendanceRecord, GuestRecord, MeetingMember } from "../types";
-import { absenceDetail, absenceLabel, formatClock, initialsOf } from "../utils";
+import { absenceDetail, absenceLabel, formatClock, formatAttendanceLateness, initialsOf } from "../utils";
 import { AbsenceFields } from "./AbsenceFields";
 import { IconInfo } from "./MeetingIcons";
 
@@ -14,13 +14,14 @@ interface Props {
   attendance: Record<string, AttendanceRecord>;
   absences?: Record<string, AbsenceNote>;
   guests?: Record<string, GuestRecord>;
+  startedAt?: string | null;
   note?: string;
   editable?: boolean;
   onSaveAbsence?: (memberId: string, next: AbsenceNote) => Promise<boolean>;
 }
 
 /** Right-hand list of members with their attendance state. Used in every phase. */
-export function AttendanceRoster({ title, members, attendance, note, absences = {}, guests = {}, editable = false, onSaveAbsence }: Props) {
+export function AttendanceRoster({ title, members, attendance, note, absences = {}, guests = {}, startedAt, editable = false, onSaveAbsence }: Props) {
   const present = members.filter((m) => attendance[m.id]?.status === "present").length;
   const guestList = Object.values(guests);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -71,7 +72,10 @@ export function AttendanceRoster({ title, members, attendance, note, absences = 
                 {rec?.status === "present" ? (
                   <>
                     <StatusChip tone="ok">Hadir</StatusChip>
-                    {rec.at && <time>{formatClock(rec.at)}</time>}
+                    {rec.at && <time dateTime={rec.at}>{formatClock(rec.at)}</time>}
+                    {rec.at && formatAttendanceLateness(rec.at, startedAt) && (
+                      <span className="dml-mt-roster__late">{formatAttendanceLateness(rec.at, startedAt)}</span>
+                    )}
                   </>
                 ) : rec?.status === "absent" ? (
                   <StatusChip tone="wait">{absenceLabel(entry)}</StatusChip>
@@ -86,7 +90,7 @@ export function AttendanceRoster({ title, members, attendance, note, absences = 
               </div>
               {editingId === m.id && (
                 <div className="dml-mt-roster__editor">
-                  <AbsenceFields idPrefix={"re-" + m.id} name={m.name} value={draft} onChange={setDraft} />
+                  <AbsenceFields idPrefix={"re-" + m.id} name={m.name} employeeNo={m.employeeNo} value={draft} onChange={setDraft} />
                   <div className="dml-mt-roster__editor-actions">
                     <Button variant="primary" disabled={saving} onClick={() => save(m.id)}>
                       {saving ? "Menyimpan…" : "Simpan"}
@@ -109,7 +113,10 @@ export function AttendanceRoster({ title, members, attendance, note, absences = 
             </div>
             <div className="dml-mt-roster__state">
               <StatusChip tone="ok">Hadir</StatusChip>
-              <time>{formatClock(g.at)}</time>
+              <time dateTime={g.at}>{formatClock(g.at)}</time>
+              {formatAttendanceLateness(g.at, startedAt) && (
+                <span className="dml-mt-roster__late">{formatAttendanceLateness(g.at, startedAt)}</span>
+              )}
             </div>
           </li>
         ))}

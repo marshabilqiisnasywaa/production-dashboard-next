@@ -722,7 +722,14 @@ export type DmProblemOnTimeRate = {
   rate: number | null;
 };
 
+export interface MeetingRepresentative {
+  employeeNo: string;
+  name: string;
+}
+
 export const meetingApi = {
+  summaryOptions: () => request<{ lines: string[]; users: (MeetingRepresentative & { id: number })[] }>("/meetings/summary-options", {}, true),
+  representatives: () => request<MeetingRepresentative[]>("/meetings/representatives", {}, true),
   prepare: (sessionId: number, scope: "line" | "dm") =>
     request<DmMeetingSession>(
       `/meetings/sessions/${sessionId}/prepare`,

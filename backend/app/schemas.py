@@ -420,6 +420,20 @@ class PresensiCloseIn(CamelModel):
     absent_employee_nos: list[str] = Field(default_factory=list)
 
 
+class MeetingRepresentativeOut(CamelModel):
+    employee_no: str
+    name: str
+
+
+class MeetingPicOut(MeetingRepresentativeOut):
+    id: int
+
+
+class MeetingSummaryOptionsOut(CamelModel):
+    lines: list[str]
+    users: list[MeetingPicOut]
+
+
 class AbsenceNoteIn(CamelModel):
     employee_no: str
     reason: Literal["none", "represented", "permit", "sick"] = "none"

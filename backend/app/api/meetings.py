@@ -19,6 +19,9 @@ from app.models import (
 )
 from app.schemas import (
     AbsenceNotesIn,
+    MeetingRepresentativeOut,
+    MeetingPicOut,
+    MeetingSummaryOptionsOut,
     EmployeePhotoOut,
     MeetingAttendanceIn,
     MeetingAttendanceOut,
@@ -329,6 +332,31 @@ def meeting_history(
     return [_map_session(s, db) for s in db.scalars(stmt).all()]
 
 
+@router.get("/summary-options", response_model=MeetingSummaryOptionsOut)
+def summary_options(
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> MeetingSummaryOptionsOut:
+    if principal.role == "member":
+        raise HTTPException(status_code=403, detail="Hanya Leader yang berwenang mengisi summary.")
+    return MeetingSummaryOptionsOut(
+        lines=list(db.scalars(select(Line.code).order_by(Line.code))),
+        users=[MeetingPicOut(id=e.id, employee_no=e.employee_no, name=e.name)
+               for e in db.scalars(select(Employee).where(Employee.is_active.is_(True)).order_by(Employee.name, Employee.employee_no))],
+    )
+
+
+@router.get("/representatives", response_model=list[MeetingRepresentativeOut])
+def list_representatives(
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> list[MeetingRepresentativeOut]:
+    if principal.role == "member":
+        raise HTTPException(status_code=403, detail="Hanya Leader yang berwenang memilih wakil.")
+    employees = db.scalars(select(Employee).where(Employee.is_active.is_(True)).order_by(Employee.name, Employee.employee_no))
+    return [MeetingRepresentativeOut(employee_no=e.employee_no, name=e.name) for e in employees]
+
+
 @router.get("/employees/{employee_no}/photo", response_model=EmployeePhotoOut)
 def employee_photo(
     employee_no: str,
@@ -609,21 +637,22 @@ def end_session(
             pic = db.scalars(
                 select(Employee).where(Employee.employee_no == sm.pic_employee_no)
             ).first()
-            if pic is not None:
-                pic_id = pic.id
-                pic_name = pic.name
+            if pic is None or not pic.is_active:
+                raise HTTPException(400, "User PIC tidak ditemukan atau sudah nonaktif.")
+            pic_id = pic.id
+            pic_name = pic.name
         summary_line_id = session.line_id
         if sm.line_code:
-            allowed_lines = {code: line_id for item in session.roster or [] for line_id, code in zip(item["line_ids"], item["line_codes"])}
-            if sm.line_code not in allowed_lines:
-                raise HTTPException(400, "Lini masalah tidak termasuk peserta meeting.")
-            summary_line_id = allowed_lines[sm.line_code]
+            selected_line = db.scalar(select(Line).where(Line.code == sm.line_code))
+            if selected_line is None:
+                raise HTTPException(400, "Lini masalah tidak ditemukan.")
+            summary_line_id = selected_line.id
         summary_session = db.scalar(select(DmMeetingSession).where(
             DmMeetingSession.source_session_id == session.id,
             DmMeetingSession.line_id == summary_line_id,
         )) if summary_line_id != session.line_id else session
         new_sm = DmMeetingSummary(
-            session_id=summary_session.id,
+            session_id=(summary_session or session).id,
             line_id=summary_line_id,
             problem=sm.problem,
             pic_name=pic_name,

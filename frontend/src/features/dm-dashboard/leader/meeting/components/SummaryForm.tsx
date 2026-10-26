@@ -7,7 +7,6 @@ import { IconPlus, IconTrash } from "./MeetingIcons";
 interface Props {
   items: SummaryItem[];
   members: MeetingMember[];
-  /** Lines covered by this meeting, e.g. ["TAC20601", "TAC20602"] */
   lines: string[];
   /** errors by item id; only shown once showErrors is true (after the Leader tries to end the meeting) */
   errors: Record<string, ItemErrors>;
@@ -86,7 +85,7 @@ export function SummaryForm({ items, members, lines, errors, showErrors, onAdd, 
                     <option value="">Pilih PIC</option>
                     {members.map((m) => (
                       <option key={m.id} value={m.id}>
-                        {m.name} ({m.roleLabel})
+                        {m.name} ({m.employeeNo ?? m.roleLabel})
                       </option>
                     ))}
                   </select>
