@@ -15,6 +15,7 @@ export interface TimelineSession {
   time: string; // display text, e.g. "07:45–08:00" or "10:00"
   status: TimelineStatus;
   statusLabel: string;
+  completed?: boolean;
   /** One-line result, only shown when the session is done */
   summary?: string;
   /** Pre-Management only: who has already sent today's papercard */

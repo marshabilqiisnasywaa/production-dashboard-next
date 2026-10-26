@@ -1,8 +1,9 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 from app.services.teamtalk import notify_new_problems
+from zoneinfo import ZoneInfo
 
 from app.api.deps import Principal, authorize_line, get_active_principal, get_current_admin, get_principal
 from app.db.session import get_db
@@ -670,6 +671,172 @@ def _is_pic(sm: DmMeetingSummary, employee: Employee) -> bool:
         return True
     return sm.pic_name.strip().lower() == employee.name.strip().lower()
 
+@router.get("/problems/closure-rate")
+def get_problem_closure_rate(
+    line_id: int,
+    from_date: date = Query(alias="from"),
+    to_date: date = Query(alias="to"),
+    shift: str = "Shift 1",
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> dict[str, int | float | None]:
+    authorize_line(db, principal, line_id)
+
+    if db.get(Line, line_id) is None:
+        raise HTTPException(status_code=404, detail="Lini tidak ditemukan.")
+
+    if from_date > to_date:
+        raise HTTPException(
+            status_code=400,
+            detail="Tanggal awal tidak boleh melewati tanggal akhir.",
+        )
+
+    if (to_date - from_date).days > 365:
+        raise HTTPException(
+            status_code=400,
+            detail="Rentang maksimal 366 hari.",
+        )
+
+    stmt = (
+        select(
+            func.count(DmMeetingSummary.id),
+            func.count(DmMeetingSummary.id).filter(
+                DmMeetingSummary.status == "resolved"
+            ),
+        )
+        .select_from(DmMeetingSummary)
+        .join(
+            DmMeetingSession,
+            DmMeetingSession.id == DmMeetingSummary.session_id,
+        )
+        .where(
+            DmMeetingSummary.line_id == line_id,
+            DmMeetingSession.date >= from_date,
+            DmMeetingSession.date <= to_date,
+            DmMeetingSession.shift == shift,
+        )
+    )
+
+    total, resolved = db.execute(stmt).one()
+    total = int(total)
+    resolved = int(resolved)
+
+    return {
+        "total": total,
+        "resolved": resolved,
+        "rate": round(resolved / total * 100, 1) if total else None,
+    }
+
+@router.get("/problems/on-time-rate")
+def get_problem_on_time_rate(
+    line_id: int,
+    from_date: date = Query(alias="from"),
+    to_date: date = Query(alias="to"),
+    shift: str = "Shift 1",
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> dict[str, int | float | None]:
+    authorize_line(db, principal, line_id)
+
+    if db.get(Line, line_id) is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Lini tidak ditemukan.",
+        )
+
+    if from_date > to_date:
+        raise HTTPException(
+            status_code=400,
+            detail="Tanggal awal tidak boleh melewati tanggal akhir.",
+        )
+
+    if (to_date - from_date).days > 365:
+        raise HTTPException(
+            status_code=400,
+            detail="Rentang maksimal 366 hari.",
+        )
+
+    jakarta = ZoneInfo("Asia/Jakarta")
+    now = datetime.now(timezone.utc)
+
+    stmt = (
+        select(DmMeetingSummary)
+        .join(
+            DmMeetingSession,
+            DmMeetingSession.id == DmMeetingSummary.session_id,
+        )
+        .where(
+            DmMeetingSummary.line_id == line_id,
+            DmMeetingSession.shift == shift,
+        )
+    )
+
+    total = 0
+    on_time = 0
+    late = 0
+    unresolved = 0
+    unknown = 0
+    invalid_deadline = 0
+
+    for problem in db.scalars(stmt):
+        raw_deadline = (problem.due_date or "").strip()
+
+        try:
+            if "T" not in raw_deadline and " " not in raw_deadline:
+                raise ValueError("Deadline harus memiliki tanggal dan jam.")
+
+            deadline = datetime.fromisoformat(raw_deadline)
+
+            if deadline.tzinfo is None:
+                deadline = deadline.replace(tzinfo=jakarta)
+
+            deadline = deadline.astimezone(jakarta)
+        except (ValueError, OverflowError):
+            invalid_deadline += 1
+            continue
+
+        if not from_date <= deadline.date() <= to_date:
+            continue
+
+        if deadline > now:
+            continue
+
+        total += 1
+
+        if problem.status != "resolved":
+            unresolved += 1
+            continue
+
+        if problem.resolved_at is None:
+            unknown += 1
+            continue
+
+        resolved_at = problem.resolved_at
+
+        if resolved_at.tzinfo is None:
+            unknown += 1
+            continue
+
+        if resolved_at <= deadline:
+            on_time += 1
+        else:
+            late += 1
+
+    rate = (
+        round(on_time / total * 100, 1)
+        if total > 0 and unknown == 0
+        else None
+    )
+
+    return {
+        "total": total,
+        "onTime": on_time,
+        "late": late,
+        "unresolved": unresolved,
+        "unknown": unknown,
+        "invalidDeadline": invalid_deadline,
+        "rate": rate,
+    }
 
 @router.get("/problems/mine", response_model=list[myProblemOut])
 def my_problems(
@@ -801,6 +968,12 @@ def set_problem_status(
     if employee is not None:
         if not _is_pic(sm, employee):
             raise HTTPException(status_code=403, detail="Hanya PIC yang bisa mengubah status problem.")
+
+    if payload.status == "resolved":
+        if sm.status != "resolved":
+            sm.resolved_at = datetime.now(timezone.utc)
+    else :
+        sm.resolved_at = None
 
     sm.status = payload.status
     db.commit()

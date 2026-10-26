@@ -27,6 +27,8 @@ export default function MemberDashboardPage() {
   const { profile } = useMember();
   const {
   mySubmission,
+  myTemplate,
+  today,
   sessions,
   loading,
   lineId,
@@ -38,9 +40,9 @@ export default function MemberDashboardPage() {
 
   const timeline = useMemo(() => {
     if (!now || loading) return null;
-    const model = buildTimeline({ now, leaderSubmitted: Boolean(mySubmission), submissions: [], sessions });
+    const model = buildTimeline({ now, today, leaderSubmission: mySubmission, leaderTemplate: myTemplate, submissions: [], sessions });
     return toMemberTimeline(model);
-  }, [now, loading, mySubmission, sessions]);
+  }, [now, today, loading, mySubmission, myTemplate, sessions]);
 
   return (
     <div className="dmm-page">

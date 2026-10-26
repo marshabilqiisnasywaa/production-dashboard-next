@@ -14,12 +14,13 @@ function forMember(s: TimelineSession): TimelineSession {
     time: s.time,
     status: s.status,
     statusLabel: s.statusLabel,
+    completed: s.completed,
     summary: s.summary,
   };
   if (s.id === "pre") {
     return {
       ...base,
-      summary: s.status === "done" ? "Papercard Anda sudah terkirim" : undefined,
+      summary: s.summary?.replace(/Leader/g, "Anda"),
       cta: s.cta ? { label: s.cta.label, href: MEMBER_ROUTES.papercard } : undefined,
     };
   }

@@ -14,10 +14,11 @@ interface Props {
   attendance: Record<string, AttendanceRecord>;
   requireAllPresent: boolean;
   sessionDbId: number | null;
-  onRecognized: (memberId: string) => void;
+  onRecognized: (memberId: string, at?: string) => void;
   onGuest: (guest: GuestRecord) => void;
   photoFor: (employeeNo: string) => string | null;
   onFinish: () => void;
+  mode?: "initial" | "late";
 }
 
 type Result =
@@ -56,7 +57,17 @@ function stepNumber(step: ScanStep | null): number | null {
 
 function Chevron({ direction }: { direction: "left" | "right" }) {
   return (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      width="24"
+      height="24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d={direction === "left" ? "M15 5l-7 7 7 7" : "M9 5l7 7-7 7"} />
     </svg>
   );
@@ -64,12 +75,24 @@ function Chevron({ direction }: { direction: "left" | "right" }) {
 
 function frameClass(scanning: boolean, result: Result): string {
   if (scanning) return "dml-mt-cam__frame is-scanning";
-  if (result) return result.ok ? "dml-mt-cam__frame is-ok" : "dml-mt-cam__frame is-fail";
+  if (result)
+    return result.ok ? "dml-mt-cam__frame is-ok" : "dml-mt-cam__frame is-fail";
   return "dml-mt-cam__frame";
 }
 
 /** Step 2: camera + face frame. Members scan one by one; "Selesai Presensi" records everyone else as absent. */
-export function AttendanceScanner({ members, attendance, requireAllPresent, sessionDbId, onRecognized, onGuest, photoFor, onFinish }: Props) {
+export function AttendanceScanner({
+  members,
+  attendance,
+  requireAllPresent,
+  sessionDbId,
+  onRecognized,
+  onGuest,
+  photoFor,
+  onFinish,
+  mode = "initial",
+}: Props) {
+  const isLateAttendance = mode === "late";
   const videoRef = useRef<HTMLVideoElement>(null);
   const [camera, setCamera] = useState<"loading" | "on" | "off">("loading");
   const [scanning, setScanning] = useState(false);
@@ -85,8 +108,12 @@ export function AttendanceScanner({ members, attendance, requireAllPresent, sess
 
     async function start() {
       try {
-        if (!navigator.mediaDevices?.getUserMedia) throw new Error("no camera API");
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+        if (!navigator.mediaDevices?.getUserMedia)
+          throw new Error("no camera API");
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" },
+          audio: false,
+        });
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop());
           return;
@@ -114,7 +141,6 @@ export function AttendanceScanner({ members, attendance, requireAllPresent, sess
     return () => clearTimeout(timer);
   }, [result]);
 
-
   async function handleScan() {
     const video = videoRef.current;
     if (scanning || !video || sessionDbId === null) return;
@@ -124,12 +150,17 @@ export function AttendanceScanner({ members, attendance, requireAllPresent, sess
       const scan = await scanFace(video, sessionDbId, setStep);
       const attended = scan.attendance;
       if (!scan.recognized || !attended) {
-        setResult({ ok: false, message: scan.message ?? "Wajah tidak dikenali. Coba lagi." });
+        setResult({
+          ok: false,
+          message: scan.message ?? "Wajah tidak dikenali. Coba lagi.",
+        });
         return;
       }
-      const member = members.find((m) => m.employeeNo && m.employeeNo === attended.employeeNo);
+      const member = members.find(
+        (m) => m.employeeNo && m.employeeNo === attended.employeeNo
+      );
       if (member) {
-        onRecognized(member.id);
+        onRecognized(member.id, attended.attendedAt ?? undefined);
       } else if (attended.employeeNo) {
         onGuest({
           employeeNo: attended.employeeNo,
@@ -144,30 +175,49 @@ export function AttendanceScanner({ members, attendance, requireAllPresent, sess
         ok: true,
         name: attended.employeeName ?? "-",
         nik: attended.employeeNo ?? "",
-        role: [attended.department, attended.position].filter(Boolean).join(" · "),
+        role: [attended.department, attended.position]
+          .filter(Boolean)
+          .join(" · "),
         line: attended.employeeLine ?? null,
         time: formatClock(attended.attendedAt),
         already: scan.alreadyPresent,
         guest: member ? null : { line: attended.employeeLine ?? null },
       });
     } catch (err) {
-      setResult({ ok: false, message: err instanceof Error ? err.message : "Scan gagal. Coba lagi." });
+      setResult({
+        ok: false,
+        message: err instanceof Error ? err.message : "Scan gagal. Coba lagi.",
+      });
     } finally {
       setScanning(false);
       setStep(null);
     }
   }
 
-  const canFinish = presentCount > 0 && (!requireAllPresent || pending.length === 0);
+  const canFinish =
+    !scanning &&
+    (isLateAttendance ||
+      (presentCount > 0 && (!requireAllPresent || pending.length === 0)));
   const canScan = !scanning && camera === "on" && sessionDbId !== null;
 
   return (
-    <Card title="Presensi berlangsung" subtitle="Arahkan wajah ke kamera. Satu member per scan.">
+    <Card
+      title={
+        isLateAttendance ? "Presensi Peserta Terlambat" : "Presensi Berlangsung"
+      }
+      subtitle={
+        isLateAttendance
+          ? "ScaN wajah peserta"
+          : "Arahkan wajah ke kamera dan klik scan"
+      }
+    >
       <div className="dml-mt-cam">
         <video ref={videoRef} className="dml-mt-cam__video" muted playsInline />
         {camera !== "on" && (
           <div className="dml-mt-cam__fallback">
-            {camera === "loading" ? "Membuka kamera…" : "Kamera tidak tersedia. Izinkan akses kamera di browser."}
+            {camera === "loading"
+              ? "Membuka kamera…"
+              : "Kamera tidak tersedia. Izinkan akses kamera di browser."}
           </div>
         )}
         <span className={frameClass(scanning, result)} aria-hidden="true" />
@@ -179,9 +229,13 @@ export function AttendanceScanner({ members, attendance, requireAllPresent, sess
               </span>
             )}
             <span className="dml-mt-cam__instruction">
-              {step?.kind === "turn" && step.direction === "left" && <Chevron direction="left" />}
+              {step?.kind === "turn" && step.direction === "left" && (
+                <Chevron direction="left" />
+              )}
               {stepText(step)}
-              {step?.kind === "turn" && step.direction === "right" && <Chevron direction="right" />}
+              {step?.kind === "turn" && step.direction === "right" && (
+                <Chevron direction="right" />
+              )}
             </span>
           </div>
         )}
@@ -190,21 +244,33 @@ export function AttendanceScanner({ members, attendance, requireAllPresent, sess
             {result.ok ? (
               <div className="dml-mt-cam__card is-ok">
                 <span className="dml-mt-cam__badge">
-                  <IconCheckCircle size={18} /> {result.already ? "Sudah hadir" : "Hadir"}
+                  <IconCheckCircle size={18} />{" "}
+                  {result.already ? "Sudah hadir" : "Hadir"}
                 </span>
-                <MeetingAvatar className="dml-mt-cam__avatar" name={result.name} photo={photoFor(result.nik)} />
+                <MeetingAvatar
+                  className="dml-mt-cam__avatar"
+                  name={result.name}
+                  photo={photoFor(result.nik)}
+                />
                 <strong className="dml-mt-cam__name">{result.name}</strong>
                 <span className="dml-mt-cam__meta">
                   {[result.nik, result.role].filter(Boolean).join(" · ")}
                 </span>
                 {(result.line || result.guest) && (
                   <span className="dml-mt-cam__chips">
-                    {result.line && <span className="dml-mt-cam__line">{result.line}</span>}
-                    {result.guest && <span className="dml-mt-cam__guest">Tamu</span>}
+                    {result.line && (
+                      <span className="dml-mt-cam__line">{result.line}</span>
+                    )}
+                    {result.guest && (
+                      <span className="dml-mt-cam__guest">Tamu</span>
+                    )}
                   </span>
                 )}
                 <span className="dml-mt-cam__time">{result.time}</span>
-                <span className="dml-mt-cam__timer" style={{ animationDuration: RESULT_MS + "ms" }} />
+                <span
+                  className="dml-mt-cam__timer"
+                  style={{ animationDuration: RESULT_MS + "ms" }}
+                />
               </div>
             ) : (
               <div className="dml-mt-cam__card is-fail">
@@ -212,7 +278,10 @@ export function AttendanceScanner({ members, attendance, requireAllPresent, sess
                   <IconAlert size={18} /> Tidak berhasil
                 </span>
                 <span className="dml-mt-cam__reason">{result.message}</span>
-                <span className="dml-mt-cam__timer" style={{ animationDuration: RESULT_MS + "ms" }} />
+                <span
+                  className="dml-mt-cam__timer"
+                  style={{ animationDuration: RESULT_MS + "ms" }}
+                />
               </div>
             )}
           </div>
@@ -223,30 +292,54 @@ export function AttendanceScanner({ members, attendance, requireAllPresent, sess
         {scanning && <span>{stepText(step)}</span>}
         {!scanning && result?.ok && (
           <span className="is-ok">
-            <IconCheckCircle size={18} /> {result.already ? "Sudah hadir" : "Berhasil"} · {result.name}
-            {result.nik || result.role ? " (" + [result.nik, result.role].filter(Boolean).join(" · ") + ")" : ""} · {result.time}
-            {result.guest ? ` · tamu${result.guest.line ? ` dari ${result.guest.line}` : ""}` : ""}
+            <IconCheckCircle size={18} />{" "}
+            {result.already ? "Sudah hadir" : "Berhasil"} · {result.name}
+            {result.nik || result.role
+              ? " (" +
+                [result.nik, result.role].filter(Boolean).join(" · ") +
+                ")"
+              : ""}{" "}
+            · {result.time}
+            {result.guest
+              ? ` · tamu${
+                  result.guest.line ? ` dari ${result.guest.line}` : ""
+                }`
+              : ""}
           </span>
         )}
-        {!scanning && result && !result.ok && <span className="is-fail">{result.message}</span>}
+        {!scanning && result && !result.ok && (
+          <span className="is-fail">{result.message}</span>
+        )}
         {!scanning && !result && <span>Menunggu member berikutnya…</span>}
       </div>
 
       <div className="dml-mt-scanactions">
-        <Button variant="outline" size="lg" disabled={!canScan} onClick={handleScan}>
+        <Button
+          variant="outline"
+          size="lg"
+          disabled={!canScan}
+          onClick={handleScan}
+        >
           {scanning ? "Memindai…" : "Scan wajah"}
         </Button>
-        <Button variant="primary" size="lg" disabled={!canFinish} onClick={onFinish}>
-          Selesai Presensi
+        <Button
+          variant="primary"
+          size="lg"
+          disabled={!canFinish}
+          onClick={onFinish}
+        >
+          {isLateAttendance ? "Tutup Presensi" : "Selesai Presensi"}
         </Button>
       </div>
 
       <p className="dml-mt-hint">
         {pending.length === 0
           ? "Semua member sudah hadir."
+          : isLateAttendance
+          ? `${pending.length} member belum hadir. Menutup scanner tidak mengubah status mereka.`
           : requireAllPresent
-            ? `Menunggu ${pending.length} member lagi. Semua member wajib hadir.`
-            : `${pending.length} member yang belum scan akan dicatat tidak hadir saat presensi ditutup.`}
+          ? `Menunggu ${pending.length} member lagi. Semua member wajib hadir.`
+          : `${pending.length} member yang belum scan akan dicatat tidak hadir saat presensi ditutup.`}
       </p>
     </Card>
   );
