@@ -65,7 +65,7 @@ export default function MemberDashboardPage() {
 
       <div className="dml-grid">
         <div className="dmm-main">
-          <MyProblemsCard rows={problems.open} ready={problems.ready} />
+          <MyProblemsCard rows={problems.open} ready={problems.ready} error={problems.error} onRetry={problems.refresh} />
           <MyHistoryCard days={mine.days} />
         </div>
 

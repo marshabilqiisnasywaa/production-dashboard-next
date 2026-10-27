@@ -64,6 +64,17 @@ export type DmMpvInput = Omit<DmMemberInput, "sortOrder">;
 export type DmMemberPick = { employeePk: number; sortOrder: number };
 
 export type DmMpvPick = { employeePk: number };
+export type DmMvpCandidate = Pick<DmEmployee, "id" | "employeeId" | "name" | "dept" | "isActive">;
+
+export const leaderMpvApi = {
+  lines: () => request<DmLine[]>("/leader/mpv/lines", {}, true),
+  candidates: (lineId: number) => request<DmMvpCandidate[]>(`/leader/mpv/lines/${lineId}/candidates`, {}, true),
+  mpvHistory: (lineId: number) => request<DmMpv[]>(`/leader/mpv/lines/${lineId}/history`, {}, true),
+  saveMpv: (lineId: number, period: string, data: DmMpvInput | DmMpvPick) =>
+    request<DmMpv>(`/leader/mpv/lines/${lineId}/${period}`, json("PUT", data), true),
+  deleteMpv: (lineId: number, period: string) =>
+    request<void>(`/leader/mpv/lines/${lineId}/${period}`, { method: "DELETE" }, true),
+};
 
 export type DmEmployeeRole = "member" | "leader" | "supervisor";
 
@@ -737,7 +748,7 @@ export const meetingApi = {
       lines: string[];
       users: (MeetingRepresentative & { id: number })[];
     }>("/meetings/summary-options", {}, true),
-  representatives: () =>
+  representatives: (_forEmployeeNo?: string) =>
     request<MeetingRepresentative[]>("/meetings/representatives", {}, true),
   prepare: (sessionId: number, scope: "line" | "dm") =>
     request<DmMeetingSession>(
@@ -808,6 +819,7 @@ export const meetingApi = {
       true
     ),
   startSession: (input: {
+    sessionId?: number;
     lineId: number;
     date: string;
     shift?: string;
@@ -938,6 +950,110 @@ export const meetingApi = {
   },
   supervisorEscalations: () =>
     request<DmMyProblem[]>("/meetings/problems/escalations", {}, true),
+};
+
+export type MeetingApi = Pick<
+  typeof meetingApi,
+  | "prepare"
+  | "getSession"
+  | "saveAbsenceNotes"
+  | "closePresensi"
+  | "startSession"
+  | "endSession"
+  | "faceChallenge"
+  | "faceScan"
+  | "summaryOptions"
+  | "representatives"
+  | "employeePhoto"
+>;
+
+export type DmWorkshopRef = { id: number; name: string };
+
+export type DmWorkshopSupervisors = {
+  workshopId: number;
+  employeeIds: number[];
+};
+
+const workshopBase = "/workshop-meetings";
+
+export const workshopMeetingApi = {
+  mine: () => request<DmWorkshopRef[]>(workshopBase + "/mine", {}, true),
+  listSessions: (workshopId: number, date: string) =>
+    request<DmMeetingSession[]>(
+      `${workshopBase}/sessions?workshop_id=${workshopId}&date=${date}`,
+      {},
+      true
+    ),
+  getSession: (sessionId: number) =>
+    request<DmMeetingSession>(`${workshopBase}/sessions/${sessionId}`, {}, true),
+  prepare: (sessionId: number, _scope?: "line" | "dm") =>
+    request<DmMeetingSession>(
+      `${workshopBase}/sessions/${sessionId}/prepare`,
+      { method: "POST" },
+      true
+    ),
+  saveAbsenceNotes: (
+    sessionId: number,
+    items: { employeeNo: string; reason: string; note?: string | null }[]
+  ) =>
+    request<DmMeetingSession>(
+      `${workshopBase}/sessions/${sessionId}/absence-notes`,
+      json("PUT", { items }),
+      true
+    ),
+  closePresensi: (sessionId: number, absentEmployeeNos: string[]) =>
+    request<DmMeetingSession>(
+      `${workshopBase}/sessions/${sessionId}/presensi/close`,
+      json("POST", { absentEmployeeNos }),
+      true
+    ),
+  startSession: (input: { sessionId?: number }) =>
+    request<DmMeetingSession>(
+      `${workshopBase}/sessions/${input.sessionId}/start`,
+      { method: "POST" },
+      true
+    ),
+  endSession: (
+    sessionId: number,
+    input: Parameters<typeof meetingApi.endSession>[1]
+  ) =>
+    request<DmMeetingSession>(
+      `${workshopBase}/sessions/${sessionId}/end`,
+      json("POST", input),
+      true
+    ),
+  faceChallenge: (sessionId: number) =>
+    request<DmFaceChallenge>(
+      `${workshopBase}/sessions/${sessionId}/challenge`,
+      { method: "POST" },
+      true
+    ),
+  faceScan: (sessionId: number, frames: Blob[], token: string | null) => {
+    const form = new FormData();
+    frames.forEach((blob, i) => form.append("frames", blob, `frame-${i}.jpg`));
+    if (token) form.append("token", token);
+    return request<DmFaceScan>(
+      `${workshopBase}/sessions/${sessionId}/scan`,
+      { method: "POST", body: form },
+      true
+    );
+  },
+  summaryOptions: meetingApi.summaryOptions,
+  representatives: (forEmployeeNo?: string) =>
+    request<MeetingRepresentative[]>(
+      `${workshopBase}/representatives?for_employee_no=${encodeURIComponent(forEmployeeNo ?? "")}`,
+      {},
+      true
+    ),
+  employeePhoto: meetingApi.employeePhoto,
+  assignments: () =>
+    request<DmWorkshopSupervisors[]>(workshopBase + "/assignments", {}, true),
+  saveAssignment: (workshopId: number, employeeIds: number[]) =>
+    request<DmWorkshopSupervisors>(
+      `${workshopBase}/assignments/${workshopId}`,
+      json("PUT", { employeeIds }),
+      true
+    ),
 };
 
 export type DmNotificationSetting = {

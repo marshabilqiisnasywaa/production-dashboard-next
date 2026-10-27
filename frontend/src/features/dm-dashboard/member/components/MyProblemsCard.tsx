@@ -5,6 +5,7 @@ import { formatDue } from "../../leader/meeting/utils";
 import type { ProblemRow, ProblemStatus } from "../../leader/problems/types";
 import { formatOverdue } from "../../leader/problems/utils";
 import { MEMBER_ROUTES } from "../routes";
+import { ProblemLoadError } from "../../leader/problems/components/ProblemLoadError";
 
 const STATUS: Record<ProblemStatus, { tone: ChipTone; label: string }> = {
   unsolved: { tone: "wait", label: "Unsolved" },
@@ -15,7 +16,7 @@ const STATUS: Record<ProblemStatus, { tone: ChipTone; label: string }> = {
 const MAX = 4;
 
 /** The member's open follow-ups from DM meetings (most urgent first). Full list is on "Masalah Saya". */
-export function MyProblemsCard({ rows, ready }: { rows: ProblemRow[]; ready: boolean }) {
+export function MyProblemsCard({ rows, ready, error, onRetry }: { rows: ProblemRow[]; ready: boolean; error: string | null; onRetry: () => void }) {
   const shown = rows.slice(0, MAX);
 
   return (
@@ -29,7 +30,7 @@ export function MyProblemsCard({ rows, ready }: { rows: ProblemRow[]; ready: boo
         </Link>
       }
     >
-      {!ready ? (
+      {error ? <ProblemLoadError error={error} onRetry={onRetry} /> : !ready ? (
         <div className="dml-empty">Memuat…</div>
       ) : shown.length === 0 ? (
         <div className="dml-empty">Tidak ada masalah yang ditugaskan kepada Anda.</div>

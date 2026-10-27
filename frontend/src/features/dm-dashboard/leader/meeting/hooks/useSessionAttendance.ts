@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { meetingApi } from "../../../api";
+import { useMeetingApi } from "../MeetingApiContext";
 import type { AbsenceNote, AbsenceReason, GuestRecord, MeetingMember } from "../types";
 
 const POLL_MS = 4000;
@@ -28,6 +28,7 @@ export function useSessionAttendance({
   onGuest,
   onAbsent,
 }: Options) {
+  const api = useMeetingApi();
   useEffect(() => {
     if (!active || sessionDbId === null) return;
     const id = sessionDbId;
@@ -35,7 +36,7 @@ export function useSessionAttendance({
 
     async function pull() {
       try {
-        const session = await meetingApi.getSession(id);
+        const session = await api.getSession(id);
         if (!alive) return;
         for (const a of session.attendances) {
           if (!a.employeeNo) continue;
@@ -71,5 +72,5 @@ export function useSessionAttendance({
       alive = false;
       if (timer) clearInterval(timer);
     };
-  }, [active, once, restoreAbsent, sessionDbId, members, onMember, onGuest, onAbsent]);
+  }, [api, active, once, restoreAbsent, sessionDbId, members, onMember, onGuest, onAbsent]);
 }

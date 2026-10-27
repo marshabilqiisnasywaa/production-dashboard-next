@@ -29,9 +29,9 @@ class DmMeetingSession(Base):
     date: Mapped[date] = mapped_column(Date, index=True)
     shift: Mapped[str] = mapped_column(String(16), default="Shift 1", server_default="Shift 1")
     session_type: Mapped[str] = mapped_column(String(16))  # "during_1", "during_2", "during_3"
-    session_number: Mapped[int] = mapped_column(Integer)  # 1, 2, 3
+    session_number: Mapped[int] = mapped_column(Integer)  # 1, 2
     label: Mapped[str | None] = mapped_column(String(60))
-    scheduled_time: Mapped[str] = mapped_column(String(8))  # "10:00", "14:00", "16:00"
+    scheduled_time: Mapped[str] = mapped_column(String(8))  # "10:00", "14:00"
     status: Mapped[str] = mapped_column(String(16), default="pending", server_default="pending")  # "pending", "in_progress", "completed"
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

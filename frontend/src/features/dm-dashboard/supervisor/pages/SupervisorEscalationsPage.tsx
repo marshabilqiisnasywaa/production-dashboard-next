@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ProblemTable } from "../../leader/problems/components/ProblemTable";
+import { ProblemLoadError } from "../../leader/problems/components/ProblemLoadError";
 import { formatOverdue } from "../../leader/problems/utils";
 import "../../leader/problems/problems.css";
 import { useSupervisor } from "../SupervisorProvider";
@@ -9,7 +10,7 @@ import { useSupervisor } from "../SupervisorProvider";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export default function SupervisorEscalationsPage() {
-  const { escalatedRows } = useSupervisor();
+  const { escalatedRows, escalationsError, escalationsReady, refreshEscalations } = useSupervisor();
   const [search, setSearch] = useState("");
   const [lineFilter, setLineFilter] = useState("all");
 
@@ -117,10 +118,10 @@ export default function SupervisorEscalationsPage() {
           </div>
         </div>
 
-        <ProblemTable
+        {escalationsError ? <ProblemLoadError error={escalationsError} onRetry={refreshEscalations} /> : !escalationsReady ? <div className="dml-empty">Memuat eskalasi masalah...</div> : <ProblemTable
           rows={visible}
           emptyMessage="Tidak ada masalah bawahan yang tereskalasi saat ini."
-        />
+        />}
       </section>
     </div>
   );

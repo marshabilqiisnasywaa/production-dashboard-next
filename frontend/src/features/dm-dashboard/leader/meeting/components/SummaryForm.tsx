@@ -210,7 +210,7 @@ export function SummaryForm({
 
               <div className="dml-mt-item__row">
                 <Field
-                  label="Kategori Masalah (opsional)"
+                  label="Kategori Masalah"
                   htmlFor={`categories-${item.id}`}
                 >
                   <CategorySelect

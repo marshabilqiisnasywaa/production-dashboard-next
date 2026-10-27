@@ -45,7 +45,8 @@ from app.schemas import (
 )
 from app.services.accounts import active_line, active_lines
 from app.services.meeting_attendance import home_line_code
-from app.services import joint_meetings
+from app.services import joint_meetings, workshop_problems
+from app.services.problem_access import is_pic, pic_filter as problem_pic_filter
 from app.services.meeting_schedule import (
     ALL_DAYS,
     DEFAULT_SLOTS,
@@ -159,7 +160,7 @@ def _map_session(s: DmMeetingSession, db: Session) -> MeetingSessionOut:
 
 
 # -----------------------------------------------------------------------------
-# During-Meeting Sessions (10:00, 14:00, 16:00)
+# During-Meeting Sessions (10:00, 14:00)
 # -----------------------------------------------------------------------------
 
 def _schedule_out(db: Session, line_id: int) -> MeetingScheduleOut:
@@ -702,9 +703,7 @@ def _my_problem_out(sm : DmMeetingSummary, session: DmMeetingSession) -> myProbl
     )
 
 def _is_pic(sm: DmMeetingSummary, employee: Employee) -> bool:
-    if sm.pic_id is not None and sm.pic_id == employee.id:
-        return True
-    return sm.pic_name.strip().lower() == employee.name.strip().lower()
+    return is_pic(sm, employee)
 
 @router.get("/problems/closure-rate")
 def get_problem_closure_rate(
@@ -885,14 +884,13 @@ def my_problems(
         select(DmMeetingSummary, DmMeetingSession)
         .join(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
         .where(
-            or_(
-                DmMeetingSummary.pic_id == employee.id,
-                func.lower(func.trim(DmMeetingSummary.pic_name)) == employee.name.strip().lower(),
-            )
+            problem_pic_filter(DmMeetingSummary, [employee.id], [employee.name.strip().lower()])
         )
         .order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
     )
-    return [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
+    rows = [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
+    rows += workshop_problems.for_pic(db, employee)
+    return sorted(rows, key=lambda row: (row.date, abs(row.id)), reverse=True)
 
 @router.get("/problems", response_model=list[myProblemOut])
 def list_problems(
@@ -934,7 +932,9 @@ def list_problems(
         stmt = stmt.where(DmMeetingSummary.line_id.in_(target_line_ids))
 
     stmt = stmt.order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
-    return [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
+    rows = [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
+    rows += workshop_problems.for_lines(db, target_line_ids)
+    return sorted(rows, key=lambda row: (row.date, abs(row.id)), reverse=True)
 
 @router.get("/problems/escalations", response_model=list[myProblemOut])
 def list_supervisor_escalations(
@@ -966,10 +966,7 @@ def list_supervisor_escalations(
         sub_ids = [sub.id for sub in subordinates]
         sub_names = [sub.name.strip().lower() for sub in subordinates if sub.name]
 
-        pic_filter = or_(
-            DmMeetingSummary.pic_id.in_(sub_ids),
-            func.lower(func.trim(DmMeetingSummary.pic_name)).in_(sub_names),
-        )
+        pic_filter = problem_pic_filter(DmMeetingSummary, sub_ids, sub_names)
     else:
         # Jika Admin / Manager, dapat melihat seluruh eskalasi
         pic_filter = None
@@ -985,7 +982,12 @@ def list_supervisor_escalations(
         stmt = stmt.where(pic_filter)
 
     stmt = stmt.order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
-    return [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
+    rows = [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
+    if principal.role == "supervisor":
+        rows += workshop_problems.unresolved_for_pics(db, sub_ids, sub_names)
+    else:
+        rows += workshop_problems.unresolved_for_pics(db, None, None)
+    return sorted(rows, key=lambda row: (row.date, abs(row.id)), reverse=True)
 
 
 @router.patch("/problems/{summary_id}", response_model=myProblemOut)
@@ -995,6 +997,8 @@ def set_problem_status(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_active_principal),
 ) -> myProblemOut:
+    if workshop_problems.is_workshop_id(summary_id):
+        return workshop_problems.set_status(db, principal.employee, summary_id, payload.status)
     sm = db.get(DmMeetingSummary, summary_id)
     if sm is None:
         raise HTTPException(status_code=404, detail="Problem tidak ditemukan.")
@@ -1027,11 +1031,14 @@ def set_problem_solution(
     principal: Principal = Depends(get_active_principal),
 ) -> myProblemOut:
     employee = principal.employee
-    if principal.role != "member" or employee is None:
+    if employee is None:
         raise HTTPException(
             status_code=403,
-            detail="Hanya member yang dapat mengisi solusi.",
+            detail="Hanya akun karyawan PIC yang dapat mengisi solusi.",
         )
+
+    if workshop_problems.is_workshop_id(summary_id):
+        return workshop_problems.set_solution(db, employee, summary_id, payload.solution)
 
     sm = db.get(DmMeetingSummary, summary_id)
     if sm is None:
@@ -1040,10 +1047,10 @@ def set_problem_solution(
             detail="Problem tidak ditemukan.",
         )
 
-    if sm.pic_id != employee.id:
+    if not _is_pic(sm, employee):
         raise HTTPException(
             status_code=403,
-            detail="Hanya member PIC masalah ini yang dapat mengisi solusi.",
+            detail="Hanya PIC masalah ini yang dapat mengisi solusi.",
         )
 
     session = db.get(DmMeetingSession, sm.session_id)

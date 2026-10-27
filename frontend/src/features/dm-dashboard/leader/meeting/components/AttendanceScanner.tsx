@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconAlert, IconCheckCircle } from "@/components/ui/icons";
 import { scanFace, type ScanStep } from "../faceScan";
+import { useMeetingApi } from "../MeetingApiContext";
 import type { AttendanceRecord, GuestRecord, MeetingMember } from "../types";
 import { formatClock } from "../utils";
 import { MeetingAvatar } from "./MeetingAvatar";
@@ -92,6 +93,7 @@ export function AttendanceScanner({
   onFinish,
   mode = "initial",
 }: Props) {
+  const api = useMeetingApi();
   const isLateAttendance = mode === "late";
   const videoRef = useRef<HTMLVideoElement>(null);
   const [camera, setCamera] = useState<"loading" | "on" | "off">("loading");
@@ -147,7 +149,7 @@ export function AttendanceScanner({
     setScanning(true);
     setResult(null);
     try {
-      const scan = await scanFace(video, sessionDbId, setStep);
+      const scan = await scanFace(video, sessionDbId, setStep, api);
       const attended = scan.attendance;
       if (!scan.recognized || !attended) {
         setResult({

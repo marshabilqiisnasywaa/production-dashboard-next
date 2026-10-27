@@ -7,6 +7,29 @@
   width: 100%;
 }
 
+.mpv-shell :is(button, input, select):focus-visible {
+  outline: 2px solid #286b46;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .mpv-shell .mpv-bar-left,
+  .mpv-shell .mpv-control-group {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mpv-shell .mpv-control-group,
+  .mpv-shell .mpv-month-stepper {
+    flex-wrap: wrap;
+  }
+
+  .mpv-shell .mpv-bar-select {
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
 /* 1. Header Toolbar */
 .mpv-bar {
   display: flex;
