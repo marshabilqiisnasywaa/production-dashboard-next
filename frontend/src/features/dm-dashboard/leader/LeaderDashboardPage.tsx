@@ -23,6 +23,7 @@ import { LEADER_USER, TIME_SHARES } from "./mockData";
 import type { DateRangeKey } from "./types";
 import { ReminderModal } from "../shared/ReminderModal";
 import { LEADER_ROUTES } from "./routes";
+import ResultsHeatmapPanel from "./results-heatmap/ResultsHeatmapPanel";
 
 const KPI_ICON = {
   clipboard: <IconClipboardCheck size={20} />,
@@ -253,6 +254,9 @@ export default function LeaderDashboardPage() {
         </div>
 
         <div className="dml-grid">
+                  {/* <div style={{ marginBottom: 16 }}>
+          <ResultsHeatmapPanel />
+        </div> */}
           <div style={{ minWidth: 0 }}>
             {inspectionLoading && (
               <p role="status">Memuat detail inspection...</p>
@@ -265,6 +269,9 @@ export default function LeaderDashboardPage() {
             )}
 
             <InspectionSection rows={rows} />
+            <div style={{ marginTop: 16 }}>
+  <ResultsHeatmapPanel />
+</div>
           </div>
           <aside className="dml-aside">
             {/* "Today" first: it is the only card the Leader can act on */}
