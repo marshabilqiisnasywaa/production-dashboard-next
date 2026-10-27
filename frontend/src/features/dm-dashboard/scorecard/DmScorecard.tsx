@@ -22,8 +22,7 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
   const [trend, setTrend] = useState<ScoreTrend>("Total");
   const [tab, setTab] = useState<ScoreTab>("Papercard");
   const [search, setSearch] = useState("");
-  const [expandedPillars, setExpandedPillars] = useState<string[]>(["total", "before", "current", "after"]);
-  const [expandedRows, setExpandedRows] = useState<string[]>([]);
+const [expandedPillars, setExpandedPillars] = useState<string[]>([]);  const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [lossDetail, setLossDetail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -133,7 +132,7 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
             <div className="divide-y divide-border md:hidden">{visibleRows.map((row) => { const rank = row.rank; return <div key={row.leader} className={`p-4 ${rank === 1 ? "bg-primary-soft/50" : ""}`}><div className="flex items-start justify-between"><div><div className="text-xs text-text-secondary">Peringkat {rank} / 5 · {row.dm}</div><div className="mt-1 font-bold">{row.leader}</div><div className="mt-1 text-xs text-text-secondary">{row.line} · {row.model}</div></div><div className={`text-xl font-bold ${scoreTone(row.total)}`}>{formatScore(row.total)}</div></div><div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs"><div className="rounded-lg bg-section p-2"><span className="text-text-secondary">Before</span><strong className="mt-1 block">{formatScore(row.before)}</strong></div><div className="rounded-lg bg-section p-2"><span className="text-text-secondary">Current</span><strong className="mt-1 block">{formatScore(row.current)}</strong></div><div className="rounded-lg bg-section p-2"><span className="text-text-secondary">After</span><strong className="mt-1 block">{formatScore(row.after)}</strong></div></div></div>; })}</div></>}
           </Card>
 
-          <div className="mb-6 grid grid-cols-1 gap-5 xl:grid-cols-dashboard">
+            <div className="mb-6">
             <Card className="p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div><div className="font-bold">Tren nilai harian</div><div className="mt-1 text-xs text-text-secondary">{selectedDm}</div></div>
@@ -143,7 +142,7 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
             </Card>
             <Card className="p-5">
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <div><div className="font-bold">Penyebab kehilangan poin · September 2026</div><div className="mt-1 text-xs leading-relaxed text-text-secondary">Poin yang hilang dari maksimum 100: total -11,65. Batas agar mencapai target 90 adalah -10,00.</div></div>
+                
                 <Badge tone="warning">Lebih 1,65 dari batas</Badge>
               </div>
               <div className="mt-4 divide-y divide-border">{[
