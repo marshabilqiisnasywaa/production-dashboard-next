@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { adminApi } from "../api";
-import type { DmEmployee, DmLine, DmMpvInput } from "../api";
+import type { DmMvpCandidate, DmLine, DmMpvInput } from "../api";
 import { formatPeriod, previousPeriod } from "../dmData";
 import type { DmMpv } from "../dmData";
 import "./MpvManager.css";
@@ -10,7 +10,13 @@ import "./MpvManager.css";
 interface MpvManagerProps {
   lines: DmLine[];
   call: <T>(fn: () => Promise<T>) => Promise<T>;
+  api?: Pick<typeof adminApi, "mpvHistory" | "saveMpv" | "deleteMpv">;
+  candidates?: (lineId: number) => Promise<DmMvpCandidate[]>;
+  allowManual?: boolean;
+  emptyLinesMessage?: string;
 }
+
+const adminCandidates = () => adminApi.employees();
 
 const PERIOD_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -32,11 +38,20 @@ function shiftPeriod(currPeriod: string, deltaMonths: number): string {
   return `${y}-${m}`;
 }
 
-export default function MpvManager({ lines, call }: MpvManagerProps) {
+export default function MpvManager({
+  lines,
+  call,
+  api = adminApi,
+  candidates = adminCandidates,
+  allowManual = true,
+  emptyLinesMessage,
+}: MpvManagerProps) {
   const [lineId, setLineId] = useState<number | null>(lines[0]?.id ?? null);
   const [period, setPeriod] = useState(previousPeriod());
   const [history, setHistory] = useState<DmMpv[]>([]);
-  const [employees, setEmployees] = useState<DmEmployee[]>([]);
+  const [employees, setEmployees] = useState<DmMvpCandidate[]>([]);
+  const loadVersion = useRef(0);
+  const [loadedLineId, setLoadedLineId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -57,6 +72,7 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
   const line = lines.find((item) => item.id === lineId) ?? null;
 
   const load = useCallback(async () => {
+    const version = ++loadVersion.current;
     if (lineId === null) {
       setHistory([]);
       return;
@@ -65,19 +81,22 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
     setLoadError(null);
     try {
       const [nextHistory, nextEmployees] = await call(() =>
-        Promise.all([adminApi.mpvHistory(lineId), adminApi.employees()])
+        Promise.all([api.mpvHistory(lineId), candidates(lineId)])
       );
+      if (version !== loadVersion.current) return;
       setHistory(nextHistory);
       setEmployees(nextEmployees);
+      setLoadedLineId(lineId);
     } catch (error) {
-      setLoadError(messageOf(error));
+      if (version === loadVersion.current) setLoadError(messageOf(error));
     } finally {
-      setLoading(false);
+      if (version === loadVersion.current) setLoading(false);
     }
-  }, [call, lineId]);
+  }, [call, lineId, api, candidates]);
 
   useEffect(() => {
     load();
+    return () => { loadVersion.current += 1; };
   }, [load]);
 
   useEffect(() => {
@@ -90,13 +109,19 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
   useEffect(() => {
     setIsReassigning(false);
     setPickEmpPk("");
+    setShowEditModal(false);
   }, [period, lineId]);
 
   if (lines.length === 0 || line === null) {
     return (
       <div className="dm-admin-state-block">
         <h3>Belum ada lini</h3>
-        <p>MPV diatur per lini. Buat lini dulu di tab Lini, Workshop &amp; Tim.</p>
+        <p>
+          {emptyLinesMessage ??
+            (allowManual
+              ? "MPV diatur per lini. Buat lini dulu di tab Lini, Workshop & Tim."
+              : "Belum ada lini yang ditugaskan kepada Anda. Hubungi admin untuk mengatur penugasan.")}
+        </p>
       </div>
     );
   }
@@ -108,11 +133,11 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
   // Quick assign from dropdown
   async function handleAssign(e: React.FormEvent) {
     e.preventDefault();
-    if (lineId === null || !pickEmpPk) return;
+    if (lineId === null || !pickEmpPk || !validPeriod || loading || loadedLineId !== lineId) return;
     setSavingAction(true);
     setStatus(null);
     try {
-      await call(() => adminApi.saveMpv(lineId, period, { employeePk: Number(pickEmpPk) }));
+      await call(() => api.saveMpv(lineId, period, { employeePk: Number(pickEmpPk) }));
       const emp = employees.find((x) => x.id === Number(pickEmpPk));
       setStatus(`✓ MPV ${formatPeriod(period)} (${emp?.name ?? "Operator"}) berhasil disimpan.`);
       setPickEmpPk("");
@@ -175,7 +200,7 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
         supervisor: null,
         workPhone: null,
       };
-      await call(() => adminApi.saveMpv(lineId, period, data));
+      await call(() => api.saveMpv(lineId, period, data));
       setStatus(`✓ Data MPV ${formatPeriod(period)} berhasil diperbarui.`);
       setShowEditModal(false);
       await load();
@@ -193,7 +218,7 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
     if (!window.confirm(`Hapus MPV ${formatPeriod(targetPeriod)} (${targetName}) dari riwayat?`)) return;
     setSavingAction(true);
     try {
-      await call(() => adminApi.deleteMpv(lineId, targetPeriod));
+      await call(() => api.deleteMpv(lineId, targetPeriod));
       setStatus(`MPV ${formatPeriod(targetPeriod)} dihapus dari riwayat.`);
       await load();
     } catch (err) {
@@ -212,8 +237,10 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
           <div className="mpv-control-group">
             <label className="mpv-bar-label">Lini:</label>
             <select
+              aria-label="Lini MVP"
               className="mpv-bar-select"
               value={lineId ?? ""}
+              disabled={savingAction}
               onChange={(e) => {
                 setLineId(Number(e.target.value));
                 setStatus(null);
@@ -234,12 +261,15 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
                 type="button"
                 className="mpv-step-btn"
                 onClick={() => setPeriod((p) => shiftPeriod(p, -1))}
+                disabled={savingAction || !validPeriod}
                 title="Bulan sebelumnya"
               >
                 ‹
               </button>
               <input
                 type="month"
+                aria-label="Periode MVP"
+                disabled={savingAction}
                 className="mpv-month-field"
                 value={period}
                 onChange={(e) => {
@@ -251,6 +281,7 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
                 type="button"
                 className="mpv-step-btn"
                 onClick={() => setPeriod((p) => shiftPeriod(p, 1))}
+                disabled={savingAction || !validPeriod}
                 title="Bulan berikutnya"
               >
                 ›
@@ -259,6 +290,7 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
                 type="button"
                 className={`mpv-quick-chip ${period === previousPeriod() ? "is-active" : ""}`}
                 onClick={() => setPeriod(previousPeriod())}
+                disabled={savingAction}
                 title="Bulan kemarin (standar tayang dashboard)"
               >
                 Bulan Kemarin
@@ -271,7 +303,7 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
           type="button"
           className="mpv-refresh-btn"
           onClick={load}
-          disabled={loading}
+          disabled={loading || savingAction}
           title="Segarkan data dari server"
         >
           {loading ? "Memuat..." : "↻ Segarkan"}
@@ -289,7 +321,14 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
       )}
 
       {/* 2. Compact 2-Column Grid */}
-      <div className="mpv-grid">
+      {loadError ? (
+        <div className="mpv-empty-notice" role="alert">
+          <p>{loadError}</p>
+          <button type="button" className="mpv-sm-btn mpv-btn-soft-primary" onClick={load}>Coba lagi</button>
+        </div>
+      ) : loading || loadedLineId !== lineId ? (
+        <div className="mpv-empty-notice" role="status">Memuat MVP...</div>
+      ) : <div className="mpv-grid">
         {/* Left Column: Active / Selected Period Card */}
         <section className="mpv-card mpv-card-focus">
           <div className="mpv-card-head">
@@ -331,18 +370,19 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
                 </div>
 
                 <div className="mpv-actions-bar">
-                  <button
+                  {allowManual && <button
                     type="button"
                     className="mpv-sm-btn mpv-btn-soft-primary"
                     onClick={openEditor}
                     title="Ubah teks nama, jabatan atau foto"
                   >
                     Ubah Data
-                  </button>
+                  </button>}
                   <button
                     type="button"
                     className="mpv-sm-btn mpv-btn-soft-ghost"
                     onClick={() => setIsReassigning(true)}
+                    disabled={savingAction}
                     title="Ganti ke karyawan lain"
                   >
                     Ganti Orang
@@ -369,6 +409,7 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
                 </div>
 
                 <select
+                  aria-label="Karyawan penerima MVP"
                   className="mpv-assign-dropdown"
                   value={pickEmpPk}
                   onChange={(e) => setPickEmpPk(e.target.value)}
@@ -389,19 +430,19 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
                   <button
                     type="submit"
                     className="mpv-sm-btn mpv-btn-solid-green"
-                    disabled={savingAction || !pickEmpPk}
+                    disabled={savingAction || !pickEmpPk || !validPeriod}
                   >
                     {savingAction ? "Menyimpan..." : "Tetapkan MPV"}
                   </button>
 
-                  <button
+                  {allowManual && <button
                     type="button"
                     className="mpv-sm-btn mpv-btn-soft-ghost"
                     onClick={openEditor}
                     title="Input manual jika karyawan belum terdaftar"
                   >
                     + Input Manual
-                  </button>
+                  </button>}
 
                   {isReassigning && (
                     <button
@@ -486,6 +527,7 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
                             <button
                               type="button"
                               className={`mpv-mini-btn ${isSelected ? "is-selected" : ""}`}
+                              disabled={savingAction}
                               onClick={() => {
                                 setPeriod(item.period);
                                 setStatus(null);
@@ -513,10 +555,10 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
             )}
           </div>
         </section>
-      </div>
+      </div>}
 
       {/* 3. Soft Detail/Manual Modal */}
-      {showEditModal && (
+      {allowManual && showEditModal && (
         <div className="mpv-modal-overlay" onClick={() => setShowEditModal(false)}>
           <div className="mpv-modal-panel" onClick={(e) => e.stopPropagation()}>
             <div className="mpv-modal-top">
@@ -569,8 +611,6 @@ export default function MpvManager({ lines, call }: MpvManagerProps) {
                     <option value="ME">ME</option>
                     <option value="PE">PE</option>
                     <option value="QC">QC</option>
-                    <option value="WAREHOUSE">WAREHOUSE</option>
-                    <option value="OTHER">OTHER</option>
                   </select>
                 </div>
 

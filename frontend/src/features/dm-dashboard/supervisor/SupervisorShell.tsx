@@ -12,6 +12,7 @@ import { SupervisorHeader } from "./components/SupervisorHeader";
 
 function SupervisorFrame({ children }: { children: ReactNode }) {
   const {
+    me,
     pendingApprovalsCount,
     escalatedCount,
     toastMessage,
@@ -29,6 +30,7 @@ function SupervisorFrame({ children }: { children: ReactNode }) {
       <SupervisorSidebar
         pendingApprovalsCount={pendingApprovalsCount}
         escalationCount={escalatedCount}
+        canHostWorkshopMeeting={(me?.dept ?? "").trim().toUpperCase() === "PROD"}
       />
       <div className="dml-main">
         <SupervisorHeader />

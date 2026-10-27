@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import "./problems.css";
 import { Card } from "@/components/ui/Card";
 import { ProblemTable } from "./components/ProblemTable";
+import { ProblemLoadError } from "./components/ProblemLoadError";
 import { useProblems } from "./hooks/useProblems";
 import type { ProblemFilter } from "./types";
 
 export default function ProblemsPage() {
-  const { rows, counts, ready } = useProblems();
+  const { rows, counts, ready, error, refresh } = useProblems();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProblemFilter>("all");
@@ -164,7 +165,7 @@ export default function ProblemsPage() {
           <strong>{rows.length}</strong> masalah
         </div>
 
-        {ready ? (
+        {error ? <ProblemLoadError error={error} onRetry={refresh} /> : ready ? (
           <ProblemTable rows={visible} />
         ) : (
           <div className="dml-empty">Memuat masalah…</div>

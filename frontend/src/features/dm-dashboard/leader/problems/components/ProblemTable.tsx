@@ -151,7 +151,9 @@ export function ProblemTable({
             <th>Tanggal</th>
             <th>Sesi</th>
             <th>Line</th>
+            <th>Kategori</th>
             <th>Masalah</th>
+            <th>Solusi</th>
             <th>PIC</th>
             <th>Due date</th>
             <th>Status</th>

@@ -18,7 +18,6 @@ const ALL_DAYS = [1, 2, 3, 4, 5, 6, 7];
 const DEFAULT_ROWS: DmMeetingScheduleItem[] = [
   { label: "Sesi 1", time: "10:00", days: ALL_DAYS, isActive: true },
   { label: "Sesi 2", time: "14:00", days: ALL_DAYS, isActive: true },
-  { label: "Sesi 3", time: "16:00", days: ALL_DAYS, isActive: true },
 ];
 
 const strip = (rows: Row[]) =>

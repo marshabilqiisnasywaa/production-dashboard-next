@@ -1,6 +1,8 @@
 "use client";
 
-import { meetingApi } from "../../api";
+import { meetingApi, workshopMeetingApi } from "../../api";
+import { MeetingApiProvider, useMeetingApi } from "./MeetingApiContext";
+import { useWorkshopMeetingWorkspace } from "./hooks/useWorkshopMeetingWorkspace";
 import { useEffect, useMemo, useState } from "react";
 import "./meeting.css";
 import { Button } from "@/components/ui/Button";
@@ -35,10 +37,46 @@ import {
   validateItem,
 } from "./utils";
 
-/** Composition only: state machine in hooks/useMeetingFlow, every card in components/. */
+type DmWorkspace = ReturnType<typeof useMeetingWorkspace>;
+type WorkshopWorkspace = ReturnType<typeof useWorkshopMeetingWorkspace>;
+type MeetingViewProps =
+  | { variant: "dm"; source: DmWorkspace }
+  | { variant: "workshop"; source: WorkshopWorkspace };
+
 export default function MeetingPage() {
+  const source = useMeetingWorkspace();
+  return <MeetingView variant="dm" source={source} />;
+}
+
+export function WorkshopMeetingPage() {
+  const source = useWorkshopMeetingWorkspace();
+  return (
+    <MeetingApiProvider value={workshopMeetingApi}>
+      <MeetingView variant="workshop" source={source} />
+    </MeetingApiProvider>
+  );
+}
+
+/** Composition only: state machine in hooks/useMeetingFlow, every card in components/. */
+function MeetingView(props: MeetingViewProps) {
+  const { variant } = props;
+  const api = useMeetingApi();
   const now = useNow(60_000);
-  const workspace = useMeetingWorkspace();
+  const dm = props.variant === "dm" ? props.source : null;
+  const ws = props.variant === "workshop" ? props.source : null;
+  const workspace = {
+    me: props.source.me,
+    sessions: props.source.sessions,
+    serverSessions: props.source.serverSessions,
+    loading: props.source.loading,
+    error: props.source.error,
+    updateSession: props.source.updateSession,
+    line: dm?.line ?? null,
+    group: dm?.group ?? null,
+    ownLines: dm?.ownLines ?? [],
+    selectLine: dm?.selectLine ?? (() => undefined),
+    workshop: ws?.workshop ?? null,
+  };
   const { sessions, loading: sessionsLoading } = workspace;
   const [scope, setScope] = useState<"line" | "dm">("line");
   const [preparing, setPreparing] = useState(false);
@@ -104,7 +142,7 @@ export default function MeetingPage() {
   useEffect(() => {
     let alive = true;
     setSummaryOptionsError(false);
-    meetingApi
+    api
       .summaryOptions()
       .then((options) => {
         if (alive) setSummaryOptions(options);
@@ -175,7 +213,7 @@ export default function MeetingPage() {
     if (!session || preparing || members.length === 0) return;
     setPreparing(true);
     try {
-      const updated = await meetingApi.prepare(session.dbId, effectiveScope);
+      const updated = await api.prepare(session.dbId, effectiveScope);
       workspace.updateSession(updated);
       actions.openPresensi();
       setSyncError(null);
@@ -195,7 +233,7 @@ export default function MeetingPage() {
     const member = members.find((m) => m.id === memberId);
     if (!session || !member?.employeeNo) return false;
     try {
-      await meetingApi.saveAbsenceNotes(session.dbId, [
+      await api.saveAbsenceNotes(session.dbId, [
         { employeeNo: member.employeeNo, reason: next.reason, note: next.note },
       ]);
       actions.setAbsence(memberId, next);
@@ -225,8 +263,9 @@ export default function MeetingPage() {
         .filter((n) => n.reason !== "none" || n.note.trim() !== "");
       try {
         if (notes.length > 0)
-          await meetingApi.saveAbsenceNotes(session.dbId, notes);
-        const updated = await meetingApi.startSession({
+          await api.saveAbsenceNotes(session.dbId, notes);
+        const updated = await api.startSession({
+          sessionId: session.dbId,
           lineId: session.lineId,
           date: session.date,
           shift: session.shift,
@@ -261,7 +300,7 @@ export default function MeetingPage() {
           lineCode: i.line || null,
         }));
       try {
-        const updated = await meetingApi.endSession(session.dbId, {
+        const updated = await api.endSession(session.dbId, {
           summaries,
         });
         workspace.updateSession(updated);
@@ -289,7 +328,7 @@ export default function MeetingPage() {
         )
         .map((m) => m.employeeNo as string);
       try {
-        await meetingApi.closePresensi(session.dbId, absentNos);
+        await api.closePresensi(session.dbId, absentNos);
         setSyncError(null);
       } catch (err) {
         setSyncError(
@@ -305,7 +344,9 @@ export default function MeetingPage() {
 
   const phase = state.phase;
   const rosterTitle =
-    phase === "running" || phase === "done" ? "Kehadiran" : "Daftar Member DM";
+    phase === "running" || phase === "done" ? "Kehadiran" : variant === "workshop"
+    ? "Daftar Supervisor"
+    : "Daftar Member DM";
   const rosterNote = MEETING_CONFIG.requireAllPresent
     ? "Semua member dari Triangle Team wajib hadir untuk memulai meeting."
     : phase === "running" || phase === "done"
@@ -335,7 +376,7 @@ export default function MeetingPage() {
   useEffect(() => {
     if (!hydrated || sessionDbId === null) return;
     let alive = true;
-    meetingApi
+    api
       .getSession(sessionDbId)
       .then((server) => {
         if (!alive) return;
@@ -373,45 +414,75 @@ export default function MeetingPage() {
     guestPhotos[employeeNo] ??
     null;
 
+  const pageTitle = variant === "workshop" ? "Workshop Meeting" : "DM Meeting";
+  const pageSubtitle =
+    variant === "workshop"
+      ? `Supervisor · ${workspace.workshop?.name ?? "Workshop"}`
+      : `During-Management · ${workspace.line?.workshopName ?? MEETING_LOCATION}`;
+  const lineSelector =
+    variant === "workshop"
+      ? ws &&
+        ws.workshops.length > 1 && (
+          <label>
+            Workshop{" "}
+            <select
+              className="ui-select"
+              aria-label="Pilih workshop meeting"
+              value={ws.workshop?.id ?? ""}
+              onChange={(event) => {
+                ws.selectWorkshop(Number(event.target.value));
+                setPickedId(null);
+                setSyncError(null);
+              }}
+            >
+              {ws.workshops.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )
+      : workspace.ownLines.length > 1 && (
+          <label>
+            Lini saya{" "}
+            <select
+              className="ui-select"
+              aria-label="Pilih lini meeting"
+              value={workspace.line?.id ?? ""}
+              onChange={(event) => {
+                workspace.selectLine(Number(event.target.value));
+                setPickedId(null);
+                setScope("line");
+                setSyncError(null);
+              }}
+            >
+              {workspace.ownLines.map((line) => (
+                <option key={line.id} value={line.id}>
+                  {line.code} · {line.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        );
+
   if (!session) {
     return (
       <div className="dml-mt">
         <div className="dml-page-head">
           <div>
-            <h1>DM Meeting</h1>
-            <p>
-              During-Management ·{" "}
-              {workspace.line?.workshopName ?? MEETING_LOCATION}
-            </p>
-            {workspace.ownLines.length > 1 && (
-              <label>
-                Lini saya{" "}
-                <select
-                  className="ui-select"
-                  aria-label="Pilih lini meeting"
-                  value={workspace.line?.id ?? ""}
-                  onChange={(event) => {
-                    workspace.selectLine(Number(event.target.value));
-                    setPickedId(null);
-                    setScope("line");
-                    setSyncError(null);
-                  }}
-                >
-                  {workspace.ownLines.map((line) => (
-                    <option key={line.id} value={line.id}>
-                      {line.code} · {line.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
+            <h1>{pageTitle}</h1>
+            <p>{pageSubtitle}</p>
+            {lineSelector}
           </div>
         </div>
         <div className="dml-empty">
           {sessionsLoading
             ? "Memuat jadwal meeting…"
             : workspace.error ??
-              "Belum ada jadwal meeting untuk lini ini hari ini. Admin bisa mengaturnya di Papercard & Meeting > Jadwal Meeting."}
+              (variant === "workshop"
+              ? "Belum ada workshop yang ditugaskan ke akun ini. Hubungi admin."
+              : "Belum ada jadwal meeting untuk lini ini hari ini. Admin bisa mengaturnya di Papercard & Meeting > Jadwal Meeting.")}
         </div>
       </div>
     );
@@ -421,33 +492,9 @@ export default function MeetingPage() {
     <div className="dml-mt">
       <div className="dml-page-head">
         <div>
-          <h1>DM Meeting</h1>
-          <p>
-            During-Management ·{" "}
-            {workspace.line?.workshopName ?? MEETING_LOCATION}
-          </p>
-          {workspace.ownLines.length > 1 && (
-            <label>
-              Lini saya{" "}
-              <select
-                className="ui-select"
-                aria-label="Pilih lini meeting"
-                value={workspace.line?.id ?? ""}
-                onChange={(event) => {
-                  workspace.selectLine(Number(event.target.value));
-                  setPickedId(null);
-                  setScope("line");
-                  setSyncError(null);
-                }}
-              >
-                {workspace.ownLines.map((line) => (
-                  <option key={line.id} value={line.id}>
-                    {line.code} · {line.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
+          <h1>{pageTitle}</h1>
+          <p>{pageSubtitle}</p>
+          {lineSelector}
         </div>
         <SegmentedControl
           ariaLabel="Pilih sesi meeting"
@@ -461,7 +508,7 @@ export default function MeetingPage() {
         />
       </div>
 
-      {phase === "idle" && !serverSession?.rosterPrepared && !readOnly && (
+      {variant === "dm" && phase === "idle" && !serverSession?.rosterPrepared && !readOnly && (
         <section className="ui-card dml-meeting-scope">
           <strong>Peserta meeting</strong>
           <SegmentedControl
@@ -497,7 +544,7 @@ export default function MeetingPage() {
           {serverSession?.dmGroupName
             ? ` untuk ${serverSession.dmGroupName}`
             : ""}
-          . Presensi lini ini tersinkron dari meeting tersebut.
+          . {variant === "workshop" ? "Presensi workshop ini" : "Presensi lini ini"} tersinkron dari meeting tersebut.
         </div>
       )}
       {preparing && (
@@ -512,6 +559,8 @@ export default function MeetingPage() {
             ? serverSession?.dmGroupName ??
               workspace.group?.name ??
               "Gabungan DM"
+            : variant === "workshop"
+            ? workspace.workshop?.name ?? "Workshop"
             : workspace.line?.name ?? MEETING_AREA
         } · ${session.label}`}
         phase={phase}
@@ -529,7 +578,7 @@ export default function MeetingPage() {
           session.start,
           session.durationMin
         )}`}
-        location={MEETING_LOCATION}
+        location={variant === "workshop" ? "Supervisor" : MEETING_LOCATION}
       />
 
       {syncError && (

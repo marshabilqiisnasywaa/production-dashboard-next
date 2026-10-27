@@ -16,8 +16,18 @@ from app.models.notification_setting import DmNotificationSetting
 from app.models.papercard import PapercardSubmission, PapercardTemplate
 from app.models.user import User
 from app.models.workshop import Workshop
+from app.models.workshop_meeting import (
+    SupervisorWorkshop,
+    WorkshopMeetingAttendance,
+    WorkshopMeetingSession,
+    WorkshopMeetingSummary,
+)
 
 __all__ = [
+    "SupervisorWorkshop",
+    "WorkshopMeetingAttendance",
+    "WorkshopMeetingSession",
+    "WorkshopMeetingSummary",
     "Board",
     "BoardMember",
     "DmGroup",

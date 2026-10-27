@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IconClipboardCheck, IconDashboard, IconGauge, IconHistory, IconLogout, IconPulse, IconUsers, IconAlert } from "@/components/ui/icons";
+import {
+  IconClipboardCheck,
+  IconDashboard,
+  IconGauge,
+  IconHistory,
+  IconLogout,
+  IconPulse,
+  IconUsers,
+  IconAlert,
+} from "@/components/ui/icons";
 import { Sidebar, type SidebarSection } from "@/components/ui/Sidebar";
 import { LEADER_ROUTES } from "../routes";
 import { accountApi, setToken, type DmMe } from "../../api";
@@ -30,7 +39,21 @@ export function LeaderSidebar() {
   });
 
   const sections: SidebarSection[] = [
-    { items: [{ label: "Dashboard", href: LEADER_ROUTES.dashboard, icon: <IconDashboard />, exact: true }] },
+    {
+      items: [
+        {
+          label: "Dashboard",
+          href: LEADER_ROUTES.dashboard,
+          icon: <IconDashboard />,
+          exact: true,
+        },
+        {
+          label: "MVP of the Month",
+          href: LEADER_ROUTES.mvp,
+          icon: <IconUsers />,
+        },
+      ],
+    },
     {
       title: "Pre Management",
       items: [
@@ -42,15 +65,36 @@ export function LeaderSidebar() {
         },
       ],
     },
-    { title: "During Management", items: [{ label: "DM Meeting", href: LEADER_ROUTES.meeting, icon: <IconUsers /> }] },
+    {
+      title: "During Management",
+      items: [
+        {
+          label: "DM Meeting",
+          href: LEADER_ROUTES.meeting,
+          icon: <IconUsers />,
+        },
+      ],
+    },
     {
       title: "Post Management",
       items: [
-        { label: "5Why & PDCA", href: LEADER_ROUTES.fiveWhy, icon: <IconPulse /> },
-        { label: "Tracking Masalah", href: LEADER_ROUTES.problems, icon: <IconAlert /> },
+        {
+          label: "5Why & PDCA",
+          href: LEADER_ROUTES.fiveWhy,
+          icon: <IconPulse />,
+        },
+        {
+          label: "Tracking Masalah",
+          href: LEADER_ROUTES.problems,
+          icon: <IconAlert />,
+        },
+        // { label: "Masalah Saya", href: LEADER_ROUTES.myProblems, icon: <IconClipboardCheck /> },
       ],
     },
-    { title: "History", items: [{ label: "Log", href: LEADER_ROUTES.log, icon: <IconHistory /> }] },
+    {
+      title: "History",
+      items: [{ label: "Log", href: LEADER_ROUTES.log, icon: <IconHistory /> }],
+    },
   ];
 
   const handleLogout = () => {

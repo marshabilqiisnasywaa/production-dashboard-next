@@ -1,4 +1,4 @@
-import { meetingApi, type DmFaceScan } from "../../api";
+import { meetingApi, type DmFaceScan, type MeetingApi } from "../../api";
 
 export type ScanStep =
   | { kind: "straight" }
@@ -27,8 +27,9 @@ export async function scanFace(
   video: HTMLVideoElement,
   sessionDbId: number,
   onStep: (step: ScanStep) => void,
+  api: MeetingApi = meetingApi,
 ): Promise<DmFaceScan> {
-  const challenge = await meetingApi.faceChallenge(sessionDbId);
+  const challenge = await api.faceChallenge(sessionDbId);
   const frames: Blob[] = [];
 
   if (challenge.required) {
@@ -45,5 +46,5 @@ export async function scanFace(
   }
 
   onStep({ kind: "sending" });
-  return meetingApi.faceScan(sessionDbId, frames, challenge.token);
+  return api.faceScan(sessionDbId, frames, challenge.token);
 }

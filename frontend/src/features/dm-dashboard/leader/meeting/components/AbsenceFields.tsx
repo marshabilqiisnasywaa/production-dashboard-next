@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { meetingApi, type MeetingRepresentative } from "../../../api";
+import type { MeetingRepresentative } from "../../../api";
+import { useMeetingApi } from "../MeetingApiContext";
 import type { AbsenceNote } from "../types";
 import { ABSENCE_REASONS } from "../utils";
 
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function AbsenceFields({ idPrefix, name, employeeNo, value, onChange }: Props) {
+  const api = useMeetingApi();
   const represented = value.reason === "represented";
   const [users, setUsers] = useState<MeetingRepresentative[]>([]);
   const [loading, setLoading] = useState(false);
@@ -22,7 +24,7 @@ export function AbsenceFields({ idPrefix, name, employeeNo, value, onChange }: P
     let alive = true;
     setLoading(true);
     setError(false);
-    meetingApi.representatives().then((list) => {
+    api.representatives(employeeNo).then((list) => {
       if (alive) setUsers(list);
     }).catch(() => {
       if (alive) setError(true);
@@ -30,7 +32,7 @@ export function AbsenceFields({ idPrefix, name, employeeNo, value, onChange }: P
       if (alive) setLoading(false);
     });
     return () => { alive = false; };
-  }, [represented, retry]);
+  }, [api, employeeNo, represented, retry]);
   const options = users.filter((user) => user.employeeNo !== employeeNo);
   const representativeValue = (user: MeetingRepresentative) => `${user.name} (${user.employeeNo})`;
   const savedOption = options.find((user) => representativeValue(user) === value.note);
