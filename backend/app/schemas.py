@@ -389,6 +389,7 @@ class MeetingSummaryOut(CamelModel):
     line_id: int
     problem: str
     problem_categories: list[str] | None = None
+    solution: str | None = None
     pic_name: str
     pic_id: int | None
     due_date: str | None
@@ -407,6 +408,7 @@ class myProblemOut(CamelModel):
     session_label : str | None = None
     problem : str
     problem_categories : list[str] | None = None
+    solution : str | None = None
     pic_name : str
     pic_id : int | None
     due_date : str | None
@@ -414,6 +416,9 @@ class myProblemOut(CamelModel):
 
 class problemStatusIn(CamelModel):
     status : ProblemStatus
+
+class ProblemSolutionIn(CamelModel):
+    solution: str | None = None
 
 class EmployeePhotoOut(CamelModel):
     photo_url: str | None = None

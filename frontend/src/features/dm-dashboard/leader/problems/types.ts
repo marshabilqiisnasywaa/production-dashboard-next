@@ -27,6 +27,8 @@ export interface ProblemRow {
   sessionLabel: string;
   line: string;
   problem: string;
+  problemCategories?: string[];
+  solution?: string | null;
   picName: string;
   due: string;
   status: ProblemStatus;

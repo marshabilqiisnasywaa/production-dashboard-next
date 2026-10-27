@@ -602,6 +602,7 @@ export type DmMeetingSummary = {
   lineId: number;
   problem: string;
   problemCategories?: string[] | null;
+  solution?: string | null;
   picName: string;
   picId?: number | null;
   dueDate?: string | null;
@@ -702,6 +703,7 @@ export type DmMyProblem = {
   sessionLabel?: string | null;
   problem: string;
   problemCategories?: string[] | null;
+  solution?: string | null;
   picName: string;
   picId?: number | null;
   dueDate?: string | null;
@@ -918,6 +920,12 @@ export const meetingApi = {
     );
   },
   myProblems: () => request<DmMyProblem[]>("/meetings/problems/mine", {}, true),
+  setProblemSolution: (id: number, solution: string | null) =>
+    request<DmMyProblem>(
+      `/meetings/problems/${id}/solution`,
+      json("PATCH", { solution }),
+      true
+    ),
   setProblemStatus: (id: number, status: "open" | "in_progress" | "resolved") =>
     request<DmMyProblem>(
       `/meetings/problems/${id}`,

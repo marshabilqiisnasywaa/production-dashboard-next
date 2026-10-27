@@ -41,6 +41,7 @@ from app.schemas import (
     PresensiCloseIn,
     myProblemOut,
     problemStatusIn,
+    ProblemSolutionIn,
 )
 from app.services.accounts import active_line, active_lines
 from app.services.meeting_attendance import home_line_code
@@ -115,6 +116,7 @@ def _map_session(s: DmMeetingSession, db: Session) -> MeetingSessionOut:
             line_id=sm.line_id,
             problem=sm.problem,
             problem_categories=sm.problem_categories,
+            solution=sm.solution,
             pic_name=sm.pic_name,
             pic_id=sm.pic_id,
             due_date=sm.due_date,
@@ -692,6 +694,7 @@ def _my_problem_out(sm : DmMeetingSummary, session: DmMeetingSession) -> myProbl
         session_label=session.label,
         problem=sm.problem,
         problem_categories=sm.problem_categories,
+        solution=sm.solution,
         pic_name=sm.pic_name,
         pic_id=sm.pic_id,
         due_date=sm.due_date,
@@ -1013,6 +1016,48 @@ def set_problem_status(
     session = db.get(DmMeetingSession, sm.session_id)
     return _my_problem_out(sm, session)
 
+@router.patch(
+    "/problems/{summary_id}/solution",
+    response_model=myProblemOut,
+)
+def set_problem_solution(
+    summary_id: int,
+    payload: ProblemSolutionIn,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> myProblemOut:
+    employee = principal.employee
+    if principal.role != "member" or employee is None:
+        raise HTTPException(
+            status_code=403,
+            detail="Hanya member yang dapat mengisi solusi.",
+        )
+
+    sm = db.get(DmMeetingSummary, summary_id)
+    if sm is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Problem tidak ditemukan.",
+        )
+
+    if sm.pic_id != employee.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Hanya member PIC masalah ini yang dapat mengisi solusi.",
+        )
+
+    session = db.get(DmMeetingSession, sm.session_id)
+    if session is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Sesi meeting tidak ditemukan.",
+        )
+
+    sm.solution = (payload.solution or "").strip() or None
+    db.commit()
+    db.refresh(sm)
+
+    return _my_problem_out(sm, session)
 
 # -----------------------------------------------------------------------------
 # Post-Meeting (Unlocked after 3 During-Meeting sessions completed)

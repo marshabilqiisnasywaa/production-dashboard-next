@@ -16,6 +16,7 @@ interface Props {
   rows: ProblemRow[];
   emptyMessage?: string;
   onToggleSolved?: (id: string, currentlySolved: boolean) => void;
+  onSaveSolution?: (id: string, solution: string) => Promise<void>;
 }
 
 type ConfirmState = { id: string; action: "complete" | "reopen" } | null;
@@ -25,7 +26,10 @@ function formatSolvedAt(value: string | null): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
 
-  const day = date.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+  const day = date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+  });
   const time = date
     .toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
     .replace(/\./g, ":");
@@ -37,6 +41,7 @@ export function ProblemTable({
   rows,
   emptyMessage = "Tidak ada masalah yang sesuai dengan filter.",
   onToggleSolved,
+  onSaveSolution,
 }: Props) {
   const [confirming, setConfirming] = useState<ConfirmState>(null);
   const confirmRef = useRef<HTMLDivElement | null>(null);
@@ -48,7 +53,10 @@ export function ProblemTable({
       if (event.key === "Escape") setConfirming(null);
     };
     const handlePointer = (event: PointerEvent) => {
-      if (confirmRef.current && !confirmRef.current.contains(event.target as Node)) {
+      if (
+        confirmRef.current &&
+        !confirmRef.current.contains(event.target as Node)
+      ) {
         setConfirming(null);
       }
     };
@@ -73,7 +81,9 @@ export function ProblemTable({
           <button
             type="button"
             className="dml-pb-act-yes"
-            aria-label={`${reopen ? "Ya, buka kembali" : "Ya, tandai selesai"}: ${row.problem || "-"}`}
+            aria-label={`${
+              reopen ? "Ya, buka kembali" : "Ya, tandai selesai"
+            }: ${row.problem || "-"}`}
             onClick={() => {
               onToggleSolved?.(row.id, reopen);
               setConfirming(null);
@@ -84,7 +94,9 @@ export function ProblemTable({
           <button
             type="button"
             className="dml-pb-act-cancel"
-            aria-label={`Batal ${reopen ? "buka kembali" : "tandai selesai"}: ${row.problem || "-"}`}
+            aria-label={`Batal ${reopen ? "buka kembali" : "tandai selesai"}: ${
+              row.problem || "-"
+            }`}
             onClick={() => setConfirming(null)}
           >
             Batal
@@ -93,6 +105,43 @@ export function ProblemTable({
       </div>
     );
   };
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [solutionDraft, setSolutionDraft] = useState("");
+  const [savingSolution, setSavingSolution] = useState(false);
+  const [solutionError, setSolutionError] = useState<string | null>(null);
+
+  function startSolutionEdit(row: ProblemRow) {
+    setEditingId(row.id);
+    setSolutionDraft(row.solution ?? "");
+    setSolutionError(null);
+  }
+
+  function cancelSolutionEdit() {
+    setEditingId(null);
+    setSolutionDraft("");
+    setSolutionError(null);
+  }
+
+  async function handleSaveSolution() {
+    if (!editingId || !onSaveSolution || savingSolution) return;
+
+    setSavingSolution(true);
+    setSolutionError(null);
+
+    try {
+      await onSaveSolution(editingId, solutionDraft.trim());
+      cancelSolutionEdit();
+    } catch (error) {
+      setSolutionError(
+        error instanceof Error
+          ? error.message
+          : "Solusi gagal disimpan. Coba lagi."
+      );
+    } finally {
+      setSavingSolution(false);
+    }
+  }
 
   return (
     <div className="dml-table-wrap dml-pb-table-wrap">
@@ -115,7 +164,7 @@ export function ProblemTable({
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={onToggleSolved ? 8 : 7} className="dml-empty">
+              <td colSpan={onToggleSolved ? 10 : 9} className="dml-empty">
                 {emptyMessage}
               </td>
             </tr>
@@ -128,17 +177,23 @@ export function ProblemTable({
               return (
                 <tr
                   key={r.id}
-                  className={r.status === "escalated" ? "is-escalated" : undefined}
+                  className={
+                    r.status === "escalated" ? "is-escalated" : undefined
+                  }
                 >
                   <td title={r.date}>{formatMeetingDate(r.date)}</td>
 
                   <td title={r.sessionLabel}>
-                    <span className="dml-pb-truncate">
-                      {r.sessionLabel}
-                    </span>
+                    <span className="dml-pb-truncate">{r.sessionLabel}</span>
                   </td>
 
                   <td title={r.line}>{r.line || "-"}</td>
+
+                  <td style={{ whiteSpace: "normal" }}>
+                    {r.problemCategories?.length
+                      ? r.problemCategories.join(", ")
+                      : "-"}
+                  </td>
 
                   <td className="dml-pb-problem" title={r.problem}>
                     <span className="dml-pb-truncate">
@@ -147,6 +202,37 @@ export function ProblemTable({
                         <span className="dml-pb-sample"> (contoh)</span>
                       )}
                     </span>
+                  </td>
+
+                  <td style={{ whiteSpace: "normal" }}>
+                    {editingId === r.id ? (
+                      <div style={{ minWidth: 220 }}>
+                        <textarea
+                          autoFocus
+                          className="ui-textarea"
+                          rows={3}
+                          aria-label={`Solusi untuk ${r.problem}`}
+                          placeholder="Tulis solusi atau tindakan perbaikan"
+                          value={solutionDraft}
+                          disabled={savingSolution}
+                          onChange={(event) => {
+                            setSolutionDraft(event.target.value);
+                            setSolutionError(null);
+                          }}
+                        />
+
+                        {solutionError && <p role="alert">{solutionError}</p>}
+                      </div>
+                    ) : (
+                      <span
+                        style={{
+                          whiteSpace: "pre-wrap",
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {r.solution || "-"}
+                      </span>
+                    )}
                   </td>
 
                   <td title={r.picName}>{r.picName || "-"}</td>
@@ -171,6 +257,55 @@ export function ProblemTable({
 
                   {onToggleSolved && (
                     <td>
+                      {onSaveSolution && (
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: 8,
+                            marginBottom: 8,
+                          }}
+                        >
+                          {editingId === r.id ? (
+                            <>
+                              <button
+                                type="button"
+                                className="dml-pb-act-btn"
+                                disabled={
+                                  savingSolution ||
+                                  solutionDraft.trim() ===
+                                    (r.solution ?? "").trim()
+                                }
+                                onClick={handleSaveSolution}
+                              >
+                                {savingSolution
+                                  ? "Menyimpan..."
+                                  : "Simpan solusi"}
+                              </button>
+
+                              <button
+                                type="button"
+                                className="dml-pb-act-cancel"
+                                disabled={savingSolution}
+                                onClick={cancelSolutionEdit}
+                              >
+                                Batal
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              className="dml-pb-act-btn"
+                              disabled={editingId !== null}
+                              onClick={() => startSolutionEdit(r)}
+                            >
+                              {r.solution?.trim()
+                                ? "Edit solusi"
+                                : "Tambah solusi"}
+                            </button>
+                          )}
+                        </div>
+                      )}
                       {isSolved ? (
                         <div className="dml-pb-act">
                           <span className="dml-pb-act-done">✓ Selesai</span>
@@ -201,7 +336,9 @@ export function ProblemTable({
                           type="button"
                           className="dml-pb-act-btn"
                           aria-label={`Tandai selesai: ${r.problem || "-"}`}
-                          onClick={() => setConfirming({ id: r.id, action: "complete" })}
+                          onClick={() =>
+                            setConfirming({ id: r.id, action: "complete" })
+                          }
                         >
                           Tandai selesai
                         </button>

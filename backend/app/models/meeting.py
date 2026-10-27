@@ -84,6 +84,7 @@ class DmMeetingSummary(Base):
     line_id: Mapped[int] = mapped_column(ForeignKey("lines.id", ondelete="CASCADE"), index=True)
     problem: Mapped[str] = mapped_column(Text)  # Masalah
     problem_categories: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)  # Kategori Masalah)
+    solution: Mapped[str | None] = mapped_column(Text, nullable=True)  # Solusi / Tindakan Perbaikan
     pic_name: Mapped[str] = mapped_column(String(120))  # PIC
     pic_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id", ondelete="SET NULL"), index=True)
     due_date: Mapped[str | None] = mapped_column(String(32))  # Target Waktu / Jam

@@ -8,7 +8,8 @@ import { useMyProblems } from "./hooks/useMyProblems";
 
 /** "Masalah Saya": the Leader's Tracking Masalah table, but only the rows where this member is the PIC. */
 export default function MyProblemsPage() {
-  const { mine, open, escalated, solved, ready, toggleSolved } = useMyProblems();
+  const { mine, open, escalated, solved, ready, toggleSolved, saveSolution } =
+    useMyProblems();
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -19,7 +20,9 @@ export default function MyProblemsPage() {
 
   function handleToggleSolved(id: string, currentlySolved: boolean) {
     toggleSolved(id, currentlySolved);
-    setToast(currentlySolved ? "Masalah dibuka kembali" : "Masalah ditandai selesai");
+    setToast(
+      currentlySolved ? "Masalah dibuka kembali" : "Masalah ditandai selesai"
+    );
   }
 
   return (
@@ -28,8 +31,8 @@ export default function MyProblemsPage() {
         <div>
           <h1>Masalah Saya</h1>
           <p>
-            Tindak lanjut dari DM meeting yang menjadi tanggung jawab Anda. Yang melewati due date otomatis dieskalasi ke
-            Supervisor.
+            Tindak lanjut dari DM meeting yang menjadi tanggung jawab Anda. Yang
+            melewati due date otomatis dieskalasi ke Supervisor.
           </p>
         </div>
       </div>
@@ -40,7 +43,11 @@ export default function MyProblemsPage() {
         subtitle={`${open.length} terbuka · ${escalated} eskalasi SPV · ${solved} selesai`}
       >
         {ready ? (
-          <ProblemTable rows={mine} onToggleSolved={handleToggleSolved} />
+          <ProblemTable
+            rows={mine}
+            onToggleSolved={handleToggleSolved}
+            onSaveSolution={saveSolution}
+          />
         ) : (
           <div className="dml-empty">Memuat masalah…</div>
         )}

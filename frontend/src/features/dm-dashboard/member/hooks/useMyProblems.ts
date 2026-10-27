@@ -36,10 +36,13 @@ export function useMyProblems() {
         sessionLabel: p.sessionLabel ?? "-",
         line: p.lineCode ?? "-",
         problem: p.problem,
+        problemCategories: p.problemCategories ?? [],
+        solution: p.solution ?? null,
         picName: p.picName,
         due,
         status,
-        overdueMs: status === "escalated" ? now.getTime() - new Date(due).getTime() : 0,
+        overdueMs:
+          status === "escalated" ? now.getTime() - new Date(due).getTime() : 0,
         solvedAt: null,
         sample: false,
       };
@@ -47,17 +50,36 @@ export function useMyProblems() {
     return sortRows(built);
   }, [now, items]);
 
-  const toggleSolved = useCallback(async (id: string, currentlySolved: boolean) => {
-    const next = currentlySolved ? "open" : "resolved";
-    const previous = currentlySolved ? "resolved" : "open";
-    const apply = (status: string) =>
-      setItems((prev) => prev && prev.map((p) => (String(p.id) === id ? { ...p, status } : p)));
-    apply(next);
-    try {
-      await meetingApi.setProblemStatus(Number(id), next);
-    } catch {
-      apply(previous);
-    }
+  const toggleSolved = useCallback(
+    async (id: string, currentlySolved: boolean) => {
+      const next = currentlySolved ? "open" : "resolved";
+      const previous = currentlySolved ? "resolved" : "open";
+      const apply = (status: string) =>
+        setItems(
+          (prev) =>
+            prev &&
+            prev.map((p) => (String(p.id) === id ? { ...p, status } : p))
+        );
+      apply(next);
+      try {
+        await meetingApi.setProblemStatus(Number(id), next);
+      } catch {
+        apply(previous);
+      }
+    },
+    []
+  );
+
+  const saveSolution = useCallback(async (id: string, solution: string) => {
+    const updated = await meetingApi.setProblemSolution(Number(id), solution);
+
+    setItems((previous) =>
+      previous
+        ? previous.map((problem) =>
+            String(problem.id) === id ? updated : problem
+          )
+        : previous
+    );
   }, []);
 
   return useMemo(
@@ -68,7 +90,8 @@ export function useMyProblems() {
       solved: rows.filter((r) => r.status === "solved").length,
       ready: now !== null && items !== null,
       toggleSolved,
+      saveSolution,
     }),
-    [rows, now, items, toggleSolved],
+    [rows, now, items, toggleSolved, saveSolution]
   );
 }

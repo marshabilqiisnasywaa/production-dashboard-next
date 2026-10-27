@@ -44,10 +44,13 @@ export function useProblems(lineId?: number) {
         sessionLabel: p.sessionLabel ?? "-",
         line: p.lineCode ?? "-",
         problem: p.problem,
+        problemCategories: p.problemCategories ?? [],
+        solution: p.solution ?? null,
         picName: p.picName ?? "-",
         due,
         status,
-        overdueMs: status === "escalated" && dueTime ? now.getTime() - dueTime : 0,
+        overdueMs:
+          status === "escalated" && dueTime ? now.getTime() - dueTime : 0,
         solvedAt: null,
         sample: false,
       };
@@ -65,7 +68,11 @@ export function useProblems(lineId?: number) {
 
       // Update optimistik di UI agar langsung berubah tanpa jeda
       setItems((prev) =>
-        prev ? prev.map((p) => (String(p.id) === id ? { ...p, status: nextStatus } : p)) : prev
+        prev
+          ? prev.map((p) =>
+              String(p.id) === id ? { ...p, status: nextStatus } : p
+            )
+          : prev
       );
 
       try {
@@ -73,7 +80,11 @@ export function useProblems(lineId?: number) {
       } catch {
         // Rollback jika request jaringan gagal
         setItems((prev) =>
-          prev ? prev.map((p) => (String(p.id) === id ? { ...p, status: prevStatus } : p)) : prev
+          prev
+            ? prev.map((p) =>
+                String(p.id) === id ? { ...p, status: prevStatus } : p
+              )
+            : prev
         );
       }
     },

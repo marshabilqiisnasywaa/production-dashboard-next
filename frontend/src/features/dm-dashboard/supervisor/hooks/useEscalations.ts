@@ -1,14 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { meetingApi, type DmMyProblem, type DmSupervisorLine, type DmSupervisorSubordinate } from "../../api";
+import {
+  meetingApi,
+  type DmMyProblem,
+  type DmSupervisorLine,
+  type DmSupervisorSubordinate,
+} from "../../api";
 import { useNow } from "../../leader/hooks/useNow";
 import type { ProblemRow } from "../../leader/problems/types";
 import { getStatus, sortRows } from "../../leader/problems/utils";
 
 export function useEscalations(
   allListItems: DmSupervisorSubordinate[],
-  dbLines: DmSupervisorLine[],
+  dbLines: DmSupervisorLine[]
 ): {
   rows: ProblemRow[];
   count: number;
@@ -59,6 +64,8 @@ export function useEscalations(
         sessionLabel: p.sessionLabel ?? "-",
         line: p.lineCode ?? "-",
         problem: p.problem,
+        problemCategories: p.problemCategories ?? [],
+        solution: p.solution ?? null,
         picName: p.picName ?? "-",
         due,
         status: "escalated",
@@ -78,14 +85,22 @@ export function useEscalations(
       const prevStatus = currentlySolved ? "resolved" : "open";
 
       setItems((prev) =>
-        prev ? prev.map((p) => (String(p.id) === id ? { ...p, status: nextStatus } : p)) : prev
+        prev
+          ? prev.map((p) =>
+              String(p.id) === id ? { ...p, status: nextStatus } : p
+            )
+          : prev
       );
 
       try {
         await meetingApi.setProblemStatus(Number(id), nextStatus);
       } catch {
         setItems((prev) =>
-          prev ? prev.map((p) => (String(p.id) === id ? { ...p, status: prevStatus } : p)) : prev
+          prev
+            ? prev.map((p) =>
+                String(p.id) === id ? { ...p, status: prevStatus } : p
+              )
+            : prev
         );
       }
     },
