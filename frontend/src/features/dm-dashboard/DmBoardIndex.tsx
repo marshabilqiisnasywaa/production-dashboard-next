@@ -6,6 +6,14 @@ import type { DmBoardListItem } from "./api";
 import { dmStatusLabels } from "./dmData";
 import "./DmDashboard.css";
 
+type IndexTab = "line" | "kpi" | "rekap";
+
+const TABS: { key: IndexTab; label: string }[] = [
+  { key: "line", label: "Line" },
+  { key: "kpi", label: "KPI Leader" },
+  { key: "rekap", label: "Rekap Absensi" },
+];
+
 type LoadState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
@@ -28,7 +36,8 @@ const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: "stopped", label: "Berhenti" },
 ];
 
-export default function DmBoardIndex() {
+/** Isi tab "Line": logika lama DmBoardIndex (fetch, cari, filter status, daftar per workshop). */
+function LineBoards() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [query, setQuery] = useState("");
@@ -72,35 +81,105 @@ export default function DmBoardIndex() {
 
   if (state.kind === "loading") {
     return (
-      <main className="dm-root dm-state-screen" aria-busy="true">
+      <div className="dmi-state" aria-busy="true">
         <p role="status">Memuat daftar dashboard...</p>
-      </main>
+      </div>
     );
   }
 
   if (state.kind === "error") {
     return (
-      <main className="dm-root dm-state-screen">
-        <h1 className="dm-state-title">Daftar dashboard belum bisa dimuat</h1>
+      <div className="dmi-state">
+        <h2 className="dm-state-title">Daftar dashboard belum bisa dimuat</h2>
         <p role="alert">{state.message}</p>
         <button type="button" className="dm-state-action" onClick={() => setAttempt((n) => n + 1)}>
           Coba lagi
         </button>
-      </main>
+      </div>
     );
   }
 
   if (state.boards.length === 0) {
     return (
-      <main className="dm-root dm-state-screen">
-        <h1 className="dm-state-title">Belum ada dashboard</h1>
+      <div className="dmi-state">
+        <h2 className="dm-state-title">Belum ada dashboard</h2>
         <p>Admin perlu menambahkan workshop dan lini lebih dulu. Setiap lini otomatis punya satu dashboard.</p>
         <Link href="/dm-dashboard/masuk" className="dm-state-action">Masuk sebagai Admin</Link>
-      </main>
+      </div>
     );
   }
 
   const groups = groupByWorkshop(visible);
+
+  return (
+    <>
+      <header className="dmi-head">
+        <h1>Dashboard lini</h1>
+        <p>
+          {boards.length} lini &middot; {counts.running} berjalan &middot; {counts.idle} idle &middot; {counts.stopped} berhenti
+        </p>
+      </header>
+
+      <div className="dmi-tools">
+        <label className="dmi-search">
+          <span className="dmi-sr">Cari lini</span>
+          <input
+            type="search"
+            placeholder="Cari lini atau workshop"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </label>
+        <div className="dmi-filters" role="group" aria-label="Filter status">
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              className={`dmi-filter${filter === f.key ? " is-active" : ""}`}
+              aria-pressed={filter === f.key}
+              onClick={() => setFilter(f.key)}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {groups.length === 0 && <p className="dmi-empty">Tidak ada lini yang cocok.</p>}
+
+      {groups.map(([workshopName, items]) => (
+        <section key={workshopName} className="dmi-group" aria-label={workshopName}>
+          <h2>{workshopName}</h2>
+          <div className="dmi-grid">
+            {items.map((board) => (
+              <Link key={board.slug} href={`/dm-dashboard/${board.slug}`} className="dmi-card">
+                <span className="dmi-card__code">{board.lineCode}</span>
+                <span className="dmi-card__name">{board.lineName}</span>
+                <span className={`dmi-status is-${board.status}`}>
+                  <i aria-hidden="true" />
+                  {dmStatusLabels[board.status]}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
+    </>
+  );
+}
+
+/** Penampung sementara untuk tab yang isinya belum dibuat. */
+function TabPlaceholder({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="dmi-state">
+      <h1 className="dmi-placeholder-title">{title}</h1>
+      <p>{text}</p>
+    </div>
+  );
+}
+
+export default function DmBoardIndex() {
+  const [tab, setTab] = useState<IndexTab>("line");
 
   return (
     <main className="dm-root dm-root--index">
@@ -119,62 +198,43 @@ export default function DmBoardIndex() {
       <div className="dmi">
         <nav className="dmi-top" aria-label="Navigasi utama">
           <span className="dmi-brand">DM Triangle Team</span>
+          <div className="dmi-tabs" role="tablist" aria-label="Menu dashboard">
+            {TABS.map((t) => (
+              <button
+                key={t.key}
+                id={`dmi-tab-${t.key}`}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.key}
+                aria-controls={`dmi-panel-${t.key}`}
+                className={`dmi-tab${tab === t.key ? " is-active" : ""}`}
+                onClick={() => setTab(t.key)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
           <Link href="/dm-dashboard/masuk" className="dmi-login">
             Masuk
           </Link>
         </nav>
 
-        <header className="dmi-head">
-          <h1>Dashboard lini</h1>
-          <p>
-            {boards.length} lini &middot; {counts.running} berjalan &middot; {counts.idle} idle &middot; {counts.stopped} berhenti
-          </p>
-        </header>
-
-        <div className="dmi-tools">
-          <label className="dmi-search">
-            <span className="dmi-sr">Cari lini</span>
-            <input
-              type="search"
-              placeholder="Cari lini atau workshop"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </label>
-          <div className="dmi-filters" role="group" aria-label="Filter status">
-            {FILTERS.map((f) => (
-              <button
-                key={f.key}
-                type="button"
-                className={`dmi-filter${filter === f.key ? " is-active" : ""}`}
-                aria-pressed={filter === f.key}
-                onClick={() => setFilter(f.key)}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+        {/* LineBoards tetap ter-mount saat pindah tab, jadi data dan filter tidak hilang. */}
+        <div id="dmi-panel-line" role="tabpanel" aria-labelledby="dmi-tab-line" className="dmi-panel" hidden={tab !== "line"}>
+          <LineBoards />
         </div>
 
-        {groups.length === 0 && <p className="dmi-empty">Tidak ada lini yang cocok.</p>}
+        {tab === "kpi" && (
+          <div id="dmi-panel-kpi" role="tabpanel" aria-labelledby="dmi-tab-kpi" className="dmi-panel">
+            <TabPlaceholder title="KPI Leader" text="Dashboard KPI Leader sedang disiapkan." />
+          </div>
+        )}
 
-        {groups.map(([workshopName, items]) => (
-          <section key={workshopName} className="dmi-group" aria-label={workshopName}>
-            <h2>{workshopName}</h2>
-            <div className="dmi-grid">
-              {items.map((board) => (
-                <Link key={board.slug} href={`/dm-dashboard/${board.slug}`} className="dmi-card">
-                  <span className="dmi-card__code">{board.lineCode}</span>
-                  <span className="dmi-card__name">{board.lineName}</span>
-                  <span className={`dmi-status is-${board.status}`}>
-                    <i aria-hidden="true" />
-                    {dmStatusLabels[board.status]}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </section>
-        ))}
+        {tab === "rekap" && (
+          <div id="dmi-panel-rekap" role="tabpanel" aria-labelledby="dmi-tab-rekap" className="dmi-panel">
+            <TabPlaceholder title="Rekap Absensi" text="Rekap absensi sedang disiapkan." />
+          </div>
+        )}
       </div>
     </main>
   );

@@ -17,6 +17,7 @@ interface Props {
   emptyMessage?: string;
   onToggleSolved?: (id: string, currentlySolved: boolean) => void;
   onSaveSolution?: (id: string, solution: string) => Promise<void>;
+  onSaveDueDate?: (id: string, dueDate: string) => Promise<void>;
 }
 
 type ConfirmState = { id: string; action: "complete" | "reopen" } | null;
@@ -37,11 +38,29 @@ function formatSolvedAt(value: string | null): string {
   return `${day}, ${time}`;
 }
 
+function toDateInputValue(value: string | null | undefined): string {
+  if (!value) return "";
+
+  // Supports ISO dates and ISO timestamps without shifting the calendar date.
+  const match = value.match(/^\d{4}-\d{2}-\d{2}/);
+  if (match) return match[0];
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 export function ProblemTable({
   rows,
   emptyMessage = "Tidak ada masalah yang sesuai dengan filter.",
   onToggleSolved,
   onSaveSolution,
+  onSaveDueDate,
 }: Props) {
   const [confirming, setConfirming] = useState<ConfirmState>(null);
   const confirmRef = useRef<HTMLDivElement | null>(null);
@@ -123,25 +142,66 @@ export function ProblemTable({
     setSolutionError(null);
   }
 
-  async function handleSaveSolution() {
-    if (!editingId || !onSaveSolution || savingSolution) return;
+async function handleSaveSolution() {
+  if (!editingId || !onSaveSolution || savingSolution) return;
 
-    setSavingSolution(true);
-    setSolutionError(null);
+  setSavingSolution(true);
+  setSolutionError(null);
 
-    try {
-      await onSaveSolution(editingId, solutionDraft.trim());
-      cancelSolutionEdit();
-    } catch (error) {
-      setSolutionError(
-        error instanceof Error
-          ? error.message
-          : "Solusi gagal disimpan. Coba lagi."
-      );
-    } finally {
-      setSavingSolution(false);
-    }
+  try {
+    await onSaveSolution(editingId, solutionDraft.trim());
+    cancelSolutionEdit();
+  } catch (error) {
+    setSolutionError(
+      error instanceof Error
+        ? error.message
+        : "Solusi gagal disimpan. Coba lagi.",
+    );
+  } finally {
+    setSavingSolution(false);
   }
+}
+
+const [editingDueId, setEditingDueId] = useState<string | null>(null);
+const [dueDateDraft, setDueDateDraft] = useState("");
+const [savingDueDate, setSavingDueDate] = useState(false);
+const [dueDateError, setDueDateError] = useState<string | null>(null);
+
+function startDueDateEdit(row: ProblemRow) {
+  setEditingDueId(row.id);
+  setDueDateDraft(toDateInputValue(row.due));
+  setDueDateError(null);
+}
+
+function cancelDueDateEdit() {
+  setEditingDueId(null);
+  setDueDateDraft("");
+  setDueDateError(null);
+}
+
+async function handleSaveDueDate() {
+  if (!editingDueId || !onSaveDueDate || !dueDateDraft || savingDueDate) {
+    return;
+  }
+
+  setSavingDueDate(true);
+  setDueDateError(null);
+
+  try {
+    await onSaveDueDate(editingDueId, dueDateDraft);
+    cancelDueDateEdit();
+  } catch (error) {
+    setDueDateError(
+      error instanceof Error
+        ? error.message
+        : "Due date gagal disimpan. Coba lagi.",
+    );
+  } finally {
+    setSavingDueDate(false);
+  }
+}
+
+  
 
   return (
     <div className="dml-table-wrap dml-pb-table-wrap">
@@ -237,19 +297,99 @@ export function ProblemTable({
 
                   <td title={r.picName}>{r.picName || "-"}</td>
 
-                  <td>
-                    <div className="dml-pb-due">
-                      <span>{formatDue(r.due)}</span>
-                      {r.status === "escalated" && (
-                        <span
-                          className="dml-pb-overdue"
-                          title={`Terlambat ${formatOverdue(r.overdueMs)}`}
-                        >
-                          {formatOverdue(r.overdueMs)}
-                        </span>
-                      )}
-                    </div>
-                  </td>
+<td>
+  {editingDueId === r.id ? (
+    <div className="dml-pb-due-editor">
+      <input
+        autoFocus
+        type="date"
+        className="dml-pb-due-input"
+        aria-label={`Due date untuk ${r.problem}`}
+        value={dueDateDraft}
+        disabled={savingDueDate}
+        onChange={(event) => {
+          setDueDateDraft(event.target.value);
+          setDueDateError(null);
+        }}
+      />
+
+      {dueDateError && (
+        <p className="dml-pb-due-error" role="alert">
+          {dueDateError}
+        </p>
+      )}
+
+      {!onSaveDueDate && (
+        <p className="dml-pb-due-hint">
+          Penyimpanan belum tersedia melalui API saat ini.
+        </p>
+      )}
+
+      <div className="dml-pb-due-actions">
+        <button
+          type="button"
+          className="dml-pb-due-save"
+          disabled={
+            !onSaveDueDate ||
+            !dueDateDraft ||
+            dueDateDraft === toDateInputValue(r.due) ||
+            savingDueDate
+          }
+          onClick={handleSaveDueDate}
+        >
+          {savingDueDate ? "Menyimpan..." : "Simpan"}
+        </button>
+
+        <button
+          type="button"
+          className="dml-pb-due-cancel"
+          disabled={savingDueDate}
+          onClick={cancelDueDateEdit}
+        >
+          Batal
+        </button>
+      </div>
+    </div>
+  ) : (
+<div className="dml-pb-due">
+  <span>{formatDue(r.due)}</span>
+
+  {r.status === "escalated" && (
+    <span
+      className="dml-pb-overdue"
+      title={`Terlambat ${formatOverdue(r.overdueMs)}`}
+    >
+      {formatOverdue(r.overdueMs)}
+    </span>
+  )}
+
+  <button
+    type="button"
+    className="dml-pb-due-edit"
+    aria-label={`Edit due date untuk ${r.problem}`}
+    title="Edit due date"
+    disabled={editingDueId !== null}
+    onClick={() => startDueDateEdit(r)}
+  >
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      width="14"
+      height="14"
+      fill="none"
+    >
+      <path
+        d="m12.5 4.5 3 3M3.5 16.5l3.6-.8L16 6.8a2.12 2.12 0 0 0-3-3L4.1 12.7l-.6 3.8Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </button>
+</div>
+  )}
+</td>
 
                   <td>
                     <StatusChip tone={view.tone}>{view.label}</StatusChip>
