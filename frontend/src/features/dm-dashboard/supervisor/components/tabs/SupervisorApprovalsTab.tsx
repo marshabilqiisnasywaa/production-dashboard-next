@@ -251,6 +251,7 @@ export function SupervisorApprovalsTab({
                       return (
                         <div
                           key={member.id}
+                          data-submission-id={sub?.id}
                           onClick={() => {
                             onSelectReview({
                               ...member,
