@@ -57,15 +57,17 @@ const RECORDS: AttendanceRecord[] = [
   { id: 19, date: "2026-10-25", session: "Sesi 16:00", level: "DM Workshop", name: "Siti Rahma", role: "Workshop", attendanceTime: "15:58", difference: -2, status: "Tepat waktu" },
 ];
 
+
 const TREND: TrendDay[] = [
-  { label: "Rab", date: "2026-10-21", onTime: 90, late: 7, absent: 3 },
-  { label: "Kam", date: "2026-10-22", onTime: 93, late: 5, absent: 2 },
-  { label: "Jum", date: "2026-10-23", onTime: 87, late: 9, absent: 4 },
-  { label: "Sab", date: "2026-10-24", onTime: 87, late: 8, absent: 5 },
-  { label: "Min", date: "2026-10-25", onTime: 90, late: 7, absent: 3 },
-  { label: "Sen", date: "2026-10-26", onTime: 90, late: 6, absent: 4 },
-  { label: "Sel", date: "2026-10-27", onTime: 88, late: 8, absent: 4 },
+  { label: "Rab", date: "2026-10-21", onTime: 68, late: 17, absent: 15 },
+  { label: "Kam", date: "2026-10-22", onTime: 82, late: 10, absent: 8 },
+  { label: "Jum", date: "2026-10-23", onTime: 61, late: 14, absent: 25 },
+  { label: "Sab", date: "2026-10-24", onTime: 74, late: 18, absent: 8 },
+  { label: "Min", date: "2026-10-25", onTime: 55, late: 20, absent: 25 },
+  { label: "Sen", date: "2026-10-26", onTime: 78, late: 12, absent: 10 },
+  { label: "Sel", date: "2026-10-27", onTime: 88, late: 7, absent: 5 },
 ];
+
 
 const STATUS_OPTIONS = ["Semua status", "Tepat waktu", "Telat", "Tidak hadir"];
 
@@ -98,108 +100,253 @@ function getStats(rows: AttendanceRecord[]) {
   };
 }
 
+
+
 function TrendChart({ data }: { data: TrendDay[] }) {
-  const chartWidth = 760;
-  const chartHeight = 190;
-  const left = 34;
-  const right = 12;
-  const top = 18;
-  const bottom = 34;
-  const plotWidth = chartWidth - left - right;
-  const plotHeight = chartHeight - top - bottom;
-  const slot = plotWidth / data.length;
-  const barWidth = Math.min(28, slot * 0.34);
+  const width = 1000;
+  const height = 330;
+  const left = 58;
+  const right = 24;
+  const top = 24;
+  const bottom = 54;
+  const plotWidth = width - left - right;
+  const plotHeight = height - top - bottom;
+  const slot = plotWidth / Math.max(data.length, 1);
+  const barWidth = Math.min(38, slot * 0.34);
+
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const points = data.map((d, i) => ({
     x: left + slot * i + slot / 2,
-    y: top + plotHeight * (1 - d.onTime / 100),
+    y: top + plotHeight * (1 - (d.onTime + d.late) / 100),
   }));
 
   const linePath = points
     .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
     .join(" ");
 
+  const areaPath = points.length
+    ? `${linePath} L ${points[points.length - 1].x} ${top + plotHeight} L ${points[0].x} ${top + plotHeight} Z`
+    : "";
+
+  const hoveredDay =
+    hoveredIndex !== null ? data[hoveredIndex] : null;
+
   return (
-    <div className="att-chart-scroll">
-      <svg
-        className="att-chart"
-        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-        role="img"
-        aria-label="Grafik tren kehadiran selama tujuh hari"
-      >
-        {[0, 50, 100].map((tick) => {
-          const y = top + plotHeight * (1 - tick / 100);
-          return (
-            <g key={tick}>
-              <line
-                x1={left}
-                x2={chartWidth - right}
-                y1={y}
-                y2={y}
-                className="att-chart-grid"
-              />
-              <text x={left - 8} y={y + 4} textAnchor="end" className="att-chart-axis">
-                {tick}%
-              </text>
-            </g>
-          );
-        })}
-
-        {data.map((d, i) => {
-          const x = left + slot * i + slot / 2 - barWidth / 2;
-          const onTimeHeight = plotHeight * (d.onTime / 100);
-          const lateHeight = plotHeight * (d.late / 100);
-          const absentHeight = plotHeight * (d.absent / 100);
-          const baseY = top + plotHeight;
-
-          return (
-            <g key={d.date}>
-              <rect
-                x={x}
-                y={baseY - onTimeHeight}
-                width={barWidth}
-                height={onTimeHeight}
-                rx="3"
-                className="att-bar-ontime"
-              />
-              <rect
-                x={x}
-                y={baseY - onTimeHeight - lateHeight}
-                width={barWidth}
-                height={lateHeight}
-                className="att-bar-late"
-              />
-              <rect
-                x={x}
-                y={baseY - onTimeHeight - lateHeight - absentHeight}
-                width={barWidth}
-                height={absentHeight}
-                rx="3"
-                className="att-bar-absent"
-              />
-              <text
-                x={left + slot * i + slot / 2}
-                y={chartHeight - 15}
-                textAnchor="middle"
-                className="att-chart-axis"
+    <div className="att-analytics">
+      {data.length === 0 ? (
+        <div className="att-chart-empty">
+          Belum ada data kehadiran pada periode ini.
+        </div>
+      ) : (
+        <div className="att-chart-scroll">
+          <svg
+            className="att-chart att-chart--analytics"
+            viewBox={`0 0 ${width} ${height}`}
+            role="img"
+            aria-label="Tren komposisi dan tingkat kehadiran"
+            onMouseLeave={() => setHoveredIndex(null)}
+          >
+            <defs>
+              <linearGradient
+                id="attendance-area-gradient"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
               >
-                {d.label} {new Date(`${d.date}T12:00:00`).getDate()}
-              </text>
-            </g>
-          );
-        })}
+                <stop offset="0%" stopColor="#087c68" stopOpacity="0.13" />
+                <stop offset="100%" stopColor="#087c68" stopOpacity="0.01" />
+              </linearGradient>
 
-        <path d={linePath} className="att-chart-line" />
-        {points.map((p, i) => (
-          <g key={data[i].date}>
-            <circle cx={p.x} cy={p.y} r="3.2" className="att-chart-dot" />
-            <title>{`${data[i].label}: ${data[i].onTime}% tepat waktu`}</title>
-          </g>
-        ))}
-      </svg>
+              <linearGradient
+                id="attendance-bar-ontime"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop offset="0%" stopColor="#a9d8c4" />
+                <stop offset="100%" stopColor="#d8ebe2" />
+              </linearGradient>
+
+              <linearGradient
+                id="attendance-bar-late"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop offset="0%" stopColor="#f5d59a" />
+                <stop offset="100%" stopColor="#f9e9c9" />
+              </linearGradient>
+            </defs>
+
+            {[0, 25, 50, 75, 100].map((tick) => {
+              const y = top + plotHeight * (1 - tick / 100);
+
+              return (
+                <g key={tick}>
+                  <line
+                    x1={left}
+                    x2={width - right}
+                    y1={y}
+                    y2={y}
+                    className="att-chart-grid"
+                  />
+                  <text
+                    x={left - 12}
+                    y={y + 4}
+                    textAnchor="end"
+                    className="att-chart-axis"
+                  >
+                    {tick}%
+                  </text>
+                </g>
+              );
+            })}
+
+            {data.map((d, i) => {
+              const centerX = left + slot * i + slot / 2;
+              const x = centerX - barWidth / 2;
+              const baseY = top + plotHeight;
+              const onTimeHeight = plotHeight * (d.onTime / 100);
+              const lateHeight = plotHeight * (d.late / 100);
+              const absentHeight = plotHeight * (d.absent / 100);
+              const isHovered = hoveredIndex === i;
+
+              return (
+                <g
+                  key={d.date}
+                  className={`att-chart-column${isHovered ? " is-hovered" : ""}`}
+                  onMouseEnter={() => setHoveredIndex(i)}
+                  onFocus={() => setHoveredIndex(i)}
+                  onBlur={() => setHoveredIndex(null)}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`${formatDate(d.date)}: ${d.onTime + d.late}% hadir`}
+                >
+                  <rect
+                    x={centerX - slot * 0.42}
+                    y={top - 8}
+                    width={slot * 0.84}
+                    height={plotHeight + 20}
+                    rx="7"
+                    className="att-chart-hover-band"
+                  />
+
+                  <rect
+                    x={x}
+                    y={baseY - onTimeHeight}
+                    width={barWidth}
+                    height={onTimeHeight}
+                    rx="4"
+                    fill="url(#attendance-bar-ontime)"
+                  />
+
+                  <rect
+                    x={x}
+                    y={baseY - onTimeHeight - lateHeight}
+                    width={barWidth}
+                    height={lateHeight}
+                    fill="url(#attendance-bar-late)"
+                  />
+
+                  <rect
+                    x={x}
+                    y={baseY - onTimeHeight - lateHeight - absentHeight}
+                    width={barWidth}
+                    height={absentHeight}
+                    rx="4"
+                    className="att-bar-absent"
+                  />
+
+                  <text
+                    x={centerX}
+                    y={height - 27}
+                    textAnchor="middle"
+                    className="att-chart-date"
+                  >
+                    {d.label} {new Date(`${d.date}T12:00:00`).getDate()}
+                  </text>
+
+                  <text
+                    x={centerX}
+                    y={height - 10}
+                    textAnchor="middle"
+                    className="att-chart-day-rate"
+                  >
+                    {d.onTime + d.late}%
+                  </text>
+                </g>
+              );
+            })}
+
+            <path d={areaPath} className="att-chart-area" />
+
+            <path
+              d={linePath}
+              className="att-chart-line att-chart-line--strong"
+            />
+
+            {points.map((p, i) => (
+              <g
+                key={data[i].date}
+                className={`att-chart-point${hoveredIndex === i ? " is-hovered" : ""}`}
+                onMouseEnter={() => setHoveredIndex(i)}
+              >
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={hoveredIndex === i ? 13 : 9}
+                  className="att-chart-point-halo"
+                />
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={hoveredIndex === i ? 5 : 4}
+                  className="att-chart-dot att-chart-dot--strong"
+                />
+              </g>
+            ))}
+          </svg>
+
+          {hoveredDay && (
+            <div className="att-chart-tooltip" role="status">
+              <div className="att-chart-tooltip-head">
+                <strong>{formatDate(hoveredDay.date)}</strong>
+                <span>
+                  {hoveredDay.onTime + hoveredDay.late}% hadir
+                </span>
+              </div>
+
+              <div className="att-chart-tooltip-row">
+                <i className="att-tooltip-dot ontime" />
+                <span>Tepat waktu</span>
+                <strong>{hoveredDay.onTime}%</strong>
+              </div>
+
+              <div className="att-chart-tooltip-row">
+                <i className="att-tooltip-dot late" />
+                <span>Telat</span>
+                <strong>{hoveredDay.late}%</strong>
+              </div>
+
+              <div className="att-chart-tooltip-row">
+                <i className="att-tooltip-dot absent" />
+                <span>Tidak hadir</span>
+                <strong>{hoveredDay.absent}%</strong>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+
     </div>
   );
 }
+
 
 function SessionComparison({ rows }: { rows: AttendanceRecord[] }) {
   const sessionStats = SESSION_CONFIG.map((session) => {
@@ -463,7 +610,6 @@ export default function AttendanceDashboardPage() {
             </div>
             <strong>{stats.onTime}</strong>
             <p>{formatPercent(stats.onTimeRate)} dari seluruh peserta terjadwal</p>
-            <small className="att-kpi-foot">Presensi sesuai jadwal</small>
           </article>
 
           <article className="att-kpi">
@@ -473,7 +619,6 @@ export default function AttendanceDashboardPage() {
             </div>
             <strong>{stats.late}</strong>
             <p>{formatPercent(stats.total ? (stats.late / stats.total) * 100 : 0)} dari seluruh peserta terjadwal</p>
-            <small className="att-kpi-foot">Hadir setelah batas waktu</small>
           </article>
 
           <article className="att-kpi">
@@ -483,7 +628,7 @@ export default function AttendanceDashboardPage() {
             </div>
             <strong>{stats.absent}</strong>
             <p>{formatPercent(stats.total ? (stats.absent / stats.total) * 100 : 0)} dari seluruh peserta terjadwal</p>
-            <small className="att-kpi-foot">Tidak ada catatan presensi</small>
+
           </article>
 
           <article className="att-kpi att-kpi-rate">
@@ -496,11 +641,7 @@ export default function AttendanceDashboardPage() {
             <div className="att-rate-track">
               <span style={{ width: `${stats.rate}%` }} />
             </div>
-            <small className="att-kpi-foot">
-              {onTimeDelta === null
-                ? "Belum ada periode pembanding"
-                : `${onTimeDelta >= 0 ? "+" : ""}${onTimeDelta.toFixed(1)} poin persentase vs periode sebelumnya`}
-            </small>
+
           </article>
         </section>
 
