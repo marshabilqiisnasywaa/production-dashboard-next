@@ -197,9 +197,9 @@ export default function LeaderDashboardPage() {
                   </p>
                 )}
 
-                <p className="dml-kpi__hint">
+                {/* <p className="dml-kpi__hint">
                   Berdasarkan deadline dalam periode terpilih.
-                </p>
+                </p> */}
 
                 {abnormal.data.invalidDeadline > 0 && (
                   <p className="dml-kpi__hint">
@@ -224,10 +224,10 @@ export default function LeaderDashboardPage() {
                 value={closure.data.rate}
                 icon={KPI_ICON.check}
               />
-              <p className="dml-kpi__hint">
+              {/* <p className="dml-kpi__hint">
                 {closure.data.resolved} dari {closure.data.total} masalah
                 selesai
-              </p>
+              </p> */}
             </div>
           ) : (
             <article className="dml-kpi">
