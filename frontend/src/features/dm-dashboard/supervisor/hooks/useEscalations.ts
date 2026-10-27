@@ -18,21 +18,25 @@ export function useEscalations(
   rows: ProblemRow[];
   count: number;
   ready: boolean;
+  error: string | null;
+  loading: boolean;
   toggleSolved: (id: string, currentlySolved: boolean) => Promise<void>;
   refresh: () => Promise<void>;
 } {
   const now = useNow(60_000); // Evaluasi ulang keterlambatan waktu setiap menit
   const [items, setItems] = useState<DmMyProblem[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load masalah yang belum selesai milik bawahan langsung dari backend
   const fetchEscalations = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const list = await meetingApi.supervisorEscalations();
       setItems(list);
-    } catch {
-      setItems([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal memuat eskalasi masalah.");
     } finally {
       setLoading(false);
     }
@@ -110,6 +114,8 @@ export function useEscalations(
   return {
     rows,
     count: rows.length,
+    error,
+    loading,
     ready: !loading && now !== null && items !== null,
     toggleSolved,
     refresh: fetchEscalations,

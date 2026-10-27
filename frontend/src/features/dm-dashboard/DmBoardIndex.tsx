@@ -6,6 +6,8 @@ import type { DmBoardListItem } from "./api";
 import { dmStatusLabels } from "./dmData";
 import DmScorecard from "./scorecard/DmScorecard";
 import "./DmDashboard.css";
+import AttendanceDashboardPage from "./attendance/page";
+
 
 type IndexTab = "line" | "kpi" | "rekap";
 
@@ -231,11 +233,16 @@ export default function DmBoardIndex() {
           </div>
         )}
 
-        {tab === "rekap" && (
-          <div id="dmi-panel-rekap" role="tabpanel" aria-labelledby="dmi-tab-rekap" className="dmi-panel">
-            <TabPlaceholder title="Rekap Absensi" text="Rekap absensi sedang disiapkan." />
-          </div>
-        )}
+{tab === "rekap" && (
+  <div
+    id="dmi-panel-rekap"
+    role="tabpanel"
+    aria-labelledby="dmi-tab-rekap"
+    className="dmi-panel"
+  >
+    <AttendanceDashboardPage />
+  </div>
+)}
       </div>
     </main>
   );

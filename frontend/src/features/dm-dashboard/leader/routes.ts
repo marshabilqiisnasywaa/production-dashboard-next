@@ -9,6 +9,8 @@ export const LEADER_ROUTES = {
   dashboard: LEADER_BASE,
   papercard: `${LEADER_BASE}/papercard`,
   meeting: `${LEADER_BASE}/meeting`,
+  myProblems: `${LEADER_BASE}/masalah-saya`,
+  mvp: `${LEADER_BASE}/mvp`,
   problems: `${LEADER_BASE}/tracking-masalah`, 
   fiveWhy: `${LEADER_BASE}/5why`,
   log: `${LEADER_BASE}/log`,

@@ -11,15 +11,17 @@ export function useProblems(lineId?: number) {
   const now = useNow(60_000); // Evaluasi ulang status 'overdue' setiap menit
   const [items, setItems] = useState<DmMyProblem[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load data dari backend
   const fetchProblems = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const list = await meetingApi.problems(lineId);
       setItems(list);
-    } catch {
-      setItems([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal memuat daftar masalah.");
     } finally {
       setLoading(false);
     }
@@ -94,6 +96,8 @@ export function useProblems(lineId?: number) {
   return {
     rows,
     counts,
+    error,
+    loading,
     ready: !loading && now !== null && items !== null,
     toggleSolved,
     refresh: fetchProblems,

@@ -33,6 +33,9 @@ interface SupervisorContextValue {
   allListItems: DmSupervisorSubordinate[];
   escalatedRows: ProblemRow[];
   escalatedCount: number;
+  escalationsError: string | null;
+  escalationsReady: boolean;
+  refreshEscalations: () => Promise<void>;
   totalCount: number;
   submittedCount: number;
   pendingApprovalsCount: number;
@@ -163,6 +166,8 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
   const {
     rows: escalatedRows,
     count: escalatedCount,
+    error: escalationsError,
+    ready: escalationsReady,
     refresh: refreshEscalations,
   } = useEscalations(allListItems, dbLines);
 
@@ -277,6 +282,9 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
       allListItems,
       escalatedRows,
       escalatedCount,
+      escalationsError,
+      escalationsReady,
+      refreshEscalations,
       totalCount,
       submittedCount,
       pendingApprovalsCount,
@@ -305,6 +313,9 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
       allListItems,
       escalatedRows,
       escalatedCount,
+      escalationsError,
+      escalationsReady,
+      refreshEscalations,
       totalCount,
       submittedCount,
       pendingApprovalsCount,

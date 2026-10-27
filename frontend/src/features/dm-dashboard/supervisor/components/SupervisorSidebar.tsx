@@ -7,6 +7,7 @@ import {
   IconGauge,
   IconHistory,
   IconPulse,
+  IconUsers,
 } from "@/components/ui/icons";
 import { Sidebar, type SidebarSection } from "@/components/ui/Sidebar";
 import { SUPERVISOR_ROUTES } from "../routes";
@@ -14,11 +15,13 @@ import { SUPERVISOR_ROUTES } from "../routes";
 interface SupervisorSidebarProps {
   pendingApprovalsCount: number;
   escalationCount: number;
+  canHostWorkshopMeeting: boolean;
 }
 
 export function SupervisorSidebar({
   pendingApprovalsCount,
   escalationCount,
+  canHostWorkshopMeeting,
 }: SupervisorSidebarProps) {
   const sections: SidebarSection[] = [
     {
@@ -52,9 +55,28 @@ export function SupervisorSidebar({
         },
       ],
     },
+    ...(canHostWorkshopMeeting
+      ? [
+          {
+            title: "During Management",
+            items: [
+              {
+                label: "Workshop Meeting",
+                href: SUPERVISOR_ROUTES.workshopMeeting,
+                icon: <IconUsers />,
+              },
+            ],
+          },
+        ]
+      : []),
     {
       title: "Post Management",
       items: [
+        {
+          label: "Masalah Saya",
+          href: SUPERVISOR_ROUTES.myProblems,
+          icon: <IconClipboardCheck />,
+        },
         {
           label: "Eskalasi",
           href: SUPERVISOR_ROUTES.escalations,

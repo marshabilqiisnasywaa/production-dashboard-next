@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import type { DmWorkshop } from "../api";
+import { adminApi, workshopMeetingApi } from "../api";
+import type { DmEmployee, DmWorkshop } from "../api";
 import { FactoryIcon, PlusIcon } from "./AdminIcons";
 
 interface WorkshopManagerProps {
@@ -23,6 +24,47 @@ export default function WorkshopManager({ workshops, onCreate, onRename, onDelet
   const [editName, setEditName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [supervisors, setSupervisors] = useState<DmEmployee[]>([]);
+  const [assigned, setAssigned] = useState<Record<number, number[]>>({});
+  const [addingSupervisorFor, setAddingSupervisorFor] = useState<number | null>(null);
+  const [supervisorWorkshopId, setSupervisorWorkshopId] = useState<number | null>(null);
+  const supervisorDialogRef = useRef<HTMLDialogElement>(null);
+  const [supervisorsLoading, setSupervisorsLoading] = useState(true);
+  const [supervisorsError, setSupervisorsError] = useState<string | null>(null);
+  const [supervisorsRetry, setSupervisorsRetry] = useState(0);
+
+  useEffect(() => {
+    if (supervisorWorkshopId === null) return;
+    const dialog = supervisorDialogRef.current;
+    dialog?.showModal();
+    return () => { dialog?.close(); };
+  }, [supervisorWorkshopId]);
+
+  useEffect(() => {
+    let alive = true;
+    setSupervisorsLoading(true);
+    setSupervisorsError(null);
+    Promise.all([adminApi.employees(), workshopMeetingApi.assignments()])
+      .then(([employees, assignments]) => {
+        if (!alive) return;
+        setSupervisors(employees.filter((item) => item.role === "supervisor" && item.isActive));
+        setAssigned(Object.fromEntries(assignments.map((item) => [item.workshopId, item.employeeIds])));
+      })
+      .catch((err) => {
+        if (alive) setSupervisorsError(messageOf(err));
+      })
+      .finally(() => {
+        if (alive) setSupervisorsLoading(false);
+      });
+    return () => { alive = false; };
+  }, [workshops.length, supervisorsRetry]);
+
+  function changeSupervisors(workshopId: number, next: number[]) {
+    run(async () => {
+      const saved = await workshopMeetingApi.saveAssignment(workshopId, next);
+      setAssigned((prev) => ({ ...prev, [workshopId]: saved.employeeIds }));
+    });
+  }
 
   async function run(action: () => Promise<void>) {
     setBusy(true);
@@ -134,6 +176,121 @@ export default function WorkshopManager({ workshops, onCreate, onRename, onDelet
                     )}
                   </div>
                 </div>
+                <button
+                  type="button"
+                  className="dm-admin-btn is-tonal dm-ws-sup-add"
+                  aria-haspopup="dialog"
+                  onClick={() => {
+                    setSupervisorWorkshopId(workshop.id);
+                    setAddingSupervisorFor(null);
+                    setError(null);
+                  }}
+                >
+                  Kelola Supervisor{!supervisorsLoading && !supervisorsError && ` (${(assigned[workshop.id] ?? []).length})`}
+                </button>
+                {supervisorWorkshopId === workshop.id && (
+                <dialog
+                  ref={supervisorDialogRef}
+                  className="dm-ws-sup-dialog"
+                  aria-labelledby={`ws-supervisors-title-${workshop.id}`}
+                  onCancel={(event) => {
+                    event.preventDefault();
+                    if (!busy) setSupervisorWorkshopId(null);
+                  }}
+                  onClick={(event) => {
+                    if (event.target !== event.currentTarget || busy) return;
+                    const bounds = event.currentTarget.getBoundingClientRect();
+                    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) {
+                      setSupervisorWorkshopId(null);
+                    }
+                  }}
+                >
+                <div className="dm-ws-sup-dialog-head">
+                  <div>
+                    <h3 id={`ws-supervisors-title-${workshop.id}`}>Supervisor Workshop</h3>
+                    <p>{workshop.name}</p>
+                  </div>
+                  <button type="button" className="dm-admin-btn is-tonal" disabled={busy} onClick={() => setSupervisorWorkshopId(null)}>
+                    Tutup
+                  </button>
+                </div>
+                <div className="dm-ws-supervisors">
+                  <span className="dm-ws-edit-label">
+                    Supervisor Workshop Meeting{!supervisorsLoading && !supervisorsError && ` (${(assigned[workshop.id] ?? []).length})`}
+                  </span>
+                  {supervisorsLoading ? <span role="status">Memuat supervisor...</span> : supervisorsError ? (
+                    <div role="alert">
+                      <p>{supervisorsError}</p>
+                      <button type="button" className="dm-admin-btn is-tonal" onClick={() => setSupervisorsRetry((value) => value + 1)}>
+                        Coba lagi
+                      </button>
+                    </div>
+                  ) : <>
+                  {(assigned[workshop.id] ?? []).length === 0 && <span>Belum ada supervisor ditambahkan.</span>}
+                  <ul className="dm-ws-sup-list">
+                    {(assigned[workshop.id] ?? []).map((id) => {
+                      const person = supervisors.find((item) => item.id === id);
+                      return (
+                        <li key={id} className="dm-ws-sup-row">
+                          <span className="dm-ws-sup-person">
+                            <span>{person ? person.name : `Supervisor #${id}`}</span>
+                            {person && <small>{person.employeeId}</small>}
+                          </span>
+                          <button
+                            type="button"
+                            className="dm-admin-btn is-danger-soft"
+                            aria-label={`Lepas ${person?.name ?? id} dari ${workshop.name}`}
+                            disabled={busy}
+                            onClick={() => changeSupervisors(workshop.id, (assigned[workshop.id] ?? []).filter((x) => x !== id))}
+                          >
+                            Hapus
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {addingSupervisorFor === workshop.id ? (
+                  <div className="dm-ws-sup-picker">
+                  <select
+                    autoFocus
+                    className="dm-admin-input"
+                    aria-label={`Tambah supervisor ke ${workshop.name}`}
+                    value=""
+                    disabled={busy}
+                    onChange={(event) => {
+                      if (event.target.value) changeSupervisors(workshop.id, [...(assigned[workshop.id] ?? []), Number(event.target.value)]);
+                    }}
+                  >
+                    <option value="">
+                      {supervisors.every((person) => (assigned[workshop.id] ?? []).includes(person.id)) ? "Semua supervisor sudah ditambahkan" : "Pilih supervisor"}
+                    </option>
+                    {supervisors
+                      .filter((item) => !(assigned[workshop.id] ?? []).includes(item.id))
+                      .map((item) => (
+                        <option key={item.id} value={item.id}>{item.name} ({item.employeeId})</option>
+                      ))}
+                  </select>
+                  <button type="button" className="dm-admin-btn is-tonal" disabled={busy} onClick={() => setAddingSupervisorFor(null)}>
+                    Tutup
+                  </button>
+                  </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="dm-admin-btn is-tonal dm-ws-sup-add"
+                      disabled={busy || !supervisors.some((person) => !(assigned[workshop.id] ?? []).includes(person.id))}
+                      onClick={() => setAddingSupervisorFor(workshop.id)}
+                    >
+                      <PlusIcon size={14} /> Tambah supervisor
+                    </button>
+                  )}
+                  {supervisors.length === 0 && <span>Belum ada akun supervisor aktif.</span>}
+                  </>}
+                </div>
+                {error && <p className="dm-admin-inline-error" role="alert">{error}</p>}
+                <p className="dm-ws-sup-note" role="status">{busy ? "Menyimpan perubahan..." : "Penambahan dan penghapusan langsung disimpan."}</p>
+                </dialog>
+                )}
                 <div className="dm-ws-actions">
                   <button type="button" className="dm-admin-btn is-primary" onClick={() => onAddDm(workshop)}>
                     <PlusIcon size={14} /> Tambah DM
@@ -195,7 +352,7 @@ export default function WorkshopManager({ workshops, onCreate, onRename, onDelet
           )}
         </li>
       </ul>
-      {error ? <p className="dm-admin-inline-error" role="alert">{error}</p> : null}
+      {error && supervisorWorkshopId === null ? <p className="dm-admin-inline-error" role="alert">{error}</p> : null}
     </section>
   );
 }
