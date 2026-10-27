@@ -1,9 +1,89 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SupervisorApprovalsTab, SupervisorPageHeader } from "../components";
 import { useSupervisor } from "../SupervisorProvider";
 import type { DmSupervisorSubordinate } from "../../api";
+
+function ApprovalsDeepLinkHandler() {
+  const { overviewData, dbLines, allListItems, isLoading, openReview, showToast } =
+    useSupervisor();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const handledTinjauRef = useRef<string | null>(null);
+
+  const clearTinjauParam = useCallback(() => {
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    params.delete("tinjau");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
+
+  useEffect(() => {
+    const requestedId = searchParams?.get("tinjau");
+    if (!requestedId) {
+      handledTinjauRef.current = null;
+      return;
+    }
+    if (isLoading || !overviewData) return;
+    if (handledTinjauRef.current === requestedId) return;
+    handledTinjauRef.current = requestedId;
+
+    const submissionId = Number(requestedId);
+    const targetMember =
+      allListItems.find((member) => member.submission?.id === submissionId) ??
+      dbLines
+        .flatMap((line) => line.members)
+        .find((member) => member.submission?.id === submissionId);
+    const targetLine =
+      dbLines.find((line) =>
+        line.members.some((member) => member.submission?.id === submissionId),
+      ) ?? dbLines.find((line) => line.lineId === targetMember?.lineId);
+    const target = targetMember
+      ? {
+          ...targetMember,
+          lineId: targetMember.lineId ?? targetLine?.lineId,
+          lineName: targetMember.lineName ?? targetLine?.lineName,
+        }
+      : null;
+
+    if (!target || target.submission?.approvalStatus !== "pending") {
+      showToast("Papercard ini sudah ditinjau", "info");
+      clearTinjauParam();
+      return;
+    }
+
+    openReview(target);
+    clearTinjauParam();
+
+    window.setTimeout(() => {
+      const card = document.querySelector<HTMLElement>(
+        `[data-submission-id="${submissionId}"]`,
+      );
+      const lineGroup = card?.closest<HTMLElement>(".spv-line-group");
+      if (!lineGroup) return;
+      document
+        .querySelectorAll<HTMLElement>(".spv-line-group.is-highlight")
+        .forEach((element) => element.classList.remove("is-highlight"));
+      lineGroup.scrollIntoView({ behavior: "smooth", block: "center" });
+      lineGroup.classList.add("is-highlight");
+      window.setTimeout(() => lineGroup.classList.remove("is-highlight"), 2200);
+    }, 80);
+  }, [
+    searchParams,
+    isLoading,
+    overviewData,
+    dbLines,
+    allListItems,
+    openReview,
+    clearTinjauParam,
+    showToast,
+  ]);
+
+  return null;
+}
 
 export default function SupervisorApprovalsPage() {
   const {
@@ -95,6 +175,9 @@ export default function SupervisorApprovalsPage() {
 
   return (
     <div className="dms-container">
+      <Suspense fallback={null}>
+        <ApprovalsDeepLinkHandler />
+      </Suspense>
       <div className="dml-page-head">
         <SupervisorPageHeader
           title="Persetujuan Checklist"

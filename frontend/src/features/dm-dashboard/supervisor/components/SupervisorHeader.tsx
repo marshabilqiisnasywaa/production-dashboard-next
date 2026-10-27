@@ -59,7 +59,8 @@ export function SupervisorHeader() {
           }`,
           timeLabel,
           actionLabel: "Tinjau Papercard",
-          actionUrl: SUPERVISOR_ROUTES.approvals,
+          actionUrl: `${SUPERVISOR_ROUTES.approvals}?tinjau=${submission.id}`,
+          submissionId: submission.id,
           createdAt: submittedAt.getTime(),
         },
       ];

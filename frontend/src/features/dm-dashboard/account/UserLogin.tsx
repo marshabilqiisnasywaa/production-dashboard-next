@@ -16,9 +16,9 @@ import "./login.css";
 const SHOW_DEMO = process.env.NEXT_PUBLIC_SHOW_DEMO_LOGIN !== "false";
 
 const DEMO_ACCOUNTS = [
-  { role: "Leader", nik: "S009898", password: "11111111" },
-  { role: "Member", nik: "009878", password: "11111111" },
-  { role: "Supervisor", nik: "S223433", password: "11111111" },
+  { role: "Leader", nik: "leader", password: "leader123" },
+  { role: "Member", nik: "member", password: "member123" },
+  { role: "Supervisor", nik: "supervisor", password: "super123" },
   { role: "Admin", nik: "admin", password: "admin123" },
 ] as const;
 

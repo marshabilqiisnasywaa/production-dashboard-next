@@ -39,6 +39,7 @@ interface SupervisorContextValue {
   approvedCount: number;
   abnormalCount: number;
   toastMessage: ToastMessage | null;
+  showToast: (text: string, type?: ToastMessage["type"]) => void;
   dismissToast: () => void;
   reviewTarget: DmSupervisorSubordinate | null;
   feedbackNote: string;
@@ -282,6 +283,7 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
       approvedCount,
       abnormalCount,
       toastMessage,
+      showToast,
       dismissToast,
       reviewTarget,
       feedbackNote,
@@ -309,6 +311,7 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
       approvedCount,
       abnormalCount,
       toastMessage,
+      showToast,
       dismissToast,
       reviewTarget,
       feedbackNote,
