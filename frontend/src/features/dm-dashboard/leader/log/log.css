@@ -73,6 +73,9 @@
   height: 44px;
   border-radius: 12px;
 }
+
+
+
 .dml-lg-stat__icon--ok {
   background: var(--dm-green-50);
   color: var(--dm-green);
@@ -221,16 +224,7 @@
   gap: 16px;
   align-items: center;
 }
-.dml-lg-drawer__icon {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: var(--dm-green-50);
-  color: var(--dm-green);
-}
+
 .dml-lg-drawer__title p {
   margin: 0 0 4px;
   display: flex;

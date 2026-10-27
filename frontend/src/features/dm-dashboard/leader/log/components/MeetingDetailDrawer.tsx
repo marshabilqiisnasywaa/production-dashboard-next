@@ -80,9 +80,7 @@ function DrawerBody({ record, now, onClose }: { record: MeetingRecord; now: Date
 
       <div className="dml-lg-drawer__scroll">
         <div className="dml-lg-drawer__title">
-          <span className="dml-lg-drawer__icon">
-            <IconCalendar size={26} />
-          </span>
+
           <div>
             <p>
               <strong>{record.sessionName}</strong> <StatusChip tone={status.tone}>{status.label}</StatusChip>
