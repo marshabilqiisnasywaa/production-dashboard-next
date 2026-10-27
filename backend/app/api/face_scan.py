@@ -16,6 +16,7 @@ from app.services.face.engine import FaceError, FaceResult, extract_face
 from app.services.face.matcher import matcher
 from app.services.meeting_attendance import home_line_code
 from app.services import joint_meetings
+from datetime import datetime, timezone
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 logger = logging.getLogger("uvicorn.error")
@@ -132,11 +133,16 @@ def scan_attendance(
         )
 
     if attendance is None:
-        attendance = DmMeetingAttendance(session_id=session_id, employee_id=match.employee_id)
+        attendance = DmMeetingAttendance(
+            session_id=session_id,
+            employee_id=match.employee_id,
+        )
         db.add(attendance)
+
     attendance.status = "present"
     attendance.verification_method = "face_id"
     attendance.face_confidence = match.score
+    attendance.attended_at = datetime.now(timezone.utc)
     db.flush()
     joint_meetings.sync_attendance(db, session, attendance)
 

@@ -31,7 +31,7 @@ export function ActivityLogTab({ entries }: { entries: ActivityEntry[] }) {
       if (range.from && day < range.from) return false;
       if (range.to && day > range.to) return false;
       if (group !== "all" && e.group !== group) return false;
-      return !q || `${e.user} ${e.role} ${e.action} ${e.object}`.toLowerCase().includes(q);
+      return !q || `${e.user} ${e.role} ${e.action} ${e.object} ${e.attendanceLateness ?? ""}`.toLowerCase().includes(q);
     });
   }, [entries, query, range, group]);
 
@@ -102,7 +102,10 @@ export function ActivityLogTab({ entries }: { entries: ActivityEntry[] }) {
             )}
             {visible.map((e) => (
               <tr key={e.id}>
-                <td className="is-strong">{formatDateTime(e.at)}</td>
+                <td className="is-strong">
+                  {formatDateTime(e.at)}
+                  {e.attendanceLateness && <div><span className="dml-lg-late">{e.attendanceLateness}</span></div>}
+                </td>
                 <td>{e.user}</td>
                 <td className="is-muted">{e.role}</td>
                 <td>{e.action}</td>

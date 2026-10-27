@@ -37,9 +37,9 @@ export const slotEndMs = (date: string, start: string, durationMin: number) =>
 /* ---------- CSV (audit export) ---------- */
 
 export function activityToCsv(rows: ActivityEntry[]): string {
-  const head = ["Waktu", "User", "Role", "Aksi", "Objek", "Sebelum", "Sesudah"];
+  const head = ["Waktu", "User", "Role", "Aksi", "Objek", "Sebelum", "Sesudah", "Keterangan kehadiran"];
   const lines = rows.map((r) =>
-    [formatDateTime(r.at), r.user, r.role, r.action, r.object, r.before ?? "", r.after ?? ""]
+    [formatDateTime(r.at), r.user, r.role, r.action, r.object, r.before ?? "", r.after ?? "", r.attendanceLateness ?? ""]
       .map((c) => `"${String(c).replace(/"/g, '""')}"`)
       .join(","),
   );

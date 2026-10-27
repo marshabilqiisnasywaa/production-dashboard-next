@@ -5,7 +5,7 @@
  */
 import type { DmMeetingSession } from "../../api";
 import type { AbsenceNote, AbsenceReason, MeetingSessionInfo } from "../meeting/types";
-import { absenceDetail, absenceLabel } from "../meeting/utils";
+import { absenceDetail, absenceLabel, formatAttendanceLateness } from "../meeting/utils";
 import { SESSION_NAME } from "./sampleData";
 import type { ActivityEntry, MeetingRecord } from "./types";
 import { addDays, formatDate, localDate, slotEndMs } from "./utils";
@@ -152,7 +152,7 @@ export function buildActivity(records: MeetingRecord[]): ActivityEntry[] {
     }
     for (const a of r.attendance) {
       if (a.present && a.at) {
-        out.push({ id: `${r.id}:att:${a.name}`, at: a.at, user: a.name, role: a.roleLabel, group: "presensi", action: "Presensi wajah", object, before: null, after: "Hadir" });
+        out.push({ id: `${r.id}:att:${a.name}`, at: a.at, user: a.name, role: a.roleLabel, group: "presensi", action: "Presensi wajah", object, before: null, after: "Hadir", attendanceLateness: formatAttendanceLateness(a.at, r.startedAt) });
       }
     }
     if (r.endedAt) {

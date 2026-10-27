@@ -88,6 +88,7 @@ class DmMeetingSummary(Base):
     due_date: Mapped[str | None] = mapped_column(String(32))  # Target Waktu / Jam
     line_code: Mapped[str | None] = mapped_column(String(32))
     status: Mapped[str] = mapped_column(String(16), default="open", server_default="open")  # "open", "in_progress", "resolved"
+    resolved_at : Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     session: Mapped["DmMeetingSession"] = relationship("DmMeetingSession", back_populates="summaries")

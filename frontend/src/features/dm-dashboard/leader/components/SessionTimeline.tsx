@@ -61,7 +61,7 @@ function SessionRow({ session, focused }: { session: TimelineSession; focused: b
     <li className={`dml-tl__item dml-tl__item--${session.status}${focused ? " is-focus" : ""}`}>
       <div className="dml-tl__row">
         <span className="dml-tl__badge" aria-hidden="true">
-          {session.status === "done" ? <IconCheck size={14} /> : session.order}
+          {session.completed ? <IconCheck size={14} /> : session.order}
         </span>
         <div className="dml-tl__main">
           <strong>{session.name}</strong>
@@ -70,7 +70,7 @@ function SessionRow({ session, focused }: { session: TimelineSession; focused: b
         <StatusChip tone={TONE[session.status]}>{session.statusLabel}</StatusChip>
       </div>
 
-      {session.status === "done" && session.summary && <p className="dml-tl__summary">{session.summary}</p>}
+      {session.summary && <p className="dml-tl__summary">{session.summary}</p>}
 
       {focused && (papercard || attendance) && (
         <div className="dml-tl__detail">

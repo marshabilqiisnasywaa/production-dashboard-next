@@ -6,10 +6,14 @@ import { dmStatusLabels, formatPeriod, previousPeriod } from "./dmData";
 import type { DmBoard, DmMember } from "./dmData";
 import "./DmDashboard.css";
 
-
 function PersonIcon() {
   return (
-    <svg className="dm-person-svg" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+    <svg
+      className="dm-person-svg"
+      viewBox="0 0 40 40"
+      aria-hidden="true"
+      focusable="false"
+    >
       <circle cx="20" cy="14" r="7" />
       <path d="M6 36c0-7.7 6.3-12 14-12s14 4.3 14 12z" />
     </svg>
@@ -18,7 +22,17 @@ function PersonIcon() {
 
 function GearIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
@@ -100,8 +114,11 @@ export default function DmDashboard({ slug }: { slug: string }) {
         if (error instanceof ApiError && error.status === 404) {
           setState({ kind: "missing" });
         } else {
-          const message = error instanceof Error ? error.message : "Terjadi kesalahan.";
-          setState((prev) => (prev.kind === "ready" ? prev : { kind: "error", message }));
+          const message =
+            error instanceof Error ? error.message : "Terjadi kesalahan.";
+          setState((prev) =>
+            prev.kind === "ready" ? prev : { kind: "error", message },
+          );
         }
       }
     }
@@ -125,7 +142,9 @@ export default function DmDashboard({ slug }: { slug: string }) {
       return { topMembers: [], displayMpv: null };
     }
 
-    const all = [...readyBoard.members].sort((a, b) => (a.sortOrder ?? 99) - (b.sortOrder ?? 99));
+    const all = [...readyBoard.members].sort(
+      (a, b) => (a.sortOrder ?? 99) - (b.sortOrder ?? 99),
+    );
 
     return {
       topMembers: all.slice(0, 4),
@@ -145,8 +164,13 @@ export default function DmDashboard({ slug }: { slug: string }) {
     return (
       <main className="dm-root dm-state-screen">
         <h1 className="dm-state-title">Dashboard tidak ditemukan</h1>
-        <p>Tidak ada dashboard dengan alamat &quot;{slug}&quot;. Periksa link-nya atau pilih dari daftar.</p>
-        <Link href="/dm-dashboard" className="dm-state-action">Lihat daftar dashboard</Link>
+        <p>
+          Tidak ada dashboard dengan alamat &quot;{slug}&quot;. Periksa link-nya
+          atau pilih dari daftar.
+        </p>
+        <Link href="/dm-dashboard" className="dm-state-action">
+          Lihat daftar dashboard
+        </Link>
       </main>
     );
   }
@@ -156,7 +180,11 @@ export default function DmDashboard({ slug }: { slug: string }) {
       <main className="dm-root dm-state-screen">
         <h1 className="dm-state-title">Dashboard belum bisa dimuat</h1>
         <p role="alert">{state.message}</p>
-        <button type="button" className="dm-state-action" onClick={() => setAttempt((n) => n + 1)}>
+        <button
+          type="button"
+          className="dm-state-action"
+          onClick={() => setAttempt((n) => n + 1)}
+        >
           Coba lagi
         </button>
       </main>
@@ -168,8 +196,13 @@ export default function DmDashboard({ slug }: { slug: string }) {
   return (
     <main className="dm-root">
       {/* Left Vertical Rail */}
-      <aside className="dm-rail dm-rail-left" aria-label={board.lineLabel ?? board.lineCode}>
-        <span className="dm-rail-text dm-rail-zh" lang="zh">{board.lineLabelZh}</span>
+      <aside
+        className="dm-rail dm-rail-left"
+        aria-label={board.lineLabel ?? board.lineCode}
+      >
+        <span className="dm-rail-text dm-rail-zh" lang="zh">
+          {board.lineLabelZh}
+        </span>
         <span className="dm-rail-text dm-rail-en">{board.lineLabel}</span>
       </aside>
 
@@ -234,7 +267,11 @@ export default function DmDashboard({ slug }: { slug: string }) {
             <div className="dm-values-footer" aria-label="Nilai Perusahaan">
               {board.values.map((val, idx) => (
                 <span key={val} className="dm-value-item">
-                  {idx > 0 ? <span className="dm-value-divider" aria-hidden="true">|</span> : null}
+                  {idx > 0 ? (
+                    <span className="dm-value-divider" aria-hidden="true">
+                      |
+                    </span>
+                  ) : null}
                   <span>{val}</span>
                 </span>
               ))}
@@ -249,7 +286,10 @@ export default function DmDashboard({ slug }: { slug: string }) {
 
             <div className="dm-team-grid">
               {topMembers.length === 0 ? (
-                <p className="dm-team-empty">Anggota tim belum diatur. Admin bisa menambahkannya di Panel Admin.</p>
+                <p className="dm-team-empty">
+                  Anggota tim belum diatur. Admin bisa menambahkannya di Panel
+                  Admin.
+                </p>
               ) : (
                 topMembers.map((member, idx) => (
                   <MemberCard key={member.id ?? idx} member={member} />
@@ -260,17 +300,51 @@ export default function DmDashboard({ slug }: { slug: string }) {
             <div className="dm-mpv-section">
               <div className="dm-mpv-badge-block">
                 <div className="dm-mpv-title-wrap">
-                  <span className="dm-mpv-heading-main">MPV</span>
+                  <span className="dm-mpv-heading-main">MVP</span>
                   <span className="dm-mpv-heading-sub">of The Month</span>
-                  {displayMpv ? <span className="dm-mpv-period">{formatPeriod(displayMpv.period)}</span> : null}
+                  {displayMpv ? (
+                    <span className="dm-mpv-period">
+                      {formatPeriod(displayMpv.period)}
+                    </span>
+                  ) : null}
                 </div>
                 <div className="dm-chevrons" aria-hidden="true">
                   <svg width="46" height="16" viewBox="0 0 46 16" fill="none">
-                    <path d="M2 2L7 8L2 14" stroke="#008a4f" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M10 2L15 8L10 14" stroke="#008a4f" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M18 2L23 8L18 14" stroke="#008a4f" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M26 2L31 8L26 14" stroke="#008a4f" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M34 2L39 8L34 14" stroke="#008a4f" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M2 2L7 8L2 14"
+                      stroke="#008a4f"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M10 2L15 8L10 14"
+                      stroke="#008a4f"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M18 2L23 8L18 14"
+                      stroke="#008a4f"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M26 2L31 8L26 14"
+                      stroke="#008a4f"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M34 2L39 8L34 14"
+                      stroke="#008a4f"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </div>
               </div>
@@ -297,15 +371,21 @@ export default function DmDashboard({ slug }: { slug: string }) {
                     <dl className="dm-member-specs">
                       <div className="dm-spec-row">
                         <dt className="dm-spec-label">Work No:</dt>
-                        <dd className="dm-spec-value">{displayMpv.employeeId ?? "-"}</dd>
+                        <dd className="dm-spec-value">
+                          {displayMpv.employeeId ?? "-"}
+                        </dd>
                       </div>
                       <div className="dm-spec-row">
                         <dt className="dm-spec-label">Dept:</dt>
-                        <dd className="dm-spec-value">{displayMpv.dept ?? "-"}</dd>
+                        <dd className="dm-spec-value">
+                          {displayMpv.dept ?? "-"}
+                        </dd>
                       </div>
                       <div className="dm-spec-row">
                         <dt className="dm-spec-label">Position:</dt>
-                        <dd className="dm-spec-value">{displayMpv.position ?? "-"}</dd>
+                        <dd className="dm-spec-value">
+                          {displayMpv.position ?? "-"}
+                        </dd>
                       </div>
                     </dl>
                   </div>
@@ -320,7 +400,9 @@ export default function DmDashboard({ slug }: { slug: string }) {
               </div>
               <div className="dm-card dm-bottom-card">
                 <span className="dm-bottom-label">Slogan:</span>
-                <span className="dm-bottom-value dm-slogan-text">{board.slogan ?? "-"}</span>
+                <span className="dm-bottom-value dm-slogan-text">
+                  {board.slogan ?? "-"}
+                </span>
               </div>
             </div>
           </section>

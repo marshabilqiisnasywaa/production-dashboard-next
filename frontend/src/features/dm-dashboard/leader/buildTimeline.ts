@@ -1,42 +1,16 @@
-/**
- * Turns today's live data (papercard submissions + meeting sessions) into the
- * view-model used by <SessionTimeline />. All the "which session is current?"
- * rules live here, so the component stays purely visual.
- */
-import type { DmMeetingSession, DmPapercardSubmission } from "../api";
-import { msUntil } from "./papercard/utils";
+import type { DmMeetingSession, DmPapercardSubmission, DmPapercardTemplate } from "../api";
 import { LEADER_ROUTES } from "./routes";
 import type { RoleKey } from "./types";
 import type { TimelineModel, TimelineRole, TimelineSession } from "./timelineTypes";
 
-interface ScheduleEntry {
-  id: string;
-  name: string;
-  label: string;
-  start: string; // HH:mm
+interface Input {
+  now: Date;
+  today: string;
+  leaderSubmission: DmPapercardSubmission | null;
+  leaderTemplate: DmPapercardTemplate | null;
+  submissions: DmPapercardSubmission[];
+  sessions: DmMeetingSession[];
 }
-
-const PRE_ENTRY: ScheduleEntry = { id: "pre", name: "Pre-Management", label: "07:45–08:00", start: "07:45" };
-
-/** Pre-Management is fixed; every other entry is a meeting session from the line's schedule (set by admin). */
-function buildSchedule(sessions: DmMeetingSession[]): { schedule: ScheduleEntry[]; sessionFor: Map<string, DmMeetingSession> } {
-  const sessionFor = new Map<string, DmMeetingSession>();
-  const entries: ScheduleEntry[] = sessions.map((s) => {
-    const entry = {
-      id: `session-${s.id}`,
-      name: s.label || `Sesi ${s.sessionNumber}`,
-      label: s.scheduledTime,
-      start: s.scheduledTime,
-    };
-    sessionFor.set(entry.id, s);
-    return entry;
-  });
-  const schedule = [PRE_ENTRY, ...entries].sort((a, b) => a.start.localeCompare(b.start));
-  return { schedule, sessionFor };
-}
-
-/** Papercard can be sent until this time, after that it counts as NG (Telat) */
-const PAPERCARD_DEADLINE = "09:00";
 
 const ROLES: { dept: string; key: RoleKey; label: string }[] = [
   { dept: "PROD", key: "leader", label: "Leader" },
@@ -45,100 +19,110 @@ const ROLES: { dept: string; key: RoleKey; label: string }[] = [
   { dept: "QC", key: "ipqc", label: "IPQC" },
 ];
 
-interface Input {
-  now: Date;
-  leaderSubmitted: boolean;
-  submissions: DmPapercardSubmission[];
-  /** Today's meeting sessions of the Leader's line, from the API (times follow the admin's schedule) */
-  sessions: DmMeetingSession[];
+function scheduleTime(date: string, time?: string): number {
+  if (!time || !/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(time)) return Number.NaN;
+  return new Date(`${date}T${time}+07:00`).getTime();
 }
 
 function formatDuration(ms: number): string {
-  const totalMin = Math.max(1, Math.round(ms / 60_000));
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  if (h === 0) return `${m} menit`;
-  return m === 0 ? `${h} jam` : `${h}j ${m}m`;
+  const minutes = Math.max(1, Math.ceil(ms / 60_000));
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${minutes} menit`;
+  return rest === 0 ? `${hours} jam` : `${hours}j ${rest}m`;
 }
 
-/**
- * TODO: fill in once we know where attendance lives in DmMeetingSession
- * (e.g. session.attendances.length). Returning null simply hides the line.
- */
-function getAttendance(_session: DmMeetingSession | undefined): { present: number; total: number } | null {
-  return null;
-}
+export function buildTimeline({ now, today, leaderSubmission, leaderTemplate, submissions, sessions }: Input): TimelineModel {
+  const nowMs = now.getTime();
+  const startById = new Map<string, number>();
+  const roles: TimelineRole[] = ROLES.map((role) => ({
+    key: role.key, label: role.label,
+    submitted: submissions.some((submission) => submission.department === role.dept),
+  }));
+  const papercard = { roles, submittedCount: roles.filter((role) => role.submitted).length };
+  const start = scheduleTime(today, leaderTemplate?.windowStart);
+  const end = scheduleTime(today, leaderTemplate?.windowEnd);
+  const validWindow = Number.isFinite(start) && Number.isFinite(end) && end >= start;
+  const preBase = {
+    id: "pre", order: 1, name: "Pre-Management",
+    time: validWindow ? `${leaderTemplate!.windowStart} - ${leaderTemplate!.windowEnd}` : "Jadwal belum tersedia",
+    papercard,
+  };
+  const papercardCta = { label: "Isi Papercard", href: LEADER_ROUTES.papercard };
+  let pre: TimelineSession;
+  if (!validWindow) {
+    pre = {
+      ...preBase, status: "upcoming", statusLabel: "Jadwal belum tersedia",
+      completed: Boolean(leaderSubmission),
+      summary: leaderSubmission
+        ? "Papercard sudah dikirim. Ketepatan waktu belum dapat dinilai."
+        : "Template papercard Leader belum memiliki rentang waktu valid.",
+    };
+  } else if (leaderSubmission) {
+    const sentAt = new Date(leaderSubmission.submittedAt).getTime();
+    if (!Number.isFinite(sentAt)) {
+      pre = {
+        ...preBase, status: "done", statusLabel: "Terkirim", completed: true,
+        summary: "Waktu kirim tidak valid. Ketepatan waktu belum dapat dinilai.",
+      };
+    } else {
+      const late = sentAt > end;
+      const sentText = new Intl.DateTimeFormat("id-ID", {
+        timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+      }).format(new Date(sentAt));
+      pre = {
+        ...preBase, status: late ? "overdue" : "done",
+        statusLabel: late ? "Terlambat" : "Selesai", completed: true,
+        summary: `Papercard Leader dikirim pukul ${sentText} WIB${late ? ", melewati batas waktu." : "."}`,
+      };
+    }
+  } else if (nowMs < start) {
+    startById.set("pre", start);
+    pre = { ...preBase, status: "upcoming", statusLabel: "Belum mulai" };
+  } else if (nowMs <= end) {
+    pre = { ...preBase, status: "live", statusLabel: "Berlangsung", cta: papercardCta };
+  } else {
+    pre = {
+      ...preBase, status: "overdue", statusLabel: "Terlambat",
+      summary: "Batas waktu sudah lewat. Papercard Leader belum dikirim.",
+      cta: { ...papercardCta, label: "Isi sekarang" },
+    };
+  }
 
-export function buildTimeline({ now, leaderSubmitted, submissions, sessions }: Input): TimelineModel {
-  const { schedule, sessionFor } = buildSchedule(sessions);
-  const built: TimelineSession[] = schedule.map((entry, index) => {
-    const base = { id: entry.id, order: index + 1, name: entry.name, time: entry.label };
-
-    /* ---------- Pre-Management: driven by the Leader's own papercard ---------- */
-    if (entry.id === "pre") {
-      const roles: TimelineRole[] = ROLES.map((r) => ({
-        key: r.key,
-        label: r.label,
-        submitted: submissions.some((s) => String(s.department) === r.dept),
-      }));
-      const submittedCount = roles.filter((r) => r.submitted).length;
-      const papercard = { roles, submittedCount };
-      const cta = { label: "Isi Papercard", href: LEADER_ROUTES.papercard };
-
-      if (leaderSubmitted) {
-        return {
-          ...base,
-          status: "done",
-          statusLabel: "Selesai",
-          summary: `Papercard Leader terkirim · ${submittedCount}/${roles.length} role`,
-          papercard,
-        };
+  const meetings: TimelineSession[] = [...sessions]
+    .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime))
+    .map((session, index) => {
+      const id = `session-${session.id}`;
+      startById.set(id, scheduleTime(session.date, session.scheduledTime));
+      const base = {
+        id, order: index + 2, name: session.label || `Sesi ${session.sessionNumber}`,
+        time: session.scheduledTime,
+      };
+      const cta = { label: "Buka ruang sesi", href: LEADER_ROUTES.meeting };
+      if (session.status === "completed") {
+        return { ...base, status: "done", statusLabel: "Selesai", completed: true, summary: "Sesi sudah dilaksanakan" };
       }
-      if (msUntil(now, entry.start) > 0) {
-        return { ...base, status: "upcoming", statusLabel: "Belum mulai", papercard };
+      if (session.status === "in_progress") {
+        return { ...base, status: "live", statusLabel: "Berlangsung", cta };
       }
-      if (msUntil(now, PAPERCARD_DEADLINE) > 0) {
-        return { ...base, status: "live", statusLabel: "Berlangsung", papercard, cta };
-      }
-      return { ...base, status: "overdue", statusLabel: "Belum diisi", papercard, cta: { ...cta, label: "Isi sekarang" } };
-    }
+      return { ...base, status: "upcoming", statusLabel: "Belum mulai", cta };
+    });
 
-    /* ---------- During / Post: driven by meeting sessions ---------- */
-    const session = sessionFor.get(entry.id);
-    const completed = session?.status === "completed";
-    const next = schedule[index + 1];
-    const cta = { label: "Buka ruang sesi", href: LEADER_ROUTES.meeting };
-
-    if (completed) {
-      return { ...base, status: "done", statusLabel: "Selesai", summary: "Sesi sudah dilaksanakan" };
-    }
-    if (msUntil(now, entry.start) > 0) {
-      return { ...base, status: "upcoming", statusLabel: "Belum mulai" };
-    }
-    // started but not completed: current slot until the next session begins, then it was missed
-    const nextStarted = next ? msUntil(now, next.start) <= 0 : false;
-    if (nextStarted) {
-      return { ...base, status: "overdue", statusLabel: "Terlewat" };
-    }
-    return { ...base, status: "live", statusLabel: "Berlangsung", attendance: getAttendance(session), cta };
-  });
-
-  const live = built.find((s) => s.status === "live");
-  const upcoming = built.find((s) => s.status === "upcoming");
-  const overdue = built.find((s) => s.status === "overdue");
-  const focus = live ?? upcoming ?? overdue ?? null;
-
-  const nextHint =
-    !live && upcoming
-      ? `Berikutnya: ${upcoming.name} · dalam ${formatDuration(
-          msUntil(now, schedule.find((s) => s.id === upcoming.id)!.start),
-        )}`
-      : null;
-
+  const built = [pre, ...meetings];
+  const live = built.find((session) => session.status === "live");
+  const overdue = built.find((session) => session.status === "overdue" && !session.completed);
+  const upcoming = built.find((session) =>
+    session.status === "upcoming" && !session.completed && Number.isFinite(startById.get(session.id)),
+  );
+  const focus = live ?? overdue ?? upcoming ?? null;
+  const remainingMs = upcoming ? (startById.get(upcoming.id) ?? nowMs) - nowMs : 0;
+  const nextHint = !live && upcoming
+    ? remainingMs > 0
+      ? `Berikutnya: ${upcoming.name} · dalam ${formatDuration(remainingMs)}`
+      : `${upcoming.name} belum dimulai`
+    : null;
   return {
-    sessions: built,
-    focusId: focus?.id ?? null,
-    doneCount: built.filter((s) => s.status === "done").length,
-    nextHint,
+    sessions: built, focusId: focus?.id ?? null,
+    doneCount: built.filter((session) => session.completed).length, nextHint,
   };
 }

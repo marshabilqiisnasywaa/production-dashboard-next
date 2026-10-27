@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { meetingApi, papercardApi, type DmMeetingSession, type DmPapercardSubmission } from "../../api";
+import { meetingApi, papercardApi, type DmMeetingSession, type DmPapercardSubmission, type DmPapercardTemplate } from "../../api";
 import { localDate } from "../../leader/meeting/utils";
 import { useMember } from "../MemberProvider";
 
@@ -10,6 +10,7 @@ export function useMemberToday() {
   const { me, profile, loading: meLoading } = useMember();
   const [submissions, setSubmissions] = useState<DmPapercardSubmission[]>([]);
   const [sessions, setSessions] = useState<DmMeetingSession[]>([]);
+  const [templates, setTemplates] = useState<DmPapercardTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
   const today = useMemo(() => localDate(new Date()), []);
@@ -22,10 +23,14 @@ export function useMemberToday() {
     Promise.all([
       papercardApi.listSubmissions({ lineId, date: today }).catch(() => []),
       meetingApi.listSessions(lineId, today).catch(() => []),
-    ]).then(([subs, sess]) => {
+      me?.dept
+        ? papercardApi.listTemplates({ lineId, department: me.dept.toUpperCase() }).catch(() => [])
+        : Promise.resolve([]),
+    ]).then(([subs, sess, templates]) => {
       if (!alive) return;
       setSubmissions(subs);
       setSessions(sess);
+      setTemplates(templates);
       setLoading(false);
     });
 
@@ -50,6 +55,8 @@ export function useMemberToday() {
   );
 
   return {
+  today,
+  myTemplate: templates.find((template) => template.id === mySubmission?.templateId) ?? templates[0] ?? null,
   mySubmission,
   sessions,
   loading: meLoading || loading,

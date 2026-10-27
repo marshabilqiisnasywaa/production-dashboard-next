@@ -1,8 +1,9 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 from app.services.teamtalk import notify_new_problems
+from zoneinfo import ZoneInfo
 
 from app.api.deps import Principal, authorize_line, get_active_principal, get_current_admin, get_principal
 from app.db.session import get_db
@@ -18,6 +19,9 @@ from app.models import (
 )
 from app.schemas import (
     AbsenceNotesIn,
+    MeetingRepresentativeOut,
+    MeetingPicOut,
+    MeetingSummaryOptionsOut,
     EmployeePhotoOut,
     MeetingAttendanceIn,
     MeetingAttendanceOut,
@@ -328,6 +332,31 @@ def meeting_history(
     return [_map_session(s, db) for s in db.scalars(stmt).all()]
 
 
+@router.get("/summary-options", response_model=MeetingSummaryOptionsOut)
+def summary_options(
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> MeetingSummaryOptionsOut:
+    if principal.role == "member":
+        raise HTTPException(status_code=403, detail="Hanya Leader yang berwenang mengisi summary.")
+    return MeetingSummaryOptionsOut(
+        lines=list(db.scalars(select(Line.code).order_by(Line.code))),
+        users=[MeetingPicOut(id=e.id, employee_no=e.employee_no, name=e.name)
+               for e in db.scalars(select(Employee).where(Employee.is_active.is_(True)).order_by(Employee.name, Employee.employee_no))],
+    )
+
+
+@router.get("/representatives", response_model=list[MeetingRepresentativeOut])
+def list_representatives(
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> list[MeetingRepresentativeOut]:
+    if principal.role == "member":
+        raise HTTPException(status_code=403, detail="Hanya Leader yang berwenang memilih wakil.")
+    employees = db.scalars(select(Employee).where(Employee.is_active.is_(True)).order_by(Employee.name, Employee.employee_no))
+    return [MeetingRepresentativeOut(employee_no=e.employee_no, name=e.name) for e in employees]
+
+
 @router.get("/employees/{employee_no}/photo", response_model=EmployeePhotoOut)
 def employee_photo(
     employee_no: str,
@@ -608,21 +637,22 @@ def end_session(
             pic = db.scalars(
                 select(Employee).where(Employee.employee_no == sm.pic_employee_no)
             ).first()
-            if pic is not None:
-                pic_id = pic.id
-                pic_name = pic.name
+            if pic is None or not pic.is_active:
+                raise HTTPException(400, "User PIC tidak ditemukan atau sudah nonaktif.")
+            pic_id = pic.id
+            pic_name = pic.name
         summary_line_id = session.line_id
         if sm.line_code:
-            allowed_lines = {code: line_id for item in session.roster or [] for line_id, code in zip(item["line_ids"], item["line_codes"])}
-            if sm.line_code not in allowed_lines:
-                raise HTTPException(400, "Lini masalah tidak termasuk peserta meeting.")
-            summary_line_id = allowed_lines[sm.line_code]
+            selected_line = db.scalar(select(Line).where(Line.code == sm.line_code))
+            if selected_line is None:
+                raise HTTPException(400, "Lini masalah tidak ditemukan.")
+            summary_line_id = selected_line.id
         summary_session = db.scalar(select(DmMeetingSession).where(
             DmMeetingSession.source_session_id == session.id,
             DmMeetingSession.line_id == summary_line_id,
         )) if summary_line_id != session.line_id else session
         new_sm = DmMeetingSummary(
-            session_id=summary_session.id,
+            session_id=(summary_session or session).id,
             line_id=summary_line_id,
             problem=sm.problem,
             pic_name=pic_name,
@@ -670,6 +700,172 @@ def _is_pic(sm: DmMeetingSummary, employee: Employee) -> bool:
         return True
     return sm.pic_name.strip().lower() == employee.name.strip().lower()
 
+@router.get("/problems/closure-rate")
+def get_problem_closure_rate(
+    line_id: int,
+    from_date: date = Query(alias="from"),
+    to_date: date = Query(alias="to"),
+    shift: str = "Shift 1",
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> dict[str, int | float | None]:
+    authorize_line(db, principal, line_id)
+
+    if db.get(Line, line_id) is None:
+        raise HTTPException(status_code=404, detail="Lini tidak ditemukan.")
+
+    if from_date > to_date:
+        raise HTTPException(
+            status_code=400,
+            detail="Tanggal awal tidak boleh melewati tanggal akhir.",
+        )
+
+    if (to_date - from_date).days > 365:
+        raise HTTPException(
+            status_code=400,
+            detail="Rentang maksimal 366 hari.",
+        )
+
+    stmt = (
+        select(
+            func.count(DmMeetingSummary.id),
+            func.count(DmMeetingSummary.id).filter(
+                DmMeetingSummary.status == "resolved"
+            ),
+        )
+        .select_from(DmMeetingSummary)
+        .join(
+            DmMeetingSession,
+            DmMeetingSession.id == DmMeetingSummary.session_id,
+        )
+        .where(
+            DmMeetingSummary.line_id == line_id,
+            DmMeetingSession.date >= from_date,
+            DmMeetingSession.date <= to_date,
+            DmMeetingSession.shift == shift,
+        )
+    )
+
+    total, resolved = db.execute(stmt).one()
+    total = int(total)
+    resolved = int(resolved)
+
+    return {
+        "total": total,
+        "resolved": resolved,
+        "rate": round(resolved / total * 100, 1) if total else None,
+    }
+
+@router.get("/problems/on-time-rate")
+def get_problem_on_time_rate(
+    line_id: int,
+    from_date: date = Query(alias="from"),
+    to_date: date = Query(alias="to"),
+    shift: str = "Shift 1",
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> dict[str, int | float | None]:
+    authorize_line(db, principal, line_id)
+
+    if db.get(Line, line_id) is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Lini tidak ditemukan.",
+        )
+
+    if from_date > to_date:
+        raise HTTPException(
+            status_code=400,
+            detail="Tanggal awal tidak boleh melewati tanggal akhir.",
+        )
+
+    if (to_date - from_date).days > 365:
+        raise HTTPException(
+            status_code=400,
+            detail="Rentang maksimal 366 hari.",
+        )
+
+    jakarta = ZoneInfo("Asia/Jakarta")
+    now = datetime.now(timezone.utc)
+
+    stmt = (
+        select(DmMeetingSummary)
+        .join(
+            DmMeetingSession,
+            DmMeetingSession.id == DmMeetingSummary.session_id,
+        )
+        .where(
+            DmMeetingSummary.line_id == line_id,
+            DmMeetingSession.shift == shift,
+        )
+    )
+
+    total = 0
+    on_time = 0
+    late = 0
+    unresolved = 0
+    unknown = 0
+    invalid_deadline = 0
+
+    for problem in db.scalars(stmt):
+        raw_deadline = (problem.due_date or "").strip()
+
+        try:
+            if "T" not in raw_deadline and " " not in raw_deadline:
+                raise ValueError("Deadline harus memiliki tanggal dan jam.")
+
+            deadline = datetime.fromisoformat(raw_deadline)
+
+            if deadline.tzinfo is None:
+                deadline = deadline.replace(tzinfo=jakarta)
+
+            deadline = deadline.astimezone(jakarta)
+        except (ValueError, OverflowError):
+            invalid_deadline += 1
+            continue
+
+        if not from_date <= deadline.date() <= to_date:
+            continue
+
+        if deadline > now:
+            continue
+
+        total += 1
+
+        if problem.status != "resolved":
+            unresolved += 1
+            continue
+
+        if problem.resolved_at is None:
+            unknown += 1
+            continue
+
+        resolved_at = problem.resolved_at
+
+        if resolved_at.tzinfo is None:
+            unknown += 1
+            continue
+
+        if resolved_at <= deadline:
+            on_time += 1
+        else:
+            late += 1
+
+    rate = (
+        round(on_time / total * 100, 1)
+        if total > 0 and unknown == 0
+        else None
+    )
+
+    return {
+        "total": total,
+        "onTime": on_time,
+        "late": late,
+        "unresolved": unresolved,
+        "unknown": unknown,
+        "invalidDeadline": invalid_deadline,
+        "rate": rate,
+    }
 
 @router.get("/problems/mine", response_model=list[myProblemOut])
 def my_problems(
@@ -801,6 +997,12 @@ def set_problem_status(
     if employee is not None:
         if not _is_pic(sm, employee):
             raise HTTPException(status_code=403, detail="Hanya PIC yang bisa mengubah status problem.")
+
+    if payload.status == "resolved":
+        if sm.status != "resolved":
+            sm.resolved_at = datetime.now(timezone.utc)
+    else :
+        sm.resolved_at = None
 
     sm.status = payload.status
     db.commit()

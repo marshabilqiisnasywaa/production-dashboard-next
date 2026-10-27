@@ -14,7 +14,7 @@ from app.api.deps import Principal
 from app.api.dm_groups import assign_line_to_group, delete_dm_group
 from app.api.face_scan import open_session, scan_attendance
 from app.api import face_scan
-from app.api.meetings import close_presensi, end_session, list_sessions, prepare_session, save_absence_notes, start_session
+from app.api.meetings import close_presensi, end_session, list_sessions, prepare_session, save_absence_notes, start_session, summary_options
 from app.db.base import Base
 from app.db.session import engine
 from app.models import Board, BoardMember, DmGroup, DmMeetingAttendance, DmMeetingSession, Employee, Line, Workshop
@@ -114,6 +114,31 @@ class JointMeetingTests(unittest.TestCase):
         self.assertEqual(result.summaries[0].pic_id, self.employees[3].id)
         with self.assertRaises(HTTPException):
             end_session(self.source_id, MeetingSessionEndIn(), BackgroundTasks(), self.db, self.host)
+
+    def test_summary_allows_line_and_pic_outside_meeting(self):
+        outside_line = Line(workshop_id=self.lines[0].workshop_id, code="999", name="Outside")
+        outside_pic = Employee(employee_no="OUTSIDE", name="Outside PIC", role="member", is_active=True)
+        inactive = Employee(employee_no="INACTIVE", name="Inactive PIC", role="member", is_active=False)
+        self.db.add_all([outside_line, outside_pic, inactive])
+        self.db.commit()
+        options = summary_options(self.db, self.host)
+        self.assertIn("999", options.lines)
+        self.assertIn(outside_pic.id, [user.id for user in options.users])
+        self.assertNotIn(inactive.id, [user.id for user in options.users])
+        with self.assertRaises(HTTPException) as denied:
+            summary_options(self.db, Principal(employee=outside_pic))
+        self.assertEqual(denied.exception.status_code, 403)
+        self.prepare()
+        start_session(MeetingSessionStartIn(line_id=self.lines[0].id, date=self.day, session_number=1), self.db, self.host)
+        result = end_session(self.source_id, MeetingSessionEndIn(summaries=[{
+            "problem": "Outside issue", "picName": "Old name", "picEmployeeNo": "OUTSIDE", "lineCode": "999",
+        }]), BackgroundTasks(), self.db, self.host)
+        self.assertEqual(result.status, "completed")
+        self.assertEqual(len(result.summaries), 1)
+        self.assertEqual(result.summaries[0].session_id, self.source_id)
+        self.assertEqual(result.summaries[0].line_id, outside_line.id)
+        self.assertEqual(result.summaries[0].pic_id, outside_pic.id)
+        self.assertEqual(result.summaries[0].pic_name, outside_pic.name)
 
     def test_scan_endpoint_mirrors_once_and_rejects_outside_dm(self):
         self.prepare()

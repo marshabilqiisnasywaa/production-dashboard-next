@@ -17,7 +17,9 @@ import { TimeCompositionCard } from "./components/TimeCompositionCard";
 import { useInspection } from "./hooks/useInspection";
 import { useLeaderToday } from "./hooks/useLeaderToday";
 import { useNow } from "./hooks/useNow";
-import { LEADER_USER, OTHER_KPIS, TIME_SHARES } from "./mockData";
+import { useClosureRate } from "./hooks/useClosureRate";
+import { useProblemOnTimeRate } from "./hooks/useProblemOnTimeRate";
+import { LEADER_USER, TIME_SHARES } from "./mockData";
 import type { DateRangeKey } from "./types";
 import { ReminderModal } from "../shared/ReminderModal";
 import { LEADER_ROUTES } from "./routes";
@@ -34,21 +36,43 @@ export default function LeaderDashboardPage() {
   const [range, setRange] = useState<DateRangeKey>("7d");
 
   // Today (live database)
-  const { currentUser, submissions, sessions, leaderSubmission, loading } =
-    useLeaderToday();
+  const {
+    currentUser,
+    submissions,
+    sessions,
+    leaderSubmission,
+    leaderTemplate,
+    today,
+    loading,
+    error: timelineError,
+  } = useLeaderToday();
   const now = useNow(30_000);
+
+  const closure = useClosureRate(
+    currentUser?.line?.id ?? null,
+    range,
+    "Shift 1"
+  );
+
+  const abnormal = useProblemOnTimeRate(
+    currentUser?.line?.id ?? null,
+    range,
+    "Shift 1"
+  );
 
   const timeline = useMemo(
     () =>
-      now && !loading
+      now && today && !loading && !timelineError
         ? buildTimeline({
             now,
-            leaderSubmitted: Boolean(leaderSubmission),
+            today,
+            leaderSubmission,
+            leaderTemplate,
             submissions,
             sessions,
           })
         : null,
-    [now, loading, leaderSubmission, submissions, sessions],
+    [now, today, loading, timelineError, leaderSubmission, leaderTemplate, submissions, sessions]
   );
 
   const {
@@ -58,6 +82,30 @@ export default function LeaderDashboardPage() {
     loading: inspectionLoading,
     error: inspectionError,
   } = useInspection(range, "Shift 1");
+
+  const abnormalMessage = loading
+    ? "Memuat akun..."
+    : !currentUser
+    ? "Data akun belum tersedia."
+    : !currentUser.line?.id
+    ? "Akun belum memiliki penugasan lini."
+    : abnormal.loading
+    ? "Memuat penanganan abnormal..."
+    : abnormal.error
+    ? abnormal.error
+    : !abnormal.data
+    ? "Data penanganan abnormal belum tersedia."
+    : abnormal.data.unknown > 0
+    ? `${abnormal.data.unknown} masalah selesai belum memiliki waktu penyelesaian. Persentase belum dapat dihitung.`
+    : abnormal.data.total === 0
+    ? "Belum ada masalah dengan deadline yang sudah jatuh tempo pada periode ini."
+    : "Persentase belum tersedia.";
+
+  const abnormalReady =
+    !loading &&
+    Boolean(currentUser?.line?.id) &&
+    !abnormal.loading &&
+    !abnormal.error;
 
   return (
     <div className="dms-container">
@@ -115,14 +163,93 @@ export default function LeaderDashboardPage() {
               />
             </>
           )}
-          {OTHER_KPIS.filter((k) => k.id !== "ontime").map((k) => (
-            <KpiCard
-              key={k.id}
-              title={k.title}
-              value={k.value}
-              icon={KPI_ICON[k.icon]}
-            />
-          ))}
+          <div>
+            {abnormalReady && abnormal.data && abnormal.data.rate !== null ? (
+              <KpiCard
+                title="Penanganan abnormal tepat waktu"
+                value={abnormal.data.rate}
+                icon={KPI_ICON.alert}
+              />
+            ) : (
+              <article className="dml-kpi">
+                <div className="dml-kpi__top">
+                  <h3>Penanganan abnormal tepat waktu</h3>
+                </div>
+                <p role={abnormal.error ? "alert" : "status"}>
+                  {abnormalMessage}
+                </p>
+              </article>
+            )}
+
+            {abnormalReady && abnormal.data && (
+              <>
+                {abnormal.data.total > 0 && (
+                  <p className="dml-kpi__hint">
+                    {abnormal.data.onTime} tepat waktu dari{" "}
+                    {abnormal.data.total} masalah yang sudah jatuh tempo.{" "}
+                    {abnormal.data.late} selesai terlambat,{" "}
+                    {abnormal.data.unresolved} belum selesai
+                    {abnormal.data.unknown > 0
+                      ? `, ${abnormal.data.unknown} waktu selesai belum diketahui`
+                      : ""}
+                    .
+                  </p>
+                )}
+
+                <p className="dml-kpi__hint">
+                  Berdasarkan deadline dalam periode terpilih.
+                </p>
+
+                {abnormal.data.invalidDeadline > 0 && (
+                  <p className="dml-kpi__hint">
+                    {abnormal.data.invalidDeadline} masalah pada lini dan shift
+                    ini tidak memiliki deadline valid, lintas periode. Tidak
+                    dimasukkan dalam perhitungan.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
+          {!loading &&
+          currentUser?.line?.id &&
+          !closure.loading &&
+          !closure.error &&
+          closure.data &&
+          closure.data.rate !== null ? (
+            <div>
+              <KpiCard
+                title="Closure rate masalah meeting"
+                value={closure.data.rate}
+                icon={KPI_ICON.check}
+              />
+              <p className="dml-kpi__hint">
+                {closure.data.resolved} dari {closure.data.total} masalah
+                selesai
+              </p>
+            </div>
+          ) : (
+            <article className="dml-kpi">
+              <div className="dml-kpi__top">
+                <h3>Closure rate masalah meeting</h3>
+              </div>
+              <p role={closure.error ? "alert" : "status"}>
+                {loading
+                  ? "Memuat akun..."
+                  : !currentUser
+                  ? "Data akun belum tersedia."
+                  : !currentUser.line?.id
+                  ? "Akun belum memiliki penugasan lini."
+                  : closure.loading
+                  ? "Memuat closure rate..."
+                  : closure.error
+                  ? closure.error
+                  : closure.data?.total === 0
+                  ? "Belum ada masalah pada periode ini."
+                  : "Data closure rate belum tersedia."}
+              </p>
+            </article>
+          )}
         </div>
 
         <div className="dml-grid">
@@ -141,7 +268,13 @@ export default function LeaderDashboardPage() {
           </div>
           <aside className="dml-aside">
             {/* "Today" first: it is the only card the Leader can act on */}
-            <SessionTimeline model={timeline} />
+            {timelineError ? (
+              <div role="alert">
+                Timeline hari ini gagal diperbarui: {timelineError}
+              </div>
+            ) : (
+              <SessionTimeline model={timeline} />
+            )}
             <TimeCompositionCard items={TIME_SHARES} />
           </aside>
         </div>
