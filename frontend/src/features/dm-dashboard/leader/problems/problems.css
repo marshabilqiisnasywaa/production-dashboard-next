@@ -434,3 +434,139 @@
   cursor: pointer;
   text-decoration: underline;
 }
+
+/* Subtle inline due-date editing */
+.dml-pb-due {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.dml-pb-due-edit {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #64748b;
+  opacity: 0;
+  cursor: pointer;
+  transition:
+    opacity 120ms ease,
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+.dml-pb-due:hover .dml-pb-due-edit,
+.dml-pb-due-edit:focus-visible {
+  opacity: 1;
+}
+
+.dml-pb-due-edit:hover {
+  border-color: #dce8e0;
+  background: #f1f7f3;
+  color: #286b46;
+}
+
+.dml-pb-due-edit:focus-visible {
+  outline: 2px solid #087443;
+  outline-offset: 2px;
+}
+
+.dml-pb-due-edit:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.dml-pb-due-editor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: 145px;
+}
+
+.dml-pb-due-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #dfe4e8;
+  border-radius: 6px;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  font-size: 12px;
+}
+
+.dml-pb-due-input:focus {
+  border-color: #087443;
+  outline: 2px solid rgb(8 116 67 / 10%);
+}
+
+.dml-pb-due-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dml-pb-due-save {
+  height: 27px;
+  padding: 0 9px;
+  border: 1px solid #286b46;
+  border-radius: 5px;
+  background: #286b46;
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.dml-pb-due-save:disabled {
+  border-color: #d8dee3;
+  background: #eef1f3;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.dml-pb-due-cancel {
+  height: 27px;
+  padding: 0 3px;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.dml-pb-due-error,
+.dml-pb-due-hint {
+  max-width: 190px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.dml-pb-due-error {
+  color: #dc2626;
+}
+
+.dml-pb-due-hint {
+  color: #64748b;
+}
+
+.dml-pb-due:hover .dml-pb-due-edit,
+.dml-pb-due-edit:focus-visible {
+  opacity: 1;
+}
