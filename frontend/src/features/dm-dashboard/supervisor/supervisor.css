@@ -1202,6 +1202,7 @@ main.dml-content:has(.spv-approvals) .spv-stat-pill--neutral {
   background: #ffffff;
   box-shadow: none;
   margin-bottom: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .spv-approvals .spv-line-group.has-ng {
@@ -1211,6 +1212,11 @@ main.dml-content:has(.spv-approvals) .spv-stat-pill--neutral {
 
 .spv-approvals .spv-line-group.is-all-approved {
   border-color: #dbe7df;
+}
+
+.spv-approvals .spv-line-group.is-highlight {
+  border-color: #286b46;
+  box-shadow: 0 0 0 2px #eaf4ee;
 }
 
 .spv-approvals .spv-line-header {

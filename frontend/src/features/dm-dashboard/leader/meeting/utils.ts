@@ -1,10 +1,17 @@
-import type { AbsenceNote, AbsenceReason, ItemErrors, MeetingSessionInfo, SummaryItem } from "./types";
+import type {
+  AbsenceNote,
+  AbsenceReason,
+  ItemErrors,
+  MeetingSessionInfo,
+  SummaryItem,
+} from "./types";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export const uid = () => Math.random().toString(36).slice(2, 9);
 
-export const localDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+export const localDate = (d: Date) =>
+  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 export const formatClock = (iso: string) => {
   const d = new Date(iso);
@@ -13,7 +20,9 @@ export const formatClock = (iso: string) => {
 
 export function formatDuration(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));
-  return `${pad(Math.floor(total / 3600))}:${pad(Math.floor((total % 3600) / 60))}:${pad(total % 60)}`;
+  return `${pad(Math.floor(total / 3600))}:${pad(
+    Math.floor((total % 3600) / 60)
+  )}:${pad(total % 60)}`;
 }
 
 export function initialsOf(name: string): string {
@@ -39,7 +48,10 @@ export function endTimeOf(start: string, durationMin: number): string {
 }
 
 /** The session the Leader most likely wants: the latest one that starts within 30 min from now (or already started). */
-export function pickSessionId(now: Date, sessions: MeetingSessionInfo[]): string {
+export function pickSessionId(
+  now: Date,
+  sessions: MeetingSessionInfo[]
+): string {
   const minutes = now.getHours() * 60 + now.getMinutes();
   const candidates = sessions.filter((s) => toMin(s.start) - 30 <= minutes);
   return (candidates[candidates.length - 1] ?? sessions[0]).id;
@@ -47,13 +59,25 @@ export function pickSessionId(now: Date, sessions: MeetingSessionInfo[]): string
 
 /* ---------- summary items ---------- */
 
-export const makeEmptyItem = (): SummaryItem => ({ id: uid(), line: "", problem: "", picId: "", due: "" });
+export const makeEmptyItem = (): SummaryItem => ({
+  id: uid(),
+  line: "",
+  problem: "",
+  problemCategories: [],
+  picId: "",
+  due: "",
+});
 
-export const isBlank = (i: SummaryItem) => !i.line && !i.problem.trim() && !i.picId && !i.due;
+export const isBlank = (i: SummaryItem) =>
+  !i.line &&
+  !i.problem.trim() &&
+  !i.problemCategories?.length &&
+  !i.picId &&
+  !i.due;
 
 export function validateItem(i: SummaryItem): ItemErrors {
   const errors: ItemErrors = {};
-  if (!i.line) errors.line = "Pilih line";          // new
+  if (!i.line) errors.line = "Pilih line"; // new
   if (!i.problem.trim()) errors.problem = "Masalah wajib diisi";
   if (!i.picId) errors.picId = "Pilih PIC";
   if (!i.due) errors.due = "Tentukan due date";
@@ -61,8 +85,12 @@ export function validateItem(i: SummaryItem): ItemErrors {
 }
 
 export const formatDue = (due: string) =>
-  new Date(due).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-
+  new Date(due).toLocaleString("id-ID", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 /* ---------- absence notes ---------- */
 
@@ -82,12 +110,16 @@ export function absenceLabel(entry?: AbsenceNote): string {
 
 export function absenceDetail(entry?: AbsenceNote): string {
   const note = entry?.note.trim() ?? "";
-  if (entry?.reason === "represented") return note ? "Diwakilkan oleh " + note : "Diwakilkan";
+  if (entry?.reason === "represented")
+    return note ? "Diwakilkan oleh " + note : "Diwakilkan";
   if (entry?.reason === "permit" || entry?.reason === "sick") return note;
   return note;
 }
 
-export function formatAttendanceLateness(at: string | null, startedAt?: string | null): string {
+export function formatAttendanceLateness(
+  at: string | null,
+  startedAt?: string | null
+): string {
   if (!at || !startedAt) return "";
   const elapsed = new Date(at).getTime() - new Date(startedAt).getTime();
   if (!Number.isFinite(elapsed) || elapsed <= 0) return "";

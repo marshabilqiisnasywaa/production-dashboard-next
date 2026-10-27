@@ -375,6 +375,7 @@ class FaceChallengeOut(CamelModel):
 
 class MeetingSummaryIn(CamelModel):
     problem: str
+    problem_categories: list[str] | None = None
     pic_name: str
     pic_id: int | None = None
     pic_employee_no: str | None = None
@@ -387,6 +388,7 @@ class MeetingSummaryOut(CamelModel):
     session_id: int
     line_id: int
     problem: str
+    problem_categories: list[str] | None = None
     pic_name: str
     pic_id: int | None
     due_date: str | None
@@ -404,6 +406,7 @@ class myProblemOut(CamelModel):
     date : date
     session_label : str | None = None
     problem : str
+    problem_categories : list[str] | None = None
     pic_name : str
     pic_id : int | None
     due_date : str | None
