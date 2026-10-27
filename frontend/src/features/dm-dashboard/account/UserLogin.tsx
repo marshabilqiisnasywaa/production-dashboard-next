@@ -16,10 +16,10 @@ import "./login.css";
 const SHOW_DEMO = process.env.NEXT_PUBLIC_SHOW_DEMO_LOGIN !== "false";
 
 const DEMO_ACCOUNTS = [
-  { role: "Leader", nik: "leader", password: "leader123" },
-  { role: "Member", nik: "member", password: "member123" },
-  { role: "Supervisor", nik: "supervisor", password: "super123" },
-  { role: "Admin", nik: "admin", password: "admin123" },
+  { role: "Leader", nik: "LEAD01", password: "LEAD12345" },
+  { role: "Member", nik: "PE01", password: "PE123456" },
+  { role: "Supervisor", nik: "SPV01", password: "SPV12345" },
+  { role: "Admin", nik: "admin", password: "admin1234" },
 ] as const;
 
 function ShieldCheckIcon() {

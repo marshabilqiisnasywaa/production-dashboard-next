@@ -4,6 +4,7 @@ import Link from "next/link";
 import { publicApi } from "./api";
 import type { DmBoardListItem } from "./api";
 import { dmStatusLabels } from "./dmData";
+import DmScorecard from "./scorecard/DmScorecard";
 import "./DmDashboard.css";
 
 type IndexTab = "line" | "kpi" | "rekap";
@@ -226,7 +227,7 @@ export default function DmBoardIndex() {
 
         {tab === "kpi" && (
           <div id="dmi-panel-kpi" role="tabpanel" aria-labelledby="dmi-tab-kpi" className="dmi-panel">
-            <TabPlaceholder title="KPI Leader" text="Dashboard KPI Leader sedang disiapkan." />
+            <DmScorecard />
           </div>
         )}
 

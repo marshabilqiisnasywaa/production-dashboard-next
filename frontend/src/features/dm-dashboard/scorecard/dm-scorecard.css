@@ -1,0 +1,144 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-primary: #046a38;
+  --color-primary-dark: #03552d;
+  --color-primary-light: #3b9365;
+  --color-primary-soft: #e6f0eb;
+  --color-primary-border: #cde1d7;
+  --color-section: #f7f8f9;
+  --color-text: #1a1d1f;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+  --color-border-strong: #9ca3af;
+  --color-danger: #d92d20;
+  --color-danger-soft: #fef3f2;
+  --color-danger-border: #fecdca;
+  --color-warning: #f79009;
+  --color-warning-dark: #b54708;
+  --color-warning-soft: #fffaeb;
+  --color-warning-border: #fedf89;
+  --color-camera: #111827;
+  --color-overlay: rgb(17 24 39 / 42%);
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 4%);
+  --shadow-popover: 0 12px 28px rgb(16 24 40 / 12%);
+  --shadow-modal: 0 24px 48px rgb(16 24 40 / 18%);
+  --spacing-sidebar: 15.5rem;
+  --spacing-sidebar-collapsed: 4.5rem;
+  --spacing-header: 4.5rem;
+  --spacing-page: 6.5rem;
+  --spacing-page-mobile: 6rem;
+  --spacing-content: 90rem;
+  --spacing-notification: 22rem;
+  --spacing-drawer: 30rem;
+  --spacing-label: 2.5rem;
+  --spacing-dashboard: 11rem;
+  --spacing-option: 4rem;
+  --spacing-bottom: 4rem;
+  --spacing-camera: 18rem;
+  --spacing-modal: 90vh;
+  --spacing-role: 8rem;
+  --spacing-submit: 7rem;
+  --spacing-bottom-nav: 4rem;
+  --spacing-number: 12rem;
+  --spacing-mobile-frame: 24rem;
+  --spacing-kiosk: 96rem;
+  --spacing-kiosk-camera: 34rem;
+  --spacing-chart-skeleton: 16rem;
+  --spacing-empty: 16rem;
+  --spacing-trend-chart: 44rem;
+  --spacing-score-chart: 20rem;
+  --spacing-search: 14rem;
+  --spacing-table: 32rem;
+  --spacing-rate: 10rem;
+  --spacing-tap: 3rem;
+  --text-tab: 0.625rem;
+  --grid-template-columns-dashboard: minmax(0, 1fr) 20rem;
+  --grid-template-columns-form: minmax(0, 1fr) 18rem;
+  --grid-template-columns-meeting: minmax(0, 1fr) 19rem;
+  --grid-template-columns-analysis: 24rem minmax(0, 1fr);
+  --grid-template-columns-template: 18rem minmax(0, 1fr);
+  --grid-template-columns-summary: minmax(0, 1fr) 11rem 10rem auto;
+  --grid-template-columns-log-filter: minmax(13rem, 1fr) repeat(4, minmax(9rem, auto)) auto;
+  --grid-template-columns-template-item: auto minmax(0, 1fr) 9rem auto;
+  --grid-template-columns-admin-row: minmax(0, 1fr) 12rem 6rem auto;
+  --grid-template-columns-face: minmax(0, 1.25fr) minmax(15rem, 0.75fr);
+  --grid-template-columns-leader-form: 17rem minmax(0, 1fr);
+  --grid-template-columns-machine: minmax(8rem, 1fr) 7rem 7rem;
+  --grid-template-columns-rate: minmax(0, 1fr) minmax(0, 1fr) 7rem;
+  --grid-template-columns-ipqc-header: minmax(0, 1.5fr) minmax(18rem, 0.5fr);
+  --grid-template-columns-settings: minmax(0, 1fr) auto auto;
+  --grid-template-columns-time-history: minmax(0, 1fr) 20rem;
+  --grid-template-columns-template-editor: 19rem minmax(0, 1fr);
+  --grid-template-columns-threshold: 13rem 6rem minmax(0, 1fr);
+  --grid-template-columns-machine-master: minmax(0, 1fr) minmax(9rem, 0.5fr) 7rem 8rem;
+  --grid-template-columns-kiosk: minmax(0, 1.6fr) minmax(20rem, 0.4fr);
+  --grid-template-columns-devices: minmax(10rem, 1fr) minmax(12rem, 1fr) minmax(12rem, 1fr) 6rem 6rem;
+  --grid-template-columns-template-list: minmax(15rem, 1.5fr) 6rem 7rem 7rem 9rem;
+  --grid-template-columns-due: minmax(0, 1fr) 9rem 4rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--color-section);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.face-frame {
+  width: 11rem;
+  height: 14rem;
+  padding: 0.5rem;
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-radius: 46%;
+}
+
+.rounded-face {
+  border-radius: 46%;
+}
+
+.face-frame-kiosk {
+  width: 15rem;
+  height: 20rem;
+  padding: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-radius: 46%;
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+.scorecard-tv:fullscreen {
+  min-height: 100vh;
+  overflow: auto;
+  padding: 1.5rem;
+  font-size: 125%;
+}
+
+@media (min-width: 1920px) {
+  .public-live {
+    font-size: 112.5%;
+  }
+}
