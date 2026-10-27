@@ -22,15 +22,17 @@ export interface AttendanceRecord {
 export interface SummaryItem {
   id: string;
   problem: string;
+  problemCategories?: string[];
   line: string;
   picId: string;
   /** datetime-local value, e.g. "2025-06-17T12:00" */
   due: string;
   picName?: string;
-
 }
 
-export type ItemErrors = Partial<Record<"line" |"problem" | "picId" | "due", string>>;
+export type ItemErrors = Partial<
+  Record<"line" | "problem" | "picId" | "due", string>
+>;
 
 export interface GuestRecord {
   employeeNo: string;
@@ -69,5 +71,3 @@ export interface MeetingSessionInfo {
   shift: string;
   sessionNumber: number;
 }
-
-

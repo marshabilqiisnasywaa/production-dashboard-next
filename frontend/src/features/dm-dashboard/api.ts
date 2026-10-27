@@ -601,6 +601,7 @@ export type DmMeetingSummary = {
   sessionId: number;
   lineId: number;
   problem: string;
+  problemCategories?: string[] | null;
   picName: string;
   picId?: number | null;
   dueDate?: string | null;
@@ -700,6 +701,7 @@ export type DmMyProblem = {
   date: string;
   sessionLabel?: string | null;
   problem: string;
+  problemCategories?: string[] | null;
   picName: string;
   picId?: number | null;
   dueDate?: string | null;
@@ -728,8 +730,13 @@ export interface MeetingRepresentative {
 }
 
 export const meetingApi = {
-  summaryOptions: () => request<{ lines: string[]; users: (MeetingRepresentative & { id: number })[] }>("/meetings/summary-options", {}, true),
-  representatives: () => request<MeetingRepresentative[]>("/meetings/representatives", {}, true),
+  summaryOptions: () =>
+    request<{
+      lines: string[];
+      users: (MeetingRepresentative & { id: number })[];
+    }>("/meetings/summary-options", {}, true),
+  representatives: () =>
+    request<MeetingRepresentative[]>("/meetings/representatives", {}, true),
   prepare: (sessionId: number, scope: "line" | "dm") =>
     request<DmMeetingSession>(
       `/meetings/sessions/${sessionId}/prepare`,
@@ -822,6 +829,7 @@ export const meetingApi = {
     input: {
       summaries: {
         problem: string;
+        problemCategories?: string[] | null;
         picName: string;
         picId?: number | null;
         dueDate?: string | null;

@@ -44,7 +44,7 @@ export default function MeetingPage() {
   const [preparing, setPreparing] = useState(false);
   const sessionOptions = useMemo(
     () => sessions.map((s) => ({ value: s.id, label: s.start })),
-    [sessions],
+    [sessions]
   );
 
   const [pickedId, setPickedId] = useState<string | null>(null);
@@ -52,42 +52,42 @@ export default function MeetingPage() {
     pickedId && sessions.some((s) => s.id === pickedId)
       ? pickedId
       : now && sessions.length > 0
-        ? pickSessionId(now, sessions)
-        : null;
+      ? pickSessionId(now, sessions)
+      : null;
   const session = sessions.find((s) => s.id === sessionId) ?? null;
 
   const serverSession = workspace.serverSessions.find(
-    (item) => item.id === session?.dbId,
+    (item) => item.id === session?.dbId
   );
   const members = useMemo(() => meetingMembers(serverSession), [serverSession]);
   const readOnly =
     Boolean(serverSession?.sourceSessionId) ||
     Boolean(
       serverSession?.rosterPrepared &&
-      workspace.me?.kind !== "admin" &&
-      serverSession.leaderEmployeeNo &&
-      serverSession.leaderEmployeeNo !== workspace.me?.username,
+        workspace.me?.kind !== "admin" &&
+        serverSession.leaderEmployeeNo &&
+        serverSession.leaderEmployeeNo !== workspace.me?.username
     );
   const effectiveScope = serverSession?.rosterPrepared
-    ? (serverSession.meetingScope ?? "line")
+    ? serverSession.meetingScope ?? "line"
     : scope;
   const meetingLines = useMemo(() => {
     const codes = serverSession?.rosterPrepared
-      ? (serverSession.meetingLineCodes ??
-        (serverSession.participants ?? []).flatMap((item) => item.lineCodes))
+      ? serverSession.meetingLineCodes ??
+        (serverSession.participants ?? []).flatMap((item) => item.lineCodes)
       : effectiveScope === "dm"
-        ? (workspace.group?.lineCodes ?? [])
-        : workspace.line
-          ? [workspace.line.code]
-          : [];
+      ? workspace.group?.lineCodes ?? []
+      : workspace.line
+      ? [workspace.line.code]
+      : [];
     return Array.from(new Set(codes)).sort((left, right) =>
-      left.localeCompare(right, undefined, { numeric: true }),
+      left.localeCompare(right, undefined, { numeric: true })
     );
   }, [serverSession, effectiveScope, workspace.group, workspace.line]);
 
   const { state, hydrated, counts, actions } = useMeetingFlow(
     sessionId,
-    members,
+    members
   );
   const [showErrors, setShowErrors] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -95,35 +95,57 @@ export default function MeetingPage() {
     number | null
   >(null);
   const [syncError, setSyncError] = useState<string | null>(null);
-  const [summaryOptions, setSummaryOptions] = useState<Awaited<ReturnType<typeof meetingApi.summaryOptions>> | null>(null);
+  const [summaryOptions, setSummaryOptions] = useState<Awaited<
+    ReturnType<typeof meetingApi.summaryOptions>
+  > | null>(null);
   const [summaryOptionsError, setSummaryOptionsError] = useState(false);
   const [summaryOptionsRetry, setSummaryOptionsRetry] = useState(0);
 
   useEffect(() => {
     let alive = true;
     setSummaryOptionsError(false);
-    meetingApi.summaryOptions().then((options) => {
-      if (alive) setSummaryOptions(options);
-    }).catch(() => {
-      if (alive) setSummaryOptionsError(true);
-    });
-    return () => { alive = false; };
+    meetingApi
+      .summaryOptions()
+      .then((options) => {
+        if (alive) setSummaryOptions(options);
+      })
+      .catch(() => {
+        if (alive) setSummaryOptionsError(true);
+      });
+    return () => {
+      alive = false;
+    };
   }, [summaryOptionsRetry]);
 
-  const summaryMembers = useMemo(() => (summaryOptions?.users ?? []).map((user) => ({
-    id: String(user.id), name: user.name, employeeNo: user.employeeNo,
-    initials: initialsOf(user.name), roleLabel: user.employeeNo,
-  })), [summaryOptions]);
+  const summaryMembers = useMemo(
+    () =>
+      (summaryOptions?.users ?? []).map((user) => ({
+        id: String(user.id),
+        name: user.name,
+        employeeNo: user.employeeNo,
+        initials: initialsOf(user.name),
+        roleLabel: user.employeeNo,
+      })),
+    [summaryOptions]
+  );
 
   const errors = useMemo(() => {
     const result: Record<string, ItemErrors> = {};
     for (const item of state.items) {
       if (isBlank(item)) continue;
       const itemErrors = validateItem(item);
-      if (summaryOptions && item.line && !summaryOptions.lines.includes(item.line)) {
+      if (
+        summaryOptions &&
+        item.line &&
+        !summaryOptions.lines.includes(item.line)
+      ) {
         itemErrors.line = "Pilih line yang tersedia.";
       }
-      if (summaryOptions && item.picId && !summaryMembers.some((user) => user.id === item.picId)) {
+      if (
+        summaryOptions &&
+        item.picId &&
+        !summaryMembers.some((user) => user.id === item.picId)
+      ) {
         itemErrors.picId = "Pilih user PIC yang masih aktif.";
       }
       result[item.id] = itemErrors;
@@ -131,7 +153,7 @@ export default function MeetingPage() {
     return result;
   }, [state.items, summaryOptions, summaryMembers]);
   const hasErrors = Object.values(errors).some(
-    (e) => Object.keys(e).length > 0,
+    (e) => Object.keys(e).length > 0
   );
   const filledCount = state.items.filter((i) => !isBlank(i)).length;
 
@@ -142,7 +164,7 @@ export default function MeetingPage() {
       setTimeout(
         () =>
           document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(),
-        0,
+        0
       );
       return;
     }
@@ -159,7 +181,7 @@ export default function MeetingPage() {
       setSyncError(null);
     } catch (err) {
       setSyncError(
-        err instanceof Error ? err.message : "Gagal membuka presensi.",
+        err instanceof Error ? err.message : "Gagal membuka presensi."
       );
     } finally {
       setPreparing(false);
@@ -168,7 +190,7 @@ export default function MeetingPage() {
 
   async function handleSaveAbsence(
     memberId: string,
-    next: AbsenceNote,
+    next: AbsenceNote
   ): Promise<boolean> {
     const member = members.find((m) => m.id === memberId);
     if (!session || !member?.employeeNo) return false;
@@ -183,7 +205,7 @@ export default function MeetingPage() {
       setSyncError(
         err instanceof Error
           ? err.message
-          : "Gagal menyimpan keterangan. Coba lagi.",
+          : "Gagal menyimpan keterangan. Coba lagi."
       );
       return false;
     }
@@ -193,7 +215,7 @@ export default function MeetingPage() {
     if (session) {
       const notes = members
         .filter(
-          (m) => m.employeeNo && state.attendance[m.id]?.status === "absent",
+          (m) => m.employeeNo && state.attendance[m.id]?.status === "absent"
         )
         .map((m) => ({
           employeeNo: m.employeeNo as string,
@@ -217,7 +239,7 @@ export default function MeetingPage() {
         setSyncError(
           err instanceof Error
             ? err.message
-            : "Gagal memulai meeting. Coba lagi.",
+            : "Gagal memulai meeting. Coba lagi."
         );
         return;
       }
@@ -231,6 +253,7 @@ export default function MeetingPage() {
         .filter((i) => !isBlank(i))
         .map((i) => ({
           problem: i.problem.trim(),
+          problemCategories: i.problemCategories ?? [],
           picName: summaryMembers.find((m) => m.id === i.picId)?.name ?? "-",
           picEmployeeNo:
             summaryMembers.find((m) => m.id === i.picId)?.employeeNo ?? null,
@@ -248,7 +271,7 @@ export default function MeetingPage() {
         setSyncError(
           err instanceof Error
             ? err.message
-            : "Gagal mengakhiri meeting. Coba lagi.",
+            : "Gagal mengakhiri meeting. Coba lagi."
         );
         return;
       }
@@ -262,7 +285,7 @@ export default function MeetingPage() {
     if (session) {
       const absentNos = members
         .filter(
-          (m) => m.employeeNo && state.attendance[m.id]?.status !== "present",
+          (m) => m.employeeNo && state.attendance[m.id]?.status !== "present"
         )
         .map((m) => m.employeeNo as string);
       try {
@@ -272,7 +295,7 @@ export default function MeetingPage() {
         setSyncError(
           err instanceof Error
             ? err.message
-            : "Gagal menyimpan presensi. Coba lagi.",
+            : "Gagal menyimpan presensi. Coba lagi."
         );
         return;
       }
@@ -286,8 +309,8 @@ export default function MeetingPage() {
   const rosterNote = MEETING_CONFIG.requireAllPresent
     ? "Semua member dari Triangle Team wajib hadir untuk memulai meeting."
     : phase === "running" || phase === "done"
-      ? undefined
-      : "Member yang belum scan saat presensi ditutup dicatat tidak hadir.";
+    ? undefined
+    : "Member yang belum scan saat presensi ditutup dicatat tidak hadir.";
 
   useSessionAttendance({
     sessionDbId: session?.dbId ?? null,
@@ -325,6 +348,7 @@ export default function MeetingPage() {
             id: String(s.id),
             line: s.lineCode ?? "",
             problem: s.problem,
+            problemCategories: s.problemCategories ?? [],
             picId: "",
             picName: s.picName,
             due: s.dueDate ?? "",
@@ -386,8 +410,8 @@ export default function MeetingPage() {
         <div className="dml-empty">
           {sessionsLoading
             ? "Memuat jadwal meeting…"
-            : (workspace.error ??
-              "Belum ada jadwal meeting untuk lini ini hari ini. Admin bisa mengaturnya di Papercard & Meeting > Jadwal Meeting.")}
+            : workspace.error ??
+              "Belum ada jadwal meeting untuk lini ini hari ini. Admin bisa mengaturnya di Papercard & Meeting > Jadwal Meeting."}
         </div>
       </div>
     );
@@ -462,8 +486,8 @@ export default function MeetingPage() {
             {scope === "dm"
               ? "Satu leader mengambil presensi seluruh DM. Hasilnya tetap masuk ke lini masing-masing. Jadwal mengikuti sesi lini yang dipilih."
               : workspace.group
-                ? "Presensi hanya untuk tim lini yang dipilih."
-                : "Lini ini belum masuk DM. Meeting tersedia per lini."}
+              ? "Presensi hanya untuk tim lini yang dipilih."
+              : "Lini ini belum masuk DM. Meeting tersedia per lini."}
           </p>
         </section>
       )}
@@ -485,10 +509,10 @@ export default function MeetingPage() {
       <MeetingHeaderCard
         title={`${
           effectiveScope === "dm"
-            ? (serverSession?.dmGroupName ??
+            ? serverSession?.dmGroupName ??
               workspace.group?.name ??
-              "Gabungan DM")
-            : (workspace.line?.name ?? MEETING_AREA)
+              "Gabungan DM"
+            : workspace.line?.name ?? MEETING_AREA
         } · ${session.label}`}
         phase={phase}
         lines={meetingLines}
@@ -503,7 +527,7 @@ export default function MeetingPage() {
         }
         timeText={`${session.start} - ${endTimeOf(
           session.start,
-          session.durationMin,
+          session.durationMin
         )}`}
         location={MEETING_LOCATION}
       />
@@ -581,25 +605,37 @@ export default function MeetingPage() {
                 )}
 
                 {summaryOptionsError ? (
-                  <p role="alert">Daftar line dan PIC gagal dimuat. <Button onClick={() => setSummaryOptionsRetry((n) => n + 1)}>Coba lagi</Button></p>
+                  <p role="alert">
+                    Daftar line dan PIC gagal dimuat.{" "}
+                    <Button
+                      onClick={() => setSummaryOptionsRetry((n) => n + 1)}
+                    >
+                      Coba lagi
+                    </Button>
+                  </p>
                 ) : !summaryOptions ? (
                   <p role="status">Memuat daftar line dan PIC…</p>
-                ) : <SummaryForm
-                  items={state.items}
-                  members={summaryMembers}
-                  lines={summaryOptions.lines}
-                  errors={errors}
-                  showErrors={showErrors}
-                  onAdd={actions.addItem}
-                  onChange={actions.updateItem}
-                  onRemove={actions.removeItem}
-                />}
+                ) : (
+                  <SummaryForm
+                    items={state.items}
+                    members={summaryMembers}
+                    lines={summaryOptions.lines}
+                    errors={errors}
+                    showErrors={showErrors}
+                    onAdd={actions.addItem}
+                    onChange={actions.updateItem}
+                    onRemove={actions.removeItem}
+                  />
+                )}
 
                 <Button
                   variant="primary"
                   size="lg"
                   className="dml-mt-danger dml-mt-end"
-                  disabled={lateAttendanceSessionId === session.dbId || (!summaryOptions && filledCount > 0)}
+                  disabled={
+                    lateAttendanceSessionId === session.dbId ||
+                    (!summaryOptions && filledCount > 0)
+                  }
                   onClick={handleEndClick}
                 >
                   <IconStop size={16} /> End Meeting
