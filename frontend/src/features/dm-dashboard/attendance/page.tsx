@@ -1,0 +1,640 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import "./attendance.css";
+
+
+type Level = "DM Line" | "DM Workshop";
+type AttendanceStatus = "Tepat waktu" | "Telat" | "Tidak hadir";
+
+type AttendanceRecord = {
+  id: number;
+  date: string;
+  session: string;
+  level: Level;
+  name: string;
+  role: string;
+  attendanceTime: string | null;
+  difference: number | null;
+  status: AttendanceStatus;
+};
+
+type TrendDay = {
+  label: string;
+  date: string;
+  onTime: number;
+  late: number;
+  absent: number;
+};
+
+const SESSION_CONFIG = [
+  { level: "DM Line" as Level, session: "Sesi 10:00", time: "10:00" },
+  { level: "DM Line" as Level, session: "Sesi 14:00", time: "14:00" },
+  { level: "DM Workshop" as Level, session: "Sesi 16:00", time: "16:00" },
+];
+
+const RECORDS: AttendanceRecord[] = [
+  { id: 1, date: "2026-10-27", session: "Sesi 10:00", level: "DM Line", name: "Andi Wijaya", role: "Leader Line", attendanceTime: "09:55", difference: -5, status: "Tepat waktu" },
+  { id: 2, date: "2026-10-27", session: "Sesi 10:00", level: "DM Line", name: "Budi Santoso", role: "Produksi", attendanceTime: "09:59", difference: -1, status: "Tepat waktu" },
+  { id: 3, date: "2026-10-27", session: "Sesi 10:00", level: "DM Line", name: "Dewi Anggraini", role: "IPQC", attendanceTime: null, difference: null, status: "Tidak hadir" },
+  { id: 4, date: "2026-10-27", session: "Sesi 10:00", level: "DM Line", name: "Dimas Saputra", role: "ME", attendanceTime: "09:57", difference: -3, status: "Tepat waktu" },
+  { id: 5, date: "2026-10-27", session: "Sesi 10:00", level: "DM Line", name: "Fajar Nugroho", role: "ME", attendanceTime: "10:12", difference: 12, status: "Telat" },
+  { id: 6, date: "2026-10-27", session: "Sesi 10:00", level: "DM Line", name: "Rina Marlina", role: "PE", attendanceTime: "09:54", difference: -6, status: "Tepat waktu" },
+  { id: 7, date: "2026-10-27", session: "Sesi 14:00", level: "DM Line", name: "Andi Wijaya", role: "Leader Line", attendanceTime: "13:57", difference: -3, status: "Tepat waktu" },
+  { id: 8, date: "2026-10-27", session: "Sesi 14:00", level: "DM Line", name: "Budi Santoso", role: "Produksi", attendanceTime: "14:08", difference: 8, status: "Telat" },
+  { id: 9, date: "2026-10-27", session: "Sesi 14:00", level: "DM Line", name: "Dewi Anggraini", role: "IPQC", attendanceTime: "13:58", difference: -2, status: "Tepat waktu" },
+  { id: 10, date: "2026-10-27", session: "Sesi 16:00", level: "DM Workshop", name: "Rizky Pratama", role: "Leader Workshop", attendanceTime: "15:56", difference: -4, status: "Tepat waktu" },
+  { id: 11, date: "2026-10-27", session: "Sesi 16:00", level: "DM Workshop", name: "Siti Rahma", role: "Workshop", attendanceTime: "16:11", difference: 11, status: "Telat" },
+  { id: 12, date: "2026-10-27", session: "Sesi 16:00", level: "DM Workshop", name: "Yoga Pratama", role: "Workshop", attendanceTime: null, difference: null, status: "Tidak hadir" },
+
+  { id: 13, date: "2026-10-26", session: "Sesi 10:00", level: "DM Line", name: "Andi Wijaya", role: "Leader Line", attendanceTime: "09:58", difference: -2, status: "Tepat waktu" },
+  { id: 14, date: "2026-10-26", session: "Sesi 10:00", level: "DM Line", name: "Budi Santoso", role: "Produksi", attendanceTime: "10:09", difference: 9, status: "Telat" },
+  { id: 15, date: "2026-10-26", session: "Sesi 14:00", level: "DM Line", name: "Dewi Anggraini", role: "IPQC", attendanceTime: "13:56", difference: -4, status: "Tepat waktu" },
+  { id: 16, date: "2026-10-26", session: "Sesi 16:00", level: "DM Workshop", name: "Rizky Pratama", role: "Leader Workshop", attendanceTime: "16:13", difference: 13, status: "Telat" },
+
+  { id: 17, date: "2026-10-25", session: "Sesi 10:00", level: "DM Line", name: "Andi Wijaya", role: "Leader Line", attendanceTime: "09:57", difference: -3, status: "Tepat waktu" },
+  { id: 18, date: "2026-10-25", session: "Sesi 14:00", level: "DM Line", name: "Budi Santoso", role: "Produksi", attendanceTime: null, difference: null, status: "Tidak hadir" },
+  { id: 19, date: "2026-10-25", session: "Sesi 16:00", level: "DM Workshop", name: "Siti Rahma", role: "Workshop", attendanceTime: "15:58", difference: -2, status: "Tepat waktu" },
+];
+
+const TREND: TrendDay[] = [
+  { label: "Rab", date: "2026-10-21", onTime: 90, late: 7, absent: 3 },
+  { label: "Kam", date: "2026-10-22", onTime: 93, late: 5, absent: 2 },
+  { label: "Jum", date: "2026-10-23", onTime: 87, late: 9, absent: 4 },
+  { label: "Sab", date: "2026-10-24", onTime: 87, late: 8, absent: 5 },
+  { label: "Min", date: "2026-10-25", onTime: 90, late: 7, absent: 3 },
+  { label: "Sen", date: "2026-10-26", onTime: 90, late: 6, absent: 4 },
+  { label: "Sel", date: "2026-10-27", onTime: 88, late: 8, absent: 4 },
+];
+
+const STATUS_OPTIONS = ["Semua status", "Tepat waktu", "Telat", "Tidak hadir"];
+
+function formatDate(date: string) {
+  return new Date(`${date}T12:00:00`).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatPercent(value: number) {
+  return `${Math.round(value)}%`;
+}
+
+function getStats(rows: AttendanceRecord[]) {
+  const onTime = rows.filter((r) => r.status === "Tepat waktu").length;
+  const late = rows.filter((r) => r.status === "Telat").length;
+  const absent = rows.filter((r) => r.status === "Tidak hadir").length;
+  const total = rows.length;
+
+  return {
+    total,
+    onTime,
+    late,
+    absent,
+    attended: onTime + late,
+    rate: total ? ((onTime + late) / total) * 100 : 0,
+    onTimeRate: total ? (onTime / total) * 100 : 0,
+  };
+}
+
+function TrendChart({ data }: { data: TrendDay[] }) {
+  const chartWidth = 760;
+  const chartHeight = 190;
+  const left = 34;
+  const right = 12;
+  const top = 18;
+  const bottom = 34;
+  const plotWidth = chartWidth - left - right;
+  const plotHeight = chartHeight - top - bottom;
+  const slot = plotWidth / data.length;
+  const barWidth = Math.min(28, slot * 0.34);
+
+  const points = data.map((d, i) => ({
+    x: left + slot * i + slot / 2,
+    y: top + plotHeight * (1 - d.onTime / 100),
+  }));
+
+  const linePath = points
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
+    .join(" ");
+
+  return (
+    <div className="att-chart-scroll">
+      <svg
+        className="att-chart"
+        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        role="img"
+        aria-label="Grafik tren kehadiran selama tujuh hari"
+      >
+        {[0, 50, 100].map((tick) => {
+          const y = top + plotHeight * (1 - tick / 100);
+          return (
+            <g key={tick}>
+              <line
+                x1={left}
+                x2={chartWidth - right}
+                y1={y}
+                y2={y}
+                className="att-chart-grid"
+              />
+              <text x={left - 8} y={y + 4} textAnchor="end" className="att-chart-axis">
+                {tick}%
+              </text>
+            </g>
+          );
+        })}
+
+        {data.map((d, i) => {
+          const x = left + slot * i + slot / 2 - barWidth / 2;
+          const onTimeHeight = plotHeight * (d.onTime / 100);
+          const lateHeight = plotHeight * (d.late / 100);
+          const absentHeight = plotHeight * (d.absent / 100);
+          const baseY = top + plotHeight;
+
+          return (
+            <g key={d.date}>
+              <rect
+                x={x}
+                y={baseY - onTimeHeight}
+                width={barWidth}
+                height={onTimeHeight}
+                rx="3"
+                className="att-bar-ontime"
+              />
+              <rect
+                x={x}
+                y={baseY - onTimeHeight - lateHeight}
+                width={barWidth}
+                height={lateHeight}
+                className="att-bar-late"
+              />
+              <rect
+                x={x}
+                y={baseY - onTimeHeight - lateHeight - absentHeight}
+                width={barWidth}
+                height={absentHeight}
+                rx="3"
+                className="att-bar-absent"
+              />
+              <text
+                x={left + slot * i + slot / 2}
+                y={chartHeight - 15}
+                textAnchor="middle"
+                className="att-chart-axis"
+              >
+                {d.label} {new Date(`${d.date}T12:00:00`).getDate()}
+              </text>
+            </g>
+          );
+        })}
+
+        <path d={linePath} className="att-chart-line" />
+        {points.map((p, i) => (
+          <g key={data[i].date}>
+            <circle cx={p.x} cy={p.y} r="3.2" className="att-chart-dot" />
+            <title>{`${data[i].label}: ${data[i].onTime}% tepat waktu`}</title>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+function SessionComparison({ rows }: { rows: AttendanceRecord[] }) {
+  const sessionStats = SESSION_CONFIG.map((session) => {
+    const group = rows.filter(
+      (r) => r.level === session.level && r.session === session.session,
+    );
+    return { ...session, ...getStats(group) };
+  });
+
+  const levelStats = (["DM Line", "DM Workshop"] as Level[]).map((level) => {
+    const group = rows.filter((r) => r.level === level);
+    return { level, ...getStats(group) };
+  });
+
+  return (
+    <div className="att-comparison">
+      <section>
+        <div className="att-subheading">
+          <div>
+            <h3>Per sesi</h3>
+            <p>Perbandingan kehadiran pada setiap jadwal meeting</p>
+          </div>
+          <span className="att-small-label">Kehadiran</span>
+        </div>
+
+        <div className="att-session-list">
+          {sessionStats.map((s) => (
+            <div className="att-session-row" key={`${s.level}-${s.session}`}>
+              <div className="att-session-name">
+                <span>{s.session}</span>
+                <small>{s.level}</small>
+              </div>
+              <div className="att-progress-track" aria-label={`${s.session}: ${formatPercent(s.rate)}`}>
+                <span
+                  className="att-progress-on-time"
+                  style={{ width: `${s.total ? (s.onTime / s.total) * 100 : 0}%` }}
+                />
+                <span
+                  className="att-progress-late"
+                  style={{ width: `${s.total ? (s.late / s.total) * 100 : 0}%` }}
+                />
+                <span
+                  className="att-progress-absent"
+                  style={{ width: `${s.total ? (s.absent / s.total) * 100 : 0}%` }}
+                />
+              </div>
+              <strong>{s.total ? formatPercent(s.rate) : "—"}</strong>
+              <small className="att-session-count">
+                {s.attended}/{s.total}
+              </small>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="att-level-section">
+        <div className="att-subheading">
+          <div>
+            <h3>Per level</h3>
+            <p>Gabungan seluruh sesi untuk masing-masing level</p>
+          </div>
+        </div>
+
+        <div className="att-session-list">
+          {levelStats.map((s) => (
+            <div className="att-session-row" key={s.level}>
+              <div className="att-session-name">
+                <span>{s.level}</span>
+                <small>
+                  {s.level === "DM Line" ? "2 sesi per hari" : "1 sesi per hari"}
+                </small>
+              </div>
+              <div className="att-progress-track" aria-label={`${s.level}: ${formatPercent(s.rate)}`}>
+                <span
+                  className="att-progress-on-time"
+                  style={{ width: `${s.total ? (s.onTime / s.total) * 100 : 0}%` }}
+                />
+                <span
+                  className="att-progress-late"
+                  style={{ width: `${s.total ? (s.late / s.total) * 100 : 0}%` }}
+                />
+                <span
+                  className="att-progress-absent"
+                  style={{ width: `${s.total ? (s.absent / s.total) * 100 : 0}%` }}
+                />
+              </div>
+              <strong>{s.total ? formatPercent(s.rate) : "—"}</strong>
+              <small className="att-session-count">
+                {s.attended}/{s.total}
+              </small>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export default function AttendanceDashboardPage() {
+  const [period, setPeriod] = useState("7");
+  const [level, setLevel] = useState("Semua");
+  const [session, setSession] = useState("Semua sesi");
+  const [status, setStatus] = useState("Semua status");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
+
+  const visibleTrend = useMemo(
+    () => TREND.slice(-Number(period)),
+    [period],
+  );
+
+  const periodDates = useMemo(
+    () => new Set(visibleTrend.map((d) => d.date)),
+    [visibleTrend],
+  );
+
+  const periodRows = useMemo(
+    () => RECORDS.filter((r) => periodDates.has(r.date)),
+    [periodDates],
+  );
+
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    return periodRows.filter((r) => {
+      const matchesLevel = level === "Semua" || r.level === level;
+      const matchesSession = session === "Semua sesi" || r.session === session;
+      const matchesStatus = status === "Semua status" || r.status === status;
+      const matchesSearch =
+        !q ||
+        [r.name, r.role, r.level, r.session, r.date].some((v) =>
+          v.toLowerCase().includes(q),
+        );
+
+      return matchesLevel && matchesSession && matchesStatus && matchesSearch;
+    });
+  }, [periodRows, level, session, status, search]);
+
+  const stats = useMemo(() => getStats(periodRows), [periodRows]);
+  const previousStats = useMemo(() => {
+    const previousDates = new Set(
+      TREND.slice(Math.max(0, TREND.length - Number(period) * 2), TREND.length - Number(period))
+        .map((d) => d.date),
+    );
+    return getStats(RECORDS.filter((r) => previousDates.has(r.date)));
+  }, [period]);
+
+  const paginatedRows = filteredRows.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+
+  function resetPage() {
+    setPage(1);
+  }
+
+  function changePeriod(value: string) {
+    setPeriod(value);
+    resetPage();
+  }
+
+  function changeLevel(value: string) {
+    setLevel(value);
+    setSession("Semua sesi");
+    resetPage();
+  }
+
+  const sessionsForLevel =
+    level === "DM Workshop"
+      ? SESSION_CONFIG.filter((s) => s.level === "DM Workshop")
+      : level === "DM Line"
+        ? SESSION_CONFIG.filter((s) => s.level === "DM Line")
+        : SESSION_CONFIG;
+
+  const availableSessions = [
+    "Semua sesi",
+    ...sessionsForLevel.map((s) => s.session),
+  ];
+
+  const onTimeDelta =
+    previousStats.total > 0
+      ? stats.rate - previousStats.rate
+      : null;
+
+  return (
+    <main className="att-page">
+      {/* <header className="att-topbar">
+        <div className="att-topbar-inner">
+          <a className="att-brand" href="/dm/dashboard/attendance">
+            <span className="att-brand-mark" aria-hidden="true">◔</span>
+            <span>DM Triangle Team</span>
+          </a>
+          <nav className="att-nav" aria-label="Navigasi utama">
+            <a href="/dm/dashboard">Line</a>
+            <a href="/dm/dashboard/kpi-leader">KPI Leader</a>
+            <a className="is-active" href="/dm/dashboard/attendance">Rekap Absensi</a>
+          </nav>
+          <a className="att-login" href="/login">Masuk</a>
+        </div>
+      </header> */}
+
+      <div className="att-container">
+        <section className="att-page-heading">
+          <div>
+            <p className="att-eyebrow">DM OPERATIONS</p>
+            <h1>Rekapitulasi Presensi</h1>
+            <p className="att-muted">
+              Pantau tingkat kehadiran meeting DM Line dan DM Workshop.
+            </p>
+          </div>
+
+          <div className="att-filters">
+            <label>
+              <span>Periode</span>
+              <div className="att-segment">
+                {[
+                  { label: "Hari ini", value: "1" },
+                  { label: "7 hari", value: "7" },
+                  { label: "30 hari", value: "30" },
+                ].map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    className={period === item.value ? "active" : ""}
+                    onClick={() => changePeriod(item.value)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </label>
+
+            <label>
+              <span>Level</span>
+              <select value={level} onChange={(e) => changeLevel(e.target.value)}>
+                <option>Semua</option>
+                <option>DM Line</option>
+                <option>DM Workshop</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Sesi</span>
+              <select
+                value={session}
+                onChange={(e) => {
+                  setSession(e.target.value);
+                  resetPage();
+                }}
+              >
+                {availableSessions.map((s) => <option key={s}>{s}</option>)}
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section className="att-kpis" aria-label="Ringkasan kehadiran">
+          <article className="att-kpi">
+            <div className="att-kpi-top">
+              <span>Tepat waktu</span>
+              <span className="att-kpi-icon green">✓</span>
+            </div>
+            <strong>{stats.onTime}</strong>
+            <p>{formatPercent(stats.onTimeRate)} dari seluruh peserta terjadwal</p>
+            <small className="att-kpi-foot">Presensi sesuai jadwal</small>
+          </article>
+
+          <article className="att-kpi">
+            <div className="att-kpi-top">
+              <span>Telat</span>
+              <span className="att-kpi-icon amber">◷</span>
+            </div>
+            <strong>{stats.late}</strong>
+            <p>{formatPercent(stats.total ? (stats.late / stats.total) * 100 : 0)} dari seluruh peserta terjadwal</p>
+            <small className="att-kpi-foot">Hadir setelah batas waktu</small>
+          </article>
+
+          <article className="att-kpi">
+            <div className="att-kpi-top">
+              <span>Tidak hadir</span>
+              <span className="att-kpi-icon red">×</span>
+            </div>
+            <strong>{stats.absent}</strong>
+            <p>{formatPercent(stats.total ? (stats.absent / stats.total) * 100 : 0)} dari seluruh peserta terjadwal</p>
+            <small className="att-kpi-foot">Tidak ada catatan presensi</small>
+          </article>
+
+          <article className="att-kpi att-kpi-rate">
+            <div className="att-kpi-top">
+              <span>Tingkat kehadiran</span>
+              <span className="att-kpi-icon green">↗</span>
+            </div>
+            <strong>{formatPercent(stats.rate)}</strong>
+            <p>Hadir = tepat waktu + telat</p>
+            <div className="att-rate-track">
+              <span style={{ width: `${stats.rate}%` }} />
+            </div>
+            <small className="att-kpi-foot">
+              {onTimeDelta === null
+                ? "Belum ada periode pembanding"
+                : `${onTimeDelta >= 0 ? "+" : ""}${onTimeDelta.toFixed(1)} poin persentase vs periode sebelumnya`}
+            </small>
+          </article>
+        </section>
+
+        <section className="att-panel att-trend-panel">
+          <div className="att-panel-heading">
+            <div>
+              <h2>Tren Kehadiran</h2>
+              <p>Proporsi tepat waktu, telat, dan tidak hadir per hari</p>
+            </div>
+            <span className="att-chart-badge">7 hari terakhir</span>
+          </div>
+
+          <TrendChart data={visibleTrend} />
+
+          <div className="att-legend">
+            <span><i className="legend-dot ontime" /> Tepat waktu</span>
+            <span><i className="legend-dot late" /> Telat</span>
+            <span><i className="legend-dot absent" /> Tidak hadir</span>
+            <span><i className="legend-line" /> Tepat waktu (%)</span>
+          </div>
+        </section>
+
+
+        <section className="att-panel att-detail-panel">
+          <div className="att-detail-heading">
+            <div>
+              <h2>Detail Presensi</h2>
+              <p>Rincian kehadiran berdasarkan tanggal, sesi, dan peserta</p>
+            </div>
+            <div className="att-detail-tools">
+              <label className="att-status-filter">
+                <span className="sr-only">Filter status</span>
+                <select
+                  value={status}
+                  onChange={(e) => {
+                    setStatus(e.target.value);
+                    resetPage();
+                  }}
+                >
+                  {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
+                </select>
+              </label>
+              <label className="att-search">
+                <span className="sr-only">Cari nama atau peran</span>
+                <input
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    resetPage();
+                  }}
+                  placeholder="Cari nama atau peran..."
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="att-table-scroll">
+            <table className="att-table">
+              <thead>
+                <tr>
+                  <th>Tanggal</th>
+                  <th>Sesi</th>
+                  <th>Nama</th>
+                  <th>Peran</th>
+                  <th>Level</th>
+                  <th>Waktu presensi</th>
+                  <th>Selisih</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedRows.map((r) => (
+                  <tr key={r.id}>
+                    <td>{formatDate(r.date)}</td>
+                    <td>{r.session.replace("Sesi ", "")}</td>
+                    <td className="att-person">{r.name}</td>
+                    <td>{r.role}</td>
+                    <td><span className="att-level-pill">{r.level}</span></td>
+                    <td>{r.attendanceTime ?? "—"}</td>
+                    <td
+                      className={
+                        r.difference === null
+                          ? ""
+                          : r.difference > 0
+                            ? "att-difference-late"
+                            : "att-difference-early"
+                      }
+                    >
+                      {r.difference === null
+                        ? "—"
+                        : r.difference > 0
+                          ? `+${r.difference} mnt`
+                          : `${r.difference} mnt`}
+                    </td>
+                    <td>
+                      <span className={`att-status-pill ${r.status === "Tepat waktu" ? "ontime" : r.status === "Telat" ? "late" : "absent"}`}>
+                        {r.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {!paginatedRows.length && (
+                  <tr>
+                    <td colSpan={8} className="att-empty-row">
+                      Tidak ada data yang cocok dengan filter.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="att-table-footer">
+            <span>
+              Menampilkan {filteredRows.length ? (page - 1) * pageSize + 1 : 0}–
+              {Math.min(page * pageSize, filteredRows.length)} dari {filteredRows.length} data
+            </span>
+            <div className="att-pagination">
+              <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                Sebelumnya
+              </button>
+              <span>Halaman {page} dari {totalPages}</span>
+              <button type="button" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                Berikutnya
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <footer className="att-footer">
+          <span>DM Triangle Team</span>
+          <span>Rekapitulasi Presensi · Prototipe UI</span>
+        </footer>
+      </div>
+    </main>
+  );
+}
