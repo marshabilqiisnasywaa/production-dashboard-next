@@ -1027,7 +1027,7 @@
 
 .att-chart-line--strong {
   fill: none;
-  stroke: #087c68;
+  stroke: #3569A8;
   stroke-width: 3.5;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -1043,7 +1043,7 @@
 }
 
 .att-chart-dot--strong {
-  fill: #087c68;
+  fill: #3569A8;
   stroke: #fff;
   stroke-width: 2;
 }
@@ -1400,4 +1400,44 @@
   .att-chart-tooltip {
     animation: none;
   }
+}
+
+/* Add these styles to the bottom of attendance.css */
+.att-chart-column {
+  cursor: pointer;
+  outline: none;
+}
+
+.att-chart-column .att-chart-hover-band {
+  opacity: 0;
+  fill: #ecfbf3;
+  transition: opacity 160ms ease, fill 160ms ease;
+}
+
+.att-chart-column:hover .att-chart-hover-band,
+.att-chart-column:focus-visible .att-chart-hover-band,
+.att-chart-column.is-selected .att-chart-hover-band {
+  opacity: 1;
+}
+
+.att-chart-column.is-selected .att-chart-hover-band {
+  fill: #ecfbf3;
+  stroke: #087443;
+  stroke-width: 1.5;
+}
+
+.att-selected-date-clear {
+  margin-top: 8px;
+  padding: 5px 9px;
+  border: 1px solid #c9d8ed;
+  border-radius: 6px;
+  background: #ecfbf3;
+  color: #087443;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.att-selected-date-clear:hover {
+  background: #e5eef9;
 }
