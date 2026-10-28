@@ -283,7 +283,7 @@
 
 .lw-input.is-mono,
 .is-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .lw-hint {

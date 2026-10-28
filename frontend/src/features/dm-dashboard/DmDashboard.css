@@ -23,7 +23,7 @@
   background-image: radial-gradient(circle, rgba(0, 138, 79, 0.12) 1.2px, transparent 1.2px);
   background-size: 20px 20px;
   color: var(--dm-text-main);
-  font-family: "Montserrat", "Segoe UI", -apple-system, sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: 13px;
   box-sizing: border-box;
 }
@@ -51,7 +51,7 @@
 }
 
 .dm-rail-zh {
-  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   letter-spacing: 0.12em;
 }
 
@@ -1107,4 +1107,53 @@
 .dmi-tools {
   justify-content: flex-start;
   gap: 1rem;
+}
+
+.dm-root.dm-root--index.dm-root--tv {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+@media (min-width: 1280px) and (min-height: 700px) {
+  .dm-root.dm-root--index.dm-root--tv {
+    height: 100dvh;
+    min-height: 0;
+    align-content: stretch;
+    overflow-y: auto;
+  }
+
+  .dm-root--tv .dmi {
+    height: 100%;
+    min-height: 0;
+    gap: 0.5rem;
+  }
+
+  .dm-root--tv .dmi-top {
+    flex: none;
+  }
+
+  .dm-root--tv .dmi-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0;
+  }
+
+  .dm-root--tv .dmi-panel > .scorecard-tv {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+@media (min-width: 1280px) and (max-height: 699px) {
+  .dm-root.dm-root--index.dm-root--tv {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .dm-root--tv .dmi,
+  .dm-root--tv .dmi-panel {
+    height: auto;
+    min-height: 0;
+  }
 }

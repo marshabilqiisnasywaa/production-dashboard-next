@@ -4,7 +4,10 @@ import Link from "next/link";
 import { publicApi } from "./api";
 import type { DmBoardListItem } from "./api";
 import { dmStatusLabels } from "./dmData";
+import DmScorecard from "./scorecard/DmScorecard";
 import "./DmDashboard.css";
+import AttendanceDashboardPage from "./attendance/page";
+
 
 type IndexTab = "line" | "kpi" | "rekap";
 
@@ -182,7 +185,7 @@ export default function DmBoardIndex() {
   const [tab, setTab] = useState<IndexTab>("line");
 
   return (
-    <main className="dm-root dm-root--index">
+    <main className={`dm-root dm-root--index${tab === "kpi" ? " dm-root--tv" : ""}`}>
       <svg className="dmi-bg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none" aria-hidden="true">
         <g stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
           <path d="M1130 -70 1500 560H760L1130 -70Z" opacity="0.5" />
@@ -226,15 +229,20 @@ export default function DmBoardIndex() {
 
         {tab === "kpi" && (
           <div id="dmi-panel-kpi" role="tabpanel" aria-labelledby="dmi-tab-kpi" className="dmi-panel">
-            <TabPlaceholder title="KPI Leader" text="Dashboard KPI Leader sedang disiapkan." />
+            <DmScorecard />
           </div>
         )}
 
-        {tab === "rekap" && (
-          <div id="dmi-panel-rekap" role="tabpanel" aria-labelledby="dmi-tab-rekap" className="dmi-panel">
-            <TabPlaceholder title="Rekap Absensi" text="Rekap absensi sedang disiapkan." />
-          </div>
-        )}
+{tab === "rekap" && (
+  <div
+    id="dmi-panel-rekap"
+    role="tabpanel"
+    aria-labelledby="dmi-tab-rekap"
+    className="dmi-panel"
+  >
+    <AttendanceDashboardPage />
+  </div>
+)}
       </div>
     </main>
   );

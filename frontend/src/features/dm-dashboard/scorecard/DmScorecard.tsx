@@ -1,0 +1,168 @@
+﻿import { useEffect, useRef, useState } from "react";
+import { BarChart3, ClipboardList, Download, Expand, Settings2, ShieldCheck, Users, X } from "lucide-react";
+import { Badge, Button, Card, Input, Select, SectionTitle } from "./ui";
+import { computeDmScores, dmScoreDetails, DM_ORDER, formatScore, leaderScores, type ScoreTab, type ScoreTrend } from "./data";
+import {
+  PapercardDetail,
+  Segmented,
+  SqdipDetail,
+  StandupDetail,
+  SummaryScoreCard,
+  TrendChart,
+} from "./components";
+import LeaderBoard from "./LeaderBoard";
+import "./dm-scorecard.css";
+
+export default function DmScorecard({ isLeader = false, canExport = false }: { isLeader?: boolean; canExport?: boolean }) {
+  const [month, setMonth] = useState("2026-09");
+  const [workshop, setWorkshop] = useState(isLeader ? "Workshop 6" : "Semua");
+  const [selectedDm, setSelectedDm] = useState(isLeader ? "DM 3" : "DM 3");
+  const [trend, setTrend] = useState<ScoreTrend>("Total");
+  const [tab, setTab] = useState<ScoreTab>("Papercard");
+  const [search, setSearch] = useState("");
+  const [expandedPillars, setExpandedPillars] = useState<string[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const target = Number(month.slice(5)) <= 6 ? 80 : 90;
+  const hasData = month === "2026-09";
+  const dmScores = computeDmScores(leaderScores, target);
+  const selectedDmScore = selectedDm === "Semua" ? dmScores["DM 3"] : dmScores[selectedDm];
+  const scoreConfig = selectedDmScore?.hasLeaders ? selectedDmScore : undefined;
+  const detailConfig = selectedDm === "DM 4" ? dmScoreDetails["DM 4"] : dmScoreDetails["DM 3"];
+  const boardLeaders = isLeader ? leaderScores.filter((row) => row.leader === "Ahmad Riswanto") : leaderScores;
+  useEffect(() => {
+    setLoading(true);
+    const timeout = window.setTimeout(() => setLoading(false), 350);
+    return () => window.clearTimeout(timeout);
+  }, [month, workshop, selectedDm]);
+
+  const filters = (
+    <>
+      <label className="grid gap-1 text-xs font-semibold text-text-secondary">Bulan<Input type="month" value={month} onChange={setMonth} className="min-w-number" /></label>
+      {!isLeader && <label className="grid gap-1 text-xs font-semibold text-text-secondary">Workshop<Select value={workshop} onChange={setWorkshop}><option>Semua</option><option>Workshop 5</option><option>Workshop 6</option></Select></label>}
+      <div className="grid gap-1 text-xs font-semibold text-text-secondary">DM<Segmented items={isLeader ? ["DM 3"] : ["Semua", "DM 3", "DM 4"]} value={selectedDm} onChange={setSelectedDm} className="overflow-x-auto" /></div>
+    </>
+  );
+  const togglePillar = (key: string) => setExpandedPillars((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
+
+  if (loading) return <div><SectionTitle title="DM Scorecard" description="Nilai Daily Management per DM, line, dan leader" /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 8 }, (_, index) => <Card key={index} className="min-h-dashboard animate-pulse bg-border" />)}</div></div>;
+
+  return (
+    <div ref={rootRef} className="scorecard-tv bg-section">
+      <div className="scorecard-top">
+        <div className="scorecard-heading mb-5">
+          <div className="flex items-center gap-2">
+            <div className="text-lg font-bold tracking-tight text-text">DM Scorecard</div>
+            <Badge tone="neutral">Data contoh</Badge>
+          </div>
+          <div className="mt-1 text-sm text-text-secondary" title="Nilai Daily Management per DM, line, dan leader">Nilai Daily Management per DM, line, dan leader</div>
+        </div>
+        <Card className="scorecard-controls mb-5 p-4">
+          <div className="scorecard-controls-desktop hidden flex-wrap items-end gap-4 md:flex"><div className="scorecard-filters flex flex-wrap items-end gap-4">{filters}</div><div className="scorecard-actions ml-auto flex items-center gap-2">{canExport && <Button variant="outline"><Download size={16} /> Export</Button>}<Button variant="ghost" onClick={() => document.fullscreenElement ? document.exitFullscreen() : rootRef.current?.requestFullscreen()}><Expand size={16} /> Mode layar penuh</Button></div></div>
+          <div className="scorecard-controls-mobile flex items-center justify-between md:hidden"><Button variant="outline" onClick={() => setFilterOpen(true)}><Settings2 size={16} /> Filter</Button>{canExport && <Button variant="ghost"><Download size={16} /> Export</Button>}</div>
+          <div className="scorecard-meta mt-3 flex items-center justify-between border-t border-border pt-3 text-xs text-text-secondary"><span>Target bulan ini: <strong className="text-text">{target}</strong></span><span>{isLeader ? "Workshop Semua · DM 3" : `${workshop === "Semua" ? "Workshop Semua" : workshop} · ${selectedDm}`}</span></div>
+        </Card>
+      </div>
+      {filterOpen && <div className="fixed inset-0 z-50 bg-overlay md:hidden"><Card className="absolute bottom-0 left-0 right-0 rounded-b-none p-5"><div className="mb-5 flex items-center justify-between"><strong>Filter Scorecard</strong><Button variant="ghost" size="icon" onClick={() => setFilterOpen(false)}><X size={19} /></Button></div><div className="grid gap-4">{filters}<Button onClick={() => setFilterOpen(false)}>Terapkan filter</Button></div></Card></div>}
+
+      {!hasData ? (
+        <Card className="scorecard-empty flex min-h-empty flex-col items-center justify-center p-8 text-center"><BarChart3 size={34} className="text-border-strong" /><div className="mt-4 font-bold">Belum ada data skor pada periode ini</div><div className="mt-1 text-sm text-text-secondary">Pilih September 2026 untuk melihat data contoh.</div></Card>
+      ) : (
+        <>
+          <div className="scorecard-kpi-row mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <SummaryScoreCard
+              title="Total Nilai"
+              icon={BarChart3}
+              highlighted
+              value={scoreConfig?.total}
+              max={100}
+              targetEquivalent={90}
+              rank={scoreConfig?.rank}
+              totalComposition={scoreConfig ? { before: scoreConfig.before, current: scoreConfig.current, after: scoreConfig.after } : undefined}
+              expanded={expandedPillars.includes("total")}
+              onExpand={() => togglePillar("total")}
+            />
+            <SummaryScoreCard
+              title="Before · Papercard system"
+              icon={ClipboardList}
+              value={scoreConfig?.before}
+              max={30}
+              targetEquivalent={27}
+              detail={scoreConfig ? detailConfig.before : undefined}
+              expanded={expandedPillars.includes("before")}
+              onExpand={() => togglePillar("before")}
+            />
+            <SummaryScoreCard
+              title="Current · Standup Meeting"
+              icon={Users}
+              value={scoreConfig?.current}
+              max={40}
+              targetEquivalent={36}
+              detail={scoreConfig ? detailConfig.current : undefined}
+              expanded={expandedPillars.includes("current")}
+              onExpand={() => togglePillar("current")}
+            />
+            <SummaryScoreCard
+              title="After · SQDIP"
+              icon={ShieldCheck}
+              value={scoreConfig?.after}
+              max={30}
+              targetEquivalent={27}
+              detail={scoreConfig ? detailConfig.after : undefined}
+              expanded={expandedPillars.includes("after")}
+              onExpand={() => togglePillar("after")}
+            />
+          </div>
+
+          <div className="scorecard-main-row mb-6">
+            <LeaderBoard
+              leaders={boardLeaders}
+              totalLeaders={leaderScores.length}
+              dmScores={dmScores}
+              selectedDm={selectedDm}
+              onSelectDm={setSelectedDm}
+              search={search}
+              onSearch={setSearch}
+              month={month}
+              target={target}
+              isLeader={isLeader}
+            />
+          <Card className="scorecard-trend p-5">
+            <div className="scorecard-trend-head flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div><div className="font-bold">Tren nilai harian</div><div className="mt-1 text-xs text-text-secondary">{selectedDm}</div></div>
+              <Segmented<ScoreTrend> items={["Total", "Before", "Current", "After"]} value={trend} onChange={setTrend} />
+            </div>
+            {scoreConfig ? <><div className="scorecard-trend-summary mt-4 text-sm text-text-secondary">Rata-rata bulan ini <strong className="text-text">{formatScore(scoreConfig.total)}</strong> · Hari di atas target <strong className="text-text">9 dari 21</strong></div><div className="scorecard-trend-chart mt-2"><TrendChart metric={trend} /></div></> : <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">Belum ada data</div>}
+          </Card>
+          </div>
+          <div className="scorecard-bottom-row">
+            <Card className="scorecard-tabs overflow-hidden">
+              <div className="scorecard-tabs-head">
+                <div className="scorecard-tabs-strip">
+                  {(["Papercard", "Standup Meeting", "SQDIP"] as ScoreTab[]).map((item) => <Button key={item} variant="ghost" size="sm" onClick={() => setTab(item)} className={`rounded-b-none border-b-2 px-4 ${tab === item ? "border-primary text-primary" : "border-transparent"}`}>{item}</Button>)}
+                </div>
+                {tab === "Papercard" && (
+                  <div className="scorecard-tab-toolbar">
+                    <div className="scorecard-tab-dates">
+                      <Input type="date" value="2026-09-14" onChange={() => undefined} className="scorecard-tab-date" />
+                      <Input type="date" value="2026-09-16" onChange={() => undefined} className="scorecard-tab-date" />
+                    </div>
+                    <Select value={selectedDm === "DM 4" ? "Edi Prasetyo" : "Semua leader"} onChange={() => undefined} className="scorecard-tab-leader">
+                      <option>{selectedDm === "DM 4" ? "Edi Prasetyo" : "Semua leader"}</option>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              <div className="scorecard-tabs-body">
+                {tab === "Papercard" && <div className="scorecard-tab-panel"><PapercardDetail canExport={canExport} selectedDm={selectedDm} /></div>}
+                {tab === "Standup Meeting" && <div className="scorecard-tab-panel scorecard-tab-panel--scroll"><StandupDetail canExport={canExport} /></div>}
+                {tab === "SQDIP" && <div className="scorecard-tab-panel scorecard-tab-panel--scroll"><SqdipDetail canExport={canExport} /></div>}
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

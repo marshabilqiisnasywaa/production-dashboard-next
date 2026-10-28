@@ -24,7 +24,7 @@
   min-height: 0;
   background: transparent;
   color: var(--dm-5w-text);
-  font-family: "Inter", "Segoe UI", sans-serif;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: var(--fw-fs-body);
   line-height: 1.5;
 }

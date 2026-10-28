@@ -45,7 +45,7 @@
 .um-sub {
   margin: 0.1rem 0 0;
   color: var(--um-muted);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 0.82rem;
 }
 
@@ -138,7 +138,7 @@
 }
 
 .um-input.is-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .um-seg {
