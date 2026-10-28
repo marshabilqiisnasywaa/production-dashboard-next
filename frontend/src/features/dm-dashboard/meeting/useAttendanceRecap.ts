@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { publicApi, type DmAttendanceRecap } from "../api";
+import { publicApi, type DmPublicAttendanceRecap } from "../api";
 
 export function useAttendanceRecap(
   date: string,
   lineId: number | null,
   call: <T>(fn: () => Promise<T>) => Promise<T>
 ) {
-  const [recap, setRecap] = useState<DmAttendanceRecap | null>(null);
+  const [recap, setRecap] = useState<DmPublicAttendanceRecap | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
