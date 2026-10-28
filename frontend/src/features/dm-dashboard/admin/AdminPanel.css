@@ -1000,7 +1000,7 @@
 
 /* Table Specific Columns */
 .dm-col-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 700;
   color: #1b5e3a;
   background: #eaf5ee;
@@ -1277,7 +1277,7 @@
 }
 
 .dm-line-code-chip {
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 0.78rem;
   font-weight: 700;
   color: #144d2d;
@@ -1439,7 +1439,7 @@
 }
 
 .dm-form-input.font-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 600;
   color: #155c32;
 }
@@ -1753,7 +1753,7 @@
 }
 
 .dm-footer-id-code {
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 0.78rem;
   font-weight: 600;
   color: #274836;
@@ -2509,7 +2509,7 @@
   border-radius: 10px;
   background: #f6f9f7;
   color: #2f4f3e;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 0.8rem;
   text-decoration: none;
 }

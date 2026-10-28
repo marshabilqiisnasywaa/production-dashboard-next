@@ -930,7 +930,6 @@ export default function AttendanceDashboardPage() {
       <div className="att-container">
         <section className="att-page-heading">
           <div>
-            <p className="att-eyebrow">DM OPERATIONS</p>
 
             <h1>Rekapitulasi Presensi</h1>
 

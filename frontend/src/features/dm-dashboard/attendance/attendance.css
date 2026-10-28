@@ -1,7 +1,7 @@
 .att-page {
   min-height: 100vh;
   color: #172b24;
-  font-family: "Montserrat", "Segoe UI", -apple-system, sans-serif;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 13px;
 }
 
@@ -116,7 +116,7 @@
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 24px 32px 32px;
+  /* padding: 24px 32px 32px; */
 }
 
 .att-page-heading {
@@ -124,15 +124,15 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
+    padding-top: 1.25rem;
 }
 
 .att-page-heading h1 {
-  margin: 3px 0 6px;
-  color: #172b24;
-  font-size: 25px;
-  font-weight: 650;
-  letter-spacing: -0.7px;
+  margin: 0;
+  font-size: clamp(1.7rem, 3.6vw, 2.2rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .att-eyebrow {
@@ -147,10 +147,9 @@
 .att-panel-heading p,
 .att-subheading p,
 .att-detail-heading p {
-  margin: 0;
-  color: #7b8794;
-  font-size: 12px;
-  line-height: 1.5;
+  margin: 0.4rem 0 0;
+  font-size: 0.92rem;
+  color: var(--dmi-muted);
 }
 
 .att-filters {

@@ -381,7 +381,7 @@
 .mpv-nik-pill {
   font-size: 0.69rem;
   font-weight: 600;
-  font-family: monospace;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   background: #f1f5f9;
   color: #64748b;
   padding: 1px 5px;
@@ -602,7 +602,7 @@
 
 .mpv-cell-nik {
   font-size: 0.69rem;
-  font-family: monospace;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   color: #64748b;
 }
 

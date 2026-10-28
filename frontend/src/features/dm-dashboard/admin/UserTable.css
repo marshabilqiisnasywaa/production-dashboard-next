@@ -91,7 +91,7 @@
 
 .ut-sub {
   color: #6c7f74;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 0.78rem;
 }
 
