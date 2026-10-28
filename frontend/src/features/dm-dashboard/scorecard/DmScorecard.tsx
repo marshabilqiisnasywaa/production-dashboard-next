@@ -1,5 +1,5 @@
 ﻿import { useEffect, useRef, useState } from "react";
-import { BarChart3, ClipboardList, Download, Expand, Settings2, ShieldCheck, Users, X } from "lucide-react";
+import { BarChart3, ClipboardList, Clock3, Download, Expand, Settings2, ShieldCheck, Users, X } from "lucide-react";
 import { Badge, Button, Card, Input, Select, SectionTitle } from "./ui";
 import { computeDmScores, dmScoreDetails, DM_ORDER, formatScore, leaderScores, type ScoreTab, type ScoreTrend } from "./data";
 import {
@@ -7,6 +7,7 @@ import {
   Segmented,
   SqdipDetail,
   StandupDetail,
+  StatusChip,
   SummaryScoreCard,
   TrendChart,
 } from "./components";
@@ -19,10 +20,12 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
   const [selectedDm, setSelectedDm] = useState(isLeader ? "DM 3" : "DM 3");
   const [trend, setTrend] = useState<ScoreTrend>("Total");
   const [tab, setTab] = useState<ScoreTab>("Papercard");
-  const [search, setSearch] = useState("");
   const [expandedPillars, setExpandedPillars] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [startDate, setStartDate] = useState("2026-09-14");
+  const [endDate, setEndDate] = useState("2026-09-16");
   const rootRef = useRef<HTMLDivElement>(null);
   const target = Number(month.slice(5)) <= 6 ? 80 : 90;
   const hasData = month === "2026-09";
@@ -36,6 +39,11 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
     const timeout = window.setTimeout(() => setLoading(false), 350);
     return () => window.clearTimeout(timeout);
   }, [month, workshop, selectedDm]);
+  useEffect(() => {
+    const sync = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
 
   const filters = (
     <>
@@ -44,25 +52,26 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
       <div className="grid gap-1 text-xs font-semibold text-text-secondary">DM<Segmented items={isLeader ? ["DM 3"] : ["Semua", "DM 3", "DM 4"]} value={selectedDm} onChange={setSelectedDm} className="overflow-x-auto" /></div>
     </>
   );
+  const changeStartDate = (value: string) => {
+    setStartDate(value);
+    if (value > endDate) setEndDate(value);
+  };
+  const changeEndDate = (value: string) => setEndDate(value < startDate ? startDate : value);
   const togglePillar = (key: string) => setExpandedPillars((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
 
-  if (loading) return <div><SectionTitle title="DM Scorecard" description="Nilai Daily Management per DM, line, dan leader" /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 8 }, (_, index) => <Card key={index} className="min-h-dashboard animate-pulse bg-border" />)}</div></div>;
+  if (loading) return <div><SectionTitle title="KPI Leader" description="Nilai Daily Management per DM, line, dan leader" /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 8 }, (_, index) => <Card key={index} className="min-h-dashboard animate-pulse bg-border" />)}</div></div>;
 
   return (
     <div ref={rootRef} className="scorecard-tv bg-section">
-      <div className="scorecard-top">
-        <div className="scorecard-heading mb-5">
-          <div className="flex items-center gap-2">
-            <div className="text-lg font-bold tracking-tight text-text">DM Scorecard</div>
-            <Badge tone="neutral">Data contoh</Badge>
-          </div>
-          <div className="mt-1 text-sm text-text-secondary" title="Nilai Daily Management per DM, line, dan leader">Nilai Daily Management per DM, line, dan leader</div>
+      <div className="scorecard-top scorecard-top-leader mb-5">
+        <div className="scorecard-heading">
+          <div className="whitespace-nowrap text-2xl font-bold tracking-tight text-text">KPI Leader</div>
+          <div className="mt-1 whitespace-normal text-sm text-text-secondary" title="Nilai Daily Management per DM, line, dan leader">Nilai Daily Management per DM, line, dan leader</div>
         </div>
-        <Card className="scorecard-controls mb-5 p-4">
-          <div className="scorecard-controls-desktop hidden flex-wrap items-end gap-4 md:flex"><div className="scorecard-filters flex flex-wrap items-end gap-4">{filters}</div><div className="scorecard-actions ml-auto flex items-center gap-2">{canExport && <Button variant="outline"><Download size={16} /> Export</Button>}<Button variant="ghost" onClick={() => document.fullscreenElement ? document.exitFullscreen() : rootRef.current?.requestFullscreen()}><Expand size={16} /> Mode layar penuh</Button></div></div>
+        <div className="scorecard-controls scorecard-controls-leader">
+          <div className="scorecard-controls-desktop hidden flex-wrap items-end justify-end gap-4 md:flex"><div className="scorecard-filters flex flex-wrap items-end gap-4">{filters}</div><div className="scorecard-actions flex items-center gap-2">{canExport && <Button variant="outline"><Download size={16} /> Export</Button>}<Button variant="outline" className="scorecard-fullscreen-button h-10 text-sm" onClick={() => document.fullscreenElement ? document.exitFullscreen() : rootRef.current?.requestFullscreen()}><Expand size={16} /> {isFullscreen ? "Keluar layar penuh" : "Mode layar penuh"}</Button></div></div>
           <div className="scorecard-controls-mobile flex items-center justify-between md:hidden"><Button variant="outline" onClick={() => setFilterOpen(true)}><Settings2 size={16} /> Filter</Button>{canExport && <Button variant="ghost"><Download size={16} /> Export</Button>}</div>
-          <div className="scorecard-meta mt-3 flex items-center justify-between border-t border-border pt-3 text-xs text-text-secondary"><span>Target bulan ini: <strong className="text-text">{target}</strong></span><span>{isLeader ? "Workshop Semua · DM 3" : `${workshop === "Semua" ? "Workshop Semua" : workshop} · ${selectedDm}`}</span></div>
-        </Card>
+        </div>
       </div>
       {filterOpen && <div className="fixed inset-0 z-50 bg-overlay md:hidden"><Card className="absolute bottom-0 left-0 right-0 rounded-b-none p-5"><div className="mb-5 flex items-center justify-between"><strong>Filter Scorecard</strong><Button variant="ghost" size="icon" onClick={() => setFilterOpen(false)}><X size={19} /></Button></div><div className="grid gap-4">{filters}<Button onClick={() => setFilterOpen(false)}>Terapkan filter</Button></div></Card></div>}
 
@@ -119,14 +128,8 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
             <LeaderBoard
               leaders={boardLeaders}
               totalLeaders={leaderScores.length}
-              dmScores={dmScores}
-              selectedDm={selectedDm}
-              onSelectDm={setSelectedDm}
-              search={search}
-              onSearch={setSearch}
               month={month}
               target={target}
-              isLeader={isLeader}
             />
           <Card className="scorecard-trend p-5">
             <div className="scorecard-trend-head flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -140,13 +143,20 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
             <Card className="scorecard-tabs overflow-hidden">
               <div className="scorecard-tabs-head">
                 <div className="scorecard-tabs-strip">
-                  {(["Papercard", "Standup Meeting", "SQDIP"] as ScoreTab[]).map((item) => <Button key={item} variant="ghost" size="sm" onClick={() => setTab(item)} className={`rounded-b-none border-b-2 px-4 ${tab === item ? "border-primary text-primary" : "border-transparent"}`}>{item}</Button>)}
+                  {(["Papercard", "Standup Meeting", "SQDIP"] as ScoreTab[]).map((item) => (
+                    <button key={item} type="button" aria-pressed={tab === item} onClick={() => setTab(item)} className={`scorecard-tab-button${tab === item ? " is-active" : ""}`}>{item}</button>
+                  ))}
                 </div>
                 {tab === "Papercard" && (
                   <div className="scorecard-tab-toolbar">
-                    <div className="scorecard-tab-dates">
-                      <Input type="date" value="2026-09-14" onChange={() => undefined} className="scorecard-tab-date" />
-                      <Input type="date" value="2026-09-16" onChange={() => undefined} className="scorecard-tab-date" />
+                    <div className="scorecard-tab-legend flex flex-wrap items-center gap-2">
+                      <StatusChip value="OK" />
+                      <Badge tone="warning"><Clock3 size={11} /> OK terlambat</Badge>
+                      <Badge tone="neutral">Belum diisi</Badge>
+                    </div>
+                    <div className="scorecard-date-range">
+                      <label>Dari<Input type="date" value={startDate} onChange={changeStartDate} className="scorecard-date-input" /></label>
+                      <label>Sampai<Input type="date" value={endDate} onChange={changeEndDate} className="scorecard-date-input" /></label>
                     </div>
                     <Select value={selectedDm === "DM 4" ? "Edi Prasetyo" : "Semua leader"} onChange={() => undefined} className="scorecard-tab-leader">
                       <option>{selectedDm === "DM 4" ? "Edi Prasetyo" : "Semua leader"}</option>
@@ -155,7 +165,7 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
                 )}
               </div>
               <div className="scorecard-tabs-body">
-                {tab === "Papercard" && <div className="scorecard-tab-panel"><PapercardDetail canExport={canExport} selectedDm={selectedDm} /></div>}
+                {tab === "Papercard" && <div className="scorecard-tab-panel"><PapercardDetail canExport={canExport} selectedDm={selectedDm} startDate={startDate} endDate={endDate} /></div>}
                 {tab === "Standup Meeting" && <div className="scorecard-tab-panel scorecard-tab-panel--scroll"><StandupDetail canExport={canExport} /></div>}
                 {tab === "SQDIP" && <div className="scorecard-tab-panel scorecard-tab-panel--scroll"><SqdipDetail canExport={canExport} /></div>}
               </div>

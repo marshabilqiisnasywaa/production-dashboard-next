@@ -33,9 +33,9 @@ export const DM_ORDER = ["DM 1", "DM 2", "DM 3", "DM 4"] as const;
 export const leaderScores: LeaderScore[] = [
   { rank: 1, area: "6", dm: "DM 3", line: "TAC20604", leader: "Ahmad Riswanto", model: "Cruiser-B4 ABB", before: 30, current: 32.74, after: 28.2, total: 90.94 },
   { rank: 2, area: "6", dm: "DM 3", line: "TAC20605", leader: "Agus Riyadi", model: "-", before: 30, current: 32.5, after: 24, total: 86.5 },
-  { rank: 3, area: "6", dm: "DM 4", line: "TAC20607", leader: "M Wildan Firdaus", model: "Nairobi-N", before: 30, current: 33.8, after: 22.4, total: 86.2 },
+  { rank: 3, area: "6", dm: "DM 4", line: "TAC20607", leader: "M Wildan Firdaus", model: "Nairobi-N", before: 30, current: 33.82, after: 22.36, total: 86.18 },
   { rank: 4, area: "6", dm: "DM 3", line: "TAC20603", leader: "Rudiyansyah", model: "-", before: 30, current: 29.75, after: 26.25, total: 86 },
-  { rank: 5, area: "6", dm: "DM 4", line: "TAC20607", leader: "Edi Prasetyo", model: "Nairobi-N", before: 29.7, current: 32.4, after: 21.3, total: 83.4 },
+  { rank: 5, area: "6", dm: "DM 4", line: "TAC20607", leader: "Edi Prasetyo", model: "Nairobi-N", before: 29.7, current: 32.35, after: 21.3, total: 83.35 },
 ];
 
 export type ScoreDetailItem = {

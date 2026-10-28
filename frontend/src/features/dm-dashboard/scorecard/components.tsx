@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, type TouchEvent } from "react";
 import { CheckCircle2, ChevronDown, Clock3, Download, Info, Trophy, X, type LucideIcon } from "lucide-react";
 import { Badge, Button, Card, Input, Select } from "./ui";
 import { formatScore, scoreBar, scoreTone, type ScoreDetailItem, type ScoreTrend } from "./data";
@@ -207,37 +208,121 @@ export function TrendChart({ metric }: { metric: ScoreTrend }) {
   const before = [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30];
   const current = [31, 32, 34, 33, 35, 29, 31, 33, 35, 30, 32, 34, 33, 36, 28, 31, 33, 35, 32, 34, 30];
   const after = total.map((value, index) => value - before[index] - current[index]);
-  const series = { Total: total, Before: before, Current: current, After: after }[metric];
+  const seriesByMetric = { Total: total, Before: before, Current: current, After: after };
+  const series = seriesByMetric[metric];
   const scale = {
     Total: { min: 70, max: 100, target: 90 },
     Before: { min: 0, max: 30, target: 27 },
     Current: { min: 0, max: 40, target: 36 },
     After: { min: 0, max: 30, target: 27 },
   }[metric];
-  const x = (index: number) => 42 + index * 31;
-  const y = (value: number) => 260 - ((value - scale.min) / (scale.max - scale.min)) * 220;
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [size, setSize] = useState({ width: 700, height: 320 });
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    const svg = svgRef.current;
+    if (!wrap || !svg) return;
+    const update = () => {
+      const rect = svg.getBoundingClientRect();
+      setSize({
+        width: Math.max(320, Math.round(rect.width)),
+        height: Math.max(160, Math.round(rect.height)),
+      });
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(wrap);
+    return () => observer.disconnect();
+  }, []);
+
+  const width = size.width;
+  const height = size.height;
+  const padding = { top: 18, right: 18, bottom: 34, left: 42 };
+  const plotWidth = width - padding.left - padding.right;
+  const plotHeight = height - padding.top - padding.bottom;
+  const step = plotWidth / (series.length - 1);
+  const x = (index: number) => padding.left + index * step;
+  const y = (value: number) => padding.top + ((scale.max - value) / (scale.max - scale.min)) * plotHeight;
   const points = series.map((value, index) => `${x(index)},${y(value)}`).join(" ");
+  const hovered = hoverIndex === null ? null : { index: hoverIndex, x: x(hoverIndex), y: y(series[hoverIndex]) };
+  const tooltipWidth = 176;
+  const tooltipHeight = 156;
+  const gap = hovered ? series[hovered.index] - scale.target : 0;
+  const wrap = wrapRef.current;
+  const visibleLeft = wrap ? wrap.scrollLeft : 0;
+  const visibleWidth = wrap ? wrap.clientWidth : width;
+  const visibleCenter = visibleLeft + visibleWidth / 2;
+  const tooltipLeft = hovered
+    ? Math.max(visibleLeft + 4, Math.min(hovered.x > visibleCenter ? hovered.x - 12 - tooltipWidth : hovered.x + 12, visibleLeft + visibleWidth - tooltipWidth - 4))
+    : 0;
+  const tooltipTop = hovered ? Math.max(4, Math.min(hovered.y - tooltipHeight / 2, height - tooltipHeight - 4)) : 0;
+  const lastTouchAt = useRef(0);
+
+  const handleTouch = (event: TouchEvent<SVGSVGElement>) => {
+    const touch = event.touches[0];
+    const svg = svgRef.current;
+    if (!touch || !svg) return;
+    lastTouchAt.current = Date.now();
+    const rect = svg.getBoundingClientRect();
+    const position = ((touch.clientX - rect.left) / rect.width) * width;
+    const index = Math.round((position - padding.left) / step);
+    setHoverIndex(Math.max(0, Math.min(series.length - 1, index)));
+  };
+
+  const handleHover = (index: number) => {
+    if (Date.now() - lastTouchAt.current < 700) return;
+    setHoverIndex(index);
+  };
+
+  const handleLeave = () => {
+    if (Date.now() - lastTouchAt.current < 700) return;
+    setHoverIndex(null);
+  };
+
   return (
-    <div className="score-trend-scroll overflow-x-auto">
-      <svg viewBox="0 0 700 300" className="score-trend-svg h-score-chart min-w-trend-chart w-full" role="img" aria-label="Tren nilai harian">
+    <div ref={wrapRef} className="score-trend-scroll relative overflow-x-auto" onMouseLeave={handleLeave}>
+      <svg ref={svgRef} width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="score-trend-svg h-score-chart min-w-trend-chart w-full" role="img" aria-label="Tren nilai harian" onTouchStart={handleTouch} onTouchMove={handleTouch} onTouchEnd={() => { lastTouchAt.current = Date.now(); setHoverIndex(null); }} onTouchCancel={() => { lastTouchAt.current = Date.now(); setHoverIndex(null); }}>
         {[scale.min, scale.target, scale.max].map((value) => (
           <g key={value}>
-            <line x1="42" x2="662" y1={y(value)} y2={y(value)} stroke="var(--color-border)" />
+            <line x1={padding.left} x2={width - padding.right} y1={y(value)} y2={y(value)} stroke="var(--color-border)" />
             <text x="8" y={y(value) + 4} className="fill-text-secondary text-tab">{value}</text>
           </g>
         ))}
-        <line x1="42" x2="662" y1={y(scale.target)} y2={y(scale.target)} stroke="var(--color-warning)" strokeWidth="2" strokeDasharray="6 5" />
-        <text x="580" y={y(scale.target) - 8} className="fill-warning-dark text-xs font-semibold">Target {scale.target}</text>
+        <line x1={padding.left} x2={width - padding.right} y1={y(scale.target)} y2={y(scale.target)} stroke="var(--color-warning)" strokeWidth="2" strokeDasharray="6 5" />
+        <text x={width - padding.right} y={y(scale.target) - 8} textAnchor="end" className="fill-warning-dark text-xs font-semibold">Target {scale.target}</text>
         <polyline points={points} fill="none" stroke="var(--color-border-strong)" strokeWidth="2.5" strokeLinejoin="round" />
+        {hovered && <line x1={hovered.x} x2={hovered.x} y1={padding.top} y2={height - padding.bottom} stroke="var(--color-border-strong)" strokeWidth="1" />}
         {series.map((value, index) => (
           <g key={`${value}-${index}`}>
-            <circle cx={x(index)} cy={y(value)} r="4.5" fill={value >= scale.target ? "var(--color-primary)" : "var(--color-warning)"} className="transition hover:r-7">
-              <title>{`${index + 1} Sep · Total ${formatScore(total[index])} · Before ${formatScore(before[index])} · Current ${formatScore(current[index])} · After ${formatScore(after[index])}`}</title>
-            </circle>
-            {index % 2 === 0 && <text x={x(index)} y="288" textAnchor="middle" className="fill-text-secondary text-tab">{index + 1} Sep</text>}
+            <circle cx={x(index)} cy={y(value)} r={hoverIndex === index ? 7 : 4.5} fill={value >= scale.target ? "var(--color-primary)" : "var(--color-warning)"} stroke={hoverIndex === index ? "#ffffff" : "none"} strokeWidth={hoverIndex === index ? 2 : 0} />
+            {index % 2 === 0 && <text x={x(index)} y={height - 8} textAnchor="middle" className="fill-text-secondary text-tab">{index + 1} Sep</text>}
           </g>
         ))}
+        {series.map((_, index) => {
+          const left = Math.max(0, x(index) - step / 2);
+          const right = Math.min(width, x(index) + step / 2);
+          return <rect key={`hit-${index}`} x={left} y={0} width={right - left} height={height} fill="transparent" onMouseEnter={() => handleHover(index)} />;
+        })}
       </svg>
+      {hovered && (
+        <div className="pointer-events-none absolute z-10 w-44 rounded-lg border border-border bg-white p-3 text-xs shadow-popover" style={{ left: tooltipLeft, top: tooltipTop }}>
+          <div className="font-semibold text-text">{hovered.index + 1} Sep</div>
+          <div className="mt-1.5 space-y-0.5">
+            {(["Total", "Before", "Current", "After"] as const).map((key) => (
+              <div key={key} className={`flex items-center justify-between gap-3 ${metric === key ? "font-bold text-text" : "text-text-secondary"}`}>
+                <span>{key}</span>
+                <span>{formatScore(seriesByMetric[key][hovered.index])}</span>
+              </div>
+            ))}
+          </div>
+          <div className={`mt-1.5 border-t border-border pt-1.5 font-semibold ${gap >= 0 ? "text-primary" : "text-warning-dark"}`}>
+            {gap >= 0 ? `+${formatScore(gap)} di atas target` : `-${formatScore(Math.abs(gap))} di bawah target`}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -256,7 +341,7 @@ export function DetailHeader({ caption, canExport }: { caption: string; canExpor
   );
 }
 
-export function PapercardDetail({ canExport, selectedDm }: { canExport: boolean; selectedDm: string }) {
+export function PapercardDetail({ canExport, selectedDm, startDate, endDate }: { canExport: boolean; selectedDm: string; startDate: string; endDate: string }) {
   const rows = selectedDm === "DM 4"
     ? [
         ["2026-09-14", "TAC20607", "Edi Prasetyo", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
@@ -270,27 +355,50 @@ export function PapercardDetail({ canExport, selectedDm }: { canExport: boolean;
           ["2026-09-16", "TAC20605", "Agus Riyadi", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
         ]
       : [];
+  const visibleRows = rows.filter((row) => String(row[0]) >= startDate && String(row[0]) <= endDate);
   return (
     <>
       <DetailHeader canExport={canExport} caption="Total harian = 30 x rate. Tepat waktu = 8 x rate, terdaftar = 14 x rate, close loop = 8 x rate. Rate = jumlah role OK tepat waktu / 4 (Leader, ME, PE, IPQC)." />
-      <div className="scorecard-tab-subhead">
-        <div className="scorecard-tab-legend flex flex-wrap gap-2">
-          <StatusChip value="OK" />
-          <Badge tone="warning"><Clock3 size={11} /> OK terlambat</Badge>
-          <Badge tone="neutral">Belum diisi</Badge>
-        </div>
-      </div>
-      {rows.length === 0 ? (
+      {visibleRows.length === 0 ? (
         <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">Belum ada data</div>
       ) : (
         <div className="scorecard-tab-table overflow-x-auto rounded-xl border border-border">
-          <table className="w-full min-w-table text-left text-sm">
-            <thead className="bg-section text-xs text-text-secondary"><tr>{["Tanggal", "Line", "Leader", "Leader", "ME", "PE", "IPQC", "Rate", "Tepat waktu", "Terdaftar", "Close loop", "Total harian"].map((item, index) => <th key={`${item}-${index}`} className="whitespace-nowrap px-4 py-3 font-semibold">{item}</th>)}</tr></thead>
-            <tbody className="divide-y divide-border">{rows.map((row) => <tr key={`${row[0]}-${row[1]}`} className="hover:bg-section/60"><td className="px-4 py-4">{row[0]}</td><td className="px-4 py-4 font-semibold">{row[1]}</td><td className="px-4 py-4">{row[2]}</td>{row.slice(3, 7).map((status, index) => <td key={index} className="px-4 py-4">{status === "OK terlambat" ? <Badge tone="warning"><Clock3 size={11} /> OK terlambat</Badge> : status === "Belum diisi" ? <Badge tone="neutral">Belum diisi</Badge> : <StatusChip value={status} />}</td>)}{row.slice(7).map((value, index) => <td key={index} className="whitespace-nowrap px-4 py-4 font-semibold">{value}</td>)}</tr>)}</tbody>
+          <table className="w-full table-auto text-left text-sm">
+            <thead className="bg-section text-xs text-text-secondary">
+              <tr>
+                <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Tanggal</th>
+                <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Line</th>
+                <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Nama Leader</th>
+                <th colSpan={4} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Status pengisian</th>
+                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-right font-semibold">Rate</th>
+                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-right font-semibold">Tepat waktu</th>
+                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-right font-semibold">Terdaftar</th>
+                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-right font-semibold">Close loop</th>
+                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-right font-semibold">Total harian</th>
+              </tr>
+              <tr>
+                {["Leader", "ME", "PE", "IPQC"].map((role) => <th key={role} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">{role}</th>)}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {visibleRows.map((row) => (
+                <tr key={`${row[0]}-${row[1]}`} className="hover:bg-section/60">
+                  <td className="whitespace-nowrap px-4 py-3 text-left">{row[0]}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-left font-semibold">{row[1]}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-left">{row[2]}</td>
+                  {row.slice(3, 7).map((status, index) => (
+                    <td key={index} className="whitespace-nowrap px-4 py-3 text-center">
+                      {status === "OK terlambat" ? <Badge tone="warning"><Clock3 size={11} /> OK terlambat</Badge> : status === "Belum diisi" ? <Badge tone="neutral">Belum diisi</Badge> : <StatusChip value={status} />}
+                    </td>
+                  ))}
+                  {row.slice(7).map((value, index) => <td key={index} className="whitespace-nowrap px-4 py-3 text-right font-semibold">{value}</td>)}
+                </tr>
+              ))}
+            </tbody>
           </table>
         </div>
       )}
-      {rows.length > 0 && <div className="scorecard-tab-footer mt-3 flex flex-wrap justify-between gap-2 text-sm text-text-secondary"><span>Rata-rata total harian {selectedDm === "DM 4" ? "(rentang 14–16 Sep) 25,00" : "(leader dan rentang terpilih) 30,00"} dari 30</span><span>Menampilkan 3 dari 19 hari</span></div>}
+      {rows.length > 0 && <div className="scorecard-tab-footer mt-3 flex flex-wrap justify-between gap-2 text-sm text-text-secondary"><span>Rata-rata total harian {selectedDm === "DM 4" ? "(rentang 14–16 Sep) 25,00" : "(leader dan rentang terpilih) 30,00"} dari 30</span><span>Menampilkan {visibleRows.length} dari 19 hari</span></div>}
     </>
   );
 }
