@@ -58,7 +58,7 @@ export function SupervisorSidebar({
     ...(canHostWorkshopMeeting
       ? [
           {
-            title: "During Management",
+            title: "Post Management",
             items: [
               {
                 label: "Workshop Meeting",
@@ -70,13 +70,13 @@ export function SupervisorSidebar({
         ]
       : []),
     {
-      title: "Post Management",
+      // title: "Post Management",
       items: [
-        {
-          label: "Masalah Saya",
-          href: SUPERVISOR_ROUTES.myProblems,
-          icon: <IconClipboardCheck />,
-        },
+        // {
+        //   label: "Masalah Saya",
+        //   href: SUPERVISOR_ROUTES.myProblems,
+        //   icon: <IconClipboardCheck />,
+        // },
         {
           label: "Eskalasi",
           href: SUPERVISOR_ROUTES.escalations,

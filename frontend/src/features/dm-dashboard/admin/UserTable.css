@@ -207,3 +207,28 @@
 .ut-notice-close:hover {
   background: rgba(0, 0, 0, 0.06);
 }
+
+.ut-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ut-head-actions .dm-admin-btn {
+  gap: 0.4rem;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 0.95rem;
+}
+
+@media (max-width: 640px) {
+  .ut-head-actions {
+    width: 100%;
+  }
+
+  .ut-head-actions .dm-admin-btn {
+    flex: 1 1 0;
+    height: 44px;
+    min-height: 44px;
+  }
+}

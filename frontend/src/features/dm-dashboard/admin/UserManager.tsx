@@ -6,6 +6,7 @@ import { PlusIcon } from "./AdminIcons";
 import RowMenu from "./RowMenu";
 import type { RowMenuItem } from "./RowMenu";
 import UserModal from "./UserModal";
+import UserImportModal from "./UserImportModal";
 import "./UserTable.css";
 
 interface UserManagerProps {
@@ -25,7 +26,16 @@ function initials(name: string) {
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
 }
 
-const iconProps = { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" } as const;
+const iconProps = {
+  width: 16,
+  height: 16,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+} as const;
 
 const icons = {
   edit: (
@@ -62,11 +72,19 @@ export default function UserManager({ call }: UserManagerProps) {
   const [users, setUsers] = useState<DmEmployee[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<{ type: "ok" | "error"; text: string } | null>(null);
+  const [notice, setNotice] = useState<{
+    type: "ok" | "error";
+    text: string;
+  } | null>(null);
 
   const ok = (text: string) => setNotice({ type: "ok", text });
-  const fail = (error: unknown) => setNotice({ type: "error", text: messageOf(error) });
-  const [form, setForm] = useState<{ open: boolean; user: DmEmployee | null }>({ open: false, user: null });
+  const fail = (error: unknown) =>
+    setNotice({ type: "error", text: messageOf(error) });
+  const [form, setForm] = useState<{ open: boolean; user: DmEmployee | null }>({
+    open: false,
+    user: null,
+  });
+  const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | DmEmployeeRole>("all");
   const [deptFilter, setDeptFilter] = useState("all");
@@ -99,7 +117,10 @@ export default function UserManager({ call }: UserManagerProps) {
       ok(`${input.name} ditambahkan.`);
     }
     if (saved.faceMessage) {
-      setNotice({ type: "error", text: `${input.name} tersimpan, tetapi Face ID belum aktif: ${saved.faceMessage}` });
+      setNotice({
+        type: "error",
+        text: `${input.name} tersimpan, tetapi Face ID belum aktif: ${saved.faceMessage}`,
+      });
     }
     setForm({ open: false, user: null });
     await load();
@@ -107,8 +128,14 @@ export default function UserManager({ call }: UserManagerProps) {
 
   async function toggleActive(user: DmEmployee) {
     try {
-      await call(() => adminApi.updateEmployee(user.id, { isActive: !user.isActive }));
-      ok(user.isActive ? `${user.name} dinonaktifkan.` : `${user.name} diaktifkan lagi.`);
+      await call(() =>
+        adminApi.updateEmployee(user.id, { isActive: !user.isActive })
+      );
+      ok(
+        user.isActive
+          ? `${user.name} dinonaktifkan.`
+          : `${user.name} diaktifkan lagi.`
+      );
       await load();
     } catch (error) {
       fail(error);
@@ -116,15 +143,29 @@ export default function UserManager({ call }: UserManagerProps) {
   }
 
   async function resetPassword(user: DmEmployee) {
-    if (!window.confirm(`Reset password ${user.name} ke NIK (${user.employeeId})? Orangnya wajib menggantinya saat login berikutnya.`)) return;
+    if (
+      !window.confirm(
+        `Reset password ${user.name} ke NIK (${user.employeeId})? Orangnya wajib menggantinya saat login berikutnya.`
+      )
+    )
+      return;
     const updated = await call(() => adminApi.resetEmployeePassword(user.id));
     ok(`Password ${user.name} dikembalikan ke NIK. Wajib diganti saat login.`);
-    setForm((current) => (current.open && current.user?.id === updated.id ? { open: true, user: updated } : current));
+    setForm((current) =>
+      current.open && current.user?.id === updated.id
+        ? { open: true, user: updated }
+        : current
+    );
     await load();
   }
 
   async function remove(user: DmEmployee) {
-    if (!window.confirm(`Hapus ${user.name} secara permanen? Riwayat lininya yang sudah dilepas ikut terhapus dan tidak bisa dikembalikan.`)) return;
+    if (
+      !window.confirm(
+        `Hapus ${user.name} secara permanen? Riwayat lininya yang sudah dilepas ikut terhapus dan tidak bisa dikembalikan.`
+      )
+    )
+      return;
     try {
       await call(() => adminApi.deleteEmployee(user.id));
       ok(`${user.name} dihapus.`);
@@ -139,12 +180,29 @@ export default function UserManager({ call }: UserManagerProps) {
     if (!showInactive && !user.isActive) return false;
     if (roleFilter !== "all" && user.role !== roleFilter) return false;
     if (deptFilter !== "all" && (user.dept ?? "") !== deptFilter) return false;
-    return !query || [user.name, user.employeeId, user.dept ?? "", user.position ?? "", user.supervisor ?? "", user.lineLabel ?? ""].some((value) => value.toLowerCase().includes(query));
+    return (
+      !query ||
+      [
+        user.name,
+        user.employeeId,
+        user.dept ?? "",
+        user.position ?? "",
+        user.supervisor ?? "",
+        user.lineLabel ?? "",
+      ].some((value) => value.toLowerCase().includes(query))
+    );
   });
-  const supervisors = users.filter((user) => user.role === "supervisor" && user.isActive);
+  const supervisors = users.filter(
+    (user) => user.role === "supervisor" && user.isActive
+  );
   const inactiveCount = users.filter((user) => !user.isActive).length;
   const deptChoices = Array.from(
-    new Set([...dmDepartments, ...users.map((user) => user.dept).filter((value): value is string => Boolean(value))])
+    new Set([
+      ...dmDepartments,
+      ...users
+        .map((user) => user.dept)
+        .filter((value): value is string => Boolean(value)),
+    ])
   );
 
   return (
@@ -152,23 +210,62 @@ export default function UserManager({ call }: UserManagerProps) {
       <div className="dm-panel-head">
         <div>
           <div className="dm-panel-titlebar">
-            <h3 id="users-title" className="dm-panel-title">Daftar User</h3>
+            <h3 id="users-title" className="dm-panel-title">
+              Daftar User
+            </h3>
             <span className="dm-pill">{users.length} Terdaftar</span>
           </div>
-          <p className="dm-panel-sub">
-            Daftarkan supervisor lebih dulu, lalu pilih mereka saat mengisi member. Saat menyusun tim atau MPV, cukup pilih namanya. Akun admin diatur terpisah di login.
-          </p>
+          {/* <p className="dm-panel-sub">
+            Daftarkan supervisor lebih dulu, lalu pilih mereka saat mengisi
+            member. Saat menyusun tim atau MPV, cukup pilih namanya. Akun admin
+            diatur terpisah di login.
+          </p> */}
         </div>
-        <button type="button" className="dm-admin-btn is-primary dm-btn-add" onClick={() => setForm({ open: true, user: null })}>
-          <PlusIcon size={14} />
-          Tambah User
-        </button>
+        <div className="ut-head-actions">
+          <button
+            type="button"
+            className="dm-admin-btn is-secondary"
+            onClick={() => setImportOpen(true)}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 16V4M7 9l5-5 5 5M4 20h16" />
+            </svg>
+            Import User
+          </button>
+
+          <button
+            type="button"
+            className="dm-admin-btn is-primary dm-btn-add"
+            onClick={() => setForm({ open: true, user: null })}
+          >
+            <PlusIcon size={14} />
+            Tambah User
+          </button>
+        </div>
       </div>
 
       {notice ? (
-        <div className={`ut-notice is-${notice.type}`} role={notice.type === "error" ? "alert" : "status"}>
+        <div
+          className={`ut-notice is-${notice.type}`}
+          role={notice.type === "error" ? "alert" : "status"}
+        >
           <span>{notice.text}</span>
-          <button type="button" className="ut-notice-close" onClick={() => setNotice(null)} aria-label="Tutup pesan">
+          <button
+            type="button"
+            className="ut-notice-close"
+            onClick={() => setNotice(null)}
+            aria-label="Tutup pesan"
+          >
             &times;
           </button>
         </div>
@@ -179,16 +276,36 @@ export default function UserManager({ call }: UserManagerProps) {
       ) : loadError ? (
         <div className="dm-admin-state-block">
           <p role="alert">{loadError}</p>
-          <button type="button" className="dm-admin-btn is-primary" onClick={load}>Coba lagi</button>
+          <button
+            type="button"
+            className="dm-admin-btn is-primary"
+            onClick={load}
+          >
+            Coba lagi
+          </button>
         </div>
       ) : users.length === 0 ? (
-        <p className="dm-lines-empty">Belum ada User. Klik &quot;Tambah User&quot; untuk mengisi yang pertama.</p>
+        <p className="dm-lines-empty">
+          Belum ada User. Klik &quot;Tambah User&quot; untuk mengisi yang
+          pertama.
+        </p>
       ) : (
         <>
           <div className="dm-lines-toolbar">
             <div className="dm-table-search-box">
-              <label className="dm-admin-sr-only" htmlFor="user-search">Cari User</label>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="dm-table-search-icon" aria-hidden="true">
+              <label className="dm-admin-sr-only" htmlFor="user-search">
+                Cari User
+              </label>
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                className="dm-table-search-icon"
+                aria-hidden="true"
+              >
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
@@ -201,19 +318,27 @@ export default function UserManager({ call }: UserManagerProps) {
                 onChange={(event) => setSearch(event.target.value)}
               />
             </div>
-            <label className="dm-admin-sr-only" htmlFor="user-role-filter">Filter role</label>
+            <label className="dm-admin-sr-only" htmlFor="user-role-filter">
+              Filter role
+            </label>
             <select
               id="user-role-filter"
               className="dm-table-filter-select"
               value={roleFilter}
-              onChange={(event) => setRoleFilter(event.target.value as "all" | DmEmployeeRole)}
+              onChange={(event) =>
+                setRoleFilter(event.target.value as "all" | DmEmployeeRole)
+              }
             >
               <option value="all">Semua role</option>
               {dmEmployeeRoles.map((item) => (
-                <option key={item.value} value={item.value}>{item.label}</option>
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
               ))}
             </select>
-            <label className="dm-admin-sr-only" htmlFor="user-dept-filter">Filter departemen</label>
+            <label className="dm-admin-sr-only" htmlFor="user-dept-filter">
+              Filter departemen
+            </label>
             <select
               id="user-dept-filter"
               className="dm-table-filter-select"
@@ -222,12 +347,18 @@ export default function UserManager({ call }: UserManagerProps) {
             >
               <option value="all">Semua departemen</option>
               {deptChoices.map((item) => (
-                <option key={item} value={item}>{item}</option>
+                <option key={item} value={item}>
+                  {item}
+                </option>
               ))}
             </select>
             {inactiveCount > 0 ? (
               <label className="ut-toggle">
-                <input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={showInactive}
+                  onChange={(event) => setShowInactive(event.target.checked)}
+                />
                 <span>Tampilkan nonaktif ({inactiveCount})</span>
               </label>
             ) : null}
@@ -237,7 +368,9 @@ export default function UserManager({ call }: UserManagerProps) {
           </div>
 
           {shown.length === 0 ? (
-            <p className="dm-lines-none">Tidak ada User yang cocok dengan pencarian atau filter ini.</p>
+            <p className="dm-lines-none">
+              Tidak ada User yang cocok dengan pencarian atau filter ini.
+            </p>
           ) : (
             <div className="ut-wrap">
               <table className="ut-table">
@@ -250,18 +383,26 @@ export default function UserManager({ call }: UserManagerProps) {
                     <th>Supervisor</th>
                     <th>Face ID</th>
                     <th>Login</th>
-                    <th className="ut-col-action"><span className="ut-sr">Aksi</span></th>
+                    <th className="ut-col-action">
+                      <span className="ut-sr">Aksi</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {shown.map((user) => {
                     const items: RowMenuItem[] = [
-                      { key: "edit", label: "Ubah", icon: icons.edit, onSelect: () => setForm({ open: true, user }) },
+                      {
+                        key: "edit",
+                        label: "Ubah",
+                        icon: icons.edit,
+                        onSelect: () => setForm({ open: true, user }),
+                      },
                       {
                         key: "reset",
                         label: "Reset password",
                         icon: icons.key,
-                        onSelect: () => resetPassword(user).catch((error) => fail(error)),
+                        onSelect: () =>
+                          resetPassword(user).catch((error) => fail(error)),
                       },
                       {
                         key: "toggle",
@@ -269,65 +410,120 @@ export default function UserManager({ call }: UserManagerProps) {
                         icon: user.isActive ? icons.off : icons.on,
                         onSelect: () => toggleActive(user),
                       },
-                      { key: "delete", label: "Hapus", icon: icons.trash, danger: true, onSelect: () => remove(user) },
+                      {
+                        key: "delete",
+                        label: "Hapus",
+                        icon: icons.trash,
+                        danger: true,
+                        onSelect: () => remove(user),
+                      },
                     ];
                     return (
-                      <tr key={user.id} className={user.isActive ? undefined : "is-inactive"}>
+                      <tr
+                        key={user.id}
+                        className={user.isActive ? undefined : "is-inactive"}
+                      >
                         <td>
                           <div className="ut-person">
                             {user.photoUrl ? (
-                              <img src={user.photoUrl} alt="" className="ut-avatar" />
+                              <img
+                                src={user.photoUrl}
+                                alt=""
+                                className="ut-avatar"
+                              />
                             ) : (
-                              <span className="ut-avatar is-initials" aria-hidden="true">{initials(user.name)}</span>
+                              <span
+                                className="ut-avatar is-initials"
+                                aria-hidden="true"
+                              >
+                                {initials(user.name)}
+                              </span>
                             )}
                             <div className="ut-person-text">
                               <span className="ut-name">
                                 {user.name}
-                                {user.isActive ? null : <span className="ut-badge is-off">Nonaktif</span>}
+                                {user.isActive ? null : (
+                                  <span className="ut-badge is-off">
+                                    Nonaktif
+                                  </span>
+                                )}
                               </span>
                               <span className="ut-sub">{user.employeeId}</span>
                             </div>
                           </div>
                         </td>
-                        <td><span className={`ut-badge is-${user.role}`}>{roleLabel(user.role)}</span></td>
+                        <td>
+                          <span className={`ut-badge is-${user.role}`}>
+                            {roleLabel(user.role)}
+                          </span>
+                        </td>
                         <td>
                           <div className="ut-stack">
                             <strong>{user.dept ?? "-"}</strong>
-                            {user.position ? <span className="ut-muted">{user.position}</span> : null}
+                            {user.position ? (
+                              <span className="ut-muted">{user.position}</span>
+                            ) : null}
                           </div>
                         </td>
                         <td>
                           {user.lineLabels && user.lineLabels.length > 0 ? (
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: "4px",
+                              }}
+                            >
                               {user.lineLabels.map((l) => (
-                                <span key={l} className="ut-badge" style={{ fontSize: "11px", background: "#f1f5f9", color: "#334155" }}>
+                                <span
+                                  key={l}
+                                  className="ut-badge"
+                                  style={{
+                                    fontSize: "11px",
+                                    background: "#f1f5f9",
+                                    color: "#334155",
+                                  }}
+                                >
                                   {l}
                                 </span>
                               ))}
                             </div>
                           ) : (
-                            user.lineLabel ?? <span className="ut-muted">Belum ada lini</span>
+                            user.lineLabel ?? (
+                              <span className="ut-muted">Belum ada lini</span>
+                            )
                           )}
                         </td>
-                        <td>{user.supervisor ?? <span className="ut-muted">-</span>}</td>
+                        <td>
+                          {user.supervisor ?? (
+                            <span className="ut-muted">-</span>
+                          )}
+                        </td>
                         <td>
                           {user.faceEnrolled ? (
                             <span className="ut-badge is-leader">Aktif</span>
                           ) : user.photoUrl ? (
-                            <span className="ut-badge is-warn">Belum aktif</span>
+                            <span className="ut-badge is-warn">
+                              Belum aktif
+                            </span>
                           ) : (
                             <span className="ut-muted">Tanpa foto</span>
                           )}
                         </td>
                         <td>
                           {user.mustChangePassword ? (
-                            <span className="ut-badge is-warn">Password awal</span>
+                            <span className="ut-badge is-warn">
+                              Password awal
+                            </span>
                           ) : (
                             <span className="ut-muted">Sudah diganti</span>
                           )}
                         </td>
                         <td className="ut-col-action">
-                          <RowMenu label={`Aksi untuk ${user.name}`} items={items} />
+                          <RowMenu
+                            label={`Aksi untuk ${user.name}`}
+                            items={items}
+                          />
                         </td>
                       </tr>
                     );
@@ -346,6 +542,13 @@ export default function UserManager({ call }: UserManagerProps) {
         onSave={save}
         onResetPassword={resetPassword}
         onClose={() => setForm({ open: false, user: null })}
+      />
+      <UserImportModal
+        open={importOpen}
+        existing={users}
+        create={(input) => call(() => adminApi.createEmployee(input))}
+        onImported={load}
+        onClose={() => setImportOpen(false)}
       />
     </section>
   );

@@ -14,7 +14,9 @@
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
         "react-is": "^19.3.0",
-        "recharts": "^3.10.1"
+        "read-excel-file": "9.3.13",
+        "recharts": "^3.10.1",
+        "write-excel-file": "4.1.1"
     },
     "devDependencies": {
         "@tailwindcss/postcss": "^4.0.0",
