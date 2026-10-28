@@ -185,7 +185,7 @@ export default function DmBoardIndex() {
   const [tab, setTab] = useState<IndexTab>("line");
 
   return (
-    <main className="dm-root dm-root--index">
+    <main className={`dm-root dm-root--index${tab === "kpi" ? " dm-root--tv" : ""}`}>
       <svg className="dmi-bg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none" aria-hidden="true">
         <g stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
           <path d="M1130 -70 1500 560H760L1130 -70Z" opacity="0.5" />

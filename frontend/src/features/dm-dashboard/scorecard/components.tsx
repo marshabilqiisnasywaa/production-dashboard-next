@@ -1,4 +1,4 @@
-import { CheckCircle2, ChevronDown, Clock3, Download, Info, Trophy, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, Clock3, Download, Info, Trophy, X, type LucideIcon } from "lucide-react";
 import { Badge, Button, Card, Input, Select } from "./ui";
 import { formatScore, scoreBar, scoreTone, type ScoreDetailItem, type ScoreTrend } from "./data";
 import "./dm-scorecard.css"; 
@@ -44,22 +44,24 @@ export function ScoreProgress({ value, max = 100, target = 90 }: { value: number
 }
 
 export function SummaryScoreCard({
-  title,
-  value,
-  max,
-  helper,
-  detail,
-  expanded,
-  onExpand,
-  targetEquivalent,
-  totalComposition,
-  rank,
-}: {
-  title: string;
-  value?: number;
-  max: number;
-  helper: string;
-  detail?: ScoreDetailItem[];
+    title,
+    icon: Icon,
+    highlighted = false,
+    value,
+    max,
+    detail,
+    expanded,
+    onExpand,
+    targetEquivalent,
+    totalComposition,
+    rank,
+  }: {
+    title: string;
+    icon: LucideIcon;
+    highlighted?: boolean;
+    value?: number;
+    max: number;
+    detail?: ScoreDetailItem[];
   expanded?: boolean;
   onExpand?: () => void;
   targetEquivalent: number;
@@ -67,30 +69,32 @@ export function SummaryScoreCard({
   rank?: number;
 }) {
   const normalized = value === undefined ? 0 : (value / max) * 100;
+  const [titleText, subtitle] = title.split(" · ");
   return (
-    <Card className="flex h-full flex-col p-5">
-      <div className="text-sm font-semibold text-text-secondary">{title}</div>
-      <div className={`mt-3 text-3xl font-bold ${value === undefined ? "text-text-secondary" : scoreTone(normalized)}`}>
-        {value === undefined ? "—" : formatScore(value)} <span className="text-base font-medium text-text-secondary">/ {formatScore(max)}</span>
-      </div>
-      <div className={`mt-2 min-h-5 text-xs font-semibold ${value !== undefined && value >= targetEquivalent ? "text-primary" : value === undefined ? "text-text-secondary" : "text-warning-dark"}`}>
-        {helper}
-        {max !== 100 && (
-          <span title="Target setara = bobot x 90%. Selisih ketiga komponen berjumlah selisih Total.">
-            <Info size={13} className="ml-1 inline" />
-          </span>
-        )}
-      </div>
-      {value === undefined ? <div className="mt-4 h-2 rounded-full bg-border" /> : <ScoreProgress value={value} max={max} target={targetEquivalent} />}
-      {max === 100 && value !== undefined && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Badge tone="warning">Di bawah target</Badge>
-          <Badge tone="neutral">Peringkat DM {rank} dari 2</Badge>
+    <Card className={`scorecard-kpi flex h-full flex-col p-5${highlighted ? " scorecard-kpi--primary" : ""}`}>
+      <div className="scorecard-kpi-main">
+        <div className="scorecard-kpi-head">
+          <span className="scorecard-kpi-icon"><Icon size={16} strokeWidth={2} /></span>
+          <div className="min-w-0">
+            <div className="scorecard-kpi-title">{titleText}</div>
+            {subtitle && <div className="scorecard-kpi-subtitle">{subtitle}</div>}
+          </div>
         </div>
-      )}
-      {max !== 100 && <div className="mt-4 min-h-6" />}
-      {max === 100 && value === undefined && <div className="mt-4 min-h-6" />}
-      <div className="mt-4 border-t border-border pt-3">
+        <div className={`mt-3 text-3xl font-bold ${value === undefined ? "text-text-secondary" : scoreTone(normalized)}`}>
+          {value === undefined ? "—" : formatScore(value)} <span className="text-base font-medium text-text-secondary">/ {formatScore(max)}</span>
+        </div>
+        {value === undefined && <div className="mt-2 text-xs text-text-secondary">Belum ada data</div>}
+        {value === undefined ? <div className="mt-4 h-2 rounded-full bg-border" /> : <ScoreProgress value={value} max={max} target={targetEquivalent} />}
+        {max === 100 && value !== undefined && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Badge tone="warning">Di bawah target</Badge>
+            <Badge tone="neutral">Peringkat DM {rank} dari 2</Badge>
+          </div>
+        )}
+        {max !== 100 && <div className="mt-4 min-h-6" />}
+        {max === 100 && value === undefined && <div className="mt-4 min-h-6" />}
+      </div>
+      <div className="scorecard-kpi-detail mt-4 border-t border-border pt-3">
         <Button variant="ghost" size="sm" onClick={onExpand} className="w-full justify-between px-0">
           {totalComposition ? "Komposisi nilai" : "Rincian"}
           <ChevronDown size={16} className={expanded ? "rotate-180" : ""} />
@@ -113,19 +117,19 @@ export function SummaryScoreCard({
           </div>
         )}
         {expanded && detail && (
-          <div className="mt-3 space-y-3">
+          <div className="scorecard-kpi-detail-list mt-3 space-y-3">
             {detail.map((item) => {
               const full = item.value === item.max;
               return (
                 <div key={item.label}>
                   <div className="flex items-end justify-between gap-2 text-xs">
-                    <span className="text-text-secondary">{item.label}</span>
+                    <span className="text-text-secondary" title={item.label}>{item.label}</span>
                     <span className="whitespace-nowrap font-semibold text-text">
                       {formatScore(item.value)} / {formatScore(item.max)}
                       {!full && <span className="ml-1 text-warning-dark">(-{formatScore(item.max - item.value)})</span>}
                     </span>
                   </div>
-                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-border">
+                  <div className="mt-1 h-1 overflow-hidden rounded-full bg-border">
                     <div className={`h-full rounded-full ${full ? "bg-primary" : "bg-warning"}`} style={{ width: `${(item.value / item.max) * 100}%` }} />
                   </div>
                 </div>
@@ -160,7 +164,7 @@ export function ScoreGauge({
   return (
     <Card
       onClick={onClick}
-      className={`cursor-pointer p-5 transition hover:-translate-y-0.5 hover:shadow-popover ${selected ? "border-primary ring-2 ring-primary-soft" : ""}`}
+      className={`score-gauge cursor-pointer p-3 transition hover:-translate-y-0.5 hover:shadow-popover ${selected ? "border-primary ring-2 ring-primary-soft" : ""}`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 font-bold text-text">
@@ -171,25 +175,29 @@ export function ScoreGauge({
         </div>
         {selected && <Badge tone="primary">Dipilih</Badge>}
       </div>
-      <svg viewBox="0 0 200 112" className="mt-3 w-full" role="img" aria-label={`Nilai ${dm}`}>
-        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="var(--color-border)" strokeWidth="16" strokeLinecap="round" strokeDasharray={score === undefined ? "3 7" : undefined} />
-        {score !== undefined && <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke={color} strokeWidth="16" strokeLinecap="round" strokeDasharray={`${arc} 157`} />}
-        <line x1="175" y1="62" x2="185" y2="57" stroke="var(--color-text)" strokeWidth="3" />
-        <text x="100" y="88" textAnchor="middle" className="fill-text text-3xl font-bold">
-          {score === undefined ? "—" : formatScore(score)}
-        </text>
-        <text x="100" y="108" textAnchor="middle" className="fill-text-secondary text-xs">Target 90</text>
-      </svg>
-      {leader ? (
-        <div className="mt-3 grid min-h-dashboard grid-rows-4 gap-2 border-t border-border pt-3 text-xs">
-          <div className="flex justify-between"><span className="text-text-secondary">Ass SPV</span><strong>Ikhwan</strong></div>
-          <div className="flex justify-between gap-2"><span className="text-text-secondary">Leader DM</span><strong className="text-right">{leader}</strong></div>
-          <div className="flex justify-between"><span className="text-text-secondary">Peringkat DM</span><strong>{rank}</strong></div>
-          <div className="text-warning-dark">Kurang {formatScore(gap ?? 0)} poin dari target</div>
+      <div className="score-gauge-body">
+        <div className="score-gauge-visual">
+          <svg viewBox="0 0 200 112" className="mx-auto mt-1 w-full max-w-56" role="img" aria-label={`Nilai ${dm}`}>
+            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="var(--color-border)" strokeWidth="16" strokeLinecap="round" strokeDasharray={score === undefined ? "3 7" : undefined} />
+            {score !== undefined && <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke={color} strokeWidth="16" strokeLinecap="round" strokeDasharray={`${arc} 157`} />}
+            <line x1="175" y1="62" x2="185" y2="57" stroke="var(--color-text)" strokeWidth="3" />
+            <text x="100" y="88" textAnchor="middle" className="fill-text text-3xl font-bold">
+              {score === undefined ? "—" : formatScore(score)}
+            </text>
+            <text x="100" y="108" textAnchor="middle" className="fill-text-secondary text-xs">Target 90</text>
+          </svg>
         </div>
-      ) : (
-        <div className="mt-3 flex min-h-dashboard items-start justify-center border-t border-border pt-4 text-center text-sm text-text-secondary">Belum ada Leader DM</div>
-      )}
+        {leader ? (
+          <div className="score-gauge-info mt-2 grid grid-rows-4 gap-1 border-t border-border pt-3 text-xs">
+            <div className="flex justify-between"><span className="text-text-secondary">Ass SPV</span><strong>Ikhwan</strong></div>
+            <div className="flex justify-between gap-2"><span className="text-text-secondary">Leader DM</span><strong className="text-right">{leader}</strong></div>
+            <div className="flex justify-between"><span className="text-text-secondary">Peringkat DM</span><strong>{rank}</strong></div>
+            <div className="text-warning-dark">Kurang {formatScore(gap ?? 0)} poin dari target</div>
+          </div>
+        ) : (
+          <div className="score-gauge-info mt-2 flex items-start justify-center border-t border-border pt-4 text-center text-sm text-text-secondary">Belum ada Leader DM</div>
+        )}
+      </div>
     </Card>
   );
 }
@@ -210,8 +218,8 @@ export function TrendChart({ metric }: { metric: ScoreTrend }) {
   const y = (value: number) => 260 - ((value - scale.min) / (scale.max - scale.min)) * 220;
   const points = series.map((value, index) => `${x(index)},${y(value)}`).join(" ");
   return (
-    <div className="overflow-x-auto">
-      <svg viewBox="0 0 700 300" className="h-score-chart min-w-trend-chart w-full" role="img" aria-label="Tren nilai harian">
+    <div className="score-trend-scroll overflow-x-auto">
+      <svg viewBox="0 0 700 300" className="score-trend-svg h-score-chart min-w-trend-chart w-full" role="img" aria-label="Tren nilai harian">
         {[scale.min, scale.target, scale.max].map((value) => (
           <g key={value}>
             <line x1="42" x2="662" y1={y(value)} y2={y(value)} stroke="var(--color-border)" />
@@ -265,31 +273,24 @@ export function PapercardDetail({ canExport, selectedDm }: { canExport: boolean;
   return (
     <>
       <DetailHeader canExport={canExport} caption="Total harian = 30 x rate. Tepat waktu = 8 x rate, terdaftar = 14 x rate, close loop = 8 x rate. Rate = jumlah role OK tepat waktu / 4 (Leader, ME, PE, IPQC)." />
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
+      <div className="scorecard-tab-subhead">
+        <div className="scorecard-tab-legend flex flex-wrap gap-2">
           <StatusChip value="OK" />
           <Badge tone="warning"><Clock3 size={11} /> OK terlambat</Badge>
           <Badge tone="neutral">Belum diisi</Badge>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Input type="date" value="2026-09-14" className="w-auto" />
-          <Input type="date" value="2026-09-16" className="w-auto" />
-          <Select value={selectedDm === "DM 4" ? "Edi Prasetyo" : "Semua leader"}>
-            <option>{selectedDm === "DM 4" ? "Edi Prasetyo" : "Semua leader"}</option>
-          </Select>
         </div>
       </div>
       {rows.length === 0 ? (
         <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">Belum ada data</div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
+        <div className="scorecard-tab-table overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-table text-left text-sm">
             <thead className="bg-section text-xs text-text-secondary"><tr>{["Tanggal", "Line", "Leader", "Leader", "ME", "PE", "IPQC", "Rate", "Tepat waktu", "Terdaftar", "Close loop", "Total harian"].map((item, index) => <th key={`${item}-${index}`} className="whitespace-nowrap px-4 py-3 font-semibold">{item}</th>)}</tr></thead>
             <tbody className="divide-y divide-border">{rows.map((row) => <tr key={`${row[0]}-${row[1]}`} className="hover:bg-section/60"><td className="px-4 py-4">{row[0]}</td><td className="px-4 py-4 font-semibold">{row[1]}</td><td className="px-4 py-4">{row[2]}</td>{row.slice(3, 7).map((status, index) => <td key={index} className="px-4 py-4">{status === "OK terlambat" ? <Badge tone="warning"><Clock3 size={11} /> OK terlambat</Badge> : status === "Belum diisi" ? <Badge tone="neutral">Belum diisi</Badge> : <StatusChip value={status} />}</td>)}{row.slice(7).map((value, index) => <td key={index} className="whitespace-nowrap px-4 py-4 font-semibold">{value}</td>)}</tr>)}</tbody>
           </table>
         </div>
       )}
-      {rows.length > 0 && <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm text-text-secondary"><span>Rata-rata total harian {selectedDm === "DM 4" ? "(rentang 14–16 Sep) 25,00" : "(leader dan rentang terpilih) 30,00"} dari 30</span><span>Menampilkan 3 dari 19 hari</span></div>}
+      {rows.length > 0 && <div className="scorecard-tab-footer mt-3 flex flex-wrap justify-between gap-2 text-sm text-text-secondary"><span>Rata-rata total harian {selectedDm === "DM 4" ? "(rentang 14–16 Sep) 25,00" : "(leader dan rentang terpilih) 30,00"} dari 30</span><span>Menampilkan 3 dari 19 hari</span></div>}
     </>
   );
 }
@@ -338,7 +339,7 @@ export function SqdipDetail({ canExport }: { canExport: boolean }) {
   return (
     <>
       <DetailHeader canExport={canExport} caption="Lima dimensi, masing-masing 6 poin jika target tercapai" />
-      <div className="mb-4 flex flex-wrap gap-3"><Input type="date" value="2026-09-17" className="w-auto" /><Select value="TAC20604"><option>TAC20604</option><option>TAC20603</option></Select></div>
+      <div className="scorecard-tab-subhead flex flex-wrap gap-3"><Input type="date" value="2026-09-17" onChange={() => undefined} className="w-auto" /><Select value="TAC20604" onChange={() => undefined}><option>TAC20604</option><option>TAC20603</option></Select></div>
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-left text-sm"><thead className="bg-section text-xs text-text-secondary"><tr>{["Dimensi", "Target", "Aktual", "Selisih", "Poin"].map((item) => <th key={item} className="px-4 py-3">{item}</th>)}</tr></thead><tbody className="divide-y divide-border">{rows.map((row) => <tr key={row[0]}><td className="px-4 py-4 font-semibold">{row[0]}</td><td className="px-4 py-4">{row[1]}</td><td className="px-4 py-4">{row[2]}</td><td className="px-4 py-4">{row[3]}</td><td className={`px-4 py-4 font-bold ${row[4] ? "text-primary" : "text-danger"}`}>{row[4] ? <CheckCircle2 size={16} className="mr-2 inline" /> : <X size={16} className="mr-2 inline" />}{row[4]}</td></tr>)}</tbody><tfoot className="border-t border-border bg-section"><tr><td colSpan={4} className="px-4 py-4 font-bold">Total</td><td className="px-4 py-4 font-bold text-danger">18 dari 30</td></tr></tfoot></table>
       </div>

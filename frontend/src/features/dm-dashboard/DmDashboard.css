@@ -1108,3 +1108,52 @@
   justify-content: flex-start;
   gap: 1rem;
 }
+
+.dm-root.dm-root--index.dm-root--tv {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+@media (min-width: 1280px) and (min-height: 700px) {
+  .dm-root.dm-root--index.dm-root--tv {
+    height: 100dvh;
+    min-height: 0;
+    align-content: stretch;
+    overflow-y: auto;
+  }
+
+  .dm-root--tv .dmi {
+    height: 100%;
+    min-height: 0;
+    gap: 0.5rem;
+  }
+
+  .dm-root--tv .dmi-top {
+    flex: none;
+  }
+
+  .dm-root--tv .dmi-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0;
+  }
+
+  .dm-root--tv .dmi-panel > .scorecard-tv {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+@media (min-width: 1280px) and (max-height: 699px) {
+  .dm-root.dm-root--index.dm-root--tv {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .dm-root--tv .dmi,
+  .dm-root--tv .dmi-panel {
+    height: auto;
+    min-height: 0;
+  }
+}
