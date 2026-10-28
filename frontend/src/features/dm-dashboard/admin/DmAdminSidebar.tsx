@@ -9,7 +9,8 @@ export type DmAdminTabKey =
   | "users"
   | "papercard"
   | "mpv"
-  | "attendance";
+  | "attendance"
+  | "sqdip";
 
 interface DmAdminSidebarProps {
   isAdmin: boolean;
@@ -257,6 +258,17 @@ export default function DmAdminSidebar({
               </span>
               <span>Rekap Presensi</span>
               {/* <span className="dm-admin-nav-badge-pill" style={{ background: "#eaf3f9", color: "#1e5a7d" }}>3 Sesi</span> */}
+            </button>
+
+            <button
+              type="button"
+              className={`dm-admin-nav-btn ${activeTab === "sqdip" ? "is-active" : ""}`}
+              onClick={() => onSelectTab("sqdip")}
+            >
+              <span className="dm-admin-nav-icon">
+                <ChartIcon />
+              </span>
+              <span>SQDIP</span>
             </button>
           </>
         ) : (

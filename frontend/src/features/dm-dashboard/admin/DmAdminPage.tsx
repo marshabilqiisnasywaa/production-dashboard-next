@@ -1,4 +1,5 @@
 "use client";
+import SqdipMonitor from "./sqdip/SqdipMonitor";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, accountApi, adminApi, getToken, setToken } from "../api";
@@ -129,6 +130,10 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
   papercard: { crumb: "Papercard & Meeting", title: "Template Papercard dan Jadwal DM Meeting per Lini" },
   mpv: { crumb: "MVP of The Month", title: "MVP of The Month per Lini dan Riwayatnya" },
   attendance: { crumb: "Rekap Presensi", title: "Rekapitulasi Presensi & Riwayat Meeting per Tanggal" },
+  sqdip: {
+    crumb: "SQDIP",
+    title: "SQDIP Monitoring: Skor Harian per Leader dan Line",
+  },
 };
 
 function AdminWorkspace({
@@ -458,7 +463,7 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
             </div>
           )}
 
-          <div className={`dm-admin-panel-card${activeTab === "workshop" || activeTab === "dashboard" || activeTab === "users" ? " is-bare" : ""}`}>
+          <div className={`dm-admin-panel-card${activeTab === "workshop" || activeTab === "dashboard" || activeTab === "users" || activeTab === "sqdip" ? " is-bare" : ""}`}>
             {activeTab === "dashboard" && (
               <div className="dm-admin-section dm-tab-lines">
                 {loading ? (
@@ -746,6 +751,12 @@ const formattedTime = currentTime.toLocaleTimeString("id-ID", {
                   <span className="dm-admin-sec-sub">Pantau kehadiran tim.</span>
                 </div>
                 <AttendanceRecap lines={lines} call={call} />
+              </div>
+            )}
+
+            {activeTab === "sqdip" && (
+              <div className="dm-admin-section dm-tab-lines">
+                <SqdipMonitor />
               </div>
             )}
           </div>
