@@ -32,6 +32,7 @@ interface SupervisorContextValue {
   dbLines: DmSupervisorLine[];
   allListItems: DmSupervisorSubordinate[];
   escalatedRows: ProblemRow[];
+  allProblemRows: ProblemRow[];
   escalatedCount: number;
   escalationsError: string | null;
   escalationsReady: boolean;
@@ -165,6 +166,7 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
 
   const {
     rows: escalatedRows,
+    allRows: allProblemRows,
     count: escalatedCount,
     error: escalationsError,
     ready: escalationsReady,
@@ -281,6 +283,7 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
       dbLines,
       allListItems,
       escalatedRows,
+      allProblemRows,
       escalatedCount,
       escalationsError,
       escalationsReady,
@@ -312,6 +315,7 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
       dbLines,
       allListItems,
       escalatedRows,
+      allProblemRows,
       escalatedCount,
       escalationsError,
       escalationsReady,
