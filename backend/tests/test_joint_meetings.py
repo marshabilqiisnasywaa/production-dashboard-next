@@ -9,7 +9,8 @@ from fastapi import BackgroundTasks, HTTPException, UploadFile
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from app.api.admin import attendance_recap, create_line
+from app.api.admin import create_line
+from app.api.public import attendance_recap
 from app.api.deps import Principal
 from app.api.dm_groups import assign_line_to_group, delete_dm_group
 from app.api.face_scan import open_session, scan_attendance

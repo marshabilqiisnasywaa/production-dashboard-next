@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { adminApi, type DmAttendanceRecap } from "../api";
+import { publicApi, type DmAttendanceRecap } from "../api";
 
 export function useAttendanceRecap(
   date: string,
   lineId: number | null,
-  call: <T>(fn: () => Promise<T>) => Promise<T>,
+  call: <T>(fn: () => Promise<T>) => Promise<T>
 ) {
   const [recap, setRecap] = useState<DmAttendanceRecap | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,12 +18,15 @@ export function useAttendanceRecap(
     let alive = true;
     setLoading(true);
     setError(null);
-    call(() => adminApi.attendanceRecap(date, lineId ?? undefined))
+    call(() => publicApi.attendanceRecap(date, lineId ?? undefined))
       .then((result) => {
         if (alive) setRecap(result);
       })
       .catch((err) => {
-        if (alive) setError(err instanceof Error ? err.message : "Gagal memuat rekap presensi.");
+        if (alive)
+          setError(
+            err instanceof Error ? err.message : "Gagal memuat rekap presensi."
+          );
       })
       .finally(() => {
         if (alive) setLoading(false);

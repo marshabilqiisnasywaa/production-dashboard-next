@@ -486,7 +486,34 @@ class AttendanceRecapOut(CamelModel):
     sessions: list[RecapSessionOut]
     rows: list[RecapRowOut]
 
+class WorkshopRecapParticipantOut(CamelModel):
+    employee_no: str
+    name: str
+    position: str | None = None
+    dept: str | None = None
 
+
+class WorkshopRecapAttendanceOut(CamelModel):
+    employee_id: int
+    employee_no: str | None = None
+    employee_name: str | None = None
+    position: str | None = None
+    department: str | None = None
+    status: str
+    attended_at: datetime
+
+
+class WorkshopRecapSessionOut(CamelModel):
+    id: int
+    date: date
+    scheduled_time: str
+    status: str
+    participants: list[WorkshopRecapParticipantOut]
+    attendances: list[WorkshopRecapAttendanceOut]
+
+
+class PublicAttendanceRecapOut(AttendanceRecapOut):
+    workshop_sessions: list[WorkshopRecapSessionOut]
 
 class MeetingSessionStartIn(CamelModel):
     line_id: int

@@ -64,16 +64,33 @@ export type DmMpvInput = Omit<DmMemberInput, "sortOrder">;
 export type DmMemberPick = { employeePk: number; sortOrder: number };
 
 export type DmMpvPick = { employeePk: number };
-export type DmMvpCandidate = Pick<DmEmployee, "id" | "employeeId" | "name" | "dept" | "isActive">;
+export type DmMvpCandidate = Pick<
+  DmEmployee,
+  "id" | "employeeId" | "name" | "dept" | "isActive"
+>;
 
 export const leaderMpvApi = {
   lines: () => request<DmLine[]>("/leader/mpv/lines", {}, true),
-  candidates: (lineId: number) => request<DmMvpCandidate[]>(`/leader/mpv/lines/${lineId}/candidates`, {}, true),
-  mpvHistory: (lineId: number) => request<DmMpv[]>(`/leader/mpv/lines/${lineId}/history`, {}, true),
+  candidates: (lineId: number) =>
+    request<DmMvpCandidate[]>(
+      `/leader/mpv/lines/${lineId}/candidates`,
+      {},
+      true
+    ),
+  mpvHistory: (lineId: number) =>
+    request<DmMpv[]>(`/leader/mpv/lines/${lineId}/history`, {}, true),
   saveMpv: (lineId: number, period: string, data: DmMpvInput | DmMpvPick) =>
-    request<DmMpv>(`/leader/mpv/lines/${lineId}/${period}`, json("PUT", data), true),
+    request<DmMpv>(
+      `/leader/mpv/lines/${lineId}/${period}`,
+      json("PUT", data),
+      true
+    ),
   deleteMpv: (lineId: number, period: string) =>
-    request<void>(`/leader/mpv/lines/${lineId}/${period}`, { method: "DELETE" }, true),
+    request<void>(
+      `/leader/mpv/lines/${lineId}/${period}`,
+      { method: "DELETE" },
+      true
+    ),
 };
 
 export type DmEmployeeRole = "member" | "leader" | "supervisor";
@@ -207,6 +224,12 @@ export const publicApi = {
   boards: () => request<DmBoardListItem[]>("/public/boards"),
   board: (slug: string) =>
     request<DmBoard>(`/public/boards/${encodeURIComponent(slug)}`),
+  attendanceRecap: (date: string, lineId?: number) =>
+    request<DmPublicAttendanceRecap>(
+      "/public/attendance-recap?date=" +
+        encodeURIComponent(date) +
+        (lineId !== undefined ? "&line_id=" + lineId : "")
+    ),
 };
 
 export type DmLoginResult = {
@@ -295,6 +318,31 @@ export type DmAttendanceRecap = {
   rows: DmRecapRow[];
 };
 
+export type DmWorkshopAttendanceRecap = Pick<
+  DmMeetingSession,
+  "id" | "date" | "scheduledTime" | "status"
+> & {
+  participants: {
+    employeeNo: string;
+    name: string;
+    position: string | null;
+    dept: string | null;
+  }[];
+  attendances: {
+    employeeId: number;
+    employeeNo: string | null;
+    employeeName: string | null;
+    position: string | null;
+    department: string | null;
+    status: string;
+    attendedAt: string;
+  }[];
+};
+
+export type DmPublicAttendanceRecap = DmAttendanceRecap & {
+  workshopSessions: DmWorkshopAttendanceRecap[];
+};
+
 export const adminApi = {
   workshops: () => request<DmWorkshop[]>("/admin/workshops", {}, true),
   createWorkshop: (name: string) =>
@@ -355,14 +403,14 @@ export const adminApi = {
       { method: "DELETE" },
       true
     ),
-  attendanceRecap: (date: string, lineId?: number) =>
-    request<DmAttendanceRecap>(
-      "/admin/attendance-recap?date=" +
-        date +
-        (lineId ? "&line_id=" + lineId : ""),
-      {},
-      true
-    ),
+  // attendanceRecap: (date: string, lineId?: number) =>
+  //   request<DmAttendanceRecap>(
+  //     "/admin/attendance-recap?date=" +
+  //       date +
+  //       (lineId ? "&line_id=" + lineId : ""),
+  //     {},
+  //     true
+  //   ),
 };
 
 export type DmPapercardTemplate = {
@@ -985,7 +1033,11 @@ export const workshopMeetingApi = {
       true
     ),
   getSession: (sessionId: number) =>
-    request<DmMeetingSession>(`${workshopBase}/sessions/${sessionId}`, {}, true),
+    request<DmMeetingSession>(
+      `${workshopBase}/sessions/${sessionId}`,
+      {},
+      true
+    ),
   prepare: (sessionId: number, _scope?: "line" | "dm") =>
     request<DmMeetingSession>(
       `${workshopBase}/sessions/${sessionId}/prepare`,
@@ -1041,7 +1093,9 @@ export const workshopMeetingApi = {
   summaryOptions: meetingApi.summaryOptions,
   representatives: (forEmployeeNo?: string) =>
     request<MeetingRepresentative[]>(
-      `${workshopBase}/representatives?for_employee_no=${encodeURIComponent(forEmployeeNo ?? "")}`,
+      `${workshopBase}/representatives?for_employee_no=${encodeURIComponent(
+        forEmployeeNo ?? ""
+      )}`,
       {},
       true
     ),

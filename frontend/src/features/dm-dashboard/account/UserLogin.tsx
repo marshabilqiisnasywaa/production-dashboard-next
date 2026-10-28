@@ -16,15 +16,25 @@ import "./login.css";
 const SHOW_DEMO = process.env.NEXT_PUBLIC_SHOW_DEMO_LOGIN !== "false";
 
 const DEMO_ACCOUNTS = [
-  { role: "Leader", nik: "LEAD01", password: "LEAD12345" },
-  { role: "Member", nik: "PE01", password: "PE123456" },
-  { role: "Supervisor", nik: "SPV01", password: "SPV12345" },
-  { role: "Admin", nik: "admin", password: "admin1234" },
+  { role: "Leader", nik: "leader", password: "leader123" },
+  { role: "Member", nik: "member", password: "member123" },
+  { role: "Supervisor", nik: "supervisor", password: "super123" },
+  { role: "Admin", nik: "admin", password: "admin123" },
 ] as const;
 
 function ShieldCheckIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.1 7.5 9.5 4.4-1.4 7.5-4.9 7.5-9.5V6L12 3z" />
       <path d="m8.8 12 2.4 2.4 4.2-4.8" />
     </svg>
@@ -33,7 +43,17 @@ function ShieldCheckIcon() {
 
 function ChevronRightIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="m9 6 6 6-6 6" />
     </svg>
   );
@@ -89,17 +109,34 @@ export default function UserLogin() {
   }
 
   // The real role is only known after login; for the demo accounts we can already tell.
-  const knownRole = DEMO_ACCOUNTS.find((a) => a.nik.toLowerCase() === nik.trim().toLowerCase())?.role;
+  const knownRole = DEMO_ACCOUNTS.find(
+    (a) => a.nik.toLowerCase() === nik.trim().toLowerCase()
+  )?.role;
 
   return (
     <main className="dml-login">
       {/* ---------- Left: brand panel ---------- */}
       <section className="dml-login__brand" aria-label="DM Digital">
-        <span className="dml-login__shape dml-login__shape--a" aria-hidden="true" />
-  <span className="dml-login__shape dml-login__shape--b" aria-hidden="true" />
-  <span className="dml-login__shape dml-login__shape--c" aria-hidden="true" />
-  <span className="dml-login__shape dml-login__shape--d" aria-hidden="true" />
-  <span className="dml-login__shape dml-login__shape--e" aria-hidden="true" />
+        <span
+          className="dml-login__shape dml-login__shape--a"
+          aria-hidden="true"
+        />
+        <span
+          className="dml-login__shape dml-login__shape--b"
+          aria-hidden="true"
+        />
+        <span
+          className="dml-login__shape dml-login__shape--c"
+          aria-hidden="true"
+        />
+        <span
+          className="dml-login__shape dml-login__shape--d"
+          aria-hidden="true"
+        />
+        <span
+          className="dml-login__shape dml-login__shape--e"
+          aria-hidden="true"
+        />
         <div className="dml-login__brandbar">
           <span className="dml-login__logo">
             <IconGauge size={24} />
@@ -112,7 +149,10 @@ export default function UserLogin() {
             <OppoLogo variant="white" height={34} />
           </div>
           <h2>Daily Management yang lebih cepat dan terukur.</h2>
-          <p>Satu ruang kerja untuk Papercard, meeting, Abnormal, dan tindak lanjut perbaikan setiap hari.</p>
+          <p>
+            Satu ruang kerja untuk Papercard, meeting, Abnormal, dan tindak
+            lanjut perbaikan setiap hari.
+          </p>
         </div>
 
         <small className="dml-login__copy">OPPO Manufacturing</small>
@@ -121,9 +161,15 @@ export default function UserLogin() {
       {/* ---------- Right: form ---------- */}
       <section className="dml-login__panel">
         <form className="dml-login__form" onSubmit={submit} noValidate>
-          <OppoLogo variant="green" className="dml-login__formlogo" height={36} />
+          <OppoLogo
+            variant="green"
+            className="dml-login__formlogo"
+            height={36}
+          />
           <h1>Selamat datang</h1>
-          <p className="dml-login__lead">Masuk untuk melanjutkan Daily Management hari ini.</p>
+          <p className="dml-login__lead">
+            Masuk untuk melanjutkan Daily Management hari ini.
+          </p>
 
           {notice && (
             <p className="dml-login__notice" role="status">

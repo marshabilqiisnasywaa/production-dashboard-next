@@ -3,12 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  adminApi,
-  getToken,
-  workshopMeetingApi,
+  publicApi,
   type DmAttendanceRecap,
-  type DmMeetingSession,
-  type DmWorkshopRef,
+  type DmWorkshopAttendanceRecap,
 } from "../api";
 
 export type AttendanceLevel = "DM Line" | "DM Workshop";
@@ -67,7 +64,9 @@ function sessionLabel(scheduledTime: string) {
 
 function timeHM(iso: string) {
   const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `${String(d.getHours()).padStart(2, "0")}:${String(
+    d.getMinutes()
+  ).padStart(2, "0")}`;
 }
 
 function lateMinutes(attendedAt: string, date: string, scheduledTime: string) {
@@ -76,8 +75,12 @@ function lateMinutes(attendedAt: string, date: string, scheduledTime: string) {
   return Math.round((attended.getTime() - scheduled.getTime()) / 60000);
 }
 
-function mapStatus(status: string, difference: number | null): AttendanceStatus {
-  if (status === "present") return (difference ?? 0) > 0 ? "Telat" : "Tepat waktu";
+function mapStatus(
+  status: string,
+  difference: number | null
+): AttendanceStatus {
+  if (status === "present")
+    return (difference ?? 0) > 0 ? "Telat" : "Tepat waktu";
   return "Tidak hadir";
 }
 
@@ -140,16 +143,19 @@ function fromLineRecap(recap: DmAttendanceRecap): DayAttendance {
   return { records, sessions };
 }
 
-function fromWorkshopSession(s: DmMeetingSession): DayAttendance {
+function fromWorkshopSession(s: DmWorkshopAttendanceRecap): DayAttendance {
   const records: AttendanceRecord[] = [];
   const sessions: SessionStat[] = [];
   const roster = s.participants ?? [];
 
-  if (!s.attendances.length && s.status === "pending") return { records, sessions };
+  if (!s.attendances.length && s.status === "pending")
+    return { records, sessions };
   if (!s.attendances.length && !roster.length) return { records, sessions };
 
   const session = sessionLabel(s.scheduledTime);
-  const byKey = new Map(s.attendances.map((a) => [a.employeeNo ?? String(a.employeeId), a]));
+  const byKey = new Map(
+    s.attendances.map((a) => [a.employeeNo ?? String(a.employeeId), a])
+  );
   let onTime = 0;
   let late = 0;
   let absent = 0;
@@ -158,7 +164,7 @@ function fromWorkshopSession(s: DmMeetingSession): DayAttendance {
     key: string,
     name: string,
     role: string,
-    attendedAt: string,
+    attendedAt: string
   ) => {
     const difference = lateMinutes(attendedAt, s.date, s.scheduledTime);
     const status = mapStatus("present", difference);
@@ -198,7 +204,12 @@ function fromWorkshopSession(s: DmMeetingSession): DayAttendance {
     seen.add(key);
     const a = byKey.get(key);
     if (a && a.status === "present") {
-      pushPresent(`ws-${s.id}-${key}`, p.name, roleOf(p.position, p.dept), a.attendedAt);
+      pushPresent(
+        `ws-${s.id}-${key}`,
+        p.name,
+        roleOf(p.position, p.dept),
+        a.attendedAt
+      );
     } else {
       pushAbsent(`ws-${s.id}-${key}`, p.name, roleOf(p.position, p.dept));
     }
@@ -209,7 +220,8 @@ function fromWorkshopSession(s: DmMeetingSession): DayAttendance {
     if (seen.has(key)) continue;
     const name = a.employeeName ?? key;
     const role = roleOf(a.position, a.department);
-    if (a.status === "present") pushPresent(`ws-${s.id}-${key}`, name, role, a.attendedAt);
+    if (a.status === "present")
+      pushPresent(`ws-${s.id}-${key}`, name, role, a.attendedAt);
     else pushAbsent(`ws-${s.id}-${key}`, name, role);
   }
 
@@ -236,24 +248,18 @@ function mergeDays(days: DayAttendance[]): DayAttendance {
 
 export function useAttendanceData(periodDays: number) {
   const cacheRef = useRef(new Map<string, DayAttendance>());
-  const workshopsRef = useRef<DmWorkshopRef[] | null>(null);
   const [loaded, setLoaded] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [unauthenticated, setUnauthenticated] = useState(false);
   const [version, setVersion] = useState(0);
 
   const dates = useMemo(() => periodDates(periodDays), [periodDays]);
 
   useEffect(() => {
-    if (!getToken()) {
-      setUnauthenticated(true);
-      setLoading(false);
-      return;
-    }
-    setUnauthenticated(false);
+    const missing = dates.filter((date) => !cacheRef.current.has(date));
 
-    const missing = dates.filter((d) => !cacheRef.current.has(d));
+    setError(null);
+
     if (!missing.length) {
       setLoading(false);
       return;
@@ -261,34 +267,32 @@ export function useAttendanceData(periodDays: number) {
 
     let alive = true;
     setLoading(true);
-    setError(null);
 
     (async () => {
       try {
-        if (!workshopsRef.current) {
-          workshopsRef.current = await workshopMeetingApi.mine();
-        }
-        const workshops = workshopsRef.current;
-        await Promise.all(
+        const results = await Promise.all(
           missing.map(async (date) => {
-            const [recap, ...workshopSessions] = await Promise.all([
-              adminApi.attendanceRecap(date),
-              ...workshops.map((w) => workshopMeetingApi.listSessions(w.id, date)),
+            const recap = await publicApi.attendanceRecap(date);
+            const day = mergeDays([
+              fromLineRecap(recap),
+              ...recap.workshopSessions.map(fromWorkshopSession),
             ]);
-            cacheRef.current.set(
-              date,
-              mergeDays([
-                fromLineRecap(recap),
-                ...workshopSessions.flat().map(fromWorkshopSession),
-              ]),
-            );
-          }),
+
+            return { date, day };
+          })
         );
-        if (alive) setLoaded((n) => n + 1);
+
+        if (!alive) return;
+
+        for (const { date, day } of results) {
+          cacheRef.current.set(date, day);
+        }
+
+        setLoaded((value) => value + 1);
       } catch (err) {
         if (alive) {
           setError(
-            err instanceof Error ? err.message : "Gagal memuat data presensi.",
+            err instanceof Error ? err.message : "Gagal memuat data presensi."
           );
         }
       } finally {
@@ -301,19 +305,25 @@ export function useAttendanceData(periodDays: number) {
     };
   }, [dates, version]);
 
-  const reload = useCallback(() => setVersion((v) => v + 1), []);
+  const reload = useCallback(() => {
+    cacheRef.current.clear();
+    setVersion((value) => value + 1);
+  }, []);
 
   const data = useMemo(() => {
     const days = dates
-      .map((d) => cacheRef.current.get(d))
-      .filter((d): d is DayAttendance => Boolean(d));
+      .map((date) => cacheRef.current.get(date))
+      .filter((day): day is DayAttendance => Boolean(day));
+
     const merged = mergeDays(days);
+
     merged.records.sort(
       (a, b) =>
         b.date.localeCompare(a.date) ||
         a.session.localeCompare(b.session) ||
-        a.name.localeCompare(b.name),
+        a.name.localeCompare(b.name)
     );
+
     return merged;
   }, [dates, loaded]);
 
@@ -323,7 +333,6 @@ export function useAttendanceData(periodDays: number) {
     sessions: data.sessions,
     loading,
     error,
-    unauthenticated,
     reload,
   };
 }

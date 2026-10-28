@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+// import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import "./attendance.css";
@@ -187,7 +187,9 @@ function TrendChart({
               return (
                 <g
                   key={d.date}
-                  className={`att-chart-column${isHovered ? " is-hovered" : ""}${selectedDate === d.date ? " is-selected" : ""}`}
+                  className={`att-chart-column${
+                    isHovered ? " is-hovered" : ""
+                  }${selectedDate === d.date ? " is-selected" : ""}`}
                   onClick={() => onSelectDate(d.date)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
@@ -200,7 +202,9 @@ function TrendChart({
                   onBlur={() => setHoveredIndex(null)}
                   tabIndex={0}
                   role="button"
-                  aria-label={`${formatDate(d.date)}: ${formatPercent(d.onTime + d.late)} hadir`}
+                  aria-label={`${formatDate(d.date)}: ${formatPercent(
+                    d.onTime + d.late
+                  )} hadir`}
                 >
                   <rect
                     x={centerX - slot * 0.42}
@@ -266,7 +270,9 @@ function TrendChart({
             {points.map((p, i) => (
               <g
                 key={data[i].date}
-                className={`att-chart-point${hoveredIndex === i ? " is-hovered" : ""}`}
+                className={`att-chart-point${
+                  hoveredIndex === i ? " is-hovered" : ""
+                }`}
                 onMouseEnter={() => setHoveredIndex(i)}
               >
                 <circle
@@ -291,7 +297,9 @@ function TrendChart({
               <div className="att-chart-tooltip-head">
                 <strong>{formatDate(hoveredDay.date)}</strong>
 
-                <span>{formatPercent(hoveredDay.onTime + hoveredDay.late)} hadir</span>
+                <span>
+                  {formatPercent(hoveredDay.onTime + hoveredDay.late)} hadir
+                </span>
               </div>
 
               <div className="att-chart-tooltip-row">
@@ -341,15 +349,8 @@ export default function AttendanceDashboardPage() {
 
   const pageSize = 8;
 
-  const {
-    dates,
-    records,
-    sessions,
-    loading,
-    error,
-    unauthenticated,
-    reload,
-  } = useAttendanceData(Number(period));
+  const { dates, records, sessions, loading, error, reload } =
+    useAttendanceData(Number(period));
 
   const visibleTrend = useMemo<TrendDay[]>(
     () =>
@@ -369,7 +370,7 @@ export default function AttendanceDashboardPage() {
         };
       }),
 
-    [dates, sessions],
+    [dates, sessions]
   );
 
   const filteredRows = useMemo(() => {
@@ -386,10 +387,16 @@ export default function AttendanceDashboardPage() {
       const matchesSearch =
         !q ||
         [r.name, r.role, r.level, r.session, r.date].some((v) =>
-          v.toLowerCase().includes(q),
+          v.toLowerCase().includes(q)
         );
 
-      return matchesDate && matchesLevel && matchesSession && matchesStatus && matchesSearch;
+      return (
+        matchesDate &&
+        matchesLevel &&
+        matchesSession &&
+        matchesStatus &&
+        matchesSearch
+      );
     });
   }, [records, selectedDate, level, session, status, search]);
 
@@ -425,7 +432,7 @@ export default function AttendanceDashboardPage() {
 
   const paginatedRows = filteredRows.slice(
     (page - 1) * pageSize,
-    page * pageSize,
+    page * pageSize
   );
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
@@ -454,43 +461,14 @@ export default function AttendanceDashboardPage() {
         ...new Set(
           sessions
             .filter((s) => level === "Semua" || s.level === level)
-            .map((s: SessionStat) => s.session),
+            .map((s: SessionStat) => s.session)
         ),
       ].sort(),
 
-    [sessions, level],
+    [sessions, level]
   );
 
-  const availableSessions = [
-    "Semua sesi",
-
-    ...sessionsForLevel,
-  ];
-
-  if (unauthenticated) {
-    return (
-      <main className="att-page">
-        <div className="att-container">
-          <section className="att-page-heading">
-            <div>
-              <p className="att-eyebrow">DM OPERATIONS</p>
-
-              <h1>Rekapitulasi Presensi</h1>
-
-              <p className="att-muted">
-                Pantau tingkat kehadiran meeting DM Line dan DM Workshop.
-              </p>
-            </div>
-          </section>
-
-          <div className="att-chart-empty">
-            Data presensi memerlukan akses admin.{" "}
-            <Link href="/dm-dashboard/masuk">Masuk terlebih dahulu</Link>.
-          </div>
-        </div>
-      </main>
-    );
-  }
+  const availableSessions = ["Semua sesi", ...sessionsForLevel];
 
   const hasData = sessions.length > 0;
 
@@ -591,9 +569,7 @@ export default function AttendanceDashboardPage() {
 
                 <strong>{stats.onTime}</strong>
 
-                <p>
-                  {formatPercent(stats.onTimeRate)} dari total presensi
-                </p>
+                <p>{formatPercent(stats.onTimeRate)} dari total presensi</p>
               </article>
 
               <article className="att-kpi">
@@ -607,7 +583,7 @@ export default function AttendanceDashboardPage() {
 
                 <p>
                   {formatPercent(
-                    stats.total ? (stats.late / stats.total) * 100 : 0,
+                    stats.total ? (stats.late / stats.total) * 100 : 0
                   )}{" "}
                   dari total presensi
                 </p>
@@ -624,7 +600,7 @@ export default function AttendanceDashboardPage() {
 
                 <p>
                   {formatPercent(
-                    stats.total ? (stats.absent / stats.total) * 100 : 0,
+                    stats.total ? (stats.absent / stats.total) * 100 : 0
                   )}{" "}
                   dari total presensi
                 </p>
@@ -662,7 +638,9 @@ export default function AttendanceDashboardPage() {
                 data={visibleTrend}
                 selectedDate={selectedDate}
                 onSelectDate={(date) => {
-                  setSelectedDate((current) => (current === date ? null : date));
+                  setSelectedDate((current) =>
+                    current === date ? null : date
+                  );
                   setPage(1);
                 }}
               />
@@ -691,7 +669,9 @@ export default function AttendanceDashboardPage() {
                 <div>
                   <h2>Detail Presensi</h2>
 
-                  <p>Rincian kehadiran berdasarkan tanggal, sesi, dan peserta</p>
+                  <p>
+                    Rincian kehadiran berdasarkan tanggal, sesi, dan peserta
+                  </p>
                   {selectedDate && (
                     <button
                       type="button"
@@ -784,20 +764,26 @@ export default function AttendanceDashboardPage() {
                             r.difference === null
                               ? ""
                               : r.difference > 0
-                                ? "att-difference-late"
-                                : "att-difference-early"
+                              ? "att-difference-late"
+                              : "att-difference-early"
                           }
                         >
                           {r.difference === null
                             ? "—"
                             : r.difference > 0
-                              ? `+${r.difference} mnt`
-                              : `${r.difference} mnt`}
+                            ? `+${r.difference} mnt`
+                            : `${r.difference} mnt`}
                         </td>
 
                         <td>
                           <span
-                            className={`att-status-pill ${r.status === "Tepat waktu" ? "ontime" : r.status === "Telat" ? "late" : "absent"}`}
+                            className={`att-status-pill ${
+                              r.status === "Tepat waktu"
+                                ? "ontime"
+                                : r.status === "Telat"
+                                ? "late"
+                                : "absent"
+                            }`}
                           >
                             {r.status}
                           </span>
@@ -818,7 +804,8 @@ export default function AttendanceDashboardPage() {
 
               <div className="att-table-footer">
                 <span>
-                  Menampilkan {filteredRows.length ? (page - 1) * pageSize + 1 : 0}–
+                  Menampilkan{" "}
+                  {filteredRows.length ? (page - 1) * pageSize + 1 : 0}–
                   {Math.min(page * pageSize, filteredRows.length)} dari{" "}
                   {filteredRows.length} data
                 </span>
