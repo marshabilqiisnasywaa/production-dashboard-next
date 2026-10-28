@@ -9,7 +9,8 @@ export type DmAdminTabKey =
   | "users"
   | "papercard"
   | "mpv"
-  | "attendance";
+  | "attendance"
+  | "problems";
 
 interface DmAdminSidebarProps {
   isAdmin: boolean;
@@ -205,7 +206,9 @@ export default function DmAdminSidebar({
           <>
             <button
               type="button"
-              className={`dm-admin-nav-btn ${activeTab === "workshop" ? "is-active" : ""}`}
+              className={`dm-admin-nav-btn ${
+                activeTab === "workshop" ? "is-active" : ""
+              }`}
               onClick={() => onSelectTab("workshop")}
             >
               <span className="dm-admin-nav-icon">
@@ -216,7 +219,9 @@ export default function DmAdminSidebar({
 
             <button
               type="button"
-              className={`dm-admin-nav-btn ${activeTab === "users" ? "is-active" : ""}`}
+              className={`dm-admin-nav-btn ${
+                activeTab === "users" ? "is-active" : ""
+              }`}
               onClick={() => onSelectTab("users")}
             >
               <span className="dm-admin-nav-icon">
@@ -227,7 +232,9 @@ export default function DmAdminSidebar({
 
             <button
               type="button"
-              className={`dm-admin-nav-btn ${activeTab === "papercard" ? "is-active" : ""}`}
+              className={`dm-admin-nav-btn ${
+                activeTab === "papercard" ? "is-active" : ""
+              }`}
               onClick={() => onSelectTab("papercard")}
             >
               <span className="dm-admin-nav-icon">
@@ -238,7 +245,9 @@ export default function DmAdminSidebar({
 
             <button
               type="button"
-              className={`dm-admin-nav-btn ${activeTab === "mpv" ? "is-active" : ""}`}
+              className={`dm-admin-nav-btn ${
+                activeTab === "mpv" ? "is-active" : ""
+              }`}
               onClick={() => onSelectTab("mpv")}
             >
               <span className="dm-admin-nav-icon">
@@ -249,7 +258,9 @@ export default function DmAdminSidebar({
 
             <button
               type="button"
-              className={`dm-admin-nav-btn ${activeTab === "attendance" ? "is-active" : ""}`}
+              className={`dm-admin-nav-btn ${
+                activeTab === "attendance" ? "is-active" : ""
+              }`}
               onClick={() => onSelectTab("attendance")}
             >
               <span className="dm-admin-nav-icon">
@@ -257,6 +268,19 @@ export default function DmAdminSidebar({
               </span>
               <span>Rekap Presensi</span>
               {/* <span className="dm-admin-nav-badge-pill" style={{ background: "#eaf3f9", color: "#1e5a7d" }}>3 Sesi</span> */}
+            </button>
+
+            <button
+              type="button"
+              className={`dm-admin-nav-btn ${
+                activeTab === "problems" ? "is-active" : ""
+              }`}
+              onClick={() => onSelectTab("problems")}
+            >
+              <span className="dm-admin-nav-icon">
+                <ClipboardCheckIcon />
+              </span>
+              <span>Tracking Masalah</span>
             </button>
           </>
         ) : (
