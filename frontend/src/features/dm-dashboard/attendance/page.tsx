@@ -278,21 +278,40 @@ const RECORDS: AttendanceRecord[] = [
   },
 ];
 
-const TREND: TrendDay[] = [
-  { label: "Rab", date: "2026-10-21", onTime: 68, late: 17, absent: 15 },
+function buildTrend(): TrendDay[] {
+  const dates = [
+    "2026-10-21",
+    "2026-10-22",
+    "2026-10-23",
+    "2026-10-24",
+    "2026-10-25",
+    "2026-10-26",
+    "2026-10-27",
+  ];
 
-  { label: "Kam", date: "2026-10-22", onTime: 82, late: 10, absent: 8 },
+  return dates.map((date) => {
+    const rows = RECORDS.filter((record) => record.date === date);
+    const total = rows.length;
 
-  { label: "Jum", date: "2026-10-23", onTime: 61, late: 14, absent: 25 },
+    const percentage = (status: AttendanceStatus) =>
+      total
+        ? (rows.filter((record) => record.status === status).length / total) *
+          100
+        : 0;
 
-  { label: "Sab", date: "2026-10-24", onTime: 74, late: 18, absent: 8 },
+    return {
+      date,
+      label: new Date(`${date}T12:00:00`).toLocaleDateString("id-ID", {
+        weekday: "short",
+      }),
+      onTime: percentage("Tepat waktu"),
+      late: percentage("Telat"),
+      absent: percentage("Tidak hadir"),
+    };
+  });
+}
 
-  { label: "Min", date: "2026-10-25", onTime: 55, late: 20, absent: 25 },
-
-  { label: "Sen", date: "2026-10-26", onTime: 78, late: 12, absent: 10 },
-
-  { label: "Sel", date: "2026-10-27", onTime: 88, late: 7, absent: 5 },
-];
+const TREND: TrendDay[] = buildTrend();
 
 const STATUS_OPTIONS = ["Semua status", "Tepat waktu", "Telat", "Tidak hadir"];
 
@@ -307,7 +326,7 @@ function formatDate(date: string) {
 }
 
 function formatPercent(value: number) {
-  return `${Math.round(value)}%`;
+  return `${Math.round(value * 10) / 10}%`;
 }
 
 function getStats(rows: AttendanceRecord[]) {
@@ -506,7 +525,7 @@ function TrendChart({
                   onBlur={() => setHoveredIndex(null)}
                   tabIndex={0}
                   role="button"
-                  aria-label={`${formatDate(d.date)}: ${d.onTime + d.late}% hadir`}
+                  aria-label={`${formatDate(d.date)}: ${formatPercent(d.onTime + d.late)} hadir`}
                 >
                   <rect
                     x={centerX - slot * 0.42}
@@ -558,7 +577,7 @@ function TrendChart({
                     textAnchor="middle"
                     className="att-chart-day-rate"
                   >
-                    {d.onTime + d.late}%
+                    {formatPercent(d.onTime + d.late)}
                   </text>
                 </g>
               );
@@ -599,7 +618,7 @@ function TrendChart({
               <div className="att-chart-tooltip-head">
                 <strong>{formatDate(hoveredDay.date)}</strong>
 
-                <span>{hoveredDay.onTime + hoveredDay.late}% hadir</span>
+                <span>{formatPercent(hoveredDay.onTime + hoveredDay.late)} hadir</span>
               </div>
 
               <div className="att-chart-tooltip-row">
@@ -607,7 +626,7 @@ function TrendChart({
 
                 <span>Tepat waktu</span>
 
-                <strong>{hoveredDay.onTime}%</strong>
+                <strong>{formatPercent(hoveredDay.onTime)}</strong>
               </div>
 
               <div className="att-chart-tooltip-row">
@@ -615,7 +634,7 @@ function TrendChart({
 
                 <span>Telat</span>
 
-                <strong>{hoveredDay.late}%</strong>
+                <strong>{formatPercent(hoveredDay.late)}</strong>
               </div>
 
               <div className="att-chart-tooltip-row">
@@ -623,7 +642,7 @@ function TrendChart({
 
                 <span>Tidak hadir</span>
 
-                <strong>{hoveredDay.absent}%</strong>
+                <strong>{formatPercent(hoveredDay.absent)}</strong>
               </div>
             </div>
           )}
@@ -989,7 +1008,7 @@ export default function AttendanceDashboardPage() {
             <strong>{stats.onTime}</strong>
 
             <p>
-              {formatPercent(stats.onTimeRate)} dari seluruh peserta terjadwal
+              {formatPercent(stats.onTimeRate)} dari total presensi
             </p>
           </article>
 
@@ -1006,7 +1025,7 @@ export default function AttendanceDashboardPage() {
               {formatPercent(
                 stats.total ? (stats.late / stats.total) * 100 : 0,
               )}{" "}
-              dari seluruh peserta terjadwal
+              dari total presensi
             </p>
           </article>
 
@@ -1023,7 +1042,7 @@ export default function AttendanceDashboardPage() {
               {formatPercent(
                 stats.total ? (stats.absent / stats.total) * 100 : 0,
               )}{" "}
-              dari seluruh peserta terjadwal
+              dari total presensi
             </p>
           </article>
 
@@ -1036,7 +1055,7 @@ export default function AttendanceDashboardPage() {
 
             <strong>{formatPercent(stats.rate)}</strong>
 
-            <p>Hadir = tepat waktu + telat</p>
+            <p>Peserta yang hadir, termasuk yang terlambat</p>
 
             <div className="att-rate-track">
               <span style={{ width: `${stats.rate}%` }} />
