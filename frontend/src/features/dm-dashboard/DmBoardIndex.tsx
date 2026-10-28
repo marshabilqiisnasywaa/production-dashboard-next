@@ -154,6 +154,10 @@ function LineBoards() {
         <section key={workshopName} className="dmi-group" aria-label={workshopName}>
           <h2>{workshopName}</h2>
           <div className="dmi-grid">
+            <Link href={`/dm-dashboard/${items[0].slug}/supervisor`} className="dmi-card">
+              <span className="dmi-card__code">DM Workshop</span>
+              <span className="dmi-card__name">Struktur Tim {workshopName}</span>
+            </Link>
             {items.map((board) => (
               <Link key={board.slug} href={`/dm-dashboard/${board.slug}`} className="dmi-card">
                 <span className="dmi-card__code">{board.lineCode}</span>
