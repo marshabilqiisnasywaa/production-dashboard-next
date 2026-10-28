@@ -16,6 +16,7 @@ export function useEscalations(
   dbLines: DmSupervisorLine[]
 ): {
   rows: ProblemRow[];
+  allRows: ProblemRow[];
   count: number;
   ready: boolean;
   error: string | null;
@@ -28,12 +29,12 @@ export function useEscalations(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load masalah yang belum selesai milik bawahan langsung dari backend
+  // Load seluruh masalah (semua status), lalu dibatasi ke milik bawahan di sisi klien
   const fetchEscalations = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const list = await meetingApi.supervisorEscalations();
+      const list = await meetingApi.problems();
       setItems(list);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal memuat eskalasi masalah.");
@@ -46,13 +47,36 @@ export function useEscalations(
     fetchEscalations();
   }, [fetchEscalations]);
 
+  const subordinateIds = useMemo(
+    () => new Set(allListItems.map((item) => item.id)),
+    [allListItems],
+  );
+  const subordinateNames = useMemo(
+    () =>
+      new Set(
+        allListItems
+          .map((item) => item.name.trim().toLowerCase())
+          .filter((name) => name !== ""),
+      ),
+    [allListItems],
+  );
+
+  const subordinateItems = useMemo<DmMyProblem[]>(() => {
+    if (!items) return [];
+    return items.filter((p) =>
+      p.picId != null
+        ? subordinateIds.has(p.picId)
+        : subordinateNames.has((p.picName ?? "").trim().toLowerCase()),
+    );
+  }, [items, subordinateIds, subordinateNames]);
+
   // Filter: HANYA masalah yang belum selesai DAN sudah melewati tenggat waktu (Overdue)
   const rows = useMemo<ProblemRow[]>(() => {
-    if (!now || !items) return [];
+    if (!now) return [];
 
     const escalatedOnly: ProblemRow[] = [];
 
-    for (const p of items) {
+    for (const p of subordinateItems) {
       if (p.status === "resolved") continue; // Abaikan yang sudah selesai
 
       const due = p.dueDate ?? "";
@@ -80,7 +104,37 @@ export function useEscalations(
     }
 
     return sortRows(escalatedOnly);
-  }, [now, items]);
+  }, [now, subordinateItems]);
+
+  // Semua status: belum selesai, melewati due, maupun yang sudah selesai
+  const allRows = useMemo<ProblemRow[]>(() => {
+    if (!now) return [];
+
+    const mapped = subordinateItems.map((p): ProblemRow => {
+      const due = p.dueDate ?? "";
+      const dueTime = due ? new Date(due).getTime() : 0;
+      const solved = p.status === "resolved";
+      const isOverdue = !solved && dueTime > 0 && dueTime < now.getTime();
+
+      return {
+        id: String(p.id),
+        date: p.date,
+        sessionLabel: p.sessionLabel ?? "-",
+        line: p.lineCode ?? "-",
+        problem: p.problem,
+        problemCategories: p.problemCategories ?? [],
+        solution: p.solution ?? null,
+        picName: p.picName ?? "-",
+        due,
+        status: getStatus(solved, due, now),
+        overdueMs: isOverdue ? now.getTime() - dueTime : 0,
+        solvedAt: null,
+        sample: false,
+      };
+    });
+
+    return sortRows(mapped);
+  }, [now, subordinateItems]);
 
   // Toggle checklist jika Supervisor menyelesaikan/menutup eskalasi
   const toggleSolved = useCallback(
@@ -113,6 +167,7 @@ export function useEscalations(
 
   return {
     rows,
+    allRows,
     count: rows.length,
     error,
     loading,
