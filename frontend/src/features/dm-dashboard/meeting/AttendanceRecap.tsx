@@ -9,8 +9,25 @@ import { absenceDetail } from "../leader/meeting/utils";
 import { useAttendanceRecap } from "./useAttendanceRecap";
 import "./AttendanceRecap.css";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
-const SESSION_BADGE: Record<number, string> = { 1: "is-pre", 2: "is-during", 3: "is-post" };
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mei",
+  "Jun",
+  "Jul",
+  "Agt",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Des",
+];
+const SESSION_BADGE: Record<number, string> = {
+  1: "is-pre",
+  2: "is-during",
+  3: "is-post",
+};
 
 function formatDateLabel(date: string, today: string): string {
   const [, month, day] = date.split("-");
@@ -20,14 +37,19 @@ function formatDateLabel(date: string, today: string): string {
 
 function clock(iso: string): string {
   const d = new Date(iso);
-  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  return (
+    String(d.getHours()).padStart(2, "0") +
+    ":" +
+    String(d.getMinutes()).padStart(2, "0")
+  );
 }
 
 function statusOf(row: DmRecapRow): { label: string; css: string } {
   if (row.status === "present") return { label: "Hadir", css: "is-hadir" };
   if (row.status === "permit") return { label: "Izin", css: "is-izin" };
   if (row.status === "sick") return { label: "Sakit", css: "is-sakit" };
-  if (row.absenceReason === "represented") return { label: "Diwakilkan", css: "is-diwakilkan" };
+  if (row.absenceReason === "represented")
+    return { label: "Diwakilkan", css: "is-diwakilkan" };
   return { label: "Tidak hadir", css: "is-tidak-hadir" };
 }
 
@@ -48,12 +70,23 @@ export default function AttendanceRecap({ lines, call }: Props) {
     setSelectedDate(now);
   }, []);
 
-  const { recap, loading, error, reload } = useAttendanceRecap(selectedDate, lineId, call);
+  const { recap, loading, error, reload } = useAttendanceRecap(
+    selectedDate,
+    lineId,
+    call
+  );
   const sessions = useMemo(() => recap?.sessions ?? [], [recap]);
   const rows = useMemo(() => recap?.rows ?? [], [recap]);
 
+  const workshopSessions = useMemo(
+    () => recap?.workshopSessions ?? [],
+    [recap]
+  );
+
   const cards = useMemo(() => {
-    const numbers = [...new Set(sessions.map((s) => s.sessionNumber))].sort((a, b) => a - b);
+    const numbers = [...new Set(sessions.map((s) => s.sessionNumber))].sort(
+      (a, b) => a - b
+    );
     return numbers.map((n) => {
       const group = sessions.filter((s) => s.sessionNumber === n);
       const groupRows = rows.filter((r) => r.sessionNumber === n);
@@ -62,9 +95,12 @@ export default function AttendanceRecap({ lines, call }: Props) {
         title: group[0]?.label || "Sesi " + n,
         times: [...new Set(group.map((s) => s.scheduledTime))].join(", "),
         team: group.reduce((sum, s) => sum + s.teamSize, 0),
-        present: groupRows.filter((r) => r.status === "present" && !r.isGuest).length,
+        present: groupRows.filter((r) => r.status === "present" && !r.isGuest)
+          .length,
         guests: groupRows.filter((r) => r.isGuest).length,
-        represented: groupRows.filter((r) => r.status === "absent" && r.absenceReason === "represented").length,
+        represented: groupRows.filter(
+          (r) => r.status === "absent" && r.absenceReason === "represented"
+        ).length,
         total: groupRows.length,
       };
     });
@@ -73,12 +109,23 @@ export default function AttendanceRecap({ lines, call }: Props) {
   const filtered = useMemo(
     () =>
       rows
-        .filter((r) => selectedMeeting === 0 || r.sessionNumber === selectedMeeting)
-        .sort((a, b) => a.sessionNumber - b.sessionNumber || a.lineCode.localeCompare(b.lineCode) || a.name.localeCompare(b.name)),
-    [rows, selectedMeeting],
+        .filter(
+          (r) => selectedMeeting === 0 || r.sessionNumber === selectedMeeting
+        )
+        .sort(
+          (a, b) =>
+            a.sessionNumber - b.sessionNumber ||
+            a.lineCode.localeCompare(b.lineCode) ||
+            a.name.localeCompare(b.name)
+        ),
+    [rows, selectedMeeting]
   );
 
-  const selectedLabel = selectedMeeting === 0 ? "Semua Sesi" : cards.find((c) => c.n === selectedMeeting)?.title ?? "Sesi " + selectedMeeting;
+  const selectedLabel =
+    selectedMeeting === 0
+      ? "Semua Sesi"
+      : cards.find((c) => c.n === selectedMeeting)?.title ??
+        "Sesi " + selectedMeeting;
 
   return (
     <div className="dm-recap-container">
@@ -100,7 +147,9 @@ export default function AttendanceRecap({ lines, call }: Props) {
             className="dm-recap-date-input"
             aria-label="Pilih line"
             value={lineId ?? ""}
-            onChange={(e) => setLineId(e.target.value ? Number(e.target.value) : null)}
+            onChange={(e) =>
+              setLineId(e.target.value ? Number(e.target.value) : null)
+            }
           >
             <option value="">Semua line</option>
             {lines.map((line) => (
@@ -116,7 +165,9 @@ export default function AttendanceRecap({ lines, call }: Props) {
           <div className="dm-recap-pills">
             <button
               type="button"
-              className={"dm-recap-pill " + (selectedMeeting === 0 ? "is-active" : "")}
+              className={
+                "dm-recap-pill " + (selectedMeeting === 0 ? "is-active" : "")
+              }
               onClick={() => setSelectedMeeting(0)}
             >
               Semua Sesi ({rows.length})
@@ -125,7 +176,10 @@ export default function AttendanceRecap({ lines, call }: Props) {
               <button
                 key={c.n}
                 type="button"
-                className={"dm-recap-pill " + (selectedMeeting === c.n ? "is-active" : "")}
+                className={
+                  "dm-recap-pill " +
+                  (selectedMeeting === c.n ? "is-active" : "")
+                }
                 onClick={() => setSelectedMeeting(c.n)}
               >
                 {c.title} ({c.total})
@@ -146,7 +200,9 @@ export default function AttendanceRecap({ lines, call }: Props) {
             <RefreshCw
               size={16}
               aria-hidden="true"
-              className={"dm-recap-refresh-icon" + (loading ? " is-spinning" : "")}
+              className={
+                "dm-recap-refresh-icon" + (loading ? " is-spinning" : "")
+              }
             />
           </button>
         </div>
@@ -161,19 +217,30 @@ export default function AttendanceRecap({ lines, call }: Props) {
       {!error && (
         <div className="dm-recap-metrics-grid">
           {cards.map((c) => (
-            <div key={c.n} className={"dm-recap-card is-session " + (c.present > 0 ? "is-complete" : "is-empty")}>
+            <div
+              key={c.n}
+              className={
+                "dm-recap-card is-session " +
+                (c.present > 0 ? "is-complete" : "is-empty")
+              }
+            >
               <div className="dm-recap-card-head">
                 <span className="dm-recap-session-tag">SESI {c.n}</span>
                 <span className="dm-recap-card-title">{c.title}</span>
               </div>
               <div className="dm-recap-card-body">
                 <div className="dm-recap-stat-number">
-                  {c.present} <span className="dm-recap-stat-sub">/ {c.team} Hadir</span>
+                  {c.present}{" "}
+                  <span className="dm-recap-stat-sub">/ {c.team} Hadir</span>
                 </div>
                 <div className="dm-recap-progress-bar">
                   <div
                     className="dm-recap-progress-fill"
-                    style={{ width: Math.min(100, c.team ? (c.present / c.team) * 100 : 0) + "%" }}
+                    style={{
+                      width:
+                        Math.min(100, c.team ? (c.present / c.team) * 100 : 0) +
+                        "%",
+                    }}
                   />
                 </div>
               </div>
@@ -181,9 +248,14 @@ export default function AttendanceRecap({ lines, call }: Props) {
                 <span>
                   Jadwal: {c.times}
                   {c.guests > 0 ? " · +" + c.guests + " tamu" : ""}
-                  {c.represented > 0 ? " · " + c.represented + " diwakilkan" : ""}
+                  {c.represented > 0
+                    ? " · " + c.represented + " diwakilkan"
+                    : ""}
                 </span>
-                <span className="dm-recap-percent">{c.team ? Math.round((c.present / c.team) * 100) : 0}% Kehadiran</span>
+                <span className="dm-recap-percent">
+                  {c.team ? Math.round((c.present / c.team) * 100) : 0}%
+                  Kehadiran
+                </span>
               </div>
             </div>
           ))}
@@ -193,9 +265,12 @@ export default function AttendanceRecap({ lines, call }: Props) {
       <div className="dm-recap-table-wrapper">
         <div className="dm-recap-table-head-bar">
           <h4 className="dm-recap-table-title">
-            Riwayat Absensi: {selectedLabel} ({selectedDate ? formatDateLabel(selectedDate, today) : "…"})
+            Riwayat Absensi: {selectedLabel} (
+            {selectedDate ? formatDateLabel(selectedDate, today) : "…"})
           </h4>
-          <span className="dm-recap-count-badge">{filtered.length} Peserta Tercatat</span>
+          <span className="dm-recap-count-badge">
+            {filtered.length} Peserta Tercatat
+          </span>
         </div>
 
         {!loading && !error && filtered.length === 0 ? (
@@ -226,45 +301,74 @@ export default function AttendanceRecap({ lines, call }: Props) {
                   const detail =
                     row.status === "present"
                       ? ""
-                      : absenceDetail({ reason: (row.absenceReason ?? "none") as AbsenceReason, note: row.absenceNote ?? "" });
+                      : absenceDetail({
+                          reason: (row.absenceReason ??
+                            "none") as AbsenceReason,
+                          note: row.absenceNote ?? "",
+                        });
                   return (
                     <tr key={row.sessionId + ":" + row.employeeNo}>
-                      <td style={{ color: "#6a8c7b", fontWeight: 700 }}>{index + 1}</td>
+                      <td style={{ color: "#6a8c7b", fontWeight: 700 }}>
+                        {index + 1}
+                      </td>
                       <td>
                         <div className="dm-recap-user-cell">
-                          <div className="dm-recap-user-avatar is-placeholder">{row.name.charAt(0)}</div>
+                          <div className="dm-recap-user-avatar is-placeholder">
+                            {row.name.charAt(0)}
+                          </div>
                           <div className="dm-recap-user-info">
-                            <span className="dm-recap-user-name">{row.name}</span>
-                            <span className="dm-recap-user-id">{row.employeeNo}</span>
+                            <span className="dm-recap-user-name">
+                              {row.name}
+                            </span>
+                            <span className="dm-recap-user-id">
+                              {row.employeeNo}
+                            </span>
                           </div>
                         </div>
                       </td>
                       <td>
                         {row.lineCode}
                         {row.isGuest && row.homeLine ? (
-                          <span className="dm-recap-status-note">asal {row.homeLine}</span>
+                          <span className="dm-recap-status-note">
+                            asal {row.homeLine}
+                          </span>
                         ) : null}
                       </td>
                       <td>
                         <span className="dm-recap-role-pill">
-                          {[row.dept, row.position].filter(Boolean).join(" · ") || "-"}
+                          {[row.dept, row.position]
+                            .filter(Boolean)
+                            .join(" · ") || "-"}
                         </span>
                       </td>
                       <td>
-                        <span className={"dm-recap-session-badge " + (SESSION_BADGE[row.sessionNumber] ?? "is-pre")}>
+                        <span
+                          className={
+                            "dm-recap-session-badge " +
+                            (SESSION_BADGE[row.sessionNumber] ?? "is-pre")
+                          }
+                        >
                           Sesi {row.sessionNumber}
                         </span>
                       </td>
                       <td>
-                        <span className="dm-recap-time-text">{row.status === "present" ? clock(row.attendedAt) + " WIB" : "-"}</span>
+                        <span className="dm-recap-time-text">
+                          {row.status === "present"
+                            ? clock(row.attendedAt) + " WIB"
+                            : "-"}
+                        </span>
                       </td>
                       <td>
                         <span className={"dm-recap-status-pill " + status.css}>
                           <span className="dm-recap-dot" aria-hidden="true" />
                           {status.label}
                         </span>
-                        {row.isGuest && <span className="dm-recap-guest-tag">Tamu</span>}
-                        {detail && <span className="dm-recap-status-note">{detail}</span>}
+                        {row.isGuest && (
+                          <span className="dm-recap-guest-tag">Tamu</span>
+                        )}
+                        {detail && (
+                          <span className="dm-recap-status-note">{detail}</span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -274,6 +378,127 @@ export default function AttendanceRecap({ lines, call }: Props) {
           </div>
         )}
       </div>
+      {lineId === null && (
+        <div className="dm-recap-table-wrapper">
+          <div className="dm-recap-table-head-bar">
+            <h4 className="dm-recap-table-title">
+              Riwayat Absensi: Workshop (
+              {selectedDate ? formatDateLabel(selectedDate, today) : "…"})
+            </h4>
+            <span className="dm-recap-count-badge">
+              {workshopSessions.reduce(
+                (total, session) => total + session.attendances.length,
+                0
+              )}{" "}
+              Peserta Tercatat
+            </span>
+          </div>
+
+          {!loading &&
+          !error &&
+          workshopSessions.every(
+            (session) => session.attendances.length === 0
+          ) ? (
+            <div className="dm-recap-empty-state">
+              <p className="dm-recap-empty-text">
+                Belum ada data absensi Workshop pada tanggal ini.
+              </p>
+            </div>
+          ) : !error ? (
+            <div className="dm-recap-table-scroll">
+              <table className="dm-recap-table">
+                <thead>
+                  <tr>
+                    <th scope="col">No</th>
+                    <th scope="col">Nama &amp; NIK</th>
+                    <th scope="col">Peran / Jabatan</th>
+                    <th scope="col">Sesi Meeting</th>
+                    <th scope="col">Waktu Absen</th>
+                    <th scope="col">Status Kehadiran</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {workshopSessions
+                    .flatMap((session) =>
+                      session.attendances.map((attendance) => ({
+                        session,
+                        attendance,
+                      }))
+                    )
+                    .map(({ session, attendance }, index) => {
+                      const status =
+                        attendance.status === "present"
+                          ? { label: "Hadir", css: "is-hadir" }
+                          : attendance.status === "permit"
+                          ? { label: "Izin", css: "is-izin" }
+                          : attendance.status === "sick"
+                          ? { label: "Sakit", css: "is-sakit" }
+                          : { label: "Tidak hadir", css: "is-tidak-hadir" };
+
+                      const name =
+                        attendance.employeeName ??
+                        attendance.employeeNo ??
+                        String(attendance.employeeId);
+
+                      return (
+                        <tr key={`${session.id}:${attendance.employeeId}`}>
+                          <td style={{ color: "#6a8c7b", fontWeight: 700 }}>
+                            {index + 1}
+                          </td>
+                          <td>
+                            <div className="dm-recap-user-cell">
+                              <div className="dm-recap-user-avatar is-placeholder">
+                                {name.charAt(0)}
+                              </div>
+                              <div className="dm-recap-user-info">
+                                <span className="dm-recap-user-name">
+                                  {name}
+                                </span>
+                                <span className="dm-recap-user-id">
+                                  {attendance.employeeNo ?? "-"}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <span className="dm-recap-role-pill">
+                              {[attendance.department, attendance.position]
+                                .filter(Boolean)
+                                .join(" · ") || "-"}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="dm-recap-session-badge is-pre">
+                              Workshop ({session.scheduledTime})
+                            </span>
+                          </td>
+                          <td>
+                            <span className="dm-recap-time-text">
+                              {attendance.status === "present"
+                                ? clock(attendance.attendedAt) + " WIB"
+                                : "-"}
+                            </span>
+                          </td>
+                          <td>
+                            <span
+                              className={"dm-recap-status-pill " + status.css}
+                            >
+                              <span
+                                className="dm-recap-dot"
+                                aria-hidden="true"
+                              />
+                              {status.label}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
