@@ -16,18 +16,17 @@ export function Segmented<T extends string>({
   className?: string;
   labels?: Partial<Record<T, string>>;
 }) {
-  return (
-    <div className={`inline-flex rounded-lg border border-border bg-section p-1 ${className}`}>
+    return (
+    <div className={`scorecard-segment ${className}`}>
       {items.map((item) => (
-        <Button
+        <button
           key={item}
-          size="sm"
-          variant="ghost"
+          type="button"
+          className={value === item ? "active" : ""}
           onClick={() => onChange(item)}
-          className={`border-0 px-3 ${value === item ? "bg-white text-primary shadow-card" : ""}`}
         >
           {labels?.[item] ?? item}
-        </Button>
+        </button>
       ))}
     </div>
   );
@@ -195,7 +194,7 @@ export function TrendChart({ metric }: { metric: ScoreTrend }) {
 
   const width = size.width;
   const height = size.height;
-  const padding = { top: 18, right: 18, bottom: 34, left: 42 };
+  const padding = { top: 32, right: 18, bottom: 34, left: 42 };
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
   const step = plotWidth / (series.length - 1);
@@ -240,6 +239,13 @@ export function TrendChart({ metric }: { metric: ScoreTrend }) {
   return (
     <div ref={wrapRef} className="score-trend-scroll relative overflow-x-auto" onMouseLeave={handleLeave}>
       <svg ref={svgRef} width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="score-trend-svg h-score-chart min-w-trend-chart w-full" role="img" aria-label="Tren nilai harian" onTouchStart={handleTouch} onTouchMove={handleTouch} onTouchEnd={() => { lastTouchAt.current = Date.now(); setHoverIndex(null); }} onTouchCancel={() => { lastTouchAt.current = Date.now(); setHoverIndex(null); }}>
+        <defs>
+  <linearGradient id={`trend-fill-${metric}`} gradientUnits="userSpaceOnUse" x1="0" y1={padding.top} x2="0" y2={height - padding.bottom}>
+  <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.04" />
+  <stop offset="60%" stopColor="var(--color-primary)" stopOpacity="0.02" />
+  <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0" />
+</linearGradient>
+</defs>
         {[scale.min, scale.target, scale.max].map((value) => (
           <g key={value}>
             <line x1={padding.left} x2={width - padding.right} y1={y(value)} y2={y(value)} stroke="var(--color-border)" />
@@ -248,11 +254,15 @@ export function TrendChart({ metric }: { metric: ScoreTrend }) {
         ))}
         <line x1={padding.left} x2={width - padding.right} y1={y(scale.target)} y2={y(scale.target)} stroke="var(--color-warning)" strokeWidth="2" strokeDasharray="6 5" />
         <text x={width - padding.right} y={y(scale.target) - 8} textAnchor="end" className="fill-warning-dark text-xs font-semibold">Target {scale.target}</text>
-        <polyline points={points} fill="none" stroke="var(--color-border-strong)" strokeWidth="2.5" strokeLinejoin="round" />
+        <polygon
+  points={`${x(0)},${height - padding.bottom} ${points} ${x(series.length - 1)},${height - padding.bottom}`}
+  fill={`url(#trend-fill-${metric})`}
+/>
+        <polyline points={points} fill="none" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinejoin="round" />
         {hovered && <line x1={hovered.x} x2={hovered.x} y1={padding.top} y2={height - padding.bottom} stroke="var(--color-border-strong)" strokeWidth="1" />}
         {series.map((value, index) => (
           <g key={`${value}-${index}`}>
-            <circle cx={x(index)} cy={y(value)} r={hoverIndex === index ? 7 : 4.5} fill={value >= scale.target ? "var(--color-primary)" : "var(--color-warning)"} stroke={hoverIndex === index ? "#ffffff" : "none"} strokeWidth={hoverIndex === index ? 2 : 0} />
+            <circle cx={x(index)} cy={y(value)} r={hoverIndex === index ? 7 : 5} fill={value >= scale.target ? "var(--color-primary)" : "var(--color-warning)"} stroke="#ffffff" strokeWidth={hoverIndex === index ? 2 : 1.5} />
             {index % 2 === 0 && <text x={x(index)} y={height - 8} textAnchor="middle" className="fill-text-secondary text-tab">{index + 1} Sep</text>}
           </g>
         ))}
