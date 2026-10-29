@@ -42,6 +42,16 @@
 
   --color-warning-border: #fedf89;
 
+  --color-kpi-title: #4b5563;
+
+  --color-kpi-ok-soft: #e8f1ec;
+
+  --color-kpi-warn-soft: #fff6e0;
+
+  --color-kpi-bad-soft: #fef0ee;
+
+  --color-kpi-track: #eef0f2;
+
   --color-camera: #111827;
 
   --color-overlay: rgb(17 24 39 / 42%);
@@ -270,13 +280,23 @@ button {
 
 
 
+.scorecard-kpi {
+
+  padding: 0.875rem 1rem;
+
+}
+
+
+
 .scorecard-kpi-head {
 
   display: flex;
 
-  align-items: center;
+  align-items: flex-start;
 
-  gap: 0.625rem;
+  justify-content: space-between;
+
+  gap: 0.5rem;
 
   min-width: 0;
 
@@ -298,7 +318,13 @@ button {
 
   height: 2rem;
 
-  border-radius: 0.625rem;
+  border-radius: 0.5625rem;
+
+}
+
+
+
+.scorecard-kpi-icon--neutral {
 
   background: var(--color-section);
 
@@ -308,15 +334,45 @@ button {
 
 
 
+.scorecard-kpi-icon--ok {
+
+  background: var(--color-kpi-ok-soft);
+
+  color: var(--color-primary);
+
+}
+
+
+
+.scorecard-kpi-icon--warn {
+
+  background: var(--color-kpi-warn-soft);
+
+  color: var(--color-warning-dark);
+
+}
+
+
+
+.scorecard-kpi-icon--bad {
+
+  background: var(--color-kpi-bad-soft);
+
+  color: var(--color-danger);
+
+}
+
+
+
 .scorecard-kpi-title {
 
-  color: var(--color-text);
+  color: var(--color-kpi-title);
 
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
 
-  font-weight: 600;
+  font-weight: 400;
 
-  line-height: 1.125rem;
+  line-height: 1.25rem;
 
 }
 
@@ -336,19 +392,145 @@ button {
 
 
 
-.scorecard-kpi--primary {
+.scorecard-kpi-value {
 
-  border-color: var(--color-primary-border);
+  margin-top: 0.75rem;
+
+  color: var(--color-camera);
+
+  font-size: 1.75rem;
+
+  font-weight: 700;
+
+  line-height: 1.2;
+
+  letter-spacing: -0.02em;
 
 }
 
 
 
-.scorecard-kpi--primary .scorecard-kpi-icon {
+.scorecard-kpi-value-suffix {
 
-  background: var(--color-primary-soft);
+  color: var(--color-text-secondary);
 
-  color: var(--color-primary);
+  font-size: 0.875rem;
+
+  font-weight: 500;
+
+}
+
+
+
+.scorecard-kpi-hint {
+
+  margin-top: 0.125rem;
+
+  overflow: hidden;
+
+  color: var(--color-text-secondary);
+
+  font-size: 0.75rem;
+
+  line-height: 1rem;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+
+}
+
+
+
+.scorecard-kpi-progress {
+
+  position: relative;
+
+  margin-top: 1rem;
+
+}
+
+
+
+.scorecard-kpi-progress-bar {
+
+  height: 0.375rem;
+
+  overflow: hidden;
+
+  border-radius: 9999px;
+
+  background: var(--color-kpi-track);
+
+}
+
+
+
+.scorecard-kpi-progress-fill {
+
+  height: 100%;
+
+  border-radius: 9999px;
+
+}
+
+
+
+.scorecard-kpi-progress-target {
+
+  position: absolute;
+
+  top: -0.1875rem;
+
+  width: 2px;
+
+  height: 0.75rem;
+
+  background: var(--color-camera);
+
+}
+
+
+
+.scorecard-kpi-chips {
+
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 0.5rem;
+
+  margin-top: 1rem;
+
+}
+
+
+
+.scorecard-kpi-spacer {
+
+  min-height: 1.5rem;
+
+  margin-top: 1rem;
+
+}
+
+
+
+.scorecard-kpi-detail {
+
+  margin-top: 1rem;
+
+  padding-top: 0.75rem;
+
+  border-top: 1px solid var(--color-border);
+
+}
+
+
+
+.scorecard-kpi--primary {
+
+  border-color: var(--color-primary-border);
 
 }
 
@@ -1918,7 +2100,7 @@ button {
 
 
 
-  .scorecard-tv .scorecard-kpi-main > .text-3xl {
+  .scorecard-tv .scorecard-kpi-value {
 
     margin-top: 0.25rem;
 
@@ -1930,7 +2112,7 @@ button {
 
 
 
-  .scorecard-tv .scorecard-kpi-main > .text-3xl > .text-base {
+  .scorecard-tv .scorecard-kpi-value-suffix {
 
     font-size: 0.75rem;
 
@@ -1938,7 +2120,7 @@ button {
 
 
 
-  .scorecard-tv .scorecard-kpi-main > .text-xs {
+  .scorecard-tv .scorecard-kpi-hint {
 
     margin-top: 0.125rem;
 
@@ -1952,7 +2134,7 @@ button {
 
 
 
-  .scorecard-tv .scorecard-kpi-main > .relative {
+  .scorecard-tv .scorecard-kpi-progress {
 
     margin-top: 0.375rem;
 
@@ -1960,7 +2142,7 @@ button {
 
 
 
-  .scorecard-tv .scorecard-kpi-main > .relative .h-2 {
+  .scorecard-tv .scorecard-kpi-progress-bar {
 
     height: 0.375rem;
 
@@ -1968,7 +2150,7 @@ button {
 
 
 
-  .scorecard-tv .scorecard-kpi-main > .mt-4.flex {
+  .scorecard-tv .scorecard-kpi-chips {
 
     margin-top: 0.375rem;
 
@@ -1976,17 +2158,7 @@ button {
 
 
 
-  .scorecard-tv .scorecard-kpi-main > .mt-4.h-2 {
-
-    height: 0.5rem;
-
-    margin-top: 0.375rem;
-
-  }
-
-
-
-  .scorecard-tv .scorecard-kpi-main > .min-h-6 {
+  .scorecard-tv .scorecard-kpi-spacer {
 
     display: none;
 
@@ -1994,7 +2166,7 @@ button {
 
 
 
-  .scorecard-tv .scorecard-kpi .inline-flex.rounded-full {
+  .scorecard-tv .scorecard-kpi-chips .inline-flex {
 
     padding: 0 0.375rem;
 
@@ -2044,7 +2216,7 @@ button {
 
 
 
-  .scorecard-tv .scorecard-kpi-detail-list .flex.items-end {
+  .scorecard-tv .scorecard-kpi-detail-row {
 
     align-items: center;
 
@@ -2058,7 +2230,7 @@ button {
 
 
 
-  .scorecard-tv .scorecard-kpi-detail-list .flex.items-end > span:first-child {
+  .scorecard-tv .scorecard-kpi-detail-label {
 
     flex: 1 1 auto;
 
@@ -2074,7 +2246,7 @@ button {
 
 
 
-  .scorecard-tv .scorecard-kpi-detail-list .flex.items-end > span:last-child {
+  .scorecard-tv .scorecard-kpi-detail-value {
 
     flex: none;
 
@@ -2086,17 +2258,11 @@ button {
 
 
 
-  .scorecard-tv .scorecard-kpi-detail-list .mt-1 {
-
-    margin-top: 0.125rem;
-
-  }
-
-
-
-  .scorecard-tv .scorecard-kpi-detail-list .h-1 {
+  .scorecard-tv .scorecard-kpi-detail-bar {
 
     height: 0.25rem;
+
+    margin-top: 0.125rem;
 
   }
 
@@ -3038,5 +3204,15 @@ button {
   .scorecard-tv .scorecard-top-leader .scorecard-heading .text-lg {
     font-size: 1.75rem;
   }
+}
+
+.scorecard-leaderboard-select {
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: #fff;
+  font-size: 0.75rem;
+  color: var(--color-text);
 }
 

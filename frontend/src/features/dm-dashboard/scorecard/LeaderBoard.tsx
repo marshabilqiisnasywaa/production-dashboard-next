@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Card } from "./ui";
-import { Segmented } from "./components";
+
 import { formatScore, type LeaderScore } from "./data";
 
 type LeaderBoardProps = {
@@ -80,18 +80,19 @@ export default function LeaderBoard({
           <div className="scorecard-leaderboard-title">
             Peringkat · {monthLabel(month)}
           </div>
-
-          <Segmented
-            items={dmTabs}
-            value={selectedTab}
-            onChange={setSelectedTab}
-            className="ml-auto shrink-0"
-          />
+          
+         <select
+  className="scorecard-leaderboard-select ml-auto shrink-0"
+  value={selectedTab}
+  onChange={(event) => setSelectedTab(event.target.value)}
+  aria-label="Filter DM"
+>
+  {dmTabs.map((tab) => (
+    <option key={tab} value={tab}>{tab}</option>
+  ))}
+</select>
         </div>
 
-        <div className="scorecard-leaderboard-subtitle">
-          Dari Total Nilai tertinggi di antara {totalLeaders} leader (semua DM)
-        </div>
       </div>
 
       <div className="scorecard-leaderboard-list">

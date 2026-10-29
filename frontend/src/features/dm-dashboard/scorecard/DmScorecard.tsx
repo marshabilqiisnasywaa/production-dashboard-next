@@ -49,8 +49,7 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
     <>
       <label className="grid gap-1 text-xs font-semibold text-text-secondary">Bulan<Input type="month" value={month} onChange={setMonth} className="min-w-number" /></label>
       {!isLeader && <label className="grid gap-1 text-xs font-semibold text-text-secondary">Workshop<Select value={workshop} onChange={setWorkshop}><option>Semua</option><option>Workshop 5</option><option>Workshop 6</option></Select></label>}
-      <div className="grid gap-1 text-xs font-semibold text-text-secondary">DM<Segmented items={isLeader ? ["DM 3"] : ["Semua", "DM 3", "DM 4"]} value={selectedDm} onChange={setSelectedDm} className="overflow-x-auto" /></div>
-    </>
+<label className="grid gap-1 text-xs font-semibold text-text-secondary">DM<Select value={selectedDm} onChange={setSelectedDm}>{(isLeader ? ["DM 3"] : ["Semua", "DM 3", "DM 4"]).map((dm) => <option key={dm}>{dm}</option>)}</Select></label>    </>
   );
   const changeStartDate = (value: string) => {
     setStartDate(value);
@@ -133,10 +132,10 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
             />
           <Card className="scorecard-trend p-5">
             <div className="scorecard-trend-head flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div><div className="font-bold">Tren nilai harian</div><div className="mt-1 text-xs text-text-secondary">{selectedDm}</div></div>
+              <div><div className="font-bold">Tren nilai harian</div></div>
               <Segmented<ScoreTrend> items={["Total", "Before", "Current", "After"]} value={trend} onChange={setTrend} />
             </div>
-            {scoreConfig ? <><div className="scorecard-trend-summary mt-4 text-sm text-text-secondary">Rata-rata bulan ini <strong className="text-text">{formatScore(scoreConfig.total)}</strong> · Hari di atas target <strong className="text-text">9 dari 21</strong></div><div className="scorecard-trend-chart mt-2"><TrendChart metric={trend} /></div></> : <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">Belum ada data</div>}
+              {scoreConfig ? <div className="scorecard-trend-chart mt-2"><TrendChart metric={trend} /></div> : <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">Belum ada data</div>}
           </Card>
           </div>
           <div className="scorecard-bottom-row">
