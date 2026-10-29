@@ -11,6 +11,7 @@ export type DmMember = {
   workPhone?: string | null;
   photoUrl?: string | null;
   sortOrder?: number;
+  isSubstitute?: boolean;
 };
 
 export type DmMpv = DmMember & { period: string };

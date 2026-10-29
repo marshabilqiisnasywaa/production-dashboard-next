@@ -163,6 +163,7 @@ class MemberIn(EmployeeRef):
     photo_url: str | None = None
     position: str | None = Field(default=None, max_length=120)
     sort_order: int = 0
+    target_dept: str | None = Field(default=None, max_length=120)
 
 
 class MemberUpdate(CamelModel):
@@ -187,6 +188,7 @@ class MemberOut(CamelModel):
     photo_url: str | None
     position: str | None
     sort_order: int
+    is_substitute: bool = False
 
 
 class EmployeeIn(CamelModel):

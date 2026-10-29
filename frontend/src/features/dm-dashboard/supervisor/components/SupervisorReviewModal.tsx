@@ -150,6 +150,12 @@ export function SupervisorReviewModal({
             </h3>
             <div className="spv-modal-meta-line">
               <span>{reviewTarget.position}</span>
+              {reviewTarget.substitutedBy && (
+                <>
+                  <span className="spv-dot-sep">•</span>
+                  <span>Diwakilkan oleh {reviewTarget.substitutedBy.name} ({reviewTarget.substitutedBy.employeeNo})</span>
+                </>
+              )}
               <span className="spv-dot-sep">•</span>
               <span>
                 Submit:{" "}

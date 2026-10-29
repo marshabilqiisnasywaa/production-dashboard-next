@@ -374,6 +374,7 @@ export default function PapercardTemplateManager({
       await adminApi.addMember(currentLine.id, {
         employeePk: emp.id,
         sortOrder: selectedDept === "PROD" && emp.role === "leader" ? 1 : lineMembers.length + 1,
+        targetDept: selectedDept,
       });
       setSavedNotice({
         type: "success",
@@ -569,7 +570,7 @@ export default function PapercardTemplateManager({
                     <div className="ptm-worker-info">
                       <span className="ptm-worker-name">{m.name}</span>
                       <span className="ptm-worker-sub">
-                        NIK: {m.employeeId} {((m as any).role === "leader" || selectedDept === "PROD") && "· Leader"}
+                        NIK: {m.employeeId} {((m as any).role === "leader" || selectedDept === "PROD") && "· Leader"}{m.isSubstitute && " · Pengganti"}
                       </span>
                     </div>
                     {m.id && (

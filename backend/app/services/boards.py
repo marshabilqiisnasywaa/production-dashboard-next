@@ -62,6 +62,7 @@ def member_out(member: BoardMember, employee: Employee) -> MemberOut:
         photo_url=employee.photo_url,
         position=employee.position,
         sort_order=member.sort_order,
+        is_substitute=member.is_substitute,
     )
 
 

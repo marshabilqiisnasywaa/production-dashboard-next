@@ -61,7 +61,7 @@ export type DmMemberInput = {
 
 export type DmMpvInput = Omit<DmMemberInput, "sortOrder">;
 
-export type DmMemberPick = { employeePk: number; sortOrder: number };
+export type DmMemberPick = { employeePk: number; sortOrder: number; targetDept?: string };
 
 export type DmMpvPick = { employeePk: number };
 export type DmMvpCandidate = Pick<
@@ -628,6 +628,7 @@ export type DmSupervisorSubordinate = {
   isMySubordinate?: boolean;
   supervisorId?: number | null;
   supervisorName?: string | null;
+  substitutedBy?: { id: number; name: string; employeeNo: string } | null;
   submission?: {
     id: number;
     date: string;

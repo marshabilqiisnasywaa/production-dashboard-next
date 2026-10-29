@@ -265,6 +265,14 @@ def get_supervisor_overview(
     sub_map = {(s.line_id, s.employee_id): s for s in submissions}
     sub_emp_map = {s.employee_id: s for s in submissions}
 
+    substitute_ids: dict[int, set[int]] = {}
+    for line_pk, employee_pk in db.execute(
+        select(Board.line_id, BoardMember.employee_id)
+        .join(BoardMember, BoardMember.board_id == Board.id)
+        .where(BoardMember.is_substitute.is_(True), BoardMember.ended_at.is_(None))
+    ).all():
+        substitute_ids.setdefault(line_pk, set()).add(employee_pk)
+
     # Query strictly the direct subordinates tied to this supervisor in PostgreSQL
     direct_subs_filter = (Employee.supervisor_id == spv_id)
     if spv_name:
@@ -279,8 +287,8 @@ def get_supervisor_overview(
         # Resolve line for this subordinate
         bm = (
             db.query(BoardMember)
-            .filter(BoardMember.employee_id == emp.id)
-            .order_by(BoardMember.id.desc())
+            .filter(BoardMember.employee_id == emp.id, BoardMember.ended_at.is_(None))
+            .order_by(BoardMember.is_substitute.asc(), BoardMember.id.desc())
             .first()
         )
         line = None
@@ -304,7 +312,34 @@ def get_supervisor_overview(
         ws = db.get(Workshop, line.workshop_id) if (line and line.workshop_id) else None
         ws_name = ws.name if ws else "Assembly Workshop"
 
-        sub = sub_map.get((line_id, emp.id)) or sub_emp_map.get(emp.id)
+        sub = sub_map.get((line_id, emp.id))
+        if sub is None:
+            fallback = sub_emp_map.get(emp.id)
+            if fallback is not None and (line_id == 0 or fallback.line_id == line_id):
+                sub = fallback
+
+        substituted_by = None
+        if sub is None and line_id:
+            cover = next(
+                (
+                    s
+                    for s in submissions
+                    if s.line_id == line_id
+                    and (s.department or "").upper() == (emp.dept or "PROD").upper()
+                    and s.employee_id != emp.id
+                    and s.employee_id in substitute_ids.get(line_id, set())
+                ),
+                None,
+            )
+            if cover is not None:
+                sub = cover
+                cover_emp = db.get(Employee, cover.employee_id)
+                if cover_emp is not None:
+                    substituted_by = {
+                        "id": cover_emp.id,
+                        "name": cover_emp.name,
+                        "employeeNo": cover_emp.employee_no,
+                    }
         has_ng = False
 
         if sub:
@@ -345,6 +380,7 @@ def get_supervisor_overview(
             "supervisorId": emp.supervisor_id,
             "supervisorName": emp.supervisor,
             "submission": sub_data,
+            "substitutedBy": substituted_by,
         }
 
         my_subs_out.append(member_item)

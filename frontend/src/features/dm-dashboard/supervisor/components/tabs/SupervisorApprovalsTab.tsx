@@ -309,6 +309,11 @@ export function SupervisorApprovalsTab({
                           <span className="spv-member-card__sub">
                             NIK: {member.employeeNo} · {member.position}
                           </span>
+                          {member.substitutedBy && (
+                            <span className="spv-member-card__sub">
+                              Diwakilkan oleh <strong>{member.substitutedBy.name}</strong> ({member.substitutedBy.employeeNo})
+                            </span>
+                          )}
 
                           <div className="spv-member-card__time">
                             <IconClock size={11} />

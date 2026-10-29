@@ -310,10 +310,24 @@ def add_member(line_id: int, body: MemberIn, db: Session = Depends(get_db)) -> M
     )
     if already_in_board:
         raise conflict(f"{employee.name} sudah terdaftar aktif di lini ini.")
+    target_dept = (body.target_dept or "").strip().upper()
+    employee_dept = (employee.dept or "").strip().upper()
+    if target_dept and employee_dept != target_dept:
+        raise conflict(
+            f"Ditolak: {employee.name} dari departemen {employee_dept or 'tanpa departemen'}, "
+            f"hanya petugas departemen {target_dept} yang bisa mengisi atau mewakili papercard {target_dept}."
+        )
+    has_other_line = db.scalar(
+        select(BoardMember.id).where(
+            BoardMember.employee_id == employee.id,
+            BoardMember.ended_at.is_(None),
+        )
+    )
     member = BoardMember(
         board_id=board.id,
         employee_id=employee.id,
         sort_order=body.sort_order,
+        is_substitute=bool(has_other_line),
     )
     db.add(member)
     db.commit()
