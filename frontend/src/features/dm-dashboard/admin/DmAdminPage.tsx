@@ -34,6 +34,7 @@ import { useDmGroups } from "./dmGroupsStore";
 import type { DmGroup } from "./dmGroupsStore";
 import "./AdminPanel.css";
 import ProblemsPage from "../leader/problems/ProblemsPage";
+import SqdipMonitor from "./sqdip/SqdipMonitor";
 
 type Auth =
   | { kind: "checking" }
@@ -179,6 +180,10 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
   problems: {
     crumb: "Tracking Masalah",
     title: "Tracking Masalah DM Meeting",
+  },
+  sqdip: {
+    crumb: "SQDIP",
+    title: "SQDIP Monitoring: Skor Harian per Leader dan Line",
   },
 };
 
@@ -600,7 +605,8 @@ function AdminWorkspace({
             className={`dm-admin-panel-card${
               activeTab === "workshop" ||
               activeTab === "dashboard" ||
-              activeTab === "users"
+              activeTab === "users" ||
+              activeTab === "sqdip"
                 ? " is-bare"
                 : ""
             }`}
@@ -1097,6 +1103,12 @@ function AdminWorkspace({
             {activeTab === "problems" && (
               <div className="dm-admin-section">
                 <ProblemsPage />
+              </div>
+            )}
+
+            {activeTab === "sqdip" && (
+              <div className="dm-admin-section dm-tab-lines">
+                <SqdipMonitor />
               </div>
             )}
           </div>

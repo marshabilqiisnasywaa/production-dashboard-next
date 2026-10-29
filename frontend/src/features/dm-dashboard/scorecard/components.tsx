@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type TouchEvent } from "react";
 import { CheckCircle2, ChevronDown, Clock3, Download, Info, Trophy, X, type LucideIcon } from "lucide-react";
 import { Badge, Button, Card, Input, Select } from "./ui";
-import { formatScore, scoreBar, scoreTone, type ScoreDetailItem, type ScoreTrend } from "./data";
+import { formatScore, scoreBar, type ScoreDetailItem, type ScoreTrend } from "./data";
 import "./dm-scorecard.css"; 
 export function Segmented<T extends string>({
   items,
@@ -35,11 +35,11 @@ export function ScoreProgress({ value, max = 100, target = 90 }: { value: number
   const percent = Math.min(100, (value / max) * 100);
   const targetPercent = Math.min(100, (target / max) * 100);
   return (
-    <div className="relative mt-4">
-      <div className="h-2 overflow-hidden rounded-full bg-border">
-        <div className={`h-full rounded-full ${scoreBar((value / max) * 100)}`} style={{ width: `${percent}%` }} />
+    <div className="scorecard-kpi-progress">
+      <div className="scorecard-kpi-progress-bar">
+        <div className={`scorecard-kpi-progress-fill ${scoreBar((value / max) * 100)}`} style={{ width: `${percent}%` }} />
       </div>
-      <div className="absolute -top-1 h-4 w-0.5 bg-text" style={{ left: `${targetPercent}%` }} />
+      <div className="scorecard-kpi-progress-target" style={{ left: `${targetPercent}%` }} />
     </div>
   );
 }
@@ -71,31 +71,32 @@ export function SummaryScoreCard({
 }) {
   const normalized = value === undefined ? 0 : (value / max) * 100;
   const [titleText, subtitle] = title.split(" · ");
+  const iconTone = value === undefined ? "neutral" : normalized >= 90 ? "ok" : normalized >= 80 ? "warn" : "bad";
   return (
-    <Card className={`scorecard-kpi flex h-full flex-col p-5${highlighted ? " scorecard-kpi--primary" : ""}`}>
+    <Card className={`scorecard-kpi flex h-full flex-col${highlighted ? " scorecard-kpi--primary" : ""}`}>
       <div className="scorecard-kpi-main">
         <div className="scorecard-kpi-head">
-          <span className="scorecard-kpi-icon"><Icon size={16} strokeWidth={2} /></span>
           <div className="min-w-0">
             <div className="scorecard-kpi-title">{titleText}</div>
             {subtitle && <div className="scorecard-kpi-subtitle">{subtitle}</div>}
           </div>
+          <span className={`scorecard-kpi-icon scorecard-kpi-icon--${iconTone}`}><Icon size={16} strokeWidth={2} /></span>
         </div>
-        <div className={`mt-3 text-3xl font-bold ${value === undefined ? "text-text-secondary" : scoreTone(normalized)}`}>
-          {value === undefined ? "—" : formatScore(value)} <span className="text-base font-medium text-text-secondary">/ {formatScore(max)}</span>
+        <div className="scorecard-kpi-value">
+          {value === undefined ? "—" : formatScore(value)} <span className="scorecard-kpi-value-suffix">/ {formatScore(max)}</span>
         </div>
-        {value === undefined && <div className="mt-2 text-xs text-text-secondary">Belum ada data</div>}
-        {value === undefined ? <div className="mt-4 h-2 rounded-full bg-border" /> : <ScoreProgress value={value} max={max} target={targetEquivalent} />}
+        {value === undefined && <div className="scorecard-kpi-hint">Belum ada data</div>}
+        {value === undefined ? <div className="scorecard-kpi-progress scorecard-kpi-progress--empty"><div className="scorecard-kpi-progress-bar" /></div> : <ScoreProgress value={value} max={max} target={targetEquivalent} />}
         {max === 100 && value !== undefined && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="scorecard-kpi-chips">
             <Badge tone="warning">Di bawah target</Badge>
             <Badge tone="neutral">Peringkat DM {rank} dari 2</Badge>
           </div>
         )}
-        {max !== 100 && <div className="mt-4 min-h-6" />}
-        {max === 100 && value === undefined && <div className="mt-4 min-h-6" />}
+        {max !== 100 && <div className="scorecard-kpi-spacer" />}
+        {max === 100 && value === undefined && <div className="scorecard-kpi-spacer" />}
       </div>
-      <div className="scorecard-kpi-detail mt-4 border-t border-border pt-3">
+      <div className="scorecard-kpi-detail">
         <Button variant="ghost" size="sm" onClick={onExpand} className="w-full justify-between px-0">
           {totalComposition ? "Komposisi nilai" : "Rincian"}
           <ChevronDown size={16} className={expanded ? "rotate-180" : ""} />
@@ -123,14 +124,14 @@ export function SummaryScoreCard({
               const full = item.value === item.max;
               return (
                 <div key={item.label}>
-                  <div className="flex items-end justify-between gap-2 text-xs">
-                    <span className="text-text-secondary" title={item.label}>{item.label}</span>
-                    <span className="whitespace-nowrap font-semibold text-text">
+                  <div className="scorecard-kpi-detail-row flex items-end justify-between gap-2 text-xs">
+                    <span className="scorecard-kpi-detail-label text-text-secondary" title={item.label}>{item.label}</span>
+                    <span className="scorecard-kpi-detail-value whitespace-nowrap font-semibold text-text">
                       {formatScore(item.value)} / {formatScore(item.max)}
                       {!full && <span className="ml-1 text-warning-dark">(-{formatScore(item.max - item.value)})</span>}
                     </span>
                   </div>
-                  <div className="mt-1 h-1 overflow-hidden rounded-full bg-border">
+                  <div className="scorecard-kpi-detail-bar mt-1 h-1 overflow-hidden rounded-full bg-border">
                     <div className={`h-full rounded-full ${full ? "bg-primary" : "bg-warning"}`} style={{ width: `${(item.value / item.max) * 100}%` }} />
                   </div>
                 </div>
