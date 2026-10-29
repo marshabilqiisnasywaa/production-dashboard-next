@@ -3281,3 +3281,35 @@ button {
     font-weight: 600;
   }
 }
+
+/* Leaderboard: list mengisi tinggi kartu, baris dibagi rata */
+.scorecard-leaderboard-list,
+.scorecard-tv .scorecard-leaderboard-list {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.scorecard-leaderboard-item {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+/* baris tidak terlalu tinggi kalau leader sedikit */
+.scorecard-leaderboard-item:not(.is-expanded) {
+  max-height: 5.5rem;
+}
+
+.scorecard-leaderboard-trigger {
+  flex: 1 1 auto;
+}
+
+.scorecard-leaderboard-trigger {
+  grid-template-columns: 2rem minmax(0, 1fr) 6.5rem 1rem;
+}
+
+.scorecard-tv .scorecard-leaderboard-trigger {
+  grid-template-columns: 2.25rem minmax(0, 1fr) 7rem 1rem;
+}

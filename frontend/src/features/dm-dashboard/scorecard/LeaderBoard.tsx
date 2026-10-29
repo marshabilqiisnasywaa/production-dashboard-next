@@ -66,11 +66,28 @@ export default function LeaderBoard({
   return (
     <Card className="scorecard-leaderboard">
       <div className="scorecard-leaderboard-head">
-        <div className="scorecard-leaderboard-head-top">
-          <div className="scorecard-leaderboard-title">
-            Peringkat · {monthLabel(month)}
-          </div>
-        </div>
+        <div className="scorecard-leaderboard-head">
+  <div className="scorecard-leaderboard-head-top">
+    <div className="scorecard-leaderboard-title">
+      Peringkat · {monthLabel(month)}
+    </div>
+  </div>
+
+  <div className="scorecard-leaderboard-legend mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-secondary">
+    <span className="inline-flex items-center gap-1.5">
+      <span className="h-2 w-2 rounded-full bg-primary" />
+      Di atas target (≥ {formatScore(target, 0)})
+    </span>
+    <span className="inline-flex items-center gap-1.5">
+      <span className="h-2 w-2 rounded-full bg-warning" />
+      Di bawah target
+    </span>
+    <span className="inline-flex items-center gap-1.5">
+      <span className="h-3 w-0.5 bg-border-strong" />
+      Garis target
+    </span>
+  </div>
+</div>
 
       </div>
 
@@ -133,22 +150,6 @@ export default function LeaderBoard({
                     </span>
                   </span>
 
-                  <span
-                    className="scorecard-leaderboard-avatar"
-                    style={{ background: tone[0], color: tone[1] }}
-                  >
-                    <span>{initials(row.leader)}</span>
-                    {row.photoUrl && (
-                      <img
-                        src={row.photoUrl}
-                        alt=""
-                        onError={(event) => {
-                          event.currentTarget.style.display = "none";
-                        }}
-                      />
-                    )}
-                  </span>
-
                   <span className="scorecard-leaderboard-person">
                     <span className="scorecard-leaderboard-name">
                       {row.leader}
@@ -184,14 +185,6 @@ export default function LeaderBoard({
                           left: `${Math.min(100, target)}%`,
                         }}
                       />
-                    </span>
-
-                    <span
-                      className={`scorecard-leaderboard-badge ${
-                        onTarget ? "is-on" : "is-off"
-                      }`}
-                    >
-                      {onTarget ? "Di atas target" : "Di bawah target"}
                     </span>
                   </span>
 
