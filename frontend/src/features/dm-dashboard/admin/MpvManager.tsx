@@ -31,7 +31,8 @@ function getInitials(name: string | null) {
 
 function shiftPeriod(currPeriod: string, deltaMonths: number): string {
   const parts = currPeriod.split("-").map(Number);
-  if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return currPeriod;
+  if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1]))
+    return currPeriod;
   const d = new Date(parts[0], parts[1] - 1 + deltaMonths, 1);
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -96,7 +97,9 @@ export default function MpvManager({
 
   useEffect(() => {
     load();
-    return () => { loadVersion.current += 1; };
+    return () => {
+      loadVersion.current += 1;
+    };
   }, [load]);
 
   useEffect(() => {
@@ -127,19 +130,35 @@ export default function MpvManager({
   }
 
   const validPeriod = PERIOD_PATTERN.test(period);
-  const existing = validPeriod ? (history.find((item) => item.period === period) ?? null) : null;
-  const shownOnDashboard = history.find((item) => item.period <= previousPeriod()) ?? null;
+  const existing = validPeriod
+    ? history.find((item) => item.period === period) ?? null
+    : null;
+  const shownOnDashboard =
+    history.find((item) => item.period <= previousPeriod()) ?? null;
 
   // Quick assign from dropdown
   async function handleAssign(e: React.FormEvent) {
     e.preventDefault();
-    if (lineId === null || !pickEmpPk || !validPeriod || loading || loadedLineId !== lineId) return;
+    if (
+      lineId === null ||
+      !pickEmpPk ||
+      !validPeriod ||
+      loading ||
+      loadedLineId !== lineId
+    )
+      return;
     setSavingAction(true);
     setStatus(null);
     try {
-      await call(() => api.saveMpv(lineId, period, { employeePk: Number(pickEmpPk) }));
+      await call(() =>
+        api.saveMpv(lineId, period, { employeePk: Number(pickEmpPk) })
+      );
       const emp = employees.find((x) => x.id === Number(pickEmpPk));
-      setStatus(`✓ MPV ${formatPeriod(period)} (${emp?.name ?? "Operator"}) berhasil disimpan.`);
+      setStatus(
+        `✓ MPV ${formatPeriod(period)} (${
+          emp?.name ?? "Operator"
+        }) berhasil disimpan.`
+      );
       setPickEmpPk("");
       setIsReassigning(false);
       await load();
@@ -215,7 +234,12 @@ export default function MpvManager({
   // Remove MPV from history
   async function handleRemove(targetPeriod: string, targetName: string | null) {
     if (lineId === null) return;
-    if (!window.confirm(`Hapus MPV ${formatPeriod(targetPeriod)} (${targetName}) dari riwayat?`)) return;
+    if (
+      !window.confirm(
+        `Hapus MPV ${formatPeriod(targetPeriod)} (${targetName}) dari riwayat?`
+      )
+    )
+      return;
     setSavingAction(true);
     try {
       await call(() => api.deleteMpv(lineId, targetPeriod));
@@ -288,7 +312,9 @@ export default function MpvManager({
               </button>
               <button
                 type="button"
-                className={`mpv-quick-chip ${period === previousPeriod() ? "is-active" : ""}`}
+                className={`mpv-quick-chip ${
+                  period === previousPeriod() ? "is-active" : ""
+                }`}
                 onClick={() => setPeriod(previousPeriod())}
                 disabled={savingAction}
                 title="Bulan kemarin (standar tayang dashboard)"
@@ -312,9 +338,17 @@ export default function MpvManager({
 
       {/* Subtle Toast / Notice */}
       {status && (
-        <div className={`mpv-toast ${status.startsWith("✓") ? "is-ok" : "is-warn"}`}>
+        <div
+          className={`mpv-toast ${
+            status.startsWith("✓") ? "is-ok" : "is-warn"
+          }`}
+        >
           <span>{status}</span>
-          <button type="button" className="mpv-toast-close" onClick={() => setStatus(null)}>
+          <button
+            type="button"
+            className="mpv-toast-close"
+            onClick={() => setStatus(null)}
+          >
             &times;
           </button>
         </div>
@@ -324,246 +358,306 @@ export default function MpvManager({
       {loadError ? (
         <div className="mpv-empty-notice" role="alert">
           <p>{loadError}</p>
-          <button type="button" className="mpv-sm-btn mpv-btn-soft-primary" onClick={load}>Coba lagi</button>
+          <button
+            type="button"
+            className="mpv-sm-btn mpv-btn-soft-primary"
+            onClick={load}
+          >
+            Coba lagi
+          </button>
         </div>
       ) : loading || loadedLineId !== lineId ? (
-        <div className="mpv-empty-notice" role="status">Memuat MVP...</div>
-      ) : <div className="mpv-grid">
-        {/* Left Column: Active / Selected Period Card */}
-        <section className="mpv-card mpv-card-focus">
-          <div className="mpv-card-head">
-            <div className="mpv-head-title-wrap">
-              <h4 className="mpv-card-title">MVP {formatPeriod(period)}</h4>
-            </div>
-            {existing ? (
-              shownOnDashboard?.id === existing.id ? (
-                <span className="mpv-badge is-live" title="Tampil di banner bawah shopfloor layar lini">
-                  <span className="mpv-dot-pulse" /> Sedang Tayang
-                </span>
+        <div className="mpv-empty-notice" role="status">
+          Memuat MVP...
+        </div>
+      ) : (
+        <div className="mpv-grid">
+          {/* Left Column: Active / Selected Period Card */}
+          <section className="mpv-card mpv-card-focus">
+            <div className="mpv-card-head">
+              <div className="mpv-head-title-wrap">
+                <h4 className="mpv-card-title">MVP {formatPeriod(period)}</h4>
+              </div>
+              {existing ? (
+                shownOnDashboard?.id === existing.id ? (
+                  <span
+                    className="mpv-badge is-live"
+                    title="Tampil di banner bawah shopfloor layar lini"
+                  >
+                    <span className="mpv-dot-pulse" /> Sedang Tayang
+                  </span>
+                ) : (
+                  <span className="mpv-badge is-archived">Arsip Periode</span>
+                )
               ) : (
-                <span className="mpv-badge is-archived">Arsip Periode</span>
-              )
-            ) : (
-              <span className="mpv-badge is-unassigned">Belum Diatur</span>
-            )}
-          </div>
+                <span className="mpv-badge is-unassigned">Belum Diatur</span>
+              )}
+            </div>
 
-          <div className="mpv-card-body">
-            {existing && !isReassigning ? (
-              <div className="mpv-winner-wrap">
-                <div className="mpv-winner-row">
-                  {existing.photoUrl ? (
-                    <img src={existing.photoUrl} alt={existing.name ?? ""} className="mpv-avatar" />
-                  ) : (
-                    <div className="mpv-avatar-fallback">{getInitials(existing.name)}</div>
-                  )}
-                  <div className="mpv-info">
-                    <div className="mpv-name-line">
-                      <span className="mpv-name">{existing.name}</span>
-                      <span className="mpv-nik-pill">{existing.employeeId}</span>
-                    </div>
-                    <div className="mpv-tags">
-                      <span className="mpv-tag-dept">{existing.dept ?? "PROD"}</span>
-                      <span className="mpv-tag-pos">{existing.position ?? "Operator Lini"}</span>
+            <div className="mpv-card-body">
+              {existing && !isReassigning ? (
+                <div className="mpv-winner-wrap">
+                  <div className="mpv-winner-row">
+                    {existing.photoUrl ? (
+                      <img
+                        src={existing.photoUrl}
+                        alt={existing.name ?? ""}
+                        className="mpv-avatar"
+                      />
+                    ) : (
+                      <div className="mpv-avatar-fallback">
+                        {getInitials(existing.name)}
+                      </div>
+                    )}
+                    <div className="mpv-info">
+                      <div className="mpv-name-line">
+                        <span className="mpv-name">{existing.name}</span>
+                        <span className="mpv-nik-pill">
+                          {existing.employeeId}
+                        </span>
+                      </div>
+                      <div className="mpv-tags">
+                        <span className="mpv-tag-dept">
+                          {existing.dept ?? "PROD"}
+                        </span>
+                        <span className="mpv-tag-pos">
+                          {existing.position ?? "Operator Lini"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="mpv-actions-bar">
-                  {allowManual && <button
-                    type="button"
-                    className="mpv-sm-btn mpv-btn-soft-primary"
-                    onClick={openEditor}
-                    title="Ubah teks nama, jabatan atau foto"
-                  >
-                    Ubah Data
-                  </button>}
-                  <button
-                    type="button"
-                    className="mpv-sm-btn mpv-btn-soft-ghost"
-                    onClick={() => setIsReassigning(true)}
-                    disabled={savingAction}
-                    title="Ganti ke karyawan lain"
-                  >
-                    Ganti Orang
-                  </button>
-                  <button
-                    type="button"
-                    className="mpv-sm-btn mpv-btn-soft-danger"
-                    onClick={() => handleRemove(existing.period, existing.name)}
-                    disabled={savingAction}
-                    title="Hapus MPV dari periode ini"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleAssign} className="mpv-assign-box">
-                <div className="mpv-assign-prompt">
-                  {isReassigning ? (
-                    <span>Ganti pemenang <strong>{formatPeriod(period)}</strong>:</span>
-                  ) : (
-                    <span>Pilih operator teladan untuk <strong>{formatPeriod(period)}</strong>:</span>
-                  )}
-                </div>
-
-                <select
-                  aria-label="Karyawan penerima MVP"
-                  className="mpv-assign-dropdown"
-                  value={pickEmpPk}
-                  onChange={(e) => setPickEmpPk(e.target.value)}
-                  disabled={savingAction}
-                  required
-                >
-                  <option value="">-- Pilih Operator / Karyawan --</option>
-                  {employees
-                    .filter((e) => e.isActive)
-                    .map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.employeeId}) · {emp.dept ?? "-"}
-                      </option>
-                    ))}
-                </select>
-
-                <div className="mpv-assign-actions">
-                  <button
-                    type="submit"
-                    className="mpv-sm-btn mpv-btn-solid-green"
-                    disabled={savingAction || !pickEmpPk || !validPeriod}
-                  >
-                    {savingAction ? "Menyimpan..." : "Tetapkan MPV"}
-                  </button>
-
-                  {allowManual && <button
-                    type="button"
-                    className="mpv-sm-btn mpv-btn-soft-ghost"
-                    onClick={openEditor}
-                    title="Input manual jika karyawan belum terdaftar"
-                  >
-                    + Input Manual
-                  </button>}
-
-                  {isReassigning && (
+                  <div className="mpv-actions-bar">
+                    {allowManual && (
+                      <button
+                        type="button"
+                        className="mpv-sm-btn mpv-btn-soft-primary"
+                        onClick={openEditor}
+                        title="Ubah teks nama, jabatan atau foto"
+                      >
+                        Ubah Data
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="mpv-sm-btn mpv-btn-soft-ghost"
-                      onClick={() => setIsReassigning(false)}
+                      onClick={() => setIsReassigning(true)}
+                      disabled={savingAction}
+                      title="Ganti ke karyawan lain"
                     >
-                      Batal
+                      Ganti Orang
                     </button>
-                  )}
+                    <button
+                      type="button"
+                      className="mpv-sm-btn mpv-btn-soft-danger"
+                      onClick={() =>
+                        handleRemove(existing.period, existing.name)
+                      }
+                      disabled={savingAction}
+                      title="Hapus MPV dari periode ini"
+                    >
+                      Hapus
+                    </button>
+                  </div>
                 </div>
-              </form>
-            )}
+              ) : (
+                <form onSubmit={handleAssign} className="mpv-assign-box">
+                  <div className="mpv-assign-prompt">
+                    {isReassigning ? (
+                      <span>
+                        Ganti pemenang <strong>{formatPeriod(period)}</strong>:
+                      </span>
+                    ) : (
+                      <span>
+                        Pilih operator teladan untuk{" "}
+                        <strong>{formatPeriod(period)}</strong>:
+                      </span>
+                    )}
+                  </div>
 
-            <div className="mpv-hint-note">
-              <span className="mpv-hint-icon">💡</span>
-              <span>
-                MPV ditampilkan pada baris bawah dashboard lini. Standar tayang adalah periode bulan kemarin (
-                <strong>{formatPeriod(previousPeriod())}</strong>).
-              </span>
-            </div>
-          </div>
-        </section>
+                  <select
+                    aria-label="Karyawan penerima MVP"
+                    className="mpv-assign-dropdown"
+                    value={pickEmpPk}
+                    onChange={(e) => setPickEmpPk(e.target.value)}
+                    disabled={savingAction}
+                    required
+                  >
+                    <option value="">-- Pilih Operator / Karyawan --</option>
+                    {employees
+                      .filter((e) => e.isActive)
+                      .map((emp) => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.name} ({emp.employeeId}) · {emp.dept ?? "-"}
+                        </option>
+                      ))}
+                  </select>
 
-        {/* Right Column: Historical MPV Table / List */}
-        <section className="mpv-card mpv-card-history">
-          <div className="mpv-card-head">
-            <div className="mpv-head-title-wrap">
-              <h4 className="mpv-card-title">Riwayat MVP Line {line.code}</h4>
-              <span className="mpv-count-pill">{history.length} Periode</span>
-            </div>
-          </div>
+                  <div className="mpv-assign-actions">
+                    <button
+                      type="submit"
+                      className="mpv-sm-btn mpv-btn-solid-green"
+                      disabled={savingAction || !pickEmpPk || !validPeriod}
+                    >
+                      {savingAction ? "Menyimpan..." : "Tetapkan MPV"}
+                    </button>
 
-          <div className="mpv-card-body mpv-history-scroll">
-            {history.length === 0 ? (
-              <div className="mpv-empty-notice">
-                Belum ada riwayat MPV untuk lini ini. Tetapkan MVP pada form di samping.
+                    {allowManual && (
+                      <button
+                        type="button"
+                        className="mpv-sm-btn mpv-btn-soft-ghost"
+                        onClick={openEditor}
+                        title="Input manual jika karyawan belum terdaftar"
+                      >
+                        + Input Manual
+                      </button>
+                    )}
+
+                    {isReassigning && (
+                      <button
+                        type="button"
+                        className="mpv-sm-btn mpv-btn-soft-ghost"
+                        onClick={() => setIsReassigning(false)}
+                      >
+                        Batal
+                      </button>
+                    )}
+                  </div>
+                </form>
+              )}
+
+              <div className="mpv-hint-note">
+                <span className="mpv-hint-icon">💡</span>
+                <span>
+                  MVP ditampilkan pada baris bawah dashboard line. Standar
+                  tayang adalah periode bulan kemarin (
+                  <strong>{formatPeriod(previousPeriod())}</strong>).
+                </span>
               </div>
-            ) : (
-              <table className="mpv-mini-table">
-                <thead>
-                  <tr>
-                    <th>Bulan</th>
-                    <th>Nama Operator</th>
-                    <th>Dept</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: "right" }}>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((item) => {
-                    const isSelected = item.period === period;
-                    const isLive = shownOnDashboard?.id === item.id;
+            </div>
+          </section>
 
-                    return (
-                      <tr key={item.id} className={isSelected ? "is-active-row" : ""}>
-                        <td className="mpv-td-period">
-                          <span className="mpv-period-text">{formatPeriod(item.period)}</span>
-                        </td>
-                        <td className="mpv-td-person">
-                          <div className="mpv-person-cell">
-                            <span className="mpv-cell-name">{item.name}</span>
-                            <span className="mpv-cell-nik">{item.employeeId}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="mpv-mini-dept">{item.dept ?? "-"}</span>
-                        </td>
-                        <td>
-                          {isLive ? (
-                            <span className="mpv-status-chip is-live">
-                              <span className="mpv-dot" /> Tayang
+          {/* Right Column: Historical MPV Table / List */}
+          <section className="mpv-card mpv-card-history">
+            <div className="mpv-card-head">
+              <div className="mpv-head-title-wrap">
+                <h4 className="mpv-card-title">Riwayat MVP Line {line.code}</h4>
+                <span className="mpv-count-pill">{history.length} Periode</span>
+              </div>
+            </div>
+
+            <div className="mpv-card-body mpv-history-scroll">
+              {history.length === 0 ? (
+                <div className="mpv-empty-notice">
+                  Belum ada riwayat MPV untuk lini ini. Tetapkan MVP pada form
+                  di samping.
+                </div>
+              ) : (
+                <table className="mpv-mini-table">
+                  <thead>
+                    <tr>
+                      <th>Bulan</th>
+                      <th>Nama Operator</th>
+                      <th>Dept</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: "right" }}>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((item) => {
+                      const isSelected = item.period === period;
+                      const isLive = shownOnDashboard?.id === item.id;
+
+                      return (
+                        <tr
+                          key={item.id}
+                          className={isSelected ? "is-active-row" : ""}
+                        >
+                          <td className="mpv-td-period">
+                            <span className="mpv-period-text">
+                              {formatPeriod(item.period)}
                             </span>
-                          ) : item.period > previousPeriod() ? (
-                            <span className="mpv-status-chip is-upcoming">Mendatang</span>
-                          ) : (
-                            <span className="mpv-status-chip is-past">Arsip</span>
-                          )}
-                        </td>
-                        <td style={{ textAlign: "right" }}>
-                          <div className="mpv-row-btns">
-                            <button
-                              type="button"
-                              className={`mpv-mini-btn ${isSelected ? "is-selected" : ""}`}
-                              disabled={savingAction}
-                              onClick={() => {
-                                setPeriod(item.period);
-                                setStatus(null);
-                              }}
-                              title="Tampilkan di kartu sebelah kiri"
-                            >
-                              {isSelected ? "Dipilih" : "Pilih"}
-                            </button>
-                            <button
-                              type="button"
-                              className="mpv-mini-btn is-danger"
-                              onClick={() => handleRemove(item.period, item.name)}
-                              disabled={savingAction}
-                              title="Hapus dari riwayat"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </section>
-      </div>}
+                          </td>
+                          <td className="mpv-td-person">
+                            <div className="mpv-person-cell">
+                              <span className="mpv-cell-name">{item.name}</span>
+                              <span className="mpv-cell-nik">
+                                {item.employeeId}
+                              </span>
+                            </div>
+                          </td>
+                          <td>
+                            <span className="mpv-mini-dept">
+                              {item.dept ?? "-"}
+                            </span>
+                          </td>
+                          <td>
+                            {isLive ? (
+                              <span className="mpv-status-chip is-live">
+                                <span className="mpv-dot" /> Tayang
+                              </span>
+                            ) : item.period > previousPeriod() ? (
+                              <span className="mpv-status-chip is-upcoming">
+                                Mendatang
+                              </span>
+                            ) : (
+                              <span className="mpv-status-chip is-past">
+                                Arsip
+                              </span>
+                            )}
+                          </td>
+                          <td style={{ textAlign: "right" }}>
+                            <div className="mpv-row-btns">
+                              <button
+                                type="button"
+                                className={`mpv-mini-btn ${
+                                  isSelected ? "is-selected" : ""
+                                }`}
+                                disabled={savingAction}
+                                onClick={() => {
+                                  setPeriod(item.period);
+                                  setStatus(null);
+                                }}
+                                title="Tampilkan di kartu sebelah kiri"
+                              >
+                                {isSelected ? "Dipilih" : "Pilih"}
+                              </button>
+                              <button
+                                type="button"
+                                className="mpv-mini-btn is-danger"
+                                onClick={() =>
+                                  handleRemove(item.period, item.name)
+                                }
+                                disabled={savingAction}
+                                title="Hapus dari riwayat"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
 
       {/* 3. Soft Detail/Manual Modal */}
       {allowManual && showEditModal && (
-        <div className="mpv-modal-overlay" onClick={() => setShowEditModal(false)}>
+        <div
+          className="mpv-modal-overlay"
+          onClick={() => setShowEditModal(false)}
+        >
           <div className="mpv-modal-panel" onClick={(e) => e.stopPropagation()}>
             <div className="mpv-modal-top">
               <h4 className="mpv-modal-heading">
-                {existing ? `Ubah Data MPV · ${formatPeriod(period)}` : `Input MPV · ${formatPeriod(period)}`}
+                {existing
+                  ? `Ubah Data MPV · ${formatPeriod(period)}`
+                  : `Input MPV · ${formatPeriod(period)}`}
               </h4>
               <button
                 type="button"
@@ -574,7 +668,10 @@ export default function MpvManager({
               </button>
             </div>
 
-            <form onSubmit={handleSaveManual} className="mpv-modal-form-content">
+            <form
+              onSubmit={handleSaveManual}
+              className="mpv-modal-form-content"
+            >
               <div className="mpv-form-group">
                 <label className="mpv-form-label">Nama Lengkap *</label>
                 <input
@@ -630,7 +727,11 @@ export default function MpvManager({
                 <label className="mpv-form-label">Foto Profil</label>
                 <div className="mpv-photo-picker-box">
                   {editPhotoUrl ? (
-                    <img src={editPhotoUrl} alt="Pratinjau foto" className="mpv-photo-thumb" />
+                    <img
+                      src={editPhotoUrl}
+                      alt="Pratinjau foto"
+                      className="mpv-photo-thumb"
+                    />
                   ) : (
                     <div className="mpv-photo-thumb-empty">
                       {getInitials(editName || "?")}
@@ -655,7 +756,9 @@ export default function MpvManager({
                         Hapus Foto
                       </button>
                     ) : (
-                      <span className="mpv-photo-hint">Maks. 2 MB (JPG / PNG)</span>
+                      <span className="mpv-photo-hint">
+                        Maks. 2 MB (JPG / PNG)
+                      </span>
                     )}
                   </div>
                 </div>

@@ -1,0 +1,61 @@
+.wtv-root {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+}
+
+.wtv-root .dsv-hod {
+  align-self: center;
+  max-width: 100%;
+}
+
+.wtv-root .dsv-connector {
+  flex: 0 0 28px;
+}
+
+.wtv-root .dsv-columns {
+  flex: 1;
+  grid-template-columns: repeat(var(--wtv-columns), minmax(0, 1fr));
+}
+
+.wtv-root .dsv-col {
+  min-height: 430px;
+}
+
+.wtv-root .dsv-col-head {
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.wtv-root .dsv-photo-frame {
+  flex: 0 0 auto;
+  height: clamp(100px, 16vh, 180px);
+}
+
+.wtv-root .dsv-col-desc {
+  flex: 1 0 auto;
+  min-height: 130px;
+  white-space: pre-wrap;
+  overflow: visible;
+  overflow-wrap: anywhere;
+}
+
+.wtv-notice,
+.wtv-empty {
+  margin: 0;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .wtv-root .dsv-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .wtv-root .dsv-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

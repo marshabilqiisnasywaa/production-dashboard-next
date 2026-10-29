@@ -471,6 +471,7 @@ export default function PapercardTemplateManager({
           selectedDept === "PROD" && emp.role === "leader"
             ? 1
             : lineMembers.length + 1,
+        targetDept: selectedDept,
       });
       setSavedNotice({
         type: "success",

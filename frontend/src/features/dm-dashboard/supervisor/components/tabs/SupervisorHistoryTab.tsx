@@ -324,6 +324,11 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
                   <div style={{ color: "#64748b", fontSize: "11px", marginTop: "1px" }}>
                     {member.position} · {member.dept}
                   </div>
+                  {member.substitutedBy && (
+                    <div style={{ color: "#64748b", fontSize: "11px", marginTop: "1px" }}>
+                      Diwakilkan oleh <strong>{member.substitutedBy.name}</strong> ({member.substitutedBy.employeeNo})
+                    </div>
+                  )}
                 </div>
 
                 {/* Submission Meta & Approval */}

@@ -59,6 +59,26 @@ class MeOut(CamelModel):
     photo_url: str | None = None
 
 
+class WorkshopHod(CamelModel):
+    name: str = Field(min_length=1, max_length=120)
+    position: str = Field(min_length=1, max_length=120)
+    work_phone: str | None = Field(default=None, max_length=32)
+    photo_url: str | None = Field(default=None, max_length=2800000)
+
+    @model_validator(mode="after")
+    def validate_hod(self):
+        self.name = self.name.strip()
+        self.position = self.position.strip()
+        self.work_phone = (self.work_phone or "").strip() or None
+        if not self.name or not self.position:
+            raise ValueError("Nama dan jabatan HOD wajib diisi.")
+        if self.photo_url and not self.photo_url.startswith((
+            "data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,"
+        )):
+            raise ValueError("Foto HOD harus berupa JPEG, PNG, atau WebP.")
+        return self
+
+
 class WorkshopIn(CamelModel):
     name: str = Field(min_length=1, max_length=120)
 
@@ -143,6 +163,7 @@ class MemberIn(EmployeeRef):
     photo_url: str | None = None
     position: str | None = Field(default=None, max_length=120)
     sort_order: int = 0
+    target_dept: str | None = Field(default=None, max_length=120)
 
 
 class MemberUpdate(CamelModel):
@@ -167,6 +188,7 @@ class MemberOut(CamelModel):
     photo_url: str | None
     position: str | None
     sort_order: int
+    is_substitute: bool = False
 
 
 class EmployeeIn(CamelModel):
@@ -249,6 +271,7 @@ class PublicBoardOut(CamelModel):
 
 class PublicBoardListItem(CamelModel):
     slug: str
+    workshop_id: int
     line_code: str
     line_name: str
     workshop_name: str

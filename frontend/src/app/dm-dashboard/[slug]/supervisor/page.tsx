@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import DmSupervisorDashboard from "@/features/dm-dashboard/DmDashboardSupervisor";
+import LegacyWorkshopRedirect from "@/features/dm-dashboard/LegacyWorkshopRedirect";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -7,5 +7,5 @@ export const metadata: Metadata = { title: "Struktur Tim DM" };
 
 export default async function Page({ params }: PageProps) {
   const { slug } = await params;
-  return <DmSupervisorDashboard slug={slug} />;
+  return <LegacyWorkshopRedirect slug={slug} />;
 }

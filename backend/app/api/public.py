@@ -16,6 +16,7 @@ from app.models import (
     Line,
     Workshop,
     WorkshopMeetingSession,
+    SupervisorWorkshop,
 )
 from app.schemas import (
     PublicAttendanceRecapOut,
@@ -26,10 +27,40 @@ from app.schemas import (
     WorkshopRecapAttendanceOut,
     WorkshopRecapParticipantOut,
     WorkshopRecapSessionOut,
+    CamelModel,
+    WorkshopHod,
 )
 from app.services.boards import public_board
 
 router = APIRouter(prefix="/public", tags=["public"])
+
+class PublicWorkshopSupervisorOut(CamelModel):
+    employee_id: int
+    name: str
+    position: str | None
+    work_phone: str | None
+    photo_url: str | None
+    responsibility: str | None
+
+
+class PublicWorkshopTeamOut(CamelModel):
+    workshop_id: int
+    workshop_name: str
+    hod: WorkshopHod | None = None
+    supervisors: list[PublicWorkshopSupervisorOut]
+
+
+class PublicWorkshopListItem(CamelModel):
+    id: int
+    name: str
+
+
+@router.get("/workshops", response_model=list[PublicWorkshopListItem])
+def list_workshops(db: Session = Depends(get_db)) -> list[PublicWorkshopListItem]:
+    return [
+        PublicWorkshopListItem(id=workshop.id, name=workshop.name)
+        for workshop in db.scalars(select(Workshop).order_by(Workshop.name, Workshop.id))
+    ]
 
 
 @router.get("/boards", response_model=list[PublicBoardListItem])
@@ -44,6 +75,7 @@ def list_boards(db: Session = Depends(get_db)) -> list[PublicBoardListItem]:
     return [
         PublicBoardListItem(
             slug=board.slug,
+            workshop_id=workshop.id,
             line_code=line.code,
             line_name=line.name,
             workshop_name=workshop.name,
@@ -64,6 +96,53 @@ def get_board(slug: str, db: Session = Depends(get_db)) -> PublicBoardOut:
     if row is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Dashboard tidak ditemukan.")
     return public_board(db, *row)
+
+@router.get(
+    "/workshops/{workshop_id}/team",
+    response_model=PublicWorkshopTeamOut,
+)
+def get_workshop_team(
+    workshop_id: int,
+    db: Session = Depends(get_db),
+) -> PublicWorkshopTeamOut:
+    workshop = db.get(Workshop, workshop_id)
+
+    if workshop is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            "Workshop tidak ditemukan.",
+        )
+
+    rows = db.execute(
+        select(SupervisorWorkshop, Employee)
+        .join(
+            Employee,
+            Employee.id == SupervisorWorkshop.employee_id,
+        )
+        .where(
+            SupervisorWorkshop.workshop_id == workshop.id,
+            Employee.role == "supervisor",
+            Employee.is_active.is_(True),
+        )
+        .order_by(SupervisorWorkshop.id)
+    ).all()
+
+    return PublicWorkshopTeamOut(
+        workshop_id=workshop.id,
+        workshop_name=workshop.name,
+        hod=workshop.hod,
+        supervisors=[
+            PublicWorkshopSupervisorOut(
+                employee_id=employee.id,
+                name=employee.name,
+                position=employee.position,
+                work_phone=employee.work_phone,
+                photo_url=employee.photo_url,
+                responsibility=assignment.responsibility,
+            )
+            for assignment, employee in rows
+        ],
+    )
 
 @router.get("/attendance-recap", response_model=PublicAttendanceRecapOut)
 def attendance_recap(

@@ -20,15 +20,7 @@ const TABS: { key: IndexTab; label: string }[] = [
 type LoadState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
-  | { kind: "ready"; boards: DmBoardListItem[] };
-
-function groupByWorkshop(boards: DmBoardListItem[]) {
-  const groups = new Map<string, DmBoardListItem[]>();
-  for (const board of boards) {
-    groups.set(board.workshopName, [...(groups.get(board.workshopName) ?? []), board]);
-  }
-  return Array.from(groups.entries());
-}
+  | { kind: "ready"; boards: DmBoardListItem[]; workshops: { id: number; name: string }[] };
 
 type StatusFilter = "all" | DmBoardListItem["status"];
 
@@ -67,10 +59,9 @@ function LineBoards() {
   useEffect(() => {
     let cancelled = false;
     setState({ kind: "loading" });
-    publicApi
-      .boards()
-      .then((boards) => {
-        if (!cancelled) setState({ kind: "ready", boards });
+    Promise.all([publicApi.boards(), publicApi.workshops()])
+      .then(([boards, workshops]) => {
+        if (!cancelled) setState({ kind: "ready", boards, workshops });
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -102,7 +93,7 @@ function LineBoards() {
     );
   }
 
-  if (state.boards.length === 0) {
+  if (state.workshops.length === 0) {
     return (
       <div className="dmi-state">
         <h2 className="dm-state-title">Belum ada dashboard</h2>
@@ -112,7 +103,16 @@ function LineBoards() {
     );
   }
 
-  const groups = groupByWorkshop(visible);
+  const q = query.trim().toLowerCase();
+  const groups = state.workshops
+    .map((workshop) => ({
+      ...workshop,
+      items: visible.filter((board) => board.workshopId === workshop.id),
+    }))
+    .filter((workshop) =>
+      workshop.items.length > 0 ||
+      (filter === "all" && (!q || workshop.name.toLowerCase().includes(q)))
+    );
 
   return (
     <>
@@ -148,15 +148,15 @@ function LineBoards() {
         </div>
       </div>
 
-      {groups.length === 0 && <p className="dmi-empty">Tidak ada lini yang cocok.</p>}
+      {groups.length === 0 && <p className="dmi-empty">Tidak ada lini atau workshop yang cocok.</p>}
 
-      {groups.map(([workshopName, items]) => (
-        <section key={workshopName} className="dmi-group" aria-label={workshopName}>
-          <h2>{workshopName}</h2>
+      {groups.map(({ id, name, items }) => (
+        <section key={id} className="dmi-group" aria-label={name}>
+          <h2>{name}</h2>
           <div className="dmi-grid">
-            <Link href={`/dm-dashboard/${items[0].slug}/supervisor`} className="dmi-card">
-              <span className="dmi-card__code">DM Workshop</span>
-              <span className="dmi-card__name">Struktur Tim {workshopName}</span>
+            <Link href={`/dm-dashboard/workshop/${id}`} className="dmi-card">
+              <span className="dmi-card__code">TV Workshop</span>
+              <span className="dmi-card__name">Struktur Tim {name}</span>
             </Link>
             {items.map((board) => (
               <Link key={board.slug} href={`/dm-dashboard/${board.slug}`} className="dmi-card">

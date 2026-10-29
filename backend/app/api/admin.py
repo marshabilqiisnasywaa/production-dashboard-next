@@ -22,6 +22,7 @@ from app.schemas import (
     ResetPasswordIn,
     WorkshopIn,
     WorkshopOut,
+    WorkshopHod,
     AttendanceRecapOut,
     RecapRowOut,
     RecapSessionOut,
@@ -54,6 +55,24 @@ def not_found(what: str) -> HTTPException:
 def workshop_out(db: Session, workshop: Workshop) -> WorkshopOut:
     count = db.scalar(select(func.count(Line.id)).where(Line.workshop_id == workshop.id))
     return WorkshopOut(id=workshop.id, name=workshop.name, line_count=count or 0)
+
+
+@router.get("/workshops/{workshop_id}/hod", response_model=WorkshopHod | None)
+def get_workshop_hod(workshop_id: int, db: Session = Depends(get_db)):
+    workshop = db.get(Workshop, workshop_id)
+    if workshop is None:
+        raise not_found("Workshop")
+    return workshop.hod
+
+
+@router.put("/workshops/{workshop_id}/hod", response_model=WorkshopHod)
+def save_workshop_hod(workshop_id: int, body: WorkshopHod, db: Session = Depends(get_db)):
+    workshop = db.get(Workshop, workshop_id)
+    if workshop is None:
+        raise not_found("Workshop")
+    workshop.hod = body.model_dump()
+    db.commit()
+    return body
 
 
 @router.get("/workshops", response_model=list[WorkshopOut])
@@ -291,10 +310,24 @@ def add_member(line_id: int, body: MemberIn, db: Session = Depends(get_db)) -> M
     )
     if already_in_board:
         raise conflict(f"{employee.name} sudah terdaftar aktif di lini ini.")
+    target_dept = (body.target_dept or "").strip().upper()
+    employee_dept = (employee.dept or "").strip().upper()
+    if target_dept and employee_dept != target_dept:
+        raise conflict(
+            f"Ditolak: {employee.name} dari departemen {employee_dept or 'tanpa departemen'}, "
+            f"hanya petugas departemen {target_dept} yang bisa mengisi atau mewakili papercard {target_dept}."
+        )
+    has_other_line = db.scalar(
+        select(BoardMember.id).where(
+            BoardMember.employee_id == employee.id,
+            BoardMember.ended_at.is_(None),
+        )
+    )
     member = BoardMember(
         board_id=board.id,
         employee_id=employee.id,
         sort_order=body.sort_order,
+        is_substitute=bool(has_other_line),
     )
     db.add(member)
     db.commit()
