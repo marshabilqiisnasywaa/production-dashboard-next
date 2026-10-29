@@ -52,17 +52,17 @@ function dashboardPath(line: DmLine) {
   return `/dm-dashboard/${line.slug}`;
 }
 
-function lineCodeRange(items: DmLine[]) {
-  if (items.length === 0) return "";
-  const codes = items
-    .map((line) => line.code)
-    .sort((left, right) =>
-      left.localeCompare(right, undefined, { numeric: true })
-    );
-  return codes.length === 1
-    ? `Line: ${codes[0]}`
-    : `Line: ${codes[0]} - ${codes[codes.length - 1]}`;
-}
+// function lineCodeRange(items: DmLine[]) {
+//   if (items.length === 0) return "";
+//   const codes = items
+//     .map((line) => line.code)
+//     .sort((left, right) =>
+//       left.localeCompare(right, undefined, { numeric: true })
+//     );
+//   return codes.length === 1
+//     ? `Line: ${codes[0]}`
+//     : `Line: ${codes[0]} - ${codes[codes.length - 1]}`;
+// }
 
 export default function DmAdminPage() {
   const router = useRouter();
@@ -186,6 +186,48 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
     title: "SQDIP Monitoring: Skor Harian per Leader dan Line",
   },
 };
+const ADMIN_TAB_HEADERS: Record<
+  DmAdminTabKey,
+  { title: string; description: string } | null
+> = {
+  workshop: {
+    title: "Line, Workshop & Tim",
+    description:
+      "Kelola struktur workshop, DM meeting, lini produksi, dan penugasan tim.",
+  },
+  users: {
+    title: "Manajemen User",
+    description:
+      "Kelola akun pengguna, peran sistem, penugasan lini, dan hak akses.",
+  },
+  papercard: {
+    title: "Papercard & Jadwal Meeting",
+    description:
+      "Atur konfigurasi template checklist papercard dan jadwal pelaksanaan DM meeting harian.",
+  },
+  mpv: {
+    title: "MVP of The Month",
+    description:
+      "Kelola kandidat dan tentukan pemenang MVP bulanan untuk operator lini produksi.",
+  },
+  attendance: {
+    title: "Rekapitulasi Presensi",
+    description:
+      "Pantau ringkasan kehadiran tim dan aktivitas presensi di lini produksi.",
+  },
+  problems: null, // ProblemsPage provides its own header to avoid duplication
+  sqdip: {
+    title: "Monitoring SQCDIP",
+    description:
+      "Pantau indikator keselamatan, kualitas, biaya, pengiriman, dan keterlibatan tim.",
+  },
+  dashboard: {
+    title: "Dashboard Admin",
+    description:
+      "Ringkasan performa lini dan pemantauan aktivitas produksi secara menyeluruh.",
+  },
+};
+
 
 function AdminWorkspace({
   username,
@@ -199,6 +241,7 @@ function AdminWorkspace({
   const [activeTab, setActiveTab] = useState<DmAdminTabKey>(
     isAdmin ? "workshop" : "dashboard"
   );
+  const tabHeader = ADMIN_TAB_HEADERS[activeTab];
   const [papercardSub, setPapercardSub] = useState<"template" | "meeting">(
     "template"
   );
@@ -577,6 +620,14 @@ function AdminWorkspace({
         </header>
 
         <main className="dm-admin-content-pane">
+          {tabHeader && (
+            <header className="dm-admin-page-head">
+              <div className="dm-admin-page-head-main">
+                <h1 className="dm-admin-page-title">{tabHeader.title}</h1>
+                <p className="dm-admin-page-desc">{tabHeader.description}</p>
+              </div>
+            </header>
+          )}
           {banner && (
             <div
               className={`dm-admin-alert-banner is-${banner.type}`}
@@ -938,11 +989,11 @@ function AdminWorkspace({
                                                 <PlusIcon size={14} /> Tambah
                                                 Lini
                                               </button>
-                                              {all.length > 0 ? (
+                                              {/* {all.length > 0 ? (
                                                 <span className="dm-dm-range">
                                                   {lineCodeRange(all)}
                                                 </span>
-                                              ) : null}
+                                              ) : null} */}
                                               <RowMenu
                                                 label={`Aksi ${group.name}`}
                                                 items={[
@@ -1089,15 +1140,6 @@ function AdminWorkspace({
 
             {activeTab === "attendance" && (
               <div className="dm-admin-section">
-                <div
-                  className="dm-admin-sec-head"
-                  style={{ marginBottom: "1.2rem" }}
-                >
-                  <h3 className="dm-admin-sec-title">Rekapitulasi Presensi</h3>
-                  <span className="dm-admin-sec-sub">
-                    Pantau kehadiran tim.
-                  </span>
-                </div>
                 <AttendanceRecap lines={lines} call={call} />
               </div>
             )}

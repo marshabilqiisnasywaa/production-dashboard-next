@@ -774,6 +774,61 @@
   box-sizing: border-box;
 }
 
+/* Page Header (Consistent with Leader Page Header) */
+.dm-admin-page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  /* border-bottom: 1px solid var(--dm-admin-border); */
+}
+
+.dm-admin-page-head-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.dm-admin-page-head h1,
+.dm-admin-page-title {
+  margin: 0;
+  font-family: var(--dm-admin-font);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--dm-admin-text);
+}
+
+.dm-admin-page-head p,
+.dm-admin-page-desc {
+  margin: 6px 0 0;
+  font-family: var(--dm-admin-font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--dm-admin-text-muted);
+}
+
+@media (max-width: 860px) {
+  .dm-admin-page-head {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .dm-admin-page-head h1,
+  .dm-admin-page-title {
+    font-size: 20px;
+  }
+
+  .dm-admin-page-head p,
+  .dm-admin-page-desc {
+    font-size: 13px;
+  }
+}
+
 .dm-admin-panel-card {
   border: 1px solid var(--dm-admin-border);
   border-radius: 12px;
