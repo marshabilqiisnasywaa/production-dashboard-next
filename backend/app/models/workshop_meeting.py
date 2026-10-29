@@ -12,10 +12,16 @@ class SupervisorWorkshop(Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id", ondelete="CASCADE"), index=True)
-    workshop_id: Mapped[int] = mapped_column(ForeignKey("workshops.id", ondelete="CASCADE"), index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-
+    employee_id: Mapped[int] = mapped_column(
+        ForeignKey("employees.id", ondelete="CASCADE"), index=True
+    )
+    workshop_id: Mapped[int] = mapped_column(
+        ForeignKey("workshops.id", ondelete="CASCADE"), index=True
+    )
+    responsibility: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
 class WorkshopMeetingSession(Base):
     __tablename__ = "workshop_meeting_sessions"

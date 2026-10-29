@@ -52,10 +52,12 @@ class WorkshopRefOut(CamelModel):
 class WorkshopSupervisorsOut(CamelModel):
     workshop_id: int
     employee_ids: list[int]
+    responsibilities: dict[int, str | None] = Field(default_factory=dict)
 
 
 class WorkshopSupervisorsIn(CamelModel):
-    employee_ids: list[int] = Field(default_factory=list)
+    employee_ids: list[int]
+    responsibilities: dict[int, str | None] = Field(default_factory=dict)
 
 
 def assigned_workshop_ids(db: Session, employee_id: int) -> set[int]:
@@ -643,10 +645,29 @@ def list_assignments(
     db: Session = Depends(get_db),
     _admin=Depends(get_current_admin),
 ) -> list[WorkshopSupervisorsOut]:
-    grouped: dict[int, list[int]] = {}
-    for row in db.scalars(select(SupervisorWorkshop).order_by(SupervisorWorkshop.employee_id)):
-        grouped.setdefault(row.workshop_id, []).append(row.employee_id)
-    return [WorkshopSupervisorsOut(workshop_id=k, employee_ids=v) for k, v in grouped.items()]
+    grouped: dict[int, list[SupervisorWorkshop]] = {}
+
+    rows = db.scalars(
+        select(SupervisorWorkshop).order_by(
+            SupervisorWorkshop.workshop_id,
+            SupervisorWorkshop.employee_id,
+        )
+    )
+
+    for row in rows:
+        grouped.setdefault(row.workshop_id, []).append(row)
+
+    return [
+        WorkshopSupervisorsOut(
+            workshop_id=workshop_id,
+            employee_ids=[row.employee_id for row in members],
+            responsibilities={
+                row.employee_id: row.responsibility
+                for row in members
+            },
+        )
+        for workshop_id, members in grouped.items()
+    ]
 
 
 @router.put("/assignments/{workshop_id}", response_model=WorkshopSupervisorsOut)
@@ -658,15 +679,70 @@ def save_assignment(
 ) -> WorkshopSupervisorsOut:
     if db.get(Workshop, workshop_id) is None:
         raise HTTPException(404, "Workshop tidak ditemukan.")
+
     wanted = set(payload.employee_ids)
-    valid = set(db.scalars(select(Employee.id).where(Employee.id.in_(wanted), Employee.role == "supervisor"))) if wanted else set()
+
+    if not set(payload.responsibilities).issubset(wanted):
+        raise HTTPException(
+            400,
+            "Tugas hanya bisa diisi untuk supervisor yang dipilih.",
+        )
+
+    valid = (
+        set(
+            db.scalars(
+                select(Employee.id).where(
+                    Employee.id.in_(wanted),
+                    Employee.role == "supervisor",
+                    Employee.is_active.is_(True),
+                )
+            )
+        )
+        if wanted
+        else set()
+    )
+
     if valid != wanted:
-        raise HTTPException(400, "Hanya akun supervisor yang bisa ditugaskan ke workshop.")
-    current = {r.employee_id: r for r in db.scalars(select(SupervisorWorkshop).where(SupervisorWorkshop.workshop_id == workshop_id))}
+        raise HTTPException(
+            400,
+            "Hanya akun supervisor aktif yang bisa ditugaskan ke workshop.",
+        )
+
+    current = {
+        row.employee_id: row
+        for row in db.scalars(
+            select(SupervisorWorkshop).where(
+                SupervisorWorkshop.workshop_id == workshop_id
+            )
+        )
+    }
+
     for employee_id, row in current.items():
         if employee_id not in wanted:
             db.delete(row)
-    for employee_id in wanted - set(current):
-        db.add(SupervisorWorkshop(employee_id=employee_id, workshop_id=workshop_id))
+
+    saved_responsibilities: dict[int, str | None] = {}
+
+    for employee_id in sorted(wanted):
+        row = current.get(employee_id)
+
+        if row is None:
+            row = SupervisorWorkshop(
+                employee_id=employee_id,
+                workshop_id=workshop_id,
+            )
+            db.add(row)
+
+        if employee_id in payload.responsibilities:
+            value = payload.responsibilities[employee_id]
+            row.responsibility = (value or "").strip() or None
+
+        saved_responsibilities[employee_id] = row.responsibility
+
     db.commit()
-    return WorkshopSupervisorsOut(workshop_id=workshop_id, employee_ids=sorted(wanted))
+
+    return WorkshopSupervisorsOut(
+        workshop_id=workshop_id,
+        employee_ids=sorted(wanted),
+        responsibilities=saved_responsibilities,
+    )

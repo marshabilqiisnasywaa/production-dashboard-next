@@ -2887,6 +2887,7 @@
 
 .dm-ws-sup-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -2900,19 +2901,70 @@
   overflow-wrap: anywhere;
 }
 
-.dm-ws-sup-row > button {
-  flex-shrink: 0;
+.dm-ws-sup-row > .dm-ws-sup-person {
+  flex: 1 1 220px;
 }
 
-.dm-ws-sup-picker {
+.dm-ws-sup-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
-.dm-ws-sup-picker > select {
-  flex: 1 1 180px;
+.dm-ws-sup-form {
+  display: grid;
+  gap: 10px;
   min-width: 0;
+}
+
+.dm-ws-hod {
+  margin-top: 16px;
+}
+
+.dm-ws-dialog-tabs {
+  margin-top: 4px;
+}
+
+.dm-ws-hod .dm-ws-sup-row {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+
+.dm-ws-hod .dm-ws-sup-row > .dm-ws-sup-person {
+  flex: 1 1 auto;
+}
+
+.dm-ws-hod input[type="file"] {
+  max-width: 100%;
+}
+
+.dm-ws-hod-preview {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.dm-ws-sup-form .dm-admin-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dm-ws-sup-form .dm-ws-sup-textarea {
+  height: auto;
+  min-height: 112px;
+  resize: vertical;
+  font: inherit;
+}
+
+.dm-ws-sup-task {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .dm-ws-sup-add {
@@ -2921,7 +2973,7 @@
 
 .dm-ws-sup-dialog {
   margin: auto;
-  width: min(480px, calc(100vw - 32px));
+  width: min(520px, calc(100vw - 32px));
   max-height: calc(100dvh - 32px);
   box-sizing: border-box;
   overflow-y: auto;

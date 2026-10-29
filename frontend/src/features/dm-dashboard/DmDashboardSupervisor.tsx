@@ -64,35 +64,40 @@ const ROLE_SLOTS = [
     header: "SPV PRODUCTION",
     tag: "PRODUCTION",
     title: "SPV Production",
-    description: "Coordinate & communicate with internal & external departments; to reach stable production.",
+    description:
+      "Coordinate & communicate with internal & external departments; to reach stable production.",
   },
   {
     key: "pe-structural",
     header: "PE STRUCTURAL",
     tag: "STRUCTURAL",
     title: "PE Structural",
-    description: "Responsible for the structural issue, related parameter specifications, acceptance issue resolution.",
+    description:
+      "Responsible for the structural issue, related parameter specifications, acceptance issue resolution.",
   },
   {
     key: "pe-electrical",
     header: "PE ELECTRICAL",
     tag: "ELECTRICAL",
     title: "PE Electrical",
-    description: "Responsible for the functional issue, related parameter specifications, acceptance issue resolution.",
+    description:
+      "Responsible for the functional issue, related parameter specifications, acceptance issue resolution.",
   },
   {
     key: "me-engineer",
     header: "ME ENGINEER",
     tag: "MECHANICAL",
     title: "ME Engineer",
-    description: "Responsible for machine & equipment, technical support, & training of equipment.",
+    description:
+      "Responsible for machine & equipment, technical support, & training of equipment.",
   },
   {
     key: "qa-engineer",
     header: "QA ENGINEER",
     tag: "QUALITY ASSU.",
     title: "QA Engineer",
-    description: "Investigate anomaly problem related & impacted to Quality of material & product.",
+    description:
+      "Investigate anomaly problem related & impacted to Quality of material & product.",
   },
 ] as const;
 
@@ -140,13 +145,44 @@ const toPerson = (raw?: RawPerson): Person => ({
 const PREVIEW_STRUCTURE: Structure = {
   workshopTitle: "WORKSHOP AREA 6",
   areaLabel: "Area 6",
-  hod: { name: "MOCHAMAD NOOR AS'AD", title: "HOD Produksi", phone: "082110472933", job: "HOD Produksi", photoUrl: null },
+  hod: {
+    name: "MOCHAMAD NOOR AS'AD",
+    title: "HOD Produksi",
+    phone: "082110472933",
+    job: "HOD Produksi",
+    photoUrl: null,
+  },
   people: {
-    "spv-production": { name: "IKHWAN HANDOKO", job: "Spv Production", phone: "082298918070", photoUrl: null },
-    "pe-structural": { name: "AHMAD BUSTAMIL", job: "PE Struktur", phone: "089650019628", photoUrl: null },
-    "pe-electrical": { name: "MOH FAUZI HUSIN", job: "PE Elektrik", phone: "081311033781", photoUrl: null },
-    "me-engineer": { name: "GALUH AZMI FAHRUDIN", job: "ME Enginering", phone: "082226536329", photoUrl: null },
-    "qa-engineer": { name: "ASWANDOKO", job: "QA Enginering", phone: "089698901084", photoUrl: null },
+    "spv-production": {
+      name: "IKHWAN HANDOKO",
+      job: "Spv Production",
+      phone: "082298918070",
+      photoUrl: null,
+    },
+    "pe-structural": {
+      name: "AHMAD BUSTAMIL",
+      job: "PE Struktur",
+      phone: "089650019628",
+      photoUrl: null,
+    },
+    "pe-electrical": {
+      name: "MOH FAUZI HUSIN",
+      job: "PE Elektrik",
+      phone: "081311033781",
+      photoUrl: null,
+    },
+    "me-engineer": {
+      name: "GALUH AZMI FAHRUDIN",
+      job: "ME Enginering",
+      phone: "082226536329",
+      photoUrl: null,
+    },
+    "qa-engineer": {
+      name: "ASWANDOKO",
+      job: "QA Enginering",
+      phone: "089698901084",
+      photoUrl: null,
+    },
   },
 };
 
@@ -158,7 +194,9 @@ function readStructure(board: DmBoard): Structure {
     workshopTitle: raw?.workshopTitle ?? board.workshopLabel ?? "WORKSHOP",
     areaLabel: raw?.areaLabel ?? "",
     hod: { ...toPerson(raw?.hod), title: raw?.hod?.title ?? "HOD Produksi" },
-    people: Object.fromEntries(ROLE_SLOTS.map((slot) => [slot.key, toPerson(raw?.roles?.[slot.key])])),
+    people: Object.fromEntries(
+      ROLE_SLOTS.map((slot) => [slot.key, toPerson(raw?.roles?.[slot.key])])
+    ),
   };
 }
 
@@ -166,7 +204,12 @@ function readStructure(board: DmBoard): Structure {
 
 function PersonIcon() {
   return (
-    <svg className="dsv-person-svg" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+    <svg
+      className="dsv-person-svg"
+      viewBox="0 0 40 40"
+      aria-hidden="true"
+      focusable="false"
+    >
       <circle cx="20" cy="14" r="7" />
       <path d="M6 36c0-7.7 6.3-12 14-12s14 4.3 14 12z" />
     </svg>
@@ -175,7 +218,11 @@ function PersonIcon() {
 
 function Avatar({ person, label }: { person: Person; label: string }) {
   return person.photoUrl ? (
-    <img src={person.photoUrl} alt={person.name ?? label} className="dsv-photo" />
+    <img
+      src={person.photoUrl}
+      alt={person.name ?? label}
+      className="dsv-photo"
+    />
   ) : (
     <span className="dsv-avatar-icon">
       <PersonIcon />
@@ -197,7 +244,13 @@ function OppoLogo() {
 }
 
 /** Pure view: easy to test and preview without the API. */
-function SupervisorBoardView({ board, structure }: { board: DmBoard; structure: Structure }) {
+function SupervisorBoardView({
+  board,
+  structure,
+}: {
+  board: DmBoard;
+  structure: Structure;
+}) {
   const { hod, people, workshopTitle, areaLabel } = structure;
   const count = ROLE_SLOTS.length;
   // x position (%) of each column's center, used to draw the org-chart lines
@@ -215,7 +268,7 @@ function SupervisorBoardView({ board, structure }: { board: DmBoard; structure: 
             <span lang="zh">车间组织架构</span>
           </p>
         </div>
-{/* 
+        {/* 
         <div className="dsv-status-box">
           <span className="dsv-status-label">Line Status:</span>
           <span className={`dsv-status-badge is-${board.status}`}>
@@ -238,9 +291,6 @@ function SupervisorBoardView({ board, structure }: { board: DmBoard; structure: 
           <span className="dsv-hod-area">{areaLabel}</span>
         </div>
         <div className="dsv-hod-body">
-          <div className="dsv-hod-avatar">
-            <Avatar person={hod} label="HOD" />
-          </div>
           <div className="dsv-hod-who">
             <span className="dsv-hod-name">{hod.name ?? "Belum diisi"}</span>
             <span className="dsv-hod-title">{hod.title}</span>
@@ -257,10 +307,17 @@ function SupervisorBoardView({ board, structure }: { board: DmBoard; structure: 
         <span className="dsv-line dsv-line--down" />
         <span
           className="dsv-line dsv-line--across"
-          style={{ left: `${centers[0]}%`, right: `${100 - centers[count - 1]}%` }}
+          style={{
+            left: `${centers[0]}%`,
+            right: `${100 - centers[count - 1]}%`,
+          }}
         />
         {centers.map((x, i) => (
-          <span key={ROLE_SLOTS[i].key} className="dsv-line dsv-line--drop" style={{ left: `${x}%` }} />
+          <span
+            key={ROLE_SLOTS[i].key}
+            className="dsv-line dsv-line--drop"
+            style={{ left: `${x}%` }}
+          />
         ))}
       </div>
 
@@ -314,7 +371,11 @@ type LoadState =
   | { kind: "error"; message: string }
   | { kind: "ready"; board: DmBoard };
 
-export default function DmSupervisorDashboard({ slug = "TAC20601" }: { slug?: string }) {
+export default function DmSupervisorDashboard({
+  slug = "TAC20601",
+}: {
+  slug?: string;
+}) {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
 
@@ -330,8 +391,11 @@ export default function DmSupervisorDashboard({ slug = "TAC20601" }: { slug?: st
         if (error instanceof ApiError && error.status === 404) {
           setState({ kind: "missing" });
         } else {
-          const message = error instanceof Error ? error.message : "Terjadi kesalahan.";
-          setState((prev) => (prev.kind === "ready" ? prev : { kind: "error", message }));
+          const message =
+            error instanceof Error ? error.message : "Terjadi kesalahan.";
+          setState((prev) =>
+            prev.kind === "ready" ? prev : { kind: "error", message }
+          );
         }
       }
     }
@@ -347,7 +411,10 @@ export default function DmSupervisorDashboard({ slug = "TAC20601" }: { slug?: st
   }, [slug, attempt]);
 
   const readyBoard = state.kind === "ready" ? state.board : null;
-  const structure = useMemo(() => (readyBoard ? readStructure(readyBoard) : null), [readyBoard]);
+  const structure = useMemo(
+    () => (readyBoard ? readStructure(readyBoard) : null),
+    [readyBoard]
+  );
 
   if (state.kind === "loading") {
     return (
@@ -361,7 +428,10 @@ export default function DmSupervisorDashboard({ slug = "TAC20601" }: { slug?: st
     return (
       <main className="dsv-root dsv-state">
         <h1 className="dsv-state-title">Dashboard tidak ditemukan</h1>
-        <p>Tidak ada dashboard dengan alamat &quot;{slug}&quot;. Periksa link-nya atau pilih dari daftar.</p>
+        <p>
+          Tidak ada dashboard dengan alamat &quot;{slug}&quot;. Periksa link-nya
+          atau pilih dari daftar.
+        </p>
         <Link href="/dm-dashboard" className="dsv-state-action">
           Lihat daftar dashboard
         </Link>
@@ -373,8 +443,14 @@ export default function DmSupervisorDashboard({ slug = "TAC20601" }: { slug?: st
     return (
       <main className="dsv-root dsv-state">
         <h1 className="dsv-state-title">Struktur tim belum bisa dimuat</h1>
-        <p role="alert">{state.kind === "error" ? state.message : "Data belum tersedia."}</p>
-        <button type="button" className="dsv-state-action" onClick={() => setAttempt((n) => n + 1)}>
+        <p role="alert">
+          {state.kind === "error" ? state.message : "Data belum tersedia."}
+        </p>
+        <button
+          type="button"
+          className="dsv-state-action"
+          onClick={() => setAttempt((n) => n + 1)}
+        >
           Coba lagi
         </button>
       </main>

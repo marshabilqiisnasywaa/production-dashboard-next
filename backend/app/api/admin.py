@@ -22,6 +22,7 @@ from app.schemas import (
     ResetPasswordIn,
     WorkshopIn,
     WorkshopOut,
+    WorkshopHod,
     AttendanceRecapOut,
     RecapRowOut,
     RecapSessionOut,
@@ -54,6 +55,24 @@ def not_found(what: str) -> HTTPException:
 def workshop_out(db: Session, workshop: Workshop) -> WorkshopOut:
     count = db.scalar(select(func.count(Line.id)).where(Line.workshop_id == workshop.id))
     return WorkshopOut(id=workshop.id, name=workshop.name, line_count=count or 0)
+
+
+@router.get("/workshops/{workshop_id}/hod", response_model=WorkshopHod | None)
+def get_workshop_hod(workshop_id: int, db: Session = Depends(get_db)):
+    workshop = db.get(Workshop, workshop_id)
+    if workshop is None:
+        raise not_found("Workshop")
+    return workshop.hod
+
+
+@router.put("/workshops/{workshop_id}/hod", response_model=WorkshopHod)
+def save_workshop_hod(workshop_id: int, body: WorkshopHod, db: Session = Depends(get_db)):
+    workshop = db.get(Workshop, workshop_id)
+    if workshop is None:
+        raise not_found("Workshop")
+    workshop.hod = body.model_dump()
+    db.commit()
+    return body
 
 
 @router.get("/workshops", response_model=list[WorkshopOut])

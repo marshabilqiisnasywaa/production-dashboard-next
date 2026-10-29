@@ -138,6 +138,7 @@ export type DmEmployeeInput = {
 
 export type DmBoardListItem = {
   slug: string;
+  workshopId: number;
   lineCode: string;
   lineName: string;
   workshopName: string;
@@ -220,10 +221,38 @@ const json = (method: string, data: unknown): RequestInit => ({
   body: JSON.stringify(data),
 });
 
+export type DmPublicWorkshopSupervisor = {
+  employeeId: number;
+  name: string;
+  position: string | null;
+  workPhone: string | null;
+  photoUrl: string | null;
+  responsibility: string | null;
+};
+
+export type DmWorkshopHod = {
+  name: string;
+  position: string;
+  workPhone: string | null;
+  photoUrl: string | null;
+};
+
+export type DmPublicWorkshopTeam = {
+  workshopId: number;
+  workshopName: string;
+  hod: DmWorkshopHod | null;
+  supervisors: DmPublicWorkshopSupervisor[];
+};
+
 export const publicApi = {
+  workshops: () => request<{ id: number; name: string }[]>("/public/workshops"),
   boards: () => request<DmBoardListItem[]>("/public/boards"),
   board: (slug: string) =>
     request<DmBoard>(`/public/boards/${encodeURIComponent(slug)}`),
+  workshopTeam: (workshopId: number) =>
+    request<DmPublicWorkshopTeam>(
+      `/public/workshops/${workshopId}/team`
+    ),
   attendanceRecap: (date: string, lineId?: number) =>
     request<DmPublicAttendanceRecap>(
       "/public/attendance-recap?date=" +
@@ -344,6 +373,9 @@ export type DmPublicAttendanceRecap = DmAttendanceRecap & {
 };
 
 export const adminApi = {
+  workshopHod: (id: number) => request<DmWorkshopHod | null>(`/admin/workshops/${id}/hod`, {}, true),
+  saveWorkshopHod: (id: number, data: DmWorkshopHod) =>
+    request<DmWorkshopHod>(`/admin/workshops/${id}/hod`, json("PUT", data), true),
   workshops: () => request<DmWorkshop[]>("/admin/workshops", {}, true),
   createWorkshop: (name: string) =>
     request<DmWorkshop>("/admin/workshops", json("POST", { name }), true),
@@ -1020,6 +1052,7 @@ export type DmWorkshopRef = { id: number; name: string };
 export type DmWorkshopSupervisors = {
   workshopId: number;
   employeeIds: number[];
+  responsibilities: Record<string, string | null>;
 };
 
 const workshopBase = "/workshop-meetings";
@@ -1102,10 +1135,17 @@ export const workshopMeetingApi = {
   employeePhoto: meetingApi.employeePhoto,
   assignments: () =>
     request<DmWorkshopSupervisors[]>(workshopBase + "/assignments", {}, true),
-  saveAssignment: (workshopId: number, employeeIds: number[]) =>
+  saveAssignment: (
+    workshopId: number,
+    employeeIds: number[],
+    responsibilities?: Record<string, string | null>
+  ) =>
     request<DmWorkshopSupervisors>(
       `${workshopBase}/assignments/${workshopId}`,
-      json("PUT", { employeeIds }),
+      json("PUT", {
+        employeeIds,
+        ...(responsibilities === undefined ? {} : { responsibilities }),
+      }),
       true
     ),
 };
