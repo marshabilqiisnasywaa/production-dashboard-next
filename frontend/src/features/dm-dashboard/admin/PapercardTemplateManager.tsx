@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DmEmployee, DmLine, DmWorkshop } from "../api";
 import { adminApi, papercardApi } from "../api";
 import type { DmMember } from "../dmData";
@@ -13,6 +13,8 @@ import {
   normalizeCategories,
   serializeCategories,
 } from "./templateModel";
+import { ChevronDown, Clock, Layers, Users } from "lucide-react";
+import { FactoryIcon } from "./AdminIcons";
 
 interface PapercardTemplateManagerProps {
   workshops: DmWorkshop[];
@@ -33,11 +35,11 @@ export interface DepartmentTemplate {
 const EMPTY_TEMPLATE: DepartmentTemplate = {
   dept: "PROD",
   name: "Papercard Departemen",
-  version: "",  
+  version: "v1.0",
   windowStart: "08:00",
   windowEnd: "09:00",
-  okRule: "OK jika seluruh item normal sesuai standar SOP.",
-  ngRule: "NG jika ada deviasi atau abnormalitas. Wajib isi alasan perbaikan.",
+  okRule: "OK jika seluruh pos normal.",
+  ngRule: "NG jika terdapat kelainan pos.",
   categories: [],
 };
 
@@ -61,28 +63,46 @@ export default function PapercardTemplateManager({
   const [selectedDept, setSelectedDept] = useState<DepartmentKey>("PROD");
 
   // Template state loaded strictly from Backend PostgreSQL keyed by `${lineId}_${dept}`
-  const [templates, setTemplates] = useState<Record<string, DepartmentTemplate>>({});
+  const [templates, setTemplates] = useState<
+    Record<string, DepartmentTemplate>
+  >({});
   const [loadingTemplate, setLoadingTemplate] = useState<boolean>(true);
+
+  // Departments on the current line that have non-empty templates
+  const [lineTemplateDepts, setLineTemplateDepts] = useState<Set<string>>(
+    new Set(["PROD"])
+  );
 
   // Save notice
   const [saving, setSaving] = useState(false);
-  const [savedNotice, setSavedNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [savedNotice, setSavedNotice] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  // Dropdown menu state
+  const [showTemplateMenu, setShowTemplateMenu] = useState(false);
+  const templateMenuRef = useRef<HTMLDivElement>(null);
+
+  // Modals state
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [selectedTargetLineIds, setSelectedTargetLineIds] = useState<
+    number[]
+  >([]);
+  const [bulkApplying, setBulkApplying] = useState(false);
+
+  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [copySourceLineId, setCopySourceLineId] = useState<string>("");
+  const [copyLoading, setCopyLoading] = useState(false);
+
+  const [showTimeModal, setShowTimeModal] = useState(false);
+  const [showWorkersModal, setShowWorkersModal] = useState(false);
 
   // Line members & worker assignment
   const [lineMembers, setLineMembers] = useState<DmMember[]>([]);
   const [allEmployees, setAllEmployees] = useState<DmEmployee[]>([]);
   const [assigningEmpId, setAssigningEmpId] = useState<string>("");
   const [assignBusy, setAssignBusy] = useState(false);
-
-  // Bulk Apply modal state
-  const [showBulkModal, setShowBulkModal] = useState(false);
-  const [selectedTargetLineIds, setSelectedTargetLineIds] = useState<number[]>([]);
-  const [bulkApplying, setBulkApplying] = useState(false);
-
-  // Copy modal state
-  const [showCopyModal, setShowCopyModal] = useState(false);
-  const [copySourceLineId, setCopySourceLineId] = useState<string>("");
-  const [copyLoading, setCopyLoading] = useState(false);
 
   // Filter lines by selected workshop
   const availableLines = useMemo(() => {
@@ -108,13 +128,35 @@ export default function PapercardTemplateManager({
     loadLineMembers();
   }, [loadLineMembers]);
 
-  // Load all employees in the system for worker assignment
+  // Load all employees once for worker assignment choices
   useEffect(() => {
     adminApi
       .employees()
       .then((emps) => setAllEmployees(emps))
       .catch(() => {});
   }, []);
+
+  // Fetch which departments have templates for the current line
+  useEffect(() => {
+    if (!currentLine) return;
+    papercardApi
+      .listTemplates({ lineId: currentLine.id })
+      .then((res) => {
+        if (res) {
+          const depts = new Set(
+            res
+              .filter(
+                (t) =>
+                  t.templateData?.categories &&
+                  t.templateData.categories.length > 0
+              )
+              .map((t) => t.department)
+          );
+          setLineTemplateDepts(depts);
+        }
+      })
+      .catch(() => {});
+  }, [currentLine]);
 
   // Fetch saved template strictly from PostgreSQL Database
   useEffect(() => {
@@ -142,7 +184,9 @@ export default function PapercardTemplateManager({
               windowEnd: matched.windowEnd,
               okRule: matched.templateData?.okRule ?? "",
               ngRule: matched.templateData?.ngRule ?? "",
-              categories: normalizeCategories(matched.templateData?.categories),
+              categories: normalizeCategories(
+                matched.templateData?.categories
+              ),
             },
           }));
         } else {
@@ -168,9 +212,24 @@ export default function PapercardTemplateManager({
     };
   }, [currentLine, selectedDept]);
 
-  const activeTemplate = useMemo(() => {
-    if (!currentLine) return EMPTY_TEMPLATE;
-    const lineKey = `${currentLine.id}_${selectedDept}`;
+  // Close dropdown menu when clicking outside
+  useEffect(() => {
+    if (!showTemplateMenu) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (
+        templateMenuRef.current &&
+        !templateMenuRef.current.contains(e.target as Node)
+      ) {
+        setShowTemplateMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [showTemplateMenu]);
+
+  // Active template memo
+  const activeTemplate = useMemo<DepartmentTemplate>(() => {
+    const lineKey = currentLine ? `${currentLine.id}_${selectedDept}` : "";
     return (
       templates[lineKey] || {
         ...EMPTY_TEMPLATE,
@@ -185,7 +244,9 @@ export default function PapercardTemplateManager({
   const assignedMembers = useMemo(() => {
     return lineMembers.filter((m) => {
       if (selectedDept === "PROD") {
-        return m.dept?.toUpperCase() === "PROD" || (m as any).role === "leader";
+        return (
+          m.dept?.toUpperCase() === "PROD" || (m as any).role === "leader"
+        );
       }
       return m.dept?.toUpperCase() === selectedDept;
     });
@@ -196,8 +257,6 @@ export default function PapercardTemplateManager({
     const existingEmpNos = new Set(lineMembers.map((m) => m.employeeId));
     return allEmployees.filter((e) => !existingEmpNos.has(e.employeeId));
   }, [allEmployees, lineMembers]);
-
-  const totalQuestionsCount = useMemo(() => countItems(activeTemplate.categories), [activeTemplate.categories]);
 
   // Current line & department composite key
   const currentKey = currentLine ? `${currentLine.id}_${selectedDept}` : "";
@@ -240,6 +299,11 @@ export default function PapercardTemplateManager({
         },
       });
 
+      // Update line template depts indicator
+      if (templateToSave.categories.length > 0) {
+        setLineTemplateDepts((prev) => new Set([...prev, selectedDept]));
+      }
+
       if (customSuccessMsg) {
         setSavedNotice({
           type: "success",
@@ -250,7 +314,10 @@ export default function PapercardTemplateManager({
     } catch (err) {
       setSavedNotice({
         type: "error",
-        message: err instanceof Error ? err.message : "Gagal menyimpan perubahan template.",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Gagal menyimpan perubahan template.",
       });
       return false;
     } finally {
@@ -259,12 +326,21 @@ export default function PapercardTemplateManager({
     }
   };
 
-  const handleTreeChange = async (nextCategories: ChecklistCategory[], message: string) => {
+  const handleTreeChange = async (
+    nextCategories: ChecklistCategory[],
+    message: string
+  ) => {
     if (!currentKey || !currentLine) return;
     const current = templates[currentKey] || activeTemplate;
-    const updatedTemplate: DepartmentTemplate = { ...current, categories: nextCategories };
+    const updatedTemplate: DepartmentTemplate = {
+      ...current,
+      categories: nextCategories,
+    };
     setTemplates((prev) => ({ ...prev, [currentKey]: updatedTemplate }));
-    await persistTemplate(updatedTemplate, `${message} Tersimpan ke database.`);
+    await persistTemplate(
+      updatedTemplate,
+      `${message} Tersimpan ke database.`
+    );
   };
 
   // Save single line template to PostgreSQL database
@@ -300,17 +376,18 @@ export default function PapercardTemplateManager({
           ngRule: activeTemplate.ngRule,
         },
       });
-
-      const count = selectedTargetLineIds.length;
       setSavedNotice({
         type: "success",
-        message: `Template ${selectedDept} berhasil diterapkan ke ${count} lini sekaligus.`,
+        message: `Template berhasil diterapkan ke ${selectedTargetLineIds.length} lini produksi.`,
       });
       setShowBulkModal(false);
     } catch (err) {
       setSavedNotice({
         type: "error",
-        message: err instanceof Error ? err.message : "Gagal menerapkan ke lini lain.",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Gagal menerapkan template masal.",
       });
     } finally {
       setBulkApplying(false);
@@ -331,30 +408,47 @@ export default function PapercardTemplateManager({
 
       if (res && res.length > 0 && res[0].templateData?.categories) {
         const src = res[0];
+        const newCategories = normalizeCategories(
+          src.templateData.categories
+        );
+        const updatedTemplate: DepartmentTemplate = {
+          dept: selectedDept,
+          name: src.name,
+          version: src.version,
+          windowStart: src.windowStart,
+          windowEnd: src.windowEnd,
+          okRule: src.templateData.okRule ?? activeTemplate.okRule,
+          ngRule: src.templateData.ngRule ?? activeTemplate.ngRule,
+          categories: newCategories,
+        };
+
         setTemplates((prev) => ({
           ...prev,
-          [currentKey]: {
-            dept: selectedDept,
-            name: src.name,
-            version: src.version,
-            windowStart: src.windowStart,
-            windowEnd: src.windowEnd,
-            okRule: src.templateData.okRule ?? activeTemplate.okRule,
-            ngRule: src.templateData.ngRule ?? activeTemplate.ngRule,
-            categories: normalizeCategories(src.templateData.categories),
-          },
+          [currentKey]: updatedTemplate,
         }));
+
         const srcLine = lines.find((l) => l.id === srcLineId);
         setSavedNotice({
           type: "success",
-          message: `Pertanyaan disalin dari ${srcLine?.name ?? "Lini Lain"}. Klik Simpan untuk memperbarui database lini ini.`,
+          message: `Pertanyaan disalin dari ${
+            srcLine?.name ?? "Lini Lain"
+          }. Klik Simpan untuk memperbarui database lini ini.`,
+        });
+        setShowCopyModal(false);
+      } else {
+        setSavedNotice({
+          type: "error",
+          message:
+            "Lini sumber belum memiliki checklist template pada departemen ini.",
         });
       }
-      setShowCopyModal(false);
     } catch (err) {
       setSavedNotice({
         type: "error",
-        message: err instanceof Error ? err.message : "Gagal menyalin template.",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Gagal menyalin template lini sumber.",
       });
     } finally {
       setCopyLoading(false);
@@ -362,18 +456,21 @@ export default function PapercardTemplateManager({
     }
   };
 
-  // Assign worker to line
+  // Assign worker to current line and department
   const handleAssignMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentLine || !assigningEmpId) return;
-    const emp = allEmployees.find((e) => String(e.id) === assigningEmpId);
+    if (!assigningEmpId || !currentLine) return;
+    const emp = allEmployees.find((item) => item.id === Number(assigningEmpId));
     if (!emp) return;
 
     setAssignBusy(true);
     try {
       await adminApi.addMember(currentLine.id, {
         employeePk: emp.id,
-        sortOrder: selectedDept === "PROD" && emp.role === "leader" ? 1 : lineMembers.length + 1,
+        sortOrder:
+          selectedDept === "PROD" && emp.role === "leader"
+            ? 1
+            : lineMembers.length + 1,
       });
       setSavedNotice({
         type: "success",
@@ -384,7 +481,8 @@ export default function PapercardTemplateManager({
     } catch (err) {
       setSavedNotice({
         type: "error",
-        message: err instanceof Error ? err.message : "Gagal menugaskan anggota.",
+        message:
+          err instanceof Error ? err.message : "Gagal menugaskan anggota.",
       });
     } finally {
       setAssignBusy(false);
@@ -393,8 +491,16 @@ export default function PapercardTemplateManager({
   };
 
   // Release assigned worker
-  const handleReleaseMember = async (memberId: number, memberName: string) => {
-    if (!window.confirm(`Lepas penugasan ${memberName} dari lini ${currentLine?.name}?`)) return;
+  const handleReleaseMember = async (
+    memberId: number,
+    memberName: string
+  ) => {
+    if (
+      !window.confirm(
+        `Lepas penugasan ${memberName} dari lini ${currentLine?.name}?`
+      )
+    )
+      return;
     try {
       await adminApi.releaseMember(memberId);
       setSavedNotice({
@@ -405,7 +511,8 @@ export default function PapercardTemplateManager({
     } catch (err) {
       setSavedNotice({
         type: "error",
-        message: err instanceof Error ? err.message : "Gagal melepas anggota.",
+        message:
+          err instanceof Error ? err.message : "Gagal melepas anggota.",
       });
     } finally {
       setTimeout(() => setSavedNotice(null), 3000);
@@ -414,85 +521,171 @@ export default function PapercardTemplateManager({
 
   return (
     <div className="ptm-root">
-      {/* 1. Header Toolbar (Compact, Clean & Calm) */}
+      {/* 1. Header Toolbar (Compact, Clean & Calm - Refined) */}
       <div className="ptm-topbar">
         <div className="ptm-selectors">
-          <div className="ptm-select-group">
-            <span className="ptm-label-subtle">Workshop:</span>
-            <select
-              value={selectedWorkshopId}
-              onChange={(e) => {
-                setSelectedWorkshopId(e.target.value);
-                const wsLines = lines.filter((l) => l.workshopId === Number(e.target.value));
-                if (wsLines[0]) setSelectedLineCode(wsLines[0].code);
-              }}
-              className="ptm-select-compact"
-            >
-              {workshops.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="ptm-select-group">
-            <span className="ptm-label-subtle">Lini:</span>
-            <select
-              value={selectedLineCode}
-              onChange={(e) => {
-                setSelectedLineCode(e.target.value);
-              }}
-              className="ptm-select-compact"
-            >
-              {availableLines.map((l) => (
-                <option key={l.id} value={l.code}>
-                  {l.name} ({l.code})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Department Tabs */}
-          <div className="ptm-dept-tabs">
-            {DEPARTMENTS.map((d) => (
-              <button
-                key={d.key}
-                type="button"
-                className={`ptm-dept-tab ${selectedDept === d.key ? "is-active" : ""}`}
-                onClick={() => {
-                  setSelectedDept(d.key);
+          {/* Workshop Selector */}
+          <div className="ptm-select-box">
+            <span className="ptm-field-label">WORKSHOP</span>
+            <div className="ptm-select-wrapper">
+              <FactoryIcon size={14} />
+              <select
+                value={selectedWorkshopId}
+                onChange={(e) => {
+                  setSelectedWorkshopId(e.target.value);
+                  const wsLines = lines.filter(
+                    (l) => l.workshopId === Number(e.target.value)
+                  );
+                  if (wsLines[0]) setSelectedLineCode(wsLines[0].code);
                 }}
+                className="ptm-select-native"
               >
-                {d.label}
-              </button>
-            ))}
+                {workshops.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="ptm-select-chevron" />
+            </div>
           </div>
+
+          {/* Line Selector */}
+          <div className="ptm-select-box">
+            <span className="ptm-field-label">LINE</span>
+            <div className="ptm-select-wrapper">
+              <Layers size={14} />
+              <select
+                value={selectedLineCode}
+                onChange={(e) => setSelectedLineCode(e.target.value)}
+                className="ptm-select-native"
+              >
+                {availableLines.map((l) => (
+                  <option key={l.id} value={l.code}>
+                    {l.name} ({l.code})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="ptm-select-chevron" />
+            </div>
+          </div>
+
+
+          <div className="ptm-select-box">
+            <span className="ptm-field-label">Department</span>
+          <div className="ptm-dept-group" role="tablist">
+            
+            {DEPARTMENTS.map((d) => {
+              const isSelected = selectedDept === d.key;
+              const hasTmpl =
+                lineTemplateDepts.has(d.key) ||
+                (templates[`${currentLine?.id}_${d.key}`]?.categories
+                  ?.length ?? 0) > 0;
+
+              return (
+                <button
+                  key={d.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={isSelected}
+                  className={`ptm-dept-pill ${
+                    isSelected ? "is-selected" : ""
+                  }`}
+                  onClick={() => setSelectedDept(d.key)}
+                >
+                  <span
+                    className={`ptm-dept-dot ${
+                      hasTmpl ? "is-filled" : "is-empty"
+                    }`}
+                  >
+                    {hasTmpl ? "●" : "○"}
+                  </span>
+                  <span>{d.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          </div>
+
+
+          {/* Department Pills */}
+
         </div>
 
-        {/* Action Buttons */}
+        {/* Top Right Actions */}
         <div className="ptm-top-actions">
-          <button
-            type="button"
-            className="ptm-btn ptm-btn-ghost"
-            onClick={() => {
-              setCopySourceLineId("");
-              setShowCopyModal(true);
-            }}
-            title="Salin pertanyaan dari lini lain"
+          {/* Status Indicator Badge */}
+          {/* <div
+            className={`ptm-status-badge ${
+              saving ? "is-saving" : "is-unsaved"
+            }`}
           >
-            Salin Template
-          </button>
+            <span className="ptm-status-dot">●</span>
+            <span>{saving ? "Menyimpan..." : "Belum disimpan"}</span>
+          </div> */}
 
-          <button
-            type="button"
-            className="ptm-btn ptm-btn-secondary"
-            onClick={handleOpenBulkModal}
-            title="Terapkan template ini ke beberapa lini sekaligus"
-          >
-            Terapkan Masal
-          </button>
+          {/* Template Actions Dropdown */}
+          <div className="ptm-menu-wrap" ref={templateMenuRef}>
+            <button
+              type="button"
+              className="ptm-btn ptm-btn-dropdown"
+              onClick={() => setShowTemplateMenu((prev) => !prev)}
+            >
+              <span>Template</span>
+              <ChevronDown size={14} />
+            </button>
 
+            {showTemplateMenu && (
+              <div className="ptm-dropdown-menu">
+                <button
+                  type="button"
+                  className="ptm-dropdown-item"
+                  onClick={() => {
+                    setShowTemplateMenu(false);
+                    setCopySourceLineId("");
+                    setShowCopyModal(true);
+                  }}
+                >
+                  Salin dari Lini Lain
+                </button>
+                <button
+                  type="button"
+                  className="ptm-dropdown-item"
+                  onClick={() => {
+                    setShowTemplateMenu(false);
+                    handleOpenBulkModal();
+                  }}
+                >
+                  Terapkan Masal ke Lini Lain
+                </button>
+                <div className="ptm-dropdown-divider" />
+                <button
+                  type="button"
+                  className="ptm-dropdown-item"
+                  onClick={() => {
+                    setShowTemplateMenu(false);
+                    setShowTimeModal(true);
+                  }}
+                >
+                  <Clock size={13} style={{ marginRight: 6 }} />
+                  Window Pengerjaan (Shift 1)
+                </button>
+                <button
+                  type="button"
+                  className="ptm-dropdown-item"
+                  onClick={() => {
+                    setShowTemplateMenu(false);
+                    setShowWorkersModal(true);
+                  }}
+                >
+                  <Users size={13} style={{ marginRight: 6 }} />
+                  Petugas Pengisi ({assignedMembers.length} Orang)
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Primary Save Button */}
           <button
             type="button"
             className="ptm-btn ptm-btn-primary"
@@ -511,155 +704,56 @@ export default function PapercardTemplateManager({
           <button
             type="button"
             onClick={() => setSavedNotice(null)}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", fontWeight: "bold" }}
+            className="ptm-notice-close"
+            aria-label="Tutup notifikasi"
           >
             &times;
           </button>
         </div>
       )}
 
-      {/* 2. Main Two-Column Layout */}
-      <div className="ptm-layout">
-        {/* Left Column: Aturan Window & Petugas Pengisi */}
-        <aside className="ptm-sidebar">
-          {/* Card: Window & Kriteria */}
-          <div className="ptm-card">
-            <h4 className="ptm-card-title">Pengaturan Waktu & Standar</h4>
+      {/* 2. Main Two-Column Layout (Left Category Nav + Right Category Editor) */}
+      <TemplateTreeEditor
+        categories={activeTemplate.categories}
+        saving={saving}
+        onChange={handleTreeChange}
+      />
 
-            <div className="ptm-form-group">
-              <label className="ptm-input-label">Window Pengerjaan (Shift 1)</label>
-              <div className="ptm-time-row">
-                <input
-                  type="text"
-                  value={activeTemplate.windowStart}
-                  onChange={(e) => handleUpdateTemplateMeta({ windowStart: e.target.value })}
-                  className="ptm-input ptm-time-input"
-                  placeholder="08:00"
-                />
-                <span style={{ color: "#94a3b8", fontSize: "12px" }}>s/d</span>
-                <input
-                  type="text"
-                  value={activeTemplate.windowEnd}
-                  onChange={(e) => handleUpdateTemplateMeta({ windowEnd: e.target.value })}
-                  className="ptm-input ptm-time-input"
-                  placeholder="09:00"
-                />
-                <span style={{ fontSize: "11px", color: "#64748b" }}>WIB</span>
-              </div>
-            </div>
-          </div>
+      {/* ======================================================================
+          MODALS
+         ====================================================================== */}
 
-          {/* Card: Petugas Pengisi */}
-          <div className="ptm-card">
-            <h4 className="ptm-card-title">
-              <span>Petugas Pengisi</span>
-              <span className={`ptm-badge-count ${assignedMembers.length > 0 ? "is-ok" : "is-empty"}`}>
-                {assignedMembers.length} Orang
-              </span>
-            </h4>
-
-            {assignedMembers.length === 0 ? (
-              <div className="ptm-empty-worker-note">
-                Belum ada personil pengisi {selectedDept} di lini ini.
-              </div>
-            ) : (
-              <div className="ptm-worker-chips">
-                {assignedMembers.map((m) => (
-                  <div key={m.id ?? m.employeeId} className="ptm-worker-chip">
-                    <div className="ptm-worker-info">
-                      <span className="ptm-worker-name">{m.name}</span>
-                      <span className="ptm-worker-sub">
-                        NIK: {m.employeeId} {((m as any).role === "leader" || selectedDept === "PROD") && "· Leader"}
-                      </span>
-                    </div>
-                    {m.id && (
-                      <button
-                        type="button"
-                        className="ptm-btn-remove-worker"
-                        onClick={() => handleReleaseMember(m.id!, m.name ?? "Anggota")}
-                        title="Lepas dari lini ini"
-                      >
-                        &times;
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Quick Assign Form */}
-            <form onSubmit={handleAssignMember} className="ptm-assign-row">
-              <select
-                value={assigningEmpId}
-                onChange={(e) => setAssigningEmpId(e.target.value)}
-                className="ptm-input"
-                style={{ fontSize: "0.78rem" }}
-              >
-                <option value="">+ Tugaskan Karyawan...</option>
-                {candidateEmployees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.name} ({emp.dept ?? "-"})
-                  </option>
-                ))}
-              </select>
-              <button
-                type="submit"
-                disabled={!assigningEmpId || assignBusy}
-                className="ptm-btn ptm-btn-secondary"
-                style={{ padding: "4px 10px", fontSize: "0.76rem" }}
-              >
-                +
-              </button>
-            </form>
-          </div>
-        </aside>
-
-        {/* Right Column: Questions & Checklist Categories */}
-        <main className="ptm-main-pane">
-          {/* Meta Bar */}
-          <div className="ptm-meta-bar">
-            <input
-              type="text"
-              value={activeTemplate.name}
-              onChange={(e) => handleUpdateTemplateMeta({ name: e.target.value })}
-              className="ptm-meta-title-input"
-              title="Klik untuk mengubah nama template"
-            />
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              {/* <span className="ptm-meta-badge">{activeTemplate.version}</span>   */}
-              <span className="ptm-meta-badge">{totalQuestionsCount} Pengecekan</span>
-            </div>
-          </div>
-
-          <TemplateTreeEditor
-            categories={activeTemplate.categories}
-            saving={saving}
-            onChange={handleTreeChange}
-          />
-        </main>
-      </div>
-
-      {/* MODAL: Bulk Apply to Other Lines */}
+      {/* MODAL 1: Bulk Apply to Other Lines */}
       {showBulkModal && (
-        <div className="ptm-modal-backdrop" onClick={() => setShowBulkModal(false)}>
-          <div className="ptm-modal-box" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="ptm-modal-backdrop"
+          onClick={() => setShowBulkModal(false)}
+        >
+          <div
+            className="ptm-modal-box"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="ptm-modal-head">
-              <h3 className="ptm-modal-title">Terapkan Template ke Lini Lain</h3>
+              <h3 className="ptm-modal-title">
+                Terapkan Template ke Lini Lain
+              </h3>
               <button
                 type="button"
                 onClick={() => setShowBulkModal(false)}
-                style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#64748b" }}
+                className="ptm-modal-close"
               >
                 &times;
               </button>
             </div>
 
             <p className="ptm-modal-desc">
-              Pilih lini target. Template <strong>{selectedDept}</strong> yang sedang dibuka akan disalin dan disimpan langsung ke database seluruh lini terpilih.
+              Pilih lini target. Template <strong>{selectedDept}</strong>{" "}
+              yang sedang dibuka akan disalin dan disimpan langsung ke
+              database seluruh lini terpilih.
             </p>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b" }}>
+            <div className="ptm-modal-subheader">
+              <span className="ptm-modal-count-label">
                 LINI TARGET ({selectedTargetLineIds.length} Dipilih):
               </span>
               <button
@@ -671,9 +765,11 @@ export default function PapercardTemplateManager({
                     setSelectedTargetLineIds(lines.map((l) => l.id));
                   }
                 }}
-                style={{ background: "none", border: "none", color: "#008a4f", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
+                className="ptm-modal-toggle-all"
               >
-                {selectedTargetLineIds.length === lines.length ? "Hapus Semua" : "Pilih Semua"}
+                {selectedTargetLineIds.length === lines.length
+                  ? "Hapus Semua"
+                  : "Pilih Semua"}
               </button>
             </div>
 
@@ -681,23 +777,37 @@ export default function PapercardTemplateManager({
               {lines.map((l) => {
                 const checked = selectedTargetLineIds.includes(l.id);
                 return (
-                  <label key={l.id} className={`ptm-modal-item ${checked ? "is-selected" : ""}`}>
+                  <label
+                    key={l.id}
+                    className={`ptm-modal-item ${
+                      checked ? "is-selected" : ""
+                    }`}
+                  >
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedTargetLineIds((prev) => [...prev, l.id]);
+                          setSelectedTargetLineIds((prev) => [
+                            ...prev,
+                            l.id,
+                          ]);
                         } else {
-                          setSelectedTargetLineIds((prev) => prev.filter((id) => id !== l.id));
+                          setSelectedTargetLineIds((prev) =>
+                            prev.filter((id) => id !== l.id)
+                          );
                         }
                       }}
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <strong style={{ display: "block", fontSize: "0.82rem" }}>
+                      <strong
+                        style={{ display: "block", fontSize: "0.82rem" }}
+                      >
                         {l.name} ({l.code})
                       </strong>
-                      <span style={{ fontSize: "0.72rem", color: "#64748b" }}>
+                      <span
+                        style={{ fontSize: "0.72rem", color: "#64748b" }}
+                      >
                         {l.workshopName}
                       </span>
                     </div>
@@ -717,50 +827,76 @@ export default function PapercardTemplateManager({
               <button
                 type="button"
                 className="ptm-btn ptm-btn-primary"
-                disabled={bulkApplying || selectedTargetLineIds.length === 0}
+                disabled={
+                  bulkApplying || selectedTargetLineIds.length === 0
+                }
                 onClick={handleExecuteBulkApply}
               >
-                {bulkApplying ? "Menerapkan..." : `Terapkan ke ${selectedTargetLineIds.length} Lini`}
+                {bulkApplying
+                  ? "Menerapkan..."
+                  : `Terapkan ke ${selectedTargetLineIds.length} Lini`}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL: Copy Template From Another Line */}
+      {/* MODAL 2: Copy Template From Another Line */}
       {showCopyModal && (
-        <div className="ptm-modal-backdrop" onClick={() => setShowCopyModal(false)}>
-          <div className="ptm-modal-box" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="ptm-modal-backdrop"
+          onClick={() => setShowCopyModal(false)}
+        >
+          <div
+            className="ptm-modal-box"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="ptm-modal-head">
               <h3 className="ptm-modal-title">Salin dari Lini Lain</h3>
               <button
                 type="button"
                 onClick={() => setShowCopyModal(false)}
-                style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#64748b" }}
+                className="ptm-modal-close"
               >
                 &times;
               </button>
             </div>
 
             <p className="ptm-modal-desc">
-              Pilih lini sumber. Pertanyaan departemen <strong>{selectedDept}</strong> akan ditarik ke editor lini <strong>{currentLine?.name}</strong>. Anda dapat mengedit dan menyimpannya.
+              Pilih lini sumber. Pertanyaan departemen{" "}
+              <strong>{selectedDept}</strong> akan ditarik ke editor lini{" "}
+              <strong>{currentLine?.name}</strong>. Anda dapat mengedit dan
+              menyimpannya.
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+              }}
+            >
+              <label
+                style={{
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  color: "#64748b",
+                }}
+              >
                 PILIH LINI SUMBER:
               </label>
               <select
                 value={copySourceLineId}
                 onChange={(e) => setCopySourceLineId(e.target.value)}
-                className="ptm-input"
+                className="ptm-select-compact"
+                style={{ width: "100%" }}
               >
                 <option value="">-- Pilih Lini Sumber --</option>
                 {lines
                   .filter((l) => l.id !== currentLine?.id)
                   .map((l) => (
                     <option key={l.id} value={l.id}>
-                      {l.name} ({l.code}) — {l.workshopName}
+                      {l.name} ({l.code}) - {l.workshopName}
                     </option>
                   ))}
               </select>
@@ -780,7 +916,241 @@ export default function PapercardTemplateManager({
                 disabled={copyLoading || !copySourceLineId}
                 onClick={handleExecuteCopy}
               >
-                {copyLoading ? "Menyalin..." : "Salin ke Editor"}
+                {copyLoading ? "Menyalin..." : "Salin Pertanyaan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: Window Pengerjaan & Standar Kriteria */}
+      {showTimeModal && (
+        <div
+          className="ptm-modal-backdrop"
+          onClick={() => setShowTimeModal(false)}
+        >
+          <div
+            className="ptm-modal-box"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ptm-modal-head">
+              <h3 className="ptm-modal-title">
+                Pengaturan Waktu & Standar (Shift 1)
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowTimeModal(false)}
+                className="ptm-modal-close"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "14px",
+                marginTop: "10px",
+              }}
+            >
+              <div className="ptm-form-group">
+                <label className="ptm-input-label">
+                  Window Pengerjaan (Shift 1)
+                </label>
+                <div className="ptm-time-row">
+                  <input
+                    type="text"
+                    value={activeTemplate.windowStart}
+                    onChange={(e) =>
+                      handleUpdateTemplateMeta({
+                        windowStart: e.target.value,
+                      })
+                    }
+                    className="ptm-input ptm-time-input"
+                    placeholder="08:00"
+                  />
+                  <span style={{ color: "#94a3b8", fontSize: "12px" }}>
+                    s/d
+                  </span>
+                  <input
+                    type="text"
+                    value={activeTemplate.windowEnd}
+                    onChange={(e) =>
+                      handleUpdateTemplateMeta({
+                        windowEnd: e.target.value,
+                      })
+                    }
+                    className="ptm-input ptm-time-input"
+                    placeholder="09:00"
+                  />
+                  <span style={{ fontSize: "11px", color: "#64748b" }}>
+                    WIB
+                  </span>
+                </div>
+              </div>
+
+              <div className="ptm-form-group">
+                <label className="ptm-input-label">
+                  Kriteria Penilaian OK
+                </label>
+                <input
+                  type="text"
+                  value={activeTemplate.okRule}
+                  onChange={(e) =>
+                    handleUpdateTemplateMeta({ okRule: e.target.value })
+                  }
+                  className="ptm-input"
+                  placeholder="Contoh: OK jika seluruh pos normal."
+                />
+              </div>
+
+              <div className="ptm-form-group">
+                <label className="ptm-input-label">
+                  Kriteria Penilaian NG
+                </label>
+                <input
+                  type="text"
+                  value={activeTemplate.ngRule}
+                  onChange={(e) =>
+                    handleUpdateTemplateMeta({ ngRule: e.target.value })
+                  }
+                  className="ptm-input"
+                  placeholder="Contoh: NG jika terdapat kelainan pos."
+                />
+              </div>
+            </div>
+
+            <div className="ptm-modal-foot">
+              <button
+                type="button"
+                className="ptm-btn ptm-btn-ghost"
+                onClick={() => setShowTimeModal(false)}
+              >
+                Tutup
+              </button>
+              <button
+                type="button"
+                className="ptm-btn ptm-btn-primary"
+                onClick={async () => {
+                  await handleSaveToDatabase();
+                  setShowTimeModal(false);
+                }}
+              >
+                Simpan ke Database
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: Petugas Pengisi Papercard */}
+      {showWorkersModal && (
+        <div
+          className="ptm-modal-backdrop"
+          onClick={() => setShowWorkersModal(false)}
+        >
+          <div
+            className="ptm-modal-box"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ptm-modal-head">
+              <h3 className="ptm-modal-title">
+                Petugas Pengisi Papercard ({selectedDept})
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowWorkersModal(false)}
+                className="ptm-modal-close"
+              >
+                &times;
+              </button>
+            </div>
+
+            <p className="ptm-modal-desc">
+              Daftar anggota yang ditugaskan mengisi form papercard{" "}
+              <strong>{selectedDept}</strong> pada lini{" "}
+              <strong>{currentLine?.name}</strong>.
+            </p>
+
+            <div style={{ marginTop: "10px" }}>
+              {assignedMembers.length === 0 ? (
+                <div className="ptm-empty-worker-note">
+                  Belum ada personil pengisi {selectedDept} di lini ini.
+                </div>
+              ) : (
+                <div className="ptm-worker-chips">
+                  {assignedMembers.map((m) => (
+                    <div
+                      key={m.id ?? m.employeeId}
+                      className="ptm-worker-chip"
+                    >
+                      <div className="ptm-worker-info">
+                        <span className="ptm-worker-name">{m.name}</span>
+                        <span className="ptm-worker-sub">
+                          NIK: {m.employeeId}{" "}
+                          {((m as any).role === "leader" ||
+                            selectedDept === "PROD") &&
+                            "· Leader"}
+                        </span>
+                      </div>
+                      {m.id && (
+                        <button
+                          type="button"
+                          className="ptm-btn-remove-worker"
+                          onClick={() =>
+                            handleReleaseMember(
+                              m.id!,
+                              m.name ?? "Anggota"
+                            )
+                          }
+                          title="Lepas dari lini ini"
+                        >
+                          &times;
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Quick Assign Form */}
+              <form
+                onSubmit={handleAssignMember}
+                className="ptm-assign-row"
+                style={{ marginTop: "12px" }}
+              >
+                <select
+                  value={assigningEmpId}
+                  onChange={(e) => setAssigningEmpId(e.target.value)}
+                  className="ptm-input"
+                  style={{ fontSize: "0.82rem" }}
+                >
+                  <option value="">+ Tugaskan Karyawan...</option>
+                  {candidateEmployees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.dept ?? "-"})
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  disabled={!assigningEmpId || assignBusy}
+                  className="ptm-btn ptm-btn-primary"
+                  style={{ padding: "6px 14px", fontSize: "0.82rem" }}
+                >
+                  Tugaskan
+                </button>
+              </form>
+            </div>
+
+            <div className="ptm-modal-foot">
+              <button
+                type="button"
+                className="ptm-btn ptm-btn-primary"
+                onClick={() => setShowWorkersModal(false)}
+              >
+                Selesai
               </button>
             </div>
           </div>

@@ -3134,3 +3134,27 @@
   opacity: 0.45;
 }
 
+.dm-admin-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dml-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--dm-admin-primary, #046a38);
+
+  color: var(--dm-admin-primary-light, #ffffff);
+  flex-shrink: 0;
+}
+
+.dm-admin-sidebar-brand strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dm-admin-text, #111827);
+}

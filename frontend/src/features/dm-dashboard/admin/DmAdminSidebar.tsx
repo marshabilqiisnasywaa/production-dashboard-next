@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { IconLogout } from "@/components/ui/icons";
 import { setToken } from "../api";
+import { Gauge as IconGauge } from "lucide-react";
 
 
 export type DmAdminTabKey =
@@ -175,19 +176,12 @@ export default function DmAdminSidebar({
   return (
     <aside className="dm-admin-sidebar">
       {/* Brand / Logo */}
-      <div className="dm-admin-sidebar-brand">
-        <div>
-          <img
-            src="/assets/dm/oppo-green-logo.svg"
-            alt=""
-            width={50}
-            height={38}
-          />
-        </div>
-        <div>
-          <h2 className="dm-admin-brand-title">Admin Page</h2>
-        </div>
-      </div>
+<div className="dm-admin-sidebar-brand">
+  <span className="dml-logo">
+    <IconGauge size={22} />
+  </span>
+  <strong>DM Digital</strong>
+</div>
 
       {/* Menu Navigasi */}
       <nav className="dm-admin-sidebar-nav" aria-label="Menu Admin">
