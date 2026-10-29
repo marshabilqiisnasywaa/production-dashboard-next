@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { adminApi, workshopMeetingApi } from "../api";
 import type { DmEmployee, DmWorkshop } from "../api";
 import { FactoryIcon, PlusIcon } from "./AdminIcons";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 interface WorkshopManagerProps {
   workshops: DmWorkshop[];
@@ -123,7 +124,7 @@ export default function WorkshopManager({ workshops, onCreate, onRename, onDelet
         <div>
           <div className="dm-panel-titlebar">
             <h3 id="ws-manager-title" className="dm-panel-title">Workshop</h3>
-            <span className="dm-pill">{workshops.length} Terdaftar</span>
+            {/* <span className="dm-pill">{workshops.length} Terdaftar</span> */}
           </div>
           <p className="dm-panel-sub">Buat workshop, tambahkan DM, lalu buat lini dan atur timnya.</p>
         </div>
@@ -137,191 +138,339 @@ export default function WorkshopManager({ workshops, onCreate, onRename, onDelet
 
       <ul className="dm-ws-grid">
         {workshops.map((workshop) => (
-          <li key={workshop.id} className="dm-ws-card">
-            {editingId === workshop.id ? (
-              <form className="dm-ws-edit" onSubmit={(event) => submitRename(event, workshop.id)}>
-                <label className="dm-ws-edit-label" htmlFor={`ws-edit-${workshop.id}`}>Nama workshop</label>
-                <input
-                  id={`ws-edit-${workshop.id}`}
-                  className="dm-admin-input dm-ws-input"
-                  value={editName}
-                  onChange={(event) => setEditName(event.target.value)}
-                  autoFocus
-                />
-                <div className="dm-ws-actions">
-                  <button type="button" className="dm-admin-btn is-primary" onClick={() => onAddDm(workshop)}>
-                    <PlusIcon size={14} /> Tambah DM
-                  </button>
-                  <button type="submit" className="dm-admin-btn is-primary" disabled={busy}>Simpan</button>
-                  <button type="button" className="dm-admin-btn is-tonal" onClick={() => setEditingId(null)}>
-                    Batal
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <>
-                <div className="dm-ws-card-top">
-                  <span className="dm-icon-tile">
-                    <FactoryIcon size={18} />
-                  </span>
-                  <div className="dm-ws-card-text">
-                    <span className="dm-ws-name">{workshop.name}</span>
-                    {workshop.lineCount > 0 ? (
-                      <span className="dm-pill is-ok">
-                        <span className="dm-pill-dot" aria-hidden="true" />
-                        {workshop.lineCount} Line
-                      </span>
-                    ) : (
-                      <span className="dm-pill">Belum ada line</span>
-                    )}
-                  </div>
-                </div>
+
+<li key={workshop.id} className="dm-ws-card">
+  {editingId === workshop.id ? (
+    <form
+      className="dm-ws-edit"
+      onSubmit={(event) => submitRename(event, workshop.id)}
+    >
+      <label
+        className="dm-ws-edit-label"
+        htmlFor={`ws-edit-${workshop.id}`}
+      >
+        Nama workshop
+      </label>
+
+      <input
+        id={`ws-edit-${workshop.id}`}
+        className="dm-admin-input dm-ws-input"
+        value={editName}
+        onChange={(event) => setEditName(event.target.value)}
+        autoFocus
+      />
+
+      <div className="dm-ws-actions">
+        <button
+          type="button"
+          className="dm-admin-btn is-primary"
+          onClick={() => onAddDm(workshop)}
+        >
+          <PlusIcon size={14} /> Tambah DM
+        </button>
+
+        <button
+          type="submit"
+          className="dm-admin-btn is-primary"
+          disabled={busy}
+        >
+          Simpan
+        </button>
+
+        <button
+          type="button"
+          className="dm-admin-btn is-tonal"
+          onClick={() => setEditingId(null)}
+        >
+          Batal
+        </button>
+      </div>
+    </form>
+  ) : (
+    <>
+      <div className="dm-ws-card-top">
+        <span className="dm-icon-tile">
+          <FactoryIcon size={18} />
+        </span>
+
+        <div className="dm-ws-card-text">
+          <span className="dm-ws-name">{workshop.name}</span>
+
+          {workshop.lineCount > 0 ? (
+            <span className="dm-pill is-ok">
+              <span className="dm-pill-dot" aria-hidden="true" />
+              {workshop.lineCount} Line
+            </span>
+          ) : (
+            <span className="dm-pill">Belum ada line</span>
+          )}
+        </div>
+
+        <details className="dm-ws-menu">
+          <summary
+            className="dm-ws-menu-trigger"
+            aria-label={`Aksi untuk ${workshop.name}`}
+            title="Aksi workshop"
+          >
+            <MoreHorizontal size={20} />
+          </summary>
+
+          <div className="dm-ws-menu-popover">
+            <button
+              type="button"
+              className="dm-ws-menu-item"
+              onClick={(event) => {
+                setEditingId(workshop.id);
+                setEditName(workshop.name);
+                setAdding(false);
+                setError(null);
+                event.currentTarget
+                  .closest("details")
+                  ?.removeAttribute("open");
+              }}
+            >
+              <Pencil size={15} />
+              Ubah Nama
+            </button>
+
+            <button
+              type="button"
+              className="dm-ws-menu-item is-danger"
+              disabled={busy || workshop.lineCount > 0}
+              title={
+                workshop.lineCount > 0
+                  ? "Masih punya line. Hapus atau pindahkan linenya dulu."
+                  : undefined
+              }
+              onClick={() => run(() => onDelete(workshop))}
+            >
+              <Trash2 size={15} />
+              Hapus
+            </button>
+          </div>
+        </details>
+      </div>
+
+      <button
+        type="button"
+        className="dm-admin-btn is-tonal dm-ws-sup-add"
+        aria-haspopup="dialog"
+        onClick={() => {
+          setSupervisorWorkshopId(workshop.id);
+          setAddingSupervisorFor(null);
+          setError(null);
+        }}
+      >
+        Kelola Supervisor
+        {!supervisorsLoading &&
+          !supervisorsError &&
+          ` (${(assigned[workshop.id] ?? []).length})`}
+      </button>
+
+      {supervisorWorkshopId === workshop.id && (
+        <dialog
+          ref={supervisorDialogRef}
+          className="dm-ws-sup-dialog"
+          aria-labelledby={`ws-supervisors-title-${workshop.id}`}
+          onCancel={(event) => {
+            event.preventDefault();
+            if (!busy) setSupervisorWorkshopId(null);
+          }}
+          onClick={(event) => {
+            if (event.target !== event.currentTarget || busy) return;
+
+            const bounds = event.currentTarget.getBoundingClientRect();
+
+            if (
+              event.clientX < bounds.left ||
+              event.clientX > bounds.right ||
+              event.clientY < bounds.top ||
+              event.clientY > bounds.bottom
+            ) {
+              setSupervisorWorkshopId(null);
+            }
+          }}
+        >
+          <div className="dm-ws-sup-dialog-head">
+            <div>
+              <h3 id={`ws-supervisors-title-${workshop.id}`}>
+                Supervisor Workshop
+              </h3>
+              <p>{workshop.name}</p>
+            </div>
+
+            <button
+              type="button"
+              className="dm-admin-btn is-tonal"
+              disabled={busy}
+              onClick={() => setSupervisorWorkshopId(null)}
+            >
+              Tutup
+            </button>
+          </div>
+
+          <div className="dm-ws-supervisors">
+            <span className="dm-ws-edit-label">
+              Supervisor Workshop Meeting
+              {!supervisorsLoading &&
+                !supervisorsError &&
+                ` (${(assigned[workshop.id] ?? []).length})`}
+            </span>
+
+            {supervisorsLoading ? (
+              <span role="status">Memuat supervisor...</span>
+            ) : supervisorsError ? (
+              <div role="alert">
+                <p>{supervisorsError}</p>
                 <button
                   type="button"
-                  className="dm-admin-btn is-tonal dm-ws-sup-add"
-                  aria-haspopup="dialog"
-                  onClick={() => {
-                    setSupervisorWorkshopId(workshop.id);
-                    setAddingSupervisorFor(null);
-                    setError(null);
-                  }}
+                  className="dm-admin-btn is-tonal"
+                  onClick={() =>
+                    setSupervisorsRetry((value) => value + 1)
+                  }
                 >
-                  Kelola Supervisor{!supervisorsLoading && !supervisorsError && ` (${(assigned[workshop.id] ?? []).length})`}
+                  Coba lagi
                 </button>
-                {supervisorWorkshopId === workshop.id && (
-                <dialog
-                  ref={supervisorDialogRef}
-                  className="dm-ws-sup-dialog"
-                  aria-labelledby={`ws-supervisors-title-${workshop.id}`}
-                  onCancel={(event) => {
-                    event.preventDefault();
-                    if (!busy) setSupervisorWorkshopId(null);
-                  }}
-                  onClick={(event) => {
-                    if (event.target !== event.currentTarget || busy) return;
-                    const bounds = event.currentTarget.getBoundingClientRect();
-                    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) {
-                      setSupervisorWorkshopId(null);
-                    }
-                  }}
-                >
-                <div className="dm-ws-sup-dialog-head">
-                  <div>
-                    <h3 id={`ws-supervisors-title-${workshop.id}`}>Supervisor Workshop</h3>
-                    <p>{workshop.name}</p>
-                  </div>
-                  <button type="button" className="dm-admin-btn is-tonal" disabled={busy} onClick={() => setSupervisorWorkshopId(null)}>
-                    Tutup
-                  </button>
-                </div>
-                <div className="dm-ws-supervisors">
-                  <span className="dm-ws-edit-label">
-                    Supervisor Workshop Meeting{!supervisorsLoading && !supervisorsError && ` (${(assigned[workshop.id] ?? []).length})`}
-                  </span>
-                  {supervisorsLoading ? <span role="status">Memuat supervisor...</span> : supervisorsError ? (
-                    <div role="alert">
-                      <p>{supervisorsError}</p>
-                      <button type="button" className="dm-admin-btn is-tonal" onClick={() => setSupervisorsRetry((value) => value + 1)}>
-                        Coba lagi
-                      </button>
-                    </div>
-                  ) : <>
-                  {(assigned[workshop.id] ?? []).length === 0 && <span>Belum ada supervisor ditambahkan.</span>}
-                  <ul className="dm-ws-sup-list">
-                    {(assigned[workshop.id] ?? []).map((id) => {
-                      const person = supervisors.find((item) => item.id === id);
-                      return (
-                        <li key={id} className="dm-ws-sup-row">
-                          <span className="dm-ws-sup-person">
-                            <span>{person ? person.name : `Supervisor #${id}`}</span>
-                            {person && <small>{person.employeeId}</small>}
+              </div>
+            ) : (
+              <>
+                {(assigned[workshop.id] ?? []).length === 0 && (
+                  <span>Belum ada supervisor ditambahkan.</span>
+                )}
+
+                <ul className="dm-ws-sup-list">
+                  {(assigned[workshop.id] ?? []).map((id) => {
+                    const person = supervisors.find(
+                      (item) => item.id === id
+                    );
+
+                    return (
+                      <li key={id} className="dm-ws-sup-row">
+                        <span className="dm-ws-sup-person">
+                          <span>
+                            {person
+                              ? person.name
+                              : `Supervisor #${id}`}
                           </span>
-                          <button
-                            type="button"
-                            className="dm-admin-btn is-danger-soft"
-                            aria-label={`Lepas ${person?.name ?? id} dari ${workshop.name}`}
-                            disabled={busy}
-                            onClick={() => changeSupervisors(workshop.id, (assigned[workshop.id] ?? []).filter((x) => x !== id))}
-                          >
-                            Hapus
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  {addingSupervisorFor === workshop.id ? (
+                          {person && <small>{person.employeeId}</small>}
+                        </span>
+
+                        <button
+                          type="button"
+                          className="dm-admin-btn is-danger-soft"
+                          aria-label={`Lepas ${
+                            person?.name ?? id
+                          } dari ${workshop.name}`}
+                          disabled={busy}
+                          onClick={() =>
+                            changeSupervisors(
+                              workshop.id,
+                              (assigned[workshop.id] ?? []).filter(
+                                (x) => x !== id
+                              )
+                            )
+                          }
+                        >
+                          Hapus
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                {addingSupervisorFor === workshop.id ? (
                   <div className="dm-ws-sup-picker">
-                  <select
-                    autoFocus
-                    className="dm-admin-input"
-                    aria-label={`Tambah supervisor ke ${workshop.name}`}
-                    value=""
-                    disabled={busy}
-                    onChange={(event) => {
-                      if (event.target.value) changeSupervisors(workshop.id, [...(assigned[workshop.id] ?? []), Number(event.target.value)]);
-                    }}
-                  >
-                    <option value="">
-                      {supervisors.every((person) => (assigned[workshop.id] ?? []).includes(person.id)) ? "Semua supervisor sudah ditambahkan" : "Pilih supervisor"}
-                    </option>
-                    {supervisors
-                      .filter((item) => !(assigned[workshop.id] ?? []).includes(item.id))
-                      .map((item) => (
-                        <option key={item.id} value={item.id}>{item.name} ({item.employeeId})</option>
-                      ))}
-                  </select>
-                  <button type="button" className="dm-admin-btn is-tonal" disabled={busy} onClick={() => setAddingSupervisorFor(null)}>
-                    Tutup
-                  </button>
-                  </div>
-                  ) : (
+                    <select
+                      autoFocus
+                      className="dm-admin-input"
+                      aria-label={`Tambah supervisor ke ${workshop.name}`}
+                      value=""
+                      disabled={busy}
+                      onChange={(event) => {
+                        if (event.target.value) {
+                          changeSupervisors(workshop.id, [
+                            ...(assigned[workshop.id] ?? []),
+                            Number(event.target.value),
+                          ]);
+                        }
+                      }}
+                    >
+                      <option value="">
+                        {supervisors.every((person) =>
+                          (assigned[workshop.id] ?? []).includes(
+                            person.id
+                          )
+                        )
+                          ? "Semua supervisor sudah ditambahkan"
+                          : "Pilih supervisor"}
+                      </option>
+
+                      {supervisors
+                        .filter(
+                          (item) =>
+                            !(assigned[workshop.id] ?? []).includes(
+                              item.id
+                            )
+                        )
+                        .map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name} ({item.employeeId})
+                          </option>
+                        ))}
+                    </select>
+
                     <button
                       type="button"
-                      className="dm-admin-btn is-tonal dm-ws-sup-add"
-                      disabled={busy || !supervisors.some((person) => !(assigned[workshop.id] ?? []).includes(person.id))}
-                      onClick={() => setAddingSupervisorFor(workshop.id)}
+                      className="dm-admin-btn is-tonal"
+                      disabled={busy}
+                      onClick={() => setAddingSupervisorFor(null)}
                     >
-                      <PlusIcon size={14} /> Tambah supervisor
+                      Tutup
                     </button>
-                  )}
-                  {supervisors.length === 0 && <span>Belum ada akun supervisor aktif.</span>}
-                  </>}
-                </div>
-                {error && <p className="dm-admin-inline-error" role="alert">{error}</p>}
-                <p className="dm-ws-sup-note" role="status">{busy ? "Menyimpan perubahan..." : "Penambahan dan penghapusan langsung disimpan."}</p>
-                </dialog>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="dm-admin-btn is-tonal dm-ws-sup-add"
+                    disabled={
+                      busy ||
+                      !supervisors.some(
+                        (person) =>
+                          !(assigned[workshop.id] ?? []).includes(
+                            person.id
+                          )
+                      )
+                    }
+                    onClick={() => setAddingSupervisorFor(workshop.id)}
+                  >
+                    <PlusIcon size={14} /> Tambah supervisor
+                  </button>
                 )}
-                <div className="dm-ws-actions">
-                  <button type="button" className="dm-admin-btn is-primary" onClick={() => onAddDm(workshop)}>
-                    <PlusIcon size={14} /> Tambah DM
-                  </button>
-                  <button
-                    type="button"
-                    className="dm-admin-btn is-tonal"
-                    aria-label={`Ubah nama ${workshop.name}`}
-                    onClick={() => {
-                      setEditingId(workshop.id);
-                      setEditName(workshop.name);
-                      setAdding(false);
-                      setError(null);
-                    }}
-                  >
-                    Ubah Nama
-                  </button>
-                  <button
-                    type="button"
-                    className="dm-admin-btn is-danger-soft"
-                    aria-label={`Hapus ${workshop.name}`}
-                    disabled={busy}
-                    title={workshop.lineCount > 0 ? "Masih punya line. Hapus atau pindahkan linenya dulu." : undefined}
-                    onClick={() => run(() => onDelete(workshop))}
-                  >
-                    Hapus
-                  </button>
-                </div>
+
+                {supervisors.length === 0 && (
+                  <span>Belum ada akun supervisor aktif.</span>
+                )}
               </>
             )}
-          </li>
+          </div>
+
+          {error && (
+            <p className="dm-admin-inline-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          <p className="dm-ws-sup-note" role="status">
+            {busy
+              ? "Menyimpan perubahan..."
+              : "Penambahan dan penghapusan langsung disimpan."}
+          </p>
+        </dialog>
+      )}
+    </>
+  )}
+</li>
+
         ))}
 
         <li className="dm-ws-slot">

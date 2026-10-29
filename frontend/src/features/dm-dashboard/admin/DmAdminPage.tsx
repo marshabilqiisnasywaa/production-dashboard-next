@@ -543,7 +543,7 @@ function AdminWorkspace({
           </div>
           <div className="dm-admin-topbar-actions">
             <span className="dm-admin-topbar-crumb">
-              Masuk sebagai {username}
+              {username}
             </span>
             <NotificationBellButton
               lineId={0}
@@ -667,18 +667,17 @@ function AdminWorkspace({
                       className="dm-panel dm-lines-card"
                       aria-labelledby="lines-title"
                     >
-                      <div className="dm-panel-head">
+                      
+                      <div className="dm-panel-head dm-lines-panel-head">
                         <div>
                           <h3 id="lines-title" className="dm-panel-title">
                             Daftar Line Produksi
                           </h3>
                           <p className="dm-panel-sub">
-                            Tiap Line punya satu dashboard dengan link sendiri
-                            untuk dipasang di layar Line. Lini dikelompokkan
-                            berdasarkan DM Meeting.
+                            Setiap Line memiliki dashboard dan link sendiri untuk ditampilkan di layar Line.
                           </p>
                         </div>
-                        <button
+                        {/* <button
                           type="button"
                           className="dm-admin-btn is-primary dm-btn-add"
                           disabled={groups.length === 0}
@@ -698,17 +697,9 @@ function AdminWorkspace({
                         >
                           <PlusIcon size={14} />
                           Tambah Line Baru
-                        </button>
-                      </div>
+                        </button> */}
 
-                      {workshops.length === 0 ? (
-                        <p className="dm-lines-empty">
-                          {workshops.length === 0
-                            ? "Belum ada line. Tambahkan workshop lebih dulu, lalu buat line di dalamnya."
-                            : 'Belum ada line. Klik "Tambah Line Baru" untuk membuat line dan dashboard pertama.'}
-                        </p>
-                      ) : (
-                        <>
+                        {workshops.length > 0 && (
                           <div className="dm-lines-toolbar">
                             <div className="dm-table-search-box">
                               <label
@@ -787,14 +778,24 @@ function AdminWorkspace({
                               <option value="idle">IDLE</option>
                               <option value="stopped">STOPPED</option>
                             </select>
-                            <span
+                            {/* <span
                               className="dm-pill dm-lines-count"
                               role="status"
                             >
                               {filteredLines.length} dari {lines.length} line
-                            </span>
+                            </span> */}
                           </div>
+                        )}
+                      </div>
 
+                      {workshops.length === 0 ? (
+                        <p className="dm-lines-empty">
+                          {workshops.length === 0
+                            ? "Belum ada line. Tambahkan workshop lebih dulu, lalu buat line di dalamnya."
+                            : 'Belum ada line. Klik "Tambah Line Baru" untuk membuat line dan dashboard pertama.'}
+                        </p>
+                      ) : (
+                        <>
                           {filteredLines.length === 0 &&
                           (query !== "" || statusFilter !== "all") ? (
                             <div className="dm-lines-none">
@@ -831,10 +832,10 @@ function AdminWorkspace({
                                         {workshop.items.length} line
                                       </span>
                                     </h4>
-                                    <p className="dm-lines-empty">
+                                    {/* <p className="dm-lines-empty">
                                       Belum ada DM. Tambahkan DM sebelum membuat
                                       lini.
-                                    </p>
+                                    </p> */}
                                     <button
                                       type="button"
                                       className="dm-admin-btn is-primary"

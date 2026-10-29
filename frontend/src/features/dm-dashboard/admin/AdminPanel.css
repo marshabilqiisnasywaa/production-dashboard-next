@@ -1951,7 +1951,7 @@
 }
 
 .dm-table-search-box {
-  flex: 1 1 14rem;
+  /* flex: 1 1 14rem; */
 }
 
 .dm-table-filter-select {
@@ -2310,6 +2310,86 @@
   margin-left: auto;
 }
 
+.dm-lines-panel-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+}
+
+.dm-lines-panel-head > div:first-child {
+  min-width: 0;
+}
+
+.dm-lines-panel-head .dm-panel-title {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.dm-lines-panel-head .dm-panel-sub {
+  margin-top: 0.25rem;
+  line-height: 1.5;
+}
+
+.dm-lines-panel-head .dm-lines-toolbar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.dm-lines-panel-head .dm-lines-toolbar .dm-table-search-box {
+  flex: 0 1 23rem;
+  /* width: 23rem; */
+  min-width: 12rem;
+  max-width: 23rem;
+}
+
+.dm-lines-panel-head .dm-lines-toolbar .dm-table-filter-select {
+  flex: 0 0 auto;
+  min-width: 8.5rem;
+  max-width: none;
+}
+
+/* Stack only when the available width is insufficient */
+@media (max-width: 1050px) {
+  .dm-lines-panel-head {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .dm-lines-panel-head .dm-lines-toolbar {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .dm-lines-panel-head .dm-lines-toolbar .dm-table-search-box {
+    flex: 1 1 16rem;
+    width: auto;
+    max-width: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .dm-lines-panel-head .dm-panel-title {
+    white-space: normal;
+  }
+
+  .dm-lines-panel-head .dm-lines-toolbar .dm-table-search-box {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .dm-lines-panel-head .dm-lines-toolbar .dm-table-filter-select {
+    flex: 1 1 9rem;
+    min-width: 0;
+  }
+}
+
+
 .dm-lines-empty,
 .dm-lines-none p {
   margin: 0;
@@ -2431,7 +2511,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
   gap: 0.9rem;
-  margin: 0;
+  margin: 1rem 0 0;
   padding: 0;
   list-style: none;
 }
@@ -2887,3 +2967,115 @@
 .dm-ws-sup-note {
   margin-top: 20px;
 }
+
+
+.dm-ws-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dm-ws-card-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dm-ws-name {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dm-ws-menu {
+  position: relative;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.dm-ws-menu-trigger {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--dm-admin-text-muted, #6b7280);
+  cursor: pointer;
+  list-style: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dm-ws-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.dm-ws-menu-trigger:hover {
+  background: #f3f4f6;
+  color: var(--dm-admin-text, #111827);
+}
+
+.dm-ws-menu-trigger:focus-visible {
+  outline: 2px solid var(--dm-admin-primary, #046a38);
+  outline-offset: 2px;
+}
+
+.dm-ws-menu-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  display: none;
+  width: 160px;
+  padding: 4px;
+  border: 1px solid var(--dm-admin-border, #e5e7eb);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 10%);
+}
+
+.dm-ws-menu[open] .dm-ws-menu-popover {
+  display: flex;
+  flex-direction: column;
+}
+
+.dm-ws-menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dm-admin-text, #111827);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dm-ws-menu-item:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.dm-ws-menu-item.is-danger {
+  color: #b42318;
+}
+
+.dm-ws-menu-item.is-danger:hover:not(:disabled) {
+  background: #fef3f2;
+}
+
+.dm-ws-menu-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+

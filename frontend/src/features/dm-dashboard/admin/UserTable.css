@@ -1,9 +1,10 @@
+
 .ut-wrap {
   width: 100%;
   overflow-x: auto;
-  border: 1px solid #e6eee9;
-  border-radius: 16px;
-  background: #ffffff;
+  border: 1px solid var(--dm-admin-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--dm-admin-card-bg, #ffffff);
 }
 
 .ut-table {
@@ -12,25 +13,25 @@
   border-collapse: separate;
   border-spacing: 0;
   font-family: inherit;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   text-align: left;
 }
 
 .ut-table thead th {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e9f0ec;
-  background: #f7faf8;
-  color: #5b6e63;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--dm-admin-border, #e5e7eb);
+  background: #f9fafb;
+  color: var(--dm-admin-text-muted, #6b7280);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
 .ut-table tbody td {
-  padding: 0.7rem 1rem;
-  border-bottom: 1px solid #f0f5f2;
-  color: #1b2a22;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--dm-admin-border-light, #f3f4f6);
+  color: var(--dm-admin-text, #111827);
   vertical-align: middle;
 }
 
@@ -39,11 +40,11 @@
 }
 
 .ut-table tbody tr:hover td {
-  background: #fafdfb;
+  background: #f9fafb;
 }
 
 .ut-table tbody tr.is-inactive .ut-name {
-  color: #6c7f74;
+  color: var(--dm-admin-text-muted, #6b7280);
 }
 
 .ut-col-action {
@@ -69,10 +70,10 @@
 }
 
 .ut-avatar.is-initials {
-  background: #e4f2ea;
-  color: #0b4d28;
+  background: var(--dm-admin-primary-light, #e8f1ec);
+  color: var(--dm-admin-primary, #046a38);
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .ut-person-text {
@@ -87,11 +88,11 @@
   align-items: center;
   gap: 0.45rem;
   font-weight: 700;
+  color: var(--dm-admin-text, #111827);
 }
 
 .ut-sub {
-  color: #6c7f74;
-  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--dm-admin-text-muted, #6b7280);
   font-size: 0.78rem;
 }
 
@@ -106,24 +107,24 @@
 }
 
 .ut-muted {
-  color: #6c7f74;
+  color: var(--dm-admin-text-muted, #6b7280);
   font-size: 0.8rem;
 }
 
 .ut-badge {
   display: inline-block;
-  padding: 0.15rem 0.65rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 999px;
-  background: #eef3f0;
-  color: #3d5247;
-  font-size: 0.78rem;
-  font-weight: 700;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.75rem;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .ut-badge.is-leader {
-  background: #e3f3ea;
-  color: #0b4d28;
+  background: var(--dm-admin-primary-light, #e8f1ec);
+  color: var(--dm-admin-primary, #046a38);
 }
 
 .ut-badge.is-supervisor {
@@ -137,8 +138,8 @@
 }
 
 .ut-badge.is-off {
-  background: #eef0ef;
-  color: #55635b;
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .ut-sr {
@@ -154,8 +155,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #5b6e63;
-  font-size: 0.86rem;
+  color: var(--dm-admin-text-muted, #6b7280);
+  font-size: 0.84rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -165,7 +166,7 @@
   width: 18px;
   height: 18px;
   margin: 0;
-  accent-color: #008b47;
+  accent-color: var(--dm-admin-primary, #046a38);
   cursor: pointer;
 }
 
@@ -176,27 +177,32 @@
   gap: 0.75rem;
   margin: 0 0 0.9rem;
   padding: 0.65rem 0.9rem;
-  border-radius: 12px;
-  font-size: 0.9rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 0.84rem;
   line-height: 1.4;
 }
 
 .ut-notice.is-ok {
-  background: #e8f5ee;
-  color: #0b4d28;
+  background: #eef7f2;
+  border-color: #bde2cc;
+  color: #1e5a38;
 }
 
 .ut-notice.is-error {
   background: #fdf1f0;
-  color: #8a1f17;
+  border-color: #f5c5c1;
+  color: #8a2a24;
 }
 
 .ut-notice-close {
+  display: grid;
   flex-shrink: 0;
+  place-items: center;
   width: 32px;
   height: 32px;
   border: 0;
-  border-radius: 50%;
+  border-radius: 8px;
   background: transparent;
   color: inherit;
   font-size: 1.25rem;
@@ -205,7 +211,7 @@
 }
 
 .ut-notice-close:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgb(0 0 0 / 6%);
 }
 
 .ut-head-actions {
