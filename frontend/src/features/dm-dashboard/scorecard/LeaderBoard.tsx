@@ -60,18 +60,8 @@ export default function LeaderBoard({
   loading = false,
 }: LeaderBoardProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [selectedTab, setSelectedTab] = useState("Semua");
 
-  const dmTabs = [
-    "Semua",
-    ...Array.from(new Set(leaders.map((row) => row.dm))).sort((a, b) =>
-      a.localeCompare(b, "id-ID", { numeric: true })
-    ),
-  ];
-
-  const visibleLeaders = [...leaders]
-    .filter((row) => selectedTab === "Semua" || row.dm === selectedTab)
-    .sort((a, b) => b.total - a.total);
+  const visibleLeaders = [...leaders].sort((a, b) => b.total - a.total);
 
   return (
     <Card className="scorecard-leaderboard">
@@ -80,17 +70,6 @@ export default function LeaderBoard({
           <div className="scorecard-leaderboard-title">
             Peringkat · {monthLabel(month)}
           </div>
-          
-         <select
-  className="scorecard-leaderboard-select ml-auto shrink-0"
-  value={selectedTab}
-  onChange={(event) => setSelectedTab(event.target.value)}
-  aria-label="Filter DM"
->
-  {dmTabs.map((tab) => (
-    <option key={tab} value={tab}>{tab}</option>
-  ))}
-</select>
         </div>
 
       </div>
@@ -113,10 +92,10 @@ export default function LeaderBoard({
             const tone = avatarTone(row.leader);
 
             const values = [
-              { label: "Before", value: row.before, max: 30 },
-              { label: "Current", value: row.current, max: 40 },
-              { label: "After", value: row.after, max: 30 },
-            ];
+  { label: "Papercard", value: row.before, max: 30 },
+  { label: "Standup Meeting", value: row.current, max: 40 },
+  { label: "SQDIP", value: row.after, max: 30 },
+];
 
             const ordered = [...values].sort(
               (a, b) => b.value / b.max - a.value / a.max
@@ -277,34 +256,7 @@ export default function LeaderBoard({
                     </div>
 
                     <div className="scorecard-leaderboard-detail-grid">
-                      <span>Area</span>
-                      <strong>{row.area}</strong>
 
-                      <span>Line</span>
-                      <strong>{row.line}</strong>
-
-                      <span>Model</span>
-                      <strong>{row.model}</strong>
-
-                      <span>Peringkat</span>
-                      <strong>
-                        {row.rank} / {totalLeaders}
-                      </strong>
-
-                      <span>Selisih ke target</span>
-                      <strong
-                        className={
-                          onTarget ? "text-primary" : "text-warning-dark"
-                        }
-                      >
-                        {onTarget
-                          ? `+${formatScore(
-                              row.total - target
-                            )} di atas target`
-                          : `Kurang ${formatScore(
-                              target - row.total
-                            )} poin`}
-                      </strong>
                     </div>
                   </div>
                 )}

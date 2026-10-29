@@ -132,3 +132,15 @@ export function scoreBar(score: number) {
 export function formatScore(value: number, digits = 2) {
   return value.toLocaleString("id-ID", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
+
+export type SqdipDimKey = "safety" | "quality" | "delivery" | "inventory" | "productivity";
+export type SqdipMonthly = { leader: string; line: string; dm: string; scores: Record<SqdipDimKey, number> }; // tiap skor maks 6
+export const SQDIP_DIMS: { key: SqdipDimKey; label: string }[] = [
+  { key: "safety", label: "Safety" }, { key: "quality", label: "Quality" }, { key: "delivery", label: "Delivery" },
+  { key: "inventory", label: "Inventory" }, { key: "productivity", label: "Productivity" }];
+export const sqdipMonthly: SqdipMonthly[] = [
+  { leader: "Ahmad Riswanto", line: "TAC20604", dm: "DM 3", scores: { safety: 6, quality: 5.2, delivery: 5.5, inventory: 5.5, productivity: 6 } },
+  { leader: "Agus Riyadi", line: "TAC20605", dm: "DM 3", scores: { safety: 6, quality: 4, delivery: 4.5, inventory: 5, productivity: 4.5 } },
+  { leader: "Rudiyansyah", line: "TAC20603", dm: "DM 3", scores: { safety: 6, quality: 5, delivery: 5.25, inventory: 5, productivity: 5 } },
+  { leader: "M Wildan Firdaus", line: "TAC20607", dm: "DM 4", scores: { safety: 6, quality: 3.5, delivery: 4.36, inventory: 4.5, productivity: 4 } },
+  { leader: "Edi Prasetyo", line: "TAC20607", dm: "DM 4", scores: { safety: 6, quality: 3, delivery: 4.3, inventory: 4, productivity: 4 } }];

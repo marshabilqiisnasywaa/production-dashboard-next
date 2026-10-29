@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState, type TouchEvent } from "react";
-import { CheckCircle2, ChevronDown, Clock3, Download, Info, Trophy, X, type LucideIcon } from "lucide-react";
+import { CheckCircle2,  Clock3, Download, Info, Trophy, X, type LucideIcon } from "lucide-react";
 import { Badge, Button, Card, Input, Select } from "./ui";
-import { formatScore, scoreBar, type ScoreDetailItem, type ScoreTrend } from "./data";
+import { formatScore, scoreBar,  type ScoreTrend } from "./data";
 import "./dm-scorecard.css"; 
 export function Segmented<T extends string>({
   items,
   value,
   onChange,
   className = "",
+  labels,
 }: {
   items: readonly T[];
   value: T;
   onChange: (value: T) => void;
   className?: string;
+  labels?: Partial<Record<T, string>>;
 }) {
   return (
     <div className={`inline-flex rounded-lg border border-border bg-section p-1 ${className}`}>
@@ -24,7 +26,7 @@ export function Segmented<T extends string>({
           onClick={() => onChange(item)}
           className={`border-0 px-3 ${value === item ? "bg-white text-primary shadow-card" : ""}`}
         >
-          {item}
+          {labels?.[item] ?? item}
         </Button>
       ))}
     </div>
@@ -50,12 +52,8 @@ export function SummaryScoreCard({
     highlighted = false,
     value,
     max,
-    detail,
-    expanded,
-    onExpand,
     targetEquivalent,
-    totalComposition,
-    rank,
+
   }: {
     title: string;
     icon: LucideIcon;
@@ -87,59 +85,9 @@ export function SummaryScoreCard({
         </div>
         {value === undefined && <div className="scorecard-kpi-hint">Belum ada data</div>}
         {value === undefined ? <div className="scorecard-kpi-progress scorecard-kpi-progress--empty"><div className="scorecard-kpi-progress-bar" /></div> : <ScoreProgress value={value} max={max} target={targetEquivalent} />}
-        {max === 100 && value !== undefined && (
-          <div className="scorecard-kpi-chips">
-            <Badge tone="warning">Di bawah target</Badge>
-            <Badge tone="neutral">Peringkat DM {rank} dari 2</Badge>
-          </div>
-        )}
-        {max !== 100 && <div className="scorecard-kpi-spacer" />}
-        {max === 100 && value === undefined && <div className="scorecard-kpi-spacer" />}
+        
       </div>
-      <div className="scorecard-kpi-detail">
-        <Button variant="ghost" size="sm" onClick={onExpand} className="w-full justify-between px-0">
-          {totalComposition ? "Komposisi nilai" : "Rincian"}
-          <ChevronDown size={16} className={expanded ? "rotate-180" : ""} />
-        </Button>
-        {expanded && value === undefined && <div className="mt-2 text-xs text-text-secondary">Belum ada data</div>}
-        {expanded && totalComposition && value !== undefined && (
-          <div className="mt-3">
-            <div className="flex h-2 overflow-hidden rounded-full bg-border">
-              <div className="bg-primary" style={{ width: `${totalComposition.before}%` }} />
-              <div className="bg-warning" style={{ width: `${totalComposition.current}%` }} />
-              <div className="bg-primary-light" style={{ width: `${totalComposition.after}%` }} />
-              <div className="bg-border" style={{ width: `${100 - value}%` }} />
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-1 text-tab text-text-secondary">
-              <span>Before {formatScore(totalComposition.before)}</span>
-              <span>Current {formatScore(totalComposition.current)}</span>
-              <span>After {formatScore(totalComposition.after)}</span>
-              <span>Hilang {formatScore(100 - value)}</span>
-            </div>
-          </div>
-        )}
-        {expanded && detail && (
-          <div className="scorecard-kpi-detail-list mt-3 space-y-3">
-            {detail.map((item) => {
-              const full = item.value === item.max;
-              return (
-                <div key={item.label}>
-                  <div className="scorecard-kpi-detail-row flex items-end justify-between gap-2 text-xs">
-                    <span className="scorecard-kpi-detail-label text-text-secondary" title={item.label}>{item.label}</span>
-                    <span className="scorecard-kpi-detail-value whitespace-nowrap font-semibold text-text">
-                      {formatScore(item.value)} / {formatScore(item.max)}
-                      {!full && <span className="ml-1 text-warning-dark">(-{formatScore(item.max - item.value)})</span>}
-                    </span>
-                  </div>
-                  <div className="scorecard-kpi-detail-bar mt-1 h-1 overflow-hidden rounded-full bg-border">
-                    <div className={`h-full rounded-full ${full ? "bg-primary" : "bg-warning"}`} style={{ width: `${(item.value / item.max) * 100}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      
     </Card>
   );
 }
@@ -203,6 +151,12 @@ export function ScoreGauge({
     </Card>
   );
 }
+const TREND_LABEL = {
+  Total: "Total",
+  Before: "Papercard",
+  Current: "Standup Meeting",
+  After: "SQDIP",
+} as const;
 
 export function TrendChart({ metric }: { metric: ScoreTrend }) {
   const total = [86, 88, 91, 89, 92, 84, 87, 90, 93, 86, 88, 91, 89, 94, 82, 87, 90, 92, 88, 91, 86];
@@ -314,7 +268,7 @@ export function TrendChart({ metric }: { metric: ScoreTrend }) {
           <div className="mt-1.5 space-y-0.5">
             {(["Total", "Before", "Current", "After"] as const).map((key) => (
               <div key={key} className={`flex items-center justify-between gap-3 ${metric === key ? "font-bold text-text" : "text-text-secondary"}`}>
-                <span>{key}</span>
+                <span>{TREND_LABEL[key]}</span>
                 <span>{formatScore(seriesByMetric[key][hovered.index])}</span>
               </div>
             ))}
@@ -356,31 +310,38 @@ export function PapercardDetail({ canExport, selectedDm, startDate, endDate }: {
           ["2026-09-16", "TAC20605", "Agus Riyadi", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
         ]
       : [];
-  const visibleRows = rows.filter((row) => String(row[0]) >= startDate && String(row[0]) <= endDate);
+  const visibleRows = rows;
   return (
     <>
-      <DetailHeader canExport={canExport} caption="Total harian = 30 x rate. Tepat waktu = 8 x rate, terdaftar = 14 x rate, close loop = 8 x rate. Rate = jumlah role OK tepat waktu / 4 (Leader, ME, PE, IPQC)." />
+      <DetailHeader canExport={canExport} caption="" />
       {visibleRows.length === 0 ? (
         <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">Belum ada data</div>
       ) : (
         <div className="scorecard-tab-table overflow-x-auto rounded-xl border border-border">
           <table className="w-full table-auto text-left text-sm">
             <thead className="bg-section text-xs text-text-secondary">
-              <tr>
-                <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Tanggal</th>
-                <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Line</th>
-                <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Nama Leader</th>
-                <th colSpan={4} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Status pengisian</th>
-                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-right font-semibold">Rate</th>
-                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-right font-semibold">Tepat waktu</th>
-                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-right font-semibold">Terdaftar</th>
-                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-right font-semibold">Close loop</th>
-                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-right font-semibold">Total harian</th>
-              </tr>
-              <tr>
-                {["Leader", "ME", "PE", "IPQC"].map((role) => <th key={role} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">{role}</th>)}
-              </tr>
-            </thead>
+  <tr>
+    <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Tanggal</th>
+    <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Line</th>
+    <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Nama Leader</th>
+    <th colSpan={4} className="whitespace-nowrap border-x border-b border-border px-4 py-2 text-center font-semibold">Status pengisian</th>
+    <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-center font-semibold">Rate</th>
+    <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Tepat waktu</th>
+    <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Terdaftar</th>
+    <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Close loop</th>
+    <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Total harian</th>
+  </tr>
+  <tr>
+    {["Leader", "ME", "PE", "IPQC"].map((role, index) => (
+      <th
+        key={role}
+        className={`whitespace-nowrap border-l border-border px-4 py-2 text-center font-semibold${index === 3 ? " border-r" : ""}`}
+      >
+        {role}
+      </th>
+    ))}
+  </tr>
+</thead>
             <tbody className="divide-y divide-border">
               {visibleRows.map((row) => (
                 <tr key={`${row[0]}-${row[1]}`} className="hover:bg-section/60">
@@ -392,48 +353,92 @@ export function PapercardDetail({ canExport, selectedDm, startDate, endDate }: {
                       {status === "OK terlambat" ? <Badge tone="warning"><Clock3 size={11} /> OK terlambat</Badge> : status === "Belum diisi" ? <Badge tone="neutral">Belum diisi</Badge> : <StatusChip value={status} />}
                     </td>
                   ))}
-                  {row.slice(7).map((value, index) => <td key={index} className="whitespace-nowrap px-4 py-3 text-right font-semibold">{value}</td>)}
+                  {row.slice(7).map((value, index) => <td key={index} className="whitespace-nowrap px-4 py-3 text-center font-semibold">{value}</td>)}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
-      {rows.length > 0 && <div className="scorecard-tab-footer mt-3 flex flex-wrap justify-between gap-2 text-sm text-text-secondary"><span>Rata-rata total harian {selectedDm === "DM 4" ? "(rentang 14–16 Sep) 25,00" : "(leader dan rentang terpilih) 30,00"} dari 30</span><span>Menampilkan {visibleRows.length} dari 19 hari</span></div>}
     </>
   );
 }
 
+type StandupStatus = "OK" | "NG";
+type StandupRow = {
+  date: string;
+  line: string;
+  leader: string;
+  status: StandupStatus[]; // urutan sama dengan STANDUP_ROLES
+  attendance: number;
+  content: number;
+  closeLoop: number;
+};
+
+const STANDUP_ROLES = ["Leader", "ME", "PE", "QA"] as const;
+
+// Data contoh, nanti diganti dari API
+const STANDUP_ROWS: StandupRow[] = [
+  { date: "2026-09-14", line: "TAC20604", leader: "Ahmad Riswanto", status: ["OK", "OK", "OK", "OK"], attendance: 10, content: 10, closeLoop: 10 },
+  { date: "2026-09-15", line: "TAC20603", leader: "Rudiyansyah", status: ["OK", "NG", "OK", "OK"], attendance: 7.5, content: 10, closeLoop: 0 },
+  { date: "2026-09-16", line: "TAC20605", leader: "Agus Riyadi", status: ["OK", "OK", "OK", "OK"], attendance: 10, content: 10, closeLoop: 10 },
+];
+
 export function StandupDetail({ canExport }: { canExport: boolean }) {
-  const meetingRows = [
-    ["TAC20604 · Ahmad Riswanto", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "100%"],
-    ["TAC20603 · Rudiyansyah", "OK", "NG", "OK", "OK", "OK", "OK", "OK", "NG", "OK", "OK", "80%"],
-  ];
   return (
-    <div className="space-y-6">
-      <div>
-        <DetailHeader canExport={canExport} caption="Attendance 10 poin" />
-        <div className="mb-3 font-bold text-text">Kehadiran sesi</div>
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <table className="w-full min-w-table text-center text-xs">
-            <thead className="bg-section text-text-secondary"><tr><th rowSpan={2} className="px-3 py-3 text-left">Line / Leader</th>{["Leader", "ME", "PE Structure", "PE Electric", "QA"].map((role) => <th key={role} colSpan={2} className="border-l border-border px-3 py-2">{role}</th>)}<th rowSpan={2} className="px-3 py-3">Rate</th></tr><tr>{Array.from({ length: 5 }).flatMap((_, i) => [<th key={`${i}-p`} className="border-l border-border px-2 py-2">Pagi 10:30</th>, <th key={`${i}-s`} className="px-2 py-2">Sore 14:30</th>])}</tr></thead>
-            <tbody>{meetingRows.map((row) => <tr key={row[0]} className="border-t border-border hover:bg-section/60"><td className="whitespace-nowrap px-3 py-4 text-left font-semibold">{row[0]}</td>{row.slice(1, 11).map((status, index) => <td key={index} className="px-2 py-4"><StatusChip value={status} /></td>)}<td className="px-3 py-4 font-bold">{row[11]}</td></tr>)}</tbody>
-          </table>
-        </div>
+    <>
+      <DetailHeader canExport={canExport} caption="" />
+      <div className="scorecard-tab-table overflow-x-auto rounded-xl border border-border">
+        <table className="w-full table-auto text-left text-sm">
+          <thead className="bg-section text-xs text-text-secondary">
+            <tr>
+              <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Tanggal</th>
+              <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Line</th>
+              <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Nama Leader</th>
+              <th colSpan={4} className="whitespace-nowrap border-x border-b border-border px-4 py-2 text-center font-semibold">Status kehadiran</th>
+              <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-center font-semibold">Rate</th>
+              <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Presensi</th>
+              <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Isi rapat</th>
+              <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Close loop</th>
+              <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Total harian</th>
+            </tr>
+            <tr>
+              {STANDUP_ROLES.map((role, index) => (
+                <th
+                  key={role}
+                  className={`whitespace-nowrap border-l border-border px-4 py-2 text-center font-semibold${index === STANDUP_ROLES.length - 1 ? " border-r" : ""}`}
+                >
+                  {role}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {STANDUP_ROWS.map((row) => {
+              const total = row.attendance + row.content + row.closeLoop;
+              const rate = row.status.filter((s) => s === "OK").length / STANDUP_ROLES.length;
+              return (
+                <tr key={`${row.date}-${row.line}`} className="hover:bg-section/60">
+                  <td className="whitespace-nowrap px-4 py-3 text-left">{row.date}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-left font-semibold">{row.line}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-left">{row.leader}</td>
+                  {row.status.map((status, index) => (
+                    <td key={STANDUP_ROLES[index]} className="whitespace-nowrap px-4 py-3 text-center">
+                      <StatusChip value={status} />
+                    </td>
+                  ))}
+                  <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{Math.round(rate * 100)}%</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{formatScore(row.attendance)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{formatScore(row.content)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{formatScore(row.closeLoop)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{formatScore(total)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-      <div>
-        <div className="mb-3 font-bold text-text">Kartu Stand Up</div>
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <table className="w-full min-w-table text-left text-xs">
-            <thead className="bg-section text-text-secondary"><tr>{["Tanggal", "Line", "Leader", "Deskripsi Masalah", "Penyebab", "Solusi", "Kode Abnormal", "Jam Abnormal", "PIC", "Status", "Poin Penulisan", "Close Loop"].map((item) => <th key={item} className="whitespace-nowrap px-3 py-3">{item}</th>)}</tr></thead>
-            <tbody className="divide-y divide-border">
-              <tr className="hover:bg-section/60"><td className="px-3 py-4">2026-09-16</td><td className="px-3 py-4 font-semibold">TAC20604</td><td className="px-3 py-4">Ahmad Riswanto</td><td className="px-3 py-4">Tekanan mesin molding tidak stabil</td><td className="px-3 py-4">Filter udara tersumbat</td><td className="px-3 py-4">Bersihkan filter dan jadwal inspeksi</td><td className="px-3 py-4">Q01</td><td className="px-3 py-4">10:20–10:30</td><td className="px-3 py-4">Rizky Pratama</td><td className="px-3 py-4"><StatusChip value="Closed" /></td><td className="px-3 py-4 font-bold">20</td><td className="px-3 py-4 font-bold">10</td></tr>
-              <tr className="hover:bg-section/60"><td className="px-3 py-4">2026-09-17</td><td className="px-3 py-4 font-semibold">TAC20603</td><td className="px-3 py-4">Rudiyansyah</td><td className="px-3 py-4">Label material tidak terbaca</td><td className="bg-danger-soft px-3 py-4 font-semibold text-danger">Belum diisi</td><td className="bg-danger-soft px-3 py-4 font-semibold text-danger">Belum diisi</td><td className="px-3 py-4">M</td><td className="px-3 py-4">08:05–08:15</td><td className="px-3 py-4">Siti Rahma</td><td className="px-3 py-4"><Badge tone="warning">Open</Badge></td><td className="px-3 py-4 font-bold">10</td><td className="px-3 py-4 font-bold text-danger">0</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
 

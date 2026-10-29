@@ -5,13 +5,13 @@ import { computeDmScores, dmScoreDetails, DM_ORDER, formatScore, leaderScores, t
 import {
   PapercardDetail,
   Segmented,
-  SqdipDetail,
   StandupDetail,
   StatusChip,
   SummaryScoreCard,
   TrendChart,
 } from "./components";
 import LeaderBoard from "./LeaderBoard";
+import SqdipSummary from "./SqdipSummary";
 import "./dm-scorecard.css";
 
 export default function DmScorecard({ isLeader = false, canExport = false }: { isLeader?: boolean; canExport?: boolean }) {
@@ -86,23 +86,16 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
               value={scoreConfig?.total}
               max={100}
               targetEquivalent={90}
-              rank={scoreConfig?.rank}
-              totalComposition={scoreConfig ? { before: scoreConfig.before, current: scoreConfig.current, after: scoreConfig.after } : undefined}
-              expanded={expandedPillars.includes("total")}
-              onExpand={() => togglePillar("total")}
             />
             <SummaryScoreCard
-              title="Before · Papercard system"
+              title="Papercard System (Before)"
               icon={ClipboardList}
               value={scoreConfig?.before}
               max={30}
               targetEquivalent={27}
-              detail={scoreConfig ? detailConfig.before : undefined}
-              expanded={expandedPillars.includes("before")}
-              onExpand={() => togglePillar("before")}
             />
             <SummaryScoreCard
-              title="Current · Standup Meeting"
+              title="Standup Meeting (Current)"
               icon={Users}
               value={scoreConfig?.current}
               max={40}
@@ -112,7 +105,7 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
               onExpand={() => togglePillar("current")}
             />
             <SummaryScoreCard
-              title="After · SQDIP"
+              title="SQDIP (After)"
               icon={ShieldCheck}
               value={scoreConfig?.after}
               max={30}
@@ -133,7 +126,12 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
           <Card className="scorecard-trend p-5">
             <div className="scorecard-trend-head flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div><div className="font-bold">Tren nilai harian</div></div>
-              <Segmented<ScoreTrend> items={["Total", "Before", "Current", "After"]} value={trend} onChange={setTrend} />
+              <Segmented<ScoreTrend>
+  items={["Total", "Before", "Current", "After"]}
+  labels={{ Before: "Papercard", Current: "Standup Meeting", After: "SQDIP" }}
+  value={trend}
+  onChange={setTrend}
+/>
             </div>
               {scoreConfig ? <div className="scorecard-trend-chart mt-2"><TrendChart metric={trend} /></div> : <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">Belum ada data</div>}
           </Card>
@@ -146,28 +144,11 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
                     <button key={item} type="button" aria-pressed={tab === item} onClick={() => setTab(item)} className={`scorecard-tab-button${tab === item ? " is-active" : ""}`}>{item}</button>
                   ))}
                 </div>
-                {tab === "Papercard" && (
-                  <div className="scorecard-tab-toolbar">
-                    <div className="scorecard-tab-legend flex flex-wrap items-center gap-2">
-                      <StatusChip value="OK" />
-                      <Badge tone="warning"><Clock3 size={11} /> OK terlambat</Badge>
-                      <Badge tone="neutral">Belum diisi</Badge>
-                    </div>
-                    <div className="scorecard-date-range">
-                      <label>Dari<Input type="date" value={startDate} onChange={changeStartDate} className="scorecard-date-input" /></label>
-                      <label>Sampai<Input type="date" value={endDate} onChange={changeEndDate} className="scorecard-date-input" /></label>
-                    </div>
-                    <Select value={selectedDm === "DM 4" ? "Edi Prasetyo" : "Semua leader"} onChange={() => undefined} className="scorecard-tab-leader">
-                      <option>{selectedDm === "DM 4" ? "Edi Prasetyo" : "Semua leader"}</option>
-                    </Select>
-                  </div>
-                )}
               </div>
               <div className="scorecard-tabs-body">
                 {tab === "Papercard" && <div className="scorecard-tab-panel"><PapercardDetail canExport={canExport} selectedDm={selectedDm} startDate={startDate} endDate={endDate} /></div>}
                 {tab === "Standup Meeting" && <div className="scorecard-tab-panel scorecard-tab-panel--scroll"><StandupDetail canExport={canExport} /></div>}
-                {tab === "SQDIP" && <div className="scorecard-tab-panel scorecard-tab-panel--scroll"><SqdipDetail canExport={canExport} /></div>}
-              </div>
+{tab === "SQDIP" && <div className="scorecard-tab-panel"><SqdipSummary dm={selectedDm} /></div>}              </div>
             </Card>
           </div>
         </>

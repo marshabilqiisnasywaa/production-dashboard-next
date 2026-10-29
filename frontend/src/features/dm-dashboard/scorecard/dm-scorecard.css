@@ -3066,8 +3066,6 @@ button {
 
     border-left: 1px solid var(--color-border);
 
-    background: var(--color-section);
-
   }
 
 
@@ -3216,3 +3214,70 @@ button {
   color: var(--color-text);
 }
 
+@media (min-width: 1280px) and (min-height: 700px) {
+  .scorecard-tv {
+    height: auto;
+    overflow: visible;
+  }
+  .scorecard-tv .scorecard-main-row {
+    flex: none;
+    height: 24rem;
+  }
+  .scorecard-tv .scorecard-bottom-row {
+    flex: none;
+    overflow: visible;
+  }
+  .scorecard-tv .scorecard-tabs {
+    height: auto;
+    overflow: visible;
+  }
+  .scorecard-tv .scorecard-tabs-body,
+  .scorecard-tv .scorecard-tab-panel,
+  .scorecard-tv .scorecard-tab-panel--scroll {
+    flex: none;
+    overflow: visible;
+  }
+}
+
+@media (min-width: 1280px) and (min-height: 700px) {
+  .scorecard-tv .scorecard-tab-panel {
+    padding-bottom: 0.8125rem; /* 13px, samakan dengan jarak atas */
+  }
+}
+
+/* Tab: sudut dan jarak atas disamakan dengan tabel */
+.scorecard-tab-button {
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+@media (min-width: 1280px) and (min-height: 700px) {
+  .scorecard-tv .scorecard-tabs-head {
+    padding: 0.75rem 0.75rem 0; /* atas = kiri = kanan */
+  }
+  .scorecard-tv .scorecard-tabs-head button {
+        border-radius: 0.5rem 0.5rem 0 0;
+  }
+}
+
+/* Daftar leader tidak scroll di dalam, kartu mengikuti tinggi isi */
+.scorecard-leaderboard-list {
+  flex: none;
+  overflow: hidden;
+}
+
+@media (min-width: 1280px) and (min-height: 700px) {
+  .scorecard-tv .scorecard-main-row {
+    height: auto; /* menggantikan 24rem dari blok sebelumnya */
+  }
+
+  /* Judul dua kartu sama ukuran, dan padding kartu disamakan */
+  .scorecard-tv .scorecard-leaderboard {
+    padding: 0.75rem;
+  }
+  .scorecard-tv .scorecard-leaderboard-title,
+  .scorecard-tv .scorecard-trend-head .font-bold {
+    font-size: 0.9375rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+  }
+}
