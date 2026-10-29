@@ -19,7 +19,7 @@
 
 .ltm-modal-card {
   background: #ffffff;
-  border-radius: 18px;
+  border-radius: 12px;
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(15, 23, 42, 0.08);
   width: 100%;
   max-width: 980px;
@@ -44,8 +44,8 @@
 /* Modal Header */
 .ltm-header {
   padding: 18px 24px;
-  border-bottom: 1px solid #e2e8f0;
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  border-bottom: 1px solid var(--dm-admin-border);
+  background: linear-gradient(180deg, #f9fafb 0%, #ffffff 100%);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -68,8 +68,8 @@
 
 .ltm-title {
   font-size: 1.25rem;
-  font-weight: 800;
-  color: #0f172a;
+  font-weight: 700;
+  color: var(--dm-admin-text);
   margin: 0;
   display: flex;
   align-items: center;
@@ -77,7 +77,7 @@
 }
 
 .ltm-badge-line {
-  background: #008a4f;
+  background: var(--dm-admin-primary);
   color: #ffffff;
   font-size: 0.82rem;
   font-weight: 800;
@@ -87,8 +87,8 @@
 }
 
 .ltm-badge-workshop {
-  background: #e2e8f0;
-  color: #334155;
+  background: #f3f4f6;
+  color: #374151;
   font-size: 0.8rem;
   font-weight: 700;
   padding: 2px 8px;
@@ -97,28 +97,28 @@
 
 .ltm-subtitle {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--dm-admin-text-muted);
   margin: 0;
 }
 
 .ltm-close-btn {
   background: transparent;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--dm-admin-border);
   border-radius: 8px;
   width: 34px;
   height: 34px;
   display: grid;
   place-items: center;
   font-size: 1.25rem;
-  color: #64748b;
+  color: var(--dm-admin-text-muted);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .ltm-close-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  border-color: #cbd5e1;
+  background: var(--dm-admin-border-light);
+  color: var(--dm-admin-text);
+  border-color: var(--dm-admin-border);
 }
 
 /* Modal Body */
@@ -134,7 +134,7 @@
 /* Banner Alert */
 .ltm-alert {
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 0.86rem;
   display: flex;
   align-items: center;
@@ -144,9 +144,9 @@
 }
 
 .ltm-alert.is-success {
-  background: #f0fdf4;
-  color: #166534;
-  border: 1px solid #bbf7d0;
+  background: var(--dm-admin-primary-light);
+  color: var(--dm-admin-primary);
+  border: 1px solid var(--dm-admin-primary-border);
 }
 
 .ltm-alert.is-error {
@@ -163,8 +163,8 @@
 
 /* Rule summary card */
 .ltm-rule-card {
-  background: #f8fafc;
-  border: 1.5px dashed #cbd5e1;
+  background: #f9fafb;
+  border: 1.5px dashed var(--dm-admin-border);
   border-radius: 12px;
   padding: 12px 16px;
   display: flex;
@@ -179,7 +179,7 @@
   align-items: center;
   gap: 10px;
   font-size: 0.85rem;
-  color: #334155;
+  color: #374151;
 }
 
 .ltm-rule-icon {
@@ -205,8 +205,8 @@
 }
 
 .ltm-team-counter.is-complete {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--dm-admin-primary-light);
+  color: var(--dm-admin-primary);
 }
 
 .ltm-team-counter.is-incomplete {
@@ -222,8 +222,8 @@
 }
 
 .ltm-slot-card {
-  border: 1.5px solid #e2e8f0;
-  border-radius: 14px;
+  border: 1.5px solid var(--dm-admin-border);
+  border-radius: 12px;
   background: #ffffff;
   padding: 14px;
   display: flex;
@@ -235,9 +235,9 @@
 }
 
 .ltm-slot-card.is-leader {
-  border-color: #008a4f;
-  background: #fbfdfc;
-  box-shadow: 0 2px 8px rgba(0, 138, 79, 0.08);
+  border-color: var(--dm-admin-primary);
+  background: #f9fafb;
+  box-shadow: 0 2px 8px rgba(4, 106, 56, 0.08);
 }
 
 .ltm-slot-card.is-mpv {
@@ -248,7 +248,7 @@
 
 .ltm-slot-card.is-empty {
   border-style: dashed;
-  background: #fafafa;
+  background: #f9fafb;
   min-height: 120px;
   justify-content: center;
   align-items: center;
@@ -273,13 +273,13 @@
 }
 
 .ltm-slot-badge.is-leader-badge {
-  background: #008a4f;
+  background: var(--dm-admin-primary);
   color: #ffffff;
 }
 
 .ltm-slot-badge.is-member-badge {
-  background: #e2e8f0;
-  color: #334155;
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .ltm-slot-dept {
@@ -287,11 +287,11 @@
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 6px;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--dm-admin-border-light);
+  color: var(--dm-admin-text-muted);
 }
 
-.ltm-slot-dept.dept-PROD { background: #dcfce7; color: #166534; }
+.ltm-slot-dept.dept-PROD { background: var(--dm-admin-primary-light); color: var(--dm-admin-primary); }
 .ltm-slot-dept.dept-ME { background: #e0f2fe; color: #075985; }
 .ltm-slot-dept.dept-PE { background: #fae8ff; color: #86198f; }
 .ltm-slot-dept.dept-QC { background: #fef3c7; color: #92400e; }
@@ -306,21 +306,21 @@
 .ltm-avatar {
   width: 44px;
   height: 44px;
-  border-radius: 10px;
+  border-radius: 8px;
   object-fit: cover;
   flex-shrink: 0;
-  background: #f1f5f9;
+  background: var(--dm-admin-border-light);
   display: grid;
   place-items: center;
   font-weight: 800;
-  color: #475569;
+  color: var(--dm-admin-text-muted);
   font-size: 0.95rem;
 }
 
 .ltm-avatar-img {
   width: 100%;
   height: 100%;
-  border-radius: 10px;
+  border-radius: 8px;
   object-fit: cover;
 }
 
@@ -331,8 +331,8 @@
 
 .ltm-member-name {
   font-size: 0.92rem;
-  font-weight: 800;
-  color: #0f172a;
+  font-weight: 700;
+  color: var(--dm-admin-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -341,7 +341,7 @@
 
 .ltm-member-meta {
   font-size: 0.78rem;
-  color: #64748b;
+  color: var(--dm-admin-text-muted);
   margin-top: 1px;
   display: block;
 }
@@ -380,7 +380,7 @@
   justify-content: space-between;
   gap: 8px;
   padding-top: 10px;
-  border-top: 1px dashed #e2e8f0;
+  border-top: 1px dashed var(--dm-admin-border);
 }
 
 .ltm-btn-release {
@@ -401,11 +401,11 @@
 
 .ltm-order-select {
   font-size: 0.78rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--dm-admin-border);
   border-radius: 6px;
   padding: 3px 6px;
   background: #ffffff;
-  color: #334155;
+  color: #374151;
   font-weight: 600;
 }
 
@@ -413,22 +413,22 @@
 .ltm-select, .ltm-input {
   font-size: 0.85rem;
   padding: 7px 10px;
-  border: 1.5px solid #cbd5e1;
+  border: 1.5px solid var(--dm-admin-border);
   border-radius: 8px;
   background: #ffffff;
-  color: #0f172a;
+  color: var(--dm-admin-text);
   font-weight: 500;
   width: 100%;
 }
 
 .ltm-select:focus, .ltm-input:focus {
   outline: none;
-  border-color: #008a4f;
-  box-shadow: 0 0 0 3px rgba(0, 138, 79, 0.15);
+  border-color: var(--dm-admin-primary);
+  box-shadow: 0 0 0 3px rgba(4, 106, 56, 0.15);
 }
 
 .ltm-btn-add {
-  background: #007040;
+  background: var(--dm-admin-primary);
   color: #ffffff;
   font-size: 0.85rem;
   font-weight: 700;
@@ -444,7 +444,7 @@
 }
 
 .ltm-btn-add:hover:not(:disabled) {
-  background: #005f35;
+  background: var(--dm-admin-primary-hover);
 }
 
 .ltm-btn-add:disabled {
@@ -454,7 +454,7 @@
 
 /* MPV History Drawer */
 .ltm-history-section {
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--dm-admin-border);
   padding-top: 16px;
 }
 
@@ -468,8 +468,8 @@
 
 .ltm-history-title {
   font-size: 0.9rem;
-  font-weight: 800;
-  color: #334155;
+  font-weight: 700;
+  color: #374151;
   margin: 0;
   display: flex;
   align-items: center;
@@ -479,7 +479,7 @@
 .ltm-history-table-wrap {
   margin-top: 10px;
   overflow-x: auto;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--dm-admin-border);
   border-radius: 10px;
 }
 
@@ -490,25 +490,25 @@
 }
 
 .ltm-table th {
-  background: #f8fafc;
+  background: #f9fafb;
   padding: 8px 12px;
   text-align: left;
   font-weight: 700;
-  color: #475569;
-  border-bottom: 1px solid #e2e8f0;
+  color: var(--dm-admin-text-muted);
+  border-bottom: 1px solid var(--dm-admin-border);
 }
 
 .ltm-table td {
   padding: 8px 12px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #1e293b;
+  border-bottom: 1px solid var(--dm-admin-border-light);
+  color: var(--dm-admin-text);
 }
 
 /* Modal Footer */
 .ltm-footer {
   padding: 14px 24px;
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border-top: 1px solid var(--dm-admin-border);
+  background: #f9fafb;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -516,7 +516,7 @@
 }
 
 .ltm-btn-done {
-  background: #0f172a;
+  background: var(--dm-admin-primary);
   color: #ffffff;
   font-size: 0.88rem;
   font-weight: 700;
@@ -528,7 +528,7 @@
 }
 
 .ltm-btn-done:hover {
-  background: #1e293b;
+  background: var(--dm-admin-primary-hover);
 }
 
 /* ---------- Empty slot card (placeholder button) ---------- */
@@ -538,8 +538,8 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
-  background: #fbfdfc;
-  border: 1.5px dashed #94a3b8;
+  background: #f9fafb;
+  border: 1.5px dashed #9ca3af;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -551,16 +551,16 @@
 }
 
 .ltm-slot-card.is-empty:hover:not(:disabled) {
-  border-color: #008a4f;
-  background: #f0fdf4;
+  border-color: var(--dm-admin-primary);
+  background: var(--dm-admin-primary-light);
   transform: translateY(-1px);
 }
 
 .ltm-slot-card.is-empty.is-active-target {
   border-style: solid;
-  border-color: #008a4f;
-  background: #ecfdf5;
-  box-shadow: 0 0 0 3px rgba(0, 138, 79, 0.18);
+  border-color: var(--dm-admin-primary);
+  background: var(--dm-admin-primary-light);
+  box-shadow: 0 0 0 3px rgba(4, 106, 56, 0.18);
 }
 
 .ltm-slot-plus {
@@ -569,8 +569,8 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #e2e8f0;
-  color: #475569;
+  background: var(--dm-admin-border);
+  color: var(--dm-admin-text-muted);
   font-size: 1.4rem;
   font-weight: 700;
   line-height: 1;
@@ -579,27 +579,27 @@
 
 .ltm-slot-card.is-empty:hover .ltm-slot-plus,
 .ltm-slot-card.is-empty.is-active-target .ltm-slot-plus {
-  background: #008a4f;
+  background: var(--dm-admin-primary);
   color: #ffffff;
 }
 
 .ltm-slot-empty-title {
-  color: #1e293b;
+  color: var(--dm-admin-text);
   font-size: 0.88rem;
   font-weight: 700;
   margin-top: 4px;
 }
 
 .ltm-slot-empty-hint {
-  color: #64748b;
+  color: var(--dm-admin-text-muted);
   font-size: 0.78rem;
 }
 
 /* ---------- Add Personnel Section (Option 2) ---------- */
 .ltm-add-section {
   background: #ffffff;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 14px;
+  border: 1.5px solid var(--dm-admin-border);
+  border-radius: 12px;
   padding: 18px 20px;
   display: flex;
   flex-direction: column;
@@ -615,8 +615,8 @@
 
 .ltm-add-title {
   font-size: 0.98rem;
-  font-weight: 800;
-  color: #0f172a;
+  font-weight: 700;
+  color: var(--dm-admin-text);
   margin: 0;
   display: flex;
   align-items: center;
@@ -625,7 +625,7 @@
 
 .ltm-add-desc {
   font-size: 0.82rem;
-  color: #64748b;
+  color: var(--dm-admin-text-muted);
   line-height: 1.4;
 }
 
@@ -645,7 +645,7 @@
 .ltm-label {
   font-size: 0.82rem;
   font-weight: 700;
-  color: #334155;
+  color: #374151;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -658,8 +658,8 @@
 /* ---------- Custom Searchable Dropdown Trigger ---------- */
 .ltm-select-trigger {
   min-height: 44px;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 10px;
+  border: 1.5px solid var(--dm-admin-border);
+  border-radius: 8px;
   background: #ffffff;
   padding: 6px 12px;
   display: flex;
@@ -672,26 +672,26 @@
 }
 
 .ltm-select-trigger:hover {
-  border-color: #94a3b8;
-  background: #f8fafc;
+  border-color: #9ca3af;
+  background: #f9fafb;
 }
 
 .ltm-select-trigger.is-focused {
-  border-color: #008a4f;
-  box-shadow: 0 0 0 3px rgba(0, 138, 79, 0.15);
+  border-color: var(--dm-admin-primary);
+  box-shadow: 0 0 0 3px rgba(4, 106, 56, 0.15);
   background: #ffffff;
 }
 
 .ltm-select-trigger.has-value {
-  border-color: #008a4f;
-  background: #fbfdfc;
+  border-color: var(--dm-admin-primary);
+  background: #f9fafb;
 }
 
 .ltm-trigger-placeholder {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #64748b;
+  color: var(--dm-admin-text-muted);
   font-size: 0.86rem;
   font-weight: 500;
 }
@@ -713,7 +713,7 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: #008a4f;
+  background: var(--dm-admin-primary);
   color: #ffffff;
   font-weight: 800;
   font-size: 0.75rem;
@@ -732,7 +732,7 @@
 .ltm-trigger-name {
   font-size: 0.88rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--dm-admin-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -743,7 +743,7 @@
 
 .ltm-trigger-meta {
   font-size: 0.74rem;
-  color: #64748b;
+  color: var(--dm-admin-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -757,14 +757,14 @@
 }
 
 .ltm-trigger-clear {
-  background: #f1f5f9;
+  background: var(--dm-admin-border-light);
   border: none;
   border-radius: 50%;
   width: 20px;
   height: 20px;
   display: grid;
   place-items: center;
-  color: #64748b;
+  color: var(--dm-admin-text-muted);
   font-size: 10px;
   font-weight: 700;
   cursor: pointer;
@@ -778,13 +778,13 @@
 
 .ltm-trigger-chevron {
   font-size: 9px;
-  color: #64748b;
+  color: var(--dm-admin-text-muted);
   transition: transform 0.18s ease;
 }
 
 .ltm-trigger-chevron.is-open {
   transform: rotate(180deg);
-  color: #008a4f;
+  color: var(--dm-admin-primary);
 }
 
 /* ---------- Dropdown Popover ---------- */
@@ -795,7 +795,7 @@
   right: 0;
   z-index: 60;
   background: #ffffff;
-  border: 1.5px solid #cbd5e1;
+  border: 1.5px solid var(--dm-admin-border);
   border-radius: 12px;
   box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.05);
   overflow: hidden;
@@ -815,8 +815,8 @@
 
 .ltm-dropdown-header {
   padding: 10px 12px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: #f9fafb;
+  border-bottom: 1px solid var(--dm-admin-border);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -832,25 +832,25 @@
   position: absolute;
   left: 10px;
   font-size: 12px;
-  color: #94a3b8;
+  color: #9ca3af;
   pointer-events: none;
 }
 
 .ltm-search-input {
   width: 100%;
   padding: 7px 30px 7px 30px;
-  border: 1.5px solid #cbd5e1;
+  border: 1.5px solid var(--dm-admin-border);
   border-radius: 8px;
   font-size: 0.84rem;
   background: #ffffff;
-  color: #0f172a;
+  color: var(--dm-admin-text);
   outline: none;
   transition: all 0.15s ease;
 }
 
 .ltm-search-input:focus {
-  border-color: #008a4f;
-  box-shadow: 0 0 0 3px rgba(0, 138, 79, 0.15);
+  border-color: var(--dm-admin-primary);
+  box-shadow: 0 0 0 3px rgba(4, 106, 56, 0.15);
 }
 
 .ltm-search-clear {
@@ -858,20 +858,20 @@
   right: 8px;
   background: none;
   border: none;
-  color: #94a3b8;
+  color: #9ca3af;
   font-size: 11px;
   cursor: pointer;
   padding: 2px 4px;
 }
 
 .ltm-search-clear:hover {
-  color: #0f172a;
+  color: var(--dm-admin-text);
 }
 
 .ltm-search-count {
   font-size: 0.72rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--dm-admin-text-muted);
   display: flex;
   justify-content: flex-end;
 }
@@ -891,7 +891,7 @@
   cursor: pointer;
   transition: background 0.12s ease;
   position: relative;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--dm-admin-border-light);
 }
 
 .ltm-dropdown-item:last-child {
@@ -899,20 +899,20 @@
 }
 
 .ltm-dropdown-item:hover {
-  background: #f8fafc;
+  background: #f9fafb;
 }
 
 .ltm-dropdown-item.is-selected {
-  background: #ecfdf5;
-  box-shadow: inset 4px 0 0 #008a4f;
+  background: var(--dm-admin-primary-light);
+  box-shadow: inset 4px 0 0 var(--dm-admin-primary);
 }
 
 .ltm-item-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #f1f5f9;
-  color: #334155;
+  background: var(--dm-admin-border-light);
+  color: #374151;
   font-weight: 800;
   font-size: 0.76rem;
   display: grid;
@@ -921,7 +921,7 @@
 }
 
 .ltm-dropdown-item.is-selected .ltm-item-avatar {
-  background: #008a4f;
+  background: var(--dm-admin-primary);
   color: #ffffff;
 }
 
@@ -943,7 +943,7 @@
 .ltm-item-name {
   font-size: 0.88rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--dm-admin-text);
 }
 
 .ltm-item-role-badge {
@@ -952,8 +952,8 @@
   text-transform: uppercase;
   padding: 1px 6px;
   border-radius: 4px;
-  background: #dcfce7;
-  color: #166534;
+  background: var(--dm-admin-primary-light);
+  color: var(--dm-admin-primary);
 }
 
 .ltm-item-dept {
@@ -961,13 +961,13 @@
   font-weight: 700;
   padding: 1px 6px;
   border-radius: 4px;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--dm-admin-border-light);
+  color: var(--dm-admin-text-muted);
 }
 
 .ltm-item-sub {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--dm-admin-text-muted);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -982,7 +982,7 @@
 
 .ltm-trigger-meta-row {
   font-size: 0.74rem;
-  color: #64748b;
+  color: var(--dm-admin-text-muted);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1012,9 +1012,9 @@
 }
 
 .ltm-item-lines-text.is-free {
-  color: #15803d;
-  background: #f0fdf4;
-  border-color: #dcfce7;
+  color: var(--dm-admin-primary);
+  background: var(--dm-admin-primary-light);
+  border-color: var(--dm-admin-primary-light);
 }
 
 .ltm-item-lines-icon {
@@ -1024,7 +1024,7 @@
 }
 
 .ltm-item-check {
-  color: #008a4f;
+  color: var(--dm-admin-primary);
   font-weight: 800;
   font-size: 0.95rem;
   margin-left: 4px;
@@ -1034,15 +1034,15 @@
 .ltm-dropdown-empty {
   padding: 24px 16px;
   text-align: center;
-  color: #64748b;
+  color: var(--dm-admin-text-muted);
   font-size: 0.84rem;
 }
 
 /* ---------- Complete Team Notice (When 4/4 members filled) ---------- */
 .ltm-complete-notice {
-  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
-  border: 1.5px solid #86efac;
-  border-radius: 14px;
+  background: linear-gradient(135deg, #eef7f2 0%, #ffffff 100%);
+  border: 1.5px solid #bde2cc;
+  border-radius: 12px;
   padding: 16px 20px;
   display: flex;
   align-items: center;
@@ -1054,14 +1054,14 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #008a4f;
+  background: var(--dm-admin-primary);
   color: #ffffff;
   font-size: 1.25rem;
   font-weight: 800;
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(0, 138, 79, 0.25);
+  box-shadow: 0 2px 6px rgba(4, 106, 56, 0.25);
 }
 
 .ltm-complete-notice-body {
@@ -1072,14 +1072,14 @@
 
 .ltm-complete-notice-title {
   font-size: 0.95rem;
-  font-weight: 800;
-  color: #14532d;
+  font-weight: 700;
+  color: #1e5a38;
 }
 
 .ltm-complete-notice-text {
   margin: 0;
   font-size: 0.82rem;
-  color: #166534;
+  color: #1e5a38;
   line-height: 1.45;
 }
 
