@@ -2,7 +2,7 @@
 @import "../meeting/AttendanceRecap.css";
 
 :root {
-  --dm-admin-font: "Plus Jakarta Sans", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  --dm-admin-font: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .dm-admin-layout,
@@ -15,9 +15,9 @@
   --dm-admin-text-muted: #6b7280;
   --dm-admin-text-sub: #9ca3af;
   --dm-admin-primary: #046a38;
-  --dm-admin-primary-hover: #03582f;
-  --dm-admin-primary-light: #eaf4ee;
-  --dm-admin-primary-border: #c6e0d0;
+  --dm-admin-primary-hover: #035a2f;
+  --dm-admin-primary-light: #e8f1ec;
+  --dm-admin-primary-border: #d3e6db;
 }
 
 /* Modal (Legacy fallback) */
@@ -384,21 +384,20 @@
 }
 
 .dm-admin-btn.is-primary {
-  border: 1px solid var(--dm-admin-primary-hover);
+  border: 1px solid var(--dm-admin-primary);
   background: var(--dm-admin-primary);
   color: #ffffff;
-  box-shadow: 0 1px 3px rgba(4, 106, 56, 0.18);
 }
 
 .dm-admin-btn.is-primary:hover {
   background: var(--dm-admin-primary-hover);
-  border-color: #023d21;
+  border-color: var(--dm-admin-primary-hover);
 }
 
 .dm-admin-btn.is-secondary {
   border: 1px solid var(--dm-admin-border);
   background: #ffffff;
-  color: var(--dm-admin-text);
+  color: #374151;
 }
 
 .dm-admin-btn.is-secondary:hover {
@@ -473,9 +472,11 @@
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--dm-admin-border-light);
-  background: #f9fafb;
+  height: 64px;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--dm-admin-border);
+  background: #ffffff;
 }
 
 .dm-admin-brand-icon-box {
@@ -510,7 +511,7 @@
 /* Sidebar Nav */
 .dm-admin-sidebar-nav {
   flex: 1;
-  padding: 0.65rem 0.55rem;
+  padding: 0.75rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -518,12 +519,12 @@
 }
 
 .dm-admin-nav-heading {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--dm-admin-text-sub);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--dm-admin-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.6rem 0.5rem 0.2rem;
+  letter-spacing: 0.04em;
+  padding: 1.1rem 0.65rem 0.35rem;
 }
 
 .dm-admin-nav-btn {
@@ -535,7 +536,7 @@
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  color: var(--dm-admin-text-muted);
+  color: #374151;
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 500;
@@ -548,12 +549,12 @@
 
 .dm-admin-nav-btn:hover {
   background: #f3f4f6;
-  color: var(--dm-admin-text);
+  color: #374151;
 }
 
 .dm-admin-nav-btn.is-active {
   background: var(--dm-admin-primary-light);
-  border-color: var(--dm-admin-primary-border);
+  border-color: transparent;
   color: var(--dm-admin-primary);
   font-weight: 600;
 }
@@ -562,7 +563,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--dm-admin-text-sub);
+  color: currentColor;
   flex-shrink: 0;
 }
 
@@ -583,8 +584,8 @@
 /* Sidebar Footer */
 .dm-admin-sidebar-footer {
   padding: 0.65rem 0.75rem;
-  border-top: 1px solid var(--dm-admin-border-light);
-  background: #f9fafb;
+  border-top: 1px solid var(--dm-admin-border);
+  background: #ffffff;
 }
 
 .dm-admin-live-status-card {
@@ -618,10 +619,8 @@
 /* Topbar */
 .dm-admin-topbar-nav {
   min-height: 64px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--dm-admin-border-light);
-  box-shadow: 0 1px 8px rgba(17, 24, 39, 0.04);
+  background: #ffffff;
+  border-bottom: 1px solid var(--dm-admin-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -644,8 +643,8 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.76rem;
-  color: var(--dm-admin-text-sub);
+  font-size: 0.75rem;
+  color: var(--dm-admin-text-muted);
 }
 
 .dm-admin-crumbs [aria-current="page"] {
@@ -768,7 +767,7 @@
 /* Content Area */
 .dm-admin-content-pane {
   flex: 1;
-  padding: 1.1rem 1.35rem;
+  padding: 1.5rem;
   max-width: 1360px;
   width: 100%;
   margin: 0 auto;
@@ -779,8 +778,7 @@
   border: 1px solid var(--dm-admin-border);
   border-radius: 12px;
   background: #ffffff;
-  box-shadow: 0 1px 3px rgba(17, 24, 39, 0.03);
-  padding: 1.15rem 1.35rem;
+  padding: 1.25rem 1.5rem;
   box-sizing: border-box;
 }
 
