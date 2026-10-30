@@ -5,14 +5,12 @@ import type { ChangeEvent, ReactNode } from "react";
 import {
   DIMS,
   EMPTY_FILTERS,
-  computeStats,
   dateLabel,
   filterRows,
   flagNote,
   flattenRows,
   fmtActual,
   fmtDelta,
-  fmtNum,
   fmtTarget,
   sortRows,
   totalTone,
@@ -26,10 +24,19 @@ import type {
   SqdipView,
 } from "./sqdipModel";
 import { exportSqdipFile, loadSqdip, parseSqdipFile, saveSqdip } from "./sqdipImport";
+import { DateRangePicker, FilterSelect } from "../../scorecard/ScorecardFilters";
 import "../UserTable.css";
 import "../SqdipMonitor.css";
 
 const PAGE_SIZE: Record<SqdipView, number> = { summary: 10, detail: 15 };
+
+const ALL_LINES = "Semua line";
+
+function todayKey(): string {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
 
 type Notice = { type: "ok" | "error"; text: string };
 
@@ -82,17 +89,35 @@ function WarnIcon() {
   );
 }
 
-function chipClass(count: number, tone: "warn" | "danger") {
-  return count > 0 ? `sq-chip is-${tone}` : "sq-chip";
-}
+type SortDir = "asc" | "desc";
 
-function SummaryTable({ rows }: { rows: SqdipLeaderDay[] }) {
+function SummaryTable({
+  rows,
+  sortDir,
+  onSort,
+}: {
+  rows: SqdipLeaderDay[];
+  sortDir: SortDir;
+  onSort: () => void;
+}) {
   return (
-    <div className="sq-wrap">
-      <table className="sq-table">
+    <div className="ut-wrap sq-wrap">
+      <table className="ut-table sq-table">
         <thead>
           <tr>
-            <th>Tanggal ↓</th>
+            <th aria-sort={sortDir === "asc" ? "ascending" : "descending"}>
+              <button
+                type="button"
+                className="sq-sort"
+                onClick={onSort}
+                aria-label={`Urutkan tanggal, saat ini ${sortDir === "asc" ? "terlama dulu" : "terbaru dulu"}`}
+              >
+                Tanggal
+                <Svg size={12}>
+                  {sortDir === "asc" ? <path d="M12 19V5M5 12l7-7 7 7" /> : <path d="M12 5v14M19 12l-7 7-7-7" />}
+                </Svg>
+              </button>
+            </th>
             <th>Line</th>
             <th>Leader</th>
             {DIMS.map((dim) => (
@@ -101,17 +126,20 @@ function SummaryTable({ rows }: { rows: SqdipLeaderDay[] }) {
                 <div className="sq-th-rule">{dim.rule}</div>
               </th>
             ))}
-            <th className="sq-right">Total</th>
+            <th className="sq-right">
+                <div className="sq-th-name">Total</div>
+                <div className="sq-th-rule">5 dimensi × 6 poin = 30</div>
+              </th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
             <tr key={`${row.date}|${row.line}|${row.leader}`}>
               <td>
-                <div className="sq-num sq-strong">{dateLabel(row.date)}</div>
+                <div className="sq-num sq-date">{dateLabel(row.date)}</div>
                 <div className="sq-sub">{weekdayLabel(row.date)}</div>
               </td>
-              <td className="sq-num sq-strong">{row.line}</td>
+              <td className="sq-num">{row.line}</td>
               <td>{row.leader}</td>
               {row.cells.map((cell, i) => {
                 const ok = cell.points === 6;
@@ -123,16 +151,24 @@ function SummaryTable({ rows }: { rows: SqdipLeaderDay[] }) {
                     title={`${DIMS[i].key} · target ${fmtTarget(i)} · poin ${cell.points}${note ? ` · ${note}` : ""}`}
                   >
                     <div className="sq-cell-main">
-                      {ok ? <CheckIcon /> : <CrossIcon />}
                       <span className="sq-num sq-val">{fmtActual(i, cell.actual)}</span>
                       {cell.flag ? <WarnIcon /> : null}
                     </div>
-                    <div className="sq-num sq-sub">{fmtDelta(i, cell.actual)}</div>
+                    <div className="sq-num sq-sub">
+                      {fmtDelta(i, cell.actual)} ·{" "}
+                      <span className={ok ? "sq-pts" : "sq-pts is-fail"}>{cell.points} poin</span>
+                    </div>
                   </td>
                 );
               })}
               <td className="sq-right">
-                <span className={`sq-total is-${totalTone(row.total)}`}>{row.total}</span>
+                <span
+                  className={`sq-total is-${totalTone(row.total)}`}
+                  title={`${row.total / 6} dari 5 dimensi tercapai × 6 poin`}
+                >
+                  {row.total}
+                </span>
+                <span className="sq-total-max"> / 30</span>
               </td>
             </tr>
           ))}
@@ -144,8 +180,8 @@ function SummaryTable({ rows }: { rows: SqdipLeaderDay[] }) {
 
 function DetailTable({ rows }: { rows: SqdipDetailRow[] }) {
   return (
-    <div className="sq-wrap">
-      <table className="sq-table">
+    <div className="ut-wrap sq-wrap">
+      <table className="ut-table sq-table">
         <thead>
           <tr>
             {["Tanggal ↓", "Line", "Leader", "Rincian", "Target", "Aktual", "Selisih", "Poin", "Catatan"].map(
@@ -191,9 +227,28 @@ export default function SqdipMonitor() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [filters, setFilters] = useState<SqdipFilters>(EMPTY_FILTERS);
-  const [view, setView] = useState<SqdipView>("summary");
+  const [view] = useState<SqdipView>("summary");
   const [page, setPage] = useState(1);
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
   const fileRef = useRef<HTMLInputElement>(null);
+  const infoRef = useRef<HTMLDivElement>(null);
+  const [infoOpen, setInfoOpen] = useState(false);
+
+  useEffect(() => {
+    if (!infoOpen) return;
+    const onDown = (event: MouseEvent) => {
+      if (infoRef.current && !infoRef.current.contains(event.target as Node)) setInfoOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setInfoOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [infoOpen]);
 
   useEffect(() => {
     setDataset(loadSqdip());
@@ -205,11 +260,13 @@ export default function SqdipMonitor() {
   const minDate = sorted.length ? sorted[sorted.length - 1].date : "";
   const maxDate = sorted.length ? sorted[0].date : "";
   const base = useMemo(() => filterRows(sorted, filters), [sorted, filters]);
-  const stats = useMemo(() => computeStats(base), [base]);
-  const shown = useMemo(
-    () => (filters.flaggedOnly ? base.filter((row) => row.flagged) : base),
-    [base, filters.flaggedOnly]
-  );
+  const shown = useMemo(() => {
+    const rows = filters.flaggedOnly ? base.filter((row) => row.flagged) : base;
+    if (sortDir === "desc") return rows;
+    return [...rows].sort((a, b) =>
+      a.date !== b.date ? (a.date < b.date ? -1 : 1) : a.line.localeCompare(b.line)
+    );
+  }, [base, filters.flaggedOnly, sortDir]);
   const detail = useMemo(() => (view === "detail" ? flattenRows(shown) : []), [shown, view]);
 
   const unit = view === "summary" ? shown.length : detail.length;
@@ -243,10 +300,20 @@ export default function SqdipMonitor() {
       if (rows.length === 0) {
         throw new Error("Tidak ada baris SQDIP yang valid di file ini.");
       }
+      const keyOf = (row: SqdipLeaderDay) => `${row.date}|${row.line}|${row.leader}`;
+      const merged = new Map<string, SqdipLeaderDay>();
+      (dataset ? dataset.rows : []).forEach((row) => merged.set(keyOf(row), row));
+      let added = 0;
+      let updated = 0;
+      rows.forEach((row) => {
+        if (merged.has(keyOf(row))) updated += 1;
+        else added += 1;
+        merged.set(keyOf(row), row);
+      });
       const next: SqdipDataset = {
         fileName: file.name,
         uploadedAt: new Date().toISOString(),
-        rows,
+        rows: Array.from(merged.values()),
       };
       const saved = saveSqdip(next);
       setDataset(next);
@@ -254,7 +321,7 @@ export default function SqdipMonitor() {
       setPage(1);
       setNotice({
         type: "ok",
-        text: `${rows.length} leader-hari dimuat dari ${file.name}, ${skipped} baris diabaikan.${
+        text: `${added} leader-hari baru ditambahkan, ${updated} diperbarui, ${skipped} baris diabaikan.${
           saved ? "" : " Data tidak bisa disimpan di browser ini."
         }`,
       });
@@ -270,7 +337,7 @@ export default function SqdipMonitor() {
 
   const onExport = async () => {
     try {
-      await exportSqdipFile(shown, view);
+      await exportSqdipFile(sorted);
     } catch {
       setNotice({ type: "error", text: "Export gagal. Coba lagi." });
     }
@@ -286,30 +353,49 @@ export default function SqdipMonitor() {
             <h3 id="sqdip-title" className="dm-panel-title">
               SQDIP Monitoring
             </h3>
-            <span className="dm-pill">{sorted.length} leader-hari</span>
           </div>
-          <p className="dm-panel-sub">Lima dimensi, masing-masing 6 poin jika target tercapai</p>
-          <p className="dm-panel-sub">
+          {/* <p className="dm-panel-sub">
             Aturan: Safety 0 insiden · Quality ≥ 93% · Delivery 100% · Inventory ≤ 400 · Productivity ≥ 87%
-          </p>
-          {dataset ? (
-            <p className="sq-source">
-              Sumber: {dataset.fileName} · data sampai {dateLabel(maxDate)}
-            </p>
-          ) : null}
+          </p> */}
         </div>
         <div className="ut-head-actions">
           <button
             type="button"
             className="dm-admin-btn is-secondary"
             onClick={onExport}
-            disabled={!dataset || shown.length === 0}
+            disabled={!ready}
           >
             <Svg>
               <path d="M12 4v12M7 11l5 5 5-5M4 20h16" />
             </Svg>
             Export
           </button>
+          <div className="sq-info" ref={infoRef}>
+            <button
+              type="button"
+              className="sq-info-btn"
+              aria-label="Petunjuk menambah data"
+              aria-expanded={infoOpen}
+              aria-controls="sqdip-info"
+              onClick={() => setInfoOpen((open) => !open)}
+            >
+              <Svg size={16}>
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4M12 8h.01" />
+              </Svg>
+            </button>
+            {infoOpen ? (
+              <div id="sqdip-info" className="sq-info-pop" role="region" aria-label="Cara menambah data">
+                <strong>Cara menambah data</strong>
+                <p>
+                  Unduh file melalui tombol Export, lalu tambahkan data terbaru pada baris di bagian bawah file
+                  tersebut. Setelah itu, unggah kembali melalui tombol Impor SQDIP. Data baru akan ditambahkan
+                  secara otomatis, sedangkan data lama dengan tanggal, line, dan leader yang sama akan
+                  diperbarui.
+                </p>
+              </div>
+            ) : null}
+          </div>
           <button
             type="button"
             className="dm-admin-btn is-primary dm-btn-add"
@@ -354,11 +440,11 @@ export default function SqdipMonitor() {
         </p>
       ) : !dataset ? (
         <p className="dm-lines-empty">
-          Belum ada data SQDIP. Klik Impor SQDIP lalu pilih file Excel kartu stand up meeting.
+          Belum ada data SQDIP. Unduh template melalui tombol Export, isi datanya, lalu unggah melalui tombol Impor SQDIP.
         </p>
       ) : (
         <>
-          <div className="dm-lines-toolbar sq-toolbar">
+          <div className="dm-lines-toolbar">
             <div className="dm-table-search-box">
               <label className="dm-admin-sr-only" htmlFor="sqdip-search">
                 Cari leader atau line
@@ -385,69 +471,28 @@ export default function SqdipMonitor() {
                 onChange={(event) => patch({ search: event.target.value })}
               />
             </div>
-            <label className="sq-field" htmlFor="sqdip-from">
-              <span className="sq-label">Dari</span>
-              <input
-                id="sqdip-from"
-                type="date"
-                className="dm-table-filter-select"
-                value={filters.from}
-                min={minDate}
-                max={maxDate}
-                onChange={(event) => patch({ from: event.target.value })}
-              />
-            </label>
-            <label className="sq-field" htmlFor="sqdip-to">
-              <span className="sq-label">Sampai</span>
-              <input
-                id="sqdip-to"
-                type="date"
-                className="dm-table-filter-select"
-                value={filters.to}
-                min={minDate}
-                max={maxDate}
-                onChange={(event) => patch({ to: event.target.value })}
-              />
-            </label>
-            <label className="sq-field" htmlFor="sqdip-line">
-              <span className="sq-label">Line</span>
-              <select
-                id="sqdip-line"
-                className="dm-table-filter-select"
-                value={filters.line}
-                onChange={(event) => patch({ line: event.target.value })}
-              >
-                <option value="all">Semua line</option>
-                {lines.map((line) => (
-                  <option key={line} value={line}>
-                    {line}
-                  </option>
-                ))}
-              </select>
-            </label>
             <div className="sq-field">
-              <span className="sq-label">Tampilan</span>
-              <div className="sq-seg" role="group" aria-label="Tampilan tabel">
-                {(
-                  [
-                    ["summary", "Ringkas"],
-                    ["detail", "Rinci"],
-                  ] as const
-                ).map(([id, label]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    aria-pressed={view === id}
-                    className={view === id ? "is-active" : undefined}
-                    onClick={() => {
-                      setView(id);
-                      setPage(1);
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+              <DateRangePicker
+                value={{
+                  from: filters.from || minDate || todayKey(),
+                  to: filters.to || maxDate || todayKey(),
+                }}
+                onChange={(range) =>
+                  patch(
+                    range.from === minDate && range.to === maxDate
+                      ? { from: "", to: "" }
+                      : { from: range.from, to: range.to }
+                  )
+                }
+              />
+            </div>
+            <div className="sq-field">
+              <FilterSelect
+                ariaLabel="Line"
+                value={filters.line === "all" ? ALL_LINES : filters.line}
+                options={[ALL_LINES, ...lines]}
+                onChange={(next) => patch({ line: next === ALL_LINES ? "all" : next })}
+              />
             </div>
             {filtersActive ? (
               <button
@@ -463,36 +508,19 @@ export default function SqdipMonitor() {
             ) : null}
           </div>
 
-          <div className="sq-strip">
-            <div className="sq-strip-main">
-              <span>
-                <strong className="sq-num">{stats.count}</strong> leader-hari
-              </span>
-              <span>
-                <strong className="sq-num">{fmtNum(stats.avg, 1)}</strong> rata-rata total harian dari 30
-              </span>
-              <span>Perlu dicek:</span>
-              <span className={chipClass(stats.mismatch, "warn")}>{stats.mismatch} poin tidak sesuai target</span>
-              <span className={chipClass(stats.empty, "danger")}>{stats.empty} aktual kosong</span>
-              <span className={chipClass(stats.zero, "warn")}>{stats.zero} inventory 0</span>
-            </div>
-            <button
-              type="button"
-              className={filters.flaggedOnly ? "sq-flag-btn is-on" : "sq-flag-btn"}
-              aria-pressed={filters.flaggedOnly}
-              onClick={() => patch({ flaggedOnly: !filters.flaggedOnly })}
-            >
-              <WarnIcon />
-              Hanya yang perlu dicek
-            </button>
-          </div>
-
           {unit === 0 ? (
             <p className="dm-lines-none">
               <span>Tidak ada data untuk filter ini</span>
             </p>
           ) : view === "summary" ? (
-            <SummaryTable rows={shown.slice(start, end)} />
+            <SummaryTable
+              rows={shown.slice(start, end)}
+              sortDir={sortDir}
+              onSort={() => {
+                setSortDir((dir) => (dir === "desc" ? "asc" : "desc"));
+                setPage(1);
+              }}
+            />
           ) : (
             <DetailTable rows={detail.slice(start, end)} />
           )}
@@ -509,9 +537,7 @@ export default function SqdipMonitor() {
                 disabled={current <= 1}
                 onClick={() => setPage(current - 1)}
               >
-                <Svg>
-                  <path d="m15 18-6-6 6-6" />
-                </Svg>
+                Sebelumnya
               </button>
               <span className="sq-num sq-page-label">
                 Hal {current} / {pages}
@@ -523,9 +549,7 @@ export default function SqdipMonitor() {
                 disabled={current >= pages}
                 onClick={() => setPage(current + 1)}
               >
-                <Svg>
-                  <path d="m9 18 6-6-6-6" />
-                </Svg>
+                Berikutnya
               </button>
             </div>
           </div>

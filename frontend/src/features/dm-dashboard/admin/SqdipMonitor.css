@@ -1,3 +1,18 @@
+/* Variabel warna yang dipakai ScorecardFilters.css. Di halaman admin variabel ini belum ada,
+   jadi border, teks, dan warna hijau pada Periode dan Line tidak muncul. */
+:root {
+  --color-primary: #046a38;
+  --color-primary-dark: #035a30;
+  --color-primary-soft: rgba(4, 106, 56, 0.14);
+  --color-primary-border: #b7d8c5;
+  --color-text: #111827;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
+  --color-section: #f3f4f6;
+  --shadow-popover: 0 12px 32px -12px rgba(20, 50, 35, 0.25);
+}
+
 .sq-source {
   margin: 0.35rem 0 0;
   color: var(--dm-admin-text-sub);
@@ -65,11 +80,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem 1rem;
-  margin: 0.9rem 0;
-  padding: 0.6rem 0.9rem;
-  border: 1px solid var(--dm-admin-border);
-  border-radius: 10px;
-  background: var(--dm-admin-bg);
+  margin: 0.75rem 0;
+  padding: 0;
 }
 
 .sq-strip-main {
@@ -88,23 +100,21 @@
 .sq-chip {
   display: inline-flex;
   align-items: center;
-  padding: 0.12rem 0.65rem;
-  border: 1px solid #e1ebe5;
+  padding: 0.2rem 0.6rem;
+  border: 0;
   border-radius: 999px;
-  background: #ffffff;
-  color: var(--dm-admin-text-muted);
-  font-size: 0.78rem;
-  font-weight: 700;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .sq-chip.is-warn {
-  border-color: #f0d9a0;
   background: #fff1cf;
   color: #5e3b00;
 }
 
 .sq-chip.is-danger {
-  border-color: #f3d6d3;
   background: #fdf3f2;
   color: #a83830;
 }
@@ -134,9 +144,6 @@
 .sq-wrap {
   width: 100%;
   overflow-x: auto;
-  border: 1px solid #e6eee9;
-  border-radius: 16px;
-  background: #ffffff;
 }
 
 .sq-table {
@@ -150,15 +157,42 @@
 }
 
 .sq-table thead th {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e9f0ec;
-  background: #f7faf8;
-  color: #5b6e63;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--dm-admin-border, #e5e7eb);
+  background: #f9fafb;
+  color: var(--dm-admin-text-muted, #6b7280);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   vertical-align: bottom;
   white-space: nowrap;
+}
+
+.sq-table thead th.sq-right {
+  text-align: right;
+}
+
+.sq-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.sq-sort:hover {
+  color: var(--dm-admin-text, #111827);
+}
+
+.sq-sort:focus-visible {
+  outline: 2px solid var(--dm-admin-primary);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .sq-th-name {
@@ -171,10 +205,11 @@
 }
 
 .sq-table tbody td {
-  padding: 0.7rem 1rem;
-  border-bottom: 1px solid #f0f5f2;
-  color: #1b2a22;
-  vertical-align: top;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--dm-admin-border-light, #f3f4f6);
+  color: var(--dm-admin-text, #111827);
+  font-size: 0.82rem;
+  vertical-align: middle;
 }
 
 .sq-table tbody tr:last-child td {
@@ -182,16 +217,15 @@
 }
 
 .sq-table tbody tr:hover td {
-  background: #fafdfb;
+  background: #f9fafb;
 }
 
 .sq-table tbody tr.is-first td {
   border-top: 1px solid #e3ece7;
 }
 
-.sq-table tbody tr.is-fail td,
-.sq-table tbody td.is-fail {
-  background: #fdf3f2;
+.sq-table tbody tr.is-fail td {
+  background: #fef7f6;
 }
 
 .sq-right {
@@ -204,8 +238,8 @@
 
 .sq-sub {
   margin-top: 0.1rem;
-  color: #6c7f74;
-  font-size: 0.74rem;
+  color: var(--dm-admin-text-muted, #6b7280);
+  font-size: 0.78rem;
 }
 
 .sq-muted {
@@ -234,7 +268,23 @@
 }
 
 .sq-val {
+  font-size: 0.82rem;
   font-weight: 700;
+}
+
+.sq-date {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.sq-pts.is-fail {
+  color: #a83830;
+  font-weight: 600;
+}
+
+.sq-total-max {
+  color: var(--dm-admin-text-muted, #6b7280);
+  font-size: 0.78rem;
 }
 
 .sq-cell.is-fail .sq-val {
@@ -280,27 +330,21 @@
 }
 
 .sq-total {
-  display: inline-block;
-  padding: 0.15rem 0.7rem;
-  border-radius: 999px;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 .sq-total.is-full,
 .sq-total.is-ok {
-  background: #e8f4ec;
   color: #1f5a39;
 }
 
 .sq-total.is-warn {
-  background: #fff1cf;
-  color: #5e3b00;
+  color: #8a5a00;
 }
 
 .sq-total.is-danger {
-  background: #fdf3f2;
   color: #a83830;
 }
 
@@ -322,9 +366,7 @@
 }
 
 .sq-page-btn {
-  width: 34px;
-  padding: 0;
-  justify-content: center;
+  padding: 0 0.85rem;
 }
 
 .sq-page-label {
@@ -334,14 +376,87 @@
   font-weight: 600;
 }
 
+/* Periode dan Line memakai komponen dari ScorecardFilters, ukurannya disamakan dengan toolbar */
+.sq-field .dmf-trigger {
+  width: 10rem;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+.sq-field .dmf-trigger.dmf-trigger--date {
+  width: 15rem;
+}
+
+.sq-info {
+  position: relative;
+  display: inline-flex;
+}
+
+.sq-info-btn {
+  display: inline-grid;
+  place-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--dm-admin-border);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--dm-admin-text-muted, #6b7280);
+  cursor: pointer;
+}
+
+.sq-info-btn:hover,
+.sq-info-btn[aria-expanded="true"] {
+  background: #f3f4f6;
+  color: var(--dm-admin-text, #111827);
+}
+
+.sq-info-btn:focus-visible {
+  outline: 2px solid var(--dm-admin-primary);
+  outline-offset: 2px;
+}
+
+.sq-info-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  width: min(320px, calc(100vw - 48px));
+  padding: 0.8rem 0.95rem;
+  border: 1px solid var(--dm-admin-border);
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 12px 32px -12px rgba(20, 50, 35, 0.25);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.sq-info-pop strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--dm-admin-text, #111827);
+  font-size: 0.84rem;
+}
+
+.sq-info-pop p {
+  margin: 0;
+  color: var(--dm-admin-text-muted, #6b7280);
+}
+
 @media (max-width: 640px) {
-  .sq-toolbar > * {
+  .dm-lines-toolbar > .sq-field {
     flex: 1 1 100%;
   }
 
   .sq-field input,
   .sq-field select,
   .sq-seg {
+    width: 100%;
+  }
+
+  .sq-field .dmf-trigger,
+  .sq-field .dmf-trigger.dmf-trigger--date {
     width: 100%;
   }
 }

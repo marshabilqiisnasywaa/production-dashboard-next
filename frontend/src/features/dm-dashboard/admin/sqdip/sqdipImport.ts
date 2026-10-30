@@ -1,14 +1,6 @@
 import { readWorkbook } from "../UserImport";
-import {
-  DIMS,
-  buildLeaderDay,
-  dateLabel,
-  flagNote,
-  fmtActual,
-  fmtDelta,
-  fmtTarget,
-} from "./sqdipModel";
-import type { SqdipDataset, SqdipLeaderDay, SqdipView } from "./sqdipModel";
+import { DIMS, buildLeaderDay, meets } from "./sqdipModel";
+import type { SqdipDataset, SqdipLeaderDay } from "./sqdipModel";
 
 const STORAGE_KEY = "dm-sqdip:v1";
 const GREEN = "#007A3F";
@@ -68,11 +60,11 @@ export async function parseSqdipFile(
   });
   if (headerIndex < 0) {
     throw new Error(
-      "Header tidak ditemukan. File harus punya kolom TANGGAL, LINE, LEADER, Rincian, Aktual, dan Perolehan Nilai."
+      "Header tidak ditemukan. File harus punya kolom TANGGAL, LINE, LEADER, Rincian, dan Aktual."
     );
   }
   const names = table[headerIndex].map((cell) => text(cell).toLowerCase());
-  const required = ["tanggal", "line", "leader", "rincian", "aktual", "perolehan nilai"];
+  const required = ["tanggal", "line", "leader", "rincian", "aktual"];
   const missing = required.filter((name) => names.indexOf(name) < 0);
   if (missing.length > 0) {
     throw new Error(`Kolom tidak ditemukan: ${missing.join(", ")}.`);
@@ -86,17 +78,24 @@ export async function parseSqdipFile(
 
   const drafts = new Map<string, Draft>();
   let skipped = 0;
+  let last = { date: "", line: "", leader: "" };
   for (const row of table.slice(headerIndex + 1)) {
     if (row.every((cell) => cell === null || cell === undefined || cell === "")) continue;
-    const date = toDateKey(row[cDate]);
-    const line = text(row[cLine]).toUpperCase();
-    const leader = text(row[cLeader]);
     const dimName = text(row[cDim]).toLowerCase();
     const dimIndex = DIMS.findIndex((dim) => dim.key.toLowerCase() === dimName);
-    if (!date || !line || !leader || dimIndex < 0) {
+    if (dimIndex < 0) {
       skipped += 1;
       continue;
     }
+    // Tanggal, line, dan leader yang kosong mengikuti baris di atasnya.
+    const date = toDateKey(row[cDate]) || last.date;
+    const line = text(row[cLine]).toUpperCase() || last.line;
+    const leader = text(row[cLeader]) || last.leader;
+    if (!date || !line || !leader) {
+      skipped += 1;
+      continue;
+    }
+    last = { date, line, leader };
     const key = `${date}|${line}|${leader}`;
     let draft = drafts.get(key);
     if (!draft) {
@@ -110,8 +109,12 @@ export async function parseSqdipFile(
       };
       drafts.set(key, draft);
     }
-    draft.actuals[dimIndex] = toNumber(row[cActual]);
-    draft.points[dimIndex] = toNumber(row[cPoints]) === 6 ? 6 : 0;
+    const actual = toNumber(row[cActual]);
+    // Perolehan Nilai opsional: kalau kosong, dihitung dari Aktual dan target.
+    const given = cPoints >= 0 ? toNumber(row[cPoints]) : null;
+    draft.actuals[dimIndex] = actual;
+    draft.points[dimIndex] =
+      given !== null ? (given === 6 ? 6 : 0) : actual !== null && meets(dimIndex, actual) ? 6 : 0;
     draft.seen[dimIndex] = true;
   }
 
@@ -148,9 +151,16 @@ export function saveSqdip(dataset: SqdipDataset): boolean {
   }
 }
 
-export async function exportSqdipFile(rows: SqdipLeaderDay[], view: SqdipView) {
+type XlsCell = { value: string | number; format?: string } | null;
+
+function serial(key: string): number {
+  const [year, month, day] = key.split("-").map(Number);
+  return Date.UTC(year, month - 1, day) / DAY_MS + 25569;
+}
+
+export async function exportSqdipFile(rows: SqdipLeaderDay[]) {
   const { default: writeExcelFile } = await import("write-excel-file/universal");
-  const head = (value: string) => ({
+  const head = (value: string): XlsCell => ({
     value,
     fontWeight: "bold" as const,
     textColor: "#FFFFFF",
@@ -158,43 +168,37 @@ export async function exportSqdipFile(rows: SqdipLeaderDay[], view: SqdipView) {
     alignVertical: "center" as const,
     indent: 1,
     height: 24,
-  });
-  const cell = (value: string | number) => ({ value });
+  } as XlsCell);
 
-  let header: string[];
-  let body: { value: string | number }[][];
-  if (view === "summary") {
-    header = ["Tanggal", "Line", "Leader", ...DIMS.map((dim) => dim.key), "Total"];
-    body = rows.map((row) => [
-      cell(dateLabel(row.date)),
-      cell(row.line),
-      cell(row.leader),
-      ...row.cells.map((c, i) => cell(fmtActual(i, c.actual))),
-      cell(row.total),
-    ]);
-  } else {
-    header = ["Tanggal", "Line", "Leader", "Rincian", "Target", "Aktual", "Selisih", "Poin", "Catatan"];
-    body = rows.flatMap((row) =>
-      row.cells.map((c, i) => [
-        cell(dateLabel(row.date)),
-        cell(row.line),
-        cell(row.leader),
-        cell(DIMS[i].key),
-        cell(fmtTarget(i)),
-        cell(fmtActual(i, c.actual)),
-        cell(fmtDelta(i, c.actual)),
-        cell(c.points),
-        cell(flagNote(i, c)),
-      ])
-    );
-  }
+  const isTemplate = rows.length === 0;
+  const source = isTemplate
+    ? [buildLeaderDay("2026-01-01", "TAC00001", "Contoh Leader", [0, 0.95, 1, 300, 0.9], [6, 6, 6, 6, 6])]
+    : [...rows].sort((a, b) =>
+        a.date !== b.date ? (a.date < b.date ? -1 : 1) : a.line.localeCompare(b.line)
+      );
+
+  const header = ["TANGGAL", "LINE", "LEADER", "Rincian", "Target", "Aktual", "Perolehan Nilai"];
+  const body: XlsCell[][] = source.flatMap((row) =>
+    row.cells.map((c, i): XlsCell[] => {
+      const pct = DIMS[i].kind === "pct";
+      return [
+        { value: serial(row.date), format: "dd-mmm-yyyy" },
+        { value: row.line },
+        { value: row.leader },
+        { value: DIMS[i].key },
+        { value: DIMS[i].target, ...(pct ? { format: "0%" } : {}) },
+        c.actual === null ? null : { value: c.actual, ...(pct ? { format: "0.00%" } : {}) },
+        { value: c.points },
+      ];
+    })
+  );
 
   const blob = await writeExcelFile(
     [
       {
         data: [header.map(head), ...body],
-        sheet: "SQDIP",
-        columns: header.map((_, i) => ({ width: i === header.length - 1 && view === "detail" ? 48 : 16 })),
+        sheet: "Sheet1",
+        columns: [14, 12, 24, 14, 10, 12, 18].map((width) => ({ width })),
         stickyRowsCount: 1,
       },
     ],
@@ -203,7 +207,7 @@ export async function exportSqdipFile(rows: SqdipLeaderDay[], view: SqdipView) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = view === "summary" ? "sqdip-ringkas.xlsx" : "sqdip-rinci.xlsx";
+  link.download = isTemplate ? "Template_SQDIP.xlsx" : "SQDIP_data.xlsx";
   link.click();
   URL.revokeObjectURL(url);
 }
