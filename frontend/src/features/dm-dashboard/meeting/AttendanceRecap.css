@@ -1,41 +1,37 @@
-/* Attendance Recap Styling - Compact, Calm & Soft */
-
 .dm-recap-container {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 16px;
   width: 100%;
+  min-width: 0;
+  color: var(--dm-admin-text);
+  font-family: var(--dm-admin-font);
 }
 
-/* Filters Bar - Compact */
 .dm-recap-filters-bar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.65rem 1rem;
-  padding: 0.65rem 0.95rem;
-  border: 1px solid #dbe7df;
-  border-radius: 8px;
-  background: #f8fbf9;
-  box-shadow: 0 1px 2px rgba(18, 42, 29, 0.02);
+  align-items: flex-end;
+  gap: 12px 18px;
+  padding: 14px;
+  border: 1px solid var(--dm-admin-border);
+  border-radius: 12px;
+  background: var(--dm-admin-card-bg);
 }
 
 .dm-recap-filter-group {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.45rem 0.6rem;
+  gap: 8px;
+  min-width: 0;
 }
 
 .dm-recap-filter-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #547061;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  color: var(--dm-admin-text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
@@ -43,93 +39,86 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.3rem;
+  gap: 6px;
+}
+
+.dm-recap-pill,
+.dm-recap-date-input,
+.dm-recap-icon-btn {
+  min-height: 36px;
+  border: 1px solid var(--dm-admin-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--dm-admin-text);
+  font: inherit;
 }
 
 .dm-recap-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 28px;
-  min-height: 28px;
-  padding: 0 0.65rem;
-  border: 1px solid #d1ded6;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #315442;
-  font-family: inherit;
-  font-size: 0.84rem;
+  padding: 0 11px;
+  color: var(--dm-admin-text-muted);
+  font-size: 0.8rem;
   font-weight: 500;
-  cursor: pointer;
   white-space: nowrap;
-  transition: all 0.12s ease;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .dm-recap-pill:hover {
-  background: #f2f7f4;
-  border-color: #bed3c6;
-  color: #1e4531;
+  border-color: var(--dm-admin-primary-border);
+  background: var(--dm-admin-primary-light);
+  color: var(--dm-admin-primary);
 }
 
 .dm-recap-pill.is-active {
-  background: #286b46;
-  border-color: #21593a;
-  color: #ffffff;
+  border-color: var(--dm-admin-primary);
+  background: var(--dm-admin-primary);
+  color: #fff;
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(40, 107, 70, 0.2);
 }
 
 .dm-recap-date-input {
-  height: 28px;
-  min-height: 28px;
-  padding: 0 0.5rem;
-  border: 1px solid #d1ded6;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #1a2c22;
-  font-family: inherit;
+  min-width: 148px;
+  padding: 0 10px;
   font-size: 0.84rem;
-  font-weight: 500;
-  outline: none;
-  cursor: pointer;
-  transition: all 0.12s ease;
 }
 
-.dm-recap-date-input:focus {
-  border-color: #286b46;
-  box-shadow: 0 0 0 2px rgba(40, 107, 70, 0.12);
+.dm-recap-date-input:focus,
+.dm-recap-pill:focus-visible,
+.dm-recap-icon-btn:focus-visible {
+  outline: 2px solid var(--dm-admin-primary);
+  outline-offset: 2px;
 }
 
 .dm-recap-action-group {
-  margin-left: auto;
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .dm-recap-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
   padding: 0;
-  border: 1px solid #d1ded6;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #286b46;
+  color: var(--dm-admin-primary);
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .dm-recap-icon-btn:hover:not(:disabled) {
-  background: #eaf4ee;
-  border-color: #bed3c6;
+  border-color: var(--dm-admin-primary-border);
+  background: var(--dm-admin-primary-light);
 }
 
 .dm-recap-icon-btn:disabled {
   cursor: not-allowed;
-  opacity: 0.65;
+  opacity: 0.6;
 }
 
 .dm-recap-refresh-icon.is-spinning {
@@ -142,123 +131,114 @@
   }
 }
 
-/* Metrics Cards Grid - Compact & Soft */
 .dm-recap-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .dm-recap-card {
   display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem 0.95rem;
-  border: 1px solid #dbe7df;
-  border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(18, 42, 29, 0.02);
-  transition: border-color 0.15s ease;
-}
-
-.dm-recap-card:hover {
-  border-color: #bed5c8;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--dm-admin-border);
+  border-radius: 12px;
+  background: var(--dm-admin-card-bg);
 }
 
 .dm-recap-card.is-complete {
-  background: linear-gradient(180deg, #fbfdfc 0%, #f4f9f6 100%);
-  border-color: #cde0d4;
-}
-
-.dm-recap-card.is-empty {
-  border-color: #e2ede6;
-  background: #fafcfb;
+  border-color: var(--dm-admin-primary-border);
 }
 
 .dm-recap-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.4rem;
+  gap: 8px;
 }
 
 .dm-recap-session-tag {
-  font-size: 0.78rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--dm-admin-primary-light);
+  color: var(--dm-admin-primary);
+  font-size: 0.7rem;
   font-weight: 700;
-  padding: 0.12rem 0.4rem;
-  border-radius: 4px;
-  background: #eaf4ee;
-  color: #286b46;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
 .dm-recap-card-title {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #1a2c22;
+  overflow: hidden;
+  color: var(--dm-admin-text);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dm-recap-card-body {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 10px;
 }
 
 .dm-recap-stat-number {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #13271d;
   display: flex;
   align-items: baseline;
-  gap: 0.3rem;
-  line-height: 1;
+  gap: 6px;
+  color: var(--dm-admin-text);
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .dm-recap-stat-sub {
+  color: var(--dm-admin-text-muted);
   font-size: 0.84rem;
   font-weight: 500;
-  color: #6c8a7b;
 }
 
 .dm-recap-progress-bar {
-  height: 5px;
-  background: #e6eee9;
-  border-radius: 3px;
+  height: 6px;
   overflow: hidden;
-  margin-top: 0.15rem;
+  border-radius: 999px;
+  background: var(--dm-admin-border-light);
 }
 
 .dm-recap-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #286b46 0%, #469a6c 100%);
-  border-radius: 3px;
-  transition: width 0.3s ease;
+  border-radius: inherit;
+  background: var(--dm-admin-primary);
+  transition: width 0.25s ease;
 }
 
 .dm-recap-card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.4rem;
-  font-size: 0.78rem;
-  color: #658172;
-  font-weight: 500;
-  padding-top: 0.35rem;
-  border-top: 1px solid #edf4ef;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--dm-admin-border-light);
+  color: var(--dm-admin-text-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
 }
 
 .dm-recap-percent {
-  font-weight: 700;
-  color: #286b46;
+  flex-shrink: 0;
+  color: var(--dm-admin-primary);
+  font-weight: 600;
+  text-align: right;
 }
 
-/* Riwayat Table Wrapper - Compact */
 .dm-recap-table-wrapper {
-  border: 1px solid #dbe7df;
-  border-radius: 8px;
-  background: #ffffff;
+  min-width: 0;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(18, 42, 29, 0.02);
+  border: 1px solid var(--dm-admin-border);
+  border-radius: 12px;
+  background: var(--dm-admin-card-bg);
 }
 
 .dm-recap-table-head-bar {
@@ -266,247 +246,299 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.6rem;
-  padding: 0.65rem 0.95rem;
-  background: #f8fbf9;
-  border-bottom: 1px solid #dbe7df;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--dm-admin-border);
 }
 
 .dm-recap-table-title {
   margin: 0;
-  font-size: 0.86rem;
-  font-weight: 700;
-  color: #1a2c22;
+  color: var(--dm-admin-text);
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.4;
 }
 
 .dm-recap-count-badge {
-  font-size: 0.78rem;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--dm-admin-primary-light);
+  color: var(--dm-admin-primary);
+  font-size: 0.74rem;
   font-weight: 600;
-  color: #286b46;
-  background: #eaf4ee;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
+  white-space: nowrap;
 }
 
-/* Empty State */
 .dm-recap-empty-state {
   display: flex;
+  min-height: 120px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2.2rem 1.2rem;
+  gap: 8px;
+  padding: 24px 16px;
   text-align: center;
-  gap: 0.6rem;
+}
+
+.dm-recap-empty-icon {
+  color: var(--dm-admin-text-sub);
 }
 
 .dm-recap-empty-text {
+  max-width: 440px;
   margin: 0;
-  font-size: 0.82rem;
-  color: #658172;
-  font-weight: 500;
-  max-width: 420px;
+  color: var(--dm-admin-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
 }
 
-/* Table */
 .dm-recap-table-scroll {
-  overflow-x: auto;
   width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
 }
 
 .dm-recap-table {
   width: 100%;
+  min-width: 900px;
   border-collapse: collapse;
+  color: var(--dm-admin-text);
+  font-size: 0.82rem;
   text-align: left;
-  font-size: 0.84rem;
 }
 
 .dm-recap-table th {
-  padding: 0.6rem 0.85rem;
-  background: #f4f8f5;
-  color: #3b5749;
-  font-weight: 700;
-  font-size: 0.78rem;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--dm-admin-border);
+  background: #f9fafb;
+  color: var(--dm-admin-text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.035em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  border-bottom: 1px solid #dbe7df;
   white-space: nowrap;
 }
 
 .dm-recap-table td {
-  padding: 0.55rem 0.85rem;
-  border-bottom: 1px solid #edf4ef;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--dm-admin-border-light);
   vertical-align: middle;
 }
 
 .dm-recap-table tbody tr:last-child td {
-  border-bottom: none;
+  border-bottom: 0;
 }
 
 .dm-recap-table tbody tr:hover {
-  background: #f8fbf9;
+  background: #fafcfb;
 }
 
-/* Cell Elements - Compact */
+.dm-recap-row-number {
+  color: var(--dm-admin-text-sub);
+  font-weight: 600;
+}
+
 .dm-recap-user-cell {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 9px;
+  min-width: 160px;
 }
 
 .dm-recap-user-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #bed5c8;
-  background: #edf5f0;
+  display: block;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
+  border: 1px solid var(--dm-admin-primary-border);
+  border-radius: 50%;
+  background: var(--dm-admin-primary-light);
+  object-fit: cover;
 }
 
 .dm-recap-user-avatar.is-placeholder {
   display: grid;
-  place-content: center;
-  font-weight: 700;
-  color: #286b46;
-  background: #e8f3ec;
+  place-items: center;
+  color: var(--dm-admin-primary);
   font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .dm-recap-user-info {
   display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: 0.05rem;
+  gap: 2px;
 }
 
 .dm-recap-user-name {
-  font-weight: 600;
-  color: #1a2c22;
+  overflow: hidden;
+  color: var(--dm-admin-text);
   font-size: 0.82rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .dm-recap-user-id {
-  font-size: 0.78rem;
-  color: #728c7f;
+  color: var(--dm-admin-text-muted);
+  font-size: 0.74rem;
+}
+
+.dm-recap-role-pill,
+.dm-recap-session-badge,
+.dm-recap-status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  font-size: 0.74rem;
   font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .dm-recap-role-pill {
-  display: inline-block;
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: #315442;
-  background: #f0f6f2;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
-  white-space: nowrap;
+  padding: 4px 7px;
+  background: #f3f4f6;
+  color: #4b5563;
 }
 
 .dm-recap-session-badge {
-  display: inline-block;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-
-.dm-recap-session-badge.is-pre {
-  background: #eaf3f9;
-  color: #1e5a7d;
+  padding: 4px 7px;
+  background: #eff6ff;
+  color: #315a82;
 }
 
 .dm-recap-session-badge.is-during {
-  background: #fcf5e6;
-  color: #7d5917;
+  background: #fef7e8;
+  color: #815d18;
 }
 
 .dm-recap-session-badge.is-post {
-  background: #f4edf9;
-  color: #68358d;
+  background: #f5f0fa;
+  color: #68458a;
 }
 
 .dm-recap-time-text {
-  font-weight: 600;
-  color: #286b46;
-  font-size: 0.84rem;
+  color: var(--dm-admin-text);
+  font-size: 0.8rem;
+  font-weight: 500;
   white-space: nowrap;
 }
 
 .dm-recap-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  white-space: nowrap;
+  gap: 6px;
+  padding: 4px 8px;
 }
 
 .dm-recap-status-pill.is-hadir {
-  background: #eaf5ee;
-  color: #20653f;
+  background: #e8f1ec;
+  color: #046a38;
 }
 
-.dm-recap-status-pill.is-terlambat {
-  background: #fcf5e6;
-  color: #7d5917;
+.dm-recap-status-pill.is-terlambat,
+.dm-recap-guest-tag {
+  background: #fef7e8;
+  color: #815d18;
 }
 
 .dm-recap-status-pill.is-izin {
   background: #fdf0f0;
-  color: #8d2d2d;
+  color: #963b3b;
 }
 
 .dm-recap-status-pill.is-diwakilkan {
-  background: #e8eefb;
-  color: #23407a;
+  background: #edf3fb;
+  color: #315a82;
 }
 
 .dm-recap-status-pill.is-sakit {
-  background: #f4edf9;
-  color: #68358d;
+  background: #f5f0fa;
+  color: #68458a;
 }
 
 .dm-recap-status-pill.is-tidak-hadir {
-  background: #eef0ef;
-  color: #55635b;
+  background: #f3f4f6;
+  color: #58616d;
+}
+
+.dm-recap-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .dm-recap-guest-tag {
-  margin-left: 0.4rem;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  background: #fcf5e6;
-  color: #7d5917;
-  font-size: 0.72rem;
+  display: inline-flex;
+  margin-left: 6px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  font-size: 0.7rem;
   font-weight: 600;
 }
 
 .dm-recap-status-note {
   display: block;
-  margin-top: 0.2rem;
-  font-size: 0.76rem;
-  color: #4b5563;
+  margin-top: 3px;
+  color: var(--dm-admin-text-muted);
+  font-size: 0.74rem;
 }
 
-
-.dm-recap-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-/* Responsiveness */
-@media (max-width: 768px) {
+@media (max-width: 800px) {
   .dm-recap-filters-bar {
-    flex-direction: column;
     align-items: flex-start;
   }
 
   .dm-recap-action-group {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .dm-recap-container {
+    gap: 12px;
+  }
+
+  .dm-recap-filters-bar {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .dm-recap-filter-group {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dm-recap-date-input {
+    width: 100%;
+  }
+
+  .dm-recap-pills {
+    width: 100%;
+  }
+
+  .dm-recap-action-group {
     align-self: flex-end;
+    margin-top: -1px;
+  }
+
+  .dm-recap-metrics-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dm-recap-card {
+    padding: 12px;
+  }
+
+  .dm-recap-table-head-bar {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .dm-recap-table-title {
+    font-size: 0.86rem;
   }
 }

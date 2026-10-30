@@ -8,7 +8,11 @@ import { ProblemLoadError } from "./components/ProblemLoadError";
 import { useProblems } from "./hooks/useProblems";
 import type { ProblemFilter } from "./types";
 
-export default function ProblemsPage() {
+export default function ProblemsPage({
+  adminLayout = false,
+}: {
+  adminLayout?: boolean;
+}) {
   const { rows, counts, ready, error, refresh } = useProblems();
 
   const [search, setSearch] = useState("");
@@ -59,19 +63,19 @@ export default function ProblemsPage() {
   }
 
   return (
-    <div className="dml-pb">
-      {/* Page heading */}
-      <div className="dml-page-head dml-pb-heading">
-        <div>
-          <h1>Tracking Masalah</h1>
-          <p>
-            Pantau penanggung jawab, tenggat waktu, dan status tindak lanjut
-            dari DM meeting.
-          </p>
+    <div className={"dml-pb" + (adminLayout ? " is-admin" : "")}>
+      {!adminLayout && (
+        <div className="dml-page-head dml-pb-heading">
+          <div>
+            <h1>Tracking Masalah</h1>
+            <p>
+              Pantau penanggung jawab, tenggat waktu, dan status tindak lanjut
+              dari DM meeting.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Summary cards */}
       <div className="dml-pb-summary">
         <div className="dml-pb-stat">
           <span className="dml-pb-stat__label">Total Masalah</span>
@@ -98,7 +102,6 @@ export default function ProblemsPage() {
         </div>
       </div>
 
-      {/* Table section */}
       <section className="dml-pb-panel">
         <div className="dml-pb-toolbar">
           <div className="dml-pb-search">

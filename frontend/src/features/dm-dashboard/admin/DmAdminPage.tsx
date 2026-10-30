@@ -211,11 +211,15 @@ const ADMIN_TAB_HEADERS: Record<
       "Kelola kandidat dan tentukan pemenang MVP bulanan untuk operator lini produksi.",
   },
   attendance: {
-    title: "Rekapitulasi Presensi",
+    title: "Rekapitulasi Absensi",
     description:
       "Pantau ringkasan kehadiran tim dan aktivitas presensi di lini produksi.",
   },
-  problems: null, // ProblemsPage provides its own header to avoid duplication
+  problems: {
+    title: "Tracking Masalah",
+    description:
+      "Pantau penanggung jawab, tenggat waktu, dan status tindak lanjut dari DM meeting.",
+  },
   sqdip: {
     title: "Monitoring SQCDIP",
     description:
@@ -1145,7 +1149,7 @@ function AdminWorkspace({
             )}
             {activeTab === "problems" && (
               <div className="dm-admin-section">
-                <ProblemsPage />
+                <ProblemsPage adminLayout />
               </div>
             )}
 

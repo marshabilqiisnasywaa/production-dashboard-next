@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { CalendarDays, RefreshCw } from "lucide-react";
 import type { DmLine, DmRecapRow } from "../api";
 import { localDate } from "../leader/log/utils";
 import type { AbsenceReason } from "../leader/meeting/types";
@@ -32,7 +32,7 @@ const SESSION_BADGE: Record<number, string> = {
 function formatDateLabel(date: string, today: string): string {
   const [, month, day] = date.split("-");
   const base = Number(day) + " " + (MONTHS[Number(month) - 1] ?? month);
-  return date === today ? "Hari Ini (" + base + ")" : base;
+  return date === today ? "Hari Ini · " + base : base;
 }
 
 function clock(iso: string): string {
@@ -308,9 +308,7 @@ export default function AttendanceRecap({ lines, call }: Props) {
                         });
                   return (
                     <tr key={row.sessionId + ":" + row.employeeNo}>
-                      <td style={{ color: "#6a8c7b", fontWeight: 700 }}>
-                        {index + 1}
-                      </td>
+                      <td className="dm-recap-row-number">{index + 1}</td>
                       <td>
                         <div className="dm-recap-user-cell">
                           <div className="dm-recap-user-avatar is-placeholder">
@@ -400,6 +398,11 @@ export default function AttendanceRecap({ lines, call }: Props) {
             (session) => session.attendances.length === 0
           ) ? (
             <div className="dm-recap-empty-state">
+              <CalendarDays
+                size={20}
+                className="dm-recap-empty-icon"
+                aria-hidden="true"
+              />
               <p className="dm-recap-empty-text">
                 Belum ada data absensi Workshop pada tanggal ini.
               </p>
@@ -442,7 +445,7 @@ export default function AttendanceRecap({ lines, call }: Props) {
 
                       return (
                         <tr key={`${session.id}:${attendance.employeeId}`}>
-                          <td style={{ color: "#6a8c7b", fontWeight: 700 }}>
+                          <td className="dm-recap-row-number">
                             {index + 1}
                           </td>
                           <td>
