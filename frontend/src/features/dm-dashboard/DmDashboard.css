@@ -1204,3 +1204,16 @@
   padding: 0 0.5rem;
   font-size: 0.6875rem;
 }
+
+.sqdip-chip {
+  display: inline-block;
+  min-width: 3.25rem;
+  padding: 0.125rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.sqdip-chip.is-full { background: #e3f4ea; color: #0b5d34; }
+.sqdip-chip.is-miss { background: #fde4e4; color: #9b1c1c; }

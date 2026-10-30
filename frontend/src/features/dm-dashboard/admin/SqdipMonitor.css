@@ -340,13 +340,13 @@
   color: #1f5a39;
 }
 
-.sq-total.is-warn {
-  color: #8a5a00;
+.sq-total.is-warn,
+.sq-total.is-danger {
+  background: #fbdada;
+  color: #9b1c1c;
 }
 
-.sq-total.is-danger {
-  color: #a83830;
-}
+
 
 .sq-pager {
   display: flex;

@@ -164,7 +164,7 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
               <div className="scorecard-tabs-body">
                 {tab === "Papercard" && <div className="scorecard-tab-panel"><PapercardDetail canExport={canExport} selectedDm={selectedDm} startDate={startDate} endDate={endDate} /></div>}
                 {tab === "Standup Meeting" && <div className="scorecard-tab-panel scorecard-tab-panel--scroll"><StandupDetail canExport={canExport} /></div>}
-{tab === "SQDIP" && <div className="scorecard-tab-panel"><SqdipSummary dm={selectedDm} /></div>}              </div>
+{tab === "SQDIP" && <div className="scorecard-tab-panel"><SqdipSummary dm={selectedDm} startDate={startDate} endDate={endDate} /></div>}              </div>
             </Card>
           </div>
         </>
