@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.services.teamtalk import notify_new_problems
 from zoneinfo import ZoneInfo
 
-from app.api.deps import Principal, authorize_line, get_active_principal, get_current_admin, get_principal
+from app.api.deps import Principal, authorize_line, get_active_principal, get_current_admin, get_principal, require
 from app.db.session import get_db
 from app.models import (
     BoardMember,
@@ -896,7 +896,7 @@ def my_problems(
 def list_problems(
     line_id: int | None = Query(None, description="Filter masalah berdasarkan ID lini"),
     db: Session = Depends(get_db),
-    principal: Principal = Depends(get_active_principal),
+    principal: Principal = Depends(require("problems.read")),
 ) -> list[myProblemOut]:
     """
     Mengambil seluruh daftar masalah dari meeting lini yang dipimpin oleh Leader (atau semua lini bagi SPV/Admin).

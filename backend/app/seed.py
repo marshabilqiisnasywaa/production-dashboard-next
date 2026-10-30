@@ -1,33 +1,31 @@
-import argparse
 import sys
-from getpass import getpass
 
 from sqlalchemy import select
 
-from app.core.config import settings
 from app.core.security import hash_password
 from app.db.session import SessionLocal
-from app.models import User, Workshop
+from app.models import Employee, User
 
-DEFAULT_WORKSHOPS = ("Workshop 5", "Workshop 6")
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin123"
 MIN_PASSWORD_LENGTH = 8
 
 
 def read_credentials() -> tuple[str, str]:
-    parser = argparse.ArgumentParser(description="Create or reset the superadmin and default workshops.")
-    parser.add_argument("--username", help="falls back to SEED_ADMIN_USERNAME in .env, then a prompt")
-    parser.add_argument("--password", help="falls back to SEED_ADMIN_PASSWORD in .env, then a prompt")
-    args = parser.parse_args()
-    username = args.username or settings.seed_admin_username or input("Username superadmin [admin]: ").strip() or "admin"
-    password = args.password or settings.seed_admin_password or getpass("Password superadmin: ")
-    if len(password) < MIN_PASSWORD_LENGTH:
-        sys.exit(f"Password minimal {MIN_PASSWORD_LENGTH} karakter.")
+    username = ADMIN_USERNAME.strip()
+    password = ADMIN_PASSWORD
+    if not username or len(username) > 64:
+        sys.exit("Username wajib diisi, maksimal 64 karakter.")
+    if not MIN_PASSWORD_LENGTH <= len(password) <= 128:
+        sys.exit(f"Password harus {MIN_PASSWORD_LENGTH}-128 karakter.")
     return username, password
 
 
 def main() -> None:
     username, password = read_credentials()
     with SessionLocal() as db:
+        if db.scalar(select(Employee.id).where(Employee.employee_no == username)) is not None:
+            sys.exit(f"Username '{username}' sudah dipakai akun karyawan.")
         user = db.scalar(select(User).where(User.username == username))
         if user is None:
             db.add(User(username=username, password_hash=hash_password(password), role="superadmin"))
@@ -37,10 +35,6 @@ def main() -> None:
             user.role = "superadmin"
             user.is_active = True
             print(f"Password superadmin '{username}' diperbarui.")
-        for name in DEFAULT_WORKSHOPS:
-            if db.scalar(select(Workshop.id).where(Workshop.name == name)) is None:
-                db.add(Workshop(name=name))
-                print(f"Workshop '{name}' dibuat.")
         db.commit()
 
 

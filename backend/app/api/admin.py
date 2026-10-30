@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_admin
 from app.api.meetings import _absence_fields
+from app.core.roles import ROLES
 from app.db.session import get_db
 from app.models import DmGroup, Board, BoardMember, DmMeetingAttendance, DmMeetingSession, Employee, Line, MpvAward, Workshop
 from app.schemas import (
@@ -26,6 +27,7 @@ from app.schemas import (
     AttendanceRecapOut,
     RecapRowOut,
     RecapSessionOut,
+    RoleOptionOut,
 )
 from app.services.accounts import new_employee, reset_password
 from app.services.boards import (
@@ -509,16 +511,23 @@ def nik_taken(db: Session, employee_no: str, exclude_id: int | None = None) -> b
     return db.scalar(query) is not None
 
 
+@router.get("/roles", response_model=list[RoleOptionOut])
+def list_roles() -> list[RoleOptionOut]:
+    return [RoleOptionOut(value=key, label=role.label) for key, role in ROLES.items() if key != "hod"]
+
+
 @router.get("/employees", response_model=list[EmployeeOut])
 def list_employees(db: Session = Depends(get_db)) -> list[EmployeeOut]:
     lines = employee_lines(db)
     enrolled = photo_template_ids(db)
-    employees = db.scalars(select(Employee).order_by(Employee.name, Employee.id))
+    employees = db.scalars(select(Employee).where(Employee.role != "hod").order_by(Employee.name, Employee.id))
     return [employee_out(e, lines.get(e.id, []), e.id in enrolled) for e in employees]
 
 
 @router.post("/employees", response_model=EmployeeOut, status_code=status.HTTP_201_CREATED)
 def create_employee(body: EmployeeIn, db: Session = Depends(get_db)) -> EmployeeOut:
+    if body.role == "hod":
+        raise HTTPException(403, "Akun HOD hanya bisa dibuat lewat seeder.")
     employee_no = body.employee_id.strip()
     if nik_taken(db, employee_no):
         raise conflict(f"NIK '{employee_no}' sudah dipakai karyawan lain.")
@@ -546,6 +555,8 @@ def update_employee(employee_pk: int, body: EmployeeUpdate, db: Session = Depend
     employee = db.get(Employee, employee_pk)
     if employee is None:
         raise not_found("Pengguna")
+    if body.role == "hod" and employee.role != "hod":
+        raise HTTPException(403, "Akun HOD hanya bisa dibuat lewat seeder.")
     sent = body.model_fields_set
     emp_lines = employee_lines(db).get(employee.id, [])
     if "employee_id" in sent and body.employee_id is not None:

@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    app_env: str = "development"
     database_url: str
     secret_key: str
     access_token_minutes: int = 720
@@ -12,8 +13,6 @@ class Settings(BaseSettings):
         r"^https?://(localhost|127\.0\.0\.1|10(\.\d{1,3}){3}|192\.168(\.\d{1,3}){2}"
         r"|172\.(1[6-9]|2\d|3[01])(\.\d{1,3}){2})(:\d+)?$"
     )
-    seed_admin_username: str | None = None
-    seed_admin_password: str | None = None
     teamtalk_enabled: bool = False
     teamtalk_webhook_url: str | None = None
 

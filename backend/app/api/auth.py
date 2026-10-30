@@ -1,10 +1,12 @@
 import math
+from app.core.roles import access_of
+
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import Principal, get_principal
+from app.api.deps import Principal, get_principal, require
 from app.core import ratelimit
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db.session import get_db
@@ -62,11 +64,12 @@ def login(body: LoginIn, request: Request, db: Session = Depends(get_db)) -> Tok
         name=employee.name,
         must_change_password=employee.must_change_password,
         dept=employee.dept,
+        **access_of(employee.role),
     )
 
 
 @router.get("/me", response_model=MeOut)
-def me(principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> MeOut:
+def me(principal: Principal = Depends(require("account.self", active=False)), db: Session = Depends(get_db)) -> MeOut:
     if principal.user is not None:
         return MeOut(
             username=principal.user.username,
@@ -106,13 +109,14 @@ def me(principal: Principal = Depends(get_principal), db: Session = Depends(get_
         supervisor=employee.supervisor_name,
         work_phone=employee.work_phone,
         photo_url=employee.photo_url,
+        **access_of(employee.role),
     )
 
 
 @router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
 def change_password(
     body: ChangePasswordIn,
-    principal: Principal = Depends(get_principal),
+    principal: Principal = Depends(require("account.self", active=False)),
     db: Session = Depends(get_db),
 ) -> Response:
     account = principal.user or principal.employee

@@ -28,11 +28,21 @@ python -m app.seed
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-`python -m app.seed` creates the superadmin and the workshops "Workshop 5" and "Workshop 6" (existing ones are kept). Credentials come from, in order: `--username` and `--password` arguments, `SEED_ADMIN_USERNAME` and `SEED_ADMIN_PASSWORD` in `.env`, then a prompt. Password minimum is 8 characters. Running it again resets that user's password.
+`python -m app.seed` creates only the superadmin account. Create workshops manually from the admin dashboard after logging in. Edit `ADMIN_USERNAME` and `ADMIN_PASSWORD` at the top of `app/seed.py`, then run the command without arguments or prompts. The password must be 8-128 characters and is hashed before storage. Running it again resets that user's password and reactivates the account. A username belonging to an employee (including HOD) is rejected.
 
 ```powershell
-python -m app.seed --username admin --password "ganti-dengan-password-kuat"
+python -m app.seed
 ```
+
+HOD accounts are created through a separate seeder, using the existing employee login and HOD permissions. Edit `HOD_USERNAME`, `HOD_NAME`, and `HOD_PASSWORD` at the top of `app/seed_hod.py`, then run:
+
+```powershell
+python -m app.seed_hod
+```
+
+The command writes directly to the database configured by `DATABASE_URL` in `.env`, without prompts. `HOD_USERNAME` is stored as the employee NIK used for login. The password must be 8-128 characters and differ from the NIK; it is hashed before storage. Login uses the configured username and password, without a forced password change. Re-running resets the password and reactivates the same HOD account. An NIK belonging to an admin or another employee role is rejected.
+
+HOD accounts are excluded from the admin employee list and role options, like admin accounts. The employee API rejects creation or promotion to HOD, including imports. `python -m app.seed_dev` still creates `DEV-HOD` for development only, with its existing initial-password flow; it cannot run in production.
 
 Reset the database from scratch (drops every table, then rebuilds them):
 

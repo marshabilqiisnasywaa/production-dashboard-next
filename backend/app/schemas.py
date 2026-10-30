@@ -1,11 +1,22 @@
 from datetime import date, datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 
+from app.core.roles import ROLES
+
 LineStatus = Literal["running", "idle", "stopped"]
-EmployeeRole = Literal["member", "leader", "supervisor"]
+
+
+def check_role(value: str) -> str:
+    if value not in ROLES:
+        raise ValueError(f"Role tidak dikenal: {value}")
+    return value
+
+
+EmployeeRole = Annotated[str, AfterValidator(check_role)]
+
 
 
 class CamelModel(BaseModel):
@@ -25,6 +36,10 @@ class TokenOut(CamelModel):
     name: str | None = None
     must_change_password: bool = False
     dept: str | None = None
+    home: str | None = None
+    scope: str | None = None
+    capabilities: list[str] | None = None
+
 
 
 class ChangePasswordIn(CamelModel):
@@ -57,6 +72,9 @@ class MeOut(CamelModel):
     supervisor: str | None = None
     work_phone: str | None = None
     photo_url: str | None = None
+    home: str | None = None
+    scope: str | None = None
+    capabilities: list[str] | None = None
 
 
 class WorkshopHod(CamelModel):
@@ -213,6 +231,9 @@ class EmployeeUpdate(CamelModel):
     photo_url: str | None = None
     is_active: bool | None = None
 
+class RoleOptionOut(CamelModel):
+    value: str
+    label: str
 
 class EmployeeOut(CamelModel):
     id: int

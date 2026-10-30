@@ -37,7 +37,6 @@ export function Segmented<T extends string>({
         <button
           key={item}
           type="button"
-          className={value === item ? "active" : ""}
           onClick={() => onChange(item)}
           className={`border-0 px-3 ${
             value === item ? "bg-white text-primary shadow-card" : ""

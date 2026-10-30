@@ -1,6 +1,12 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { adminApi, dmDepartments, dmEmployeeRoles } from "../api";
+import {
+  adminApi,
+  dmDepartments,
+  dmEmployeeRoles,
+  syncEmployeeRoles,
+} from "../api";
+
 import type { DmEmployee, DmEmployeeInput, DmEmployeeRole } from "../api";
 import { PlusIcon } from "./AdminIcons";
 import RowMenu from "./RowMenu";
@@ -94,6 +100,7 @@ export default function UserManager({ call }: UserManagerProps) {
     setLoading(true);
     setLoadError(null);
     try {
+      await syncEmployeeRoles().catch(() => undefined);
       setUsers(await call(() => adminApi.employees()));
     } catch (error) {
       setLoadError(messageOf(error));

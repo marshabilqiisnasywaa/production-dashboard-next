@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.face_template import FaceTemplate
@@ -10,9 +10,9 @@ from app.db.base import Base
 
 class Employee(Base):
     __tablename__ = "employees"
-    __table_args__ = (
-        CheckConstraint("role IN ('member', 'leader', 'supervisor')", name="ck_employees_role"),
-    )
+    # __table_args__ = (
+    #     CheckConstraint("role IN ('member', 'leader', 'supervisor')", name="ck_employees_role"),
+    # )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     employee_no: Mapped[str] = mapped_column(String(32), unique=True)

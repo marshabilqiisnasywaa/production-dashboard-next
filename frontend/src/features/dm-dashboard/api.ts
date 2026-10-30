@@ -61,7 +61,11 @@ export type DmMemberInput = {
 
 export type DmMpvInput = Omit<DmMemberInput, "sortOrder">;
 
-export type DmMemberPick = { employeePk: number; sortOrder: number; targetDept?: string };
+export type DmMemberPick = {
+  employeePk: number;
+  sortOrder: number;
+  targetDept?: string;
+};
 
 export type DmMpvPick = { employeePk: number };
 export type DmMvpCandidate = Pick<
@@ -93,16 +97,26 @@ export const leaderMpvApi = {
     ),
 };
 
-export type DmEmployeeRole = "member" | "leader" | "supervisor";
+export type DmEmployeeRole = string;
 
-export const dmEmployeeRoles: readonly {
+export const dmEmployeeRoles: {
   value: DmEmployeeRole;
   label: string;
 }[] = [
   { value: "member", label: "Member" },
   { value: "leader", label: "Leader" },
   { value: "supervisor", label: "Supervisor" },
+  { value: "hod", label: "HOD" },
 ];
+
+export async function syncEmployeeRoles() {
+  const rows = await request<{ value: string; label: string }[]>(
+    "/admin/roles",
+    {},
+    true
+  );
+  if (rows.length) dmEmployeeRoles.splice(0, dmEmployeeRoles.length, ...rows);
+}
 
 export const dmDepartments: readonly string[] = ["ME", "PE", "PROD", "QC"];
 
@@ -250,9 +264,7 @@ export const publicApi = {
   board: (slug: string) =>
     request<DmBoard>(`/public/boards/${encodeURIComponent(slug)}`),
   workshopTeam: (workshopId: number) =>
-    request<DmPublicWorkshopTeam>(
-      `/public/workshops/${workshopId}/team`
-    ),
+    request<DmPublicWorkshopTeam>(`/public/workshops/${workshopId}/team`),
   attendanceRecap: (date: string, lineId?: number) =>
     request<DmPublicAttendanceRecap>(
       "/public/attendance-recap?date=" +
@@ -269,6 +281,9 @@ export type DmLoginResult = {
   name: string | null;
   mustChangePassword: boolean;
   dept?: string | null;
+  home?: string | null;
+  scope?: string | null;
+  capabilities?: string[] | null;
 };
 
 export type DmMe = {
@@ -296,6 +311,9 @@ export type DmMe = {
     workshopName: string;
     slug: string;
   }[];
+  home?: string | null;
+  scope?: string | null;
+  capabilities?: string[] | null;
 };
 
 export const accountApi = {
@@ -373,9 +391,14 @@ export type DmPublicAttendanceRecap = DmAttendanceRecap & {
 };
 
 export const adminApi = {
-  workshopHod: (id: number) => request<DmWorkshopHod | null>(`/admin/workshops/${id}/hod`, {}, true),
+  workshopHod: (id: number) =>
+    request<DmWorkshopHod | null>(`/admin/workshops/${id}/hod`, {}, true),
   saveWorkshopHod: (id: number, data: DmWorkshopHod) =>
-    request<DmWorkshopHod>(`/admin/workshops/${id}/hod`, json("PUT", data), true),
+    request<DmWorkshopHod>(
+      `/admin/workshops/${id}/hod`,
+      json("PUT", data),
+      true
+    ),
   workshops: () => request<DmWorkshop[]>("/admin/workshops", {}, true),
   createWorkshop: (name: string) =>
     request<DmWorkshop>("/admin/workshops", json("POST", { name }), true),

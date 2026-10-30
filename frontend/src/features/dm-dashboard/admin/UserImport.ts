@@ -46,8 +46,8 @@ const templateColumns = [
     key: "position",
     width: 24,
     text: false,
-    rule: "Opsional. Jabatan.",
-    example: "Operator",
+    rule: "Posisi DI team ini.",
+    example: "PE Structurel / PE Technician",
   },
   {
     key: "supervisor_nik",
@@ -99,7 +99,11 @@ export async function downloadTemplate() {
         alignVertical: "top" as const,
       },
       { value: column.rule, wrap: true, alignVertical: "top" as const },
-      { value: column.example, textColor: MUTED, alignVertical: "top" as const },
+      {
+        value: column.example,
+        textColor: MUTED,
+        alignVertical: "top" as const,
+      },
     ]),
   ];
   const blob = await writeExcelFile(
