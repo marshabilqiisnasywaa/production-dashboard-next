@@ -1,6 +1,6 @@
-﻿import { useEffect, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useRef, useState } from "react";
 import { BarChart3, ClipboardList, Clock3, Download, Expand, Settings2, ShieldCheck, Users, X } from "lucide-react";
-import { Badge, Button, Card, Input, Select, SectionTitle } from "./ui";
+import { Badge, Button, Card, SectionTitle } from "./ui";
 import { computeDmScores, dmScoreDetails, DM_ORDER, formatScore, leaderScores, type ScoreTab, type ScoreTrend } from "./data";
 import {
   PapercardDetail,
@@ -12,10 +12,10 @@ import {
 } from "./components";
 import LeaderBoard from "./LeaderBoard";
 import SqdipSummary from "./SqdipSummary";
+import { DateRangePicker, FilterPortalContext, FilterSelect } from "./ScorecardFilters";
 import "./dm-scorecard.css";
 
 export default function DmScorecard({ isLeader = false, canExport = false }: { isLeader?: boolean; canExport?: boolean }) {
-  const [month, setMonth] = useState("2026-09");
   const [workshop, setWorkshop] = useState(isLeader ? "Workshop 6" : "Semua");
   const [selectedDm, setSelectedDm] = useState(isLeader ? "DM 3" : "DM 3");
   const [trend, setTrend] = useState<ScoreTrend>("Total");
@@ -24,9 +24,17 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
   const [filterOpen, setFilterOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [startDate, setStartDate] = useState("2026-09-14");
-  const [endDate, setEndDate] = useState("2026-09-16");
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [range, setRange] = useState({ from: "2026-09-14", to: "2026-09-16" });
+  const startDate = range.from;
+  const endDate = range.to;
+  // Skor bulanan (KPI & peringkat) mengikuti bulan dari tanggal awal periode
+  const month = startDate.slice(0, 7);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
+  const setRoot = useCallback((node: HTMLDivElement | null) => {
+    rootRef.current = node;
+    setPortalEl(node);
+  }, []);
   const target = Number(month.slice(5)) <= 6 ? 80 : 90;
   const hasData = month === "2026-09";
   const dmScores = computeDmScores(leaderScores, target);
@@ -47,21 +55,29 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
 
   const filters = (
     <>
-      <label className="grid gap-1 text-xs font-semibold text-text-secondary">Bulan<Input type="month" value={month} onChange={setMonth} className="min-w-number" /></label>
-      {!isLeader && <label className="grid gap-1 text-xs font-semibold text-text-secondary">Workshop<Select value={workshop} onChange={setWorkshop}><option>Semua</option><option>Workshop 5</option><option>Workshop 6</option></Select></label>}
-<label className="grid gap-1 text-xs font-semibold text-text-secondary">DM<Select value={selectedDm} onChange={setSelectedDm}>{(isLeader ? ["DM 3"] : ["Semua", "DM 3", "DM 4"]).map((dm) => <option key={dm}>{dm}</option>)}</Select></label>    </>
+      <label className="grid gap-1 text-xs font-semibold text-text-secondary">
+        Periode
+        <DateRangePicker value={range} onChange={setRange} />
+      </label>
+      {!isLeader && (
+        <label className="grid gap-1 text-xs font-semibold text-text-secondary">
+          Workshop
+          <FilterSelect value={workshop} onChange={setWorkshop} options={["Semua", "Workshop 5", "Workshop 6"]} />
+        </label>
+      )}
+      <label className="grid gap-1 text-xs font-semibold text-text-secondary">
+        DM
+        <FilterSelect value={selectedDm} onChange={setSelectedDm} options={isLeader ? ["DM 3"] : ["Semua", "DM 3", "DM 4"]} />
+      </label>
+    </>
   );
-  const changeStartDate = (value: string) => {
-    setStartDate(value);
-    if (value > endDate) setEndDate(value);
-  };
-  const changeEndDate = (value: string) => setEndDate(value < startDate ? startDate : value);
   const togglePillar = (key: string) => setExpandedPillars((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
 
   if (loading) return <div><SectionTitle title="KPI Leader" description="Nilai Daily Management per DM, line, dan leader" /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 8 }, (_, index) => <Card key={index} className="min-h-dashboard animate-pulse bg-border" />)}</div></div>;
 
   return (
-    <div ref={rootRef} className="scorecard-tv bg-section">
+    <FilterPortalContext.Provider value={portalEl}>
+    <div ref={setRoot} className="scorecard-tv bg-section">
       <div className="scorecard-top scorecard-top-leader mb-5">
         <div className="scorecard-heading">
           <div className="whitespace-nowrap text-2xl font-bold tracking-tight text-text">KPI Leader</div>
@@ -154,5 +170,6 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
         </>
       )}
     </div>
+    </FilterPortalContext.Provider>
   );
 }
