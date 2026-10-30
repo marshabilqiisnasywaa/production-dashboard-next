@@ -527,7 +527,7 @@ export default function MpvManager({
               )}
 
               <div className="mpv-hint-note">
-                <span className="mpv-hint-icon">💡</span>
+                {/* <span className="mpv-hint-icon">💡</span> */}
                 <span>
                   MVP ditampilkan pada baris bawah dashboard line. Standar
                   tayang adalah periode bulan kemarin (

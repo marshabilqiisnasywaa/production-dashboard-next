@@ -228,7 +228,7 @@ export default function LineTeamModal({
               </h2>
             </div>
             <p className="ltm-subtitle">
-              Line <strong>{line.name}</strong>. Slot 1 selalu Leader.
+              TIM <strong>{line.name}</strong>
             </p>
           </div>
           <button
@@ -260,143 +260,30 @@ export default function LineTeamModal({
           {/* Rule and Capacity Summary Bar */}
           <div className="ltm-rule-card">
             <div className="ltm-rule-info">
-              <span className="ltm-rule-icon">👥</span>
+              {/* <span className="ltm-rule-icon">👥</span> */}
               <div>
-                <strong>Standar Tim Inti: Tepat 4 Personil</strong>
+                <strong>Standar Tim DM</strong>
                 <div style={{ fontSize: "12px", color: "#64748b" }}>
-                  Slot #1 wajib <strong>Leader</strong> + 3 Personil Departemen (PROD, ME, PE, QC).
+                  Terdiri dari 1 Leader(PROD) + 3 Personil Departemen (ME, PE, QC). <strong>Slot #1 wajib Leader</strong>
                 </div>
               </div>
             </div>
 
             <span className={`ltm-team-counter ${isComplete ? "is-complete" : "is-incomplete"}`}>
-              {isComplete ? "✓ Lengkap: 4 / 4 Personil" : `Perhatian: ${members.length} / 4 Personil`}
+              {isComplete ? "Personil: 4 / 4" : `Perhatian: ${members.length} / 4`}
             </span>
           </div>
 
-          {/* Loading / Error States */}
-          {loading ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
-              Memuat data personil line {line.code}...
-            </div>
-          ) : loadError ? (
-            <div className="ltm-alert is-error">
-              <span>{loadError}</span>
-              <button type="button" onClick={loadData} className="ltm-btn-add" style={{ height: "30px", fontSize: "12px" }}>
-                Coba Lagi
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* 4 Slots Grid */}
-              <div className="ltm-slots-grid">
-                {members.slice(0, 4).map((member, idx) => {
-                  const isLeader = member.sortOrder === 1;
-                  const dept = member.dept?.toUpperCase() || "PROD";
-
-                  return (
-                    <div
-                      key={member.id ?? idx}
-                      className={`ltm-slot-card ${isLeader ? "is-leader" : ""}`}
-                    >
-                      <div>
-                        <div className="ltm-slot-head">
-                          <span className={`ltm-slot-badge ${isLeader ? "is-leader-badge" : "is-member-badge"}`}>
-                            {isLeader ? " SLOT #1 LEADER" : `SLOT #${member.sortOrder ?? idx + 1}`}
-                          </span>
-                          <span className={`ltm-slot-dept dept-${dept}`}>
-                            {dept}
-                          </span>
-                        </div>
-
-                        <div className="ltm-member-row" style={{ marginTop: "10px" }}>
-                          <div className="ltm-avatar">
-                            {member.photoUrl ? (
-                              <img src={member.photoUrl} alt="" className="ltm-avatar-img" />
-                            ) : (
-                              getInitials(member.name)
-                            )}
-                          </div>
-                          <div className="ltm-member-details">
-                            <span className="ltm-member-name" title={member.name ?? ""}>
-                              {member.name}
-                            </span>
-                            <span className="ltm-member-meta">
-                              NIK: <strong>{member.employeeId ?? "-"}</strong>
-                            </span>
-                            <span className="ltm-member-meta" style={{ color: "#008a4f" }}>
-                              {member.position ?? "-"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Card Footer Actions */}
-                      <div className="ltm-slot-actions">
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: 600 }}>
-                            Urutan:
-                          </label>
-                          <select
-                            className="ltm-order-select"
-                            value={member.sortOrder ?? idx + 1}
-                            onChange={(e) => handleOrderChange(member, Number(e.target.value))}
-                            disabled={savingAction}
-                            title="Ubah nomor urutan tampil"
-                          >
-                            <option value="1">#1 (Leader)</option>
-                            <option value="2">#2</option>
-                            <option value="3">#3</option>
-                            <option value="4">#4</option>
-                          </select>
-                        </div>
-
-                        <button
-                          type="button"
-                          className="ltm-btn-release"
-                          onClick={() => handleRelease(member)}
-                          disabled={savingAction}
-                          title="Lepas anggota dari line ini"
-                        >
-                          Lepas
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Placeholders for remaining slots if team has < 4 members */}
-                {freeSlots.map((slotNum) => (
-                  <button
-                    key={`empty-${slotNum}`}
-                    type="button"
-                    className={`ltm-slot-card is-empty ${pickSlotOrder === String(slotNum) ? "is-active-target" : ""}`}
-                    onClick={() => {
-                      setPickSlotOrder(String(slotNum));
-                      setIsDropdownOpen(true);
-                    }}
-                    disabled={savingAction}
-                    title={`Pilih untuk mengisi Slot #${slotNum}`}
-                  >
-                    <span className="ltm-slot-plus" aria-hidden="true">+</span>
-                    <span className="ltm-slot-empty-title">
-                      Slot #{slotNum}{slotNum === 1 ? " (Leader)" : ""} Masih Kosong
-                    </span>
-                    <span className="ltm-slot-empty-hint">Klik untuk pasang personil</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Add / Assign Personnel Section or Complete Notice */}
+                        {/* Add / Assign Personnel Section or Complete Notice */}
               {isComplete ? (
                 <div className="ltm-complete-notice">
                   <div className="ltm-complete-notice-icon">✓</div>
                   <div className="ltm-complete-notice-body">
                     <strong className="ltm-complete-notice-title">
-                      DM Triangle Team Line {line.code} Sudah Lengkap (4 / 4 Team)
+                      DM Triangle Team Line {line.code} Sudah Lengkap
                     </strong>
                     <p className="ltm-complete-notice-text">
-                      Team telah terpenuhi sehingga penambahan personil ditutup. Jika ingin mengganti anggota, klik tombol <strong>Lepas</strong> pada salah satu personil di atas terlebih dahulu.
+                      Team telah terpenuhi sehingga penambahan personil ditutup. Jika ingin mengganti anggota, klik tombol <strong>Keluarkan</strong> pada salah satu personil terlebih dahulu.
                     </p>
                   </div>
                 </div>
@@ -404,7 +291,7 @@ export default function LineTeamModal({
                 <section className="ltm-add-section">
                   <div className="ltm-add-header">
                     <h3 className="ltm-add-title">
-                      <span>Tambah / Pasang team ke Line {line.code}</span>
+                      <span>Tambah team ke Line {line.code}</span>
                     </h3>
                     <span className="ltm-add-desc">
                       Pilih karyawan dari daftar. Karyawan yang sudah terdaftar di line lain tetap dapat dipasang secara bebas (multi-line).
@@ -486,7 +373,7 @@ export default function LineTeamModal({
                           </div>
                         ) : (
                           <div className="ltm-trigger-placeholder">
-                            <span className="ltm-trigger-icon">🔍</span>
+                            {/* <span className="ltm-trigger-icon">🔍</span> */}
                             <span>
                               {availableEmployees.length === 0
                                 ? "Semua karyawan sudah terpasang di line ini"
@@ -519,7 +406,7 @@ export default function LineTeamModal({
                           {/* Search Box Header */}
                           <div className="ltm-dropdown-header">
                             <div className="ltm-search-wrap">
-                              <span className="ltm-search-icon">🔍</span>
+                              {/* <span className="ltm-search-icon">🔍</span> */}
                               <input
                                 ref={searchInputRef}
                                 type="text"
@@ -653,6 +540,127 @@ export default function LineTeamModal({
                   </form>
                 </section>
               )}
+
+          {/* Loading / Error States */}
+          {loading ? (
+            <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
+              Memuat data personil line {line.code}...
+            </div>
+          ) : loadError ? (
+            <div className="ltm-alert is-error">
+              <span>{loadError}</span>
+              <button type="button" onClick={loadData} className="ltm-btn-add" style={{ height: "30px", fontSize: "12px" }}>
+                Coba Lagi
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* 4 Slots Grid */}
+              <div className="ltm-slots-grid">
+                {members.slice(0, 4).map((member, idx) => {
+                  const isLeader = member.sortOrder === 1;
+                  const dept = member.dept?.toUpperCase() || "PROD";
+
+                  return (
+                    <div
+                      key={member.id ?? idx}
+                      className={`ltm-slot-card ${isLeader ? "is-leader" : ""}`}
+                    >
+                      <div>
+                        <div className="ltm-slot-head">
+                          <span className={`ltm-slot-badge ${isLeader ? "is-leader-badge" : "is-member-badge"}`}>
+                            {isLeader ? "#1 LEADER" : `#${member.sortOrder ?? idx + 1}`}
+                          </span>
+                          <span className={`ltm-slot-dept dept-${dept}`}>
+                            {dept}
+                          </span>
+                        </div>
+
+                        <div className="ltm-member-row" style={{ marginTop: "10px" }}>
+                          <div className="ltm-avatar">
+                            {member.photoUrl ? (
+                              <img src={member.photoUrl} alt="" className="ltm-avatar-img" />
+                            ) : (
+                              getInitials(member.name)
+                            )}
+                          </div>
+                          <div className="ltm-member-details">
+                            <span className="ltm-member-name" title={member.name ?? ""}>
+                              {member.name}
+                            </span>
+                            <span className="ltm-member-meta">
+                              NIK: <strong>{member.employeeId ?? "-"}</strong>
+                            </span>
+                            <span className="ltm-member-meta" style={{ color: "#008a4f" }}>
+                              {member.position ?? "-"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card Footer Actions */}
+                      <div className="ltm-slot-actions">
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: 600 }}>
+                            Urutan:
+                          </label>
+                          <select
+                            className="ltm-order-select"
+                            value={member.sortOrder ?? idx + 1}
+                            onChange={(e) => handleOrderChange(member, Number(e.target.value))}
+                            disabled={savingAction}
+                            title="Ubah nomor urutan tampil"
+                          >
+                            <option value="1">#1 (Leader)</option>
+                            <option value="2">#2</option>
+                            <option value="3">#3</option>
+                            <option value="4">#4</option>
+                          </select>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="ltm-btn-release"
+                          onClick={() => handleRelease(member)}
+                          disabled={savingAction}
+                          title="Keluarkan anggota dari line ini"
+                        >
+                          Keluarkan
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                
+{freeSlots.map((slotNum) => (
+  <button
+    key={`empty-${slotNum}`}
+    type="button"
+    className="ltm-slot-card is-empty"
+    onClick={() => {
+      setPickSlotOrder(String(slotNum));
+      setIsDropdownOpen(true);
+    }}
+    disabled={savingAction}
+    title={`Pilih untuk mengisi Slot #${slotNum}`}
+  >
+    <span className="ltm-slot-plus" aria-hidden="true">+</span>
+    <span className="ltm-slot-empty-title">
+      Slot #{slotNum}{slotNum === 1 ? " (Leader)" : ""} Masih Kosong
+    </span>
+    <span className="ltm-slot-empty-hint">
+      Klik untuk menambahkan personil
+    </span>
+  </button>
+))}
+
+                
+              </div>
+
+              
+
+
             </>
           )}
         </div>

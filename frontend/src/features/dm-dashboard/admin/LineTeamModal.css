@@ -98,7 +98,8 @@
 .ltm-subtitle {
   font-size: 0.85rem;
   color: var(--dm-admin-text-muted);
-  margin: 0;
+  margin: 8px 0;
+  gap: 10px;
 }
 
 .ltm-close-btn {
@@ -235,9 +236,9 @@
 }
 
 .ltm-slot-card.is-leader {
-  border-color: var(--dm-admin-primary);
-  background: #f9fafb;
-  box-shadow: 0 2px 8px rgba(4, 106, 56, 0.08);
+  /* border: 1.5px solid var(--dm-admin-border); */
+  background: #ffffff;
+  /* box-shadow: 0 2px 8px rgba(4, 106, 56, 0.08); */
 }
 
 .ltm-slot-card.is-mpv {
