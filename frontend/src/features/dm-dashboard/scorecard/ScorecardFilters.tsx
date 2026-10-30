@@ -147,9 +147,6 @@ const CALENDAR_CLASSES = {
   range_middle: "dmf-range-middle",
   outside: "dmf-outside",
   disabled: "dmf-disabled",
-  range_start: "dmf-range-start",
-range_end: "dmf-range-end",
-range_middle: "dmf-range-middle",
 } as const;
 
 function CalendarChevron({ orientation }: { orientation?: "up" | "down" | "left" | "right" }) {
