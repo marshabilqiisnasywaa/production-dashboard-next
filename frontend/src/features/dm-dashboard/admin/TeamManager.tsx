@@ -80,7 +80,7 @@ function MemberRow({ member, index, onSave, onRelease }: MemberRowProps) {
             <button type="submit" className="lw-link" disabled={busy}>Simpan</button>
           ) : null}
           <button type="button" className="lw-link is-danger" disabled={busy} onClick={() => run(onRelease)}>
-            Lepas
+            Keluarkan
           </button>
         </div>
       </form>
@@ -160,7 +160,7 @@ export default function TeamManager({ line, call, onChanged }: TeamManagerProps)
       throw new Error(CANCELLED);
     }
     await call(() => adminApi.releaseMember(memberId));
-    await afterChange(`${member.name ?? "Anggota"} dilepas dari lini.`);
+    await afterChange(`${member.name ?? "Anggota"} dikeluarkan dari lini.`);
   }
 
   const currentMemberIds = new Set(members.map((m) => m.employeeId));
