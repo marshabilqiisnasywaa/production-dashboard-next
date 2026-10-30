@@ -4,7 +4,6 @@ import { IconLogout } from "@/components/ui/icons";
 import { setToken } from "../api";
 import { Gauge as IconGauge } from "lucide-react";
 
-
 export type DmAdminTabKey =
   | "dashboard"
   | "workshop"
@@ -176,12 +175,12 @@ export default function DmAdminSidebar({
   return (
     <aside className="dm-admin-sidebar">
       {/* Brand / Logo */}
-<div className="dm-admin-sidebar-brand">
-  <span className="dml-logo">
-    <IconGauge size={22} />
-  </span>
-  <strong>DM Digital</strong>
-</div>
+      <div className="dm-admin-sidebar-brand">
+        <span className="dml-logo">
+          <IconGauge size={22} />
+        </span>
+        <strong>DM Digital</strong>
+      </div>
 
       {/* Menu Navigasi */}
       <nav className="dm-admin-sidebar-nav" aria-label="Menu Admin">
@@ -306,7 +305,7 @@ export default function DmAdminSidebar({
           </>
         )}
 
-        <div className="dm-admin-nav-heading">ROLE VIEW</div>
+        {/* <div className="dm-admin-nav-heading">ROLE VIEW</div>
 
         <Link href="/dm-dashboard/leader" className="dm-admin-nav-btn">
           <span className="dm-admin-nav-icon">
@@ -327,7 +326,7 @@ export default function DmAdminSidebar({
             <UsersGroupIcon />
           </span>
           <span>Supervisor</span>
-        </Link>
+        </Link> */}
       </nav>
     </aside>
   );
