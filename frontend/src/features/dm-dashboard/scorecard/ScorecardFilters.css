@@ -1,0 +1,729 @@
+/*
+  Styling filter (Select + DateRangePicker).
+  Sengaja memakai CSS biasa dengan class berawalan "dmf-", bukan utilitas Tailwind,
+  karena aturan global scorecard (button { font: inherit }, .scorecard-filters .inline-flex,
+  aturan table/th/td) akan menimpa utilitas Tailwind yang ada di layer.
+  Selector isi panel memakai .dmf-panel.dmf-panel (specificity dobel) supaya aman.
+*/
+
+/* ---------- Trigger (dipakai Select dan DateRangePicker) ---------- */
+.dmf-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  height: 2.5rem;
+  width: 8.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: #fff;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.25rem;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.dmf-trigger > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dmf-trigger svg {
+  flex: none;
+  color: var(--color-text-secondary);
+}
+
+.dmf-trigger:hover {
+  background: var(--color-section);
+}
+
+.dmf-trigger:focus-visible,
+.dmf-trigger[data-state="open"] {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-soft);
+}
+
+.dmf-trigger--date {
+  width: 15rem;
+}
+
+/* Mode TV: tinggi dan font disamakan dengan tombol Export / Layar penuh */
+.scorecard-tv .scorecard-controls .dmf-trigger {
+  height: 2rem;
+  padding: 0 0.625rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.scorecard-tv .scorecard-controls .dmf-trigger--date {
+  width: 13.5rem;
+}
+
+/* ---------- Panel melayang (menu select + popover tanggal) ---------- */
+.dmf-panel {
+  z-index: 50;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: #fff;
+  color: var(--color-text);
+  box-shadow: var(--shadow-popover);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.25rem;
+  outline: none;
+}
+
+.dmf-panel.dmf-panel *,
+.dmf-panel.dmf-panel *::before,
+.dmf-panel.dmf-panel *::after {
+  box-sizing: border-box;
+}
+
+/* ---------- Menu Select ---------- */
+.dmf-select-panel {
+  min-width: var(--radix-select-trigger-width);
+  max-height: var(--radix-select-content-available-height);
+  overflow: hidden;
+  padding: 0.25rem;
+}
+
+.dmf-panel.dmf-panel .dmf-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 2.25rem;
+  padding: 0 0.75rem 0 2rem;
+  border-radius: 0.5rem;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+
+.dmf-panel.dmf-panel .dmf-item[data-highlighted] {
+  background: var(--color-section);
+}
+
+.dmf-panel.dmf-panel .dmf-item[data-state="checked"] {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.dmf-panel.dmf-panel .dmf-item-check {
+  position: absolute;
+  left: 0.625rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ---------- Popover tanggal ---------- */
+.dmf-date-panel {
+  max-width: calc(100vw - 1.5rem);
+  max-height: calc(100vh - 1.5rem);
+  overflow: auto;
+}
+
+.dmf-panel.dmf-panel .dmf-date {
+  display: flex;
+}
+
+.dmf-panel.dmf-panel .dmf-date-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dmf-panel.dmf-panel .dmf-cal-wrap {
+  padding: 1rem;
+}
+
+.dmf-panel.dmf-panel .dmf-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.dmf-panel.dmf-panel .dmf-footer-dash {
+  color: var(--color-text-secondary);
+}
+
+.dmf-panel.dmf-panel .dmf-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.dmf-panel.dmf-panel .dmf-input {
+  width: 7.25rem;
+  height: 2.25rem;
+  padding: 0 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: #fff;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  outline: none;
+}
+
+.dmf-panel.dmf-panel .dmf-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-soft);
+}
+
+.dmf-panel.dmf-panel .dmf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.25rem;
+  padding: 0 0.875rem;
+  border: 1px solid var(--color-primary-border);
+  border-radius: 0.5rem;
+  background: #fff;
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.dmf-panel.dmf-panel .dmf-btn:hover {
+  background: var(--color-primary-soft);
+}
+
+.dmf-panel.dmf-panel .dmf-btn--primary {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.dmf-panel.dmf-panel .dmf-btn--primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.dmf-panel.dmf-panel .dmf-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Quick select */
+.dmf-panel.dmf-panel .dmf-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 11rem;
+  padding: 0.75rem;
+  border-left: 1px solid var(--color-border);
+}
+
+.dmf-panel.dmf-panel .dmf-preset {
+  flex: none;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.25rem;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dmf-panel.dmf-panel .dmf-preset:hover {
+  background: var(--color-section);
+}
+
+.dmf-panel.dmf-panel .dmf-preset.is-active {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ---------- Kalender (react-day-picker) ---------- */
+.dmf-panel.dmf-panel .dmf-cal {
+  position: relative;
+}
+
+.dmf-panel.dmf-panel .dmf-months {
+  position: relative;
+  display: flex;
+  gap: 2rem;
+}
+
+.dmf-panel.dmf-panel .dmf-month {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dmf-panel.dmf-panel .dmf-caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+}
+
+.dmf-panel.dmf-panel .dmf-caption-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.dmf-panel.dmf-panel .dmf-nav {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 2rem;
+  pointer-events: none;
+}
+
+.dmf-panel.dmf-panel .dmf-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.dmf-panel.dmf-panel .dmf-nav-btn:hover {
+  background: var(--color-section);
+  color: var(--color-text);
+}
+
+.dmf-panel.dmf-panel .dmf-nav-btn:disabled {
+  opacity: 0.4;
+}
+
+.dmf-panel.dmf-panel .dmf-grid {
+  width: auto;
+  margin: 0;
+  border: 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.dmf-panel.dmf-panel .dmf-weekdays,
+.dmf-panel.dmf-panel .dmf-week {
+  border: 0;
+  background: transparent;
+}
+
+.dmf-panel.dmf-panel .dmf-weekday {
+  width: 2.25rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: none;
+}
+
+.dmf-panel.dmf-panel .dmf-day {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: center;
+}
+
+.dmf-panel.dmf-panel .dmf-day-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.dmf-panel.dmf-panel .dmf-day-btn:hover {
+  background: var(--color-section);
+}
+
+.dmf-panel.dmf-panel .dmf-day-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.dmf-panel.dmf-panel .dmf-today .dmf-day-btn {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* Rentang terpilih */
+.dmf-panel.dmf-panel .dmf-range-middle {
+  background: var(--color-primary-soft);
+}
+
+.dmf-panel.dmf-panel .dmf-range-middle .dmf-day-btn {
+  border-radius: 0;
+  color: var(--color-primary);
+}
+
+.dmf-panel.dmf-panel .dmf-range-middle .dmf-day-btn:hover {
+  background: var(--color-primary-border);
+}
+
+.dmf-panel.dmf-panel .dmf-range-start {
+  border-radius: 0.5rem 0 0 0.5rem;
+  background: var(--color-primary-soft);
+}
+
+.dmf-panel.dmf-panel .dmf-range-end {
+  border-radius: 0 0.5rem 0.5rem 0;
+  background: var(--color-primary-soft);
+}
+
+.dmf-panel.dmf-panel .dmf-range-start.dmf-range-end {
+  border-radius: 0.5rem;
+  background: transparent;
+}
+
+.dmf-panel.dmf-panel .dmf-range-start .dmf-day-btn,
+.dmf-panel.dmf-panel .dmf-range-end .dmf-day-btn {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.dmf-panel.dmf-panel .dmf-range-start .dmf-day-btn:hover,
+.dmf-panel.dmf-panel .dmf-range-end .dmf-day-btn:hover {
+  background: var(--color-primary-dark);
+}
+
+.dmf-panel.dmf-panel .dmf-outside {
+  opacity: 0.4;
+}
+
+.dmf-panel.dmf-panel .dmf-disabled .dmf-day-btn {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ---------- Layar sempit: kalender 1 bulan, quick select jadi baris di atas ---------- */
+@media (max-width: 639px) {
+  .dmf-panel.dmf-panel .dmf-date {
+    flex-direction: column;
+  }
+
+  .dmf-panel.dmf-panel .dmf-presets {
+    order: -1;
+    flex-direction: row;
+    width: auto;
+    overflow-x: auto;
+    border-left: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .dmf-panel.dmf-panel .dmf-months {
+    flex-direction: column;
+  }
+
+  .dmf-trigger--date,
+  .scorecard-tv .scorecard-controls .dmf-trigger--date {
+    width: 100%;
+  }
+
+  .dmf-trigger {
+    width: 100%;
+  }
+}
+
+/* ---------- Date picker kompak (ukuran meniru Manpower Dashboard) ---------- */
+
+.dmf-date-panel {
+  width: max-content;
+}
+
+.dmf-panel.dmf-panel .dmf-date {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.dmf-panel.dmf-panel .dmf-cal-wrap {
+  padding: 1rem 1.5rem;
+}
+
+.dmf-panel.dmf-panel .dmf-cal,
+.dmf-panel.dmf-panel .dmf-months {
+  width: max-content;
+}
+
+.dmf-panel.dmf-panel .dmf-months {
+  gap: 2.5rem;
+}
+
+.dmf-panel.dmf-panel .dmf-month {
+  flex: none;
+  width: auto;
+  gap: 0.25rem;
+}
+
+.dmf-panel.dmf-panel .dmf-caption,
+.dmf-panel.dmf-panel .dmf-nav,
+.dmf-panel.dmf-panel .dmf-nav-btn {
+  height: 1.75rem;
+}
+
+.dmf-panel.dmf-panel .dmf-nav-btn {
+  width: 1.75rem;
+}
+
+.dmf-panel.dmf-panel .dmf-caption-label {
+  font-size: 0.8125rem;
+}
+
+/* Kunci lebar tabel = 7 kolom x 25px, supaya tidak ikut melebar */
+.dmf-panel.dmf-panel .dmf-grid {
+  width: 10.9375rem !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  table-layout: fixed;
+}
+
+.dmf-panel.dmf-panel .dmf-weekday {
+  width: 1.5625rem;
+  height: 1.5rem;
+  font-size: 0.6875rem;
+}
+
+.dmf-panel.dmf-panel .dmf-day {
+  width: 1.5625rem;
+  height: 1.5625rem;
+}
+
+.dmf-panel.dmf-panel .dmf-day-btn {
+  width: 1.5625rem;
+  height: 1.5625rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+}
+
+/* Footer */
+.dmf-panel.dmf-panel .dmf-footer {
+  padding: 0.625rem 0.75rem;
+}
+
+.dmf-panel.dmf-panel .dmf-input {
+  width: 7.5rem;
+  height: 1.75rem;
+  font-size: 0.75rem;
+}
+
+.dmf-panel.dmf-panel .dmf-btn {
+  height: 1.75rem;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+}
+
+/* Quick select */
+.dmf-panel.dmf-panel .dmf-presets {
+  width: 8rem;
+  gap: 0.0625rem;
+  padding: 0.5rem;
+}
+
+.dmf-panel.dmf-panel .dmf-preset {
+  height: 1.875rem;
+  font-size: 0.75rem;
+}
+
+/* ---------- Samakan gaya dengan Manpower Dashboard ---------- */
+
+.dmf-panel.dmf-panel .dmf-cal-wrap {
+  padding: 1rem 2.25rem 1.25rem;
+}
+
+.dmf-panel.dmf-panel .dmf-months {
+  gap: 2.75rem;
+}
+
+/* Panah di tepi, sejajar baris label hari */
+.dmf-panel.dmf-panel .dmf-nav {
+  top: 2rem;
+  right: -1.75rem;
+  left: -1.75rem;
+}
+
+.dmf-panel.dmf-panel .dmf-caption-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.dmf-panel.dmf-panel .dmf-weekday {
+  color: var(--color-border-strong);
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+.dmf-panel.dmf-panel .dmf-day-btn {
+  font-weight: 500;
+}
+
+.dmf-panel.dmf-panel .dmf-today .dmf-day-btn {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+/* Rentang: pita hijau muda, ujung lingkaran hijau tua */
+.dmf-panel.dmf-panel .dmf-range-middle {
+  background: var(--color-primary-soft);
+  border-radius: 0;
+}
+
+.dmf-panel.dmf-panel .dmf-range-middle .dmf-day-btn {
+  border-radius: 0;
+  color: var(--color-text);
+}
+
+.dmf-panel.dmf-panel .dmf-range-start,
+.dmf-panel.dmf-panel .dmf-range-end {
+  border-radius: 0;
+}
+
+.dmf-panel.dmf-panel .dmf-range-start {
+  background: linear-gradient(to right, transparent 50%, var(--color-primary-soft) 50%);
+}
+
+.dmf-panel.dmf-panel .dmf-range-end {
+  background: linear-gradient(to left, transparent 50%, var(--color-primary-soft) 50%);
+}
+
+.dmf-panel.dmf-panel .dmf-range-start.dmf-range-end {
+  background: transparent;
+}
+
+.dmf-panel.dmf-panel .dmf-range-start .dmf-day-btn,
+.dmf-panel.dmf-panel .dmf-range-end .dmf-day-btn {
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Footer */
+.dmf-panel.dmf-panel .dmf-footer {
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+}
+
+.dmf-panel.dmf-panel .dmf-input {
+  width: 7.875rem;
+  height: 2rem;
+  padding: 0 0.75rem;
+  border-color: var(--color-border);
+  background: var(--color-section);
+  font-size: 0.75rem;
+}
+
+.dmf-panel.dmf-panel .dmf-input:focus {
+  background: #fff;
+}
+
+.dmf-panel.dmf-panel .dmf-btn {
+  height: 2rem;
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.dmf-panel.dmf-panel .dmf-btn:hover {
+  background: var(--color-section);
+}
+
+.dmf-panel.dmf-panel .dmf-btn--primary {
+  border-color: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.dmf-panel.dmf-panel .dmf-btn--primary:hover {
+  background: var(--color-primary-dark);
+}
+
+/* Quick select */
+.dmf-panel.dmf-panel .dmf-presets {
+  width: 8.25rem;
+  padding: 0.75rem 0.5rem;
+}
+
+.dmf-panel.dmf-panel .dmf-presets-title {
+  padding: 0 0.75rem 0.375rem;
+  color: var(--color-text-secondary);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dmf-panel.dmf-panel .dmf-preset {
+  height: 1.875rem;
+  font-size: 0.75rem;
+}
+
+.dmf-panel.dmf-panel .dmf-preset.is-active {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+/* Footer menempel di dasar panel, sisa tinggi jatuh di bawah kalender */
+.dmf-panel.dmf-panel .dmf-date-main {
+  flex: 1 1 auto;
+}
+
+.dmf-panel.dmf-panel .dmf-cal-wrap {
+  flex: 1 1 auto;
+}
+
+.dmf-panel.dmf-panel .dmf-footer {
+  margin-top: auto;
+}
+
+/* Rapatkan quick select supaya selisih tinggi makin kecil */
+.dmf-panel.dmf-panel .dmf-presets {
+  gap: 0;
+  padding: 0.625rem 0.5rem;
+}
+
+.dmf-panel.dmf-panel .dmf-preset {
+  height: 1.75rem;
+}

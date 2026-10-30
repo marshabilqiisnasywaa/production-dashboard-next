@@ -422,6 +422,8 @@ export default function TemplateTreeEditor({
     ? activeCategory.groups.reduce((a, g) => a + g.items.length, 0)
     : 0;
 
+    
+
   return (
     <div className="tte-layout">
       {/* LEFT COLUMN: Category Navigation (Member-style) */}

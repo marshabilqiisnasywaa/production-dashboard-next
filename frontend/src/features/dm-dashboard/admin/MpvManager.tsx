@@ -117,14 +117,19 @@ export default function MpvManager({
 
   if (lines.length === 0 || line === null) {
     return (
-      <div className="dm-admin-state-block">
-        <h3>Belum ada lini</h3>
-        <p>
-          {emptyLinesMessage ??
-            (allowManual
-              ? "MPV diatur per lini. Buat lini dulu di tab Lini, Workshop & Tim."
-              : "Belum ada lini yang ditugaskan kepada Anda. Hubungi admin untuk mengatur penugasan.")}
-        </p>
+      <div className="mpv-shell">
+
+        <div className="mpv-content">
+          <div className="dm-admin-state-block">
+            <h3>Belum ada lini</h3>
+            <p>
+              {emptyLinesMessage ??
+                (allowManual
+                  ? "MPV diatur per lini. Buat lini dulu di tab Lini, Workshop & Tim."
+                  : "Belum ada lini yang ditugaskan kepada Anda. Hubungi admin untuk mengatur penugasan.")}
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -255,6 +260,12 @@ export default function MpvManager({
 
   return (
     <div className="mpv-shell">
+      {/* <header className="mpv-page-heading">
+        <h2>MVP of the Month</h2>
+        <p>Kelola kandidat dan tentukan pemenang MVP bulanan untuk operator lini produksi.</p>
+      </header> */}
+
+      <div className="mpv-content">
       {/* 1. Sleek Compact Toolbar */}
       <div className="mpv-bar">
         <div className="mpv-bar-left">
@@ -527,7 +538,7 @@ export default function MpvManager({
               )}
 
               <div className="mpv-hint-note">
-                <span className="mpv-hint-icon">💡</span>
+                {/* <span className="mpv-hint-icon">💡</span> */}
                 <span>
                   MVP ditampilkan pada baris bawah dashboard line. Standar
                   tayang adalah periode bulan kemarin (
@@ -645,6 +656,7 @@ export default function MpvManager({
           </section>
         </div>
       )}
+      </div>
 
       {/* 3. Soft Detail/Manual Modal */}
       {allowManual && showEditModal && (

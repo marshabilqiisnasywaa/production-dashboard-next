@@ -124,7 +124,7 @@
 
   --spacing-tv-top: 3.5rem;
 
-  --spacing-tv-kpi: 8.75rem;
+  --spacing-tv-kpi: 7rem;
 
   --spacing-tv-gauge: 7.5rem;
 
@@ -3568,4 +3568,11 @@ button {
 .scorecard-leaderboard .scorecard-leaderboard-item.is-top
   .scorecard-leaderboard-trigger {
   background: #ffffff;
+}
+
+.scorecard-kpi,
+.scorecard-tv .scorecard-kpi {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }

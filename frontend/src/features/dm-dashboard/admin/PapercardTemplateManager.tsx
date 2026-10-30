@@ -13,7 +13,7 @@ import {
   normalizeCategories,
   serializeCategories,
 } from "./templateModel";
-import { ChevronDown, Clock, Layers, Users } from "lucide-react";
+import { ChevronDown, ChevronRight, Clock, Layers, Users } from "lucide-react";
 import { FactoryIcon } from "./AdminIcons";
 
 interface PapercardTemplateManagerProps {
@@ -523,6 +523,7 @@ export default function PapercardTemplateManager({
   return (
     <div className="ptm-root">
       {/* 1. Header Toolbar (Compact, Clean & Calm - Refined) */}
+      
       <div className="ptm-topbar">
         <div className="ptm-selectors">
           {/* Workshop Selector */}
@@ -659,29 +660,6 @@ export default function PapercardTemplateManager({
                 >
                   Terapkan Masal ke Lini Lain
                 </button>
-                <div className="ptm-dropdown-divider" />
-                <button
-                  type="button"
-                  className="ptm-dropdown-item"
-                  onClick={() => {
-                    setShowTemplateMenu(false);
-                    setShowTimeModal(true);
-                  }}
-                >
-                  <Clock size={13} style={{ marginRight: 6 }} />
-                  Window Pengerjaan (Shift 1)
-                </button>
-                <button
-                  type="button"
-                  className="ptm-dropdown-item"
-                  onClick={() => {
-                    setShowTemplateMenu(false);
-                    setShowWorkersModal(true);
-                  }}
-                >
-                  <Users size={13} style={{ marginRight: 6 }} />
-                  Petugas Pengisi ({assignedMembers.length} Orang)
-                </button>
               </div>
             )}
           </div>
@@ -696,6 +674,37 @@ export default function PapercardTemplateManager({
             {saving ? "Menyimpan..." : "Simpan Template"}
           </button>
         </div>
+      </div>
+
+      <div className="ptm-settings-grid">
+        <button
+          type="button"
+          className="ptm-setting-card"
+          onClick={() => setShowTimeModal(true)}
+        >
+          <Clock size={18} className="ptm-setting-icon" aria-hidden="true" />
+          <span className="ptm-setting-copy">
+            <span className="ptm-setting-title">Window Pengerjaan</span>
+            <span className="ptm-setting-subtitle">
+              {activeTemplate.windowStart}–{activeTemplate.windowEnd} · Shift 1
+            </span>
+          </span>
+          <ChevronRight size={18} className="ptm-setting-chevron" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className="ptm-setting-card"
+          onClick={() => setShowWorkersModal(true)}
+        >
+          <Users size={18} className="ptm-setting-icon" aria-hidden="true" />
+          <span className="ptm-setting-copy">
+            <span className="ptm-setting-title">Petugas Pengisi</span>
+            <span className="ptm-setting-subtitle">
+              {assignedMembers.length} orang ditugaskan
+            </span>
+          </span>
+          <ChevronRight size={18} className="ptm-setting-chevron" aria-hidden="true" />
+        </button>
       </div>
 
       {/* Notice Banner */}
