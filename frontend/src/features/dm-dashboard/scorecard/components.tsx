@@ -34,17 +34,17 @@ export function Segmented<T extends string>({
       className={`inline-flex rounded-lg border border-border bg-section p-1 ${className}`}
     >
       {items.map((item) => (
-        <Button
+        <button
           key={item}
-          size="sm"
-          variant="ghost"
+          type="button"
+          className={value === item ? "active" : ""}
           onClick={() => onChange(item)}
           className={`border-0 px-3 ${
             value === item ? "bg-white text-primary shadow-card" : ""
           }`}
         >
           {labels?.[item] ?? item}
-        </Button>
+        </button>
       ))}
     </div>
   );
@@ -331,7 +331,7 @@ export function TrendChart({ metric }: { metric: ScoreTrend }) {
 
   const width = size.width;
   const height = size.height;
-  const padding = { top: 18, right: 18, bottom: 34, left: 42 };
+  const padding = { top: 32, right: 18, bottom: 34, left: 42 };
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
   const step = plotWidth / (series.length - 1);

@@ -22,14 +22,6 @@ function monthLabel(value: string) {
   });
 }
 
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("");
-}
-
 const AVATAR_TONES = [
   ["#E8F3EC", "#046A38"],
   ["#FEF3C7", "#B45309"],
@@ -39,9 +31,11 @@ const AVATAR_TONES = [
 
 function avatarTone(name: string) {
   let hash = 0;
+
   for (const char of name) {
     hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   }
+
   return AVATAR_TONES[hash % AVATAR_TONES.length];
 }
 
@@ -50,6 +44,55 @@ function rankClass(rank: number) {
   if (rank === 2) return "is-silver";
   if (rank === 3) return "is-bronze";
   return "";
+}
+
+const GAUGE_R = 30;
+const GAUGE_C = 2 * Math.PI * GAUGE_R;
+const GAUGE_ARC = GAUGE_C * 0.75;
+
+function ScoreGauge({
+  value,
+  onTarget,
+}: {
+  value: number;
+  onTarget: boolean;
+}) {
+  const pct = Math.max(0, Math.min(100, value)) / 100;
+
+  return (
+    <div
+      className="scorecard-leaderboard-gauge"
+      role="img"
+      aria-label={`Skor total ${formatScore(value)} dari 100`}
+    >
+      <svg viewBox="0 0 72 72" aria-hidden="true">
+        <circle
+          className="scorecard-leaderboard-gauge-track"
+          cx="36"
+          cy="36"
+          r={GAUGE_R}
+          strokeDasharray={`${GAUGE_ARC} ${GAUGE_C}`}
+          transform="rotate(135 36 36)"
+        />
+
+        <circle
+          className={`scorecard-leaderboard-gauge-fill${
+            onTarget ? " is-on" : " is-off"
+          }`}
+          cx="36"
+          cy="36"
+          r={GAUGE_R}
+          strokeDasharray={`${GAUGE_ARC * pct} ${GAUGE_C}`}
+          transform="rotate(135 36 36)"
+        />
+      </svg>
+
+      <div className="scorecard-leaderboard-gauge-value">
+        <strong>{formatScore(value)}</strong>
+        <span>/ {formatScore(100)}</span>
+      </div>
+    </div>
+  );
 }
 
 export default function LeaderBoard({
@@ -61,7 +104,9 @@ export default function LeaderBoard({
 }: LeaderBoardProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const visibleLeaders = [...leaders].sort((a, b) => b.total - a.total);
+  const visibleLeaders = [...leaders].sort(
+    (a, b) => b.total - a.total
+  );
 
   return (
     <Card className="scorecard-leaderboard">
@@ -72,6 +117,17 @@ export default function LeaderBoard({
           </div>
         </div>
 
+        <div className="scorecard-leaderboard-legend">
+          <span className="scorecard-leaderboard-legend-item">
+            <span className="scorecard-leaderboard-legend-dot is-on" />
+            Di atas target (≥ {formatScore(target, 0)})
+          </span>
+
+          <span className="scorecard-leaderboard-legend-item">
+            <span className="scorecard-leaderboard-legend-dot is-off" />
+            Di bawah target
+          </span>
+        </div>
       </div>
 
       <div className="scorecard-leaderboard-list">
@@ -89,23 +145,17 @@ export default function LeaderBoard({
           visibleLeaders.map((row) => {
             const open = expanded === row.leader;
             const onTarget = row.total >= target;
-            const tone = avatarTone(row.leader);
 
-            const values = [
-  { label: "Papercard", value: row.before, max: 30 },
-  { label: "Standup Meeting", value: row.current, max: 40 },
-  { label: "SQDIP", value: row.after, max: 30 },
-];
-
-            const ordered = [...values].sort(
-              (a, b) => b.value / b.max - a.value / a.max
-            );
-
-            const strongest = ordered[0];
-            const weakest = ordered[ordered.length - 1];
-            const allFull = values.every(
-              (item) => item.value >= item.max
-            );
+            const metrics = [
+              { label: "Papercard", value: row.before, max: 30 },
+              { label: "Standup Meeting", value: row.current, max: 40 },
+              { label: "SQDIP", value: row.after, max: 30 },
+            ]
+              .map((item) => ({
+                ...item,
+                lost: item.max - item.value,
+              }))
+              .sort((x, y) => y.lost - x.lost);
 
             return (
               <div
@@ -118,9 +168,7 @@ export default function LeaderBoard({
                   type="button"
                   className="scorecard-leaderboard-trigger"
                   aria-expanded={open}
-                  onClick={() =>
-                    setExpanded(open ? null : row.leader)
-                  }
+                  onClick={() => setExpanded(open ? null : row.leader)}
                 >
                   <span className="scorecard-leaderboard-rank-wrap">
                     <span
@@ -133,66 +181,27 @@ export default function LeaderBoard({
                     </span>
                   </span>
 
-                  <span
-                    className="scorecard-leaderboard-avatar"
-                    style={{ background: tone[0], color: tone[1] }}
-                  >
-                    <span>{initials(row.leader)}</span>
-                    {row.photoUrl && (
-                      <img
-                        src={row.photoUrl}
-                        alt=""
-                        onError={(event) => {
-                          event.currentTarget.style.display = "none";
-                        }}
-                      />
-                    )}
-                  </span>
-
                   <span className="scorecard-leaderboard-person">
                     <span className="scorecard-leaderboard-name">
                       {row.leader}
                     </span>
+
                     <span className="scorecard-leaderboard-meta">
                       {row.line} · {row.dm} · Workshop {row.area}
                     </span>
                   </span>
 
+                  {/* Ruang skor tetap tersedia agar panah tidak bergeser */}
                   <span className="scorecard-leaderboard-score">
-                    <span
-                      className={`scorecard-leaderboard-total ${
-                        onTarget ? "is-on" : "is-off"
-                      }`}
-                    >
-                      {formatScore(row.total)}
-                    </span>
-
-                    <span
-                      className={`scorecard-leaderboard-bar${
-                        onTarget ? " is-on" : ""
-                      }`}
-                    >
+                    {!open && (
                       <span
-                        className="scorecard-leaderboard-bar-fill"
-                        style={{
-                          width: `${Math.min(100, row.total)}%`,
-                        }}
-                      />
-                      <span
-                        className="scorecard-leaderboard-bar-target"
-                        style={{
-                          left: `${Math.min(100, target)}%`,
-                        }}
-                      />
-                    </span>
-
-                    <span
-                      className={`scorecard-leaderboard-badge ${
-                        onTarget ? "is-on" : "is-off"
-                      }`}
-                    >
-                      {onTarget ? "Di atas target" : "Di bawah target"}
-                    </span>
+                        className={`scorecard-leaderboard-total ${
+                          onTarget ? "is-on" : "is-off"
+                        }`}
+                      >
+                        {formatScore(row.total)}
+                      </span>
+                    )}
                   </span>
 
                   <ChevronRight
@@ -205,59 +214,34 @@ export default function LeaderBoard({
 
                 {open && (
                   <div className="scorecard-leaderboard-detail">
-                    <div className="scorecard-leaderboard-highlight">
-                      {allFull
-                        ? "Semua komponen penuh"
-                        : `Terkuat: ${strongest.label} ${formatScore(
-                            strongest.value
-                          )}/${strongest.max} · Perlu perhatian: ${
-                            weakest.label
-                          } ${formatScore(weakest.value)}/${weakest.max}`}
-                    </div>
+                    <ScoreGauge
+                      value={row.total}
+                      onTarget={onTarget}
+                    />
 
-                    <div className="scorecard-leaderboard-metrics">
-                      {values.map((item) => {
-                        const full = item.value >= item.max;
+                    <dl className="scorecard-leaderboard-metrics">
+                      {metrics.map((item) => (
+                        <div
+                          key={item.label}
+                          className="scorecard-leaderboard-metric"
+                        >
+                          <dt>{item.label}</dt>
 
-                        return (
-                          <div
-                            key={item.label}
-                            className="scorecard-leaderboard-metric"
-                          >
-                            <div className="scorecard-leaderboard-metric-head">
-                              <span>{item.label}</span>
-                              <strong>
-                                {formatScore(item.value)} /{" "}
-                                {formatScore(item.max)}
-                                {!full && (
-                                  <span>
-                                    {" "}
-                                    (-{formatScore(item.max - item.value)})
-                                  </span>
-                                )}
-                              </strong>
-                            </div>
+                          <dd>
+                            <span className="scorecard-leaderboard-metric-value">
+                              {formatScore(item.value)} /{" "}
+                              {formatScore(item.max)}
+                            </span>
 
-                            <div className="scorecard-leaderboard-metric-bar">
-                              <div
-                                className={
-                                  full ? "bg-primary" : "bg-warning"
-                                }
-                                style={{
-                                  width: `${
-                                    (item.value / item.max) * 100
-                                  }%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="scorecard-leaderboard-detail-grid">
-
-                    </div>
+                            <span className="scorecard-leaderboard-metric-lost">
+                              {item.lost > 0.004
+                                ? `(−${formatScore(item.lost)})`
+                                : ""}
+                            </span>
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
                   </div>
                 )}
               </div>

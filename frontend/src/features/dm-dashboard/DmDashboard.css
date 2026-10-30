@@ -1109,10 +1109,10 @@
   gap: 1rem;
 }
 
-.dm-root.dm-root--index.dm-root--tv {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-}
+   .dm-root.dm-root--index.dm-root--tv {
+     padding-top: 1.5rem;      /* sebelumnya 0.75rem, samakan dengan tab Line */
+     padding-bottom: 0.75rem;  /* biarkan */
+   }
 
 @media (min-width: 1280px) and (min-height: 700px) {
   .dm-root.dm-root--index.dm-root--tv {
@@ -1122,11 +1122,11 @@
     overflow-y: auto;
   }
 
-  .dm-root--tv .dmi {
-    height: 100%;
-    min-height: 0;
-    gap: 0.5rem;
-  }
+    .dm-root--tv .dmi {
+     height: 100%;
+     min-height: 0;
+     gap: 1.75rem;   /* sebelumnya 0.5rem, samakan dengan .dmi di tab Line */
+   }
 
   .dm-root--tv .dmi-top {
     flex: none;
@@ -1156,4 +1156,51 @@
     height: auto;
     min-height: 0;
   }
+}
+
+/* Tab segmented hijau (gaya sama dengan Periode di Rekap Absensi) */
+.scorecard-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+  padding: 3px;
+  border: 1px solid #e0e6e9;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.scorecard-segment button {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.scorecard-segment button:hover:not(.active) {
+  background: #f1f5f4;
+}
+
+.scorecard-segment button.active {
+  background: #087443;
+  color: #fff;
+}
+
+/* Versi ringkas untuk mode TV (menggantikan aturan .inline-flex lama) */
+.scorecard-tv .scorecard-trend-head .scorecard-segment {
+  height: auto;
+  padding: 2px;
+}
+
+.scorecard-tv .scorecard-trend-head .scorecard-segment button {
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  font-size: 0.6875rem;
 }
