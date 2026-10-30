@@ -184,7 +184,7 @@ export default function LeaderDashboardPage() {
 
             {abnormalReady && abnormal.data && (
               <>
-                {abnormal.data.total > 0 && (
+                {/* {abnormal.data.total > 0 && (
                   <p className="dml-kpi__hint">
                     {abnormal.data.onTime} tepat waktu dari{" "}
                     {abnormal.data.total} masalah yang sudah jatuh tempo.{" "}
@@ -195,7 +195,7 @@ export default function LeaderDashboardPage() {
                       : ""}
                     .
                   </p>
-                )}
+                )} */}
 
                 {/* <p className="dml-kpi__hint">
                   Berdasarkan deadline dalam periode terpilih.
