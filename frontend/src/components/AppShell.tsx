@@ -65,6 +65,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
   const { mode } = useDisplayMode();
   const { user: roleUser, role, picArea } = useRole();
   const { user: sessionUser, activeArea, setActiveArea, logout } = useAuth();
+  const navigationUser = sessionUser ?? roleUser;
   const [active, setActive] = useState(initialActive);
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [mobileSidebar, setMobileSidebar] = useState(false);
@@ -81,7 +82,11 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
 
   useEffect(() => {
     const parent = parentForKey(active);
-    setOpenMenu(parent ? parent.label : null);
+    if (parent) {
+      setOpenMenu(parent.key);
+      return;
+    }
+    setOpenMenu((current) => (current === active ? current : null));
   }, [active]);
 
   const page = getShellPage(active);
@@ -132,26 +137,33 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
 
   useEffect(() => {
     if (isRepairPicMeeting && (active === "repair-monitor" || active === "Preassembly" || active === "Rework" || active === "Warranty")) {
-      setOpenMenu("Area Monitoring");
+      setOpenMenu("repair-monitor");
     }
   }, [isRepairPicMeeting, active]);
   useEffect(() => {
     if (isCostPicMeeting && (active === "cost-area-monitoring" || active.startsWith("cost-"))) {
-      setOpenMenu("Area Monitoring");
+      setOpenMenu("cost-area-monitoring");
     }
   }, [isCostPicMeeting, active]);
   useEffect(() => {
     if (isSafetyPicMeeting && (active === "safety-area-monitoring" || active.startsWith("safety-"))) {
-      setOpenMenu("Area Monitoring");
+      setOpenMenu("safety-area-monitoring");
     }
   }, [isSafetyPicMeeting, active]);
-  const navigationGroups = useMemo(() => filterNavGroups({ role, picArea, mode }), [role, picArea, mode]);
-  const visibleCommandLabels = useMemo(() => new Set(navigationGroups.flatMap((group) => group.items.flatMap((item) => [item.label, ...(item.aliases ?? []), ...(item.children?.flatMap((child) => [child.label, ...(child.aliases ?? [])]) ?? [])]))), [navigationGroups]);
+  const navigationGroups = useMemo(() => filterNavGroups({ user: navigationUser, activeArea }), [navigationUser, activeArea]);
+  const visibleCommandTargets = useMemo(() => new Set(navigationGroups.flatMap((group) => group.items.flatMap((item) => [item.key, item.label, ...(item.aliases ?? []), ...(item.children?.flatMap((child) => [child.key, child.label, ...(child.aliases ?? [])]) ?? [])]))), [navigationGroups]);
 
   const filteredCommandGroups = useMemo(() => commandGroups.map((group) => ({
     ...group,
-    items: group.items.filter((item) => item.label.toLowerCase().includes(commandQuery.toLowerCase()) && (!resolveNavItem(item.label) || visibleCommandLabels.has(item.label))),
-  })).filter((group) => group.items.length), [commandQuery, visibleCommandLabels]);
+    items: group.items.flatMap((item) => {
+      if (!item.label.toLowerCase().includes(commandQuery.toLowerCase())) return [];
+      const resolved = resolveNavItem(item.key ?? item.label);
+      if (!resolved) return [item];
+      if (visibleCommandTargets.has(resolved.key)) return [item];
+      const visible = navigationGroups.flatMap((navGroup) => navGroup.items).find((navItem) => navItem.label === item.label);
+      return visible ? [{ ...item, key: visible.key }] : [];
+    }),
+  })).filter((group) => group.items.length), [commandQuery, navigationGroups, visibleCommandTargets]);
   const filteredCommands = filteredCommandGroups.flatMap((group) => group.items);
 
   useEffect(() => {
@@ -229,7 +241,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
           onExpand={() => setSidebarExpanded(true)}
           onCloseMobile={() => setMobileSidebar(false)}
           onSelect={selectMenu}
-          onToggleMenu={(label) => setOpenMenu((current) => (current === label ? null : label))}
+          onToggleMenu={(key) => setOpenMenu((current) => (current === key ? null : key))}
         />
         <main>
           <ShellTopbar

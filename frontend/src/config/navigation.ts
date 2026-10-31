@@ -1,6 +1,16 @@
 import type { DisplayMode } from "@/components/providers/DisplayModeProvider";
 import type { PicAreaKey } from "@/components/providers/RoleProvider";
 import type { Role } from "@/types/morningMeeting";
+import {
+  accessGroupOrder,
+  accessModuleOrder,
+  accessModuleRules,
+  canAccess,
+  effectiveModules,
+  type AccessGroupTitle,
+  type AccessModuleKey,
+  type AccessUser,
+} from "@/config/access";
 
 export type NavIconName =
   | "factory" | "grid" | "assembly" | "package" | "shield" | "wrench"
@@ -35,11 +45,17 @@ const morningMeetingMode: readonly DisplayMode[] = ["morning-meeting"];
 export const morningMeetingGroup: NavGroup = {
   title: "MORNING MEETING",
   items: [
-    { label: "Meeting Dashboard", key: "meeting-home", href: "/morning-meeting", icon: "calendar", mode: morningMeetingMode, general: true, allowedRoles: ["PIC Area", "Host", "HOD"], aliases: ["Beranda Meeting"] },
-    { label: "Production KPI", key: "production-kpi", href: "/morning-meeting/production-kpi", icon: "chart", mode: morningMeetingMode, allowedRoles: ["Host"] },
-    { label: "Project 2026", key: "project-2026", href: "/morning-meeting/project-2026", icon: "trending", mode: morningMeetingMode, allowedRoles: ["Host"] },
-    { label: "Follow-up", key: "followup", href: "/morning-meeting/followup", icon: "message", mode: morningMeetingMode, general: true, allowedRoles: ["PIC Area", "Host", "HOD"], aliases: ["Followup", "Follow-up Progress"] },
-    { label: "Meeting Dashboard", key: "hod-overview", href: "/morning-meeting/hod", icon: "panel", mode: morningMeetingMode, general: true, allowedRoles: ["HOD"], aliases: ["Beranda", "Beranda Meeting", "Beranda Departemen"] },
+    { label: "Meeting Dashboard", key: "meeting-home", href: "/morning-meeting", icon: "calendar", mode: morningMeetingMode, general: true, aliases: ["Beranda Meeting"] },
+    { label: "Meeting Dashboard", key: "hod-overview", href: "/morning-meeting/hod", icon: "panel", mode: morningMeetingMode, general: true, aliases: ["Beranda", "Beranda Meeting", "Beranda Departemen"] },
+    { label: "Follow-up", key: "followup", href: "/morning-meeting/followup", icon: "message", mode: morningMeetingMode, general: true, aliases: ["Followup", "Follow-up Progress"] },
+  ],
+};
+
+export const productionKpiGroup: NavGroup = {
+  title: "PRODUCTION KPI",
+  items: [
+    { label: "Production KPI", key: "production-kpi", href: "/morning-meeting/production-kpi", icon: "chart", mode: morningMeetingMode },
+    { label: "Project 2026", key: "project-2026", href: "/morning-meeting/project-2026", icon: "trending", mode: morningMeetingMode },
   ],
 };
 
@@ -238,7 +254,7 @@ export const managementGroup: NavGroup = {
   ],
 };
 
-export const navGroups: readonly NavGroup[] = [morningMeetingGroup, platformGroup, monitoringGroup, managementGroup, laporanGroup];
+export const navGroups: readonly NavGroup[] = [morningMeetingGroup, productionKpiGroup, platformGroup, monitoringGroup, managementGroup, laporanGroup];
 
 export const navItems: readonly NavItem[] = navGroups.flatMap((group) =>
   group.items.flatMap((item) => [item, ...(item.children ?? [])]),
@@ -395,129 +411,23 @@ export function activeForPath(pathname: string): string {
 }
 
 export type NavigationFilter = {
-  role: Role;
-  picArea: PicAreaKey;
-  mode: DisplayMode;
+  user: AccessUser;
+  activeArea?: PicAreaKey | null;
 };
 
-function isFutureGeneralItem(item: NavItem): boolean {
-  const normalized = `${item.key} ${item.label}`.toLowerCase();
-  return normalized.includes("followup") || normalized.includes("follow-up") || normalized.includes("p-ai") || normalized.includes("pai robot");
-}
-
-function isAllowedForRole(item: NavItem, filter: NavigationFilter): boolean {
-  if (filter.role === "Superadmin") return true;
-  if (item.allowedRoles) {
-    if (!item.allowedRoles.includes(filter.role)) return false;
-    if (filter.role === "PIC Area" && item.area) return item.area === filter.picArea;
-    return true;
-  }
-  if (filter.role === "HOD") return filter.mode === "morning-meeting" ? false : item.key === "Dashboard" || isFutureGeneralItem(item) && normalizedFollowup(item);
-  if (filter.role === "PIC Area") return Boolean(item.general) || isFutureGeneralItem(item) || item.area === filter.picArea;
-  return true;
-}
-
-function normalizedFollowup(item: NavItem): boolean {
-  const normalized = `${item.key} ${item.label}`.toLowerCase();
-  return normalized.includes("followup") || normalized.includes("follow-up");
-}
-
-function isVisibleNavItem(item: NavItem, filter: NavigationFilter): boolean {
-  return item.mode.includes(filter.mode) && isAllowedForRole(item, filter);
+function modulesForGroup(title: AccessGroupTitle): AccessModuleKey[] {
+  return accessModuleOrder.filter((key) => accessModuleRules[key].group === title);
 }
 
 export function filterNavGroups(filter: NavigationFilter): NavGroup[] {
-  if (filter.mode === "morning-meeting" && filter.role === "Host") {
-    const meetingItems = morningMeetingGroup.items
-      .filter((item) => item.key === "meeting-home" || item.key === "followup")
-      .map((item) => (item.key === "followup" ? { ...item, label: "Follow-up" } : item));
-    return [{ title: "MORNING MEETING", items: meetingItems }];
-  }
-  if (filter.mode === "morning-meeting" && filter.role === "HOD") {
-    const order = ["hod-overview", "followup"];
-    const meetingItems = morningMeetingGroup.items
-      .filter((item) => order.includes(item.key) && isVisibleNavItem(item, filter))
-      .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
-    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    return [
-      { title: "MORNING MEETING", items: meetingItems },
-      { title: "REPORTS", items: laporanItems },
-    ].filter((group) => group.items.length);
-  }
-  if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "repair") {
-    const meetingItems = morningMeetingGroup.items
-      .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"));
-    const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    return [
-      { title: "MORNING MEETING", items: meetingItems },
-      { title: "MONITORING", items: monitorItems },
-      { title: "REPORTS", items: laporanItems },
-    ].filter((group) => group.items.length);
-  }
-  if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "service") {
-    const meetingItems = morningMeetingGroup.items
-      .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"));
-    const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    return [
-      { title: "MORNING MEETING", items: meetingItems },
-      { title: "MONITORING", items: monitorItems },
-      { title: "REPORTS", items: laporanItems },
-    ].filter((group) => group.items.length);
-  }
-  if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "qc") {
-    const meetingItems = morningMeetingGroup.items
-      .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"));
-    const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    return [
-      { title: "MORNING MEETING", items: meetingItems },
-      { title: "MONITORING", items: monitorItems },
-      { title: "REPORTS", items: laporanItems },
-    ].filter((group) => group.items.length);
-  }
-  if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "assembly") {
-    const meetingItems = morningMeetingGroup.items
-      .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"));
-    const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    return [
-      { title: "MORNING MEETING", items: meetingItems },
-      { title: "MONITORING", items: monitorItems },
-      { title: "REPORTS", items: laporanItems },
-    ].filter((group) => group.items.length);
-  }
-  if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "cost") {
-    const meetingItems = morningMeetingGroup.items
-      .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"))
-      .map((item) => (item.key === "meeting-home" ? { ...item, label: "Meeting Dashboard" } : item));
-    const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    return [
-      { title: "MORNING MEETING", items: meetingItems as NavItem[] },
-      { title: "MONITORING", items: monitorItems },
-      { title: "REPORTS", items: laporanItems },
-    ].filter((group) => group.items.length);
-  }
-  if (filter.mode === "morning-meeting" && filter.role === "PIC Area" && filter.picArea === "safety") {
-    const meetingItems = morningMeetingGroup.items
-      .filter((item) => isVisibleNavItem(item, filter) && (item.key === "meeting-home" || item.key === "followup"))
-      .map((item) => (item.key === "meeting-home" ? { ...item, label: "Beranda Meeting" } : item));
-    const monitorItems = monitoringGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    const laporanItems = laporanGroup.items.filter((item) => isVisibleNavItem(item, filter));
-    return [
-      { title: "MORNING MEETING", items: meetingItems as NavItem[] },
-      { title: "MONITORING", items: monitorItems },
-      { title: "REPORTS", items: laporanItems },
-    ].filter((group) => group.items.length);
-  }
-  return navGroups.map((group) => ({
-    ...group,
-    items: group.items.map((item) => {
-      const children = item.children?.filter((child) => isVisibleNavItem(child, filter));
-      if (!isVisibleNavItem(item, filter) && !children?.length) return null;
-      return children ? { ...item, children } : item;
-    }).filter((item): item is NavItem => Boolean(item)),
-  })).filter((group) => group.items.length);
+  const allowed = new Set(effectiveModules(filter.user));
+  return accessGroupOrder
+    .map((title) => ({
+      title,
+      items: modulesForGroup(title)
+        .filter((key) => allowed.has(key) && canAccess(filter.user, key, filter.activeArea ?? null))
+        .map((key) => resolveNavItem(key))
+        .filter((item): item is NavItem => Boolean(item)),
+    }))
+    .filter((group) => group.items.length);
 }

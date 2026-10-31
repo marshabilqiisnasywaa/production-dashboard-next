@@ -16,7 +16,7 @@ type SidebarNavProps = {
   onExpand: () => void;
   onCloseMobile: () => void;
   onSelect: (target: string) => void;
-  onToggleMenu: (label: string) => void;
+  onToggleMenu: (key: string) => void;
 };
 
 export default function SidebarNav({
@@ -67,18 +67,18 @@ export default function SidebarNav({
             {group.items.map((item) => {
               const parent = parentForKey(active);
               const isActiveParent = parent
-                ? parent.label === item.label
-                : active === item.label || (item.key === active) || item.aliases?.includes(active);
+                ? parent.key === item.key
+                : item.key === active || item.aliases?.includes(active);
 
-              const isOpen = openMenu === item.label && expanded;
+              const isOpen = openMenu === item.key && expanded;
               const btnClass = [isActiveParent ? "active" : "", isOpen ? "open" : ""].filter(Boolean).join(" ");
 
               return (
-                <div className="nav-entry" key={item.label}>
+                <div className="nav-entry" key={item.key}>
                   <button data-tooltip={item.label} className={btnClass} onClick={() => {
                     onSelect(item.key === "cost-area-monitoring" ? "cost-overview" : item.key === "safety-area-monitoring" ? "safety-monitoring" : item.key);
                     if (item.children) {
-                      onToggleMenu(item.label);
+                      onToggleMenu(item.key);
                     }
                   }}>
                     <Icon name={item.icon} /><span className="sidebar-copy">{item.label}</span>

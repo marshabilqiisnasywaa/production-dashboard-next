@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import type { AccessModuleKey } from "@/config/access";
 import type { Role } from "@/types/morningMeeting";
 
 export type PicAreaKey = "assembly" | "packing" | "material" | "qc" | "service" | "repair" | "cost" | "safety";
@@ -12,6 +13,7 @@ export type AppUser = {
   role: Role;
   area?: PicAreaKey;
   areas?: PicAreaKey[];
+  extraModules?: AccessModuleKey[];
 };
 
 type RoleContextValue = {
