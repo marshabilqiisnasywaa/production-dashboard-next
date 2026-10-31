@@ -6,6 +6,7 @@ import { useDisplayMode } from "@/components/providers/DisplayModeProvider";
 import { useRole } from "@/components/providers/RoleProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { useAuth } from "@/features/auth/AuthProvider";
 import { commandGroups } from "@/components/shell/commands";
 import { getShellPage } from "@/components/shell/shellPage";
 import SidebarNav from "@/components/shell/SidebarNav";
@@ -61,8 +62,9 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
   const router = useRouter();
   const { dark, toggleTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
-  const { mode, setMode } = useDisplayMode();
-  const { user, role, picArea, setRole, setPicArea } = useRole();
+  const { mode } = useDisplayMode();
+  const { user: roleUser, role, picArea } = useRole();
+  const { user: sessionUser, activeArea, setActiveArea, logout } = useAuth();
   const [active, setActive] = useState(initialActive);
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [mobileSidebar, setMobileSidebar] = useState(false);
@@ -71,16 +73,11 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState("");
   const [commandIndex, setCommandIndex] = useState(0);
-  const [isMac, setIsMac] = useState(false);
   const [costFocus, setCostFocus] = useState<CostNav | undefined>();
 
   useEffect(() => {
     setActive(initialActive);
   }, [initialActive]);
-
-  useEffect(() => {
-    setIsMac(navigator.platform.includes("Mac"));
-  }, []);
 
   useEffect(() => {
     const parent = parentForKey(active);
@@ -214,6 +211,11 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
     setLanguageOpen(false);
   };
 
+  const handleLogout = () => {
+    logout();
+    router.replace("/login");
+  };
+
   return (
     <div className="canvas">
       <div className={`dashboard-frame ${sidebarExpanded ? "" : "sidebar-collapsed"}`}>
@@ -232,19 +234,15 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
         <main>
           <ShellTopbar
             page={page}
-            active={active}
-            isMac={isMac}
             dark={dark}
             language={language}
             languageOpen={languageOpen}
             mode={mode}
-            role={role}
-            picArea={picArea}
-            user={user}
+            user={sessionUser ?? roleUser}
+            activeArea={activeArea ?? "assembly"}
             onOpenCommand={() => setCommandOpen(true)}
-            onSelectMode={setMode}
-            onSelectRole={setRole}
-            onSelectPicArea={setPicArea}
+            onSelectActiveArea={setActiveArea}
+            onLogout={handleLogout}
             onToggleLanguageMenu={() => setLanguageOpen(!languageOpen)}
             onSelectLanguage={selectLanguage}
             onToggleTheme={toggleTheme}

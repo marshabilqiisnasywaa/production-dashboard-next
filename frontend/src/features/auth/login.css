@@ -1,0 +1,331 @@
+.mml-login {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.mml-login__brand {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  color: #f4fff9;
+  background:
+    radial-gradient(120% 90% at 12% 8%, rgba(140, 198, 63, 0.28), transparent 58%),
+    radial-gradient(90% 80% at 90% 100%, rgba(15, 157, 138, 0.32), transparent 60%),
+    linear-gradient(145deg, #034d29 0%, #046a39 52%, #023d21 100%);
+}
+
+.mml-login__brand::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(80% 70% at 50% 40%, black, transparent 78%);
+}
+
+.mml-login__logo {
+  position: relative;
+  z-index: 1;
+  width: 132px;
+  height: auto;
+}
+
+.mml-login__brand-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 520px;
+}
+
+.mml-login__eyebrow {
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(244, 255, 249, 0.72);
+}
+
+.mml-login__eyebrow--panel {
+  color: var(--muted);
+}
+
+.mml-login .mml-login__title {
+  margin: 0;
+  color: #ffffff !important;
+  font-size: clamp(2rem, 3.6vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+}
+
+.mml-login__lead {
+  margin: 20px 0 0;
+  max-width: 440px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(244, 255, 249, 0.82);
+}
+
+.mml-login__brand-foot {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: rgba(244, 255, 249, 0.6);
+}
+
+.mml-login__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 40px;
+}
+
+.mml-login__form {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.mml-login__heading {
+  margin-bottom: 6px;
+}
+
+.mml-login .mml-login__form-title {
+  margin: 0;
+  color: var(--text);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.mml-login__form-sub {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.mml-login__field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.mml-login__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.mml-login__input {
+  width: 100%;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.mml-login__input::placeholder {
+  color: var(--faint);
+}
+
+.mml-login__input:focus {
+  border-color: color-mix(in srgb, var(--accent-1) 60%, var(--border));
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.1);
+}
+
+.mml-login__password {
+  position: relative;
+  display: block;
+}
+
+.mml-login__input--password {
+  padding-right: 104px;
+}
+
+.mml-login__toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  height: 32px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--accent-2);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mml-login__toggle:hover {
+  background: rgba(var(--accent-rgb), 0.08);
+}
+
+.mml-login__error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(214, 69, 69, 0.28);
+  border-radius: 9px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.mml-login__hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.mml-login__hint strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.mml-login__submit {
+  height: 46px;
+  margin-top: 2px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(var(--accent-rgb), 0.2);
+  transition: filter 0.18s, opacity 0.18s;
+}
+
+.mml-login__submit:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.mml-login__submit:disabled {
+  opacity: 0.62;
+  cursor: progress;
+}
+
+.mml-login__demo {
+  margin-top: 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mml-login__demo-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.mml-login__demo-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+
+.mml-login__demo-label {
+  padding-top: 5px;
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.mml-login__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mml-login__chip {
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.16s, color 0.16s, background 0.16s;
+}
+
+.mml-login__chip:hover {
+  border-color: color-mix(in srgb, var(--accent-1) 45%, var(--border));
+  background: rgba(var(--accent-rgb), 0.06);
+  color: var(--accent-2);
+}
+
+.mml-login__demo-note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--faint);
+}
+
+@media (max-width: 960px) {
+  .mml-login {
+    grid-template-columns: 1fr;
+  }
+
+  .mml-login__brand {
+    min-height: auto;
+    padding: 32px 24px;
+    gap: 24px;
+  }
+
+  .mml-login__logo {
+    width: 104px;
+  }
+
+  .mml-login .mml-login__title {
+    font-size: clamp(1.75rem, 7vw, 2.4rem);
+  }
+
+  .mml-login__lead {
+    font-size: 14px;
+  }
+
+  .mml-login__brand-foot {
+    display: none;
+  }
+
+  .mml-login__panel {
+    padding: 32px 20px 48px;
+  }
+}
+
+@media (max-width: 520px) {
+  .mml-login__demo-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .mml-login__demo-label {
+    padding-top: 0;
+  }
+}

@@ -408,3 +408,10 @@ body,button,input { font-family: var(--font-sans); }
   .bento-top,.bento-bottom { grid-template-columns: 1fr; }
   .page-heading { gap: 12px; }
 }
+.topbar-user-area { width: 132px; }
+.topbar-logout { height: 34px; padding: 0 11px; border: 1px solid var(--border); border-radius: 9px; background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; transition: .18s; }
+.topbar-logout:hover { color: var(--accent-2); border-color: color-mix(in srgb,var(--accent-1) 42%,var(--border)); background: rgba(var(--accent-rgb),.07); }
+@media (max-width: 640px) {
+  .topbar-user-area { width: 104px; }
+  .topbar-logout { height: 32px; padding: 0 8px; font-size: 11px; }
+}

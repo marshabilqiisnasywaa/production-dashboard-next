@@ -11,6 +11,7 @@ export type AppUser = {
   initials: string;
   role: Role;
   area?: PicAreaKey;
+  areas?: PicAreaKey[];
 };
 
 type RoleContextValue = {
