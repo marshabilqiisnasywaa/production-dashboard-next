@@ -1,0 +1,7 @@
+.mmd-daily-plan{min-width:0}
+.mmd-plan-tabs{display:flex;gap:8px;overflow-x:auto;padding:0 0 14px;scrollbar-width:thin}
+.mmd-plan-tab{display:inline-flex;flex:0 0 auto;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:999px;background:var(--card);color:var(--muted);font:600 11px var(--font-sans);white-space:nowrap;cursor:pointer}
+.mmd-plan-tab:hover{border-color:var(--accent-1);color:var(--accent-1)}
+.mmd-plan-tab.active{border-color:var(--accent-1);background:var(--accent-1);color:#fff}
+.mmd-plan-tab-count{font-size:10px;font-weight:500;opacity:.8}
+@media(max-width:600px){.mmd-plan-tabs{gap:6px}.mmd-plan-tab{padding:6px 10px;font-size:10px}}

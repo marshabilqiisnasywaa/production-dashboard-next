@@ -40,7 +40,8 @@ export type AccessModuleKey =
   | "cost-abnormality"
   | "cost-daily-plan"
   | "safety-abnormality"
-  | "safety-daily-plan";
+  | "safety-daily-plan"
+  | "hod-daily-plan";
 
 export type AccessModuleRule = {
   group: AccessGroupTitle;
@@ -73,6 +74,7 @@ export const accessModuleOrder: readonly AccessModuleKey[] = [
   "assembly-monitor",
   "cost-area-monitoring",
   "safety-area-monitoring",
+  "hod-daily-plan",
   "Abnormality",
   "repair-plan",
   "service-abnormality",
@@ -98,18 +100,19 @@ export const accessModuleRules: Record<AccessModuleKey, AccessModuleRule> = {
   "assembly-monitor": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "PIC Area"], area: "assembly" },
   "cost-area-monitoring": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "PIC Area"], area: "cost" },
   "safety-area-monitoring": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "PIC Area"], area: "safety" },
+  "hod-daily-plan": { group: "REPORTS", label: "Daily Plan", roles: ["HOD"] },
   Abnormality: { group: "REPORTS", label: "Abnormality", roles: ["PIC Area"], area: "repair" },
-  "repair-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area", "HOD"], area: "repair" },
+  "repair-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area"], area: "repair" },
   "service-abnormality": { group: "REPORTS", label: "Abnormality", roles: ["PIC Area"], area: "service" },
-  "service-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area", "HOD"], area: "service" },
+  "service-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area"], area: "service" },
   "qc-abnormality": { group: "REPORTS", label: "Abnormality", roles: ["PIC Area"], area: "qc" },
-  "qc-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area", "HOD"], area: "qc" },
+  "qc-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area"], area: "qc" },
   "assembly-abnormality": { group: "REPORTS", label: "Abnormality", roles: ["PIC Area"], area: "assembly" },
-  "assembly-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area", "HOD"], area: "assembly" },
+  "assembly-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area"], area: "assembly" },
   "cost-abnormality": { group: "REPORTS", label: "Abnormality", roles: ["PIC Area"], area: "cost" },
-  "cost-daily-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area", "HOD"], area: "cost" },
+  "cost-daily-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area"], area: "cost" },
   "safety-abnormality": { group: "REPORTS", label: "Abnormality", roles: ["PIC Area"], area: "safety" },
-  "safety-daily-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area", "HOD"], area: "safety" },
+  "safety-daily-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area"], area: "safety" },
 };
 
 const allPicAreas: PicAreaKey[] = ["assembly", "packing", "material", "qc", "service", "repair", "cost", "safety"];
@@ -161,10 +164,17 @@ const childModuleKeys: Record<string, AccessModuleKey> = {
   "safety-monitoring": "safety-area-monitoring",
   "safety-isc": "safety-area-monitoring",
   "safety-ga-admin": "safety-area-monitoring",
+  "safety-data-source": "safety-area-monitoring",
 };
 
 export function canOpenNavKey(user: AccessUser, key: string, area?: PicAreaKey | null): boolean {
   if (isAccessModuleKey(key)) return canAccess(user, key, area);
   const moduleKey = childModuleKeys[key];
   return moduleKey ? canAccess(user, moduleKey, area) : false;
+}
+
+export function areaForNavKey(key: string): PicAreaKey | null {
+  if (isAccessModuleKey(key)) return accessModuleRules[key].area ?? null;
+  const moduleKey = childModuleKeys[key];
+  return moduleKey ? accessModuleRules[moduleKey].area ?? null : null;
 }

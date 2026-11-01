@@ -155,8 +155,9 @@ export const monitoringGroup: NavGroup = {
 export const laporanGroup: NavGroup = {
   title: "REPORTS",
   items: [
+    { label: "Daily Plan", key: "hod-daily-plan", href: "/morning-meeting/daily-plan", icon: "calendar", mode: morningMeetingMode, allowedRoles: ["HOD"] },
     { label: "Abnormality", key: "Abnormality", href: "/abnormality", icon: "alert", mode: morningMeetingMode, area: "repair", allowedRoles: ["PIC Area"] },
-    { label: "Daily Plan", key: "repair-plan", href: "/abnormality/plan", icon: "calendar", mode: morningMeetingMode, area: "repair", allowedRoles: ["PIC Area", "HOD"], aliases: ["Plan Hari Ini"] },
+    { label: "Daily Plan", key: "repair-plan", href: "/abnormality/plan", icon: "calendar", mode: morningMeetingMode, area: "repair", allowedRoles: ["PIC Area"], aliases: ["Plan Hari Ini"] },
     { label: "Abnormality", key: "service-abnormality", href: "/service/pic-abnormality", icon: "alert", mode: morningMeetingMode, area: "service", allowedRoles: ["PIC Area"] },
     { label: "Daily Plan", key: "service-plan", href: "/service/pic-plan", icon: "calendar", mode: morningMeetingMode, area: "service", allowedRoles: ["PIC Area"] },
     { label: "Abnormality", key: "qc-abnormality", href: "/qc/pic-abnormality", icon: "alert", mode: morningMeetingMode, area: "qc", allowedRoles: ["PIC Area"] },
@@ -444,21 +445,11 @@ export function filterNavGroups(filter: NavigationFilter): NavGroup[] {
 
   if (filter.user.role !== "HOD") return groups;
 
-  const labelCounts = new Map<string, number>();
-  for (const group of groups) {
-    for (const item of group.items) {
-      labelCounts.set(item.label, (labelCounts.get(item.label) ?? 0) + 1);
-    }
-  }
-
   return groups.map((group) => ({
     ...group,
     items: group.items.map((item) => {
       if (group.title === "MONITORING" && item.area) {
         return { ...item, label: areaNavLabels[item.area] };
-      }
-      if (group.title === "REPORTS" && item.area && (labelCounts.get(item.label) ?? 0) > 1) {
-        return { ...item, label: `${item.label} · ${areaNavLabels[item.area]}` };
       }
       return item;
     }),

@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { filterNavGroups, parentForKey, resolveNavItem } from "@/config/navigation";
+import { areaForNavKey } from "@/config/access";
 import { useDisplayMode } from "@/components/providers/DisplayModeProvider";
 import { useRole } from "@/components/providers/RoleProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
@@ -42,6 +43,7 @@ import PicAssemblyPlan from "@/features/pic-assembly/PicAssemblyPlan";
 import PaiRobot from "@/features/morning-meeting/PaiRobot";
 import MeetingDashboard from "@/features/morning-meeting/MeetingDashboard";
 import FollowupPage from "@/features/morning-meeting/FollowupPage";
+import HodDailyPlan from "@/features/morning-meeting/HodDailyPlan";
 import CostOverview from "@/features/cost/CostOverview";
 import CostProductivity from "@/features/cost/CostProductivity";
 import CostManpower from "@/features/cost/CostManpower";
@@ -91,14 +93,16 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
 
   const page = getShellPage(active);
   const brandLogo = dark ? oppoLogoDark : oppoLogo;
-  const isRepairPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "repair";
-  const isServicePicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "service";
-  const isQcPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "qc";
-  const isAssemblyPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "assembly";
-  const isCostPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "cost";
-  const isSafetyPicMeeting = mode === "morning-meeting" && role === "PIC Area" && picArea === "safety";
+  const viewArea = mode === "morning-meeting" ? role === "PIC Area" ? picArea : role === "HOD" ? areaForNavKey(active) : null : null;
+  const isRepairPicMeeting = viewArea === "repair";
+  const isServicePicMeeting = viewArea === "service";
+  const isQcPicMeeting = viewArea === "qc";
+  const isAssemblyPicMeeting = viewArea === "assembly";
+  const isCostPicMeeting = viewArea === "cost";
+  const isSafetyPicMeeting = viewArea === "safety";
 
   useEffect(() => {
+    if (role !== "PIC Area") return;
     if (isRepairPicMeeting) {
       if (active !== "meeting-home" && active !== "followup" && active !== "repair-monitor" && active !== "Preassembly" && active !== "Rework" && active !== "Warranty" && active !== "Abnormality" && active !== "Abnormal" && active !== "repair-plan") {
         setActive("meeting-home");
@@ -133,23 +137,23 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
       setActive("Dashboard");
       router.push(dashboardHref);
     }
-  }, [isRepairPicMeeting, isServicePicMeeting, isQcPicMeeting, isAssemblyPicMeeting, isCostPicMeeting, isSafetyPicMeeting, active, router]);
+  }, [role, isRepairPicMeeting, isServicePicMeeting, isQcPicMeeting, isAssemblyPicMeeting, isCostPicMeeting, isSafetyPicMeeting, active, router]);
 
   useEffect(() => {
-    if (isRepairPicMeeting && (active === "repair-monitor" || active === "Preassembly" || active === "Rework" || active === "Warranty")) {
+    if (viewArea === "repair" && (active === "repair-monitor" || active === "Preassembly" || active === "Rework" || active === "Warranty")) {
       setOpenMenu("repair-monitor");
     }
-  }, [isRepairPicMeeting, active]);
+  }, [viewArea, active]);
   useEffect(() => {
-    if (isCostPicMeeting && (active === "cost-area-monitoring" || active.startsWith("cost-"))) {
+    if (viewArea === "cost" && (active === "cost-area-monitoring" || active.startsWith("cost-"))) {
       setOpenMenu("cost-area-monitoring");
     }
-  }, [isCostPicMeeting, active]);
+  }, [viewArea, active]);
   useEffect(() => {
-    if (isSafetyPicMeeting && (active === "safety-area-monitoring" || active.startsWith("safety-"))) {
+    if (viewArea === "safety" && (active === "safety-area-monitoring" || active.startsWith("safety-"))) {
       setOpenMenu("safety-area-monitoring");
     }
-  }, [isSafetyPicMeeting, active]);
+  }, [viewArea, active]);
   const navigationGroups = useMemo(() => filterNavGroups({ user: navigationUser, activeArea }), [navigationUser, activeArea]);
   const visibleCommandTargets = useMemo(() => new Set(navigationGroups.flatMap((group) => group.items.flatMap((item) => [item.key, item.label, ...(item.aliases ?? []), ...(item.children?.flatMap((child) => [child.key, child.label, ...(child.aliases ?? [])]) ?? [])]))), [navigationGroups]);
 
@@ -205,10 +209,12 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
 
   const selectMenu = (target: string, costNav?: CostNav) => {
     const item = resolveNavItem(target);
-    router.push(item ? item.href : dashboardHref);
-    setActive(item ? item.key : target);
+    const nextItem = role === "HOD" && item?.children?.length ? item.children[0] : item;
+    const keepHodArea = role === "HOD" && (target.startsWith("cost-") || target.startsWith("safety-")) && (nextItem?.href === "/morning-meeting" || !nextItem);
+    if (!keepHodArea) router.push(nextItem ? nextItem.href : dashboardHref);
+    setActive(nextItem ? nextItem.key : target);
     setMobileSidebar(false);
-    if (item?.href.startsWith("/cost/")) setCostFocus(costNav);
+    if (nextItem?.href.startsWith("/cost/")) setCostFocus(costNav);
   };
 
   const selectSubPage = (target: string, costNav?: CostNav) => {
@@ -264,7 +270,11 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
             }}
             onNavigate={selectMenu}
           />
-          {isRepairPicMeeting ? (
+          {active === "hod-daily-plan" ? (
+            <section className="content">
+              <HodDailyPlan />
+            </section>
+          ) : isRepairPicMeeting ? (
             <section className="content repair-content">
               <RepairPicProvider>
                 {active === "followup" ? (

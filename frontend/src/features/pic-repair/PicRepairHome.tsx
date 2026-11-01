@@ -12,6 +12,7 @@ import {
   wipTargets,
 } from "@/features/repair/RepairDashboard";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
+import { useRole } from "@/components/providers/RoleProvider";
 
 type TrendKey = "wip-pre" | "wip-rework" | "wip-warranty";
 
@@ -87,6 +88,8 @@ function Breakdown({ trendKey }: { trendKey: TrendKey }) {
 }
 
 export default function PicRepairHome() {
+  const { role } = useRole();
+  const canInput = role === "PIC Area";
   const [selected, setSelected] = useState<TrendKey | null>(null);
   const [values, setValues] = useState<Record<string, number>>({});
   const [inputOpen, setInputOpen] = useState(false);
@@ -127,7 +130,7 @@ export default function PicRepairHome() {
         </div>
         <div className="repair-actions">
           <button className="repair-outline" type="button">07 Oct 2026</button>
-          <button className="repair-primary text-white font-bold" type="button" onClick={() => setInputOpen(true)}>+ Input Data</button>
+          {canInput && <button className="repair-primary text-white font-bold" type="button" onClick={() => setInputOpen(true)}>+ Input Data</button>}
         </div>
       </div>
 
@@ -174,7 +177,7 @@ export default function PicRepairHome() {
           onClose={() => setAiCard(null)}
         />
       )}
-      {inputOpen && <InputDialog onClose={() => setInputOpen(false)} onSave={saveInput} />}
+      {canInput && inputOpen && <InputDialog onClose={() => setInputOpen(false)} onSave={saveInput} />}
       {toast && <div className="repair-toast"><span>✓</span>Data berhasil disimpan</div>}
     </div>
   );
