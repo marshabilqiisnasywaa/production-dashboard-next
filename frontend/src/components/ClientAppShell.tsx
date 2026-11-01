@@ -1,7 +1,8 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useEffect, type ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { canOpenNavKey, landingPathFor } from "@/config/access";
 import { activeForPath } from "@/config/navigation";
 import { DisplayModeProvider, useDisplayMode } from "@/components/providers/DisplayModeProvider";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
@@ -32,6 +33,22 @@ function SessionSync({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+function UrlGuard({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user, activeArea } = useAuth();
+  const activeKey = activeForPath(pathname);
+  const allowed = Boolean(user && canOpenNavKey(user, activeKey, activeArea));
+
+  useEffect(() => {
+    if (!user || allowed) return;
+    router.replace(landingPathFor(user));
+  }, [user, allowed, router]);
+
+  if (!user || !allowed) return null;
+  return <>{children}</>;
+}
+
 export default function ClientAppShell() {
   const pathname = usePathname();
   return (
@@ -40,9 +57,11 @@ export default function ClientAppShell() {
         <DisplayModeProvider>
           <RoleProvider>
             <AuthGate>
-              <SessionSync>
-                <AppShell initialActive={activeForPath(pathname)} />
-              </SessionSync>
+              <UrlGuard>
+                <SessionSync>
+                  <AppShell initialActive={activeForPath(pathname)} />
+                </SessionSync>
+              </UrlGuard>
             </AuthGate>
           </RoleProvider>
         </DisplayModeProvider>

@@ -415,6 +415,17 @@ export type NavigationFilter = {
   activeArea?: PicAreaKey | null;
 };
 
+const areaNavLabels: Record<PicAreaKey, string> = {
+  assembly: "Assembly",
+  packing: "Packing",
+  material: "Material",
+  qc: "QC",
+  service: "Service",
+  repair: "Repair",
+  cost: "Cost",
+  safety: "Safety, ISC, GA",
+};
+
 function modulesForGroup(title: AccessGroupTitle): AccessModuleKey[] {
   return accessModuleOrder.filter((key) => accessModuleRules[key].group === title);
 }
@@ -427,7 +438,8 @@ export function filterNavGroups(filter: NavigationFilter): NavGroup[] {
       items: modulesForGroup(title)
         .filter((key) => allowed.has(key) && canAccess(filter.user, key, filter.activeArea ?? null))
         .map((key) => resolveNavItem(key))
-        .filter((item): item is NavItem => Boolean(item)),
+        .filter((item): item is NavItem => Boolean(item))
+        .map((item) => filter.user.role === "HOD" && item.area ? { ...item, label: `${item.label} · ${areaNavLabels[item.area]}` } : item),
     }))
     .filter((group) => group.items.length);
 }

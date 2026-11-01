@@ -138,3 +138,33 @@ export function canAccess(user: AccessUser, key: AccessModuleKey, area?: PicArea
 export function effectiveModules(user: AccessUser): AccessModuleKey[] {
   return accessModuleOrder.filter((key) => canAccess(user, key));
 }
+
+const childModuleKeys: Record<string, AccessModuleKey> = {
+  Preassembly: "repair-monitor",
+  Rework: "repair-monitor",
+  Warranty: "repair-monitor",
+  "service-mainboard": "service-monitor",
+  "service-battery": "service-monitor",
+  "service-external": "service-monitor",
+  "service-qualitas": "service-monitor",
+  "qc-mon-fqc": "qc-monitor",
+  "qc-mon-oqc": "qc-monitor",
+  "qc-mon-odm": "qc-monitor",
+  "assembly-prod": "assembly-monitor",
+  "assembly-pack": "assembly-monitor",
+  "cost-overview": "cost-area-monitoring",
+  "cost-productivity": "cost-area-monitoring",
+  "cost-manpower-hours": "cost-area-monitoring",
+  "cost-breakdown": "cost-area-monitoring",
+  "cost-finish-good": "cost-area-monitoring",
+  "cost-data-source": "cost-area-monitoring",
+  "safety-monitoring": "safety-area-monitoring",
+  "safety-isc": "safety-area-monitoring",
+  "safety-ga-admin": "safety-area-monitoring",
+};
+
+export function canOpenNavKey(user: AccessUser, key: string, area?: PicAreaKey | null): boolean {
+  if (isAccessModuleKey(key)) return canAccess(user, key, area);
+  const moduleKey = childModuleKeys[key];
+  return moduleKey ? canAccess(user, moduleKey, area) : false;
+}
