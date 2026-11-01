@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { picAreaOptions, type PicAreaKey } from "@/components/providers/RoleProvider";
-import { findUserByNik, type MockUser } from "@/data/mockUsers";
+import { findUserByNik, getUsers, setPassword, type ManagedUser } from "@/features/user-management/userStore";
 
 const SESSION_KEY = "mm-session";
 
@@ -16,12 +16,14 @@ export type LoginResult = {
 };
 
 type AuthContextValue = {
-  user: MockUser | null;
+  user: ManagedUser | null;
   activeArea: PicAreaKey | null;
   ready: boolean;
   login: (nik: string, password: string) => LoginResult;
   logout: () => void;
   setActiveArea: (area: PicAreaKey) => void;
+  changePassword: (currentPassword: string, newPassword: string) => LoginResult;
+  refreshUser: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -54,30 +56,33 @@ function writeSession(session: StoredSession | null): void {
   }
 }
 
-function resolveArea(user: MockUser, preferred: PicAreaKey | null): PicAreaKey | null {
+function resolveArea(user: ManagedUser, preferred: PicAreaKey | null): PicAreaKey | null {
   if (preferred && user.areas.includes(preferred)) return preferred;
   return user.areas[0] ?? null;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<MockUser | null>(null);
+  const [user, setUser] = useState<ManagedUser | null>(null);
   const [activeArea, setActiveAreaState] = useState<PicAreaKey | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const session = readSession();
     const account = session ? findUserByNik(session.nik) : undefined;
-    if (account) {
+    if (account?.active) {
       setUser(account);
       setActiveAreaState(resolveArea(account, session?.activeArea ?? null));
+    } else {
+      writeSession(null);
     }
     setReady(true);
   }, []);
 
   const login = useCallback((nik: string, password: string): LoginResult => {
-    if (!nik.trim() || !password) return { ok: false, error: "NIK dan password wajib diisi." };
+    if (!nik.trim() || !password) return { ok: false, error: "NIK atau password salah." };
     const account = findUserByNik(nik);
-    if (!account) return { ok: false, error: "NIK tidak ditemukan." };
+    if (!account || account.password !== password) return { ok: false, error: "NIK atau password salah." };
+    if (!account.active) return { ok: false, error: "Akun tidak aktif." };
     const area = resolveArea(account, null);
     setUser(account);
     setActiveAreaState(area);
@@ -97,9 +102,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     writeSession({ nik: user.nik, activeArea: area });
   }, [user]);
 
+  const changePassword = useCallback((currentPassword: string, newPassword: string): LoginResult => {
+    if (!user) return { ok: false, error: "Sesi pengguna tidak ditemukan." };
+    if (user.password !== currentPassword) return { ok: false, error: "Password lama salah." };
+    if (newPassword.length < 6) return { ok: false, error: "Password baru minimal 6 karakter." };
+    if (newPassword === currentPassword) return { ok: false, error: "Password baru tidak boleh sama dengan password lama." };
+    const updated = setPassword(user.nik, newPassword);
+    if (!updated) return { ok: false, error: "Akun tidak ditemukan." };
+    setUser(updated);
+    return { ok: true };
+  }, [user]);
+
+  const refreshUser = useCallback(() => {
+    if (!user) return;
+    const latest = getUsers().find((item) => item.id === user.id);
+    if (!latest || !latest.active) {
+      setUser(null);
+      setActiveAreaState(null);
+      writeSession(null);
+      return;
+    }
+    const area = resolveArea(latest, activeArea);
+    setUser(latest);
+    setActiveAreaState(area);
+    writeSession({ nik: latest.nik, activeArea: area });
+  }, [user, activeArea]);
+
   const value = useMemo(
-    () => ({ user, activeArea, ready, login, logout, setActiveArea }),
-    [user, activeArea, ready, login, logout, setActiveArea],
+    () => ({ user, activeArea, ready, login, logout, setActiveArea, changePassword, refreshUser }),
+    [user, activeArea, ready, login, logout, setActiveArea, changePassword, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

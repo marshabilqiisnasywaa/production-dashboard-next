@@ -7,6 +7,7 @@ import {
   accessModuleRules,
   canAccess,
   effectiveModules,
+  isAreaMonitoringViewer,
   type AccessGroupTitle,
   type AccessModuleKey,
   type AccessUser,
@@ -54,8 +55,8 @@ export const morningMeetingGroup: NavGroup = {
 export const productionKpiGroup: NavGroup = {
   title: "PRODUCTION KPI",
   items: [
-    { label: "Production KPI", key: "production-kpi", href: "/morning-meeting/production-kpi", icon: "chart", mode: morningMeetingMode },
-    { label: "Project 2026", key: "project-2026", href: "/morning-meeting/project-2026", icon: "trending", mode: morningMeetingMode },
+    { label: "SQDCIP Overview", key: "sqcdip-overview", href: "/sqcdip", icon: "chart", mode: morningMeetingMode, general: true, aliases: ["SQDCIP Overview", "Production KPI"] },
+    { label: "Abnormal Tracker", key: "sqcdip-abnormal", href: "/sqcdip/abnormal-tracker", icon: "alert", mode: morningMeetingMode, general: true },
   ],
 };
 
@@ -174,18 +175,6 @@ export const laporanGroup: NavGroup = {
 export const platformGroup: NavGroup = {
   title: "PLATFORM",
   items: [
-    {
-      label: "SQDCIP",
-      key: "Overview",
-      href: "/sqcdip",
-      icon: "chart",
-      children: [
-        { label: "Overview", key: "Overview", href: "/sqcdip", icon: "chart", mode: allModes, general: true, aliases: ["SQDCIP Overview"], currentWhenActive: false },
-        { label: "Abnormal Tracker", key: "Abnormal Tracker", href: "/sqcdip/abnormal-tracker", icon: "alert", mode: allModes, general: true, currentWhenActive: false },
-      ],
-      mode: allModes,
-      general: true,
-    },
     { label: "Dashboard", key: "Dashboard", href: "/dashboard", icon: "grid", mode: allModes, general: true },
     { label: "Assembly", key: "assembly-overview", href: "/assembly", icon: "assembly", mode: allModes, area: "assembly" },
     { label: "Packing", key: "Packing", href: "/packing", icon: "package", mode: allModes, area: "packing" },
@@ -246,6 +235,13 @@ export const platformGroup: NavGroup = {
   ],
 };
 
+export const adminGroup: NavGroup = {
+  title: "ADMINISTRASI",
+  items: [
+    { label: "Atur User", key: "user-management", href: "/admin/atur-user", icon: "users", mode: morningMeetingMode, general: true },
+  ],
+};
+
 export const managementGroup: NavGroup = {
   title: "MANAGEMENT",
   items: [
@@ -255,7 +251,7 @@ export const managementGroup: NavGroup = {
   ],
 };
 
-export const navGroups: readonly NavGroup[] = [morningMeetingGroup, productionKpiGroup, platformGroup, monitoringGroup, managementGroup, laporanGroup];
+export const navGroups: readonly NavGroup[] = [morningMeetingGroup, productionKpiGroup, platformGroup, monitoringGroup, managementGroup, laporanGroup, adminGroup];
 
 export const navItems: readonly NavItem[] = navGroups.flatMap((group) =>
   group.items.flatMap((item) => [item, ...(item.children ?? [])]),
@@ -443,7 +439,7 @@ export function filterNavGroups(filter: NavigationFilter): NavGroup[] {
     }))
     .filter((group) => group.items.length);
 
-  if (filter.user.role !== "HOD") return groups;
+  if (!isAreaMonitoringViewer(filter.user.role)) return groups;
 
   return groups.map((group) => ({
     ...group,

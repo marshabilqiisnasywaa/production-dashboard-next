@@ -54,7 +54,6 @@ const kpis: Record<Category, Kpi[]> = {
     { name: "UPPH", actual: 5.4, display: "5.4", target: 5.26, targetLabel: "5.26", direction: "higher", views: ["H", "B"] },
     { name: "OPE Pabrik", actual: 92, display: "92%", target: 95, targetLabel: "95%", direction: "higher", views: ["H"] },
     { name: "OPE Instalasi", actual: 96, display: "96%", target: 95, targetLabel: "95%", direction: "higher", views: ["H"] },
-    { name: "OPE Packing", actual: 93, display: "93%", target: 95, targetLabel: "95%", direction: "higher", views: ["H"] },
     { name: "Losses Material", actual: .35, display: "0.35%", target: .4, targetLabel: "0.40%", direction: "lower", views: ["B"] },
   ],
   I: [

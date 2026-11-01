@@ -4,6 +4,7 @@ import CustomSelect from "@/components/shell/CustomSelect";
 import { picAreaOptions, type AppUser, type PicAreaKey } from "@/components/providers/RoleProvider";
 import SimulationBadge from "@/features/morning-meeting/SimulationBadge";
 import { getNotifications } from "@/features/morning-meeting/aiFollowupData";
+import ChangePasswordForm from "@/features/auth/ChangePasswordForm";
 import type { DisplayMode } from "@/components/providers/DisplayModeProvider";
 import type { AppLanguage } from "@/components/providers/LanguageProvider";
 import type { ShellPage } from "@/components/shell/shellPage";
@@ -44,12 +45,14 @@ export default function ShellTopbar({
   onNavigate,
 }: ShellTopbarProps) {
   const [notificationOpen, setNotificationOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const notifications = mode === "morning-meeting" ? getNotifications(user.role, activeArea) : [];
   const userAreas = user.areas ?? [];
   const currentArea = user.role === "PIC Area"
     ? picAreaOptions.find((option) => option.key === activeArea)?.label
     : undefined;
   return (
+    <>
     <header className="topbar">
       <div className="navbar-left">
         <button className="ghost-button sidebar-trigger" aria-label="Toggle sidebar" onClick={onToggleSidebar}><Icon name="panel" size={18} /></button>
@@ -99,8 +102,24 @@ export default function ShellTopbar({
             />
           </div>
         )}
+        <button type="button" className="topbar-logout" onClick={() => setPasswordOpen(true)}>Ganti password</button>
         <button type="button" className="topbar-logout" onClick={onLogout}>Keluar</button>
       </div>
     </header>
+    {passwordOpen && (
+      <div className="mml-pass-modal" role="dialog" aria-modal="true" aria-labelledby="mml-pass-modal-title">
+        <section className="mml-pass-modal__card">
+          <div className="mml-pass-modal__head">
+            <div>
+              <span>Keamanan akun</span>
+              <h2 id="mml-pass-modal-title">Ganti password</h2>
+            </div>
+            <button type="button" className="mml-pass-modal__close" aria-label="Tutup" onClick={() => setPasswordOpen(false)}>×</button>
+          </div>
+          <ChangePasswordForm onSuccess={() => setPasswordOpen(false)} onCancel={() => setPasswordOpen(false)} />
+        </section>
+      </div>
+    )}
+    </>
   );
 }

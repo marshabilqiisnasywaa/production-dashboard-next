@@ -47,7 +47,7 @@ const morningMeetingPages = ["meeting-home", "production-kpi", "project-2026", "
 export function getShellPage(active: string): ShellPage {
   const isRepairPage = repairPages.includes(active);
   const isProductionPage = active === "Dashboard";
-  const isSqcdipPage = ["Overview", "Abnormal Tracker"].includes(active);
+  const isSqcdipPage = ["sqcdip-overview", "sqcdip-abnormal"].includes(active);
   const isServicePage = servicePages.includes(active);
   const isQcPage = qcPages.includes(active);
   const isPackingPage = active === "Packing";

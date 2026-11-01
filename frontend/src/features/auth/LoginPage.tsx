@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { picAreaOptions, type PicAreaKey } from "@/components/providers/RoleProvider";
 import { landingPathFor, landingTitleFor } from "@/config/access";
-import { demoPassword, findMultiAreaPicUser, findPicUserForArea, findUserByNik, findUserByRole, type MockUser } from "@/data/mockUsers";
+import { findMultiAreaPicUser, findPicUserForArea, findUserByNik, findUserByRole, type ManagedUser } from "@/features/user-management/userStore";
 import type { Role } from "@/types/morningMeeting";
 import { useAuth } from "@/features/auth/AuthProvider";
 import "./login.css";
@@ -11,22 +11,10 @@ import "./login.css";
 type QuickChip = {
   key: string;
   label: string;
-  account: MockUser;
+  account: ManagedUser;
 };
 
 const demoRoles: Role[] = ["Host", "HOD", "Superadmin"];
-
-const picChips: QuickChip[] = picAreaOptions.flatMap((option) => {
-  const account = findPicUserForArea(option.key);
-  return account ? [{ key: option.key, label: option.label, account }] : [];
-});
-
-const roleChips: QuickChip[] = demoRoles.flatMap((role) => {
-  const account = findUserByRole(role);
-  return account ? [{ key: role, label: role, account }] : [];
-});
-
-const multiAreaUser = findMultiAreaPicUser();
 
 function areaLabel(area: PicAreaKey): string {
   return picAreaOptions.find((option) => option.key === area)?.label ?? area;
@@ -41,6 +29,18 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
+  const { picChips, roleChips, multiAreaUser } = useMemo(() => ({
+    picChips: picAreaOptions.flatMap((option): QuickChip[] => {
+      const account = findPicUserForArea(option.key);
+      return account ? [{ key: option.key, label: option.label, account }] : [];
+    }),
+    roleChips: demoRoles.flatMap((role): QuickChip[] => {
+      const account = findUserByRole(role);
+      return account ? [{ key: role, label: role, account }] : [];
+    }),
+    multiAreaUser: findMultiAreaPicUser(),
+  }), []);
+
   const showDemo = process.env.NEXT_PUBLIC_SHOW_DEMO_LOGIN !== "false";
   const matchedUser = findUserByNik(nik);
   const destination = matchedUser ? landingTitleFor(matchedUser) : "";
@@ -52,9 +52,9 @@ export default function LoginPage() {
     if (ready && user) router.replace(landingPathFor(user));
   }, [ready, user, router]);
 
-  const fillDemoAccount = (account: MockUser) => {
+  const fillDemoAccount = (account: ManagedUser) => {
     setNik(account.nik);
-    setPassword(demoPassword);
+    setPassword(account.nik);
     setError("");
   };
 
@@ -176,7 +176,7 @@ export default function LoginPage() {
                   )}
                 </div>
               </div>
-              <p className="mml-login__demo-note">Klik chip untuk mengisi NIK dan password demo, lalu tekan Masuk.</p>
+              <p className="mml-login__demo-note">Klik chip untuk mengisi NIK dan password (sama dengan NIK), lalu tekan Masuk.</p>
             </div>
           )}
         </form>

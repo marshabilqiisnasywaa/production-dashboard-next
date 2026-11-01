@@ -6,8 +6,6 @@ export type MockUser = AppUser & {
   areas: PicAreaKey[];
 };
 
-export const demoPassword = "demo123";
-
 function initialsFor(name: string): string {
   return name
     .split(/\s+/)
@@ -61,20 +59,3 @@ export const mockUsers: MockUser[] = [
   roleUser("24020002", "Koh Alvin", "HOD"),
   roleUser("24020003", "Admin Sistem", "Superadmin"),
 ];
-
-export function findUserByNik(nik: string): MockUser | undefined {
-  const target = nik.trim().toLowerCase();
-  return mockUsers.find((user) => user.nik.toLowerCase() === target);
-}
-
-export function findPicUserForArea(area: PicAreaKey): MockUser | undefined {
-  return mockUsers.find((user) => user.role === "PIC Area" && user.areas.includes(area));
-}
-
-export function findUserByRole(role: Role): MockUser | undefined {
-  return mockUsers.find((user) => user.role === role);
-}
-
-export function findMultiAreaPicUser(): MockUser | undefined {
-  return mockUsers.find((user) => user.role === "PIC Area" && user.areas.length > 1);
-}

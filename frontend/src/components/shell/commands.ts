@@ -18,8 +18,8 @@ export const commandGroups: CommandGroup[] = [
     items: [
       { label: "Dashboard", icon: "grid", shortcut: "G D", key: "Dashboard" },
       { label: "Meeting Dashboard", icon: "calendar", shortcut: "G M", key: "meeting-home" },
-      { label: "Production KPI", icon: "chart", shortcut: "G K", key: "production-kpi" },
-      { label: "Project 2026", icon: "trending", shortcut: "G P", key: "project-2026" },
+      { label: "SQDCIP Overview", icon: "chart", shortcut: "G K", key: "sqcdip-overview" },
+      { label: "Abnormal Tracker", icon: "alert", shortcut: "G A", key: "sqcdip-abnormal" },
       { label: "Follow-up", icon: "message", shortcut: "G F", key: "followup" },
       { label: "My Wallet", icon: "warehouse", shortcut: "G W" },
       { label: "Transactions", icon: "refresh", shortcut: "G T" },

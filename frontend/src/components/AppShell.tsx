@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { filterNavGroups, parentForKey, resolveNavItem } from "@/config/navigation";
-import { areaForNavKey } from "@/config/access";
+import { areaForNavKey, isAreaMonitoringViewer } from "@/config/access";
 import { useDisplayMode } from "@/components/providers/DisplayModeProvider";
 import { useRole } from "@/components/providers/RoleProvider";
 import { useTheme } from "@/components/providers/ThemeProvider";
@@ -93,7 +93,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
 
   const page = getShellPage(active);
   const brandLogo = dark ? oppoLogoDark : oppoLogo;
-  const viewArea = mode === "morning-meeting" ? role === "PIC Area" ? picArea : role === "HOD" ? areaForNavKey(active) : null : null;
+  const viewArea = mode === "morning-meeting" ? role === "PIC Area" ? picArea : isAreaMonitoringViewer(role) ? areaForNavKey(active) : null : null;
   const isRepairPicMeeting = viewArea === "repair";
   const isServicePicMeeting = viewArea === "service";
   const isQcPicMeeting = viewArea === "qc";
@@ -209,9 +209,9 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
 
   const selectMenu = (target: string, costNav?: CostNav) => {
     const item = resolveNavItem(target);
-    const nextItem = role === "HOD" && item?.children?.length ? item.children[0] : item;
-    const keepHodArea = role === "HOD" && (target.startsWith("cost-") || target.startsWith("safety-")) && (nextItem?.href === "/morning-meeting" || !nextItem);
-    if (!keepHodArea) router.push(nextItem ? nextItem.href : dashboardHref);
+    const nextItem = isAreaMonitoringViewer(role) && item?.children?.length ? item.children[0] : item;
+    const keepAreaView = isAreaMonitoringViewer(role) && (target.startsWith("cost-") || target.startsWith("safety-")) && (nextItem?.href === "/morning-meeting" || !nextItem);
+    if (!keepAreaView) router.push(nextItem ? nextItem.href : dashboardHref);
     setActive(nextItem ? nextItem.key : target);
     setMobileSidebar(false);
     if (nextItem?.href.startsWith("/cost/")) setCostFocus(costNav);

@@ -10,6 +10,7 @@ import CostDashboard from "@/features/cost/CostDashboard";
 import MorningMeetingDashboard from "@/features/morning-meeting/MorningMeetingDashboard";
 import PicPlan from "@/features/pic-repair/PicPlan";
 import WarehouseOverview from "@/features/warehouse/WarehouseOverview";
+import UserManagementPage from "@/features/user-management/UserManagementPage";
 import type { ServicePageKey } from "@/data/serviceData";
 import type { CostNav } from "@/data/costData";
 import type { ShellPage } from "@/components/shell/shellPage";
@@ -39,7 +40,9 @@ export default function ShellContent({ page, costFocus, onNavigate, onSubPageNav
   } else if (page.isCostPage) {
     content = <CostDashboard page={page.costPage} focus={costFocus} onNavigate={onSubPageNavigate} />;
   } else if (page.isSqcdipPage) {
-    content = <SqcdipDashboard page={active === "Abnormal Tracker" ? "Abnormal Tracker" : "Overview"} onOpenCost={onSubPageNavigate} />;
+    content = <SqcdipDashboard page={active === "sqcdip-abnormal" ? "Abnormal Tracker" : "Overview"} onOpenCost={onSubPageNavigate} />;
+  } else if (active === "user-management") {
+    content = <UserManagementPage />;
   } else if (page.isServicePage) {
     content = <ServiceDashboard pageKey={active as ServicePageKey} />;
   } else if (page.isQcPage) {
