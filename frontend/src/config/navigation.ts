@@ -432,14 +432,35 @@ function modulesForGroup(title: AccessGroupTitle): AccessModuleKey[] {
 
 export function filterNavGroups(filter: NavigationFilter): NavGroup[] {
   const allowed = new Set(effectiveModules(filter.user));
-  return accessGroupOrder
+  const groups = accessGroupOrder
     .map((title) => ({
       title,
       items: modulesForGroup(title)
         .filter((key) => allowed.has(key) && canAccess(filter.user, key, filter.activeArea ?? null))
         .map((key) => resolveNavItem(key))
-        .filter((item): item is NavItem => Boolean(item))
-        .map((item) => filter.user.role === "HOD" && item.area ? { ...item, label: `${item.label} · ${areaNavLabels[item.area]}` } : item),
+        .filter((item): item is NavItem => Boolean(item)),
     }))
     .filter((group) => group.items.length);
+
+  if (filter.user.role !== "HOD") return groups;
+
+  const labelCounts = new Map<string, number>();
+  for (const group of groups) {
+    for (const item of group.items) {
+      labelCounts.set(item.label, (labelCounts.get(item.label) ?? 0) + 1);
+    }
+  }
+
+  return groups.map((group) => ({
+    ...group,
+    items: group.items.map((item) => {
+      if (group.title === "MONITORING" && item.area) {
+        return { ...item, label: areaNavLabels[item.area] };
+      }
+      if (group.title === "REPORTS" && item.area && (labelCounts.get(item.label) ?? 0) > 1) {
+        return { ...item, label: `${item.label} · ${areaNavLabels[item.area]}` };
+      }
+      return item;
+    }),
+  }));
 }
