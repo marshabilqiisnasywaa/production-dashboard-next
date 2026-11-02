@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   publicApi,
   type DmAttendanceRecap,
+  type DmPublicAttendanceRecap,
   type DmWorkshopAttendanceRecap,
 } from "../api";
 
@@ -244,6 +245,15 @@ function mergeDays(days: DayAttendance[]): DayAttendance {
     records: days.flatMap((d) => d.records),
     sessions: days.flatMap((d) => d.sessions),
   };
+}
+
+export function attendanceSessionsFromRecap(
+  recap: DmPublicAttendanceRecap
+): SessionStat[] {
+  return mergeDays([
+    fromLineRecap(recap),
+    ...recap.workshopSessions.map(fromWorkshopSession),
+  ]).sessions;
 }
 
 export function useAttendanceData(periodDays: number) {
