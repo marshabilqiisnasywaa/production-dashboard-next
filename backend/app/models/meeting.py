@@ -119,3 +119,13 @@ class DmPostMeeting(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class Holiday(Base):
+    __tablename__ = "holidays"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    date: Mapped[date] = mapped_column(Date, unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    kind: Mapped[str] = mapped_column(String(12))  # "custom" (tambahan admin) | "suppressed" (libur nasional yang dibatalkan)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

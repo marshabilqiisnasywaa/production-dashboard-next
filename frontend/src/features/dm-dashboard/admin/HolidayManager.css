@@ -1,0 +1,124 @@
+.hm {
+  display: grid;
+  gap: 20px;
+}
+
+.hm-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--dm-admin-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--dm-admin-card-bg, #fff);
+}
+
+.hm-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hm-year,
+.hm-field {
+  display: grid;
+  gap: 4px;
+  color: var(--dm-admin-text-muted, #6b7280);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.hm-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.hm-field--grow {
+  flex: 1 1 220px;
+}
+
+.hm-list {
+  max-height: 440px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--dm-admin-border, #e5e7eb);
+  border-radius: 10px;
+}
+
+.hm-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 14px;
+}
+
+.hm-row + .hm-row {
+  border-top: 1px solid var(--dm-admin-border-light, #f3f4f6);
+}
+
+.hm-row__main {
+  display: grid;
+  flex: 1 1 220px;
+  min-width: 0;
+  gap: 2px;
+}
+
+.hm-row__main strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--dm-admin-text, #111827);
+}
+
+.hm-row__main span {
+  color: var(--dm-admin-text-muted, #6b7280);
+  font-size: 0.78rem;
+}
+
+.hm-row.is-off .hm-row__main strong {
+  color: var(--dm-admin-text-muted, #6b7280);
+  text-decoration: line-through;
+}
+
+.hm-open-date {
+  max-width: 320px;
+}
+
+.hm-pick {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 14px;
+}
+
+.hm-fieldset {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--dm-admin-border, #e5e7eb);
+  border-radius: 10px;
+}
+
+.hm-fieldset legend {
+  padding: 0 6px;
+  color: var(--dm-admin-text-muted, #6b7280);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.hm-checks {
+  display: grid;
+  max-height: 220px;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.hm-all {
+  justify-self: start;
+}

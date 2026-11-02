@@ -11,6 +11,7 @@ from app.models.meeting import (
     DmMeetingSession,
     DmMeetingSummary,
     DmPostMeeting,
+    Holiday,
 )
 from app.models.mpv_award import MpvAward
 from app.models.notification_setting import DmNotificationSetting
@@ -27,6 +28,7 @@ from app.models.workshop_meeting import (
 
 
 __all__ = [
+    "Holiday",
     "SupervisorWorkshop",
     "WorkshopMeetingAttendance",
     "WorkshopMeetingSession",

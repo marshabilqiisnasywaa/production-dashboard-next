@@ -27,6 +27,7 @@ import { IconLogout } from "@/components/ui/icons";
 import { Layers, Pencil, Trash2 } from "lucide-react";
 import WorkshopManager from "./WorkshopManager";
 import WorkshopScheduleCard from "./WorkshopScheduleCard";
+import HolidayManager from "./HolidayManager";
 import PapercardTemplateManager from "./PapercardTemplateManager";
 import { NotificationBellButton } from "../notifications/NotificationBellButton";
 import DmGroupDialog from "./DmGroupDialog";
@@ -248,7 +249,7 @@ function AdminWorkspace({
   );
   const tabHeader = ADMIN_TAB_HEADERS[activeTab];
   const [papercardSub, setPapercardSub] = useState<
-    "template" | "workshop" | "meeting"
+    "template" | "workshop" | "meeting" | "holiday"
   >("template");
   const [workshops, setWorkshops] = useState<DmWorkshop[]>([]);
   const [lines, setLines] = useState<DmLine[]>([]);
@@ -1136,6 +1137,17 @@ function AdminWorkspace({
                   >
                     DM Meeting
                   </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={papercardSub === "holiday"}
+                    className={`dm-subtab${
+                      papercardSub === "holiday" ? " is-active" : ""
+                    }`}
+                    onClick={() => setPapercardSub("holiday")}
+                  >
+                    Hari Libur
+                  </button>
                 </div>
                 {papercardSub === "template" ? (
                   <PapercardTemplateManager
@@ -1144,6 +1156,8 @@ function AdminWorkspace({
                   />
                 ) : papercardSub === "workshop" ? (
                   <WorkshopScheduleCard />
+                ) : papercardSub === "holiday" ? (
+                  <HolidayManager lines={lines} workshops={workshops} />
                 ) : (
                   <MeetingScheduleManager lines={lines} />
                 )}

@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   meetingApi,
+  holidayApi,
   notificationApi,
   papercardApi,
   workshopMeetingApi,
+  type DmHoliday,
   type DmMeetingSchedule,
   type DmWorkshopSchedule,
   type DmMeetingSession,
@@ -76,6 +78,7 @@ export function useDmNotifications({
 
   const [schedule, setSchedule] = useState<DmMeetingSchedule | null>(null);
   const [sessions, setSessions] = useState<DmMeetingSession[]>([]);
+  const [holidayToday, setHolidayToday] = useState(false);
   const [workshopSchedules, setWorkshopSchedules] = useState<DmWorkshopSchedule[]>([]);
   const [workshopSessions, setWorkshopSessions] = useState<Record<number, DmMeetingSession | undefined>>({});
   const [templates, setTemplates] = useState<DmPapercardTemplate[]>([]);
@@ -120,6 +123,11 @@ export function useDmNotifications({
     const todayStr = new Date().toISOString().split("T")[0];
 
     try {
+      const today = new Date();
+      const localToday = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+      const holidays = await holidayApi.list(today.getFullYear()).catch((): DmHoliday[] => []);
+      setHolidayToday(holidays.some((h) => h.active && h.date === localToday));
+
       const targetLine = lineId && lineId > 0 ? lineId : 0;
       const settRes = await notificationApi.getSettings(targetLine).catch(() => null);
       if (settRes) setSettings(settRes);
@@ -204,7 +212,7 @@ export function useDmNotifications({
     const isoDay = jsDay === 0 ? 7 : jsDay;
 
     // 1. MEETING (DM) NOTIFICATIONS
-    if (settings.meetingEnabled && schedule?.items) {
+    if (settings.meetingEnabled && schedule?.items && !(holidayToday && sessions.length === 0)) {
       const targetLine = lineName || "Lini";
       schedule.items.forEach((item, idx) => {
         if (!item.isActive || !item.days.includes(isoDay)) return;
@@ -295,6 +303,7 @@ export function useDmNotifications({
         const schedTime = new Date(curYear, curMonth, curDate, sh, sm, 0);
         const diffMins = Math.round((schedTime.getTime() - now.getTime()) / 60000);
         const session = workshopSessions[item.workshopId];
+        if (holidayToday && !session) return;
         if (session && session.status !== "pending") return;
 
         const base = {
@@ -475,6 +484,7 @@ export function useDmNotifications({
     settings,
     schedule,
     sessions,
+    holidayToday,
     workshopSchedules,
     workshopSessions,
     templates,

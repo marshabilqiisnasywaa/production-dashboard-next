@@ -48,3 +48,10 @@ def slots_for_day(db: Session, line_id: int, day: date) -> list[Slot]:
     weekday = day.isoweekday()
     active = [r for r in rows if r.is_active and weekday in parse_days(r.days)]
     return [Slot(i + 1, r.label, r.time) for i, r in enumerate(active)]
+
+
+def all_active_slots(db: Session, line_id: int) -> list[Slot]:
+    rows = line_schedule_rows(db, line_id)
+    if not rows:
+        return [Slot(i + 1, label, time) for i, (label, time) in enumerate(DEFAULT_SLOTS)]
+    return [Slot(i + 1, r.label, r.time) for i, r in enumerate(r for r in rows if r.is_active)]

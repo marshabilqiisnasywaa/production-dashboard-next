@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { meetingApi, workshopMeetingApi } from "../api";
+import { publicApi } from "../api";
 import type {
   AttendanceRecord,
   SessionStat,
@@ -90,8 +90,8 @@ async function loadRoster(
 ): Promise<SessionRoster> {
   const session =
     stat.level === "DM Line"
-      ? await meetingApi.getSession(sessionId)
-      : await workshopMeetingApi.getSession(sessionId);
+      ? await publicApi.session(sessionId)
+      : await publicApi.workshopSession(sessionId);
 
   if (session.id !== sessionId || session.date !== stat.date) {
     throw new Error(`Sesi ${stat.session} tidak cocok dengan data rekap.`);

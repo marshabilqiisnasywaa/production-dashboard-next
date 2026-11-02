@@ -6,6 +6,7 @@ alembic==1.14.0
 pydantic-settings==2.7.0
 PyJWT==2.10.1
 bcrypt==4.2.1
+holidays==0.107
 
 httpx==0.28.1
 
