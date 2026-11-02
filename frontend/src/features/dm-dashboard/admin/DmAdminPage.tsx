@@ -37,6 +37,7 @@ import { useDmGroups } from "./dmGroupsStore";
 import type { DmGroup } from "./dmGroupsStore";
 import "./AdminPanel.css";
 import ProblemsPage from "../leader/problems/ProblemsPage";
+import PapercardProblems from "./PapercardProblems";
 import SqdipMonitor from "./sqdip/SqdipMonitor";
 
 type Auth =
@@ -182,7 +183,7 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
   },
   problems: {
     crumb: "Tracking Masalah",
-    title: "Tracking Masalah DM Meeting",
+    title: "Tracking Masalah DM Meeting dan Papercard",
   },
   sqdip: {
     crumb: "SQDIP",
@@ -221,7 +222,7 @@ const ADMIN_TAB_HEADERS: Record<
   problems: {
     title: "Tracking Masalah",
     description:
-      "Pantau penanggung jawab, tenggat waktu, dan status tindak lanjut dari DM meeting.",
+      "Pantau tindak lanjut masalah DM meeting dan temuan NG papercard harian.",
   },
   sqdip: {
     title: "Monitoring SQCDIP",
@@ -251,6 +252,7 @@ function AdminWorkspace({
   const [papercardSub, setPapercardSub] = useState<
     "template" | "workshop" | "meeting" | "holiday"
   >("template");
+  const [problemSub, setProblemSub] = useState<"meeting" | "papercard">("meeting");
   const [workshops, setWorkshops] = useState<DmWorkshop[]>([]);
   const [lines, setLines] = useState<DmLine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1193,7 +1195,15 @@ function AdminWorkspace({
             )}
             {activeTab === "problems" && (
               <div className="dm-admin-section">
-                <ProblemsPage adminLayout />
+                <div className="dm-subtabs" role="group" aria-label="Sumber tracking masalah">
+                  <button type="button" className={`dm-subtab${problemSub === "meeting" ? " is-active" : ""}`} aria-pressed={problemSub === "meeting"} onClick={() => setProblemSub("meeting")}>
+                    DM Meeting
+                  </button>
+                  <button type="button" className={`dm-subtab${problemSub === "papercard" ? " is-active" : ""}`} aria-pressed={problemSub === "papercard"} onClick={() => setProblemSub("papercard")}>
+                    Papercard
+                  </button>
+                </div>
+                {problemSub === "meeting" ? <ProblemsPage adminLayout /> : <PapercardProblems lines={lines} call={call} />}
               </div>
             )}
 

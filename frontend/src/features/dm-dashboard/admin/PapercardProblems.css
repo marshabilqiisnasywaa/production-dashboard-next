@@ -1,0 +1,52 @@
+.dm-papercard-problems .dml-pb-toolbar {
+  flex-wrap: wrap;
+}
+
+.dm-papercard-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 13px;
+}
+
+.dm-papercard-date input {
+  min-width: 0;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #dfe4e8;
+  border-radius: 7px;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+}
+
+.dm-papercard-problems .dm-papercard-problems-table th {
+  width: 120px;
+}
+
+.dm-papercard-problems .dm-papercard-problems-table th:nth-child(n + 5) {
+  width: 220px;
+}
+
+.dm-papercard-problems-table td {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.dm-papercard-ng {
+  color: #b91c1c;
+}
+
+.dm-papercard-date input:focus-visible,
+.dm-papercard-problems .dml-pb-table-wrap:focus-visible {
+  outline: 2px solid #087443;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .dm-papercard-problems .dml-pb-filters {
+    justify-content: flex-start;
+    width: 100%;
+  }
+}
