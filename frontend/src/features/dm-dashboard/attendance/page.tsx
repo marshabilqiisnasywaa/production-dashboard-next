@@ -10,10 +10,6 @@ import {
   useDepartmentAttendance,
   type DepartmentKey,
 } from "./useDepartmentAttendance";
-import {
-  usePreviousPeriodStats,
-  type PreviousStats,
-} from "./usePreviousPeriodStats";
 
 type TrendDay = {
   label: string;
@@ -53,102 +49,6 @@ function isMeetingDay(
     day.onTime !== null &&
     day.late !== null &&
     day.absent !== null
-  );
-}
-
-function KpiDelta({
-  metric,
-  currentRate,
-  currentTotal,
-  previous,
-  previousRate,
-  goodWhenUp,
-  periodLabel,
-  loading,
-  error,
-  onRetry,
-}: {
-  metric: string;
-  currentRate: number;
-  currentTotal: number;
-  previous: PreviousStats | null;
-  previousRate: number;
-  goodWhenUp: boolean;
-  periodLabel: string;
-  loading: boolean;
-  error: string | null;
-  onRetry: () => void;
-}) {
-  const difference = currentRate - previousRate;
-  const isNeutral = Math.abs(difference) <= 0.1;
-  const isGood = isNeutral || (difference > 0) === goodWhenUp;
-  const direction = isNeutral ? "stabil" : difference > 0 ? "naik" : "turun";
-  const displayedDifference = new Intl.NumberFormat("id-ID", {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  }).format(Math.abs(difference));
-  const changeText = isNeutral
-    ? "— stabil"
-    : `${difference > 0 ? "+" : "−"}${displayedDifference} pp`;
-  const rangeTitle = previous
-    ? `${previous.dateRange}${
-        previous.total < 20
-          ? ". Sampel kecil (kurang dari 20 catatan); interpretasikan dengan hati-hati."
-          : ""
-      }`
-    : undefined;
-  const periodText =
-    periodLabel === "Hari ini"
-      ? "vs hari meeting sebelumnya"
-      : `vs ${periodLabel === "30 hari terakhir" ? "30" : "7"} hari sebelumnya`;
-  const ariaLabel = isNeutral
-    ? `${metric} stabil dibanding periode sebelumnya`
-    : `${metric} ${direction} ${displayedDifference} poin persentase dibanding periode sebelumnya, ${
-        isGood ? "baik" : "kurang baik"
-      }`;
-
-  return (
-    <div className="att-kpi-delta-slot" aria-live="polite">
-      {currentTotal > 0 && previous && previous.total > 0 ? (
-        <>
-          <div
-            className={`att-kpi-delta ${
-              isNeutral
-                ? "is-neutral"
-                : isGood
-                ? "is-good"
-                : "is-bad"
-            }`}
-            title={rangeTitle}
-            aria-label={ariaLabel}
-            role="group"
-          >
-            <span aria-hidden="true">
-              {isNeutral ? "" : difference > 0 ? "▲" : "▼"}
-            </span>
-            <strong>{changeText}</strong>
-            <span>{periodText}</span>
-          </div>
-          <small className="att-kpi-delta-previous">
-            sebelumnya{" "}
-            {formatPercent(previousRate)}
-          </small>
-        </>
-      ) : currentTotal > 0 && error ? (
-        <button
-          type="button"
-          className="att-kpi-delta-retry"
-          onClick={onRetry}
-          title={error}
-        >
-          Perbandingan gagal · Coba lagi
-        </button>
-      ) : loading ? (
-        <span className="att-kpi-delta-placeholder" aria-hidden="true" />
-      ) : (
-        <span className="att-kpi-delta-placeholder" aria-hidden="true" />
-      )}
-    </div>
   );
 }
 
@@ -540,8 +440,6 @@ export default function AttendanceDashboardPage() {
 
   const { dates, records, sessions, loading, error, reload } =
     useAttendanceData(Number(period));
-  const previousPeriod = usePreviousPeriodStats(period);
-
   const [departmentRetry, setDepartmentRetry] = useState(0);
   const departmentRecap = useDepartmentAttendance({
     sessions,
@@ -555,12 +453,6 @@ export default function AttendanceDashboardPage() {
       : period === "30"
       ? "30 hari terakhir"
       : "7 hari terakhir";
-  const comparisonStats =
-    previousPeriod.period === period ? previousPeriod.stats : null;
-  const comparisonLoading =
-    previousPeriod.period !== period || previousPeriod.loading;
-  const comparisonError =
-    previousPeriod.period === period ? previousPeriod.error : null;
 
   const visibleTrend = useMemo<TrendDay[]>(
     () =>
@@ -801,19 +693,6 @@ export default function AttendanceDashboardPage() {
                 <strong>{stats.onTime}</strong>
 
                 <p>{formatPercent(stats.onTimeRate)} dari total presensi</p>
-
-                <KpiDelta
-                  metric="Tepat waktu"
-                  currentRate={stats.onTimeRate}
-                  currentTotal={stats.total}
-                  previous={comparisonStats}
-                  previousRate={comparisonStats?.onTimeRate ?? 0}
-                  goodWhenUp
-                  periodLabel={periodLabel}
-                  loading={comparisonLoading}
-                  error={comparisonError}
-                  onRetry={previousPeriod.retry}
-                />
               </article>
 
               <article className="att-kpi">
@@ -831,21 +710,6 @@ export default function AttendanceDashboardPage() {
                   )}{" "}
                   dari total presensi
                 </p>
-
-                <KpiDelta
-                  metric="Telat"
-                  currentRate={
-                    stats.total ? (stats.late / stats.total) * 100 : 0
-                  }
-                  currentTotal={stats.total}
-                  previous={comparisonStats}
-                  previousRate={comparisonStats?.lateRate ?? 0}
-                  goodWhenUp={false}
-                  periodLabel={periodLabel}
-                  loading={comparisonLoading}
-                  error={comparisonError}
-                  onRetry={previousPeriod.retry}
-                />
               </article>
 
               <article className="att-kpi">
@@ -863,21 +727,6 @@ export default function AttendanceDashboardPage() {
                   )}{" "}
                   dari total presensi
                 </p>
-
-                <KpiDelta
-                  metric="Tidak hadir"
-                  currentRate={
-                    stats.total ? (stats.absent / stats.total) * 100 : 0
-                  }
-                  currentTotal={stats.total}
-                  previous={comparisonStats}
-                  previousRate={comparisonStats?.absentRate ?? 0}
-                  goodWhenUp={false}
-                  periodLabel={periodLabel}
-                  loading={comparisonLoading}
-                  error={comparisonError}
-                  onRetry={previousPeriod.retry}
-                />
               </article>
 
               <article className="att-kpi att-kpi-rate">
@@ -890,19 +739,6 @@ export default function AttendanceDashboardPage() {
                 <strong>{formatPercent(stats.rate)}</strong>
 
                 <p>Peserta yang hadir, termasuk yang terlambat</p>
-
-                <KpiDelta
-                  metric="Tingkat kehadiran"
-                  currentRate={stats.rate}
-                  currentTotal={stats.total}
-                  previous={comparisonStats}
-                  previousRate={comparisonStats?.attendanceRate ?? 0}
-                  goodWhenUp
-                  periodLabel={periodLabel}
-                  loading={comparisonLoading}
-                  error={comparisonError}
-                  onRetry={previousPeriod.retry}
-                />
 
                 <div className="att-rate-track">
                   <span style={{ width: `${stats.rate}%` }} />
