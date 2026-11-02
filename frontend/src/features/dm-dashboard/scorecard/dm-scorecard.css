@@ -3736,3 +3736,48 @@ button {
 .scorecard-status-count-item.is-ok .scorecard-status-count-dot { background: var(--color-primary); }
 .scorecard-status-count-item.is-ng .scorecard-status-count-dot { background: var(--color-danger, #d92d20); }
 
+.scorecard-detail-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 16rem;
+  max-width: 100%;
+  height: 2rem;
+  padding: 0 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: var(--color-text-secondary);
+}
+.scorecard-detail-search:focus-within {
+  border-color: var(--color-primary);
+}
+.scorecard-detail-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.75rem;
+}
+.scorecard-detail-search input::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.scorecard-detail-search:hover {
+  background: var(--color-section);
+}
+
+.scorecard-detail-search:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-soft);
+  background: #ffffff;
+}
+
+.scorecard-detail-search input::-ms-clear,
+.scorecard-detail-search input::-webkit-search-cancel-button {
+  display: none;
+  -webkit-appearance: none;
+}

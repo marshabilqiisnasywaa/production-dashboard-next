@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type TouchEvent } from "react";
-import { CheckCircle2,  Clock3, Download, Info, Trophy, X, type LucideIcon } from "lucide-react";
+import { CheckCircle2,  Clock3, Download, Info, Search, Trophy, X, type LucideIcon } from "lucide-react";
 import { Badge, Button, Card, Input, Select } from "./ui";
 import { formatScore, scoreBar, type ScoreDetailItem, type ScoreTrend } from "./data";
 import { formatTrendDate, type SqdipTrend } from "./sqdipTrend";
@@ -430,10 +430,40 @@ export function StatusChip({ value, late = false }: { value: string; late?: bool
   return <Badge tone={tone}>{late && <Clock3 size={11} />}{value}</Badge>;
 }
 
-export function DetailHeader({ caption, canExport }: { caption: string; canExport: boolean }) {
+export function matchesQuery(query: string, ...fields: string[]) {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  return fields.join(" ").toLowerCase().includes(needle);
+}
+
+export function searchOptions(values: string[]) {
+  return [...new Set(values)].sort((a, b) => a.localeCompare(b));
+}
+
+function DetailSearch({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return (
+    <label className="scorecard-detail-search">
+      <Search size={14} aria-hidden="true" />
+      <input
+        type="text"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="Cari line atau leader"
+        aria-label="Cari line atau leader"
+        autoComplete="off"
+        spellCheck={false}
+      />
+    </label>
+  );
+}
+
+export function DetailHeader({ caption, canExport, query, onQuery }: { caption: string; canExport: boolean; query?: string; onQuery?: (value: string) => void; options?: string[] }) {
   return (
     <div className="mb-4 flex items-start justify-between gap-4">
-      <div className="text-sm text-text-secondary">{caption}</div>
+      <div className="flex min-w-0 flex-wrap items-center gap-3">
+        {onQuery && <DetailSearch value={query ?? ""} onChange={onQuery} />}
+        {caption && <div className="text-sm text-text-secondary">{caption}</div>}
+      </div>
       {canExport && <Button variant="ghost" size="sm"><Download size={15} /> Export</Button>}
     </div>
   );
@@ -465,21 +495,23 @@ function countStatuses(statuses: string[]): StatusCount {
   return { ok, ng: statuses.length - ok };
 }
 
-export function papercardCount(selectedDm: string) {
-  return countStatuses(papercardRows(selectedDm).flatMap((row) => row.slice(3, 7)));
+export function papercardCount(selectedDm: string, query = "") {
+  return countStatuses(papercardRows(selectedDm).filter((row) => matchesQuery(query, row[1], row[2])).flatMap((row) => row.slice(3, 7)));
 }
 
-export function standupCount() {
-  return countStatuses(STANDUP_ROWS.flatMap((row) => row.status));
+export function standupCount(query = "") {
+  return countStatuses(STANDUP_ROWS.filter((row) => matchesQuery(query, row.line, row.leader)).flatMap((row) => row.status));
 }
 
-export function PapercardDetail({ canExport, selectedDm, startDate, endDate }: { canExport: boolean; selectedDm: string; startDate: string; endDate: string }) {
-  const visibleRows = papercardRows(selectedDm);
+export function PapercardDetail({ canExport, selectedDm, startDate, endDate, query = "", onQuery }: { canExport: boolean; selectedDm: string; startDate: string; endDate: string; query?: string; onQuery?: (value: string) => void }) {
+  const allRows = papercardRows(selectedDm);
+  const visibleRows = allRows.filter((row) => matchesQuery(query, row[1], row[2]));
+  const options = searchOptions(allRows.flatMap((row) => [row[1], row[2]]));
   return (
     <>
-      <DetailHeader canExport={canExport} caption="" />
+      <DetailHeader canExport={canExport} caption="" query={query} onQuery={onQuery} options={options} />
       {visibleRows.length === 0 ? (
-        <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">Belum ada data</div>
+        <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">{allRows.length === 0 ? "Belum ada data" : "Tidak ada hasil pencarian"}</div>
       ) : (
         <div className="scorecard-tab-table overflow-x-auto rounded-xl border border-border">
           <table className="w-full table-auto text-left text-sm">
@@ -548,10 +580,12 @@ const STANDUP_ROWS: StandupRow[] = [
   { date: "2026-09-16", line: "TAC20605", leader: "Agus Riyadi", status: ["OK", "OK", "OK", "OK"], attendance: 10, content: 10, closeLoop: 10 },
 ];
 
-export function StandupDetail({ canExport }: { canExport: boolean }) {
+export function StandupDetail({ canExport, query = "", onQuery }: { canExport: boolean; query?: string; onQuery?: (value: string) => void }) {
+  const rows = STANDUP_ROWS.filter((row) => matchesQuery(query, row.line, row.leader));
+  const options = searchOptions(STANDUP_ROWS.flatMap((row) => [row.line, row.leader]));
   return (
     <>
-      <DetailHeader canExport={canExport} caption="" />
+      <DetailHeader canExport={canExport} caption="" query={query} onQuery={onQuery} options={options} />
       <div className="scorecard-tab-table overflow-x-auto rounded-xl border border-border">
         <table className="w-full table-auto text-left text-sm">
           <thead className="bg-section text-xs text-text-secondary">
@@ -578,7 +612,10 @@ export function StandupDetail({ canExport }: { canExport: boolean }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {STANDUP_ROWS.map((row) => {
+            {rows.length === 0 && (
+              <tr><td colSpan={11} className="px-4 py-6 text-center text-sm text-text-secondary">Tidak ada hasil pencarian</td></tr>
+            )}
+            {rows.map((row) => {
               const total = row.attendance + row.content + row.closeLoop;
               const rate = row.status.filter((s) => s === "OK").length / STANDUP_ROLES.length;
               return (

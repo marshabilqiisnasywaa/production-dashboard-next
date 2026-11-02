@@ -28,6 +28,7 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
   const [trend, setTrend] = useState<ScoreTrend>("Total");
   const [sqdipDim, setSqdipDim] = useState<DimKey>("Safety");
   const [tab, setTab] = useState<ScoreTab>("Papercard");
+  const [query, setQuery] = useState("");
   const [expandedPillars, setExpandedPillars] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -57,7 +58,7 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
   const sqdipScope = { leader: selectedLeader, dm: selectedLeaderScore ? null : selectedDmScore?.dm ?? null };
   const sqdipTiles = trend === "After" ? SQDIP_DIMS.map((key) => ({ key, trend: buildSqdipTrend(key, startDate, endDate, sqdipScope) })) : [];
   const sqdipTrend = sqdipTiles.find((tile) => tile.key === sqdipDim)?.trend ?? null;
-  const statusCount = tab === "Papercard" ? papercardCount(selectedDm) : tab === "Standup Meeting" ? standupCount() : null;
+  const statusCount = tab === "Papercard" ? papercardCount(selectedDm, query) : tab === "Standup Meeting" ? standupCount(query) : null;
   useEffect(() => {
     setLoading(true);
     const timeout = window.setTimeout(() => setLoading(false), 350);
@@ -187,9 +188,9 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
                 )}
               </div>
               <div className="scorecard-tabs-body">
-                {tab === "Papercard" && <div className="scorecard-tab-panel"><PapercardDetail canExport={canExport} selectedDm={selectedDm} startDate={startDate} endDate={endDate} /></div>}
-                {tab === "Standup Meeting" && <div className="scorecard-tab-panel scorecard-tab-panel--scroll"><StandupDetail canExport={canExport} /></div>}
-                {tab === "SQDIP" && <div className="scorecard-tab-panel"><SqdipSummary dm={selectedDm} startDate={startDate} endDate={endDate} /></div>}
+                {tab === "Papercard" && <div className="scorecard-tab-panel"><PapercardDetail canExport={canExport} selectedDm={selectedDm} startDate={startDate} endDate={endDate} query={query} onQuery={setQuery} /></div>}
+                {tab === "Standup Meeting" && <div className="scorecard-tab-panel scorecard-tab-panel--scroll"><StandupDetail canExport={canExport} query={query} onQuery={setQuery} /></div>}
+                {tab === "SQDIP" && <div className="scorecard-tab-panel"><SqdipSummary dm={selectedDm} startDate={startDate} endDate={endDate} query={query} onQuery={setQuery} /></div>}
               </div>
             </Card>
           </div>

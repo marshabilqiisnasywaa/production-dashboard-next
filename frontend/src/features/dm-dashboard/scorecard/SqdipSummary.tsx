@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { loadSqdip } from "../admin/sqdip/sqdipImport";
 import { DIMS, type SqdipLeaderDay } from "../admin/sqdip/sqdipModel";
 import { formatScore, leaderScores, SQDIP_DIMS } from "./data";
-import { DetailHeader } from "./components";
+import { DetailHeader, matchesQuery, searchOptions } from "./components";
 
 const MAX = 6;
 const TH = "whitespace-nowrap px-4 py-3 text-[0.6875rem] font-semibold uppercase tracking-[0.02em]";
@@ -36,7 +36,7 @@ const thStyle = (align: "left" | "center") =>
     background: "var(--color-section)",
   }) as const;
 
-export function SqdipSummary({ dm, startDate, endDate }: { dm: string; startDate: string; endDate: string }) {
+export function SqdipSummary({ dm, startDate, endDate, query = "", onQuery }: { dm: string; startDate: string; endDate: string; query?: string; onQuery?: (value: string) => void }) {
   const [data, setData] = useState<DayRow[]>([]);
 
   useEffect(() => {
@@ -46,9 +46,9 @@ export function SqdipSummary({ dm, startDate, endDate }: { dm: string; startDate
     return () => window.removeEventListener("storage", sync);
   }, [startDate, endDate]);
 
-  const rows = data.filter((row) => dm === "Semua" || row.dm === dm);
+  const scoped = data.filter((row) => dm === "Semua" || row.dm === dm);
 
-  if (rows.length === 0) {
+  if (scoped.length === 0) {
     return (
       <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">
         Belum ada data SQDIP pada periode ini. Impor data di Admin → SQDIP Monitoring.
@@ -56,12 +56,18 @@ export function SqdipSummary({ dm, startDate, endDate }: { dm: string; startDate
     );
   }
 
+  const rows = scoped.filter((row) => matchesQuery(query, row.line, row.leader));
+  const options = searchOptions(scoped.flatMap((row) => [row.line, row.leader]));
+
   const average = (value: (row: DayRow) => number) =>
     rows.reduce((sum, row) => sum + value(row), 0) / rows.length;
 
   return (
     <>
-      <DetailHeader canExport={false} caption="S Safety · Q Quality · D Delivery · I Inventory · P Productivity. Poin harian: 6 jika target tercapai, 0 jika tidak (maks 30 per hari)" />
+      <DetailHeader canExport={false} caption="S Safety · Q Quality · D Delivery · I Inventory · P Productivity. Poin harian: 6 jika target tercapai, 0 jika tidak (maks 30 per hari)" query={query} onQuery={onQuery} options={options} />
+      {rows.length === 0 ? (
+        <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">Tidak ada hasil pencarian</div>
+      ) : (
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full table-auto text-left text-sm">
           <caption className="sr-only">Poin SQDIP harian per leader</caption>
@@ -126,6 +132,7 @@ export function SqdipSummary({ dm, startDate, endDate }: { dm: string; startDate
           </tfoot>
         </table>
       </div>
+      )}
     </>
   );
 }
