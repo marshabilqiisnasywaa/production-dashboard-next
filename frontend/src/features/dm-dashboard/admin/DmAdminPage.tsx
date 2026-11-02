@@ -29,6 +29,7 @@ import WorkshopManager from "./WorkshopManager";
 import PapercardTemplateManager from "./PapercardTemplateManager";
 import { NotificationBellButton } from "../notifications/NotificationBellButton";
 import DmGroupDialog from "./DmGroupDialog";
+import DmLeaderDialog from "./DmLeaderDialog";
 import RowMenu from "./RowMenu";
 import { useDmGroups } from "./dmGroupsStore";
 import type { DmGroup } from "./dmGroupsStore";
@@ -282,6 +283,7 @@ function AdminWorkspace({
     dmGroupId: number;
   } | null>(null);
   const [dmEditGroup, setDmEditGroup] = useState<DmGroup | null>(null);
+  const [dmLeaderGroup, setDmLeaderGroup] = useState<DmGroup | null>(null);
 
   const call = useCallback(
     async <T,>(fn: () => Promise<T>): Promise<T> => {
@@ -978,6 +980,14 @@ function AdminWorkspace({
                                               <button
                                                 type="button"
                                                 className="dm-admin-btn is-tonal"
+                                                onClick={() => setDmLeaderGroup(group)}
+                                                aria-label={group.leaderName ? `Ganti leader ${group.name}, saat ini ${group.leaderName}` : `Tambah leader ${group.name}`}
+                                              >
+                                                <UsersIcon size={14} /> {group.leaderName ? `Leader: ${group.leaderName}` : "Tambah Leader DM"}
+                                              </button>
+                                              <button
+                                                type="button"
+                                                className="dm-admin-btn is-tonal"
                                                 onClick={() => {
                                                   setLineDefaults({
                                                     workshopId,
@@ -1191,6 +1201,20 @@ function AdminWorkspace({
               setModal({ open: false, line: null, tab: "general" })
             }
           />
+          {dmLeaderGroup ? (
+            <DmLeaderDialog
+              key={dmLeaderGroup.id}
+              group={dmLeaderGroup}
+              call={call}
+              onClose={() => setDmLeaderGroup(null)}
+              onSaved={() => {
+                setDmLeaderGroup(null);
+                notify("success", "Penugasan leader berhasil disimpan.");
+                void refreshQuietly();
+                void refreshDmGroups().catch((error: unknown) => notify("error", messageOf(error)));
+              }}
+            />
+          ) : null}
           <DmGroupDialog
             open={dmCreateWorkshopId !== null}
             mode="create"

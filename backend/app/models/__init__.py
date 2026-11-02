@@ -4,6 +4,7 @@ from app.models.dm_group import DmGroup
 from app.models.employee import Employee
 from app.models.face_template import FaceTemplate
 from app.models.line import Line
+from app.models.leader_assignment import LeaderAssignment
 from app.models.meeting import (
     DmMeetingAttendance,
     DmMeetingSchedule,
@@ -22,6 +23,7 @@ from app.models.workshop_meeting import (
     WorkshopMeetingSession,
     WorkshopMeetingSummary,
 )
+
 
 __all__ = [
     "SupervisorWorkshop",
@@ -45,4 +47,5 @@ __all__ = [
     "PapercardTemplate",
     "User",
     "Workshop",
+    "LeaderAssignment",
 ]

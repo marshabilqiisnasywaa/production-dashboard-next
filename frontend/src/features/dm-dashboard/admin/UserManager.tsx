@@ -12,6 +12,8 @@ import { PlusIcon } from "./AdminIcons";
 import RowMenu from "./RowMenu";
 import type { RowMenuItem } from "./RowMenu";
 import UserModal from "./UserModal";
+import UserHistoryPage from "./UserHistoryPage";
+import { History } from "lucide-react";
 import UserImportModal from "./UserImportModal";
 import "./UserTable.css";
 
@@ -91,6 +93,8 @@ export default function UserManager({ call }: UserManagerProps) {
     user: null,
   });
   const [importOpen, setImportOpen] = useState(false);
+  const [historyUser, setHistoryUser] = useState<DmEmployee | null>(null);
+  const [view, setView] = useState<"users" | "history">("users");
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | DmEmployeeRole>("all");
   const [deptFilter, setDeptFilter] = useState("all");
@@ -136,12 +140,12 @@ export default function UserManager({ call }: UserManagerProps) {
   async function toggleActive(user: DmEmployee) {
     try {
       await call(() =>
-        adminApi.updateEmployee(user.id, { isActive: !user.isActive })
+        adminApi.updateEmployee(user.id, { isActive: !user.isActive }),
       );
       ok(
         user.isActive
           ? `${user.name} dinonaktifkan.`
-          : `${user.name} diaktifkan lagi.`
+          : `${user.name} diaktifkan lagi.`,
       );
       await load();
     } catch (error) {
@@ -152,7 +156,7 @@ export default function UserManager({ call }: UserManagerProps) {
   async function resetPassword(user: DmEmployee) {
     if (
       !window.confirm(
-        `Reset password ${user.name} ke NIK (${user.employeeId})? Orangnya wajib menggantinya saat login berikutnya.`
+        `Reset password ${user.name} ke NIK (${user.employeeId})? Orangnya wajib menggantinya saat login berikutnya.`,
       )
     )
       return;
@@ -161,7 +165,7 @@ export default function UserManager({ call }: UserManagerProps) {
     setForm((current) =>
       current.open && current.user?.id === updated.id
         ? { open: true, user: updated }
-        : current
+        : current,
     );
     await load();
   }
@@ -169,7 +173,7 @@ export default function UserManager({ call }: UserManagerProps) {
   async function remove(user: DmEmployee) {
     if (
       !window.confirm(
-        `Hapus ${user.name} secara permanen? Riwayat lininya yang sudah dilepas ikut terhapus dan tidak bisa dikembalikan.`
+        `Hapus ${user.name} secara permanen? Riwayat lininya yang sudah dilepas ikut terhapus dan tidak bisa dikembalikan.`,
       )
     )
       return;
@@ -200,7 +204,7 @@ export default function UserManager({ call }: UserManagerProps) {
     );
   });
   const supervisors = users.filter(
-    (user) => user.role === "supervisor" && user.isActive
+    (user) => user.role === "supervisor" && user.isActive,
   );
   const inactiveCount = users.filter((user) => !user.isActive).length;
   const deptChoices = Array.from(
@@ -209,8 +213,21 @@ export default function UserManager({ call }: UserManagerProps) {
       ...users
         .map((user) => user.dept)
         .filter((value): value is string => Boolean(value)),
-    ])
+    ]),
   );
+
+  if (view === "history")
+    return (
+      <UserHistoryPage
+        users={users}
+        initialEmployeeId={historyUser?.id}
+        loadingUsers={loading}
+        usersError={loadError}
+        call={call}
+        onBack={() => setView("users")}
+        onRetryUsers={load}
+      />
+    );
 
   return (
     <section className="dm-panel" aria-labelledby="users-title">
@@ -229,6 +246,16 @@ export default function UserManager({ call }: UserManagerProps) {
           </p> */}
         </div>
         <div className="ut-head-actions">
+          <button
+            type="button"
+            className="dm-admin-btn is-secondary"
+            onClick={() => {
+              setHistoryUser(null);
+              setView("history");
+            }}
+          >
+            <History size={16} /> Riwayat
+          </button>
           <button
             type="button"
             className="dm-admin-btn is-secondary"
@@ -399,6 +426,15 @@ export default function UserManager({ call }: UserManagerProps) {
                   {shown.map((user) => {
                     const items: RowMenuItem[] = [
                       {
+                        key: "history",
+                        label: "Riwayat",
+                        icon: <History size={16} />,
+                        onSelect: () => {
+                          setHistoryUser(user);
+                          setView("history");
+                        },
+                      },
+                      {
                         key: "edit",
                         label: "Ubah",
                         icon: icons.edit,
@@ -496,9 +532,9 @@ export default function UserManager({ call }: UserManagerProps) {
                               ))}
                             </div>
                           ) : (
-                            user.lineLabel ?? (
+                            (user.lineLabel ?? (
                               <span className="ut-muted">Belum ada lini</span>
-                            )
+                            ))
                           )}
                         </td>
                         <td>
