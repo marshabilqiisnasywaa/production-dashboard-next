@@ -22,12 +22,14 @@ export function Segmented<T extends string>({
     <div className={`scorecard-segment ${className}`}>
       {items.map((item) => (
         <button
-          key={item}
-          type="button"
-          onClick={() => onChange(item)}
-        >
-          {labels?.[item] ?? item}
-        </button>
+  key={item}
+  type="button"
+  aria-pressed={value === item}
+  className={value === item ? "is-active" : ""}
+  onClick={() => onChange(item)}
+>
+  {labels?.[item] ?? item}
+</button>
       ))}
     </div>
   );

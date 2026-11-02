@@ -3781,3 +3781,19 @@ button {
   display: none;
   -webkit-appearance: none;
 }
+
+.scorecard-segment button.is-active {
+  background: var(--color-primary-soft, #e6f4ec);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.scorecard-segment button.is-active {
+  background: var(--color-primary);
+  color: #ffff;
+  font-weight: 700;
+}
+
+.scorecard-segment button.is-active {
+  border-radius: 6px;
+}

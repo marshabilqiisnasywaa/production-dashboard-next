@@ -64,7 +64,7 @@ export function SqdipSummary({ dm, startDate, endDate, query = "", onQuery }: { 
 
   return (
     <>
-      <DetailHeader canExport={false} caption="S Safety · Q Quality · D Delivery · I Inventory · P Productivity. Poin harian: 6 jika target tercapai, 0 jika tidak (maks 30 per hari)" query={query} onQuery={onQuery} options={options} />
+      <DetailHeader canExport={false} caption="" query={query} onQuery={onQuery} options={options} />
       {rows.length === 0 ? (
         <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">Tidak ada hasil pencarian</div>
       ) : (
