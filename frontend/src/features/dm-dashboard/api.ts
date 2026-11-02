@@ -1131,8 +1131,33 @@ export type DmWorkshopSupervisors = {
 
 const workshopBase = "/workshop-meetings";
 
+export interface DmWorkshopSchedule {
+  workshopId: number;
+  workshopName: string;
+  label: string;
+  time: string;
+  days: number[];
+  isActive: boolean;
+  reminderEnabled: boolean;
+  reminderMinutes: number;
+  isDefault: boolean;
+}
+
+export type DmWorkshopScheduleInput = Pick<
+  DmWorkshopSchedule,
+  "time" | "days" | "isActive" | "reminderEnabled" | "reminderMinutes"
+>;
+
 export const workshopMeetingApi = {
   mine: () => request<DmWorkshopRef[]>(workshopBase + "/mine", {}, true),
+  getSchedule: () =>
+    request<DmWorkshopSchedule[]>(workshopBase + "/schedule", {}, true),
+  saveSchedule: (workshopId: number, input: DmWorkshopScheduleInput) =>
+    request<DmWorkshopSchedule[]>(
+      `${workshopBase}/schedule/${workshopId}`,
+      json("PUT", input),
+      true
+    ),
   listSessions: (workshopId: number, date: string) =>
     request<DmMeetingSession[]>(
       `${workshopBase}/sessions?workshop_id=${workshopId}&date=${date}`,

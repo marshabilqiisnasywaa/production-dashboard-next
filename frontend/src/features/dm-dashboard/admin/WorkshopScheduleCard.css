@@ -1,0 +1,79 @@
+.wsc {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 16px;
+}
+
+.wsc-head {
+  margin-bottom: 12px;
+}
+
+.wsc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wsc-row {
+  padding: 14px 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.wsc-row__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.wsc-name {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.wsc-default {
+  font-weight: 400;
+  color: #64748b;
+}
+
+.wsc-row.is-off .wsc-fields {
+  opacity: 0.55;
+}
+
+.wsc-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px 24px;
+}
+
+.wsc-field {
+  display: grid;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.wsc-reminder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+
+.wsc-minutes {
+  width: 72px;
+}
+
+.wsc-unit {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.wsc-save {
+  margin-left: auto;
+}

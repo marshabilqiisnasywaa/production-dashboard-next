@@ -21,6 +21,7 @@ from app.models.workshop_meeting import (
     SupervisorWorkshop,
     WorkshopMeetingAttendance,
     WorkshopMeetingSession,
+    WorkshopMeetingSetting,
     WorkshopMeetingSummary,
 )
 
@@ -29,6 +30,7 @@ __all__ = [
     "SupervisorWorkshop",
     "WorkshopMeetingAttendance",
     "WorkshopMeetingSession",
+    "WorkshopMeetingSetting",
     "WorkshopMeetingSummary",
     "Board",
     "BoardMember",

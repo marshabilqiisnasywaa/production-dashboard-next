@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Index, Integer, JSON, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Index, Integer, JSON, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -22,6 +22,21 @@ class SupervisorWorkshop(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+class WorkshopMeetingSetting(Base):
+    __tablename__ = "workshop_meeting_settings"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    workshop_id: Mapped[int] = mapped_column(
+        ForeignKey("workshops.id", ondelete="CASCADE"), unique=True, index=True
+    )
+    time: Mapped[str] = mapped_column(String(5))
+    days: Mapped[str] = mapped_column(String(20), default="1,2,3,4,5,6,7", server_default="1,2,3,4,5,6,7")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    reminder_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    reminder_minutes: Mapped[int] = mapped_column(Integer, default=15, server_default="15")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
 
 class WorkshopMeetingSession(Base):
     __tablename__ = "workshop_meeting_sessions"

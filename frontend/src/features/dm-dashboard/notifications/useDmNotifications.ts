@@ -5,7 +5,9 @@ import {
   meetingApi,
   notificationApi,
   papercardApi,
+  workshopMeetingApi,
   type DmMeetingSchedule,
+  type DmWorkshopSchedule,
   type DmMeetingSession,
   type DmNotificationSetting,
   type DmNotificationSettingInput,
@@ -74,6 +76,8 @@ export function useDmNotifications({
 
   const [schedule, setSchedule] = useState<DmMeetingSchedule | null>(null);
   const [sessions, setSessions] = useState<DmMeetingSession[]>([]);
+  const [workshopSchedules, setWorkshopSchedules] = useState<DmWorkshopSchedule[]>([]);
+  const [workshopSessions, setWorkshopSessions] = useState<Record<number, DmMeetingSession | undefined>>({});
   const [templates, setTemplates] = useState<DmPapercardTemplate[]>([]);
   const [submissions, setSubmissions] = useState<DmPapercardSubmission[]>([]);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
@@ -120,6 +124,19 @@ export function useDmNotifications({
       const settRes = await notificationApi.getSettings(targetLine).catch(() => null);
       if (settRes) setSettings(settRes);
 
+      if (role === "supervisor") {
+        const [mine, all] = await Promise.all([
+          workshopMeetingApi.mine().catch(() => []),
+          workshopMeetingApi.getSchedule().catch(() => []),
+        ]);
+        const mineIds = new Set(mine.map((w) => w.id));
+        setWorkshopSchedules(all.filter((s) => mineIds.has(s.workshopId)));
+        const sessionLists = await Promise.all(
+          mine.map((w) => workshopMeetingApi.listSessions(w.id, todayStr).catch(() => []))
+        );
+        setWorkshopSessions(Object.fromEntries(mine.map((w, i) => [w.id, sessionLists[i][0]])));
+      }
+
       if (lineId && lineId > 0) {
         const [schedRes, sessRes, tmplRes, subRes] = await Promise.all([
           meetingApi.getSchedule(lineId).catch(() => null),
@@ -139,7 +156,7 @@ export function useDmNotifications({
       setLoading(false);
       setLastCheck(Date.now());
     }
-  }, [lineId]);
+  }, [lineId, role]);
 
   useEffect(() => {
     fetchData();
@@ -262,6 +279,58 @@ export function useDmNotifications({
             severity: "urgent", // Soft Red
             actionLabel: isLeader ? "Selesaikan Sekarang" : "Buka Meeting",
             actionUrl: meetingUrl,
+            createdAt: schedTime.getTime(),
+          });
+        }
+      });
+    }
+
+    // 1b. WORKSHOP MEETING NOTIFICATIONS (supervisor)
+    if (role === "supervisor") {
+      const dayKey = `${curYear}${pad(curMonth + 1)}${pad(curDate)}`;
+      workshopSchedules.forEach((item) => {
+        if (!item.isActive || !item.reminderEnabled || !item.days.includes(isoDay)) return;
+        const [sh, sm] = item.time.split(":").map(Number);
+        if (Number.isNaN(sh) || Number.isNaN(sm)) return;
+        const schedTime = new Date(curYear, curMonth, curDate, sh, sm, 0);
+        const diffMins = Math.round((schedTime.getTime() - now.getTime()) / 60000);
+        const session = workshopSessions[item.workshopId];
+        if (session && session.status !== "pending") return;
+
+        const base = {
+          type: "meeting" as const,
+          severity: "warning" as const,
+          actionLabel: "Buka Workshop Meeting",
+          actionUrl: "/dm-dashboard/supervisor/workshop-meeting",
+        };
+        const key = `workshop_meeting_${item.workshopId}_${dayKey}`;
+
+        if (diffMins > 0 && diffMins <= item.reminderMinutes) {
+          list.push({
+            ...base,
+            id: `${key}_upcoming`,
+            title: `Pengingat: Workshop Meeting ${item.workshopName}`,
+            message: `Workshop Meeting ${item.workshopName} akan dimulai dalam ${diffMins} menit lagi (pukul ${item.time}). Siapkan presensi supervisor.`,
+            timeLabel: `${diffMins}m lagi`,
+            createdAt: schedTime.getTime() - item.reminderMinutes * 60000,
+          });
+        } else if (diffMins <= 0 && diffMins >= -30) {
+          list.push({
+            ...base,
+            id: `${key}_started`,
+            title: `Waktunya Workshop Meeting ${item.workshopName}`,
+            message: `Workshop Meeting pukul ${item.time} sudah waktunya dimulai. Harap segera buka presensi dan mulai meeting.`,
+            timeLabel: diffMins === 0 ? "Mulai Sekarang" : `Lewat ${Math.abs(diffMins)}m`,
+            createdAt: schedTime.getTime(),
+          });
+        } else if (diffMins < -30 && diffMins >= -120) {
+          list.push({
+            ...base,
+            id: `${key}_overdue`,
+            severity: "urgent",
+            title: `Telat: Workshop Meeting ${item.workshopName} Belum Dimulai`,
+            message: `Jadwal Workshop Meeting pukul ${item.time} telah terlewat ${Math.abs(diffMins)} menit dan belum dimulai.`,
+            timeLabel: `Telat ${Math.abs(diffMins)}m`,
             createdAt: schedTime.getTime(),
           });
         }
@@ -406,6 +475,8 @@ export function useDmNotifications({
     settings,
     schedule,
     sessions,
+    workshopSchedules,
+    workshopSessions,
     templates,
     submissions,
     dismissedIds,

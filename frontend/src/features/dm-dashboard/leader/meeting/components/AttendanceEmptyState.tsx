@@ -17,7 +17,8 @@ export function AttendanceEmptyState({ requireAllPresent, onStart }: Props) {
         </span> */}
         <h2>Lakukan presensi terlebih dahulu</h2>
         <p>
-          Seluruh member DM wajib melakukan presensi dengan face recognition sebelum meeting dapat dimulai.
+          Seluruh member wajib melakukan presensi dengan face recognition
+          sebelum meeting dapat dimulai.
         </p>
 
         <ol className="dml-mt-steps">
@@ -33,20 +34,24 @@ export function AttendanceEmptyState({ requireAllPresent, onStart }: Props) {
           </li>
           <li>
             <IconCheckCircle size={22} />
-            <strong>{requireAllPresent ? "Setelah semua hadir" : "Setelah presensi ditutup"}</strong>
+            <strong>
+              {requireAllPresent
+                ? "Setelah semua hadir"
+                : "Setelah presensi ditutup"}
+            </strong>
             <span>meeting dapat dimulai</span>
           </li>
         </ol>
 
-<Button
-  variant="primary"
-  size="lg"
-  className="dml-mt-empty__cta justify-center"
-  onClick={onStart}
->
-  <IconFaceScan size={20} />
-  Mulai Presensi
-</Button>
+        <Button
+          variant="primary"
+          size="lg"
+          className="dml-mt-empty__cta justify-center"
+          onClick={onStart}
+        >
+          <IconFaceScan size={20} />
+          Mulai Presensi
+        </Button>
       </div>
     </section>
   );
