@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.models import (
     DmMeetingSchedule,
+    DmMeetingSession,
     DmMeetingSummary,
     DmNotificationSetting,
     Line,
@@ -18,7 +19,8 @@ from app.models import (
     WorkshopMeetingSession,
     WorkshopMeetingSetting,
 )
-from app.services.meeting_schedule import parse_days, slots_for_day
+from app.services.holidays import is_holiday
+from app.services.meeting_schedule import Slot, parse_days, slots_for_day
 from app.services.teamtalk import (
     notify_escalated_problems,
     notify_meeting_reminder,
@@ -63,7 +65,15 @@ async def check_meeting_reminders(db: Session, now: datetime):
         if not meeting_enabled or reminder_mins <= 0:
             continue
 
-        slots = slots_for_day(db, line.id, today)
+        if is_holiday(db, today):
+            held = db.scalars(select(DmMeetingSession).where(
+                DmMeetingSession.line_id == line.id,
+                DmMeetingSession.date == today,
+                DmMeetingSession.status == "pending",
+            )).all()
+            slots = [Slot(s.session_number, s.label or "Sesi", s.scheduled_time) for s in held]
+        else:
+            slots = slots_for_day(db, line.id, today)
         for slot in slots:
             try:
                 # slot.time berbentuk "HH:MM"
@@ -94,7 +104,14 @@ async def check_workshop_meeting_reminders(db: Session, now: datetime):
     for setting in db.scalars(select(WorkshopMeetingSetting)):
         if not setting.is_active or not setting.reminder_enabled:
             continue
-        if now.isoweekday() not in parse_days(setting.days):
+        held_today = db.scalar(select(WorkshopMeetingSession.id).where(
+            WorkshopMeetingSession.workshop_id == setting.workshop_id,
+            WorkshopMeetingSession.date == today,
+        ))
+        if is_holiday(db, today):
+            if held_today is None:
+                continue
+        elif now.isoweekday() not in parse_days(setting.days):
             continue
         try:
             sh, sm = [int(p) for p in setting.time.split(":")]

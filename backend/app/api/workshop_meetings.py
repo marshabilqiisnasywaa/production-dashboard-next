@@ -35,6 +35,7 @@ from app.schemas import (
 from app.services.face import antispoof, liveness
 from app.services.face.engine import FaceError, FaceResult, extract_face
 from app.services.face.matcher import matcher
+from app.services.holidays import is_holiday
 from app.services.meeting_schedule import ALL_DAYS, format_days, parse_days
 from app.services.teamtalk import notify_new_problems
 
@@ -383,6 +384,8 @@ def list_sessions(
     session = db.scalars(select(WorkshopMeetingSession).where(
         WorkshopMeetingSession.workshop_id == workshop_id, WorkshopMeetingSession.date == date_val,
     )).first()
+    if is_holiday(db, date_val):
+        return [map_session(session, db)] if session is not None else []
     configured_time = meeting_time(db, workshop_id)
     if session is not None and session.status == "pending" and session.scheduled_time != configured_time:
         session.scheduled_time = configured_time

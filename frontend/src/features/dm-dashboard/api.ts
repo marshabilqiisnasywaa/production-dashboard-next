@@ -336,6 +336,33 @@ export const publicApi = {
     ),
 };
 
+export type DmHoliday = {
+  date: string;
+  name: string;
+  source: "national" | "custom";
+  active: boolean;
+};
+
+export type DmOpenHolidayMeetingsResult = {
+  createdLines: number;
+  createdWorkshops: number;
+  skipped: number;
+};
+
+export const holidayApi = {
+  list: (year: number) => request<DmHoliday[]>(`/holidays?year=${year}`),
+  add: (date: string, name: string) =>
+    request<DmHoliday[]>("/holidays", json("POST", { date, name }), true),
+  remove: (date: string) =>
+    request<DmHoliday[]>(`/holidays/${date}`, { method: "DELETE" }, true),
+  openMeetings: (input: { date: string; lineIds: number[]; workshopIds: number[] }) =>
+    request<DmOpenHolidayMeetingsResult>(
+      "/holidays/open-meetings",
+      json("POST", input),
+      true
+    ),
+};
+
 export type DmLoginResult = {
   accessToken: string;
   username: string;

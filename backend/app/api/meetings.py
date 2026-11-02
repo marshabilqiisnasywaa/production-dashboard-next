@@ -44,6 +44,7 @@ from app.schemas import (
     ProblemSolutionIn,
 )
 from app.services.accounts import active_line, active_lines
+from app.services.holidays import is_holiday
 from app.services.meeting_attendance import home_line_code
 from app.services import joint_meetings, workshop_problems
 from app.services.problem_access import is_pic, pic_filter as problem_pic_filter
@@ -270,6 +271,9 @@ def list_sessions(
         .order_by(DmMeetingSession.session_number)
     )
     sessions = list(db.scalars(stmt).all())
+
+    if is_holiday(db, date_val):
+        return [_map_session(s, db) for s in sessions]
 
     slots = {slot.number: slot for slot in slots_for_day(db, line_id, date_val)}
     changed = False
