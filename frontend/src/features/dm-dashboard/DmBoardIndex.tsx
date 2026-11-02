@@ -13,7 +13,7 @@ type IndexTab = "line" | "kpi" | "rekap";
 
 const TABS: { key: IndexTab; label: string }[] = [
   { key: "line", label: "Line" },
-  { key: "kpi", label: "KPI Leader" },
+  { key: "kpi", label: "Scorecard" },
   { key: "rekap", label: "Rekap Absensi" },
 ];
 

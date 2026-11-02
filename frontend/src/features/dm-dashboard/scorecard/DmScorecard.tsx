@@ -4,27 +4,35 @@ import { Badge, Button, Card, SectionTitle } from "./ui";
 import { computeDmScores, dmScoreDetails, DM_ORDER, formatScore, leaderScores, type ScoreTab, type ScoreTrend } from "./data";
 import {
   PapercardDetail,
+  papercardCount,
   Segmented,
+  standupCount,
   StandupDetail,
   StatusChip,
+  SQDIP_DIMS,
+  SqdipDimTiles,
   SummaryScoreCard,
   TrendChart,
 } from "./components";
 import LeaderBoard from "./LeaderBoard";
 import SqdipSummary from "./SqdipSummary";
+import { buildSqdipTrend } from "./sqdipTrend";
+import type { DimKey } from "../admin/sqdip/sqdipModel";
 import { DateRangePicker, FilterPortalContext, FilterSelect } from "./ScorecardFilters";
 import "./dm-scorecard.css";
 
 export default function DmScorecard({ isLeader = false, canExport = false }: { isLeader?: boolean; canExport?: boolean }) {
   const [workshop, setWorkshop] = useState(isLeader ? "Workshop 6" : "Semua");
-  const [selectedDm, setSelectedDm] = useState(isLeader ? "DM 3" : "DM 3");
+  const [selectedLeader, setSelectedLeader] = useState<string | null>(null);
+  const [selectedDm, setSelectedDm] = useState(isLeader ? "DM 3" : "Semua");
   const [trend, setTrend] = useState<ScoreTrend>("Total");
+  const [sqdipDim, setSqdipDim] = useState<DimKey>("Safety");
   const [tab, setTab] = useState<ScoreTab>("Papercard");
   const [expandedPillars, setExpandedPillars] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [range, setRange] = useState({ from: "2026-09-14", to: "2026-09-16" });
+  const [range, setRange] = useState({ from: "2026-09-15", to: "2026-09-21" });
   const startDate = range.from;
   const endDate = range.to;
   // Skor bulanan (KPI & peringkat) mengikuti bulan dari tanggal awal periode
@@ -38,15 +46,23 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
   const target = Number(month.slice(5)) <= 6 ? 80 : 90;
   const hasData = month === "2026-09";
   const dmScores = computeDmScores(leaderScores, target);
-  const selectedDmScore = selectedDm === "Semua" ? dmScores["DM 3"] : dmScores[selectedDm];
-  const scoreConfig = selectedDmScore?.hasLeaders ? selectedDmScore : undefined;
-  const detailConfig = selectedDm === "DM 4" ? dmScoreDetails["DM 4"] : dmScoreDetails["DM 3"];
-  const boardLeaders = isLeader ? leaderScores.filter((row) => row.leader === "Ahmad Riswanto") : leaderScores;
+  const selectedDmScore = selectedDm === "Semua" ? Object.values(dmScores).find((d) => d.rank === 1) : dmScores[selectedDm];
+  const selectedLeaderScore = selectedLeader ? leaderScores.find((l) => l.leader === selectedLeader) : undefined;
+  const scoreConfig = selectedLeaderScore ?? (selectedDmScore?.hasLeaders ? selectedDmScore : undefined);
+  const handleSelectDm = (dm: string) => { setSelectedDm(dm); setSelectedLeader(null); };
+  const detailDm = selectedLeaderScore?.dm ?? selectedDmScore?.dm;
+  const detailConfig = detailDm === "DM 4" ? dmScoreDetails["DM 4"] : dmScoreDetails["DM 3"];
+  const boardLeaders = (isLeader ? leaderScores.filter((row) => row.leader === "Ahmad Riswanto") : leaderScores)
+  .filter((row) => selectedDm === "Semua" || row.dm === selectedDm);
+  const sqdipScope = { leader: selectedLeader, dm: selectedLeaderScore ? null : selectedDmScore?.dm ?? null };
+  const sqdipTiles = trend === "After" ? SQDIP_DIMS.map((key) => ({ key, trend: buildSqdipTrend(key, startDate, endDate, sqdipScope) })) : [];
+  const sqdipTrend = sqdipTiles.find((tile) => tile.key === sqdipDim)?.trend ?? null;
+  const statusCount = tab === "Papercard" ? papercardCount(selectedDm) : tab === "Standup Meeting" ? standupCount() : null;
   useEffect(() => {
     setLoading(true);
     const timeout = window.setTimeout(() => setLoading(false), 350);
     return () => window.clearTimeout(timeout);
-  }, [month, workshop, selectedDm]);
+  }, [month, workshop]);
   useEffect(() => {
     const sync = () => setIsFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", sync);
@@ -65,26 +81,22 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
           <FilterSelect value={workshop} onChange={setWorkshop} options={["Semua", "Workshop 5", "Workshop 6"]} />
         </label>
       )}
-      <label className="grid gap-1 text-xs font-semibold text-text-secondary">
-        DM
-        <FilterSelect value={selectedDm} onChange={setSelectedDm} options={isLeader ? ["DM 3"] : ["Semua", "DM 3", "DM 4"]} />
-      </label>
     </>
   );
   const togglePillar = (key: string) => setExpandedPillars((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
 
-  if (loading) return <div><SectionTitle title="KPI Leader" description="Nilai Daily Management per DM, line, dan leader" /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 8 }, (_, index) => <Card key={index} className="min-h-dashboard animate-pulse bg-border" />)}</div></div>;
+  if (loading) return <div><SectionTitle title="KPI Scorecard" description="Nilai Daily Management per DM dan leader" /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 8 }, (_, index) => <Card key={index} className="min-h-dashboard animate-pulse bg-border" />)}</div></div>;
 
   return (
     <FilterPortalContext.Provider value={portalEl}>
     <div ref={setRoot} className="scorecard-tv bg-section">
       <div className="scorecard-top scorecard-top-leader mb-5">
         <div className="scorecard-heading">
-          <div className="whitespace-nowrap text-2xl font-bold tracking-tight text-text">KPI Leader</div>
-          <div className="mt-1 whitespace-normal text-sm text-text-secondary" title="Nilai Daily Management per DM, line, dan leader">Nilai Daily Management per DM, line, dan leader</div>
+          <div className="whitespace-nowrap text-2xl font-bold tracking-tight text-text">KPI Scorecard</div>
+          <div className="mt-1 whitespace-normal text-sm text-text-secondary" title="Nilai Daily Management per DM dan leader">Nilai Daily Management per DM dan leader</div>
         </div>
         <div className="scorecard-controls scorecard-controls-leader">
-          <div className="scorecard-controls-desktop hidden flex-wrap items-end justify-end gap-4 md:flex"><div className="scorecard-filters flex flex-wrap items-end gap-4">{filters}</div><div className="scorecard-actions flex items-center gap-2">{canExport && <Button variant="outline"><Download size={16} /> Export</Button>}<Button variant="outline" className="scorecard-fullscreen-button h-10 text-sm" onClick={() => document.fullscreenElement ? document.exitFullscreen() : rootRef.current?.requestFullscreen()}><Expand size={16} /> {isFullscreen ? "Keluar layar penuh" : "Mode layar penuh"}</Button></div></div>
+          <div className="scorecard-controls-desktop hidden flex-wrap items-end justify-end gap-4 md:flex"><div className="scorecard-filters flex flex-wrap items-end gap-4">{filters}</div><div className="scorecard-actions flex items-center gap-2">{canExport && <Button variant="outline"><Download size={16} /> Export</Button>}<Button variant="outline" className="scorecard-fullscreen-button h-10 text-sm" onClick={() => document.fullscreenElement ? document.exitFullscreen() : rootRef.current?.requestFullscreen()}><Expand size={16} /> {isFullscreen ? "Keluar layar penuh" : ""}</Button></div></div>
           <div className="scorecard-controls-mobile flex items-center justify-between md:hidden"><Button variant="outline" onClick={() => setFilterOpen(true)}><Settings2 size={16} /> Filter</Button>{canExport && <Button variant="ghost"><Download size={16} /> Export</Button>}</div>
         </div>
       </div>
@@ -138,6 +150,12 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
               totalLeaders={leaderScores.length}
               month={month}
               target={target}
+              dmScores={dmScores}
+              selectedDm={selectedDm}
+              onSelectDm={handleSelectDm}
+              selectedLeader={selectedLeader}
+              onSelectLeader={setSelectedLeader}
+              showDmChips={!isLeader}
             />
           <Card className="scorecard-trend p-5">
             <div className="scorecard-trend-head flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -146,10 +164,11 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
   items={["Total", "Before", "Current", "After"]}
   labels={{ Before: "Papercard", Current: "Standup Meeting", After: "SQDIP" }}
   value={trend}
-  onChange={setTrend}
+  onChange={(next) => { setTrend(next); if (next === "After") setSqdipDim("Safety"); }}
 />
             </div>
-              {scoreConfig ? <div className="scorecard-trend-chart mt-2"><TrendChart metric={trend} /></div> : <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">Belum ada data</div>}
+              {scoreConfig && trend === "After" && <SqdipDimTiles tiles={sqdipTiles} selected={sqdipDim} onSelect={setSqdipDim} />}
+              {scoreConfig ? <div className="scorecard-trend-chart mt-4">{trend === "After" ? (sqdipTrend && sqdipTrend.series.length > 1 ? <TrendChart metric={trend} custom={sqdipTrend} /> : <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">Belum cukup data SQDIP pada periode ini</div>) : <TrendChart metric={trend} />}</div> : <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">Belum ada data</div>}
           </Card>
           </div>
           <div className="scorecard-bottom-row">
@@ -160,11 +179,18 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
                     <button key={item} type="button" aria-pressed={tab === item} onClick={() => setTab(item)} className={`scorecard-tab-button${tab === item ? " is-active" : ""}`}>{item}</button>
                   ))}
                 </div>
+                {statusCount && (
+                  <div className="scorecard-status-count" aria-label="Jumlah status">
+                    <span className="scorecard-status-count-item is-ok"><span className="scorecard-status-count-dot" />OK <strong>{statusCount.ok}</strong></span>
+                    <span className="scorecard-status-count-item is-ng"><span className="scorecard-status-count-dot" />NG <strong>{statusCount.ng}</strong></span>
+                  </div>
+                )}
               </div>
               <div className="scorecard-tabs-body">
                 {tab === "Papercard" && <div className="scorecard-tab-panel"><PapercardDetail canExport={canExport} selectedDm={selectedDm} startDate={startDate} endDate={endDate} /></div>}
                 {tab === "Standup Meeting" && <div className="scorecard-tab-panel scorecard-tab-panel--scroll"><StandupDetail canExport={canExport} /></div>}
-{tab === "SQDIP" && <div className="scorecard-tab-panel"><SqdipSummary dm={selectedDm} startDate={startDate} endDate={endDate} /></div>}              </div>
+                {tab === "SQDIP" && <div className="scorecard-tab-panel"><SqdipSummary dm={selectedDm} startDate={startDate} endDate={endDate} /></div>}
+              </div>
             </Card>
           </div>
         </>

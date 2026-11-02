@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type TouchEvent } from "react";
 import { CheckCircle2,  Clock3, Download, Info, Trophy, X, type LucideIcon } from "lucide-react";
 import { Badge, Button, Card, Input, Select } from "./ui";
 import { formatScore, scoreBar, type ScoreDetailItem, type ScoreTrend } from "./data";
+import { formatTrendDate, type SqdipTrend } from "./sqdipTrend";
+import type { DimKey } from "../admin/sqdip/sqdipModel";
 import "./dm-scorecard.css"; 
 export function Segmented<T extends string>({
   items,
@@ -181,14 +183,86 @@ function buildScale(series: number[], target: number, cap: number) {
   return { min, max, target, ticks };
 } 
 
-export function TrendChart({ metric }: { metric: ScoreTrend }) {
+// Skala untuk dimensi angka bulat (Safety, Inventory): mulai dari 0, tick bilangan bulat
+function buildIntScale(series: number[], target: number) {
+  const top = Math.max(...series, target, 0);
+  const range = Math.max(top * 1.15, 4);
+  const step = Math.max(1, Math.ceil(niceStep(range)));
+  const max = Math.ceil(range / step) * step;
+  const ticks: number[] = [];
+  for (let v = 0; v <= max + 1e-9; v += step) ticks.push(Math.round(v * 100) / 100);
+  return { min: 0, max, target, ticks };
+}
+
+export function formatSqdipValue(value: number, kind: SqdipTrend["kind"]) {
+  return `${value.toLocaleString("id-ID", { maximumFractionDigits: 2 })}${kind === "pct" ? "%" : ""}`;
+}
+
+export const SQDIP_DIMS: DimKey[] = ["Safety", "Quality", "Delivery", "Inventory", "Productivity"];
+const SQDIP_LETTER: Record<string, string> = { Safety: "S", Quality: "Q", Delivery: "D", Inventory: "I", Productivity: "P" };
+
+// Ukuran bagian SQDIP di kartu Tren. Ubah angka ini kalau mau lebih tinggi/rendah.
+const SQDIP_TILE_HEIGHT = 120;
+const SQDIP_TILE_TOP_GAP = 20;
+const SQDIP_CHART_HEIGHT = 450;
+
+// Lima kotak S/Q/D/I/P. Aktual = rata-rata pada periode terpilih. Klik kotak untuk mengganti grafik.
+export function SqdipDimTiles({ tiles, selected, onSelect }: { tiles: { key: DimKey; trend: SqdipTrend }[]; selected: DimKey; onSelect: (key: DimKey) => void }) {
+  return (
+    <div className="grid grid-cols-5 gap-2 sm:gap-3" style={{ marginTop: SQDIP_TILE_TOP_GAP }}>
+      {tiles.map(({ key, trend }) => {
+        const actual = trend.series.length ? trend.series.reduce((sum, value) => sum + value, 0) / trend.series.length : null;
+        const ok = actual === null ? null : trend.dir === "max" ? actual <= trend.target : actual >= trend.target;
+        const active = key === selected;
+        const chipTone = ok === null ? "bg-section text-text-secondary" : ok ? "bg-primary-soft text-primary" : "bg-danger-soft text-danger";
+        const valueTone = ok === null ? "text-text-secondary" : ok ? "text-primary" : "text-danger";
+        return (
+          <button
+            key={key}
+            type="button"
+            title={key}
+            aria-pressed={active}
+            onClick={() => onSelect(key)}
+            className={`flex min-w-0 flex-col justify-between rounded-xl border bg-white px-3 py-2.5 text-left transition hover:-translate-y-0.5 ${active ? "border-primary ring-2 ring-primary-soft" : "border-border"}`}
+            style={{ height: SQDIP_TILE_HEIGHT }}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sm font-bold ${chipTone}`}>{SQDIP_LETTER[key] ?? key[0]}</span>
+              <span className="truncate pt-0.5 font-light uppercase tracking-wide text-text-secondary" style={{ fontSize: 10 }}>{key}</span>
+            </div>
+            <div className={`text-xl font-semibold leading-none ${valueTone}`} style={{ fontVariantNumeric: "tabular-nums" }}>
+              {actual === null ? "—" : formatSqdipValue(actual, trend.kind)}
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="truncate text-xs font-medium text-text-secondary">Target : {trend.dir === "max" ? "≤ " : ""}{formatSqdipValue(trend.target, trend.kind)}</span>
+              {ok !== null && (
+                <span className={`flex shrink-0 items-center gap-1 font-medium ${valueTone}`} style={{ fontSize: 10 }}>
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
+                  {ok ? "On Target" : "Off Target"}
+                </span>
+              )}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function TrendChart({ metric, custom }: { metric: ScoreTrend; custom?: SqdipTrend }) {
   const total = [86, 88, 91, 89, 92, 84, 87, 90, 93, 86, 88, 91, 89, 94, 82, 87, 90, 92, 88, 91, 86];
   const before = [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30];
   const current = [31, 32, 34, 33, 35, 29, 31, 33, 35, 30, 32, 34, 33, 36, 28, 31, 33, 35, 32, 34, 30];
   const after = total.map((value, index) => value - before[index] - current[index]);
   const seriesByMetric = { Total: total, Before: before, Current: current, After: after };
-  const series = seriesByMetric[metric];
-  const scale = buildScale(series, TREND_TARGET[metric], TREND_CAP[metric]);
+  const series = custom ? custom.series : seriesByMetric[metric];
+  const scale = custom
+    ? custom.kind === "int"
+      ? buildIntScale(series, custom.target)
+      : buildScale(series, custom.target, custom.kind === "pct" ? 100 : Math.max(1, Math.max(...custom.series, custom.target) * 1.5))
+    : buildScale(series, TREND_TARGET[metric], TREND_CAP[metric]);
+  const fmt = (value: number) => custom ? formatSqdipValue(value, custom.kind) : value.toLocaleString("id-ID");
+  const meetsTarget = (value: number) => custom?.dir === "max" ? value <= scale.target : value >= scale.target;
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [size, setSize] = useState({ width: 700, height: 320 });
@@ -213,7 +287,7 @@ export function TrendChart({ metric }: { metric: ScoreTrend }) {
 
   const width = size.width;
   const height = size.height;
-  const padding = { top: 24, right: 64, bottom: 34, left: 44 };
+  const padding = { top: 32, right: custom ? 80 : 64, bottom: 34, left: 44 };
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
   const step = plotWidth / (series.length - 1);
@@ -257,7 +331,7 @@ export function TrendChart({ metric }: { metric: ScoreTrend }) {
 
   return (
     <div ref={wrapRef} className="score-trend-scroll relative overflow-x-auto" onMouseLeave={handleLeave}>
-      <svg ref={svgRef} width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="score-trend-svg h-score-chart min-w-trend-chart w-full" role="img" aria-label="Tren nilai harian" onTouchStart={handleTouch} onTouchMove={handleTouch} onTouchEnd={() => { lastTouchAt.current = Date.now(); setHoverIndex(null); }} onTouchCancel={() => { lastTouchAt.current = Date.now(); setHoverIndex(null); }}>
+      <svg ref={svgRef} width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="score-trend-svg h-score-chart min-w-trend-chart w-full" style={custom ? { height: SQDIP_CHART_HEIGHT } : undefined} role="img" aria-label="Tren nilai harian" onTouchStart={handleTouch} onTouchMove={handleTouch} onTouchEnd={() => { lastTouchAt.current = Date.now(); setHoverIndex(null); }} onTouchCancel={() => { lastTouchAt.current = Date.now(); setHoverIndex(null); }}>
         <defs>
   <linearGradient id={`trend-fill-${metric}`} gradientUnits="userSpaceOnUse" x1="0" y1={padding.top} x2="0" y2={height - padding.bottom}>
   <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.06" />
@@ -275,13 +349,13 @@ export function TrendChart({ metric }: { metric: ScoreTrend }) {
       className="fill-text-secondary text-tab"
       style={{ fontVariantNumeric: "tabular-nums" }}
     >
-      {value.toLocaleString("id-ID")}
+      {fmt(value)}
     </text>
   </g>
 ))}
         <line x1={padding.left} x2={width - padding.right} y1={y(scale.target)} y2={y(scale.target)} stroke="var(--color-warning)" strokeWidth="1.5" strokeDasharray="5 4" />
 <text x={width - padding.right + 8} y={y(scale.target) + 4} className="fill-warning-dark text-xs font-semibold">
-  Target {scale.target}
+  Target {fmt(scale.target)}
 </text>
         <polygon
   points={`${x(0)},${height - padding.bottom} ${points} ${x(series.length - 1)},${height - padding.bottom}`}
@@ -295,12 +369,21 @@ export function TrendChart({ metric }: { metric: ScoreTrend }) {
   cx={x(index)}
   cy={y(value)}
   r={hoverIndex === index ? 5 : 3.5}
-  fill={value >= scale.target ? "var(--color-primary)" : "var(--color-warning)"}
+  fill={meetsTarget(value) ? "var(--color-primary)" : "var(--color-warning)"}
   stroke="#ffffff"
   strokeWidth="1.5"
 />
           </g>
         ))}
+        {custom && custom.dates.map((date, index) => {
+          const every = Math.max(1, Math.ceil(80 / step));
+          if (index % every !== 0) return null;
+          return (
+            <text key={`xl-${index}`} x={x(index)} y={height - padding.bottom + 20} textAnchor="middle" className="fill-text-secondary text-tab" style={{ fontVariantNumeric: "tabular-nums" }}>
+              {date}
+            </text>
+          );
+        })}
         {series.map((_, index) => {
           const left = Math.max(0, x(index) - step / 2);
           const right = Math.min(width, x(index) + step / 2);
@@ -309,18 +392,33 @@ export function TrendChart({ metric }: { metric: ScoreTrend }) {
       </svg>
       {hovered && (
         <div className="pointer-events-none absolute z-10 w-44 rounded-lg border border-border bg-white p-3 text-xs shadow-popover" style={{ left: tooltipLeft, top: tooltipTop }}>
-          <div className="font-semibold text-text">{hovered.index + 1} Sep</div>
-          <div className="mt-1.5 space-y-0.5">
-            {(["Total", "Before", "Current", "After"] as const).map((key) => (
-              <div key={key} className={`flex items-center justify-between gap-3 ${metric === key ? "font-bold text-text" : "text-text-secondary"}`}>
-                <span>{TREND_LABEL[key]}</span>
-                <span>{formatScore(seriesByMetric[key][hovered.index])}</span>
+          {custom ? (
+            <>
+              <div className="font-semibold text-text">{formatTrendDate(custom.dates[hovered.index])}</div>
+              <div className="mt-1.5 space-y-0.5">
+                <div className="flex items-center justify-between gap-3 font-bold text-text"><span>Aktual</span><span>{fmt(series[hovered.index])}</span></div>
+                <div className="flex items-center justify-between gap-3 text-text-secondary"><span>Target</span><span>{fmt(scale.target)}</span></div>
               </div>
-            ))}
-          </div>
-          <div className={`mt-1.5 border-t border-border pt-1.5 font-semibold ${gap >= 0 ? "text-primary" : "text-warning-dark"}`}>
-            {gap >= 0 ? `+${formatScore(gap)} di atas target` : `-${formatScore(Math.abs(gap))} di bawah target`}
-          </div>
+              <div className={`mt-1.5 border-t border-border pt-1.5 font-semibold ${meetsTarget(series[hovered.index]) ? "text-primary" : "text-warning-dark"}`}>
+                {meetsTarget(series[hovered.index]) ? "Memenuhi target" : `${fmt(Math.abs(gap))} ${gap > 0 ? "di atas" : "di bawah"} target`}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="font-semibold text-text">{hovered.index + 1} Sep</div>
+              <div className="mt-1.5 space-y-0.5">
+                {(["Total", "Before", "Current", "After"] as const).map((key) => (
+                  <div key={key} className={`flex items-center justify-between gap-3 ${metric === key ? "font-bold text-text" : "text-text-secondary"}`}>
+                    <span>{TREND_LABEL[key]}</span>
+                    <span>{formatScore(seriesByMetric[key][hovered.index])}</span>
+                  </div>
+                ))}
+              </div>
+              <div className={`mt-1.5 border-t border-border pt-1.5 font-semibold ${gap >= 0 ? "text-primary" : "text-warning-dark"}`}>
+                {gap >= 0 ? `+${formatScore(gap)} di atas target` : `-${formatScore(Math.abs(gap))} di bawah target`}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -341,21 +439,42 @@ export function DetailHeader({ caption, canExport }: { caption: string; canExpor
   );
 }
 
+const PAPERCARD_DM3: string[][] = [
+  ["2026-09-14", "TAC20604", "Ahmad Riswanto", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
+  ["2026-09-15", "TAC20603", "Rudiyansyah", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
+  ["2026-09-16", "TAC20605", "Agus Riyadi", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
+];
+
+const PAPERCARD_DM4: string[][] = [
+  ["2026-09-14", "TAC20607", "Edi Prasetyo", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
+  ["2026-09-15", "TAC20605", "Rudiyansyah", "OK", "OK", "OK", "Belum diisi", "75%", "6,00", "10,50", "6,00", "22,50"],
+  ["2026-09-16", "TAC20607", "Edi Prasetyo", "OK", "OK", "OK terlambat", "OK", "75%", "6,00", "10,50", "6,00", "22,50"],
+];
+
+function papercardRows(selectedDm: string) {
+  if (selectedDm === "DM 4") return PAPERCARD_DM4;
+  if (selectedDm === "DM 3") return PAPERCARD_DM3;
+  if (selectedDm === "Semua") return [...PAPERCARD_DM3, ...PAPERCARD_DM4].sort((a, b) => a[0].localeCompare(b[0]));
+  return [];
+}
+
+export type StatusCount = { ok: number; ng: number };
+
+function countStatuses(statuses: string[]): StatusCount {
+  const ok = statuses.filter((status) => status === "OK" || status === "OK terlambat").length;
+  return { ok, ng: statuses.length - ok };
+}
+
+export function papercardCount(selectedDm: string) {
+  return countStatuses(papercardRows(selectedDm).flatMap((row) => row.slice(3, 7)));
+}
+
+export function standupCount() {
+  return countStatuses(STANDUP_ROWS.flatMap((row) => row.status));
+}
+
 export function PapercardDetail({ canExport, selectedDm, startDate, endDate }: { canExport: boolean; selectedDm: string; startDate: string; endDate: string }) {
-  const rows = selectedDm === "DM 4"
-    ? [
-        ["2026-09-14", "TAC20607", "Edi Prasetyo", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
-        ["2026-09-15", "TAC20605", "Rudiyansyah", "OK", "OK", "OK", "Belum diisi", "75%", "6,00", "10,50", "6,00", "22,50"],
-        ["2026-09-16", "TAC20607", "Edi Prasetyo", "OK", "OK", "OK terlambat", "OK", "75%", "6,00", "10,50", "6,00", "22,50"],
-      ]
-    : selectedDm === "DM 3"
-      ? [
-          ["2026-09-14", "TAC20604", "Ahmad Riswanto", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
-          ["2026-09-15", "TAC20603", "Rudiyansyah", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
-          ["2026-09-16", "TAC20605", "Agus Riyadi", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
-        ]
-      : [];
-  const visibleRows = rows;
+  const visibleRows = papercardRows(selectedDm);
   return (
     <>
       <DetailHeader canExport={canExport} caption="" />

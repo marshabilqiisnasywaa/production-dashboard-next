@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Card } from "./ui";
 
-import { formatScore, type LeaderScore } from "./data";
+import { formatScore, DM_ORDER, type DmScore, type LeaderScore } from "./data";
 
 type LeaderBoardProps = {
   leaders: LeaderScore[];
@@ -12,7 +12,17 @@ type LeaderBoardProps = {
   month: string;
   target: number;
   loading?: boolean;
+  dmScores?: Record<string, DmScore>;
+  selectedDm?: string;
+  onSelectDm?: (dm: string) => void;
+  selectedLeader?: string | null;
+  onSelectLeader?: (leader: string | null) => void;
+  showDmChips?: boolean;
 };
+
+const TOP_COUNT = 5;
+
+type Scored = { before: number; current: number; after: number };
 
 function monthLabel(value: string) {
   const date = new Date(`${value}-01T00:00:00`);
@@ -20,23 +30,6 @@ function monthLabel(value: string) {
     month: "long",
     year: "numeric",
   });
-}
-
-const AVATAR_TONES = [
-  ["#E8F3EC", "#046A38"],
-  ["#FEF3C7", "#B45309"],
-  ["#E0ECFF", "#1D4ED8"],
-  ["#F3E8FF", "#7E22CE"],
-] as const;
-
-function avatarTone(name: string) {
-  let hash = 0;
-
-  for (const char of name) {
-    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  }
-
-  return AVATAR_TONES[hash % AVATAR_TONES.length];
 }
 
 function rankClass(rank: number) {
@@ -53,15 +46,17 @@ const GAUGE_ARC = GAUGE_C * 0.75;
 function ScoreGauge({
   value,
   onTarget,
+  compact = false,
 }: {
   value: number;
   onTarget: boolean;
+  compact?: boolean;
 }) {
   const pct = Math.max(0, Math.min(100, value)) / 100;
 
   return (
     <div
-      className="scorecard-leaderboard-gauge"
+      className={`scorecard-leaderboard-gauge${compact ? " is-compact" : ""}`}
       role="img"
       aria-label={`Skor total ${formatScore(value)} dari 100`}
     >
@@ -95,18 +90,94 @@ function ScoreGauge({
   );
 }
 
+function MetricList({ item }: { item: Scored }) {
+  const metrics = [
+    { label: "Papercard", value: item.before, max: 30 },
+    { label: "Standup Meeting", value: item.current, max: 40 },
+    { label: "SQDIP", value: item.after, max: 30 },
+  ]
+    .map((metric) => ({
+      ...metric,
+      lost: metric.max - metric.value,
+    }))
+    .sort((x, y) => y.lost - x.lost);
+
+  return (
+    <dl className="scorecard-leaderboard-metrics">
+      {metrics.map((metric) => (
+        <div key={metric.label} className="scorecard-leaderboard-metric">
+          <dt>{metric.label}</dt>
+
+          <dd>
+            <span className="scorecard-leaderboard-metric-value">
+              {formatScore(metric.value)} / {formatScore(metric.max)}
+            </span>
+
+            <span className="scorecard-leaderboard-metric-lost">
+              {metric.lost > 0.004 ? `(−${formatScore(metric.lost)})` : ""}
+            </span>
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function SeeMore({
+  total,
+  expanded,
+  onToggle,
+}: {
+  total: number;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  if (total <= TOP_COUNT) return null;
+
+  return (
+    <button
+      type="button"
+      className="scorecard-leaderboard-more"
+      aria-expanded={expanded}
+      onClick={onToggle}
+    >
+      {expanded ? `Tampilkan ${TOP_COUNT} teratas` : `Lihat semua (${total})`}
+    </button>
+  );
+}
+
 export default function LeaderBoard({
   leaders,
   totalLeaders,
   month,
   target,
   loading = false,
+  dmScores,
+  selectedDm,
+  onSelectDm,
+  selectedLeader,
+  onSelectLeader,
+  showDmChips = false,
 }: LeaderBoardProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [showAllDm, setShowAllDm] = useState(false);
+  const [showAllLeaders, setShowAllLeaders] = useState(false);
+  const current = onSelectLeader ? (selectedLeader ?? null) : expanded;
+  const dmFiltered = Boolean(selectedDm) && selectedDm !== "Semua";
 
-  const visibleLeaders = [...leaders].sort(
-    (a, b) => b.total - a.total
-  );
+  const dmRows =
+    showDmChips && dmScores
+      ? DM_ORDER.map((dm) => dmScores[dm])
+          .filter((score) => score?.hasLeaders)
+          .sort((a, b) => a.rank - b.rank)
+      : [];
+  const shownDm = showAllDm ? dmRows : dmRows.slice(0, TOP_COUNT);
+
+  const rankedLeaders = [...leaders].sort((a, b) => b.total - a.total);
+  const shownLeaders = showAllLeaders
+    ? rankedLeaders
+    : rankedLeaders.slice(0, TOP_COUNT);
+  const leaderTotal = dmFiltered ? rankedLeaders.length : totalLeaders;
 
   return (
     <Card className="scorecard-leaderboard">
@@ -115,20 +186,101 @@ export default function LeaderBoard({
           <div className="scorecard-leaderboard-title">
             Peringkat · {monthLabel(month)}
           </div>
-        </div>
 
-        <div className="scorecard-leaderboard-legend">
-          <span className="scorecard-leaderboard-legend-item">
-            <span className="scorecard-leaderboard-legend-dot is-on" />
-            Di atas target (≥ {formatScore(target, 0)})
-          </span>
+          <div className="scorecard-leaderboard-legend">
+            <span className="scorecard-leaderboard-legend-item">
+              <span className="scorecard-leaderboard-legend-dot is-on" />
+              Di atas target (≥ {formatScore(target, 0)})
+            </span>
 
-          <span className="scorecard-leaderboard-legend-item">
-            <span className="scorecard-leaderboard-legend-dot is-off" />
-            Di bawah target
-          </span>
+            <span className="scorecard-leaderboard-legend-item">
+              <span className="scorecard-leaderboard-legend-dot is-off" />
+              Di bawah target
+            </span>
+          </div>
         </div>
       </div>
+
+      {dmRows.length > 0 && (
+        <>
+          <div className="scorecard-leaderboard-section">Peringkat DM</div>
+
+          <div className="scorecard-leaderboard-list">
+            {shownDm.map((score) => {
+              const open = selectedDm === score.dm;
+              const onTarget = score.total >= target;
+              const areas = [...new Set(score.members.map((m) => m.area))].join(", ");
+
+              return (
+                <div
+                  key={score.dm}
+                  className={`scorecard-leaderboard-item${
+                    score.rank === 1 ? " is-top" : ""
+                  }${open ? " is-expanded" : ""}`}
+                >
+                  <button
+                    type="button"
+                    className="scorecard-leaderboard-trigger relative"
+                    aria-expanded={open}
+                    onClick={() => onSelectDm?.(open ? "Semua" : score.dm)}
+                  >
+                    <span className="scorecard-leaderboard-rank-wrap">
+                      <span
+                        className={`scorecard-leaderboard-rank ${rankClass(
+                          score.rank
+                        )}`}
+                        title={`Peringkat ${score.rank} dari ${dmRows.length} DM`}
+                      >
+                        {score.rank}
+                      </span>
+                    </span>
+
+                    <span className="scorecard-leaderboard-person">
+                      <span className="scorecard-leaderboard-name">
+                        {score.dm}
+                      </span>
+
+                      <span className="scorecard-leaderboard-meta">
+  Workshop {areas}{score.leader ? ` · ${score.leader}` : ""}
+</span>
+                    </span>
+
+                    <span className="scorecard-leaderboard-score">
+  <ScoreGauge value={score.total} onTarget={onTarget} compact />
+</span>
+
+                    <ChevronRight
+                      size={16}
+                      className={`scorecard-leaderboard-chevron${
+                        open ? " is-open" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {open && (
+                    <div className="scorecard-leaderboard-detail">
+                      <MetricList item={score} />
+
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <SeeMore
+            total={dmRows.length}
+            expanded={showAllDm}
+            onToggle={() => setShowAllDm((value) => !value)}
+          />
+        </>
+      )}
+
+      {dmRows.length > 0 && (
+        <div className="scorecard-leaderboard-section">
+          Peringkat Leader{dmFiltered ? ` · ${selectedDm}` : ""}
+        </div>
+      )}
 
       <div className="scorecard-leaderboard-list">
         {loading ? (
@@ -137,47 +289,41 @@ export default function LeaderBoard({
               <div key={item} className="animate-pulse" />
             ))}
           </div>
-        ) : visibleLeaders.length === 0 ? (
+        ) : shownLeaders.length === 0 ? (
           <div className="scorecard-leaderboard-empty">
             Belum ada Leader DM
           </div>
         ) : (
-          visibleLeaders.map((row) => {
-            const open = expanded === row.leader;
+          shownLeaders.map((row, index) => {
+            const rank = index + 1;
+            const open = current === row.leader;
             const onTarget = row.total >= target;
-
-            const metrics = [
-              { label: "Papercard", value: row.before, max: 30 },
-              { label: "Standup Meeting", value: row.current, max: 40 },
-              { label: "SQDIP", value: row.after, max: 30 },
-            ]
-              .map((item) => ({
-                ...item,
-                lost: item.max - item.value,
-              }))
-              .sort((x, y) => y.lost - x.lost);
 
             return (
               <div
                 key={row.leader}
                 className={`scorecard-leaderboard-item${
-                  row.rank === 1 ? " is-top" : ""
+                  rank === 1 ? " is-top" : ""
                 }${open ? " is-expanded" : ""}`}
               >
                 <button
                   type="button"
                   className="scorecard-leaderboard-trigger"
                   aria-expanded={open}
-                  onClick={() => setExpanded(open ? null : row.leader)}
+                  onClick={() => {
+                    const next = open ? null : row.leader;
+                    if (onSelectLeader) onSelectLeader(next);
+                    else setExpanded(next);
+                  }}
                 >
                   <span className="scorecard-leaderboard-rank-wrap">
                     <span
                       className={`scorecard-leaderboard-rank ${rankClass(
-                        row.rank
+                        rank
                       )}`}
-                      title={`Peringkat ${row.rank} dari ${totalLeaders}`}
+                      title={`Peringkat ${rank} dari ${leaderTotal}`}
                     >
-                      {row.rank}
+                      {rank}
                     </span>
                   </span>
 
@@ -191,7 +337,6 @@ export default function LeaderBoard({
                     </span>
                   </span>
 
-                  {/* Ruang skor tetap tersedia agar panah tidak bergeser */}
                   <span className="scorecard-leaderboard-score">
                     {!open && (
                       <span
@@ -214,34 +359,9 @@ export default function LeaderBoard({
 
                 {open && (
                   <div className="scorecard-leaderboard-detail">
-                    <ScoreGauge
-                      value={row.total}
-                      onTarget={onTarget}
-                    />
+                    <ScoreGauge value={row.total} onTarget={onTarget} />
 
-                    <dl className="scorecard-leaderboard-metrics">
-                      {metrics.map((item) => (
-                        <div
-                          key={item.label}
-                          className="scorecard-leaderboard-metric"
-                        >
-                          <dt>{item.label}</dt>
-
-                          <dd>
-                            <span className="scorecard-leaderboard-metric-value">
-                              {formatScore(item.value)} /{" "}
-                              {formatScore(item.max)}
-                            </span>
-
-                            <span className="scorecard-leaderboard-metric-lost">
-                              {item.lost > 0.004
-                                ? `(−${formatScore(item.lost)})`
-                                : ""}
-                            </span>
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
+                    <MetricList item={row} />
                   </div>
                 )}
               </div>
@@ -249,6 +369,14 @@ export default function LeaderBoard({
           })
         )}
       </div>
+
+      {!loading && (
+        <SeeMore
+          total={rankedLeaders.length}
+          expanded={showAllLeaders}
+          onToggle={() => setShowAllLeaders((value) => !value)}
+        />
+      )}
     </Card>
   );
 }
