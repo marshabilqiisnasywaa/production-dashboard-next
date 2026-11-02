@@ -119,6 +119,12 @@ export type LeaderHistoryEntry = Omit<LeaderAssignment, "created_by_user_id"> & 
   source: "assignment" | "line_membership";
 };
 
+export type LeaderCurrent = {
+  employee_id: number;
+  position: LeaderHistoryEntry;
+  previous: LeaderHistoryEntry | null;
+};
+
 export type DmLeaderCandidate = {
   employee_id: number;
   employee_no: string;
@@ -143,6 +149,9 @@ export const leaderAssignmentApi = {
   ),
   assign: (input: LeaderAssignmentInput) => request<LeaderAssignment>(
     "/admin/leader-assignments", json("POST", input), true
+  ),
+  current: () => request<LeaderCurrent[]>(
+    "/admin/leader-assignments/current", {}, true
   ),
   history: (employeeId: number, offset = 0) => request<LeaderHistoryEntry[]>(
     `/admin/leader-assignments/employees/${employeeId}/history?limit=50&offset=${offset}`, {}, true
