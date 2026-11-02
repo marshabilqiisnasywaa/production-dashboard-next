@@ -6,12 +6,12 @@ import { IconPlus, IconTrash } from "./MeetingIcons";
 import { useEffect, useRef, useState } from "react";
 
 const PROBLEM_CATEGORIES = [
-  { value: "quality", label: "Kualitas" },
-  { value: "delivery", label: "Pengiriman" },
-  { value: "cost", label: "Biaya" },
-  { value: "safety", label: "Keselamatan" },
-  { value: "environment", label: "Lingkungan" },
-  { value: "other", label: "Lainnya" },
+  { value: "P-Planning Losses", label: "P-Planning Losses" },
+  { value: "H-Human Losses (MP)", label: "H-Human Losses (MP)" },
+  { value: "T-Time Losses (Overtime)", label: "T-Time Losses (Overtime)" },
+  { value: "R-ResuIt Losses (Output)", label: "R-ResuIt Losses (Output)" },
+  { value: "Q-Quality Losses", label: "Q-Quality Losses" },
+  { value: "M--Machine Losses", label: "M--Machine Losses" },
 ];
 
 function CategorySelect({
