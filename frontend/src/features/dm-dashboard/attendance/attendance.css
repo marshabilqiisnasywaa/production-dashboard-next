@@ -1240,7 +1240,7 @@
   stroke-width: 3.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 2px 2px rgb(8 124 104 / 12%));
+  filter: none;
   pointer-events: none;
 }
 
