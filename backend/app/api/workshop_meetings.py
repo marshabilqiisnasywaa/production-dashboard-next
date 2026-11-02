@@ -1,7 +1,7 @@
 from datetime import date, datetime, timezone
 
 import numpy as np
-from pydantic import Field
+from pydantic import Field, model_validator
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -17,6 +17,7 @@ from app.models import (
     Workshop,
     WorkshopMeetingAttendance,
     WorkshopMeetingSession,
+    WorkshopMeetingSetting,
     WorkshopMeetingSummary,
 )
 from app.schemas import (
@@ -34,6 +35,7 @@ from app.schemas import (
 from app.services.face import antispoof, liveness
 from app.services.face.engine import FaceError, FaceResult, extract_face
 from app.services.face.matcher import matcher
+from app.services.meeting_schedule import ALL_DAYS, format_days, parse_days
 from app.services.teamtalk import notify_new_problems
 
 router = APIRouter(prefix="/workshop-meetings", tags=["workshop-meetings"])
@@ -47,6 +49,58 @@ SESSION_PLACEHOLDER_LINE = 0
 class WorkshopRefOut(CamelModel):
     id: int
     name: str
+
+
+class WorkshopScheduleOut(CamelModel):
+    workshop_id: int
+    workshop_name: str
+    label: str
+    time: str
+    days: list[int]
+    is_active: bool
+    reminder_enabled: bool
+    reminder_minutes: int
+    is_default: bool
+
+
+class WorkshopScheduleIn(CamelModel):
+    time: str = Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
+    days: list[int] = Field(default_factory=lambda: list(ALL_DAYS), min_length=1)
+    is_active: bool = True
+    reminder_enabled: bool = True
+    reminder_minutes: int = Field(default=15, ge=1, le=180)
+
+    @model_validator(mode="after")
+    def check_days(self):
+        if any(d < 1 or d > 7 for d in self.days):
+            raise ValueError("Hari harus berupa angka 1 (Senin) sampai 7 (Minggu).")
+        return self
+
+
+def meeting_settings(db: Session) -> dict[int, WorkshopMeetingSetting]:
+    return {s.workshop_id: s for s in db.scalars(select(WorkshopMeetingSetting))}
+
+
+def meeting_time(db: Session, workshop_id: int) -> str:
+    setting = meeting_settings(db).get(workshop_id)
+    return setting.time if setting else WORKSHOP_MEETING_TIME
+
+
+def schedule_out(db: Session) -> list[WorkshopScheduleOut]:
+    saved = meeting_settings(db)
+    result = []
+    for w in db.scalars(select(Workshop).order_by(Workshop.name)):
+        s = saved.get(w.id)
+        result.append(WorkshopScheduleOut(
+            workshop_id=w.id, workshop_name=w.name, label=WORKSHOP_MEETING_LABEL,
+            time=s.time if s else WORKSHOP_MEETING_TIME,
+            days=parse_days(s.days) if s else list(ALL_DAYS),
+            is_active=s.is_active if s else True,
+            reminder_enabled=s.reminder_enabled if s else True,
+            reminder_minutes=s.reminder_minutes if s else 15,
+            is_default=s is None,
+        ))
+    return result
 
 
 class WorkshopSupervisorsOut(CamelModel):
@@ -244,6 +298,47 @@ def map_session(s: WorkshopMeetingSession, db: Session) -> MeetingSessionOut:
     )
 
 
+@router.get("/schedule", response_model=list[WorkshopScheduleOut])
+def get_schedule(
+    db: Session = Depends(get_db),
+    _principal: Principal = Depends(get_active_principal),
+) -> list[WorkshopScheduleOut]:
+    return schedule_out(db)
+
+
+@router.put("/schedule/{workshop_id}", response_model=list[WorkshopScheduleOut])
+def save_schedule(
+    workshop_id: int,
+    payload: WorkshopScheduleIn,
+    db: Session = Depends(get_db),
+    _admin=Depends(get_current_admin),
+) -> list[WorkshopScheduleOut]:
+    if db.get(Workshop, workshop_id) is None:
+        raise HTTPException(404, "Workshop tidak ditemukan.")
+    setting = db.scalars(
+        select(WorkshopMeetingSetting).where(WorkshopMeetingSetting.workshop_id == workshop_id)
+    ).first()
+    if setting is None:
+        setting = WorkshopMeetingSetting(workshop_id=workshop_id)
+        db.add(setting)
+    setting.time = payload.time
+    setting.days = format_days(payload.days)
+    setting.is_active = payload.is_active
+    setting.reminder_enabled = payload.reminder_enabled
+    setting.reminder_minutes = payload.reminder_minutes
+    setting.updated_at = datetime.now(timezone.utc)
+    db.flush()
+    pending = db.scalars(select(WorkshopMeetingSession).where(
+        WorkshopMeetingSession.workshop_id == workshop_id,
+        WorkshopMeetingSession.date >= date.today(),
+        WorkshopMeetingSession.status == "pending",
+    )).all()
+    for session in pending:
+        session.scheduled_time = payload.time
+    db.commit()
+    return schedule_out(db)
+
+
 @router.get("/mine", response_model=list[WorkshopRefOut])
 def my_workshops(
     db: Session = Depends(get_db),
@@ -288,10 +383,15 @@ def list_sessions(
     session = db.scalars(select(WorkshopMeetingSession).where(
         WorkshopMeetingSession.workshop_id == workshop_id, WorkshopMeetingSession.date == date_val,
     )).first()
+    configured_time = meeting_time(db, workshop_id)
+    if session is not None and session.status == "pending" and session.scheduled_time != configured_time:
+        session.scheduled_time = configured_time
+        db.commit()
+        db.refresh(session)
     if session is None:
         session = WorkshopMeetingSession(
             workshop_id=workshop_id, date=date_val, label=WORKSHOP_MEETING_LABEL,
-            scheduled_time=WORKSHOP_MEETING_TIME, status="pending", duration_seconds=0,
+            scheduled_time=configured_time, status="pending", duration_seconds=0,
         )
         host_session = db.scalars(select(WorkshopMeetingSession).where(
             WorkshopMeetingSession.date == date_val,
@@ -367,13 +467,13 @@ def prepare_session(
             if target is None:
                 target = WorkshopMeetingSession(
                     workshop_id=workshop_id, date=session.date, label=session.label,
-                    scheduled_time=session.scheduled_time, status="pending", duration_seconds=0,
+                    scheduled_time=meeting_time(db, workshop_id), status="pending",
+                    duration_seconds=0,
                 )
                 db.add(target)
             target.source_session_id = session.id
             target.host_id = host_id
             target.label = session.label
-            target.scheduled_time = session.scheduled_time
             target.roster = build_roster(db, [workshop_id])
     db.commit()
     db.refresh(session)

@@ -7,9 +7,24 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
-from app.models import DmMeetingSchedule, DmMeetingSummary, DmNotificationSetting, Line, PapercardSubmission, PapercardTemplate
-from app.services.meeting_schedule import slots_for_day
-from app.services.teamtalk import notify_escalated_problems, notify_meeting_reminder, notify_papercard_reminder
+from app.models import (
+    DmMeetingSchedule,
+    DmMeetingSummary,
+    DmNotificationSetting,
+    Line,
+    PapercardSubmission,
+    PapercardTemplate,
+    Workshop,
+    WorkshopMeetingSession,
+    WorkshopMeetingSetting,
+)
+from app.services.meeting_schedule import parse_days, slots_for_day
+from app.services.teamtalk import (
+    notify_escalated_problems,
+    notify_meeting_reminder,
+    notify_papercard_reminder,
+    notify_workshop_meeting_reminder,
+)
 
 logger = logging.getLogger("teamtalk_scheduler")
 
@@ -72,6 +87,40 @@ async def check_meeting_reminders(db: Session, now: datetime):
                             _sent_events_cache.add(event_key)
             except Exception as e:
                 logger.error("Error saat evaluasi slot meeting %s: %s", slot, e)
+
+
+async def check_workshop_meeting_reminders(db: Session, now: datetime):
+    today = now.date()
+    for setting in db.scalars(select(WorkshopMeetingSetting)):
+        if not setting.is_active or not setting.reminder_enabled:
+            continue
+        if now.isoweekday() not in parse_days(setting.days):
+            continue
+        try:
+            sh, sm = [int(p) for p in setting.time.split(":")]
+            diff_min = (datetime(now.year, now.month, now.day, sh, sm) - now).total_seconds() / 60.0
+            if not 0 <= diff_min <= setting.reminder_minutes:
+                continue
+            event_key = f"workshop_meeting_{setting.workshop_id}_{today}"
+            if event_key in _sent_events_cache:
+                continue
+            session = db.scalar(select(WorkshopMeetingSession).where(
+                WorkshopMeetingSession.workshop_id == setting.workshop_id,
+                WorkshopMeetingSession.date == today,
+            ))
+            if session is not None and session.status != "pending":
+                continue
+            workshop = db.get(Workshop, setting.workshop_id)
+            logger.info("Mengirim pengingat workshop meeting: %s", workshop.name if workshop else setting.workshop_id)
+            sent = await notify_workshop_meeting_reminder(
+                workshop_name=workshop.name if workshop else "-",
+                scheduled_time=setting.time,
+                minutes_left=max(1, int(diff_min)),
+            )
+            if sent:
+                _sent_events_cache.add(event_key)
+        except Exception as e:
+            logger.error("Error saat evaluasi workshop meeting %s: %s", setting.workshop_id, e)
 
 
 async def check_papercard_reminders(db: Session, now: datetime):
@@ -175,6 +224,7 @@ async def run_teamtalk_scheduler():
 
             with SessionLocal() as db:
                 await check_meeting_reminders(db, now)
+                await check_workshop_meeting_reminders(db, now)
                 await check_papercard_reminders(db, now)
                 await check_escalated_reminders(db, now)
 

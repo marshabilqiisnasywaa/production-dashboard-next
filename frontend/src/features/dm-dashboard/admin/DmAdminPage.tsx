@@ -26,6 +26,7 @@ import {
 import { IconLogout } from "@/components/ui/icons";
 import { Layers, Pencil, Trash2 } from "lucide-react";
 import WorkshopManager from "./WorkshopManager";
+import WorkshopScheduleCard from "./WorkshopScheduleCard";
 import PapercardTemplateManager from "./PapercardTemplateManager";
 import { NotificationBellButton } from "../notifications/NotificationBellButton";
 import DmGroupDialog from "./DmGroupDialog";
@@ -233,7 +234,6 @@ const ADMIN_TAB_HEADERS: Record<
   },
 };
 
-
 function AdminWorkspace({
   username,
   isAdmin,
@@ -247,9 +247,9 @@ function AdminWorkspace({
     isAdmin ? "workshop" : "dashboard"
   );
   const tabHeader = ADMIN_TAB_HEADERS[activeTab];
-  const [papercardSub, setPapercardSub] = useState<"template" | "meeting">(
-    "template"
-  );
+  const [papercardSub, setPapercardSub] = useState<
+    "template" | "workshop" | "meeting"
+  >("template");
   const [workshops, setWorkshops] = useState<DmWorkshop[]>([]);
   const [lines, setLines] = useState<DmLine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -591,9 +591,7 @@ function AdminWorkspace({
             </h2>
           </div>
           <div className="dm-admin-topbar-actions">
-            <span className="dm-admin-topbar-crumb">
-              {username}
-            </span>
+            <span className="dm-admin-topbar-crumb">{username}</span>
             <NotificationBellButton
               lineId={0}
               role="admin"
@@ -724,14 +722,14 @@ function AdminWorkspace({
                       className="dm-panel dm-lines-card"
                       aria-labelledby="lines-title"
                     >
-                      
                       <div className="dm-panel-head dm-lines-panel-head">
                         <div>
                           <h3 id="lines-title" className="dm-panel-title">
                             Daftar Line Produksi
                           </h3>
                           <p className="dm-panel-sub">
-                            Setiap Line memiliki dashboard dan link sendiri untuk ditampilkan di layar Line.
+                            Setiap Line memiliki dashboard dan link sendiri
+                            untuk ditampilkan di layar Line.
                           </p>
                         </div>
                         {/* <button
@@ -980,10 +978,19 @@ function AdminWorkspace({
                                               <button
                                                 type="button"
                                                 className="dm-admin-btn is-tonal"
-                                                onClick={() => setDmLeaderGroup(group)}
-                                                aria-label={group.leaderName ? `Ganti leader ${group.name}, saat ini ${group.leaderName}` : `Tambah leader ${group.name}`}
+                                                onClick={() =>
+                                                  setDmLeaderGroup(group)
+                                                }
+                                                aria-label={
+                                                  group.leaderName
+                                                    ? `Ganti leader ${group.name}, saat ini ${group.leaderName}`
+                                                    : `Tambah leader ${group.name}`
+                                                }
                                               >
-                                                <UsersIcon size={14} /> {group.leaderName ? `Leader: ${group.leaderName}` : "Tambah Leader DM"}
+                                                <UsersIcon size={14} />{" "}
+                                                {group.leaderName
+                                                  ? `Leader: ${group.leaderName}`
+                                                  : "Tambah Leader DM"}
                                               </button>
                                               <button
                                                 type="button"
@@ -1110,13 +1117,24 @@ function AdminWorkspace({
                   <button
                     type="button"
                     role="tab"
+                    aria-selected={papercardSub === "workshop"}
+                    className={`dm-subtab${
+                      papercardSub === "workshop" ? " is-active" : ""
+                    }`}
+                    onClick={() => setPapercardSub("workshop")}
+                  >
+                    Workshop Meeting
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
                     aria-selected={papercardSub === "meeting"}
                     className={`dm-subtab${
                       papercardSub === "meeting" ? " is-active" : ""
                     }`}
                     onClick={() => setPapercardSub("meeting")}
                   >
-                    Jadwalkan Meeting
+                    DM Meeting
                   </button>
                 </div>
                 {papercardSub === "template" ? (
@@ -1124,6 +1142,8 @@ function AdminWorkspace({
                     workshops={workshops}
                     lines={lines}
                   />
+                ) : papercardSub === "workshop" ? (
+                  <WorkshopScheduleCard />
                 ) : (
                   <MeetingScheduleManager lines={lines} />
                 )}
@@ -1211,7 +1231,9 @@ function AdminWorkspace({
                 setDmLeaderGroup(null);
                 notify("success", "Penugasan leader berhasil disimpan.");
                 void refreshQuietly();
-                void refreshDmGroups().catch((error: unknown) => notify("error", messageOf(error)));
+                void refreshDmGroups().catch((error: unknown) =>
+                  notify("error", messageOf(error))
+                );
               }}
             />
           ) : null}

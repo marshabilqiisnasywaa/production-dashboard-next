@@ -121,6 +121,19 @@ async def notify_meeting_reminder(line_code: str, session_label: str, scheduled_
     return await send_teamtalk_message(content)
 
 
+async def notify_workshop_meeting_reminder(workshop_name: str, scheduled_time: str, minutes_left: int = 15) -> bool:
+    """
+    Notifikasi pengingat Workshop Meeting yang akan segera dimulai.
+    """
+    content = (
+        f"[PENGINGAT WORKSHOP MEETING - {workshop_name or '-'}]\n"
+        f"Workshop Meeting dijadwalkan pukul {scheduled_time}.\n"
+        f"Waktu tersisa kurang lebih {minutes_left} menit lagi.\n\n"
+        f"Harap supervisor PROD dan seluruh supervisor workshop bersiap untuk membuka presensi."
+    )
+    return await send_teamtalk_message(content)
+
+
 async def notify_papercard_reminder(line_code: str, shift: str, pending_count: int, minutes_left: int = 30) -> bool:
     """
     Notifikasi pengingat pengisian papercard sebelum shift berakhir.
