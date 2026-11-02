@@ -75,3 +75,9 @@ class DmLeaderSet(BaseModel):
 class LeaderHistoryOut(LeaderAssignmentOut):
     created_by_user_id: int | None = None
     source: Literal["assignment", "line_membership"] = "assignment"
+
+
+class LeaderCurrentOut(BaseModel):
+    employee_id: int
+    position: LeaderHistoryOut
+    previous: LeaderHistoryOut | None = None

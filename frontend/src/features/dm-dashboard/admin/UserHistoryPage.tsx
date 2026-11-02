@@ -2,8 +2,9 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { leaderAssignmentApi } from "../api";
-import type { DmEmployee, LeaderHistoryEntry } from "../api";
+import type { DmEmployee, LeaderCurrent, LeaderHistoryEntry } from "../api";
 import "./DmLeaderDialog.css";
+import "./UserTable.css";
 
 type Props = {
   users: DmEmployee[];
@@ -14,6 +15,22 @@ type Props = {
   onBack: () => void;
   onRetryUsers: () => Promise<void>;
 };
+
+function initialsOf(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function positionLabel(item: LeaderHistoryEntry) {
+  return item.kind === "dm_leader"
+    ? `Leader DM ${item.dm_name_snapshot}`
+    : `Leader Line ${item.line_code_snapshot}`;
+}
 
 function dateLabel(value: string) {
   return new Intl.DateTimeFormat("id-ID", {
@@ -32,7 +49,7 @@ export default function UserHistoryPage({
   onRetryUsers,
 }: Props) {
   const [employeeId, setEmployeeId] = useState(
-    initialEmployeeId ? String(initialEmployeeId) : "",
+    initialEmployeeId ? String(initialEmployeeId) : ""
   );
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<LeaderHistoryEntry[]>([]);
@@ -41,11 +58,18 @@ export default function UserHistoryPage({
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentLeaders, setCurrentLeaders] = useState<LeaderCurrent[]>([]);
+  const [currentError, setCurrentError] = useState<string | null>(null);
   const employee = users.find((user) => user.id === Number(employeeId));
   const query = search.trim().toLowerCase();
   const choices = users.filter((user) =>
-    `${user.name} ${user.employeeId}`.toLowerCase().includes(query),
+    `${user.name} ${user.employeeId}`.toLowerCase().includes(query)
   );
+
+  const currentHolders = currentLeaders.flatMap((row) => {
+    const holder = users.find((user) => user.id === row.employee_id);
+    return holder ? [{ row, holder }] : [];
+  });
 
   function selectEmployee(id: number) {
     setSearch("");
@@ -56,6 +80,27 @@ export default function UserHistoryPage({
     setHasMore(false);
     setError(null);
   }
+
+  useEffect(() => {
+    let cancelled = false;
+    void call(() => leaderAssignmentApi.current())
+      .then((rows) => {
+        if (cancelled) return;
+        setCurrentLeaders(rows);
+        setCurrentError(null);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled)
+          setCurrentError(
+            err instanceof Error
+              ? err.message
+              : "Daftar leader aktif gagal dimuat."
+          );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [call]);
 
   useEffect(() => {
     if (!employeeId) return;
@@ -71,7 +116,7 @@ export default function UserHistoryPage({
       .catch((err: unknown) => {
         if (!cancelled)
           setError(
-            err instanceof Error ? err.message : "Riwayat gagal dimuat.",
+            err instanceof Error ? err.message : "Riwayat gagal dimuat."
           );
       })
       .finally(() => {
@@ -132,7 +177,9 @@ export default function UserHistoryPage({
                   <li key={user.id}>
                     <button
                       type="button"
-                      className={`dm-history-user-result${String(user.id) === employeeId ? " is-selected" : ""}`}
+                      className={`dm-history-user-result${
+                        String(user.id) === employeeId ? " is-selected" : ""
+                      }`}
                       aria-pressed={String(user.id) === employeeId}
                       onClick={() => selectEmployee(user.id)}
                     >
@@ -146,6 +193,80 @@ export default function UserHistoryPage({
                 ))}
               </ul>
             ) : null}
+          </div>
+        ) : null}
+        {!query && !loadingUsers && !usersError ? (
+          <div className="dm-holders">
+            <p className="dm-holders-lead">
+              Posisi saat ini. Pilih satu orang untuk melihat riwayatnya.
+            </p>
+            {currentError ? (
+              <p role="alert">{currentError}</p>
+            ) : currentHolders.length === 0 ? (
+              <p className="dm-leader-note" role="status">
+                Belum ada leader aktif yang tercatat. Cari nama di atas untuk
+                melihat riwayat user lain.
+              </p>
+            ) : (
+              <div className="dm-holder-wrap">
+                <ul className="dm-holder-list" aria-label="Leader saat ini">
+                  {currentHolders.map(({ row, holder }) => {
+                    const selected = String(holder.id) === employeeId;
+                    return (
+                      <li key={holder.id}>
+                        <button
+                          type="button"
+                          className={`dm-holder${
+                            selected ? " is-selected" : ""
+                          }`}
+                          aria-pressed={selected}
+                          onClick={() => selectEmployee(holder.id)}
+                        >
+                          <span className="ut-person">
+                            {holder.photoUrl ? (
+                              <img
+                                src={holder.photoUrl}
+                                alt=""
+                                className="ut-avatar"
+                              />
+                            ) : (
+                              <span
+                                className="ut-avatar is-initials"
+                                aria-hidden="true"
+                              >
+                                {initialsOf(holder.name)}
+                              </span>
+                            )}
+                            <span className="ut-person-text">
+                              <span className="ut-name">{holder.name}</span>
+                              <span className="ut-sub">
+                                {holder.employeeId}
+                              </span>
+                            </span>
+                          </span>
+                          <span className="dm-holder-move">
+                            <span className="ut-badge is-off">
+                              {row.previous
+                                ? positionLabel(row.previous)
+                                : "Belum ada"}
+                            </span>
+                            <span
+                              className="dm-holder-arrow"
+                              aria-label="menjadi"
+                            >
+                              →
+                            </span>
+                            <span className="ut-badge is-leader">
+                              {positionLabel(row.position)}
+                            </span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
           </div>
         ) : null}
       </div>
@@ -237,7 +358,7 @@ export default function UserHistoryPage({
         </div>
       ) : !loadingUsers && !usersError ? (
         <p className="dm-leader-note">
-          Pilih User untuk menampilkan timeline jabatannya.
+          Pilih User untuk menampilkan timeline riwayatnya.
         </p>
       ) : null}
     </section>

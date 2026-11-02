@@ -11,6 +11,7 @@ from app.leader_assignment_schemas import (
     DmLeaderSet,
     LeaderAssignmentCreate,
     LeaderAssignmentOut,
+    LeaderCurrentOut,
     LeaderHistoryOut,
 )
 from app.models import Board, BoardMember, DmGroup, Employee, LeaderAssignment, Line, User
@@ -96,25 +97,11 @@ def save_dm_leader(
     return set_dm_leader(db, dm_group_id, payload.employee_id, admin)
 
 
-@router.get(
-    "/employees/{employee_id}/history",
-    response_model=list[LeaderHistoryOut],
-)
-def get_employee_history(
-    employee_id: int,
-    limit: int = Query(default=50, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
-    db: Session = Depends(get_db),
-):
-    employee = db.get(Employee, employee_id)
-
-    if employee is None:
-        raise HTTPException(404, "Karyawan tidak ditemukan.")
-
+def build_history(db: Session, employee: Employee) -> list[LeaderHistoryOut]:
     statement = (
         select(LeaderAssignment)
         .where(
-            LeaderAssignment.employee_id == employee_id,
+            LeaderAssignment.employee_id == employee.id,
         )
         .order_by(
             LeaderAssignment.started_at.desc(),
@@ -159,4 +146,54 @@ def get_employee_history(
         item.started_at.replace(tzinfo=timezone.utc) if item.started_at.tzinfo is None else item.started_at,
         item.id,
     ), reverse=True)
+    return history
+
+
+@router.get(
+    "/current",
+    response_model=list[LeaderCurrentOut],
+)
+def list_current_leaders(db: Session = Depends(get_db)):
+    ids = set(db.scalars(
+        select(LeaderAssignment.employee_id).where(LeaderAssignment.ended_at.is_(None))
+    ))
+    ids |= set(db.scalars(
+        select(BoardMember.employee_id)
+        .where(BoardMember.sort_order == 1, BoardMember.ended_at.is_(None))
+    ))
+    employees = db.scalars(
+        select(Employee).where(Employee.id.in_(ids), Employee.is_active.is_(True)).order_by(Employee.name)
+    ).all()
+
+    result = []
+    for employee in employees:
+        history = build_history(db, employee)
+        active = [item for item in history if item.ended_at is None]
+        if not active:
+            continue
+        position = next((item for item in active if item.kind == "dm_leader"), active[0])
+        previous = next((item for item in history if item is not position), None)
+        result.append(LeaderCurrentOut(
+            employee_id=employee.id, position=position, previous=previous,
+        ))
+    result.sort(key=lambda row: (row.position.dm_name_snapshot, row.position.kind, row.position.line_code_snapshot or ""))
+    return result
+
+
+@router.get(
+    "/employees/{employee_id}/history",
+    response_model=list[LeaderHistoryOut],
+)
+def get_employee_history(
+    employee_id: int,
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+):
+    employee = db.get(Employee, employee_id)
+
+    if employee is None:
+        raise HTTPException(404, "Karyawan tidak ditemukan.")
+
+    history = build_history(db, employee)
     return history[offset:offset + limit]
