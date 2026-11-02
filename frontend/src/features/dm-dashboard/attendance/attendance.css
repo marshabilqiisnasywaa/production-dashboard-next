@@ -318,7 +318,7 @@
 }
 
 .att-trend-panel {
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .att-panel-heading,
@@ -1439,4 +1439,207 @@
 
 .att-selected-date-clear:hover {
   background: #e5eef9;
+}
+
+/* Department recap card */
+.att-dept-panel {
+  min-width: 0;
+  padding: 20px;
+}
+
+.att-dept-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 15px;
+}
+
+.att-dept-row {
+  display: grid;
+  grid-template-columns: minmax(52px, 0.62fr) minmax(70px, 1fr) minmax(68px, auto);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #172b24;
+  cursor: pointer;
+  transition: background-color 155ms ease, border-color 155ms ease;
+}
+
+.att-dept-row:hover,
+.att-dept-row:focus-visible {
+  background: #eaf4ee;
+  outline: none;
+}
+
+.att-dept-row.is-selected {
+  border-color: #087443;
+  background: #ecfbf3;
+}
+
+.att-dept-row.is-top-absent:not(.is-selected) {
+  border-color: #ffd6d3;
+  background: #fff1f0;
+}
+
+.att-dept-row.is-no-data {
+  color: #87938d;
+  cursor: default;
+}
+
+.att-dept-row.is-no-data:hover,
+.att-dept-row.is-no-data:focus-visible {
+  background: transparent;
+}
+
+.att-dept-name {
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.att-dept-bar {
+  display: flex;
+  width: 100%;
+  height: 11px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #edf0f2;
+}
+
+.att-dept-bar i {
+  display: block;
+  min-width: 0;
+  height: 100%;
+  transition: width 180ms ease;
+}
+
+.att-dept-bar .is-ontime {
+  background: linear-gradient(90deg, #79c6a6, #4fa985);
+}
+
+.att-dept-bar .is-late {
+  background: linear-gradient(90deg, #f4be58, #e9a52e);
+}
+
+.att-dept-bar .is-absent {
+  background: linear-gradient(90deg, #ef9999, #de6666);
+}
+
+.att-dept-rate {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.att-dept-rate strong {
+  color: #172b24;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.att-dept-row.is-top-absent .att-dept-rate strong {
+  color: #c93630;
+}
+
+.att-dept-rate small {
+  color: #64756d;
+  font-size: 10px;
+}
+
+.att-dept-badge {
+  grid-column: 2 / -1;
+  justify-self: start;
+  padding: 3px 7px;
+  border: 1px solid #ffd6d3;
+  border-radius: 999px;
+  background: #fff1f0;
+  color: #c93630;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.att-dept-no-data {
+  grid-column: 2 / -1;
+  color: #87938d;
+  font-size: 11px;
+}
+
+.att-dept-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  color: #64756d;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.att-dept-message p {
+  margin: 0;
+}
+
+.att-dept-message details {
+  width: 100%;
+}
+
+.att-dept-message summary {
+  cursor: pointer;
+  color: #475569;
+  font-weight: 600;
+}
+
+.att-dept-message ul {
+  display: flex;
+  max-height: 180px;
+  flex-direction: column;
+  gap: 5px;
+  overflow: auto;
+  padding-left: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.att-dept-message button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #d5e5dc;
+  border-radius: 7px;
+  background: #fff;
+  color: #087443;
+  font-weight: 600;
+}
+
+.att-dept-message button:hover {
+  background: #eaf4ee;
+}
+
+.att-dept-panel .att-legend {
+  gap: 9px 14px;
+  font-size: 11px;
+}
+
+@media (max-width: 680px) {
+  .att-dept-panel {
+    padding: 16px;
+  }
+
+  .att-dept-row {
+    grid-template-columns: minmax(50px, 0.6fr) minmax(90px, 1fr) minmax(66px, auto);
+    gap: 8px;
+    padding: 10px 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .att-dept-row,
+  .att-dept-bar i {
+    transition: none;
+  }
 }

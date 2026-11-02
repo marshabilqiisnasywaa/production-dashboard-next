@@ -5,6 +5,11 @@ import { useMemo, useState } from "react";
 
 import "./attendance.css";
 import { useAttendanceData, type SessionStat } from "./useAttendanceData";
+import DepartmentRecap from "./DepartmentRecap";
+import {
+  useDepartmentAttendance,
+  type DepartmentKey,
+} from "./useDepartmentAttendance";
 
 type TrendDay = {
   label: string;
@@ -345,12 +350,28 @@ export default function AttendanceDashboardPage() {
 
   const [search, setSearch] = useState("");
 
+  const [department, setDepartment] = useState<DepartmentKey | null>(null);
+
   const [page, setPage] = useState(1);
 
   const pageSize = 8;
 
   const { dates, records, sessions, loading, error, reload } =
     useAttendanceData(Number(period));
+
+  const [departmentRetry, setDepartmentRetry] = useState(0);
+  const departmentRecap = useDepartmentAttendance({
+    sessions,
+    records,
+    level,
+    retry: departmentRetry,
+  });
+  const periodLabel =
+    period === "1"
+      ? "Hari ini"
+      : period === "30"
+      ? "30 hari terakhir"
+      : "7 hari terakhir";
 
   const visibleTrend = useMemo<TrendDay[]>(
     () =>
@@ -383,10 +404,14 @@ export default function AttendanceDashboardPage() {
       const matchesSession = session === "Semua sesi" || r.session === session;
 
       const matchesStatus = status === "Semua status" || r.status === status;
+      const rowDepartment =
+        departmentRecap.departmentByRecordId.get(r.id) ?? "Lainnya";
+      const matchesDepartment =
+        department === null || rowDepartment === department;
 
       const matchesSearch =
         !q ||
-        [r.name, r.role, r.level, r.session, r.date].some((v) =>
+        [r.name, r.role, r.level, r.session, r.date, rowDepartment].some((v) =>
           v.toLowerCase().includes(q)
         );
 
@@ -395,10 +420,20 @@ export default function AttendanceDashboardPage() {
         matchesLevel &&
         matchesSession &&
         matchesStatus &&
+        matchesDepartment &&
         matchesSearch
       );
     });
-  }, [records, selectedDate, level, session, status, search]);
+  }, [
+    records,
+    selectedDate,
+    level,
+    session,
+    status,
+    search,
+    department,
+    departmentRecap.departmentByRecordId,
+  ]);
 
   const stats = useMemo(() => {
     let onTime = 0;
@@ -623,7 +658,8 @@ export default function AttendanceDashboardPage() {
               </article>
             </section>
 
-            <section className="att-panel att-trend-panel">
+            <div className="att-middle-grid">
+              <section className="att-panel att-trend-panel">
               <div className="att-panel-heading">
                 <div>
                   <h2>Tren Kehadiran</h2>
@@ -631,7 +667,7 @@ export default function AttendanceDashboardPage() {
                   <p>Proporsi tepat waktu, telat, dan tidak hadir per hari</p>
                 </div>
 
-                <span className="att-chart-badge">7 hari terakhir</span>
+                <span className="att-chart-badge">{periodLabel}</span>
               </div>
 
               <TrendChart
@@ -662,7 +698,27 @@ export default function AttendanceDashboardPage() {
                   <i className="legend-line" /> Tepat waktu (%)
                 </span>
               </div>
-            </section>
+              </section>
+
+              <DepartmentRecap
+                data={departmentRecap.departments}
+                selectedDepartment={department}
+                onSelectDepartment={(nextDepartment) => {
+                  setDepartment((current) =>
+                    current === nextDepartment ? null : nextDepartment
+                  );
+                  resetPage();
+                }}
+                periodLabel={periodLabel}
+                loading={departmentRecap.loading}
+                error={departmentRecap.error}
+                mismatches={departmentRecap.mismatches}
+                onRetry={() => {
+                  setDepartmentRetry((value) => value + 1);
+                }}
+                formatPercent={formatPercent}
+              />
+            </div>
 
             <section className="att-panel att-detail-panel">
               <div className="att-detail-heading">
@@ -682,6 +738,18 @@ export default function AttendanceDashboardPage() {
                       }}
                     >
                       Filter tanggal: {formatDate(selectedDate)} ×
+                    </button>
+                  )}
+                  {department && (
+                    <button
+                      type="button"
+                      className="att-date-filter-clear"
+                      onClick={() => {
+                        setDepartment(null);
+                        resetPage();
+                      }}
+                    >
+                      Departemen: {department} ×
                     </button>
                   )}
                 </div>
