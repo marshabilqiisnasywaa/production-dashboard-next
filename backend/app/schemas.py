@@ -710,6 +710,7 @@ class DmGroupOut(CamelModel):
     workshop_id: int
     name: str
     description: str = ""
+    leader_name: str | None = None
     line_ids: list[int] = []
     line_codes: list[str] = Field(default_factory=list)
 

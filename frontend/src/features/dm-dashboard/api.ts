@@ -99,6 +99,56 @@ export const leaderMpvApi = {
 
 export type DmEmployeeRole = string;
 
+export type LeaderAssignment = {
+  id: number;
+  employee_id: number;
+  kind: "line_leader" | "dm_leader";
+  dm_group_id: number;
+  line_id: number | null;
+  dm_name_snapshot: string;
+  line_code_snapshot: string | null;
+  started_at: string;
+  ended_at: string | null;
+  reason: string | null;
+  created_by_user_id: number;
+  created_at: string;
+};
+
+export type LeaderHistoryEntry = Omit<LeaderAssignment, "created_by_user_id"> & {
+  created_by_user_id: number | null;
+  source: "assignment" | "line_membership";
+};
+
+export type DmLeaderCandidate = {
+  employee_id: number;
+  employee_no: string;
+  name: string;
+  lines: { assignment_id: number | null; line_id: number; line_code: string }[];
+};
+
+export type LeaderAssignmentInput = Pick<
+  LeaderAssignment,
+  "employee_id" | "kind" | "dm_group_id" | "line_id" | "started_at"
+> & { reason: string; close_assignment_ids: number[] };
+
+export const leaderAssignmentApi = {
+  active: (dmId: number) => request<LeaderAssignment[]>(
+    `/admin/leader-assignments/active?dm_group_id=${dmId}`, {}, true
+  ),
+  candidates: (dmId: number) => request<DmLeaderCandidate[]>(
+    `/admin/leader-assignments/dm-candidates?dm_group_id=${dmId}`, {}, true
+  ),
+  setDmLeader: (dmId: number, employeeId: number) => request<LeaderAssignment>(
+    `/admin/leader-assignments/dm/${dmId}`, json("PUT", { employee_id: employeeId }), true
+  ),
+  assign: (input: LeaderAssignmentInput) => request<LeaderAssignment>(
+    "/admin/leader-assignments", json("POST", input), true
+  ),
+  history: (employeeId: number, offset = 0) => request<LeaderHistoryEntry[]>(
+    `/admin/leader-assignments/employees/${employeeId}/history?limit=50&offset=${offset}`, {}, true
+  ),
+};
+
 export const dmEmployeeRoles: {
   value: DmEmployeeRole;
   label: string;
@@ -1212,6 +1262,7 @@ export type DmGroup = {
   workshopId: number;
   name: string;
   description: string;
+  leaderName?: string | null;
   lineIds?: number[];
   lineCodes?: string[];
 };

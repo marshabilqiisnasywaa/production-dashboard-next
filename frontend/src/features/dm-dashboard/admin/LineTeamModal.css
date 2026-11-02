@@ -1,4 +1,20 @@
 /* Line Team Manager Modal Styles */
+.ltm-native-dialog { width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 16px; border: 0; background: transparent; color: var(--dm-admin-text, #111827); box-sizing: border-box; }
+.ltm-native-dialog[open] { display: flex; align-items: center; justify-content: center; }
+.ltm-native-dialog::backdrop { background: rgba(15, 23, 42, .55); }
+.ltm-fixed-team { display: flex; flex-direction: column; gap: 16px; }
+.ltm-fixed-team .ltm-slots-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ltm-fixed-note { margin: 0; color: #64748b; font-size: 13px; line-height: 1.5; }
+.ltm-fixed-occupant { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.ltm-fixed-error { margin: 0; color: #b42318; font-size: 13px; line-height: 1.5; }
+.ltm-fixed-picker { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid var(--dm-admin-border, #e5e7eb); border-radius: 8px; }
+.ltm-fixed-picker-head, .ltm-fixed-extra { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.ltm-fixed-candidates { max-height: 220px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.ltm-fixed-candidates button { display: flex; flex-wrap: wrap; gap: 4px 12px; width: 100%; padding: 10px; border: 0; border-bottom: 1px solid #f3f4f6; background: #fff; color: #111827; font: inherit; text-align: left; cursor: pointer; }
+.ltm-fixed-candidates button:hover { background: #f3f4f6; }
+.ltm-fixed-candidates button:focus-visible { outline: 2px solid #046a38; outline-offset: -2px; }
+.ltm-fixed-candidates span { color: #64748b; }
+@media (max-width: 640px) { .ltm-fixed-team .ltm-slots-grid { grid-template-columns: minmax(0, 1fr); } }
 .ltm-modal-backdrop {
   position: fixed;
   inset: 0;

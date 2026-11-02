@@ -1,9 +1,12 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response, status
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_admin
+from app.services.leader_assignments import sync_member_leader_history
+from app.services.team_slots import team_department, validate_team_slot
+from app.models.leader_assignment import LeaderAssignment
 from app.api.meetings import _absence_fields
 from app.core.roles import ROLES
 from app.db.session import get_db
@@ -281,7 +284,7 @@ def employee_by_pk(db: Session, employee_pk: int) -> Employee:
 @router.post(
     "/lines/{line_id}/members", response_model=MemberOut, status_code=status.HTTP_201_CREATED
 )
-def add_member(line_id: int, body: MemberIn, db: Session = Depends(get_db)) -> MemberOut:
+def add_member(line_id: int, body: MemberIn, db: Session = Depends(get_db), admin=Depends(get_current_admin)) -> MemberOut:
     board, _, _ = line_row(db, line_id)
     if body.employee_pk is not None:
         employee = employee_by_pk(db, body.employee_pk)
@@ -312,13 +315,14 @@ def add_member(line_id: int, body: MemberIn, db: Session = Depends(get_db)) -> M
     )
     if already_in_board:
         raise conflict(f"{employee.name} sudah terdaftar aktif di lini ini.")
-    target_dept = (body.target_dept or "").strip().upper()
-    employee_dept = (employee.dept or "").strip().upper()
+    target_dept = team_department(body.target_dept)
+    employee_dept = team_department(employee.dept)
     if target_dept and employee_dept != target_dept:
         raise conflict(
             f"Ditolak: {employee.name} dari departemen {employee_dept or 'tanpa departemen'}, "
             f"hanya petugas departemen {target_dept} yang bisa mengisi atau mewakili papercard {target_dept}."
         )
+    slot = validate_team_slot(db, board.id, employee)
     has_other_line = db.scalar(
         select(BoardMember.id).where(
             BoardMember.employee_id == employee.id,
@@ -328,10 +332,12 @@ def add_member(line_id: int, body: MemberIn, db: Session = Depends(get_db)) -> M
     member = BoardMember(
         board_id=board.id,
         employee_id=employee.id,
-        sort_order=body.sort_order,
+        sort_order=slot,
         is_substitute=bool(has_other_line),
+        started_at=datetime.now(timezone.utc),
     )
     db.add(member)
+    sync_member_leader_history(db, member, employee, admin, False, member.started_at)
     db.commit()
     return member_out(member, employee)
 
@@ -346,8 +352,9 @@ def active_member(db: Session, member_id: int) -> tuple[BoardMember, Employee]:
 
 
 @router.patch("/members/{member_id}", response_model=MemberOut)
-def update_member(member_id: int, body: MemberUpdate, db: Session = Depends(get_db)) -> MemberOut:
+def update_member(member_id: int, body: MemberUpdate, db: Session = Depends(get_db), admin=Depends(get_current_admin)) -> MemberOut:
     member, employee = active_member(db, member_id)
+    was_leader = member.sort_order == 1 and employee.role == "leader"
     sent = body.model_fields_set
     if "employee_id" in sent and body.employee_id is not None:
         employee_no = body.employee_id.strip()
@@ -372,15 +379,22 @@ def update_member(member_id: int, body: MemberUpdate, db: Session = Depends(get_
     if "position" in sent:
         employee.position = body.position
     if "sort_order" in sent and body.sort_order is not None:
-        member.sort_order = body.sort_order
+        slot = validate_team_slot(db, member.board_id, employee, member.id)
+        if body.sort_order != slot:
+            raise HTTPException(400, "Nomor tim ditentukan otomatis dari departemen karyawan.")
+        member.sort_order = slot
+        sync_member_leader_history(db, member, employee, admin, was_leader, datetime.now(timezone.utc))
     db.commit()
     return member_out(member, employee)
 
 
 @router.delete("/members/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
-def release_member(member_id: int, db: Session = Depends(get_db)) -> Response:
-    member, _ = active_member(db, member_id)
-    member.ended_at = func.now()
+def release_member(member_id: int, db: Session = Depends(get_db), admin=Depends(get_current_admin)) -> Response:
+    member, employee = active_member(db, member_id)
+    changed_at = datetime.now(timezone.utc)
+    was_leader = member.sort_order == 1 and employee.role == "leader"
+    member.ended_at = changed_at
+    sync_member_leader_history(db, member, employee, admin, was_leader, changed_at)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -558,6 +572,15 @@ def update_employee(employee_pk: int, body: EmployeeUpdate, db: Session = Depend
     if body.role == "hod" and employee.role != "hod":
         raise HTTPException(403, "Akun HOD hanya bisa dibuat lewat seeder.")
     sent = body.model_fields_set
+    removing_leader_role = "role" in sent and body.role is not None and body.role != "leader"
+    disabling_employee = "is_active" in sent and body.is_active is False
+    if (removing_leader_role or disabling_employee) and db.scalar(
+        select(LeaderAssignment.id).where(
+            LeaderAssignment.employee_id == employee.id,
+            LeaderAssignment.ended_at.is_(None),
+        ).limit(1)
+    ):
+        raise conflict("Karyawan masih memiliki penugasan leader aktif. Ganti penugasannya terlebih dahulu.")
     emp_lines = employee_lines(db).get(employee.id, [])
     if "employee_id" in sent and body.employee_id is not None:
         employee_no = body.employee_id.strip()
@@ -613,6 +636,10 @@ def delete_employee(employee_pk: int, db: Session = Depends(get_db)) -> Response
     employee = db.get(Employee, employee_pk)
     if employee is None:
         raise not_found("Pengguna")
+    if db.scalar(select(LeaderAssignment.id).where(
+        LeaderAssignment.employee_id == employee.id,
+    ).limit(1)):
+        raise conflict("Karyawan memiliki riwayat leader. Nonaktifkan setelah penugasan berakhir.")
     count = subordinate_count(db, employee.id)
     if count:
         raise conflict(f"{employee.name} masih jadi supervisor {count} orang. Pindahkan mereka dulu.")

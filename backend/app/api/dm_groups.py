@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_current_admin, get_principal
 from app.db.session import get_db
-from app.models import DmGroup, Line, Workshop
+from app.models import DmGroup, Employee, LeaderAssignment, Line, Workshop
 from app.schemas import DmGroupIn, DmGroupLineAssignIn, DmGroupOut, DmGroupUpdateIn
 
 router = APIRouter(prefix="/dm-groups", tags=["dm-groups"])
@@ -16,13 +16,21 @@ def list_dm_groups(
     db: Session = Depends(get_db),
     _principal: Principal = Depends(get_principal),
 ) -> list[DmGroupOut]:
-    stmt = select(DmGroup)
+    stmt = (
+        select(DmGroup, Employee.name)
+        .outerjoin(LeaderAssignment, (
+            (LeaderAssignment.dm_group_id == DmGroup.id)
+            & (LeaderAssignment.kind == "dm_leader")
+            & LeaderAssignment.ended_at.is_(None)
+        ))
+        .outerjoin(Employee, Employee.id == LeaderAssignment.employee_id)
+    )
     if workshop_id is not None:
         stmt = stmt.where(DmGroup.workshop_id == workshop_id)
-    groups = db.scalars(stmt.order_by(DmGroup.name, DmGroup.id)).all()
+    groups = db.execute(stmt.order_by(DmGroup.name, DmGroup.id)).all()
 
     result: list[DmGroupOut] = []
-    for g in groups:
+    for g, leader_name in groups:
         line_ids = [l.id for l in g.lines]
         result.append(
             DmGroupOut(
@@ -30,6 +38,7 @@ def list_dm_groups(
                 workshop_id=g.workshop_id,
                 name=g.name,
                 description=g.description or "",
+                leader_name=leader_name,
                 line_ids=line_ids,
                 line_codes=[line.code for line in g.lines],
             )
@@ -119,12 +128,22 @@ def update_dm_group(
     db.refresh(group)
 
     line_ids = [l.id for l in group.lines]
+    leader_name = db.scalar(
+        select(Employee.name)
+        .join(LeaderAssignment, LeaderAssignment.employee_id == Employee.id)
+        .where(
+            LeaderAssignment.dm_group_id == group.id,
+            LeaderAssignment.kind == "dm_leader",
+            LeaderAssignment.ended_at.is_(None),
+        )
+    )
     return DmGroupOut(
         id=group.id,
         workshop_id=group.workshop_id,
         name=group.name,
         description=group.description or "",
         line_ids=line_ids,
+        leader_name=leader_name,
         line_codes=[line.code for line in group.lines],
     )
 

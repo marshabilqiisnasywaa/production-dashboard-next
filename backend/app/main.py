@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import admin, auth, dm_groups, face, face_scan, health, lines, meetings, notifications, papercards, public, workshop_meetings
 from app.core.config import settings
 from app.api import leader_mpv
+from app.api import leader_assignments
 
 app = FastAPI(title="Production Dashboard API")
 
@@ -35,5 +36,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for module in (health, auth, face, face_scan, public, lines, admin, papercards, meetings, notifications, dm_groups, workshop_meetings, leader_mpv):
+for module in (health, auth, face, face_scan, public, lines, admin, papercards, meetings, notifications, dm_groups, workshop_meetings, leader_mpv, leader_assignments):
     app.include_router(module.router, prefix="/api")

@@ -1,0 +1,27 @@
+.dm-leader-card { width: 540px; }
+.dm-leader-fields { display: flex; flex-direction: column; gap: 12px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.dm-leader-current { margin-bottom: 16px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; }
+.dm-leader-current p, .dm-leader-note { margin: 6px 0 0; color: #6b7280; font-size: 12px; line-height: 1.5; }
+.dm-leader-current ul { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.dm-leader-current li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; }
+.dm-leader-current li span { color: #6b7280; }
+.dm-leader-check { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; line-height: 1.5; }
+.dm-leader-check input { margin-top: 3px; accent-color: #046a38; }
+.dm-leader-fields:disabled { opacity: .65; }
+.dm-leader-timeline { margin: 20px 0; padding: 0 0 0 18px; list-style: none; }
+.dm-leader-timeline > li { position: relative; padding: 0 0 22px 18px; border-left: 2px solid #e5e7eb; }
+.dm-leader-timeline > li:last-child { padding-bottom: 0; }
+.dm-leader-timeline > li::before { position: absolute; top: 3px; left: -6px; width: 10px; height: 10px; border-radius: 50%; background: #046a38; content: ""; }
+.dm-leader-timeline-title { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.dm-leader-timeline p { margin: 5px 0 0; color: #6b7280; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.dm-history-filters { display: grid; gap: 12px; max-width: 800px; margin: 20px 0; }
+.dm-history-user-results { max-height: 200px; overflow-y: auto; list-style: none; padding: 0; margin: 6px 0 0; border: 1px solid #e5e7eb; border-radius: 6px; }
+.dm-history-user-results > li + li { border-top: 1px solid #f3f4f6; }
+.dm-history-user-result { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; width: 100%; padding: 8px 10px; border: 0; background: transparent; color: #111827; font: inherit; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.dm-history-user-result strong { font-weight: 500; }
+.dm-history-user-result span { color: #6b7280; font-size: 12px; }
+.dm-history-user-result:hover { background: #f9fafb; }
+.dm-history-user-result.is-selected { background: #eef7f1; }
+.dm-history-user-result:focus-visible { outline: 2px solid #046a38; outline-offset: 1px; }
+.dm-history-content { max-width: 800px; }
+.dm-history-content h4 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
