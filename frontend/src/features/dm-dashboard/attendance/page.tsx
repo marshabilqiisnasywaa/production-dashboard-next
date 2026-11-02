@@ -10,17 +10,23 @@ import {
   useDepartmentAttendance,
   type DepartmentKey,
 } from "./useDepartmentAttendance";
+import {
+  usePreviousPeriodStats,
+  type PreviousStats,
+} from "./usePreviousPeriodStats";
 
 type TrendDay = {
   label: string;
 
   date: string;
 
-  onTime: number;
+  onTime: number | null;
 
-  late: number;
+  late: number | null;
 
-  absent: number;
+  absent: number | null;
+
+  hasMeeting: boolean;
 };
 
 const STATUS_OPTIONS = ["Semua status", "Tepat waktu", "Telat", "Tidak hadir"];
@@ -39,6 +45,113 @@ function formatPercent(value: number) {
   return `${Math.round(value * 10) / 10}%`;
 }
 
+function isMeetingDay(
+  day: TrendDay
+): day is TrendDay & { onTime: number; late: number; absent: number } {
+  return (
+    day.hasMeeting &&
+    day.onTime !== null &&
+    day.late !== null &&
+    day.absent !== null
+  );
+}
+
+function KpiDelta({
+  metric,
+  currentRate,
+  currentTotal,
+  previous,
+  previousRate,
+  goodWhenUp,
+  periodLabel,
+  loading,
+  error,
+  onRetry,
+}: {
+  metric: string;
+  currentRate: number;
+  currentTotal: number;
+  previous: PreviousStats | null;
+  previousRate: number;
+  goodWhenUp: boolean;
+  periodLabel: string;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+}) {
+  const difference = currentRate - previousRate;
+  const isNeutral = Math.abs(difference) <= 0.1;
+  const isGood = isNeutral || (difference > 0) === goodWhenUp;
+  const direction = isNeutral ? "stabil" : difference > 0 ? "naik" : "turun";
+  const displayedDifference = new Intl.NumberFormat("id-ID", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(Math.abs(difference));
+  const changeText = isNeutral
+    ? "— stabil"
+    : `${difference > 0 ? "+" : "−"}${displayedDifference} pp`;
+  const rangeTitle = previous
+    ? `${previous.dateRange}${
+        previous.total < 20
+          ? ". Sampel kecil (kurang dari 20 catatan); interpretasikan dengan hati-hati."
+          : ""
+      }`
+    : undefined;
+  const periodText =
+    periodLabel === "Hari ini"
+      ? "vs hari meeting sebelumnya"
+      : `vs ${periodLabel === "30 hari terakhir" ? "30" : "7"} hari sebelumnya`;
+  const ariaLabel = isNeutral
+    ? `${metric} stabil dibanding periode sebelumnya`
+    : `${metric} ${direction} ${displayedDifference} poin persentase dibanding periode sebelumnya, ${
+        isGood ? "baik" : "kurang baik"
+      }`;
+
+  return (
+    <div className="att-kpi-delta-slot" aria-live="polite">
+      {currentTotal > 0 && previous && previous.total > 0 ? (
+        <>
+          <div
+            className={`att-kpi-delta ${
+              isNeutral
+                ? "is-neutral"
+                : isGood
+                ? "is-good"
+                : "is-bad"
+            }`}
+            title={rangeTitle}
+            aria-label={ariaLabel}
+            role="group"
+          >
+            <span aria-hidden="true">
+              {isNeutral ? "" : difference > 0 ? "▲" : "▼"}
+            </span>
+            <strong>{changeText}</strong>
+            <span>{periodText}</span>
+          </div>
+          <small className="att-kpi-delta-previous">
+            sebelumnya{" "}
+            {formatPercent(previousRate)}
+          </small>
+        </>
+      ) : currentTotal > 0 && error ? (
+        <button
+          type="button"
+          className="att-kpi-delta-retry"
+          onClick={onRetry}
+          title={error}
+        >
+          Perbandingan gagal · Coba lagi
+        </button>
+      ) : loading ? (
+        <span className="att-kpi-delta-placeholder" aria-hidden="true" />
+      ) : (
+        <span className="att-kpi-delta-placeholder" aria-hidden="true" />
+      )}
+    </div>
+  );
+}
+
 function TrendChart({
   data,
   selectedDate,
@@ -48,8 +161,6 @@ function TrendChart({
   selectedDate: string | null;
   onSelectDate: (date: string) => void;
 }) {
-  const width = 1000;
-
   const height = 330;
 
   const left = 58;
@@ -60,33 +171,57 @@ function TrendChart({
 
   const bottom = 54;
 
+  const baseWidth = 1000;
+
+  const minSlotWidth = 36;
+
+  const width = Math.max(baseWidth, left + right + data.length * minSlotWidth);
+
   const plotWidth = width - left - right;
 
   const plotHeight = height - top - bottom;
 
   const slot = plotWidth / Math.max(data.length, 1);
 
-  const barWidth = Math.min(38, slot * 0.34);
+  const barWidth = Math.min(38, slot * (data.length > 14 ? 0.5 : 0.34));
+
+  const labelStep = data.length > 14 ? Math.ceil(data.length / 10) : 1;
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const points = data.map((d, i) => ({
     x: left + slot * i + slot / 2,
-
-    y: top + plotHeight * (1 - (d.onTime + d.late) / 100),
+    y: isMeetingDay(d)
+      ? top + plotHeight * (1 - (d.onTime + d.late) / 100)
+      : null,
   }));
 
-  const linePath = points
+  const linePath = points.reduce((path, point, index) => {
+    if (point.y === null) return path;
 
-    .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
-
-    .join(" ");
+    const startsSegment = index === 0 || points[index - 1].y === null;
+    return `${path} ${startsSegment ? "M" : "L"} ${point.x} ${point.y}`;
+  }, "");
 
   const hoveredDay = hoveredIndex !== null ? data[hoveredIndex] : null;
+  const hoveredMeetingDay =
+    hoveredDay && isMeetingDay(hoveredDay) ? hoveredDay : null;
+  const hasMeetingData = data.some(isMeetingDay);
+  const tooltipLeft =
+    hoveredIndex !== null
+      ? `${(
+          (Math.min(
+            Math.max(left + slot * hoveredIndex + slot / 2, 120),
+            width - 120
+          ) /
+            width) *
+          100
+        ).toFixed(2)}%`
+      : "50%";
 
   return (
     <div className="att-analytics">
-      {data.length === 0 ? (
+      {!hasMeetingData ? (
         <div className="att-chart-empty">
           Belum ada data kehadiran pada periode ini.
         </div>
@@ -95,6 +230,7 @@ function TrendChart({
           <svg
             className="att-chart att-chart--analytics"
             viewBox={`0 0 ${width} ${height}`}
+            style={data.length > 14 ? { minWidth: width } : undefined}
             role="img"
             aria-label="Tren komposisi dan tingkat kehadiran"
             onMouseLeave={() => setHoveredIndex(null)}
@@ -181,35 +317,55 @@ function TrendChart({
 
               const baseY = top + plotHeight;
 
-              const onTimeHeight = plotHeight * (d.onTime / 100);
+              const onTimeHeight =
+                d.onTime === null ? 0 : plotHeight * (d.onTime / 100);
 
-              const lateHeight = plotHeight * (d.late / 100);
+              const lateHeight =
+                d.late === null ? 0 : plotHeight * (d.late / 100);
 
-              const absentHeight = plotHeight * (d.absent / 100);
+              const absentHeight =
+                d.absent === null ? 0 : plotHeight * (d.absent / 100);
 
               const isHovered = hoveredIndex === i;
+              const hasMeeting = isMeetingDay(d);
 
               return (
                 <g
                   key={d.date}
                   className={`att-chart-column${
                     isHovered ? " is-hovered" : ""
-                  }${selectedDate === d.date ? " is-selected" : ""}`}
-                  onClick={() => onSelectDate(d.date)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      onSelectDate(d.date);
-                    }
-                  }}
+                  }${hasMeeting ? "" : " att-chart-column--nomeeting"}${
+                    hasMeeting && selectedDate === d.date
+                      ? " is-selected"
+                      : ""
+                  }`}
+                  onClick={
+                    hasMeeting ? () => onSelectDate(d.date) : undefined
+                  }
+                  onKeyDown={
+                    hasMeeting
+                      ? (event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            onSelectDate(d.date);
+                          }
+                        }
+                      : undefined
+                  }
                   onMouseEnter={() => setHoveredIndex(i)}
-                  onFocus={() => setHoveredIndex(i)}
+                  onFocus={
+                    hasMeeting ? () => setHoveredIndex(i) : undefined
+                  }
                   onBlur={() => setHoveredIndex(null)}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`${formatDate(d.date)}: ${formatPercent(
-                    d.onTime + d.late
-                  )} hadir`}
+                  tabIndex={hasMeeting ? 0 : undefined}
+                  role={hasMeeting ? "button" : undefined}
+                  aria-label={
+                    hasMeeting
+                      ? `${formatDate(d.date)}: ${formatPercent(
+                          d.onTime + d.late
+                        )} hadir`
+                      : `${formatDate(d.date)}: tidak ada meeting`
+                  }
                 >
                   <rect
                     x={centerX - slot * 0.42}
@@ -220,49 +376,57 @@ function TrendChart({
                     className="att-chart-hover-band"
                   />
 
-                  <rect
-                    x={x}
-                    y={baseY - onTimeHeight}
-                    width={barWidth}
-                    height={onTimeHeight}
-                    rx="4"
-                    fill="url(#attendance-bar-ontime)"
-                  />
+                  {hasMeeting ? (
+                    <>
+                      <rect
+                        x={x}
+                        y={baseY - onTimeHeight}
+                        width={barWidth}
+                        height={onTimeHeight}
+                        rx="4"
+                        fill="url(#attendance-bar-ontime)"
+                      />
 
-                  <rect
-                    x={x}
-                    y={baseY - onTimeHeight - lateHeight}
-                    width={barWidth}
-                    height={lateHeight}
-                    fill="url(#attendance-bar-late)"
-                  />
+                      <rect
+                        x={x}
+                        y={baseY - onTimeHeight - lateHeight}
+                        width={barWidth}
+                        height={lateHeight}
+                        fill="url(#attendance-bar-late)"
+                      />
 
-                  <rect
-                    x={x}
-                    y={baseY - onTimeHeight - lateHeight - absentHeight}
-                    width={barWidth}
-                    height={absentHeight}
-                    rx="4"
-                    fill="url(#attendance-bar-absent)"
-                  />
+                      <rect
+                        x={x}
+                        y={baseY - onTimeHeight - lateHeight - absentHeight}
+                        width={barWidth}
+                        height={absentHeight}
+                        rx="4"
+                        fill="url(#attendance-bar-absent)"
+                      />
+                    </>
+                  ) : null}
 
-                  <text
-                    x={centerX}
-                    y={height - 27}
-                    textAnchor="middle"
-                    className="att-chart-date"
-                  >
-                    {d.label} {new Date(`${d.date}T12:00:00`).getDate()}
-                  </text>
+                  {i % labelStep === 0 ? (
+                    <text
+                      x={centerX}
+                      y={height - 27}
+                      textAnchor="middle"
+                      className="att-chart-date"
+                    >
+                      {d.label} {new Date(`${d.date}T12:00:00`).getDate()}
+                    </text>
+                  ) : null}
 
-                  <text
-                    x={centerX}
-                    y={height - 10}
-                    textAnchor="middle"
-                    className="att-chart-day-rate"
-                  >
-                    {formatPercent(d.onTime + d.late)}
-                  </text>
+                  {hasMeeting && i % labelStep === 0 ? (
+                    <text
+                      x={centerX}
+                      y={height - 10}
+                      textAnchor="middle"
+                      className="att-chart-day-rate"
+                    >
+                      {formatPercent(d.onTime + d.late)}
+                    </text>
+                  ) : null}
                 </g>
               );
             })}
@@ -272,64 +436,82 @@ function TrendChart({
               className="att-chart-line att-chart-line--strong"
             />
 
-            {points.map((p, i) => (
-              <g
-                key={data[i].date}
-                className={`att-chart-point${
-                  hoveredIndex === i ? " is-hovered" : ""
-                }`}
-                onMouseEnter={() => setHoveredIndex(i)}
-              >
-                <circle
-                  cx={p.x}
-                  cy={p.y}
-                  r={hoveredIndex === i ? 13 : 9}
-                  className="att-chart-point-halo"
-                />
+            {points.map((p, i) =>
+              p.y === null ? null : (
+                <g
+                  key={data[i].date}
+                  className={`att-chart-point${
+                    hoveredIndex === i ? " is-hovered" : ""
+                  }`}
+                  onMouseEnter={() => setHoveredIndex(i)}
+                >
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={hoveredIndex === i ? 13 : 9}
+                    className="att-chart-point-halo"
+                  />
 
-                <circle
-                  cx={p.x}
-                  cy={p.y}
-                  r={hoveredIndex === i ? 5 : 4}
-                  className="att-chart-dot att-chart-dot--strong"
-                />
-              </g>
-            ))}
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={hoveredIndex === i ? 5 : 4}
+                    className="att-chart-dot att-chart-dot--strong"
+                  />
+                </g>
+              )
+            )}
           </svg>
 
           {hoveredDay && (
-            <div className="att-chart-tooltip" role="status">
-              <div className="att-chart-tooltip-head">
+            <div
+              className="att-chart-tooltip"
+              style={{ left: tooltipLeft }}
+              role="status"
+            >
+              <div
+                className={`att-chart-tooltip-head${
+                  hoveredMeetingDay ? "" : " att-chart-tooltip-empty"
+                }`}
+              >
                 <strong>{formatDate(hoveredDay.date)}</strong>
 
                 <span>
-                  {formatPercent(hoveredDay.onTime + hoveredDay.late)} hadir
+                  {hoveredMeetingDay
+                    ? `${formatPercent(
+                        hoveredMeetingDay.onTime + hoveredMeetingDay.late
+                      )} hadir`
+                    : "Tidak ada meeting"}
                 </span>
               </div>
 
-              <div className="att-chart-tooltip-row">
-                <i className="att-tooltip-dot ontime" />
+              {hoveredMeetingDay && (
+                <>
+                  <div className="att-chart-tooltip-row">
+                    <i className="att-tooltip-dot ontime" />
 
-                <span>Tepat waktu</span>
+                    <span>Tepat waktu</span>
 
-                <strong>{formatPercent(hoveredDay.onTime)}</strong>
-              </div>
+                    <strong>{formatPercent(hoveredMeetingDay.onTime)}</strong>
+                  </div>
 
-              <div className="att-chart-tooltip-row">
-                <i className="att-tooltip-dot late" />
+                  <div className="att-chart-tooltip-row">
+                    <i className="att-tooltip-dot late" />
 
-                <span>Telat</span>
+                    <span>Telat</span>
 
-                <strong>{formatPercent(hoveredDay.late)}</strong>
-              </div>
+                    <strong>{formatPercent(hoveredMeetingDay.late)}</strong>
+                  </div>
 
-              <div className="att-chart-tooltip-row">
-                <i className="att-tooltip-dot absent" />
+                  <div className="att-chart-tooltip-row">
+                    <i className="att-tooltip-dot absent" />
 
-                <span>Tidak hadir</span>
+                    <span>Tidak hadir</span>
 
-                <strong>{formatPercent(hoveredDay.absent)}</strong>
-              </div>
+                    <strong>{formatPercent(hoveredMeetingDay.absent)}</strong>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -358,6 +540,7 @@ export default function AttendanceDashboardPage() {
 
   const { dates, records, sessions, loading, error, reload } =
     useAttendanceData(Number(period));
+  const previousPeriod = usePreviousPeriodStats(period);
 
   const [departmentRetry, setDepartmentRetry] = useState(0);
   const departmentRecap = useDepartmentAttendance({
@@ -372,6 +555,12 @@ export default function AttendanceDashboardPage() {
       : period === "30"
       ? "30 hari terakhir"
       : "7 hari terakhir";
+  const comparisonStats =
+    previousPeriod.period === period ? previousPeriod.stats : null;
+  const comparisonLoading =
+    previousPeriod.period !== period || previousPeriod.loading;
+  const comparisonError =
+    previousPeriod.period === period ? previousPeriod.error : null;
 
   const visibleTrend = useMemo<TrendDay[]>(
     () =>
@@ -385,9 +574,16 @@ export default function AttendanceDashboardPage() {
           label: new Date(`${date}T12:00:00`).toLocaleDateString("id-ID", {
             weekday: "short",
           }),
-          onTime: pct(daySessions.reduce((n, s) => n + s.onTime, 0)),
-          late: pct(daySessions.reduce((n, s) => n + s.late, 0)),
-          absent: pct(daySessions.reduce((n, s) => n + s.absent, 0)),
+          onTime: total
+            ? pct(daySessions.reduce((n, s) => n + s.onTime, 0))
+            : null,
+          late: total
+            ? pct(daySessions.reduce((n, s) => n + s.late, 0))
+            : null,
+          absent: total
+            ? pct(daySessions.reduce((n, s) => n + s.absent, 0))
+            : null,
+          hasMeeting: total > 0,
         };
       }),
 
@@ -605,6 +801,19 @@ export default function AttendanceDashboardPage() {
                 <strong>{stats.onTime}</strong>
 
                 <p>{formatPercent(stats.onTimeRate)} dari total presensi</p>
+
+                <KpiDelta
+                  metric="Tepat waktu"
+                  currentRate={stats.onTimeRate}
+                  currentTotal={stats.total}
+                  previous={comparisonStats}
+                  previousRate={comparisonStats?.onTimeRate ?? 0}
+                  goodWhenUp
+                  periodLabel={periodLabel}
+                  loading={comparisonLoading}
+                  error={comparisonError}
+                  onRetry={previousPeriod.retry}
+                />
               </article>
 
               <article className="att-kpi">
@@ -622,6 +831,21 @@ export default function AttendanceDashboardPage() {
                   )}{" "}
                   dari total presensi
                 </p>
+
+                <KpiDelta
+                  metric="Telat"
+                  currentRate={
+                    stats.total ? (stats.late / stats.total) * 100 : 0
+                  }
+                  currentTotal={stats.total}
+                  previous={comparisonStats}
+                  previousRate={comparisonStats?.lateRate ?? 0}
+                  goodWhenUp={false}
+                  periodLabel={periodLabel}
+                  loading={comparisonLoading}
+                  error={comparisonError}
+                  onRetry={previousPeriod.retry}
+                />
               </article>
 
               <article className="att-kpi">
@@ -639,6 +863,21 @@ export default function AttendanceDashboardPage() {
                   )}{" "}
                   dari total presensi
                 </p>
+
+                <KpiDelta
+                  metric="Tidak hadir"
+                  currentRate={
+                    stats.total ? (stats.absent / stats.total) * 100 : 0
+                  }
+                  currentTotal={stats.total}
+                  previous={comparisonStats}
+                  previousRate={comparisonStats?.absentRate ?? 0}
+                  goodWhenUp={false}
+                  periodLabel={periodLabel}
+                  loading={comparisonLoading}
+                  error={comparisonError}
+                  onRetry={previousPeriod.retry}
+                />
               </article>
 
               <article className="att-kpi att-kpi-rate">
@@ -651,6 +890,19 @@ export default function AttendanceDashboardPage() {
                 <strong>{formatPercent(stats.rate)}</strong>
 
                 <p>Peserta yang hadir, termasuk yang terlambat</p>
+
+                <KpiDelta
+                  metric="Tingkat kehadiran"
+                  currentRate={stats.rate}
+                  currentTotal={stats.total}
+                  previous={comparisonStats}
+                  previousRate={comparisonStats?.attendanceRate ?? 0}
+                  goodWhenUp
+                  periodLabel={periodLabel}
+                  loading={comparisonLoading}
+                  error={comparisonError}
+                  onRetry={previousPeriod.retry}
+                />
 
                 <div className="att-rate-track">
                   <span style={{ width: `${stats.rate}%` }} />
