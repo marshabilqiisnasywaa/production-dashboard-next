@@ -324,6 +324,10 @@ export const publicApi = {
     request<DmBoard>(`/public/boards/${encodeURIComponent(slug)}`),
   workshopTeam: (workshopId: number) =>
     request<DmPublicWorkshopTeam>(`/public/workshops/${workshopId}/team`),
+  session: (sessionId: number) =>
+    request<DmMeetingSession>(`/public/sessions/${sessionId}`),
+  workshopSession: (sessionId: number) =>
+    request<DmMeetingSession>(`/public/workshop-sessions/${sessionId}`),
   attendanceRecap: (date: string, lineId?: number) =>
     request<DmPublicAttendanceRecap>(
       "/public/attendance-recap?date=" +

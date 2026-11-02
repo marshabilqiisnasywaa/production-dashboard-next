@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.meetings import _absence_fields
+from app.api.meetings import _absence_fields, _map_session
 from app.api.workshop_meetings import map_session
 from app.db.session import get_db
 from app.models import (
@@ -28,6 +28,7 @@ from app.schemas import (
     WorkshopRecapParticipantOut,
     WorkshopRecapSessionOut,
     CamelModel,
+    MeetingSessionOut,
     WorkshopHod,
 )
 from app.services.boards import public_board
@@ -143,6 +144,22 @@ def get_workshop_team(
             for assignment, employee in rows
         ],
     )
+
+@router.get("/sessions/{session_id}", response_model=MeetingSessionOut)
+def get_public_session(session_id: int, db: Session = Depends(get_db)) -> MeetingSessionOut:
+    session = db.get(DmMeetingSession, session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Sesi meeting tidak ditemukan.")
+    return _map_session(session, db)
+
+
+@router.get("/workshop-sessions/{session_id}", response_model=MeetingSessionOut)
+def get_public_workshop_session(session_id: int, db: Session = Depends(get_db)) -> MeetingSessionOut:
+    session = db.get(WorkshopMeetingSession, session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Sesi meeting tidak ditemukan.")
+    return map_session(session, db)
+
 
 @router.get("/attendance-recap", response_model=PublicAttendanceRecapOut)
 def attendance_recap(
