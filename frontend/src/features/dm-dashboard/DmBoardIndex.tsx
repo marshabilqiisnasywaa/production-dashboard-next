@@ -155,7 +155,7 @@ function LineBoards() {
           <h2>{name}</h2>
           <div className="dmi-grid">
             <Link href={`/dm-dashboard/workshop/${id}`} className="dmi-card">
-              <span className="dmi-card__code">TV Workshop</span>
+              <span className="dmi-card__code">DM Workshop</span>
               <span className="dmi-card__name">Struktur Tim {name}</span>
             </Link>
             {items.map((board) => (
