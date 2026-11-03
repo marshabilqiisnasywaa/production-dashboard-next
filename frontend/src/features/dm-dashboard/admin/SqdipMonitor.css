@@ -186,7 +186,7 @@
 }
 
 .sq-sort:hover {
-  color: var(--dm-admin-text, #111827);
+  color: inherit;
 }
 
 .sq-sort:focus-visible {
@@ -196,12 +196,26 @@
 }
 
 .sq-th-name {
-  color: var(--dm-admin-text);
+  color: inherit;
 }
 
 .sq-th-rule {
+  color: inherit;
   font-size: 0.72rem;
-  font-weight: 500;
+  font-weight: 400;
+}
+
+/* Semua sel header satu warna, termasuk kolom Tanggal yang punya aria-sort */
+.ut-table.sq-table thead th,
+.ut-table.sq-table thead th[aria-sort] {
+  background: #f9fafb;
+  color: var(--dm-admin-text-muted, #6b7280);
+}
+
+/* Lebar kolom diatur lewat <colgroup> di SummaryTable */
+.sq-table.sq-table-fixed {
+  min-width: 1240px;
+  table-layout: fixed;
 }
 
 .sq-table tbody td {
@@ -209,7 +223,7 @@
   border-bottom: 1px solid var(--dm-admin-border-light, #f3f4f6);
   color: var(--dm-admin-text, #111827);
   font-size: 0.82rem;
-  vertical-align: middle;
+  vertical-align: top;
 }
 
 .sq-table tbody tr:last-child td {
@@ -222,10 +236,6 @@
 
 .sq-table tbody tr.is-first td {
   border-top: 1px solid #e3ece7;
-}
-
-.sq-table tbody tr.is-fail td {
-  background: #fef7f6;
 }
 
 .sq-right {
@@ -274,7 +284,7 @@
 
 .sq-date {
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .sq-pts.is-fail {
@@ -342,8 +352,18 @@
 
 .sq-total.is-warn,
 .sq-total.is-danger {
-  background: #fbdada;
-  color: #9b1c1c;
+  color: #a83830;
+}
+
+/* Chip status, basisnya .ut-badge dari UserTable.css */
+.ut-badge.is-on {
+  background: var(--dm-admin-primary-light, #e8f1ec);
+  color: var(--dm-admin-primary, #046a38);
+}
+
+.ut-badge.is-fail {
+  background: #fdf1f0;
+  color: #a83830;
 }
 
 
