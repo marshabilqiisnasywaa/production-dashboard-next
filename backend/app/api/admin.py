@@ -10,7 +10,7 @@ from app.models.leader_assignment import LeaderAssignment
 from app.api.meetings import _absence_fields
 from app.core.roles import ADMIN_ROLES, ROLES
 from app.db.session import get_db
-from app.models import DmGroup, Board, BoardMember, DmMeetingAttendance, DmMeetingSession, Employee, Line, MpvAward, Workshop
+from app.models import DmGroup, Board, BoardMember, DmMeetingAttendance, DmMeetingSession, Employee, Line, MpvAward, User, Workshop
 from app.schemas import (
     EmployeeIn,
     EmployeeOut,
@@ -526,7 +526,7 @@ def nik_taken(db: Session, employee_no: str, exclude_id: int | None = None) -> b
 
 
 def guard_privileged(
-    actor: Employee,
+    actor: Employee | User,
     target: Employee | None = None,
     new_role: str | None = None,
     removing: bool = False,
@@ -534,12 +534,12 @@ def guard_privileged(
     touches_superadmin = (target is not None and target.role == "superadmin") or new_role == "superadmin"
     if touches_superadmin and actor.role != "superadmin":
         raise HTTPException(403, "Hanya superadmin yang bisa mengelola akun superadmin.")
-    if removing and target is not None and target.id == actor.id:
+    if removing and target is not None and isinstance(actor, Employee) and target.id == actor.id:
         raise HTTPException(400, "Akun sendiri tidak bisa dinonaktifkan, dihapus, atau diturunkan perannya.")
 
 
 @router.get("/roles", response_model=list[RoleOptionOut])
-def list_roles(admin: Employee = Depends(get_current_admin)) -> list[RoleOptionOut]:
+def list_roles(admin: Employee | User = Depends(get_current_admin)) -> list[RoleOptionOut]:
     return [
         RoleOptionOut(value=key, label=role.label)
         for key, role in ROLES.items()
@@ -559,7 +559,7 @@ def list_employees(db: Session = Depends(get_db)) -> list[EmployeeOut]:
 def create_employee(
     body: EmployeeIn,
     db: Session = Depends(get_db),
-    admin: Employee = Depends(get_current_admin),
+    admin: Employee | User = Depends(get_current_admin),
 ) -> EmployeeOut:
     guard_privileged(admin, new_role=body.role)
     employee_no = body.employee_id.strip()
@@ -589,7 +589,7 @@ def update_employee(
     employee_pk: int,
     body: EmployeeUpdate,
     db: Session = Depends(get_db),
-    admin: Employee = Depends(get_current_admin),
+    admin: Employee | User = Depends(get_current_admin),
 ) -> EmployeeOut:
     employee = db.get(Employee, employee_pk)
     if employee is None:
@@ -652,7 +652,7 @@ def reset_employee_password(
     employee_pk: int,
     body: ResetPasswordIn | None = None,
     db: Session = Depends(get_db),
-    admin: Employee = Depends(get_current_admin),
+    admin: Employee | User = Depends(get_current_admin),
 ) -> EmployeeOut:
     employee = db.get(Employee, employee_pk)
     if employee is None:
@@ -667,7 +667,7 @@ def reset_employee_password(
 def delete_employee(
     employee_pk: int,
     db: Session = Depends(get_db),
-    admin: Employee = Depends(get_current_admin),
+    admin: Employee | User = Depends(get_current_admin),
 ) -> Response:
     employee = db.get(Employee, employee_pk)
     if employee is None:

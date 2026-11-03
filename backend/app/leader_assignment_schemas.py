@@ -51,7 +51,8 @@ class LeaderAssignmentOut(BaseModel):
     started_at: datetime
     ended_at: datetime | None
     reason: str | None
-    created_by_employee_id: int
+    created_by_employee_id: int | None
+    created_by_user_id: int | None = None
     created_at: datetime
 
 

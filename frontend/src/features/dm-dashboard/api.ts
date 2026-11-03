@@ -110,7 +110,8 @@ export type LeaderAssignment = {
   started_at: string;
   ended_at: string | null;
   reason: string | null;
-  created_by_employee_id: number;
+  created_by_employee_id: number | null;
+  created_by_user_id?: number | null;
   created_at: string;
 };
 

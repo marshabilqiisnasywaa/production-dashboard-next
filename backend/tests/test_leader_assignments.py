@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.api.leader_assignments import list_dm_leader_candidates
 from app.leader_assignment_schemas import LeaderAssignmentCreate
-from app.models import Board, BoardMember, DmGroup, Employee, LeaderAssignment, Line, Workshop
+from app.models import Board, BoardMember, DmGroup, Employee, LeaderAssignment, Line, User, Workshop
 from app.services.leader_assignments import change_assignment, set_dm_leader
 
 
@@ -16,7 +16,7 @@ class LeaderAssignmentTests(unittest.TestCase):
     def setUp(self):
         self.engine = create_engine("sqlite:///:memory:")
         metadata = MetaData()
-        for model in (Employee, Workshop, DmGroup, Line, Board, BoardMember, LeaderAssignment):
+        for model in (User, Employee, Workshop, DmGroup, Line, Board, BoardMember, LeaderAssignment):
             table = model.__table__.to_metadata(metadata)
             for index in table.indexes:
                 predicate = index.dialect_options["postgresql"].get("where")

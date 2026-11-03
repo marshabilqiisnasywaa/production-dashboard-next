@@ -679,6 +679,8 @@ def submit_papercard(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_principal),
 ) -> PapercardSubmissionOut:
+    if principal.employee is None:
+        raise HTTPException(403, "Pengisian papercard memerlukan akun karyawan.")
     dept = payload.department.upper()
 
     # Enforce strict boundary for member and leader role: only assigned lines & department
@@ -697,8 +699,7 @@ def submit_papercard(
                 detail=f"Akses ditolak: {role_label} hanya dapat mengisi papercard untuk departemen {principal.employee.dept}.",
             )
 
-    # Get employee ID
-    emp_id = principal.employee.id if principal.employee else 1  # Fallback for admin testing
+    emp_id = principal.employee.id
 
     # Find template
     tmpl = db.scalars(

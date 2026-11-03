@@ -20,6 +20,11 @@ class LeaderAssignment(Base):
 
     __table_args__ = (
         CheckConstraint(
+            "(created_by_employee_id IS NOT NULL AND created_by_user_id IS NULL) OR "
+            "(created_by_employee_id IS NULL AND created_by_user_id IS NOT NULL)",
+            name="ck_leader_assignments_creator",
+        ),
+        CheckConstraint(
             "kind IN ('line_leader', 'dm_leader')",
             name="ck_leader_assignments_kind",
         ),
@@ -94,9 +99,13 @@ class LeaderAssignment(Base):
         nullable=True,
     )
 
-    created_by_employee_id: Mapped[int] = mapped_column(
+    created_by_employee_id: Mapped[int | None] = mapped_column(
         ForeignKey("employees.id", ondelete="RESTRICT"),
         index=True,
+    )
+
+    created_by_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), index=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(

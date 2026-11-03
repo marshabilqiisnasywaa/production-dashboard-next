@@ -10,7 +10,7 @@ from app.api.deps import Principal, get_principal, require
 from app.core import ratelimit
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db.session import get_db
-from app.models import Employee
+from app.models import Employee, User
 from app.schemas import ChangePasswordIn, LineRef, LoginIn, MeOut, TokenOut
 from app.services.accounts import active_line, active_lines
 
@@ -35,6 +35,19 @@ def login(body: LoginIn, request: Request, db: Session = Depends(get_db)) -> Tok
             headers={"Retry-After": str(wait)},
         )
 
+    user = db.scalar(select(User).where(User.username == username))
+    if user is not None:
+        matched = verify_password(body.password, user.password_hash or DUMMY_HASH)
+        if not user.is_active or user.role != "superadmin" or not user.password_hash or not matched:
+            ratelimit.record_failure(key)
+            raise bad_credentials()
+        ratelimit.clear(key)
+        return TokenOut(
+            access_token=create_access_token(user.id, "user"), username=user.username,
+            kind="admin", role=user.role, name=user.username,
+            must_change_password=user.must_change_password, **access_of(user.role),
+        )
+
     employee = db.scalar(select(Employee).where(Employee.employee_no == username))
     stored = employee.password_hash if employee and employee.password_hash else DUMMY_HASH
     matched = verify_password(body.password, stored)
@@ -57,6 +70,13 @@ def login(body: LoginIn, request: Request, db: Session = Depends(get_db)) -> Tok
 
 @router.get("/me", response_model=MeOut)
 def me(principal: Principal = Depends(require("account.self", active=False)), db: Session = Depends(get_db)) -> MeOut:
+    if principal.user is not None:
+        user = principal.user
+        return MeOut(
+            username=user.username, role=user.role, kind="admin", name=user.username,
+            must_change_password=user.must_change_password, line=None, lines=[],
+            **access_of(user.role),
+        )
     employee = principal.employee
     found_lines = active_lines(db, employee.id)
     lines_ref = [
@@ -94,12 +114,13 @@ def change_password(
     principal: Principal = Depends(require("account.self", active=False)),
     db: Session = Depends(get_db),
 ) -> Response:
-    account = principal.employee
+    account = principal.account
     if not account.password_hash or not verify_password(body.current_password, account.password_hash):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Password saat ini salah.")
     if body.new_password == body.current_password:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Password baru harus berbeda dari yang lama.")
-    if body.new_password == account.employee_no:
+    username = account.username if isinstance(account, User) else account.employee_no
+    if body.new_password == username:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Password baru tidak boleh sama dengan NIK.")
     account.password_hash = hash_password(body.new_password)
     account.must_change_password = False
