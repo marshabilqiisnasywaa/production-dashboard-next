@@ -10,6 +10,7 @@ import { CategoryNav } from "../../leader/papercard/components/CategoryNav";
 import { CategoryPanel } from "../../leader/papercard/components/CategoryPanel";
 import { OverallProgress } from "../../leader/papercard/components/OverallProgress";
 import { PapercardMetaCard } from "../../leader/papercard/components/PapercardMetaCard";
+import { SupervisorSelect, usePapercardSupervisor } from "../../leader/papercard/components/SupervisorSelect";
 import { SubmitBar } from "../../leader/papercard/components/SubmitBar";
 import { WindowBanner } from "../../leader/papercard/components/WindowBanner";
 import { useInspectionWindow } from "../../leader/papercard/hooks/useInspectionWindow";
@@ -242,6 +243,8 @@ export default function MemberPapercardPage({
     }
   }, [realSubmission]);
 
+  const supervisor = usePapercardSupervisor(`${currentUser?.username}:${effectiveLineId}:${selectedDept}`, realSubmission?.lineId === effectiveLineId && realSubmission?.department === selectedDept ? realSubmission : null);
+
   const approvalStatus = (realSubmission?.approvalStatus || "").toLowerCase();
   const isApproved = approvalStatus === "approved";
   const isRejected = approvalStatus === "rejected";
@@ -260,7 +263,7 @@ export default function MemberPapercardPage({
     start: dynamicTemplate.window?.start || "07:30",
     end: dynamicTemplate.window?.end || "08:15",
     remainingMs: win.remainingMs,
-    supervisorName: realSubmission?.approvedByName || activeProfile.supervisor.name,
+    supervisorName: realSubmission?.approvedByName || supervisor.name,
     supervisorNotes: realSubmission?.supervisorNotes,
     submittedAt: realSubmission?.submittedAt
       ? (realSubmission.submittedAt.includes("T")
@@ -270,7 +273,7 @@ export default function MemberPapercardPage({
   };
 
   const handleSubmit = async () => {
-    if (!form.progress.complete || !win.now || readOnly) return;
+    if (!form.progress.complete || !supervisor.available || !win.now || readOnly) return;
     const now = win.now;
     const status = win.state === "closed" ? "LATE" : "ON_TIME";
 
@@ -285,6 +288,7 @@ export default function MemberPapercardPage({
         shift: PAPERCARD_CONFIG.shift,
         answers: buildAnswerPayload(dynamicTemplate.categories, form.answers),
         abnormalNotes: null,
+        recipientSupervisorId: supervisor.selectedId,
       });
       loadDailySubmissions();
       window.dispatchEvent(new Event(PAPERCARD_CHANGED_EVENT));
@@ -307,7 +311,7 @@ export default function MemberPapercardPage({
             Checklist kesiapan kerja sebelum DM Meeting khusus departemen{" "}
             <strong>{labelWithDepartment(activeProfile.deptLabel, selectedDept)}</strong> pada{" "}
             <strong>{activeProfile.lineName}</strong>. Hasil pemeriksaan otomatis diteruskan ke
-            Supervisor {activeProfile.supervisor.name} untuk persetujuan.
+            Supervisor {supervisor.name} untuk persetujuan.
           </p>
         </div>
       </div>
@@ -343,6 +347,7 @@ export default function MemberPapercardPage({
         operatorLabel="Operator / Anggota"
         shift={PAPERCARD_CONFIG.shift}
         date={win.now ? formatDateId(win.now) : ""}
+        supervisorField={<SupervisorSelect selection={supervisor} disabled={readOnly} />}
         lineLocked={!(currentUser?.lines && currentUser.lines.length > 1)}
       >
         {!isRejected && (
@@ -451,7 +456,7 @@ export default function MemberPapercardPage({
           <SubmitBar
             done={form.progress.done}
             total={form.progress.total}
-            complete={form.progress.complete}
+            complete={form.progress.complete && supervisor.available}
             submitted={readOnly}
             isRevision={isRevisionMode}
             onSubmit={handleSubmit}

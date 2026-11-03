@@ -342,6 +342,7 @@ class PapercardSubmissionIn(CamelModel):
     shift: str = "Shift 1"
     answers: list[dict[str, Any]] = Field(default_factory=list)
     abnormal_notes: str | None = None
+    recipient_supervisor_id: int | None = Field(default=None, gt=0)
 
 
 class PapercardSubmissionOut(CamelModel):
@@ -351,6 +352,8 @@ class PapercardSubmissionOut(CamelModel):
     employee_id: int
     employee_name: str | None = None
     employee_no: str | None = None
+    recipient_supervisor_id: int | None = None
+    recipient_supervisor_name: str | None = None
     department: str
     date: date
     shift: str

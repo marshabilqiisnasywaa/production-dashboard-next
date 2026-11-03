@@ -6,6 +6,7 @@ import { CategoryNav } from "./components/CategoryNav";
 import { CategoryPanel } from "./components/CategoryPanel";
 import { OverallProgress } from "./components/OverallProgress";
 import { PapercardMetaCard } from "./components/PapercardMetaCard";
+import { SupervisorSelect, usePapercardSupervisor } from "./components/SupervisorSelect";
 import { SubmitBar } from "./components/SubmitBar";
 import { WindowBanner } from "./components/WindowBanner";
 import { useInspectionWindow } from "./hooks/useInspectionWindow";
@@ -173,6 +174,8 @@ export default function PapercardPage() {
     };
   }, [effectiveLineId, todayIso]);
 
+  const supervisor = usePapercardSupervisor(`${currentUser?.username}:${effectiveLineId}:PROD:${todayIso}`, dbSubmission?.lineId === effectiveLineId ? dbSubmission : null);
+
   const approvalStatus = (dbSubmission?.approvalStatus || "").toLowerCase();
   const isApproved = approvalStatus === "approved";
   const isRejected = approvalStatus === "rejected";
@@ -186,7 +189,7 @@ export default function PapercardPage() {
   const activeProgress = active ? (form.progress.byCategory[active.id] ?? { done: 0, total: 0 }) : { done: 0, total: 0 };
 
   const handleSubmit = async () => {
-    if (!form.progress.complete || !win.now || readOnly) return;
+    if (!form.progress.complete || !supervisor.available || !win.now || readOnly) return;
     const now = win.now;
     const status = win.state === "closed" ? "LATE" : "ON_TIME";
 
@@ -202,6 +205,7 @@ export default function PapercardPage() {
         shift: PAPERCARD_CONFIG.shift,
         answers: buildAnswerPayload(dynamicTemplate.categories, form.answers),
         abnormalNotes: null,
+        recipientSupervisorId: supervisor.selectedId,
       });
       setDbSubmission(res);
       window.dispatchEvent(new Event(PAPERCARD_CHANGED_EVENT));
@@ -213,7 +217,7 @@ export default function PapercardPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const supervisorName = currentUser?.supervisor || "Belum diatur admin";
+  const supervisorName = supervisor.name;
   const lineDisplayName = currentUser?.line?.name || `Line ${line}`;
 
   const bannerProps = {
@@ -260,6 +264,7 @@ export default function PapercardPage() {
         leader={`${currentUser?.name || "Leader"} (Leader Produksi)`}
         shift={PAPERCARD_CONFIG.shift}
         date={win.now ? formatDateId(win.now) : ""}
+        supervisorField={<SupervisorSelect selection={supervisor} disabled={readOnly || submissionLoading} />}
         lineLocked={true}
       >
         {!isRejected && (
@@ -365,7 +370,7 @@ export default function PapercardPage() {
           <SubmitBar
             done={form.progress.done}
             total={form.progress.total}
-            complete={form.progress.complete}
+            complete={form.progress.complete && supervisor.available}
             submitted={readOnly}
             isRevision={isRevisionMode}
             onSubmit={handleSubmit}

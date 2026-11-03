@@ -11,6 +11,7 @@ interface Props {
   /** Lock the line selector (e.g. after submit, or when Admin assigns it, FR-1.4) */
   lineLocked?: boolean;
   operatorLabel?: string;
+  supervisorField?: ReactNode;
   /** Banner slot, rendered attached to the bottom of the card */
   children?: ReactNode;
 }
@@ -25,6 +26,7 @@ export function PapercardMetaCard({
   date,
   lineLocked,
   operatorLabel,
+  supervisorField,
   children,
 }: Props) {
   return (
@@ -80,6 +82,7 @@ export function PapercardMetaCard({
         <Field label="Tanggal">
           <div className="ui-field__value">{date || "\u00a0"}</div>
         </Field>
+        {supervisorField && <div className="dml-pc-meta__supervisor">{supervisorField}</div>}
       </div>
       {children}
     </section>

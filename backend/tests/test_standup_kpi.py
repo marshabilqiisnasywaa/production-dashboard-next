@@ -1,7 +1,9 @@
 import unittest
 from datetime import date
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
-from app.services.standup_kpi import check_meeting, score_day
+from app.services.standup_kpi import check_meeting, line_standup, score_day
 
 DAY = date(2026, 9, 15)
 LATER = date(2026, 9, 20)
@@ -45,6 +47,33 @@ class StandupKpiTests(unittest.TestCase):
 
     def test_today_is_not_final(self):
         self.assertFalse(score([meeting(1)], today=DAY).final)
+
+    def test_live_attendance_visible_before_meeting_finishes(self):
+        db = MagicMock()
+        db.scalars.side_effect = [
+            [SimpleNamespace(id=1, date=DAY, session_number=1, status="pending", started_at=None,
+                             roster=[{"employee_id": i} for i in TEAM])],
+            [SimpleNamespace(session_id=1, employee_id=i) for i in TEAM],
+        ]
+        db.execute.return_value = []
+        with patch("app.services.standup_kpi.working_days", return_value=[DAY]), patch(
+            "app.services.standup_kpi.build_roster", return_value=[{"employee_id": i} for i in TEAM]
+        ):
+            result = line_standup(db, 1, DAY, DAY, "Shift 1", DAY)[0]
+        self.assertFalse(result.final)
+        self.assertEqual(result.meetings[0].present, 4)
+        self.assertTrue(result.meetings[0].held)
+        self.assertEqual((result.attendance, result.content), (5, 0))
+
+    def test_unfinished_historical_meeting_does_not_earn_points(self):
+        live = check_meeting(1, False, TEAM, TEAM, finished=False)
+        result = score([live])
+        self.assertEqual((result.attendance, result.content), (0, 0))
+
+    def test_in_progress_meeting_only_earns_attendance_points(self):
+        live = check_meeting(1, True, TEAM, TEAM, finished=False)
+        result = score([live], today=DAY)
+        self.assertEqual((result.attendance, result.content), (5, 0))
 
 
 if __name__ == "__main__":

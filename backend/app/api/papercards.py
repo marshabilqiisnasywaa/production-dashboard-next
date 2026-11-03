@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -22,6 +22,50 @@ from app.seed_papercards import FACTORY_PRESETS
 from app.services.accounts import active_line, active_lines
 
 router = APIRouter(prefix="/papercards", tags=["papercards"])
+
+
+def default_supervisor(db: Session, employee: Employee) -> Employee | None:
+    if employee.supervisor_id is not None:
+        return db.get(Employee, employee.supervisor_id)
+    if employee.supervisor:
+        matches = list(db.scalars(select(Employee).where(
+            Employee.role == "supervisor", Employee.name == employee.supervisor,
+        )))
+        if len(matches) == 1:
+            return matches[0]
+    return None
+
+
+def recipient_of(db: Session, submission: PapercardSubmission) -> Employee | None:
+    if submission.recipient_supervisor_id is not None:
+        return db.get(Employee, submission.recipient_supervisor_id)
+    employee = db.get(Employee, submission.employee_id)
+    return default_supervisor(db, employee) if employee else None
+
+
+def recipient_fields(db: Session, submission: PapercardSubmission) -> dict:
+    recipient = recipient_of(db, submission)
+    return {
+        "recipient_supervisor_id": recipient.id if recipient else None,
+        "recipient_supervisor_name": recipient.name if recipient else None,
+    }
+
+
+@router.get("/supervisors")
+def list_recipient_supervisors(
+    db: Session = Depends(get_db), principal: Principal = Depends(get_principal),
+) -> dict:
+    employee = principal.employee
+    if employee is None:
+        raise HTTPException(403, "Pengisian papercard memerlukan akun karyawan.")
+    supervisors = list(db.scalars(select(Employee).where(
+        Employee.role == "supervisor", Employee.is_active.is_(True), Employee.id != employee.id,
+    ).order_by(Employee.name, Employee.id)))
+    default = default_supervisor(db, employee)
+    return {
+        "defaultSupervisorId": default.id if default and any(s.id == default.id for s in supervisors) else None,
+        "supervisors": [{"id": s.id, "name": s.name, "employeeNo": s.employee_no, "dept": s.dept} for s in supervisors],
+    }
 
 @router.get("/inspection")
 def get_inspection(
@@ -255,167 +299,86 @@ def get_supervisor_overview(
     principal: Principal = Depends(get_principal),
     date_str: str | None = Query(None, alias="date"),
 ) -> dict[str, Any]:
-    spv_emp = principal.employee
-    spv_id = spv_emp.id if spv_emp else None
-    spv_name = spv_emp.name if spv_emp else None
-
-    target_date = date.fromisoformat(date_str) if date_str else date.today()
-
-    submissions = db.query(PapercardSubmission).filter(PapercardSubmission.date == target_date).all()
-    sub_map = {(s.line_id, s.employee_id): s for s in submissions}
-    sub_emp_map = {s.employee_id: s for s in submissions}
-
-    substitute_ids: dict[int, set[int]] = {}
-    for line_pk, employee_pk in db.execute(
-        select(Board.line_id, BoardMember.employee_id)
+    if not principal.is_admin and principal.role != "supervisor":
+        raise HTTPException(403, "Halaman ini hanya untuk supervisor dan admin.")
+    supervisor = principal.employee
+    target_date = date.fromisoformat(date_str) if date_str else datetime.now(ZoneInfo("Asia/Jakarta")).date()
+    submissions = list(db.scalars(select(PapercardSubmission).where(
+        PapercardSubmission.date == target_date, PapercardSubmission.shift == "Shift 1",
+    )))
+    substitutes = set(db.execute(select(Board.line_id, BoardMember.employee_id)
         .join(BoardMember, BoardMember.board_id == Board.id)
-        .where(BoardMember.is_substitute.is_(True), BoardMember.ended_at.is_(None))
-    ).all():
-        substitute_ids.setdefault(line_pk, set()).add(employee_pk)
-
-    # Query strictly the direct subordinates tied to this supervisor in PostgreSQL
-    direct_subs_filter = (Employee.supervisor_id == spv_id)
-    if spv_name:
-        direct_subs_filter = direct_subs_filter | (Employee.supervisor == spv_name)
-
-    my_subs_emps = db.query(Employee).filter(direct_subs_filter).all()
-
-    grouped_lines: dict[int, dict[str, Any]] = {}
-    my_subs_out: list[dict[str, Any]] = []
-
-    for emp in my_subs_emps:
-        # Resolve line for this subordinate
-        bm = (
-            db.query(BoardMember)
-            .filter(BoardMember.employee_id == emp.id, BoardMember.ended_at.is_(None))
-            .order_by(BoardMember.is_substitute.asc(), BoardMember.id.desc())
-            .first()
-        )
-        line = None
-        if bm:
-            b = db.query(Board).filter(Board.id == bm.board_id).first()
-            line = db.query(Line).filter(Line.id == b.line_id).first() if b else None
-
-        if not line:
-            if "601" in emp.name:
-                line = db.query(Line).filter(Line.code.like("%601%")).first()
-            elif "602" in emp.name:
-                line = db.query(Line).filter(Line.code.like("%602%")).first()
-            elif "501" in emp.name:
-                line = db.query(Line).filter(Line.code.like("%501%")).first()
-            elif "502" in emp.name:
-                line = db.query(Line).filter(Line.code.like("%502%")).first()
-
-        line_id = line.id if line else 0
-        line_name = f"{line.name} ({line.code})" if line else "Lini Lain"
-        line_code = line.code if line else "OTHER"
-        ws = db.get(Workshop, line.workshop_id) if (line and line.workshop_id) else None
-        ws_name = ws.name if ws else "Assembly Workshop"
-
-        sub = sub_map.get((line_id, emp.id))
-        if sub is None:
-            fallback = sub_emp_map.get(emp.id)
-            if fallback is not None and (line_id == 0 or fallback.line_id == line_id):
-                sub = fallback
-
-        substituted_by = None
-        if sub is None and line_id:
-            cover = next(
-                (
-                    s
-                    for s in submissions
-                    if s.line_id == line_id
-                    and (s.department or "").upper() == (emp.dept or "PROD").upper()
-                    and s.employee_id != emp.id
-                    and s.employee_id in substitute_ids.get(line_id, set())
-                ),
-                None,
-            )
-            if cover is not None:
-                sub = cover
-                cover_emp = db.get(Employee, cover.employee_id)
-                if cover_emp is not None:
-                    substituted_by = {
-                        "id": cover_emp.id,
-                        "name": cover_emp.name,
-                        "employeeNo": cover_emp.employee_no,
-                    }
-        has_ng = False
-
-        if sub:
-            has_ng = sub.status == "NG" or any(
-                isinstance(answer, dict) and answer.get("status") == "NG"
-                for answer in (sub.answers or [])
-            )
-
-        sub_data = None
-        if sub:
-            approver = db.get(Employee, sub.approved_by_id) if sub.approved_by_id else None
-            enriched_answers = enrich_submission_answers(db, sub, line_id, emp.dept)
-            sub_data = {
-                "id": sub.id,
-                "date": str(sub.date),
-                "shift": sub.shift,
-                "status": sub.status,
-                "approvalStatus": sub.approval_status,
-                "submittedAt": sub.submitted_at.isoformat() if sub.submitted_at else None,
-                "hasNg": has_ng,
-                "answers": enriched_answers,
-                "abnormalNotes": sub.abnormal_notes,
-                "supervisorNotes": sub.supervisor_notes,
-                "approvedByName": approver.name if approver else None,
-                "approvedAt": sub.approved_at.isoformat() if sub.approved_at else None,
+        .where(BoardMember.ended_at.is_(None), BoardMember.is_substitute.is_(True))).all())
+    by_key = {(s.line_id, s.employee_id): s for s in submissions}
+    grouped_lines = {}
+    members_out = []
+    for employee in db.scalars(select(Employee).order_by(Employee.name, Employee.id)):
+        default = default_supervisor(db, employee)
+        is_direct = bool(supervisor and default and default.id == supervisor.id)
+        received = [s for s in submissions if s.employee_id == employee.id and (
+            principal.is_admin or (supervisor and (recipient := recipient_of(db, s)) and recipient.id == supervisor.id)
+        )]
+        if not principal.is_admin and not is_direct and not received:
+            continue
+        lines = {line.id: line for line in db.scalars(
+            select(Line).join(Board, Board.line_id == Line.id).join(BoardMember, BoardMember.board_id == Board.id)
+            .where(BoardMember.employee_id == employee.id, BoardMember.ended_at.is_(None))
+        )}
+        for submission in received:
+            line = db.get(Line, submission.line_id)
+            if line:
+                lines[line.id] = line
+        for line in list(lines.values()) or [None]:
+            line_id = line.id if line else 0
+            line_name = f"{line.name} ({line.code})" if line else "Lini belum diatur"
+            submission = by_key.get((line_id, employee.id))
+            if submission is None:
+                submission = next((s for s in submissions if s.line_id == line_id
+                    and s.department.upper() == (employee.dept or "PROD").upper()
+                    and (line_id, s.employee_id) in substitutes), None)
+            recipient = recipient_of(db, submission) if submission else default
+            if not principal.is_admin and (recipient is None or recipient.id != supervisor.id):
+                continue
+            data = None
+            substituted_by = None
+            if submission:
+                approver = db.get(Employee, submission.approved_by_id) if submission.approved_by_id else None
+                data = {
+                    "id": submission.id, "date": str(submission.date), "shift": submission.shift,
+                    "status": submission.status, "approvalStatus": submission.approval_status,
+                    "submittedAt": submission.submitted_at.isoformat(),
+                    "hasNg": submission.status == "NG" or any(a.get("status") == "NG" for a in submission.answers if isinstance(a, dict)),
+                    "answers": enrich_submission_answers(db, submission), "abnormalNotes": submission.abnormal_notes,
+                    "supervisorNotes": submission.supervisor_notes, "approvedByName": approver.name if approver else None,
+                    "approvedAt": submission.approved_at.isoformat() if submission.approved_at else None,
+                    "recipientSupervisorId": recipient.id if recipient else None,
+                    "recipientSupervisorName": recipient.name if recipient else None,
+                }
+                if submission.employee_id != employee.id:
+                    substitute = db.get(Employee, submission.employee_id)
+                    substituted_by = {"id": substitute.id, "name": substitute.name, "employeeNo": substitute.employee_no} if substitute else None
+            item = {
+                "id": employee.id, "employeeNo": employee.employee_no, "name": employee.name,
+                "role": employee.role, "dept": employee.dept or "PROD",
+                "position": employee.position or ("Line Leader" if employee.role == "leader" else "Operator"),
+                "lineId": line_id, "lineName": line_name, "isMySubordinate": is_direct,
+                "supervisorId": recipient.id if recipient else None, "supervisorName": recipient.name if recipient else None,
+                "submission": data, "substitutedBy": substituted_by,
             }
-
-        member_item = {
-            "id": emp.id,
-            "employeeNo": emp.employee_no,
-            "name": emp.name,
-            "role": emp.role,
-            "dept": emp.dept or "PROD",
-            "position": emp.position or ("Line Leader" if emp.role == "leader" else "Operator"),
-            "lineId": line_id,
-            "lineName": line_name,
-            "isMySubordinate": True,
-            "supervisorId": emp.supervisor_id,
-            "supervisorName": emp.supervisor,
-            "submission": sub_data,
-            "substitutedBy": substituted_by,
-        }
-
-        my_subs_out.append(member_item)
-
-        if line_id not in grouped_lines:
-            grouped_lines[line_id] = {
-                "lineId": line_id,
-                "lineName": line_name,
-                "lineCode": line_code,
-                "workshopName": ws_name,
-                "shift": "Shift 1",
-                "leader": None,
-                "members": [],
-            }
-
-        grouped_lines[line_id]["members"].append(member_item)
-        if emp.role == "leader" and not grouped_lines[line_id]["leader"]:
-            grouped_lines[line_id]["leader"] = {
-                "id": emp.id,
-                "name": emp.name,
-                "employeeNo": emp.employee_no,
-            }
-
-    # Sort lines by lineId
-    lines_out = sorted(grouped_lines.values(), key=lambda l: l["lineId"])
-
+            members_out.append(item)
+            if line_id not in grouped_lines:
+                workshop = db.get(Workshop, line.workshop_id) if line else None
+                grouped_lines[line_id] = {
+                    "lineId": line_id, "lineName": line_name, "lineCode": line.code if line else "OTHER",
+                    "workshopName": workshop.name if workshop else "", "shift": "Shift 1", "leader": None, "members": [],
+                }
+            grouped_lines[line_id]["members"].append(item)
+            if employee.role == "leader" and grouped_lines[line_id]["leader"] is None:
+                grouped_lines[line_id]["leader"] = {"id": employee.id, "name": employee.name, "employeeNo": employee.employee_no}
     return {
-        "supervisor": {
-            "id": spv_emp.id if spv_emp else None,
-            "name": spv_emp.name if spv_emp else "Supervisor",
-            "employeeNo": spv_emp.employee_no if spv_emp else "SPV",
-            "dept": spv_emp.dept if spv_emp else "PROD",
-        },
-        "lines": lines_out,
-        "mySubordinates": my_subs_out,
+        "supervisor": {"id": supervisor.id if supervisor else None, "name": supervisor.name if supervisor else "Admin",
+                       "employeeNo": supervisor.employee_no if supervisor else "", "dept": supervisor.dept if supervisor else None},
+        "lines": sorted(grouped_lines.values(), key=lambda line: line["lineId"]), "mySubordinates": members_out,
     }
 
 
@@ -630,6 +593,14 @@ def list_submissions(
             department = principal.employee.dept
 
     stmt = select(PapercardSubmission)
+    if principal.role == "supervisor":
+        stmt = stmt.join(Employee, Employee.id == PapercardSubmission.employee_id).where(or_(
+            PapercardSubmission.recipient_supervisor_id == principal.employee.id,
+            and_(PapercardSubmission.recipient_supervisor_id.is_(None), or_(
+                Employee.supervisor_id == principal.employee.id,
+                and_(Employee.supervisor_id.is_(None), Employee.supervisor == principal.employee.name),
+            )),
+        ))
     if line_id is not None:
         stmt = stmt.where(PapercardSubmission.line_id == line_id)
     if department is not None:
@@ -655,6 +626,7 @@ def list_submissions(
                 employee_id=s.employee_id,
                 employee_name=emp.name if emp else None,
                 employee_no=emp.employee_no if emp else None,
+                **recipient_fields(db, s),
                 department=s.department,
                 date=s.date,
                 shift=s.shift,
@@ -764,6 +736,13 @@ def submit_papercard(
     )
     existing = db.scalars(stmt).first()
 
+    recipient_id = payload.recipient_supervisor_id
+    if recipient_id is None and existing is not None:
+        recipient_id = existing.recipient_supervisor_id
+    recipient = db.get(Employee, recipient_id) if recipient_id is not None else default_supervisor(db, principal.employee)
+    if recipient is None or recipient.role != "supervisor" or not recipient.is_active or recipient.id == emp_id:
+        raise HTTPException(400, "Pilih supervisor penerima yang aktif.")
+
     if existing:
         if existing.approval_status == "approved":
             raise HTTPException(
@@ -775,6 +754,7 @@ def submit_papercard(
         existing.status = result_status
         existing.submitted_at = submitted_at
         existing.approval_status = "pending"
+        existing.recipient_supervisor_id = recipient.id
         db.commit()
         db.refresh(existing)
         target = existing
@@ -783,6 +763,7 @@ def submit_papercard(
             template_id=tmpl.id if tmpl else None,
             line_id=payload.line_id,
             employee_id=emp_id,
+            recipient_supervisor_id=recipient.id,
             department=dept,
             date=payload.date,
             shift=payload.shift,
@@ -804,6 +785,7 @@ def submit_papercard(
         employee_id=target.employee_id,
         employee_name=emp.name if emp else None,
         employee_no=emp.employee_no if emp else None,
+        **recipient_fields(db, target),
         department=target.department,
         date=target.date,
         shift=target.shift,
@@ -831,11 +813,18 @@ def approve_submission(
     if not submission:
         raise HTTPException(status_code=404, detail="Submission tidak ditemukan.")
 
+    recipient = recipient_of(db, submission)
+    if not principal.is_admin and (
+        principal.role != "supervisor" or recipient is None or recipient.id != principal.employee.id
+        or submission.employee_id == principal.employee.id
+    ):
+        raise HTTPException(403, "Hanya supervisor penerima yang dapat memeriksa papercard ini.")
+
     supervisor_id = principal.employee.id if principal.employee else None
 
     submission.approval_status = payload.approval_status
     submission.approved_by_id = supervisor_id
-    submission.approved_at = datetime.now()
+    submission.approved_at = datetime.now(ZoneInfo("Asia/Jakarta"))
     submission.supervisor_notes = payload.supervisor_notes
 
     db.commit()
@@ -851,6 +840,7 @@ def approve_submission(
         employee_id=submission.employee_id,
         employee_name=emp.name if emp else None,
         employee_no=emp.employee_no if emp else None,
+        **recipient_fields(db, submission),
         department=submission.department,
         date=submission.date,
         shift=submission.shift,

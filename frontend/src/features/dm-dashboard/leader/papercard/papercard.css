@@ -19,6 +19,15 @@
   gap: 16px;
   padding: 20px 24px;
 }
+.dml-pc-meta__supervisor {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.dml-pc-supervisor__hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--dm-text-muted, #64748b);
+}
 .dml-banner {
   display: flex;
   align-items: center;

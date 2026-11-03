@@ -8,6 +8,7 @@ import {
   type DmStandupKpiDay,
 } from "../api";
 import type { LeaderScore } from "./data";
+import { PAPERCARD_CHANGED_EVENT } from "../notifications/revisions";
 
 export const NO_DM = "Tanpa DM";
 
@@ -24,6 +25,7 @@ export type ScorecardLine = {
 export type PapercardStatus = "OK" | "OK terlambat" | "Belum diisi" | "-";
 
 export type PapercardRow = {
+  final: boolean;
   date: string;
   line: string;
   leader: string;
@@ -44,6 +46,7 @@ export type StandupMeetingCell = {
 };
 
 export type StandupRow = {
+  final: boolean;
   date: string;
   line: string;
   leader: string;
@@ -90,7 +93,7 @@ function addDays(iso: string, days: number) {
 }
 
 export function defaultRange() {
-  const to = addDays(jakartaToday(), -1);
+  const to = jakartaToday();
   return { from: addDays(to, -6), to };
 }
 
@@ -99,91 +102,79 @@ function errorText(error: unknown) {
 }
 
 export function useScorecardData(from: string, to: string) {
-  const [leaders, setLeaders] = useState<DmScorecardLeader[] | null>(null);
-  const [leadersError, setLeadersError] = useState<string | null>(null);
   const [state, setState] = useState<{ lines: ScorecardLine[]; loading: boolean; error: string | null }>({
-    lines: [],
-    loading: true,
-    error: null,
+    lines: [], loading: true, error: null,
   });
 
   useEffect(() => {
     let alive = true;
-    publicApi
-      .scorecardLeaders()
-      .then((data) => {
-        if (alive) setLeaders(data);
-      })
-      .catch((error) => {
-        if (alive) setLeadersError(errorText(error));
-      });
+    let inFlight = false;
+    const mean = (days: { total: number }[]) => days.length
+      ? round2(days.reduce((sum, day) => sum + day.total, 0) / days.length) : 0;
+    const refresh = async () => {
+      if (inFlight || !alive) return;
+      inFlight = true;
+      try {
+        const leaders = await publicApi.scorecardLeaders();
+        const today = jakartaToday();
+        const end = to < today ? to : today;
+        const earliest = addDays(end, -365);
+        const start = from < earliest ? earliest : from;
+        const results = await Promise.all(leaders.map(async (info) => {
+          const line: ScorecardLine = { info, papercard: [], standup: [], sqdip: [], before: 0, current: 0, after: 0 };
+          if (start > end) return { line, failed: false };
+          const params = { lineCode: info.lineCode, from: start, to: end };
+          const [papercard, standup, sqdip] = await Promise.allSettled([
+            publicApi.papercardKpi(params), publicApi.standupKpi(params), publicApi.sqdipKpi(params),
+          ]);
+          if (papercard.status === "fulfilled") {
+            line.papercard = papercard.value.days;
+            line.before = mean(line.papercard);
+          }
+          if (standup.status === "fulfilled") {
+            line.standup = standup.value.days;
+            line.current = mean(line.standup);
+          }
+          if (sqdip.status === "fulfilled") {
+            line.sqdip = sqdip.value.days;
+            line.after = sqdip.value.average?.total ?? 0;
+          }
+          return { line, failed: [papercard, standup, sqdip].some((result) => result.status === "rejected") };
+        }));
+        if (!alive) return;
+        const failed = results.filter((item) => item.failed).map((item) => item.line.info.lineCode);
+        setState((previous) => ({
+          lines: results.map(({ line, failed }) => failed
+            ? previous.lines.find((item) => item.info.lineId === line.info.lineId) ?? line : line),
+          loading: false,
+          error: failed.length ? `Sebagian data gagal dimuat untuk line ${failed.join(", ")}.` : null,
+        }));
+      } catch (error) {
+        if (alive) setState((previous) => ({ ...previous, loading: false, error: errorText(error) }));
+      } finally {
+        inFlight = false;
+      }
+    };
+    const refreshVisible = () => {
+      if (document.visibilityState !== "hidden") void refresh();
+    };
+    setState((previous) => ({ ...previous, lines: [], loading: true, error: null }));
+    void refresh();
+    const timer = window.setInterval(() => {
+      const today = jakartaToday();
+      if (from <= today && to >= today) refreshVisible();
+    }, 5000);
+    window.addEventListener("focus", refreshVisible);
+    document.addEventListener("visibilitychange", refreshVisible);
+    window.addEventListener(PAPERCARD_CHANGED_EVENT, refreshVisible);
     return () => {
       alive = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshVisible);
+      document.removeEventListener("visibilitychange", refreshVisible);
+      window.removeEventListener(PAPERCARD_CHANGED_EVENT, refreshVisible);
     };
-  }, []);
-
-  useEffect(() => {
-    if (leaders === null) {
-      if (leadersError) setState({ lines: [], loading: false, error: leadersError });
-      return;
-    }
-    const today = jakartaToday();
-    const end = to < today ? to : today;
-    const earliest = addDays(end, -365);
-    const start = from < earliest ? earliest : from;
-    const blank = (info: DmScorecardLeader): ScorecardLine => ({
-      info,
-      papercard: [],
-      standup: [],
-      sqdip: [],
-      before: 0,
-      current: 0,
-      after: 0,
-    });
-    if (leaders.length === 0 || start > end) {
-      setState({ lines: leaders.map(blank), loading: false, error: null });
-      return;
-    }
-
-    let alive = true;
-    setState((current) => ({ ...current, loading: true, error: null }));
-    Promise.all(
-      leaders.map(async (info) => {
-        const params = { lineCode: info.lineCode, from: start, to: end };
-        const [papercard, standup, sqdip] = await Promise.allSettled([
-          publicApi.papercardKpi(params),
-          publicApi.standupKpi(params),
-          publicApi.sqdipKpi(params),
-        ]);
-        const line: ScorecardLine = blank(info);
-        if (papercard.status === "fulfilled") {
-          line.papercard = papercard.value.days;
-          line.before = papercard.value.average?.total ?? 0;
-        }
-        if (standup.status === "fulfilled") {
-          line.standup = standup.value.days;
-          line.current = standup.value.average?.total ?? 0;
-        }
-        if (sqdip.status === "fulfilled") {
-          line.sqdip = sqdip.value.days;
-          line.after = sqdip.value.average?.total ?? 0;
-        }
-        const failed = [papercard, standup, sqdip].some((result) => result.status === "rejected");
-        return { line, failed };
-      })
-    ).then((results) => {
-      if (!alive) return;
-      const failed = results.filter((item) => item.failed).map((item) => item.line.info.lineCode);
-      setState({
-        lines: results.map((item) => item.line),
-        loading: false,
-        error: failed.length > 0 ? `Sebagian data gagal dimuat untuk line ${failed.join(", ")}.` : null,
-      });
-    });
-    return () => {
-      alive = false;
-    };
-  }, [leaders, leadersError, from, to]);
+  }, [from, to]);
 
   return state;
 }
@@ -210,7 +201,6 @@ export function toPapercardRows(lines: ScorecardLine[]): PapercardRow[] {
   const rows: PapercardRow[] = [];
   for (const line of lines) {
     for (const day of line.papercard) {
-      if (!day.final) continue;
       const statuses = DEPARTMENT_ORDER.map((department): PapercardStatus => {
         const check = day.checks.find((item) => item.department === department);
         if (!check) return "-";
@@ -220,6 +210,7 @@ export function toPapercardRows(lines: ScorecardLine[]): PapercardRow[] {
       const required = day.checks.length;
       const onTimeCount = day.checks.filter((check) => check.onTime).length;
       rows.push({
+        final: day.final,
         date: day.date,
         line: line.info.lineCode,
         leader: line.info.leaderName,
@@ -232,15 +223,15 @@ export function toPapercardRows(lines: ScorecardLine[]): PapercardRow[] {
       });
     }
   }
-  return rows.sort((a, b) => a.date.localeCompare(b.date) || a.line.localeCompare(b.line));
+  return rows.sort((a, b) => b.date.localeCompare(a.date) || a.line.localeCompare(b.line));
 }
 
 export function toStandupRows(lines: ScorecardLine[]): StandupRow[] {
   const rows: StandupRow[] = [];
   for (const line of lines) {
     for (const day of line.standup) {
-      if (!day.final) continue;
       rows.push({
+        final: day.final,
         date: day.date,
         line: line.info.lineCode,
         leader: line.info.leaderName,
@@ -252,7 +243,7 @@ export function toStandupRows(lines: ScorecardLine[]): StandupRow[] {
       });
     }
   }
-  return rows.sort((a, b) => a.date.localeCompare(b.date) || a.line.localeCompare(b.line));
+  return rows.sort((a, b) => b.date.localeCompare(a.date) || a.line.localeCompare(b.line));
 }
 
 export function toSqdipRows(lines: ScorecardLine[]): SqdipTableRow[] {
@@ -271,13 +262,13 @@ export function toSqdipRows(lines: ScorecardLine[]): SqdipTableRow[] {
       });
     }
   }
-  return rows.sort((a, b) => a.date.localeCompare(b.date) || a.line.localeCompare(b.line) || a.leader.localeCompare(b.leader));
+  return rows.sort((a, b) => b.date.localeCompare(a.date) || a.line.localeCompare(b.line) || a.leader.localeCompare(b.leader));
 }
 
 export function buildTrendSeries(lines: ScorecardLine[]): TrendSeries {
   const maps = lines.map((line) => ({
-    papercard: new Map(line.papercard.filter((day) => day.final).map((day) => [day.date, day.total])),
-    standup: new Map(line.standup.filter((day) => day.final).map((day) => [day.date, day.total])),
+    papercard: new Map(line.papercard.map((day) => [day.date, day.total])),
+    standup: new Map(line.standup.map((day) => [day.date, day.total])),
     sqdip: new Map(line.sqdip.filter((day) => day.final).map((day) => [day.date, day.total])),
   }));
   const dates = new Set<string>();

@@ -745,6 +745,8 @@ export type DmPapercardSubmission = {
   employeeId: number;
   employeeName?: string | null;
   employeeNo?: string | null;
+  recipientSupervisorId?: number | null;
+  recipientSupervisorName?: string | null;
   department: string;
   date: string;
   shift: string;
@@ -758,6 +760,11 @@ export type DmPapercardSubmission = {
   approvedAt?: string | null;
   supervisorNotes?: string | null;
   createdAt: string;
+};
+
+export type DmPapercardSupervisors = {
+  defaultSupervisorId: number | null;
+  supervisors: { id: number; name: string; employeeNo: string; dept: string | null }[];
 };
 
 export type DmInspectionRow = {
@@ -775,6 +782,7 @@ export type DmInspectionRow = {
 };
 
 export const papercardApi = {
+  supervisors: () => request<DmPapercardSupervisors>("/papercards/supervisors", {}, true),
   inspection: (params: {
     lineId: number;
     from: string;
@@ -870,6 +878,7 @@ export const papercardApi = {
     shift: string;
     answers: any[];
     abnormalNotes?: string | null;
+    recipientSupervisorId?: number | null;
   }) =>
     request<DmPapercardSubmission>(
       "/papercards/submissions",
