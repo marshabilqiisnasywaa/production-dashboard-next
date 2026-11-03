@@ -20,6 +20,7 @@ from app.schemas import (
 )
 from app.seed_papercards import FACTORY_PRESETS
 from app.services.accounts import active_line, active_lines
+from app.services.papercard_kpi import to_jakarta
 
 router = APIRouter(prefix="/papercards", tags=["papercards"])
 
@@ -201,13 +202,10 @@ def get_inspection(
                     statuses[role] = "NG"
                 continue
 
-            submission_status = submission.status.upper()
-
-            if submission_status in ("OK", "NG"):
-                statuses[role] = submission_status
-
-                if submission.submitted_at <= deadline:
-                    on_time += 1
+            is_on_time = to_jakarta(submission.submitted_at) <= deadline
+            statuses[role] = "OK" if is_on_time else "NG"
+            if is_on_time:
+                on_time += 1
 
         submitted = sum(
             statuses[department_roles[department]] == "OK"
