@@ -1,4 +1,5 @@
 "use client";
+import { departmentLabel } from "../departments";
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { dmDepartments, dmEmployeeRoles } from "../api";
@@ -238,7 +239,7 @@ export default function UserModal({ open, user, supervisors, onSave, onResetPass
               <select id="um-dept" className="um-input" value={form.dept} onChange={(event) => change("dept", event.target.value)}>
                 <option value="">Belum dipilih</option>
                 {deptOptions.map((item) => (
-                  <option key={item} value={item}>{item}</option>
+                  <option key={item} value={item}>{departmentLabel(item)}</option>
                 ))}
               </select>
             </div>

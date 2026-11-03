@@ -44,7 +44,7 @@ export default function AccountPage() {
       .me()
       .then((me) => {
         if (cancelled) return;
-        if (me.kind === "admin") {
+        if (me.kind === "admin" && !me.mustChangePassword) {
           router.replace("/dm-dashboard/admin");
           return;
         }
@@ -121,7 +121,7 @@ export default function AccountPage() {
         <h1 className="dm-admin-login-title">{me.name ?? me.username}</h1>
         <p className="dm-admin-login-sub">
           NIK {me.username} · {roleLabel}
-          {me.line ? ` · Lini ${me.line.code} (${me.line.workshopName})` : " · Belum ditempatkan di lini"}
+          {me.kind === "admin" ? "" : me.line ? ` · Lini ${me.line.code} (${me.line.workshopName})` : " · Belum ditempatkan di lini"}
         </p>
         {me.mustChangePassword ? (
           <p className="dm-admin-login-notice" role="status">

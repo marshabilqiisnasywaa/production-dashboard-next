@@ -84,7 +84,7 @@ export default function DmAdminPage() {
       .me()
       .then((me) => {
         if (cancelled) return;
-        if (me.kind !== "admin") {
+        if (me.kind !== "admin" || me.mustChangePassword) {
           router.replace(homeFor(me));
           return;
         }

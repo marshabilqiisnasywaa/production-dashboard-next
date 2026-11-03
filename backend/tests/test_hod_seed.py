@@ -12,7 +12,7 @@ from app.api.auth import login
 from app.core.security import hash_password, verify_password
 from app.db.base import Base
 from app.db.session import engine
-from app.models import Employee, User, Workshop
+from app.models import Employee, Workshop
 from app.schemas import EmployeeIn, EmployeeUpdate, LoginIn
 
 
@@ -41,7 +41,7 @@ class HodSeedTests(unittest.TestCase):
 
     def test_admin_seed_login_and_reset_keep_existing_workshops(self):
         self.seed_admin()
-        admin = self.db.scalar(select(User).where(User.username == "admin"))
+        admin = self.db.scalar(select(Employee).where(Employee.employee_no == "admin"))
         original_id = admin.id
         request = Request({"type": "http", "client": ("127.0.0.1", 1234)})
         token = login(LoginIn(username="admin", password="admin-password-123"), request, self.db)
@@ -66,7 +66,7 @@ class HodSeedTests(unittest.TestCase):
         self.db.commit()
         with self.assertRaises(SystemExit):
             self.seed_admin()
-        self.assertIsNone(self.db.scalar(select(User.id).where(User.username == "admin")))
+        self.assertEqual(self.db.scalar(select(Employee.role).where(Employee.employee_no == "admin")), "hod")
 
     def test_admin_seed_rejects_invalid_credentials(self):
         for username, password in ((" ", "password-123"), ("x" * 65, "password-123"), ("admin", "short"), ("admin", "x" * 129)):
@@ -100,30 +100,33 @@ class HodSeedTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             self.seed()
         self.assertEqual(employee.role, "member")
-        self.db.delete(employee)
-        self.db.add(User(username="HOD001", password_hash=hash_password("admin-password")))
-        self.db.commit()
-        with self.assertRaises(SystemExit):
-            self.seed()
 
-    def test_admin_cannot_create_or_promote_hod(self):
-        with self.assertRaises(HTTPException) as created:
-            create_employee(EmployeeIn(employee_id="HOD001", name="HOD", role="hod"), self.db)
-        self.assertEqual(created.exception.status_code, 403)
+    def make_actor(self):
+        actor = Employee(employee_no="root", name="Root", role="superadmin")
+        self.db.add(actor)
+        self.db.commit()
+        return actor
+
+    def test_admin_can_create_and_promote_hod_with_forced_password_change(self):
+        actor = self.make_actor()
+        created = create_employee(EmployeeIn(employee_id="HOD002", name="HOD Produksi", role="hod", dept="PROD"), self.db, actor)
+        self.assertEqual((created.role, created.dept), ("hod", "PROD"))
+        hod = self.db.scalar(select(Employee).where(Employee.employee_no == "HOD002"))
+        self.assertTrue(hod.must_change_password)
+        self.assertTrue(verify_password("HOD002", hod.password_hash))
         employee = Employee(employee_no="MEM001", name="Member", role="member")
         self.db.add(employee)
         self.db.commit()
-        with self.assertRaises(HTTPException) as promoted:
-            update_employee(employee.id, EmployeeUpdate(role="hod"), self.db)
-        self.assertEqual(promoted.exception.status_code, 403)
-        self.assertEqual(employee.role, "member")
+        update_employee(employee.id, EmployeeUpdate(role="hod"), self.db, actor)
+        self.assertEqual(employee.role, "hod")
 
-    def test_hod_is_excluded_from_admin_lists(self):
+    def test_hod_is_included_in_admin_lists(self):
         self.seed()
         self.db.add(Employee(employee_no="MEM001", name="Member", role="member"))
         self.db.commit()
-        self.assertEqual([employee.employee_id for employee in list_employees(self.db)], ["MEM001"])
-        self.assertNotIn("hod", [role.value for role in list_roles()])
+        actor = self.make_actor()
+        self.assertCountEqual([employee.employee_id for employee in list_employees(self.db)], ["MEM001", "HOD001", "root"])
+        self.assertIn("hod", [role.value for role in list_roles(actor)])
 
     def test_invalid_credentials_are_rejected_before_database_changes(self):
         for username, name, password in (

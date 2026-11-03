@@ -1,3 +1,4 @@
+import { departmentLabel } from "../../departments";
 import { IconCheck, IconClock } from "@/components/ui/icons";
 import type { DepartmentKey } from "../../leader/types";
 import type { MemberPapercardApproval } from "./MemberPapercardStatusCard";
@@ -104,7 +105,7 @@ export function MemberTeamSection({
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
                   <span className={`dms-dept-badge dms-dept-badge--${member.dept}`} style={{ fontSize: "10px", padding: "1px 6px" }}>
-                    {isLeader ? " LEADER" : member.dept}
+                    {isLeader ? " LEADER" : departmentLabel(member.dept)}
                   </span>
 
                   {isCurrentUser && (
@@ -181,7 +182,7 @@ export function MemberTeamSection({
                 MPV of The Month ({mpvTeamMember.period}): {mpvTeamMember.name}
               </strong>
               <span className="member-mpv-sub" style={{ color: "#a16207", marginLeft: "6px" }}>
-                ({mpvTeamMember.dept}) · {mpvTeamMember.position}
+                ({departmentLabel(mpvTeamMember.dept)}) · {mpvTeamMember.position}
               </span>
             </div>
           </div>

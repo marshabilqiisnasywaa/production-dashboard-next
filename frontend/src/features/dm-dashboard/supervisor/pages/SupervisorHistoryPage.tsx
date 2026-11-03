@@ -1,11 +1,12 @@
 "use client";
 
+import { departmentLabel } from "../../departments";
 import { SupervisorHistoryTab, SupervisorPageHeader } from "../components";
 import { useSupervisor } from "../SupervisorProvider";
 
 export default function SupervisorHistoryPage() {
   const { currentSupervisor, dbLines, totalCount, openReview } = useSupervisor();
-  const meta = `Dept ${currentSupervisor.dept} · ${dbLines.length} lini · ${totalCount} anggota tim`;
+  const meta = `Dept ${departmentLabel(currentSupervisor.dept)} · ${dbLines.length} lini · ${totalCount} anggota tim`;
 
   return (
     <div className="dms-container">

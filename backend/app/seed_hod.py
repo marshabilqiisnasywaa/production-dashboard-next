@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from app.core.security import hash_password
 from app.db.session import SessionLocal
-from app.models import Employee, User
+from app.models import Employee
 from app.seed import MIN_PASSWORD_LENGTH
 
 HOD_USERNAME = "HOD001"
@@ -30,8 +30,6 @@ def read_credentials() -> tuple[str, str, str]:
 def main() -> None:
     nik, name, password = read_credentials()
     with SessionLocal() as db:
-        if db.scalar(select(User.id).where(User.username == nik)) is not None:
-            sys.exit(f"NIK '{nik}' sudah dipakai akun admin.")
         employee = db.scalar(select(Employee).where(Employee.employee_no == nik))
         if employee is not None and employee.role != "hod":
             sys.exit(f"NIK '{nik}' sudah dipakai karyawan dengan role '{employee.role}'.")

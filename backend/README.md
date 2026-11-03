@@ -28,7 +28,7 @@ python -m app.seed
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-`python -m app.seed` creates only the superadmin account. Create workshops manually from the admin dashboard after logging in. Edit `ADMIN_USERNAME` and `ADMIN_PASSWORD` at the top of `app/seed.py`, then run the command without arguments or prompts. The password must be 8-128 characters and is hashed before storage. Running it again resets that user's password and reactivates the account. A username belonging to an employee (including HOD) is rejected.
+`python -m app.seed` creates only the superadmin account, as an employee with the `superadmin` role (the NIK is `ADMIN_USERNAME`, the name is `ADMIN_NAME`). Create workshops manually from the admin dashboard after logging in. Edit `ADMIN_USERNAME` and `ADMIN_PASSWORD` at the top of `app/seed.py`, then run the command without arguments or prompts. The password must be 8-128 characters and is hashed before storage. Running it again resets that account's password and reactivates it. A NIK belonging to an employee with another role is rejected.
 
 ```powershell
 python -m app.seed
@@ -42,7 +42,7 @@ python -m app.seed_hod
 
 The command writes directly to the database configured by `DATABASE_URL` in `.env`, without prompts. `HOD_USERNAME` is stored as the employee NIK used for login. The password must be 8-128 characters and differ from the NIK; it is hashed before storage. Login uses the configured username and password, without a forced password change. Re-running resets the password and reactivates the same HOD account. An NIK belonging to an admin or another employee role is rejected.
 
-HOD accounts are excluded from the admin employee list and role options, like admin accounts. The employee API rejects creation or promotion to HOD, including imports. `python -m app.seed_dev` still creates `DEV-HOD` for development only, with its existing initial-password flow; it cannot run in production.
+Admins are employees. The `admin` and `superadmin` roles live in `employees` like member, leader, supervisor, and HOD, so every account has a NIK, name, department, work phone, and photo, and logs in with its NIK. Any admin or superadmin can create admin, HOD, and the other roles from the User tab or by import; only a superadmin can create, change, reset, deactivate, or delete a superadmin, and nobody can deactivate, delete, or demote their own account. Every account created or reset by an admin, including admin and HOD accounts, must change its password at first login (`mustChangePassword`). Migration `0033` moved the old `users` rows into `employees`; the `users` table is kept but no longer used. `app.seed_hod` is optional. `python -m app.seed_dev` still creates `DEV-*` accounts for development only, with their initial-password flow; it cannot run in production.
 
 Reset the database from scratch (drops every table, then rebuilds them):
 
@@ -65,13 +65,13 @@ To enable it on the office PC, install the dependencies from `requirements.txt`,
 
 ## API
 
-- `POST /api/auth/login`, `GET /api/auth/me`: login for the superadmin (username) and for employees (NIK as username). The initial employee password is the NIK, and `mustChangePassword` stays true until `POST /api/auth/change-password` succeeds. Employees with `mustChangePassword` can only call `/auth/me` and `/auth/change-password`. Login is limited to 5 wrong attempts per IP and username, then locked for 5 minutes (in memory, per process).
+- `POST /api/auth/login`, `GET /api/auth/me`: login for every account by NIK, admins included (`kind` is `admin` for the `admin` and `superadmin` roles). The initial password is the NIK, and `mustChangePassword` stays true until `POST /api/auth/change-password` succeeds. Accounts with `mustChangePassword` can only call `/auth/me` and `/auth/change-password`. Login is limited to 5 wrong attempts per IP and NIK, then locked for 5 minutes (in memory, per process).
 - `GET /api/lines`: lines the logged-in account may see on the admin dashboard tab. Admin gets all, member and leader get their own active line, supervisor gets none until the scope is decided. Non-admins see only the Dashboard tab of the admin panel; the TV boards stay public and need no login.
 - `GET /api/lines/{line_id}/board`: a member or leader only reaches their own active line, the admin reaches every line, supervisors are refused until their scope is decided.
 - Employees pick their supervisor by `supervisorId`, which must point to an active employee with role `supervisor` (optional, never required). Register supervisors first. A supervisor who still has people under them cannot be deleted or changed to another role. TV boards show the supervisor's current name, so renaming a supervisor updates every board. Old free-text supervisors stay as a fallback until a real supervisor is chosen.
 - `POST /api/admin/employees/{id}/reset-password`: sets the password back to the NIK (or to a given `password`) and forces a change at the next login.
 - `GET /api/public/boards`, `GET /api/public/boards/{slug}`: no login, used by the TV dashboards.
-- `/api/admin/...`: workshops, lines, team members, and MPV history. Requires the superadmin token.
+- `/api/admin/...`: workshops, lines, team members, MPV history, and users. Requires an admin or superadmin token.
 - `GET|PUT|DELETE /api/admin/lines/{id}/mpv[/{YYYY-MM}]`: one MPV per line per month. The public board shows the previous month's MPV (October shows September), or the latest earlier month if that one is empty.
 
 Every line owns exactly one board. The board slug is its public link, `/dm-dashboard/{slug}` on the frontend.

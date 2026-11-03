@@ -49,6 +49,7 @@ export function useProblems(lineId?: number) {
         problemCategories: p.problemCategories ?? [],
         solution: p.solution ?? null,
         picName: p.picName ?? "-",
+        picDept: p.picDept ?? null,
         due,
         status,
         overdueMs:

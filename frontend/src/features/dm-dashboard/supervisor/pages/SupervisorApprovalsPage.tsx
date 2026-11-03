@@ -1,5 +1,6 @@
 "use client";
 
+import { departmentLabel } from "../../departments";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SupervisorApprovalsTab, SupervisorPageHeader } from "../components";
@@ -105,7 +106,7 @@ export default function SupervisorApprovalsPage() {
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("ALL");
 
   const totalCount = allListItems.length;
-  const meta = `Dept ${currentSupervisor.dept} · ${dbLines.length} lini · ${totalCount} anggota tim`;
+  const meta = `Dept ${departmentLabel(currentSupervisor.dept)} · ${dbLines.length} lini · ${totalCount} anggota tim`;
 
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||

@@ -83,7 +83,7 @@ export default function TeamManager({ line, call, onChanged, onBusyChange }: Pro
         <div className="ltm-slot-head"><span className="ltm-slot-badge">#{item.order} {item.label}</span></div>
         {occupants.map((member) => <div key={member.id ?? member.employeeId} className="ltm-fixed-occupant">
           <div className="ltm-member-details"><strong className="ltm-member-name">{member.name}</strong><span className="ltm-member-meta">NIK: {member.employeeId}</span></div>
-          {item.order === 1 && member.role !== "leader" ? <p className="ltm-fixed-error">User ini belum memiliki role Leader. Lepas dan pilih leader PROD.</p> : null}
+          {item.order === 1 && member.role !== "leader" ? <p className="ltm-fixed-error">User ini belum memiliki role Leader. Lepas dan pilih leader Produksi.</p> : null}
           <button type="button" className="ltm-btn-release" disabled={busy} onClick={() => void release(member)}>Keluarkan</button>
         </div>)}
         {occupants.length > 1 ? <p className="ltm-fixed-error">Slot berisi lebih dari satu anggota. Sisakan satu anggota.</p> : null}

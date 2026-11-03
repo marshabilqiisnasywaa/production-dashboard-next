@@ -1,5 +1,6 @@
 "use client";
 
+import { departmentLabel } from "../../departments";
 import { useMemo } from "react";
 import { IconCheck, IconCheckCircle, IconClose } from "@/components/ui/icons";
 import type { DmSupervisorSubordinate } from "../../api";
@@ -121,7 +122,7 @@ export function SupervisorReviewModal({
           <div className="spv-modal-header-top">
             <div className="spv-modal-chips-row">
               <span className={`spv-chip spv-chip--dept-${reviewTarget.dept.toLowerCase()}`}>
-                {reviewTarget.dept}
+                {departmentLabel(reviewTarget.dept)}
               </span>
                 {/* <span className="spv-chip spv-chip--neutral">
                   {reviewTarget.role === "leader" ? "Leader" : "Operator"}

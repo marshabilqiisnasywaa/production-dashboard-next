@@ -1,5 +1,6 @@
 "use client";
 
+import { departmentLabel } from "../departments";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { adminApi } from "../api";
 import type { DmMvpCandidate, DmLine, DmMpvInput } from "../api";
@@ -429,7 +430,7 @@ export default function MpvManager({
                       </div>
                       <div className="mpv-tags">
                         <span className="mpv-tag-dept">
-                          {existing.dept ?? "PROD"}
+                          {departmentLabel(existing.dept ?? "PROD")}
                         </span>
                         <span className="mpv-tag-pos">
                           {existing.position ?? "Operator Lini"}
@@ -499,7 +500,7 @@ export default function MpvManager({
                       .filter((e) => e.isActive)
                       .map((emp) => (
                         <option key={emp.id} value={emp.id}>
-                          {emp.name} ({emp.employeeId}) · {emp.dept ?? "-"}
+                          {emp.name} ({emp.employeeId}) · {departmentLabel(emp.dept) || "-"}
                         </option>
                       ))}
                   </select>
@@ -599,7 +600,7 @@ export default function MpvManager({
                           </td>
                           <td>
                             <span className="mpv-mini-dept">
-                              {item.dept ?? "-"}
+                              {departmentLabel(item.dept) || "-"}
                             </span>
                           </td>
                           <td>
@@ -716,10 +717,10 @@ export default function MpvManager({
                     value={editDept}
                     onChange={(e) => setEditDept(e.target.value)}
                   >
-                    <option value="PROD">PROD</option>
+                    <option value="PROD">Produksi</option>
                     <option value="ME">ME</option>
                     <option value="PE">PE</option>
-                    <option value="QC">QC</option>
+                    <option value="QC">Quality</option>
                   </select>
                 </div>
 

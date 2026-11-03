@@ -1,5 +1,6 @@
 "use client";
 
+import { departmentLabel } from "../departments";
 import Link from "next/link";
 import {
   IconAlert,
@@ -37,7 +38,7 @@ export default function SupervisorDashboard() {
   );
   const submittedRate = percent(submittedCount, totalCount);
   const approvedRate = percent(approvedCount, submittedCount);
-  const meta = `Dept ${currentSupervisor.dept} · ${dbLines.length} lini · ${totalCount} anggota tim`;
+  const meta = `Dept ${departmentLabel(currentSupervisor.dept)} · ${dbLines.length} lini · ${totalCount} anggota tim`;
 
   return (
     <div className="dms-container">
@@ -119,7 +120,7 @@ export default function SupervisorDashboard() {
                     <strong className="spv-dash-row__name">{member.name}</strong>
                     <span className="spv-dash-row__meta">
                       <span className={`spv-chip spv-chip--dept-${member.dept.toLowerCase()}`}>
-                        {member.dept}
+                        {departmentLabel(member.dept)}
                       </span>{" "}
                       · {member.lineName || "Lini Lain"}
                     </span>

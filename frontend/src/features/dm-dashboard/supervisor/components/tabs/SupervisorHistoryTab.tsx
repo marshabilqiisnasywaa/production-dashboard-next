@@ -1,5 +1,6 @@
 "use client";
 
+import { departmentLabel } from "../../../departments";
 import { useEffect, useMemo, useState } from "react";
 import {
   IconAlert,
@@ -233,7 +234,7 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
           Menampilkan catatan tanggal: <strong>{formattedDateTitle}</strong>
         </span>
         <span style={{ fontSize: "11px", color: "#64748b" }}>
-          Departemen: <strong>{data?.supervisor.dept || "PROD"}</strong>
+          Departemen: <strong>{departmentLabel(data?.supervisor.dept || "PROD")}</strong>
         </span>
       </div>
 
@@ -322,7 +323,7 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
                     PIC: <strong>{member.name}</strong> · <span style={{ color: "#64748b" }}>{member.employeeNo}</span>
                   </div>
                   <div style={{ color: "#64748b", fontSize: "11px", marginTop: "1px" }}>
-                    {member.position} · {member.dept}
+                    {member.position} · {departmentLabel(member.dept)}
                   </div>
                   {member.substitutedBy && (
                     <div style={{ color: "#64748b", fontSize: "11px", marginTop: "1px" }}>

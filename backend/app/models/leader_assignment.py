@@ -94,8 +94,9 @@ class LeaderAssignment(Base):
         nullable=True,
     )
 
-    created_by_user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="RESTRICT"),
+    created_by_employee_id: Mapped[int] = mapped_column(
+        ForeignKey("employees.id", ondelete="RESTRICT"),
+        index=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(

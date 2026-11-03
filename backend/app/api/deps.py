@@ -4,10 +4,10 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from app.core.roles import ROLES
+from app.core.roles import ADMIN_ROLES, ROLES
 from app.core.security import decode_access_token
 from app.db.session import get_db
-from app.models import Employee, User
+from app.models import Employee
 from app.services.accounts import active_line, active_lines, forbidden
 
 bearer = HTTPBearer(auto_error=False)
@@ -15,18 +15,14 @@ bearer = HTTPBearer(auto_error=False)
 
 @dataclass
 class Principal:
-    user: User | None = None
-    employee: Employee | None = None
+    employee: Employee
 
     @property
     def is_admin(self) -> bool:
-        return self.user is not None
+        return self.employee.role in ADMIN_ROLES
 
     @property
     def role(self) -> str:
-        if self.user is not None:
-            return "admin"
-        assert self.employee is not None
         return self.employee.role
 
 
@@ -67,20 +63,17 @@ def get_principal(
     if decoded is None:
         raise invalid_session()
     kind, subject_id = decoded
-    if kind == "employee":
-        employee = db.get(Employee, subject_id)
-        if employee is None or not employee.is_active:
-            raise invalid_session()
-        enforce_capabilities(request, employee.role)
-        return Principal(employee=employee)
-    user = db.get(User, subject_id)
-    if user is None or not user.is_active or user.role != "superadmin":
+    if kind != "employee":
         raise invalid_session()
-    return Principal(user=user)
+    employee = db.get(Employee, subject_id)
+    if employee is None or not employee.is_active:
+        raise invalid_session()
+    enforce_capabilities(request, employee.role)
+    return Principal(employee=employee)
 
 
 def get_active_principal(principal: Principal = Depends(get_principal)) -> Principal:
-    if principal.employee is not None and principal.employee.must_change_password:
+    if principal.employee.must_change_password:
         raise forbidden("Ganti password dulu sebelum memakai akun ini.")
     return principal
 
@@ -100,10 +93,12 @@ def require(capability: str, *, active: bool = True):
     return dependency
 
 
-def get_current_admin(principal: Principal = Depends(get_principal)) -> User:
-    if principal.user is None:
+def get_current_admin(principal: Principal = Depends(get_principal)) -> Employee:
+    if not principal.is_admin:
         raise forbidden("Hanya admin yang bisa membuka bagian ini.")
-    return principal.user
+    if principal.employee.must_change_password:
+        raise forbidden("Ganti password dulu sebelum memakai akun ini.")
+    return principal.employee
 
 
 def authorize_line(db: Session, principal: Principal, line_id: int) -> None:

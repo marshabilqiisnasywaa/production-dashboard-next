@@ -10,6 +10,8 @@ TEAM_SLOTS = {"PROD": 1, "PE": 2, "QC": 3, "ME": 4}
 
 def team_department(value: str | None) -> str:
     department = (value or "").strip().upper()
+    if department == "PRODUKSI":
+        return "PROD"
     return "QC" if department in {"QA", "QUALITY", "QUALITY CONTROL"} else department
 
 

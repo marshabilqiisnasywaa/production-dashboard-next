@@ -1,5 +1,6 @@
 "use client";
 
+import { departmentLabel } from "../../departments";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import "../dmSoft.css";
@@ -127,7 +128,7 @@ export default function LeaderMeetingPage() {
                       : bm.dept === "PE"
                       ? "Process Eng"
                       : bm.dept === "QC"
-                      ? "Quality Control"
+                      ? "Quality"
                       : "Produksi",
                   position: bm.position || "Operator Lini",
                   papercardStatus: "OK",
@@ -1057,7 +1058,7 @@ export default function LeaderMeetingPage() {
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                    <strong>{sub.department} ({sub.employeeName || "Tanpa nama"}):</strong>
+                    <strong>{departmentLabel(sub.department)} ({sub.employeeName || "Tanpa nama"}):</strong>
                     <span style={{ fontSize: "10.5px", fontWeight: 700, background: "#fecdd3", padding: "1px 6px", borderRadius: "4px" }}>
                       STATUS NG
                     </span>

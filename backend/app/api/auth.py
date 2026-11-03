@@ -1,5 +1,5 @@
 import math
-from app.core.roles import access_of
+from app.core.roles import ADMIN_ROLES, access_of
 
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -10,7 +10,7 @@ from app.api.deps import Principal, get_principal, require
 from app.core import ratelimit
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db.session import get_db
-from app.models import Employee, User
+from app.models import Employee
 from app.schemas import ChangePasswordIn, LineRef, LoginIn, MeOut, TokenOut
 from app.services.accounts import active_line, active_lines
 
@@ -35,19 +35,6 @@ def login(body: LoginIn, request: Request, db: Session = Depends(get_db)) -> Tok
             headers={"Retry-After": str(wait)},
         )
 
-    user = db.scalar(select(User).where(User.username == username))
-    if user is not None and user.is_active and verify_password(body.password, user.password_hash):
-        ratelimit.clear(key)
-        return TokenOut(
-            access_token=create_access_token(user.id, "admin"),
-            username=user.username,
-            kind="admin",
-            role=user.role,
-            name=None,
-            must_change_password=False,
-            dept=None,
-        )
-
     employee = db.scalar(select(Employee).where(Employee.employee_no == username))
     stored = employee.password_hash if employee and employee.password_hash else DUMMY_HASH
     matched = verify_password(body.password, stored)
@@ -59,7 +46,7 @@ def login(body: LoginIn, request: Request, db: Session = Depends(get_db)) -> Tok
     return TokenOut(
         access_token=create_access_token(employee.id, "employee"),
         username=employee.employee_no,
-        kind="employee",
+        kind="admin" if employee.role in ADMIN_ROLES else "employee",
         role=employee.role,
         name=employee.name,
         must_change_password=employee.must_change_password,
@@ -70,19 +57,7 @@ def login(body: LoginIn, request: Request, db: Session = Depends(get_db)) -> Tok
 
 @router.get("/me", response_model=MeOut)
 def me(principal: Principal = Depends(require("account.self", active=False)), db: Session = Depends(get_db)) -> MeOut:
-    if principal.user is not None:
-        return MeOut(
-            username=principal.user.username,
-            role=principal.user.role,
-            kind="admin",
-            name=None,
-            must_change_password=False,
-            line=None,
-            lines=[],
-            dept=None,
-        )
     employee = principal.employee
-    assert employee is not None
     found_lines = active_lines(db, employee.id)
     lines_ref = [
         LineRef(
@@ -99,7 +74,7 @@ def me(principal: Principal = Depends(require("account.self", active=False)), db
     return MeOut(
         username=employee.employee_no,
         role=employee.role,
-        kind="employee",
+        kind="admin" if employee.role in ADMIN_ROLES else "employee",
         name=employee.name,
         must_change_password=employee.must_change_password,
         line=primary_line,
@@ -119,16 +94,14 @@ def change_password(
     principal: Principal = Depends(require("account.self", active=False)),
     db: Session = Depends(get_db),
 ) -> Response:
-    account = principal.user or principal.employee
-    assert account is not None
+    account = principal.employee
     if not account.password_hash or not verify_password(body.current_password, account.password_hash):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Password saat ini salah.")
     if body.new_password == body.current_password:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Password baru harus berbeda dari yang lama.")
-    if principal.employee is not None and body.new_password == principal.employee.employee_no:
+    if body.new_password == account.employee_no:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Password baru tidak boleh sama dengan NIK.")
     account.password_hash = hash_password(body.new_password)
-    if principal.employee is not None:
-        principal.employee.must_change_password = False
+    account.must_change_password = False
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

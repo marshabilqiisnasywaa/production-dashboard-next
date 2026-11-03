@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Clock3, Eye, Tag, UserRound, X } from "lucide-react";
+import { dmDepartments } from "@/features/dm-dashboard/api";
+import {
+  departmentLabel,
+  normalizeDepartment,
+} from "@/features/dm-dashboard/departments";
 import { ProblemLoadError } from "@/features/dm-dashboard/leader/problems/components/ProblemLoadError";
 import { useProblems } from "@/features/dm-dashboard/leader/problems/hooks/useProblems";
 import type {
@@ -200,6 +205,7 @@ export default function HodTrackingProblemsPage() {
   const [statusFilter, setStatusFilter] = useState<ProblemFilter>("all");
   const [lineFilter, setLineFilter] = useState("all");
   const [dueFilter, setDueFilter] = useState("all");
+  const [deptFilter, setDeptFilter] = useState("all");
   const [selectedProblem, setSelectedProblem] = useState<ProblemRow | null>(
     null
   );
@@ -208,6 +214,16 @@ export default function HodTrackingProblemsPage() {
     () =>
       [...new Set(rows.map((row) => row.line).filter((line) => line && line !== "-"))]
         .sort(),
+    [rows]
+  );
+
+  const departments = useMemo(
+    () => [
+      ...new Set([
+        ...dmDepartments,
+        ...rows.map((row) => normalizeDepartment(row.picDept)).filter(Boolean),
+      ]),
+    ],
     [rows]
   );
 
@@ -222,13 +238,17 @@ export default function HodTrackingProblemsPage() {
       const matchesStatus =
         statusFilter === "all" || row.status === statusFilter;
       const matchesLine = lineFilter === "all" || row.line === lineFilter;
+      const matchesDept =
+        deptFilter === "all" || normalizeDepartment(row.picDept) === deptFilter;
       const matchesDue =
         dueFilter === "all" ||
         (dueFilter === "overdue" && row.status === "escalated") ||
         (dueFilter === "not-overdue" && row.status !== "escalated");
-      return matchesSearch && matchesStatus && matchesLine && matchesDue;
+      return (
+        matchesSearch && matchesStatus && matchesLine && matchesDept && matchesDue
+      );
     });
-  }, [rows, search, statusFilter, lineFilter, dueFilter]);
+  }, [rows, search, statusFilter, lineFilter, deptFilter, dueFilter]);
 
   useEffect(() => {
     document.title = "Tracking Masalah · DM Digital";
@@ -247,6 +267,7 @@ export default function HodTrackingProblemsPage() {
     setSearch("");
     setStatusFilter("all");
     setLineFilter("all");
+    setDeptFilter("all");
     setDueFilter("all");
   }
 
@@ -335,6 +356,19 @@ export default function HodTrackingProblemsPage() {
             </select>
 
             <select
+              aria-label="Filter departemen"
+              value={deptFilter}
+              onChange={(event) => setDeptFilter(event.target.value)}
+            >
+              <option value="all">Semua departemen</option>
+              {departments.map((department) => (
+                <option key={department} value={department}>
+                  {departmentLabel(department)}
+                </option>
+              ))}
+            </select>
+
+            <select
               aria-label="Filter tenggat"
               value={dueFilter}
               onChange={(event) => setDueFilter(event.target.value)}
@@ -344,7 +378,7 @@ export default function HodTrackingProblemsPage() {
               <option value="not-overdue">Belum terlambat</option>
             </select>
 
-            {(search || statusFilter !== "all" || lineFilter !== "all" || dueFilter !== "all") && (
+            {(search || statusFilter !== "all" || lineFilter !== "all" || deptFilter !== "all" || dueFilter !== "all") && (
               <button
                 type="button"
                 className="dml-pb-reset"
@@ -602,6 +636,12 @@ export default function HodTrackingProblemsPage() {
                   </span>
                   <span className="hod-pic-name">
                     {selectedProblem.picName || "-"}
+                    {selectedProblem.picDept ? (
+                      <span className="hod-detail-muted">
+                        {" "}
+                        · {departmentLabel(selectedProblem.picDept)}
+                      </span>
+                    ) : null}
                   </span>
                 </div>
               </section>

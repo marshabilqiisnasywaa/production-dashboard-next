@@ -8,7 +8,7 @@ from app.services.leader_assignments import sync_member_leader_history
 from app.services.team_slots import team_department, validate_team_slot
 from app.models.leader_assignment import LeaderAssignment
 from app.api.meetings import _absence_fields
-from app.core.roles import ROLES
+from app.core.roles import ADMIN_ROLES, ROLES
 from app.db.session import get_db
 from app.models import DmGroup, Board, BoardMember, DmMeetingAttendance, DmMeetingSession, Employee, Line, MpvAward, Workshop
 from app.schemas import (
@@ -525,23 +525,43 @@ def nik_taken(db: Session, employee_no: str, exclude_id: int | None = None) -> b
     return db.scalar(query) is not None
 
 
+def guard_privileged(
+    actor: Employee,
+    target: Employee | None = None,
+    new_role: str | None = None,
+    removing: bool = False,
+) -> None:
+    touches_superadmin = (target is not None and target.role == "superadmin") or new_role == "superadmin"
+    if touches_superadmin and actor.role != "superadmin":
+        raise HTTPException(403, "Hanya superadmin yang bisa mengelola akun superadmin.")
+    if removing and target is not None and target.id == actor.id:
+        raise HTTPException(400, "Akun sendiri tidak bisa dinonaktifkan, dihapus, atau diturunkan perannya.")
+
+
 @router.get("/roles", response_model=list[RoleOptionOut])
-def list_roles() -> list[RoleOptionOut]:
-    return [RoleOptionOut(value=key, label=role.label) for key, role in ROLES.items() if key != "hod"]
+def list_roles(admin: Employee = Depends(get_current_admin)) -> list[RoleOptionOut]:
+    return [
+        RoleOptionOut(value=key, label=role.label)
+        for key, role in ROLES.items()
+        if key != "superadmin" or admin.role == "superadmin"
+    ]
 
 
 @router.get("/employees", response_model=list[EmployeeOut])
 def list_employees(db: Session = Depends(get_db)) -> list[EmployeeOut]:
     lines = employee_lines(db)
     enrolled = photo_template_ids(db)
-    employees = db.scalars(select(Employee).where(Employee.role != "hod").order_by(Employee.name, Employee.id))
+    employees = db.scalars(select(Employee).order_by(Employee.name, Employee.id))
     return [employee_out(e, lines.get(e.id, []), e.id in enrolled) for e in employees]
 
 
 @router.post("/employees", response_model=EmployeeOut, status_code=status.HTTP_201_CREATED)
-def create_employee(body: EmployeeIn, db: Session = Depends(get_db)) -> EmployeeOut:
-    if body.role == "hod":
-        raise HTTPException(403, "Akun HOD hanya bisa dibuat lewat seeder.")
+def create_employee(
+    body: EmployeeIn,
+    db: Session = Depends(get_db),
+    admin: Employee = Depends(get_current_admin),
+) -> EmployeeOut:
+    guard_privileged(admin, new_role=body.role)
     employee_no = body.employee_id.strip()
     if nik_taken(db, employee_no):
         raise conflict(f"NIK '{employee_no}' sudah dipakai karyawan lain.")
@@ -565,13 +585,21 @@ def create_employee(body: EmployeeIn, db: Session = Depends(get_db)) -> Employee
 
 
 @router.patch("/employees/{employee_pk}", response_model=EmployeeOut)
-def update_employee(employee_pk: int, body: EmployeeUpdate, db: Session = Depends(get_db)) -> EmployeeOut:
+def update_employee(
+    employee_pk: int,
+    body: EmployeeUpdate,
+    db: Session = Depends(get_db),
+    admin: Employee = Depends(get_current_admin),
+) -> EmployeeOut:
     employee = db.get(Employee, employee_pk)
     if employee is None:
         raise not_found("Pengguna")
-    if body.role == "hod" and employee.role != "hod":
-        raise HTTPException(403, "Akun HOD hanya bisa dibuat lewat seeder.")
     sent = body.model_fields_set
+    new_role = body.role if "role" in sent else None
+    leaving_admin = (
+        "is_active" in sent and body.is_active is False
+    ) or (new_role is not None and new_role not in ADMIN_ROLES)
+    guard_privileged(admin, employee, new_role, leaving_admin)
     removing_leader_role = "role" in sent and body.role is not None and body.role != "leader"
     disabling_employee = "is_active" in sent and body.is_active is False
     if (removing_leader_role or disabling_employee) and db.scalar(
@@ -621,21 +649,30 @@ def update_employee(employee_pk: int, body: EmployeeUpdate, db: Session = Depend
 
 @router.post("/employees/{employee_pk}/reset-password", response_model=EmployeeOut)
 def reset_employee_password(
-    employee_pk: int, body: ResetPasswordIn | None = None, db: Session = Depends(get_db)
+    employee_pk: int,
+    body: ResetPasswordIn | None = None,
+    db: Session = Depends(get_db),
+    admin: Employee = Depends(get_current_admin),
 ) -> EmployeeOut:
     employee = db.get(Employee, employee_pk)
     if employee is None:
         raise not_found("Pengguna")
+    guard_privileged(admin, employee)
     reset_password(employee, body.password if body else None)
     db.commit()
     return employee_out(employee, employee_lines(db).get(employee.id, []), has_photo_template(db, employee.id))
 
 
 @router.delete("/employees/{employee_pk}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_employee(employee_pk: int, db: Session = Depends(get_db)) -> Response:
+def delete_employee(
+    employee_pk: int,
+    db: Session = Depends(get_db),
+    admin: Employee = Depends(get_current_admin),
+) -> Response:
     employee = db.get(Employee, employee_pk)
     if employee is None:
         raise not_found("Pengguna")
+    guard_privileged(admin, employee, removing=True)
     if db.scalar(select(LeaderAssignment.id).where(
         LeaderAssignment.employee_id == employee.id,
     ).limit(1)):

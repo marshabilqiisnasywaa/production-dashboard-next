@@ -14,7 +14,7 @@ from app.leader_assignment_schemas import (
     LeaderCurrentOut,
     LeaderHistoryOut,
 )
-from app.models import Board, BoardMember, DmGroup, Employee, LeaderAssignment, Line, User
+from app.models import Board, BoardMember, DmGroup, Employee, LeaderAssignment, Line
 from app.services.leader_assignments import change_assignment, dm_leader_candidates, set_dm_leader
 
 
@@ -33,7 +33,7 @@ router = APIRouter(
 def create_assignment(
     payload: LeaderAssignmentCreate,
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: Employee = Depends(get_current_admin),
 ):
     return change_assignment(
         db=db,
@@ -92,7 +92,7 @@ def save_dm_leader(
     dm_group_id: int,
     payload: DmLeaderSet,
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: Employee = Depends(get_current_admin),
 ):
     return set_dm_leader(db, dm_group_id, payload.employee_id, admin)
 

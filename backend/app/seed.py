@@ -4,9 +4,10 @@ from sqlalchemy import select
 
 from app.core.security import hash_password
 from app.db.session import SessionLocal
-from app.models import Employee, User
+from app.models import Employee
 
 ADMIN_USERNAME = "admin"
+ADMIN_NAME = "Superadmin"
 ADMIN_PASSWORD = "admin123"
 MIN_PASSWORD_LENGTH = 8
 
@@ -14,8 +15,8 @@ MIN_PASSWORD_LENGTH = 8
 def read_credentials() -> tuple[str, str]:
     username = ADMIN_USERNAME.strip()
     password = ADMIN_PASSWORD
-    if not username or len(username) > 64:
-        sys.exit("Username wajib diisi, maksimal 64 karakter.")
+    if not username or len(username) > 32:
+        sys.exit("NIK wajib diisi, maksimal 32 karakter.")
     if not MIN_PASSWORD_LENGTH <= len(password) <= 128:
         sys.exit(f"Password harus {MIN_PASSWORD_LENGTH}-128 karakter.")
     return username, password
@@ -24,17 +25,18 @@ def read_credentials() -> tuple[str, str]:
 def main() -> None:
     username, password = read_credentials()
     with SessionLocal() as db:
-        if db.scalar(select(Employee.id).where(Employee.employee_no == username)) is not None:
-            sys.exit(f"Username '{username}' sudah dipakai akun karyawan.")
-        user = db.scalar(select(User).where(User.username == username))
-        if user is None:
-            db.add(User(username=username, password_hash=hash_password(password), role="superadmin"))
+        employee = db.scalar(select(Employee).where(Employee.employee_no == username))
+        if employee is not None and employee.role != "superadmin":
+            sys.exit(f"NIK '{username}' sudah dipakai karyawan dengan role '{employee.role}'.")
+        if employee is None:
+            employee = Employee(employee_no=username, name=ADMIN_NAME, role="superadmin")
+            db.add(employee)
             print(f"Superadmin '{username}' dibuat.")
         else:
-            user.password_hash = hash_password(password)
-            user.role = "superadmin"
-            user.is_active = True
             print(f"Password superadmin '{username}' diperbarui.")
+        employee.password_hash = hash_password(password)
+        employee.must_change_password = False
+        employee.is_active = True
         db.commit()
 
 

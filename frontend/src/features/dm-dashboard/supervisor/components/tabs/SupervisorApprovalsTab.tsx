@@ -1,5 +1,6 @@
 "use client";
 
+import { departmentLabel } from "../../../departments";
 import {
   IconAlert,
   IconCheckCircle,
@@ -100,10 +101,10 @@ export function SupervisorApprovalsTab({
             aria-label="Filter Departemen"
           >
             <option value="ALL">Semua Dept</option>
-            <option value="PROD">PROD</option>
+            <option value="PROD">Produksi</option>
             <option value="ME">ME</option>
             <option value="PE">PE</option>
-            <option value="QC">QC</option>
+            <option value="QC">Quality</option>
           </select>
 
           {/* Filter Status */}
@@ -273,7 +274,7 @@ export function SupervisorApprovalsTab({
                           <div className="spv-member-card__top">
                             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                               <span className={`spv-chip spv-chip--dept-${member.dept.toLowerCase()}`}>
-                                {member.dept}
+                                {departmentLabel(member.dept)}
                               </span>
                               {member.role === "leader" && (
                                 <span className="spv-chip spv-chip--neutral">Leader</span>

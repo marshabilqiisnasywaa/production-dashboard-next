@@ -1,5 +1,6 @@
 "use client";
 
+import { departmentLabel } from "../../departments";
 import { useEffect, useMemo, useState } from "react";
 import { IconLogout } from "@/components/ui/icons";
 import { setToken } from "../../api";
@@ -52,8 +53,8 @@ export function SupervisorHeader() {
           type: "papercard",
           severity: submission.hasNg ? "warning" : "info",
           title: wasRevised
-            ? `Papercard ${item.dept} dikirim ulang setelah revisi`
-            : `Papercard ${item.dept} menunggu persetujuan`,
+            ? `Papercard ${departmentLabel(item.dept)} dikirim ulang setelah revisi`
+            : `Papercard ${departmentLabel(item.dept)} menunggu persetujuan`,
           message: `${item.name} (${lineLabel}) sudah submit papercard pukul ${timeLabel}.${
             submission.hasNg ? " Ada temuan NG." : ""
           }`,

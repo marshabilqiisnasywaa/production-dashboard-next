@@ -1,3 +1,4 @@
+import { departmentLabel, normalizeDepartment } from "../departments";
 import { dmDepartments, dmEmployeeRoles } from "../api";
 import type { DmEmployee, DmEmployeeInput } from "../api";
 
@@ -39,8 +40,8 @@ const templateColumns = [
     key: "departemen",
     width: 14,
     text: false,
-    rule: `${dmDepartments.join(", ")}.`,
-    example: "PROD",
+    rule: `${dmDepartments.map(departmentLabel).join(", ")}.`,
+    example: "Produksi",
   },
   {
     key: "position",
@@ -187,7 +188,7 @@ export function buildRows(
     if (deptText) {
       dept =
         dmDepartments.find(
-          (item) => item.toLowerCase() === deptText.toLowerCase()
+          (item) => item === normalizeDepartment(deptText)
         ) ?? null;
       if (!dept) errors.push(`Departemen "${deptText}" tidak dikenal.`);
     }

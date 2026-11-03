@@ -1,6 +1,7 @@
 "use client";
 
 // import Link from "next/link";
+import { departmentLabel } from "../departments";
 import { useMemo, useState } from "react";
 
 import "./attendance.css";
@@ -837,7 +838,7 @@ export default function AttendanceDashboardPage() {
                         resetPage();
                       }}
                     >
-                      Departemen: {department} ×
+                      Departemen: {departmentLabel(department)} ×
                     </button>
                   )}
                 </div>

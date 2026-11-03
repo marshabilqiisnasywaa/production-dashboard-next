@@ -1,4 +1,5 @@
 "use client";
+import { departmentLabel } from "../departments";
 import { useEffect, useRef, useState } from "react";
 import { ClipboardList, MoreHorizontal } from "lucide-react";
 import { IconCheck, IconClock } from "@/components/ui/icons";
@@ -72,7 +73,7 @@ function roleLabelFor(user: DmMe | null) {
   if (!user) return CURRENT_USER.role;
   if (user.role === "leader") return "Leader Line";
   if (user.role === "supervisor") return "Supervisor";
-  if (user.dept) return `Anggota ${user.dept}`;
+  if (user.dept) return `Anggota ${departmentLabel(user.dept)}`;
   return "Anggota Tim";
 }
 

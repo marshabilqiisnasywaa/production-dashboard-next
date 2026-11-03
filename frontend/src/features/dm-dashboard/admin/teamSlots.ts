@@ -1,15 +1,15 @@
+import { normalizeDepartment } from "../departments";
 import type { DmEmployee } from "../api";
 
 export const teamSlots = [
-  { order: 1, department: "PROD", label: "Leader PROD" },
+  { order: 1, department: "PROD", label: "Leader Produksi" },
   { order: 2, department: "PE", label: "PE" },
-  { order: 3, department: "QC", label: "Quality / QC" },
+  { order: 3, department: "QC", label: "Quality" },
   { order: 4, department: "ME", label: "ME" },
 ] as const;
 
 export function teamDepartment(value: string | null | undefined) {
-  const department = (value ?? "").trim().toUpperCase();
-  return ["QA", "QUALITY", "QUALITY CONTROL"].includes(department) ? "QC" : department;
+  return normalizeDepartment(value);
 }
 
 export function matchesTeamSlot(employee: Pick<DmEmployee, "dept" | "role">, order: number) {

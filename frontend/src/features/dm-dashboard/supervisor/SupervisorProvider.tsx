@@ -1,5 +1,6 @@
 "use client";
 
+import { departmentLabel } from "../departments";
 import {
   createContext,
   useCallback,
@@ -213,7 +214,7 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
 
         showToast(
           newStatus === "approved"
-            ? `Papercard ${target.name} (${target.dept}) berhasil disetujui!`
+            ? `Papercard ${target.name} (${departmentLabel(target.dept)}) berhasil disetujui!`
             : `Permintaan revisi berhasil dikirim ke ${target.name}.`,
           "success",
         );

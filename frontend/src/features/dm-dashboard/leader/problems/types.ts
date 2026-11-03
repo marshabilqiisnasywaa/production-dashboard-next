@@ -30,6 +30,7 @@ export interface ProblemRow {
   problemCategories?: string[];
   solution?: string | null;
   picName: string;
+  picDept?: string | null;
   due: string;
   status: ProblemStatus;
   /** How long past the due date (ms), 0 when not overdue */

@@ -1,4 +1,5 @@
 "use client";
+import { departmentLabel } from "./departments";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ApiError, publicApi } from "./api";
@@ -378,7 +379,7 @@ export default function DmDashboard({ slug }: { slug: string }) {
                       <div className="dm-spec-row">
                         <dt className="dm-spec-label">Dept:</dt>
                         <dd className="dm-spec-value">
-                          {displayMpv.dept ?? "-"}
+                          {departmentLabel(displayMpv.dept) || "-"}
                         </dd>
                       </div>
                       <div className="dm-spec-row">

@@ -29,7 +29,7 @@ export default function LineTeamModal({ open, line, call, onChanged, onClose }: 
     <div className="ltm-modal-card">
       <header className="ltm-header"><div><h2 id="line-team-title" className="ltm-title">Tim Line {line.code}</h2><p className="ltm-subtitle">{line.workshopName} · {line.name}</p></div><button type="button" className="ltm-close-btn" aria-label="Tutup" onClick={() => { if (!busy.current) onClose(); }}>×</button></header>
       <div className="ltm-body"><TeamManager key={line.id} line={line} call={call} onChanged={onChanged} onBusyChange={(value) => { busy.current = value; }} /></div>
-      <footer className="ltm-footer"><span>1 Leader PROD · 2 PE · 3 Quality · 4 ME</span><button type="button" className="ltm-btn-done" onClick={() => { if (!busy.current) onClose(); }}>Selesai</button></footer>
+      <footer className="ltm-footer"><span>1 Leader Produksi · 2 PE · 3 Quality · 4 ME</span><button type="button" className="ltm-btn-done" onClick={() => { if (!busy.current) onClose(); }}>Selesai</button></footer>
     </div>
   </dialog>;
 }

@@ -6,7 +6,7 @@ import { FALLBACK_MEMBERS } from "../mockData";
 import type { MeetingMember } from "../types";
 import { initialsOf } from "../utils";
 
-const DEPT_LABEL: Record<string, string> = { PROD: "Produksi", ME: "ME", PE: "PE", QC: "IPQC" };
+const DEPT_LABEL: Record<string, string> = { PROD: "Produksi", ME: "ME", PE: "PE", QC: "Quality" };
 
 /** Members of the Leader's DM team. Falls back to mock members if the API is unavailable. */
 export function useMeetingMembers(): MeetingMember[] {

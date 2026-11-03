@@ -20,9 +20,13 @@ ROLES: dict[str, Role] = {
     "supervisor": Role(label="Supervisor", scope="none", home="/dm-dashboard/supervisor"),
     "hod": Role(label="HOD", scope="all", home="/dm-dashboard/hod", capabilities=frozenset({"account.self", "problems.read"}),
     ),
+    "admin": Role(label="Admin", scope="all", home="/dm-dashboard/admin"),
+    "superadmin": Role(label="Superadmin", scope="all", home="/dm-dashboard/admin"),
 }
 
 ROLE_KEYS: tuple[str, ...] = tuple(ROLES)
+
+ADMIN_ROLES: tuple[str, ...] = ("superadmin", "admin")
 
 def access_of(role_key: str) -> dict:
     role = ROLES.get(role_key)

@@ -16,7 +16,7 @@ const DEPTS = [
   { key: "PROD", label: "Produksi" },
   { key: "ME", label: "Maintenance" },
   { key: "PE", label: "Process Eng" },
-  { key: "QC", label: "Quality Control" },
+  { key: "QC", label: "Quality" },
 ];
 
 export function TeamShopfloorMonitor({

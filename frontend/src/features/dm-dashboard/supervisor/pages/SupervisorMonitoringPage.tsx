@@ -1,5 +1,6 @@
 "use client";
 
+import { departmentLabel } from "../../departments";
 import { useRouter } from "next/navigation";
 import { SupervisorLinesTab, SupervisorPageHeader } from "../components";
 import { SUPERVISOR_ROUTES } from "../routes";
@@ -8,7 +9,7 @@ import { useSupervisor } from "../SupervisorProvider";
 export default function SupervisorMonitoringPage() {
   const router = useRouter();
   const { currentSupervisor, dbLines, totalCount } = useSupervisor();
-  const meta = `Dept ${currentSupervisor.dept} · ${dbLines.length} lini · ${totalCount} anggota tim`;
+  const meta = `Dept ${departmentLabel(currentSupervisor.dept)} · ${dbLines.length} lini · ${totalCount} anggota tim`;
 
   return (
     <div className="dms-container">

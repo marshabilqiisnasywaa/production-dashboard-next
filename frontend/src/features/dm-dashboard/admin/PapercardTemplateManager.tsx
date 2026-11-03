@@ -1,5 +1,6 @@
 "use client";
 
+import { departmentLabel } from "../departments";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DmEmployee, DmLine, DmWorkshop } from "../api";
 import { adminApi, papercardApi } from "../api";
@@ -44,10 +45,10 @@ const EMPTY_TEMPLATE: DepartmentTemplate = {
 };
 
 const DEPARTMENTS: { key: DepartmentKey; label: string }[] = [
-  { key: "PROD", label: "PROD" },
+  { key: "PROD", label: "Produksi" },
   { key: "ME", label: "ME" },
   { key: "PE", label: "PE" },
-  { key: "QC", label: "QC" },
+  { key: "QC", label: "Quality" },
 ];
 
 export default function PapercardTemplateManager({
@@ -1139,7 +1140,7 @@ export default function PapercardTemplateManager({
                   <option value="">+ Tugaskan Karyawan...</option>
                   {candidateEmployees.map((emp) => (
                     <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.dept ?? "-"})
+                      {emp.name} ({departmentLabel(emp.dept) || "-"})
                     </option>
                   ))}
                 </select>

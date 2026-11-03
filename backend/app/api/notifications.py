@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_current_admin, get_principal
 from app.db.session import get_db
-from app.models import DmNotificationSetting, Line, User
+from app.models import DmNotificationSetting, Employee, Line
 from app.schemas import NotificationSettingIn, NotificationSettingOut
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
@@ -89,7 +89,7 @@ def update_notification_settings(
     line_id: int,
     payload: NotificationSettingIn,
     db: Session = Depends(get_db),
-    _admin: User = Depends(get_current_admin),
+    _admin: Employee = Depends(get_current_admin),
 ) -> NotificationSettingOut:
     now = datetime.now(timezone.utc)
 

@@ -110,12 +110,12 @@ export type LeaderAssignment = {
   started_at: string;
   ended_at: string | null;
   reason: string | null;
-  created_by_user_id: number;
+  created_by_employee_id: number;
   created_at: string;
 };
 
-export type LeaderHistoryEntry = Omit<LeaderAssignment, "created_by_user_id"> & {
-  created_by_user_id: number | null;
+export type LeaderHistoryEntry = Omit<LeaderAssignment, "created_by_employee_id"> & {
+  created_by_employee_id: number | null;
   source: "assignment" | "line_membership";
 };
 
@@ -166,6 +166,7 @@ export const dmEmployeeRoles: {
   { value: "leader", label: "Leader" },
   { value: "supervisor", label: "Supervisor" },
   { value: "hod", label: "HOD" },
+  { value: "admin", label: "Admin" },
 ];
 
 export async function syncEmployeeRoles() {
@@ -1075,6 +1076,7 @@ export type DmMyProblem = {
   solution?: string | null;
   picName: string;
   picId?: number | null;
+  picDept?: string | null;
   dueDate?: string | null;
   status: string;
 };

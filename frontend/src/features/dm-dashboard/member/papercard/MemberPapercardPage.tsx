@@ -1,5 +1,6 @@
 "use client";
 
+import { labelWithDepartment } from "../../departments";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import "../../leader/papercard/papercard.css";
@@ -105,7 +106,7 @@ export default function MemberPapercardPage({
         ? "Produksi"
         : dept === "PE"
         ? "Process Eng"
-        : "Quality Control";
+        : "Quality";
 
     return {
       name: currentUser.name || currentUser.username,
@@ -304,7 +305,7 @@ export default function MemberPapercardPage({
           </h1>
           <p className="dml-pc__intro" style={{ fontSize: 12.5, lineHeight: 1.5, margin: 0 }}>
             Checklist kesiapan kerja sebelum DM Meeting khusus departemen{" "}
-            <strong>{activeProfile.deptLabel} ({selectedDept})</strong> pada{" "}
+            <strong>{labelWithDepartment(activeProfile.deptLabel, selectedDept)}</strong> pada{" "}
             <strong>{activeProfile.lineName}</strong>. Hasil pemeriksaan otomatis diteruskan ke
             Supervisor {activeProfile.supervisor.name} untuk persetujuan.
           </p>
@@ -382,7 +383,7 @@ export default function MemberPapercardPage({
             Memuat Checklist Papercard dari Database...
           </div>
           <div style={{ fontSize: "12.5px", color: "#64748b", marginTop: "4px" }}>
-            Mengambil konfigurasi resmi untuk {activeProfile.deptLabel} ({selectedDept}) pada {activeProfile.lineName}
+            Mengambil konfigurasi resmi untuk {labelWithDepartment(activeProfile.deptLabel, selectedDept)} pada {activeProfile.lineName}
           </div>
         </div>
       ) : dynamicTemplate.categories.length === 0 ? (

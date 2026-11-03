@@ -47,7 +47,7 @@ from app.services.accounts import active_line, active_lines
 from app.services.holidays import is_holiday
 from app.services.meeting_attendance import home_line_code
 from app.services import joint_meetings, workshop_problems
-from app.services.problem_access import is_pic, pic_filter as problem_pic_filter
+from app.services.problem_access import is_pic, pic_filter as problem_pic_filter, with_pic_dept
 from app.services.meeting_schedule import (
     ALL_DAYS,
     DEFAULT_SLOTS,
@@ -938,6 +938,7 @@ def list_problems(
     stmt = stmt.order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
     rows = [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
     rows += workshop_problems.for_lines(db, target_line_ids)
+    rows = with_pic_dept(db, rows)
     return sorted(rows, key=lambda row: (row.date, abs(row.id)), reverse=True)
 
 @router.get("/problems/escalations", response_model=list[myProblemOut])

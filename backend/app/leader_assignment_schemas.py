@@ -51,7 +51,7 @@ class LeaderAssignmentOut(BaseModel):
     started_at: datetime
     ended_at: datetime | None
     reason: str | None
-    created_by_user_id: int
+    created_by_employee_id: int
     created_at: datetime
 
 
@@ -73,7 +73,7 @@ class DmLeaderSet(BaseModel):
 
 
 class LeaderHistoryOut(LeaderAssignmentOut):
-    created_by_user_id: int | None = None
+    created_by_employee_id: int | None = None
     source: Literal["assignment", "line_membership"] = "assignment"
 
 

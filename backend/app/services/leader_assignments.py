@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.roles import ADMIN_ROLES
 from app.leader_assignment_schemas import LeaderAssignmentCreate
 from app.leader_assignment_schemas import DmLeaderCandidateOut, LeaderCandidateLineOut
 from app.services.team_slots import team_department, validate_team_slot
@@ -15,7 +16,6 @@ from app.models import (
     Employee,
     LeaderAssignment,
     Line,
-    User,
 )
 
 
@@ -64,9 +64,9 @@ def dm_leader_candidates(db: Session, group: DmGroup) -> list[DmLeaderCandidateO
     return list(candidates.values())
 
 
-def set_dm_leader(db: Session, dm_group_id: int, employee_id: int, admin: User) -> LeaderAssignment:
+def set_dm_leader(db: Session, dm_group_id: int, employee_id: int, admin: Employee) -> LeaderAssignment:
     try:
-        if not admin.is_active or admin.role != "superadmin":
+        if not admin.is_active or admin.role not in ADMIN_ROLES:
             raise HTTPException(403, "Hanya admin yang boleh mengubah leader DM.")
         group = db.scalar(select(DmGroup).where(DmGroup.id == dm_group_id).with_for_update())
         if group is None:
@@ -167,7 +167,7 @@ def sync_line_memberships(
 
 
 def sync_member_leader_history(
-    db: Session, member: BoardMember, employee: Employee, admin: User,
+    db: Session, member: BoardMember, employee: Employee, admin: Employee,
     was_leader: bool, changed_at: datetime,
 ) -> None:
     board = db.get(Board, member.board_id)
@@ -197,7 +197,7 @@ def sync_member_leader_history(
         db.add(LeaderAssignment(
             employee_id=employee.id, kind="line_leader", dm_group_id=group.id,
             line_id=line.id, dm_name_snapshot=group.name, line_code_snapshot=line.code,
-            started_at=changed_at, created_by_user_id=admin.id,
+            started_at=changed_at, created_by_employee_id=admin.id,
         ))
     elif current is not None:
         current.ended_at = changed_at
@@ -211,17 +211,17 @@ def sync_member_leader_history(
                 line_id=line.id, dm_name_snapshot=group.name, line_code_snapshot=line.code,
                 started_at=member_start, ended_at=changed_at,
                 reason="Periode awal mengikuti catatan keanggotaan line.",
-                created_by_user_id=admin.id,
+                created_by_employee_id=admin.id,
             ))
 
 
 def change_assignment(
     db: Session,
     payload: LeaderAssignmentCreate,
-    admin: User,
+    admin: Employee,
 ) -> LeaderAssignment:
     try:
-        if not admin.is_active or admin.role != "superadmin":
+        if not admin.is_active or admin.role not in ADMIN_ROLES:
             raise HTTPException(403, "Hanya admin yang boleh mengubah penugasan.")
 
         started_at = payload.started_at.astimezone(timezone.utc)
@@ -383,7 +383,7 @@ def change_assignment(
             started_at=started_at,
             ended_at=None,
             reason=payload.reason,
-            created_by_user_id=admin.id,
+            created_by_employee_id=admin.id,
         )
 
         db.add(assignment)

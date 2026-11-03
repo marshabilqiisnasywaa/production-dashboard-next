@@ -1,3 +1,4 @@
+import { labelWithDepartment } from "../../departments";
 import { IconCheckCircle } from "@/components/ui/icons";
 
 interface MemberHeroBannerProps {
@@ -38,7 +39,7 @@ export function MemberHeroBanner({
               border: "1px solid #ccfbf1",
             }}
           >
-            {deptLabel} ({dept})
+            {labelWithDepartment(deptLabel, dept)}
           </span>
           <span className="member-hero__location" style={{ fontSize: "12.5px", color: "#64748b" }}>
             📍 <strong>{lineName}</strong> ({lineCode}) · {workshopName}

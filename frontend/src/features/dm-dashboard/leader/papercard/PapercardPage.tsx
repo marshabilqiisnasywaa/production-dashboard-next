@@ -257,7 +257,7 @@ export default function PapercardPage() {
         lines={PAPERCARD_LINES}
         line={lineDisplayName.replace(/^Line\s+/i, "")}
         onLineChange={() => {}}
-        leader={`${currentUser?.name || "Leader"} (Leader PROD)`}
+        leader={`${currentUser?.name || "Leader"} (Leader Produksi)`}
         shift={PAPERCARD_CONFIG.shift}
         date={win.now ? formatDateId(win.now) : ""}
         lineLocked={true}
@@ -320,7 +320,7 @@ export default function PapercardPage() {
             Belum Ada Papercard yang harus anda checklist.
           </h3>
           <p style={{ fontSize: "13px", color: "#64748b", maxWidth: "480px", margin: "0 auto 16px", lineHeight: "1.5" }}>
-            Database belum memiliki konfigurasi checklist pertanyaan papercard untuk Line <strong>{lineDisplayName}</strong> dan Departemen <strong>PROD</strong>.
+            Database belum memiliki konfigurasi checklist pertanyaan papercard untuk Line <strong>{lineDisplayName}</strong> dan Departemen <strong>Produksi</strong>.
           </p>
           <div
             style={{

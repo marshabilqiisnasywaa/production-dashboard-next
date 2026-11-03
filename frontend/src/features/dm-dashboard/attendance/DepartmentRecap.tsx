@@ -1,5 +1,6 @@
 "use client";
 
+import { departmentLabel } from "../departments";
 import type { DepartmentAttendance, DepartmentKey } from "./useDepartmentAttendance";
 
 type Props = {
@@ -95,10 +96,10 @@ export default function DepartmentRecap({
                   aria-pressed={isSelected}
                   aria-label={
                     item.total
-                      ? `${item.department}: ${formatPercent(
+                      ? `${departmentLabel(item.department)}: ${formatPercent(
                           absentRate
                         )} tidak hadir, ${item.absent} orang`
-                      : `${item.department}: Belum ada data`
+                      : `${departmentLabel(item.department)}: Belum ada data`
                   }
                   onClick={() => onSelectDepartment(item.department)}
                   onKeyDown={(event) => {
@@ -108,7 +109,7 @@ export default function DepartmentRecap({
                     }
                   }}
                 >
-                  <span className="att-dept-name">{item.department}</span>
+                  <span className="att-dept-name">{departmentLabel(item.department)}</span>
                   {item.total > 0 ? (
                     <>
                       <span

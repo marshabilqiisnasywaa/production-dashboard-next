@@ -455,6 +455,7 @@ class myProblemOut(CamelModel):
     solution : str | None = None
     pic_name : str
     pic_id : int | None
+    pic_dept : str | None = None
     due_date : str | None
     status : str
 
@@ -717,6 +718,7 @@ class DmGroupOut(CamelModel):
 
 class DmGroupLineAssignIn(CamelModel):
     group_id: int | None = None
+
 
 # kpi papercard
 class PapercardKpiCheckOut(CamelModel):

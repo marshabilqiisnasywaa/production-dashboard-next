@@ -1,4 +1,5 @@
 "use client";
+import { departmentLabel } from "../departments";
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import type { DmEmployee, DmEmployeeInput } from "../api";
@@ -303,7 +304,7 @@ export default function UserImportModal({
                         </td>
                         <td>{row.input.name || "-"}</td>
                         <td>{row.input.role}</td>
-                        <td>{row.input.dept ?? "-"}</td>
+                        <td>{departmentLabel(row.input.dept) || "-"}</td>
                         <td className="ui-mono">{row.supervisorNik ?? "-"}</td>
                         <td>
                           {row.errors.length > 0 ? (
@@ -385,7 +386,7 @@ export default function UserImportModal({
                     member, leader, atau supervisor. Kosong dianggap member.
                   </dd>
                   <dt>departemen</dt>
-                  <dd>ME, PE, PROD, atau QC.</dd>
+                  <dd>ME, PE, Produksi, atau Quality. PROD, QC, dan QA juga diterima.</dd>
                   <dt>supervisor_nik</dt>
                   <dd>
                     NIK supervisor yang sudah ada, atau yang ada di file ini.

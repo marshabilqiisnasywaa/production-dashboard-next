@@ -1,4 +1,5 @@
 "use client";
+import { departmentLabel } from "../departments";
 import { useCallback, useEffect, useState } from "react";
 import {
   adminApi,
@@ -382,7 +383,7 @@ export default function UserManager({ call }: UserManagerProps) {
               <option value="all">Semua departemen</option>
               {deptChoices.map((item) => (
                 <option key={item} value={item}>
-                  {item}
+                  {departmentLabel(item)}
                 </option>
               ))}
             </select>
@@ -502,7 +503,7 @@ export default function UserManager({ call }: UserManagerProps) {
                         </td>
                         <td>
                           <div className="ut-stack">
-                            <strong>{user.dept ?? "-"}</strong>
+                            <strong>{departmentLabel(user.dept) || "-"}</strong>
                             {user.position ? (
                               <span className="ut-muted">{user.position}</span>
                             ) : null}

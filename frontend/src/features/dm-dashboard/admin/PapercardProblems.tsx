@@ -1,5 +1,6 @@
 "use client";
 
+import { departmentLabel } from "../departments";
 import { useEffect, useMemo, useState } from "react";
 import { papercardApi, type DmLine, type DmPapercardSubmission } from "../api";
 import { ProblemLoadError } from "../leader/problems/components/ProblemLoadError";
@@ -222,7 +223,7 @@ export default function PapercardProblems({
                           {lineNames.get(row.submission.lineId) ||
                             `Line #${row.submission.lineId}`}
                         </td>
-                        <td>{row.submission.department}</td>
+                        <td>{departmentLabel(row.submission.department)}</td>
                         <td>{row.category}</td>
                         <td>
                           <strong className="dm-papercard-ng">
