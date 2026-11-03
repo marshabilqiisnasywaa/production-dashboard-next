@@ -7,7 +7,7 @@ import { NotificationBellButton } from "../../notifications/NotificationBellButt
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-export function LeaderHeader() {
+export function LeaderHeader({ onMenuClick }: { onMenuClick?: () => void }) {
   // null on first render so server and client markup match (no hydration warning)
   const [now, setNow] = useState<Date | null>(null);
   const [user, setUser] = useState<DmMe | null>(null);
@@ -45,14 +45,26 @@ export function LeaderHeader() {
     .join("")
     .toUpperCase();
 
-  return (
+    return (
     <header className="dml-header">
+      <button
+        type="button"
+        className="dml-header__menu"
+        aria-label="Buka menu"
+        onClick={onMenuClick}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
       <div className="dml-header__time">
         <div>
           <strong>{time}</strong>
           <span>{date}</span>
         </div>
       </div>
+
+      {/* dml-header__right tetap sama seperti sebelumnya */}
 
       <div className="dml-header__right">
         <NotificationBellButton

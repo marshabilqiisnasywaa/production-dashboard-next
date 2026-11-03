@@ -22,18 +22,23 @@ interface SidebarProps {
   brand: ReactNode;
   sections: SidebarSection[];
   footer?: ReactNode;
+  /** Extra class on <aside>. `ui-sidebar--drawer` = off-canvas drawer on mobile. */
+  className?: string;
+  /** Called after a menu link is clicked (e.g. to close the mobile drawer). */
+  onNavigate?: () => void;
 }
 
 /**
  * Generic, config-driven sidebar. Leader / Admin / SPV each pass their own
  * `sections`, so the markup and styling live in exactly one place.
- * On screens < 768px it turns into a bottom tab bar (CSS only).
+ * On screens < 768px it turns into a bottom tab bar (CSS only), or into an
+ * off-canvas drawer when `className` contains `ui-sidebar--drawer`.
  */
-export function Sidebar({ brand, sections, footer }: SidebarProps) {
+export function Sidebar({ brand, sections, footer, className = "", onNavigate }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="ui-sidebar">
+    <aside className={`ui-sidebar ${className}`.trim()}>
       <div className="ui-sidebar__brand">{brand}</div>
       <nav className="ui-sidebar__nav" aria-label="Navigasi utama">
         {sections.map((section, i) => (
@@ -45,6 +50,7 @@ export function Sidebar({ brand, sections, footer }: SidebarProps) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={onNavigate}
                   className={active ? "ui-sidebar__link is-active" : "ui-sidebar__link"}
                   aria-current={active ? "page" : undefined}
                 >

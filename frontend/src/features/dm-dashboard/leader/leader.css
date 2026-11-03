@@ -546,6 +546,10 @@
   font-size: 14px;
 }
 
+.dml-header__menu {
+  display: none;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1279px) {
   .dml-grid {
@@ -574,6 +578,26 @@
   .dml-content.member-content {
     padding: 10px 10px 84px;
   }
+
+  .dml-shell--drawer .dml-content {
+    padding-bottom: 24px;
+  }
+  .dml-header__menu {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--dm-text);
+    cursor: pointer;
+  }
+  .dml-header__time {
+    display: none;
+  } 
+  
   .dml-header {
     height: 50px;
     padding: 0 10px;

@@ -6,17 +6,21 @@ import {
   IconDashboard,
   IconGauge,
   IconHistory,
-  IconLogout,
   IconPulse,
   IconUsers,
   IconAlert,
 } from "@/components/ui/icons";
 import { Sidebar, type SidebarSection } from "@/components/ui/Sidebar";
 import { LEADER_ROUTES } from "../routes";
-import { accountApi, setToken, type DmMe } from "../../api";
+import { accountApi, type DmMe } from "../../api";
 import { useRevisionCount } from "../../notifications/useRevisionCount";
 
-export function LeaderSidebar() {
+interface Props {
+  open?: boolean;
+  onNavigate?: () => void;
+}
+
+export function LeaderSidebar({ open = false, onNavigate }: Props) {
   const [me, setMe] = useState<DmMe | null>(null);
 
   useEffect(() => {
@@ -97,11 +101,6 @@ export function LeaderSidebar() {
     },
   ];
 
-  const handleLogout = () => {
-    setToken(null);
-    window.location.href = "/dm-dashboard/masuk";
-  };
-
   return (
     <Sidebar
       brand={
@@ -113,6 +112,8 @@ export function LeaderSidebar() {
         </>
       }
       sections={sections}
+      className={`ui-sidebar--drawer${open ? " is-open" : ""}`}
+      onNavigate={onNavigate}
     />
   );
 }
