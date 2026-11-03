@@ -1,26 +1,10 @@
-import { useEffect, useState } from "react";
-import { loadSqdip } from "../admin/sqdip/sqdipImport";
-import { DIMS, type SqdipLeaderDay } from "../admin/sqdip/sqdipModel";
-import { formatScore, leaderScores, SQDIP_DIMS } from "./data";
+import { DIMS } from "../admin/sqdip/sqdipModel";
+import { formatScore, SQDIP_DIMS } from "./data";
 import { DetailHeader } from "./components";
+import type { SqdipTableRow } from "./useScorecardData";
 
 const MAX = 6;
 const TH = "whitespace-nowrap px-4 py-3 text-[0.6875rem] font-semibold uppercase tracking-[0.02em]";
-
-type DayRow = SqdipLeaderDay & { dm: string; sum: number };
-
-function loadRows(from: string, to: string): DayRow[] {
-  const dataset = loadSqdip();
-  if (!dataset) return [];
-  return dataset.rows
-    .filter((row) => row.date >= from && row.date <= to)
-    .map((row) => ({
-      ...row,
-      dm: leaderScores.find((item) => item.line === row.line)?.dm ?? "-",
-      sum: row.cells.reduce((total, cell) => total + cell.points, 0),
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.line.localeCompare(b.line) || a.leader.localeCompare(b.leader));
-}
 
 function actualText(index: number, actual: number | null) {
   if (actual === null) return "belum diisi";
@@ -36,17 +20,14 @@ const thStyle = (align: "left" | "center") =>
     background: "var(--color-section)",
   }) as const;
 
-export function SqdipSummary({ dm, startDate, endDate }: { dm: string; startDate: string; endDate: string }) {
-  const [data, setData] = useState<DayRow[]>([]);
-
-  useEffect(() => {
-    const sync = () => setData(loadRows(startDate, endDate));
-    sync();
-    window.addEventListener("storage", sync);
-    return () => window.removeEventListener("storage", sync);
-  }, [startDate, endDate]);
-
-  const rows = data.filter((row) => dm === "Semua" || row.dm === dm);
+export function SqdipSummary({ rows, loading }: { rows: SqdipTableRow[]; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">
+        Memuat data SQDIP...
+      </div>
+    );
+  }
 
   if (rows.length === 0) {
     return (
@@ -56,7 +37,7 @@ export function SqdipSummary({ dm, startDate, endDate }: { dm: string; startDate
     );
   }
 
-  const average = (value: (row: DayRow) => number) =>
+  const average = (value: (row: SqdipTableRow) => number) =>
     rows.reduce((sum, row) => sum + value(row), 0) / rows.length;
 
   return (

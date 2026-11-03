@@ -5,6 +5,7 @@ import type { ChangeEvent, ReactNode } from "react";
 import {
   DIMS,
   EMPTY_FILTERS,
+  buildLeaderDay,
   dateLabel,
   filterRows,
   flagNote,
@@ -23,12 +24,32 @@ import type {
   SqdipLeaderDay,
   SqdipView,
 } from "./sqdipModel";
-import { exportSqdipFile, loadSqdip, parseSqdipFile, saveSqdip } from "./sqdipImport";
+import { exportSqdipFile, parseSqdipFile } from "./sqdipImport";
+import { sqdipApi, type DmSqdipList } from "../../api";
 import { DateRangePicker, FilterSelect } from "../../scorecard/ScorecardFilters";
 import "../UserTable.css";
 import "../SqdipMonitor.css";
 
 const PAGE_SIZE: Record<SqdipView, number> = { summary: 10, detail: 15 };
+
+const IMPORT_BATCH = 2000;
+
+function toDataset(list: DmSqdipList): SqdipDataset | null {
+  if (list.rows.length === 0) return null;
+  return {
+    fileName: list.fileName ?? "",
+    uploadedAt: list.uploadedAt ?? "",
+    rows: list.rows.map((row) =>
+      buildLeaderDay(
+        row.date,
+        row.line,
+        row.leader,
+        row.cells.map((cell) => cell.actual),
+        row.cells.map((cell) => (cell.points === 6 ? 6 : 0))
+      )
+    ),
+  };
+}
 
 const ALL_LINES = "Semua line";
 
@@ -251,8 +272,26 @@ export default function SqdipMonitor() {
   }, [infoOpen]);
 
   useEffect(() => {
-    setDataset(loadSqdip());
-    setReady(true);
+    let alive = true;
+    sqdipApi
+      .list()
+      .then((list) => {
+        if (alive) setDataset(toDataset(list));
+      })
+      .catch((error) => {
+        if (alive) {
+          setNotice({
+            type: "error",
+            text: error instanceof Error ? error.message : "Data SQDIP tidak bisa dimuat.",
+          });
+        }
+      })
+      .finally(() => {
+        if (alive) setReady(true);
+      });
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const sorted = useMemo(() => sortRows(dataset ? dataset.rows : []), [dataset]);
@@ -300,30 +339,28 @@ export default function SqdipMonitor() {
       if (rows.length === 0) {
         throw new Error("Tidak ada baris SQDIP yang valid di file ini.");
       }
-      const keyOf = (row: SqdipLeaderDay) => `${row.date}|${row.line}|${row.leader}`;
-      const merged = new Map<string, SqdipLeaderDay>();
-      (dataset ? dataset.rows : []).forEach((row) => merged.set(keyOf(row), row));
+      const payload = rows.map((row) => ({
+        date: row.date,
+        line: row.line,
+        leader: row.leader,
+        cells: row.cells.map((cell) => ({ actual: cell.actual, points: cell.points })),
+      }));
       let added = 0;
       let updated = 0;
-      rows.forEach((row) => {
-        if (merged.has(keyOf(row))) updated += 1;
-        else added += 1;
-        merged.set(keyOf(row), row);
-      });
-      const next: SqdipDataset = {
-        fileName: file.name,
-        uploadedAt: new Date().toISOString(),
-        rows: Array.from(merged.values()),
-      };
-      const saved = saveSqdip(next);
-      setDataset(next);
+      for (let from = 0; from < payload.length; from += IMPORT_BATCH) {
+        const result = await sqdipApi.import({
+          fileName: file.name,
+          rows: payload.slice(from, from + IMPORT_BATCH),
+        });
+        added += result.added;
+        updated += result.updated;
+      }
+      setDataset(toDataset(await sqdipApi.list()));
       setFilters(EMPTY_FILTERS);
       setPage(1);
       setNotice({
         type: "ok",
-        text: `${added} leader-hari baru ditambahkan, ${updated} diperbarui, ${skipped} baris diabaikan.${
-          saved ? "" : " Data tidak bisa disimpan di browser ini."
-        }`,
+        text: `${added} leader-hari baru ditambahkan, ${updated} diperbarui, ${skipped} baris diabaikan.`,
       });
     } catch (error) {
       setNotice({

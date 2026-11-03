@@ -4,7 +4,8 @@ import { Badge, Button, Card, Input, Select } from "./ui";
 import { formatScore, scoreBar, type ScoreDetailItem, type ScoreTrend } from "./data";
 import { formatTrendDate, type SqdipTrend } from "./sqdipTrend";
 import type { DimKey } from "../admin/sqdip/sqdipModel";
-import "./dm-scorecard.css"; 
+import type { PapercardRow, StandupRow, TrendSeries } from "./useScorecardData";
+import "./dm-scorecard.css";
 export function Segmented<T extends string>({
   items,
   value,
@@ -249,12 +250,8 @@ export function SqdipDimTiles({ tiles, selected, onSelect }: { tiles: { key: Dim
   );
 }
 
-export function TrendChart({ metric, custom }: { metric: ScoreTrend; custom?: SqdipTrend }) {
-  const total = [86, 88, 91, 89, 92, 84, 87, 90, 93, 86, 88, 91, 89, 94, 82, 87, 90, 92, 88, 91, 86];
-  const before = [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30];
-  const current = [31, 32, 34, 33, 35, 29, 31, 33, 35, 30, 32, 34, 33, 36, 28, 31, 33, 35, 32, 34, 30];
-  const after = total.map((value, index) => value - before[index] - current[index]);
-  const seriesByMetric = { Total: total, Before: before, Current: current, After: after };
+export function TrendChart({ metric, custom, trend }: { metric: ScoreTrend; custom?: SqdipTrend; trend?: TrendSeries }) {
+  const seriesByMetric = { Total: trend?.total ?? [], Before: trend?.before ?? [], Current: trend?.current ?? [], After: trend?.after ?? [] };
   const series = custom ? custom.series : seriesByMetric[metric];
   const scale = custom
     ? custom.kind === "int"
@@ -375,7 +372,7 @@ export function TrendChart({ metric, custom }: { metric: ScoreTrend; custom?: Sq
 />
           </g>
         ))}
-        {custom && custom.dates.map((date, index) => {
+        {(custom ? custom.dates : (trend?.dates ?? []).map(formatTrendDate)).map((date, index) => {
           const every = Math.max(1, Math.ceil(80 / step));
           if (index % every !== 0) return null;
           return (
@@ -405,7 +402,7 @@ export function TrendChart({ metric, custom }: { metric: ScoreTrend; custom?: Sq
             </>
           ) : (
             <>
-              <div className="font-semibold text-text">{hovered.index + 1} Sep</div>
+              <div className="font-semibold text-text">{formatTrendDate(trend?.dates[hovered.index] ?? "")}</div>
               <div className="mt-1.5 space-y-0.5">
                 {(["Total", "Before", "Current", "After"] as const).map((key) => (
                   <div key={key} className={`flex items-center justify-between gap-3 ${metric === key ? "font-bold text-text" : "text-text-secondary"}`}>
@@ -439,25 +436,6 @@ export function DetailHeader({ caption, canExport }: { caption: string; canExpor
   );
 }
 
-const PAPERCARD_DM3: string[][] = [
-  ["2026-09-14", "TAC20604", "Ahmad Riswanto", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
-  ["2026-09-15", "TAC20603", "Rudiyansyah", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
-  ["2026-09-16", "TAC20605", "Agus Riyadi", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
-];
-
-const PAPERCARD_DM4: string[][] = [
-  ["2026-09-14", "TAC20607", "Edi Prasetyo", "OK", "OK", "OK", "OK", "100%", "8,00", "14,00", "8,00", "30,00"],
-  ["2026-09-15", "TAC20605", "Rudiyansyah", "OK", "OK", "OK", "Belum diisi", "75%", "6,00", "10,50", "6,00", "22,50"],
-  ["2026-09-16", "TAC20607", "Edi Prasetyo", "OK", "OK", "OK terlambat", "OK", "75%", "6,00", "10,50", "6,00", "22,50"],
-];
-
-function papercardRows(selectedDm: string) {
-  if (selectedDm === "DM 4") return PAPERCARD_DM4;
-  if (selectedDm === "DM 3") return PAPERCARD_DM3;
-  if (selectedDm === "Semua") return [...PAPERCARD_DM3, ...PAPERCARD_DM4].sort((a, b) => a[0].localeCompare(b[0]));
-  return [];
-}
-
 export type StatusCount = { ok: number; ng: number };
 
 function countStatuses(statuses: string[]): StatusCount {
@@ -465,20 +443,24 @@ function countStatuses(statuses: string[]): StatusCount {
   return { ok, ng: statuses.length - ok };
 }
 
-export function papercardCount(selectedDm: string) {
-  return countStatuses(papercardRows(selectedDm).flatMap((row) => row.slice(3, 7)));
+export function papercardCount(rows: PapercardRow[]) {
+  return countStatuses(rows.flatMap((row) => row.statuses.filter((status) => status !== "-")));
 }
 
-export function standupCount() {
-  return countStatuses(STANDUP_ROWS.flatMap((row) => row.status));
+export function standupCount(rows: StandupRow[]): StatusCount {
+  const meetings = rows.flatMap((row) => row.meetings);
+  const ok = meetings.filter((meeting) => meeting.complete).length;
+  return { ok, ng: meetings.length - ok };
 }
 
-export function PapercardDetail({ canExport, selectedDm, startDate, endDate }: { canExport: boolean; selectedDm: string; startDate: string; endDate: string }) {
-  const visibleRows = papercardRows(selectedDm);
+export function PapercardDetail({ canExport, rows, loading, error }: { canExport: boolean; rows: PapercardRow[]; loading: boolean; error: string | null }) {
+  const visibleRows = rows;
   return (
     <>
-      <DetailHeader canExport={canExport} caption="" />
-      {visibleRows.length === 0 ? (
+      <DetailHeader canExport={canExport} caption={error ?? ""} />
+      {loading ? (
+        <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">Memuat data papercard...</div>
+      ) : visibleRows.length === 0 ? (
         <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">Belum ada data</div>
       ) : (
         <div className="scorecard-tab-table overflow-x-auto rounded-xl border border-border">
@@ -508,16 +490,20 @@ export function PapercardDetail({ canExport, selectedDm, startDate, endDate }: {
 </thead>
             <tbody className="divide-y divide-border">
               {visibleRows.map((row) => (
-                <tr key={`${row[0]}-${row[1]}`} className="hover:bg-section/60">
-                  <td className="whitespace-nowrap px-4 py-3 text-left">{row[0]}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-left font-semibold">{row[1]}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-left">{row[2]}</td>
-                  {row.slice(3, 7).map((status, index) => (
+                <tr key={`${row.date}-${row.line}`} className="hover:bg-section/60">
+                  <td className="whitespace-nowrap px-4 py-3 text-left">{row.date}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-left font-semibold">{row.line}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-left">{row.leader}</td>
+                  {row.statuses.map((status, index) => (
                     <td key={index} className="whitespace-nowrap px-4 py-3 text-center">
-                      {status === "OK terlambat" ? <Badge tone="warning"><Clock3 size={11} /> OK terlambat</Badge> : status === "Belum diisi" ? <Badge tone="neutral">Belum diisi</Badge> : <StatusChip value={status} />}
+                      {status === "OK terlambat" ? <Badge tone="warning"><Clock3 size={11} /> OK terlambat</Badge> : status === "Belum diisi" || status === "-" ? <Badge tone="neutral">{status}</Badge> : <StatusChip value={status} />}
                     </td>
                   ))}
-                  {row.slice(7).map((value, index) => <td key={index} className="whitespace-nowrap px-4 py-3 text-center font-semibold">{value}</td>)}
+                  <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{row.rate}%</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{formatScore(row.onTime)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{formatScore(row.registered)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{formatScore(row.closed)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{formatScore(row.total)}</td>
                 </tr>
               ))}
             </tbody>
@@ -528,80 +514,65 @@ export function PapercardDetail({ canExport, selectedDm, startDate, endDate }: {
   );
 }
 
-type StandupStatus = "OK" | "NG";
-type StandupRow = {
-  date: string;
-  line: string;
-  leader: string;
-  status: StandupStatus[]; // urutan sama dengan STANDUP_ROLES
-  attendance: number;
-  content: number;
-  closeLoop: number;
-};
+function MeetingCell({ meeting }: { meeting: StandupRow["meetings"][number] | undefined }) {
+  if (!meeting || !meeting.held) return <Badge tone="neutral">Tidak ada</Badge>;
+  return <Badge tone={meeting.complete ? "success" : "danger"}>{meeting.complete ? "OK" : "NG"} {meeting.present}/{meeting.required}</Badge>;
+}
 
-const STANDUP_ROLES = ["Leader", "ME", "PE", "QA"] as const;
-
-// Data contoh, nanti diganti dari API
-const STANDUP_ROWS: StandupRow[] = [
-  { date: "2026-09-14", line: "TAC20604", leader: "Ahmad Riswanto", status: ["OK", "OK", "OK", "OK"], attendance: 10, content: 10, closeLoop: 10 },
-  { date: "2026-09-15", line: "TAC20603", leader: "Rudiyansyah", status: ["OK", "NG", "OK", "OK"], attendance: 7.5, content: 10, closeLoop: 0 },
-  { date: "2026-09-16", line: "TAC20605", leader: "Agus Riyadi", status: ["OK", "OK", "OK", "OK"], attendance: 10, content: 10, closeLoop: 10 },
-];
-
-export function StandupDetail({ canExport }: { canExport: boolean }) {
+export function StandupDetail({ canExport, rows, loading, error }: { canExport: boolean; rows: StandupRow[]; loading: boolean; error: string | null }) {
   return (
     <>
-      <DetailHeader canExport={canExport} caption="" />
-      <div className="scorecard-tab-table overflow-x-auto rounded-xl border border-border">
-        <table className="w-full table-auto text-left text-sm">
-          <thead className="bg-section text-xs text-text-secondary">
-            <tr>
-              <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Tanggal</th>
-              <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Line</th>
-              <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Nama Leader</th>
-              <th colSpan={4} className="whitespace-nowrap border-x border-b border-border px-4 py-2 text-center font-semibold">Status kehadiran</th>
-              <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-center font-semibold">Rate</th>
-              <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Presensi</th>
-              <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Isi rapat</th>
-              <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Close loop</th>
-              <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Total harian</th>
-            </tr>
-            <tr>
-              {STANDUP_ROLES.map((role, index) => (
-                <th
-                  key={role}
-                  className={`whitespace-nowrap border-l border-border px-4 py-2 text-center font-semibold${index === STANDUP_ROLES.length - 1 ? " border-r" : ""}`}
-                >
-                  {role}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {STANDUP_ROWS.map((row) => {
-              const total = row.attendance + row.content + row.closeLoop;
-              const rate = row.status.filter((s) => s === "OK").length / STANDUP_ROLES.length;
-              return (
+      <DetailHeader canExport={canExport} caption={error ?? ""} />
+      {loading ? (
+        <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">Memuat data standup meeting...</div>
+      ) : rows.length === 0 ? (
+        <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">Belum ada data</div>
+      ) : (
+        <div className="scorecard-tab-table overflow-x-auto rounded-xl border border-border">
+          <table className="w-full table-auto text-left text-sm">
+            <thead className="bg-section text-xs text-text-secondary">
+              <tr>
+                <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Tanggal</th>
+                <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Line</th>
+                <th rowSpan={2} className="whitespace-nowrap px-4 py-3 text-left font-semibold">Nama Leader</th>
+                <th colSpan={2} className="whitespace-nowrap border-x border-b border-border px-4 py-2 text-center font-semibold">Kehadiran lengkap</th>
+                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Presensi</th>
+                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Isi rapat</th>
+                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Close loop</th>
+                <th rowSpan={2} className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold">Total harian</th>
+              </tr>
+              <tr>
+                {[1, 2].map((number, index) => (
+                  <th
+                    key={number}
+                    className={`whitespace-nowrap border-l border-border px-4 py-2 text-center font-semibold${index === 1 ? " border-r" : ""}`}
+                  >
+                    Rapat {number}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {rows.map((row) => (
                 <tr key={`${row.date}-${row.line}`} className="hover:bg-section/60">
                   <td className="whitespace-nowrap px-4 py-3 text-left">{row.date}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-left font-semibold">{row.line}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-left">{row.leader}</td>
-                  {row.status.map((status, index) => (
-                    <td key={STANDUP_ROLES[index]} className="whitespace-nowrap px-4 py-3 text-center">
-                      <StatusChip value={status} />
+                  {[1, 2].map((number) => (
+                    <td key={number} className="whitespace-nowrap px-4 py-3 text-center">
+                      <MeetingCell meeting={row.meetings.find((meeting) => meeting.number === number)} />
                     </td>
                   ))}
-                  <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{Math.round(rate * 100)}%</td>
                   <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{formatScore(row.attendance)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{formatScore(row.content)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{formatScore(row.closeLoop)}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{formatScore(total)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">{formatScore(row.total)}</td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </>
   );
 }

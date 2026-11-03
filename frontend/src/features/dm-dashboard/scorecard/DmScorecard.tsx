@@ -1,7 +1,7 @@
 ﻿import { useCallback, useEffect, useRef, useState } from "react";
 import { BarChart3, ClipboardList, Clock3, Download, Expand, Settings2, ShieldCheck, Users, X } from "lucide-react";
 import { Badge, Button, Card, SectionTitle } from "./ui";
-import { computeDmScores, dmScoreDetails, DM_ORDER, formatScore, leaderScores, type ScoreTab, type ScoreTrend } from "./data";
+import { computeDmScores, formatScore, type ScoreTab, type ScoreTrend } from "./data";
 import {
   PapercardDetail,
   papercardCount,
@@ -17,22 +17,32 @@ import {
 import LeaderBoard from "./LeaderBoard";
 import SqdipSummary from "./SqdipSummary";
 import { buildSqdipTrend } from "./sqdipTrend";
+import {
+  buildTrendSeries,
+  defaultRange,
+  dmNameOf,
+  jakartaToday,
+  toLeaderScores,
+  toPapercardRows,
+  toSqdipRows,
+  toStandupRows,
+  useScorecardData,
+} from "./useScorecardData";
 import type { DimKey } from "../admin/sqdip/sqdipModel";
 import { DateRangePicker, FilterPortalContext, FilterSelect } from "./ScorecardFilters";
 import "./dm-scorecard.css";
 
 export default function DmScorecard({ isLeader = false, canExport = false }: { isLeader?: boolean; canExport?: boolean }) {
-  const [workshop, setWorkshop] = useState(isLeader ? "Workshop 6" : "Semua");
+  const [workshop, setWorkshop] = useState("Semua");
   const [selectedLeader, setSelectedLeader] = useState<string | null>(null);
-  const [selectedDm, setSelectedDm] = useState(isLeader ? "DM 3" : "Semua");
+  const [selectedDm, setSelectedDm] = useState("Semua");
   const [trend, setTrend] = useState<ScoreTrend>("Total");
   const [sqdipDim, setSqdipDim] = useState<DimKey>("Safety");
   const [tab, setTab] = useState<ScoreTab>("Papercard");
   const [expandedPillars, setExpandedPillars] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [range, setRange] = useState({ from: "2026-09-15", to: "2026-09-21" });
+  const [range, setRange] = useState(defaultRange);
   const startDate = range.from;
   const endDate = range.to;
   // Skor bulanan (KPI & peringkat) mengikuti bulan dari tanggal awal periode
@@ -44,25 +54,26 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
     setPortalEl(node);
   }, []);
   const target = Number(month.slice(5)) <= 6 ? 80 : 90;
-  const hasData = month === "2026-09";
+  const { lines, loading, error } = useScorecardData(startDate, endDate);
+  const workshopNames = [...new Set(lines.map((line) => line.info.workshopName))].sort();
+  const workshopLines = lines.filter((line) => workshop === "Semua" || line.info.workshopName === workshop);
+  const leaderScores = toLeaderScores(workshopLines);
   const dmScores = computeDmScores(leaderScores, target);
-  const selectedDmScore = selectedDm === "Semua" ? Object.values(dmScores).find((d) => d.rank === 1) : dmScores[selectedDm];
+  const activeDm = selectedDm === "Semua" || dmScores[selectedDm] ? selectedDm : "Semua";
+  const selectedDmScore = activeDm === "Semua" ? Object.values(dmScores).find((d) => d.rank === 1) : dmScores[activeDm];
   const selectedLeaderScore = selectedLeader ? leaderScores.find((l) => l.leader === selectedLeader) : undefined;
   const scoreConfig = selectedLeaderScore ?? (selectedDmScore?.hasLeaders ? selectedDmScore : undefined);
   const handleSelectDm = (dm: string) => { setSelectedDm(dm); setSelectedLeader(null); };
-  const detailDm = selectedLeaderScore?.dm ?? selectedDmScore?.dm;
-  const detailConfig = detailDm === "DM 4" ? dmScoreDetails["DM 4"] : dmScoreDetails["DM 3"];
-  const boardLeaders = (isLeader ? leaderScores.filter((row) => row.leader === "Ahmad Riswanto") : leaderScores)
-  .filter((row) => selectedDm === "Semua" || row.dm === selectedDm);
-  const sqdipScope = { leader: selectedLeader, dm: selectedLeaderScore ? null : selectedDmScore?.dm ?? null };
-  const sqdipTiles = trend === "After" ? SQDIP_DIMS.map((key) => ({ key, trend: buildSqdipTrend(key, startDate, endDate, sqdipScope) })) : [];
+  const boardLeaders = leaderScores.filter((row) => activeDm === "Semua" || row.dm === activeDm);
+  const dmLines = workshopLines.filter((line) => activeDm === "Semua" || dmNameOf(line) === activeDm);
+  const scopeLines = selectedLeaderScore ? workshopLines.filter((line) => line.info.leaderName === selectedLeaderScore.leader) : dmLines;
+  const trendSeries = buildTrendSeries(scopeLines);
+  const sqdipTiles = trend === "After" ? SQDIP_DIMS.map((key) => ({ key, trend: buildSqdipTrend(key, scopeLines) })) : [];
   const sqdipTrend = sqdipTiles.find((tile) => tile.key === sqdipDim)?.trend ?? null;
-  const statusCount = tab === "Papercard" ? papercardCount(selectedDm) : tab === "Standup Meeting" ? standupCount() : null;
-  useEffect(() => {
-    setLoading(true);
-    const timeout = window.setTimeout(() => setLoading(false), 350);
-    return () => window.clearTimeout(timeout);
-  }, [month, workshop]);
+  const papercardRows = toPapercardRows(dmLines);
+  const standupRows = toStandupRows(dmLines);
+  const sqdipRows = toSqdipRows(dmLines);
+  const statusCount = tab === "Papercard" ? papercardCount(papercardRows) : tab === "Standup Meeting" ? standupCount(standupRows) : null;
   useEffect(() => {
     const sync = () => setIsFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", sync);
@@ -73,19 +84,19 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
     <>
       <label className="grid gap-1 text-xs font-semibold text-text-secondary">
         Periode
-        <DateRangePicker value={range} onChange={setRange} />
+        <DateRangePicker value={range} onChange={setRange} maxDate={jakartaToday()} />
       </label>
       {!isLeader && (
         <label className="grid gap-1 text-xs font-semibold text-text-secondary">
           Workshop
-          <FilterSelect value={workshop} onChange={setWorkshop} options={["Semua", "Workshop 5", "Workshop 6"]} />
+          <FilterSelect value={workshop} onChange={setWorkshop} options={["Semua", ...workshopNames]} />
         </label>
       )}
     </>
   );
   const togglePillar = (key: string) => setExpandedPillars((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
 
-  if (loading) return <div><SectionTitle title="KPI Scorecard" description="Nilai Daily Management per DM dan leader" /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 8 }, (_, index) => <Card key={index} className="min-h-dashboard animate-pulse bg-border" />)}</div></div>;
+  if (loading && lines.length === 0) return <div><SectionTitle title="KPI Scorecard" description="Nilai Daily Management per DM dan leader" /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 8 }, (_, index) => <Card key={index} className="min-h-dashboard animate-pulse bg-border" />)}</div></div>;
 
   return (
     <FilterPortalContext.Provider value={portalEl}>
@@ -102,8 +113,9 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
       </div>
       {filterOpen && <div className="fixed inset-0 z-50 bg-overlay md:hidden"><Card className="absolute bottom-0 left-0 right-0 rounded-b-none p-5"><div className="mb-5 flex items-center justify-between"><strong>Filter Scorecard</strong><Button variant="ghost" size="icon" onClick={() => setFilterOpen(false)}><X size={19} /></Button></div><div className="grid gap-4">{filters}<Button onClick={() => setFilterOpen(false)}>Terapkan filter</Button></div></Card></div>}
 
-      {!hasData ? (
-        <Card className="scorecard-empty flex min-h-empty flex-col items-center justify-center p-8 text-center"><BarChart3 size={34} className="text-border-strong" /><div className="mt-4 font-bold">Belum ada data skor pada periode ini</div><div className="mt-1 text-sm text-text-secondary">Pilih September 2026 untuk melihat data contoh.</div></Card>
+      {error && <div role="status" className="mb-4 rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning-dark">{error}</div>}
+      {lines.length === 0 ? (
+        <Card className="scorecard-empty flex min-h-empty flex-col items-center justify-center p-8 text-center"><BarChart3 size={34} className="text-border-strong" /><div className="mt-4 font-bold">Belum ada leader yang ditugaskan</div><div className="mt-1 text-sm text-text-secondary">Tetapkan leader pada line di dashboard admin.</div></Card>
       ) : (
         <>
           <div className="scorecard-kpi-row mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -128,9 +140,6 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
               value={scoreConfig?.current}
               max={40}
               targetEquivalent={36}
-              detail={scoreConfig ? detailConfig.current : undefined}
-              expanded={expandedPillars.includes("current")}
-              onExpand={() => togglePillar("current")}
             />
             <SummaryScoreCard
               title="SQDIP (After)"
@@ -138,9 +147,6 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
               value={scoreConfig?.after}
               max={30}
               targetEquivalent={27}
-              detail={scoreConfig ? detailConfig.after : undefined}
-              expanded={expandedPillars.includes("after")}
-              onExpand={() => togglePillar("after")}
             />
           </div>
 
@@ -151,7 +157,7 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
               month={month}
               target={target}
               dmScores={dmScores}
-              selectedDm={selectedDm}
+              selectedDm={activeDm}
               onSelectDm={handleSelectDm}
               selectedLeader={selectedLeader}
               onSelectLeader={setSelectedLeader}
@@ -168,7 +174,7 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
 />
             </div>
               {scoreConfig && trend === "After" && <SqdipDimTiles tiles={sqdipTiles} selected={sqdipDim} onSelect={setSqdipDim} />}
-              {scoreConfig ? <div className="scorecard-trend-chart mt-4">{trend === "After" ? (sqdipTrend && sqdipTrend.series.length > 1 ? <TrendChart metric={trend} custom={sqdipTrend} /> : <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">Belum cukup data SQDIP pada periode ini</div>) : <TrendChart metric={trend} />}</div> : <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">Belum ada data</div>}
+              {scoreConfig ? <div className="scorecard-trend-chart mt-4">{trend === "After" ? (sqdipTrend && sqdipTrend.series.length > 1 ? <TrendChart metric={trend} custom={sqdipTrend} /> : <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">Belum cukup data SQDIP pada periode ini</div>) : (trendSeries.dates.length > 1 ? <TrendChart metric={trend} trend={trendSeries} /> : <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">Belum cukup data pada periode ini</div>)}</div> : <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">Belum ada data</div>}
           </Card>
           </div>
           <div className="scorecard-bottom-row">
@@ -187,9 +193,9 @@ export default function DmScorecard({ isLeader = false, canExport = false }: { i
                 )}
               </div>
               <div className="scorecard-tabs-body">
-                {tab === "Papercard" && <div className="scorecard-tab-panel"><PapercardDetail canExport={canExport} selectedDm={selectedDm} startDate={startDate} endDate={endDate} /></div>}
-                {tab === "Standup Meeting" && <div className="scorecard-tab-panel scorecard-tab-panel--scroll"><StandupDetail canExport={canExport} /></div>}
-                {tab === "SQDIP" && <div className="scorecard-tab-panel"><SqdipSummary dm={selectedDm} startDate={startDate} endDate={endDate} /></div>}
+                {tab === "Papercard" && <div className="scorecard-tab-panel"><PapercardDetail canExport={canExport} rows={papercardRows} loading={loading} error={null} /></div>}
+                {tab === "Standup Meeting" && <div className="scorecard-tab-panel scorecard-tab-panel--scroll"><StandupDetail canExport={canExport} rows={standupRows} loading={loading} error={null} /></div>}
+                {tab === "SQDIP" && <div className="scorecard-tab-panel"><SqdipSummary rows={sqdipRows} loading={loading} /></div>}
               </div>
             </Card>
           </div>
