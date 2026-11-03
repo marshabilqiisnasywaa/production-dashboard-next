@@ -718,5 +718,160 @@ class DmGroupOut(CamelModel):
 class DmGroupLineAssignIn(CamelModel):
     group_id: int | None = None
 
+# kpi papercard
+class PapercardKpiCheckOut(CamelModel):
+    department: str
+    submitted: bool
+    on_time: bool
+    has_finding: bool
+    registered: bool
+    closed: bool
 
 
+class PapercardKpiDayOut(CamelModel):
+    date: date
+    final: bool
+    on_time: int
+    registered: int
+    closed: int
+    total: int
+    checks: list[PapercardKpiCheckOut]
+
+
+class PapercardKpiAverageOut(CamelModel):
+    days: int
+    on_time: float
+    registered: float
+    closed: float
+    total: float
+
+
+class PapercardKpiOut(CamelModel):
+    max_on_time: int
+    max_registered: int
+    max_closed: int
+    max_total: int
+    days: list[PapercardKpiDayOut]
+    average: PapercardKpiAverageOut | None
+
+
+
+class ScorecardLeaderOut(CamelModel):
+    line_id: int
+    line_code: str
+    line_name: str
+    model: str | None
+    workshop_id: int
+    workshop_name: str
+    dm_group_id: int | None
+    dm_name: str | None
+    leader_id: int
+    leader_name: str
+    leader_photo_url: str | None
+
+
+class StandupKpiMeetingOut(CamelModel):
+    number: int
+    held: bool
+    required: int
+    present: int
+    complete: bool
+
+
+class StandupKpiDayOut(CamelModel):
+    date: date
+    final: bool
+    attendance: int
+    content: int
+    close_loop: int
+    total: int
+    problems: int
+    problems_closed: int
+    meetings: list[StandupKpiMeetingOut]
+
+
+class StandupKpiAverageOut(CamelModel):
+    days: int
+    attendance: float
+    content: float
+    close_loop: float
+    total: float
+
+
+class StandupKpiOut(CamelModel):
+    max_attendance: int
+    max_content: int
+    max_close_loop: int
+    max_total: int
+    days: list[StandupKpiDayOut]
+    average: StandupKpiAverageOut | None
+
+
+class SqdipCellIn(CamelModel):
+    actual: float | None = None
+    points: Literal[0, 6]
+
+
+class SqdipRowIn(CamelModel):
+    date: date
+    line: str = Field(min_length=1, max_length=32)
+    leader: str = Field(min_length=1, max_length=120)
+    cells: list[SqdipCellIn] = Field(min_length=5, max_length=5)
+
+
+class SqdipImportIn(CamelModel):
+    file_name: str | None = Field(default=None, max_length=255)
+    rows: list[SqdipRowIn] = Field(min_length=1, max_length=5000)
+
+
+class SqdipImportOut(CamelModel):
+    added: int
+    updated: int
+
+
+class SqdipCellOut(CamelModel):
+    actual: float | None
+    points: int
+
+
+class SqdipRowOut(CamelModel):
+    date: date
+    line: str
+    leader: str
+    cells: list[SqdipCellOut]
+
+
+class SqdipListOut(CamelModel):
+    file_name: str | None
+    uploaded_at: datetime | None
+    rows: list[SqdipRowOut]
+
+
+class SqdipKpiDayOut(CamelModel):
+    date: date
+    leader: str
+    final: bool
+    safety: int
+    quality: int
+    delivery: int
+    inventory: int
+    productivity: int
+    total: int
+    actuals: list[float | None]
+
+
+class SqdipKpiAverageOut(CamelModel):
+    days: int
+    safety: float
+    quality: float
+    delivery: float
+    inventory: float
+    productivity: float
+    total: float
+
+
+class SqdipKpiOut(CamelModel):
+    max_per_dimension: int
+    max_total: int
+    days: list[SqdipKpiDayOut]
+    average: SqdipKpiAverageOut | None

@@ -16,6 +16,7 @@ from app.models.meeting import (
 from app.models.mpv_award import MpvAward
 from app.models.notification_setting import DmNotificationSetting
 from app.models.papercard import PapercardSubmission, PapercardTemplate
+from app.models.sqdip import SqdipEntry
 from app.models.user import User
 from app.models.workshop import Workshop
 from app.models.workshop_meeting import (
@@ -49,6 +50,7 @@ __all__ = [
     "MpvAward",
     "PapercardSubmission",
     "PapercardTemplate",
+    "SqdipEntry",
     "User",
     "Workshop",
     "LeaderAssignment",

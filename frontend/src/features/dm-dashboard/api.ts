@@ -317,8 +317,172 @@ export type DmPublicWorkshopTeam = {
   supervisors: DmPublicWorkshopSupervisor[];
 };
 
+export type DmPapercardKpiCheck = {
+  department: string;
+  submitted: boolean;
+  onTime: boolean;
+  hasFinding: boolean;
+  registered: boolean;
+  closed: boolean;
+};
+
+export type DmPapercardKpiDay = {
+  date: string;
+  final: boolean;
+  onTime: number;
+  registered: number;
+  closed: number;
+  total: number;
+  checks: DmPapercardKpiCheck[];
+};
+
+export type DmPapercardKpi = {
+  maxOnTime: number;
+  maxRegistered: number;
+  maxClosed: number;
+  maxTotal: number;
+  days: DmPapercardKpiDay[];
+  average: {
+    days: number;
+    onTime: number;
+    registered: number;
+    closed: number;
+    total: number;
+  } | null;
+};
+
+export type DmStandupKpiMeeting = {
+  number: number;
+  held: boolean;
+  required: number;
+  present: number;
+  complete: boolean;
+};
+
+export type DmStandupKpiDay = {
+  date: string;
+  final: boolean;
+  attendance: number;
+  content: number;
+  closeLoop: number;
+  total: number;
+  problems: number;
+  problemsClosed: number;
+  meetings: DmStandupKpiMeeting[];
+};
+
+export type DmStandupKpi = {
+  maxAttendance: number;
+  maxContent: number;
+  maxCloseLoop: number;
+  maxTotal: number;
+  days: DmStandupKpiDay[];
+  average: {
+    days: number;
+    attendance: number;
+    content: number;
+    closeLoop: number;
+    total: number;
+  } | null;
+};
+
+export type DmSqdipKpiDay = {
+  date: string;
+  leader: string;
+  final: boolean;
+  safety: number;
+  quality: number;
+  delivery: number;
+  inventory: number;
+  productivity: number;
+  total: number;
+  actuals: (number | null)[];
+};
+
+export type DmSqdipKpi = {
+  maxPerDimension: number;
+  maxTotal: number;
+  days: DmSqdipKpiDay[];
+  average: {
+    days: number;
+    safety: number;
+    quality: number;
+    delivery: number;
+    inventory: number;
+    productivity: number;
+    total: number;
+  } | null;
+};
+
+export type DmScorecardLeader = {
+  lineId: number;
+  lineCode: string;
+  lineName: string;
+  model: string | null;
+  workshopId: number;
+  workshopName: string;
+  dmGroupId: number | null;
+  dmName: string | null;
+  leaderId: number;
+  leaderName: string;
+  leaderPhotoUrl: string | null;
+};
+
+export type DmSqdipAdminRow = {
+  date: string;
+  line: string;
+  leader: string;
+  cells: { actual: number | null; points: number }[];
+};
+
+export type DmSqdipList = {
+  fileName: string | null;
+  uploadedAt: string | null;
+  rows: DmSqdipAdminRow[];
+};
+
+type KpiParams = { lineCode: string; from: string; to: string; shift?: string };
+
+function kpiQuery(params: KpiParams, withShift: boolean) {
+  const query = new URLSearchParams({
+    line_code: params.lineCode,
+    from: params.from,
+    to: params.to,
+  });
+  if (withShift) query.set("shift", params.shift ?? "Shift 1");
+  return query.toString();
+}
+
+export const sqdipApi = {
+  list: () => request<DmSqdipList>("/sqdip", {}, true),
+  import: (data: {
+    fileName: string;
+    rows: {
+      date: string;
+      line: string;
+      leader: string;
+      cells: { actual: number | null; points: number }[];
+    }[];
+  }) =>
+    request<{ added: number; updated: number }>(
+      "/sqdip/import",
+      json("POST", data),
+      true
+    ),
+};
+
 export const publicApi = {
   workshops: () => request<{ id: number; name: string }[]>("/public/workshops"),
+  scorecardLeaders: () =>
+    request<DmScorecardLeader[]>("/public/scorecard/leaders"),
+  papercardKpi: (params: KpiParams) =>
+    request<DmPapercardKpi>(
+      "/public/papercard-kpi?" + kpiQuery(params, true)
+    ),
+  standupKpi: (params: KpiParams) =>
+    request<DmStandupKpi>("/public/standup-kpi?" + kpiQuery(params, true)),
+  sqdipKpi: (params: KpiParams) =>
+    request<DmSqdipKpi>("/public/sqdip-kpi?" + kpiQuery(params, false)),
   boards: () => request<DmBoardListItem[]>("/public/boards"),
   board: (slug: string) =>
     request<DmBoard>(`/public/boards/${encodeURIComponent(slug)}`),

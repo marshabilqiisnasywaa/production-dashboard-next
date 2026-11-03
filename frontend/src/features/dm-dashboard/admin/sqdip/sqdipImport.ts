@@ -1,8 +1,7 @@
 import { readWorkbook } from "../UserImport";
 import { DIMS, buildLeaderDay, meets } from "./sqdipModel";
-import type { SqdipDataset, SqdipLeaderDay } from "./sqdipModel";
+import type { SqdipLeaderDay } from "./sqdipModel";
 
-const STORAGE_KEY = "dm-sqdip:v1";
 const GREEN = "#007A3F";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -127,28 +126,6 @@ export async function parseSqdipFile(
     }
   });
   return { rows, skipped };
-}
-
-export function loadSqdip(): SqdipDataset | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw) as SqdipDataset;
-    if (!data || !Array.isArray(data.rows) || typeof data.fileName !== "string") return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-export function saveSqdip(dataset: SqdipDataset): boolean {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(dataset));
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 type XlsCell = { value: string | number; format?: string } | null;

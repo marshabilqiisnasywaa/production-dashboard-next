@@ -1,4 +1,5 @@
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
@@ -11,8 +12,10 @@ from app.models import (
     Board,
     BoardMember,
     DmMeetingAttendance,
+    DmGroup,
     DmMeetingSession,
     Employee,
+    LeaderAssignment,
     Line,
     Workshop,
     WorkshopMeetingSession,
@@ -29,9 +32,16 @@ from app.schemas import (
     WorkshopRecapSessionOut,
     CamelModel,
     MeetingSessionOut,
+    PapercardKpiOut,
+    ScorecardLeaderOut,
+    SqdipKpiOut,
+    StandupKpiOut,
     WorkshopHod,
 )
+from app.services import sqdip as sqdip_service
+from app.services import standup_kpi
 from app.services.boards import public_board
+from app.services.papercard_kpi import MAX_CLOSED, MAX_ON_TIME, MAX_REGISTERED, MAX_TOTAL, average_scores, line_kpi
 
 router = APIRouter(prefix="/public", tags=["public"])
 
@@ -327,3 +337,112 @@ def attendance_recap(
         rows=rows,
         workshop_sessions=workshop_sessions,
     )
+
+
+def resolve_kpi_request(db: Session, line_id: int | None, line_code: str | None, from_date: date, to_date: date):
+    today = datetime.now(ZoneInfo("Asia/Jakarta")).date()
+    if from_date > to_date:
+        raise HTTPException(status_code=400, detail="Tanggal awal tidak boleh melewati tanggal akhir.")
+    if to_date > today:
+        raise HTTPException(status_code=400, detail="Tanggal akhir tidak boleh di masa depan.")
+    if (to_date - from_date).days > 365:
+        raise HTTPException(status_code=400, detail="Rentang maksimal 366 hari.")
+    if line_id is None and not line_code:
+        raise HTTPException(status_code=400, detail="Isi line_id atau line_code.")
+    line = db.get(Line, line_id) if line_id is not None else db.scalar(select(Line).where(Line.code == line_code))
+    if line is None:
+        raise HTTPException(status_code=404, detail="Lini tidak ditemukan.")
+    return line, today
+
+
+@router.get("/standup-kpi", response_model=StandupKpiOut)
+def standup_kpi_endpoint(
+    line_id: int | None = None,
+    line_code: str | None = None,
+    from_date: date = Query(alias="from"),
+    to_date: date = Query(alias="to"),
+    shift: str = "Shift 1",
+    db: Session = Depends(get_db),
+) -> StandupKpiOut:
+    line, today = resolve_kpi_request(db, line_id, line_code, from_date, to_date)
+    days = standup_kpi.line_standup(db, line.id, from_date, to_date, shift, today)
+    return StandupKpiOut(
+        max_attendance=standup_kpi.MAX_ATTENDANCE,
+        max_content=standup_kpi.MAX_CONTENT,
+        max_close_loop=standup_kpi.MAX_CLOSE_LOOP,
+        max_total=standup_kpi.MAX_TOTAL,
+        days=days,
+        average=standup_kpi.average_scores(days),
+    )
+
+
+@router.get("/sqdip-kpi", response_model=SqdipKpiOut)
+def sqdip_kpi_endpoint(
+    line_id: int | None = None,
+    line_code: str | None = None,
+    from_date: date = Query(alias="from"),
+    to_date: date = Query(alias="to"),
+    db: Session = Depends(get_db),
+) -> SqdipKpiOut:
+    line, today = resolve_kpi_request(db, line_id, line_code, from_date, to_date)
+    days = sqdip_service.line_sqdip(db, line.code, from_date, to_date, today)
+    return SqdipKpiOut(
+        max_per_dimension=sqdip_service.POINTS_PER_DIMENSION,
+        max_total=sqdip_service.MAX_TOTAL,
+        days=days,
+        average=sqdip_service.average_scores(days),
+    )
+
+
+@router.get("/papercard-kpi", response_model=PapercardKpiOut)
+def papercard_kpi(
+    line_id: int | None = None,
+    line_code: str | None = None,
+    from_date: date = Query(alias="from"),
+    to_date: date = Query(alias="to"),
+    shift: str = "Shift 1",
+    db: Session = Depends(get_db),
+) -> PapercardKpiOut:
+    line, today = resolve_kpi_request(db, line_id, line_code, from_date, to_date)
+    days = line_kpi(db, line.id, from_date, to_date, shift, today)
+    return PapercardKpiOut(
+        max_on_time=MAX_ON_TIME,
+        max_registered=MAX_REGISTERED,
+        max_closed=MAX_CLOSED,
+        max_total=MAX_TOTAL,
+        days=days,
+        average=average_scores(days),
+    )
+
+
+@router.get("/scorecard/leaders", response_model=list[ScorecardLeaderOut])
+def scorecard_leaders(db: Session = Depends(get_db)) -> list[ScorecardLeaderOut]:
+    rows = db.execute(
+        select(Line, Workshop, Employee, DmGroup)
+        .join(LeaderAssignment, LeaderAssignment.line_id == Line.id)
+        .join(Workshop, Workshop.id == Line.workshop_id)
+        .join(Employee, Employee.id == LeaderAssignment.employee_id)
+        .outerjoin(DmGroup, DmGroup.id == Line.dm_group_id)
+        .where(
+            LeaderAssignment.kind == "line_leader",
+            LeaderAssignment.ended_at.is_(None),
+            Employee.is_active.is_(True),
+        )
+        .order_by(Workshop.name, DmGroup.name, Line.code)
+    ).all()
+    return [
+        ScorecardLeaderOut(
+            line_id=line.id,
+            line_code=line.code,
+            line_name=line.name,
+            model=line.model,
+            workshop_id=workshop.id,
+            workshop_name=workshop.name,
+            dm_group_id=group.id if group else None,
+            dm_name=group.name if group else None,
+            leader_id=employee.id,
+            leader_name=employee.name,
+            leader_photo_url=employee.photo_url,
+        )
+        for line, workshop, employee, group in rows
+    ]

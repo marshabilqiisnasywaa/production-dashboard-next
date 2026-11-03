@@ -15,7 +15,6 @@ import {
   fmtTarget,
   sortRows,
   totalTone,
-  weekdayLabel,
 } from "./sqdipModel";
 import type {
   SqdipDataset,
@@ -99,17 +98,6 @@ function CrossIcon() {
   );
 }
 
-function WarnIcon() {
-  return (
-    <span className="sq-ico is-warn">
-      <Svg size={13}>
-        <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
-        <path d="M12 9v4M12 17h.01" />
-      </Svg>
-    </span>
-  );
-}
-
 type SortDir = "asc" | "desc";
 
 function SummaryTable({
@@ -123,7 +111,18 @@ function SummaryTable({
 }) {
   return (
     <div className="ut-wrap sq-wrap">
-      <table className="ut-table sq-table">
+      <table className="ut-table sq-table sq-table-fixed">
+        {/* Lebar kolom: atur persentase di sini, totalnya 100 */}
+        <colgroup>
+          <col style={{ width: "9%" }} />
+          <col style={{ width: "8%" }} />
+          <col style={{ width: "11%" }} />
+          {DIMS.map((dim) => (
+            <col key={dim.key} style={{ width: "10%" }} />
+          ))}
+          <col style={{ width: "13%" }} />
+          <col style={{ width: "9%" }} />
+        </colgroup>
         <thead>
           <tr>
             <th aria-sort={sortDir === "asc" ? "ascending" : "descending"}>
@@ -147,19 +146,17 @@ function SummaryTable({
                 <div className="sq-th-rule">{dim.rule}</div>
               </th>
             ))}
-            <th className="sq-right">
+            <th>
                 <div className="sq-th-name">Total</div>
-                <div className="sq-th-rule">5 dimensi × 6 poin = 30</div>
+                <div className="sq-th-rule">5 × 6 poin = 30</div>
               </th>
+            <th className="sq-state-col">Status</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
             <tr key={`${row.date}|${row.line}|${row.leader}`}>
-              <td>
-                <div className="sq-num sq-date">{dateLabel(row.date)}</div>
-                <div className="sq-sub">{weekdayLabel(row.date)}</div>
-              </td>
+              <td className="sq-num">{dateLabel(row.date)}</td>
               <td className="sq-num">{row.line}</td>
               <td>{row.leader}</td>
               {row.cells.map((cell, i) => {
@@ -168,21 +165,17 @@ function SummaryTable({
                 return (
                   <td
                     key={DIMS[i].key}
-                    className={ok ? "sq-cell" : "sq-cell is-fail"}
+                    className={ok && !cell.flag ? "sq-cell" : "sq-cell is-fail"}
                     title={`${DIMS[i].key} · target ${fmtTarget(i)} · poin ${cell.points}${note ? ` · ${note}` : ""}`}
                   >
                     <div className="sq-cell-main">
                       <span className="sq-num sq-val">{fmtActual(i, cell.actual)}</span>
-                      {cell.flag ? <WarnIcon /> : null}
                     </div>
-                    <div className="sq-num sq-sub">
-                      {fmtDelta(i, cell.actual)} ·{" "}
-                      <span className={ok ? "sq-pts" : "sq-pts is-fail"}>{cell.points} poin</span>
-                    </div>
+                    <div className="sq-num sq-sub">{cell.points} poin</div>
                   </td>
                 );
               })}
-              <td className="sq-right">
+              <td>
                 <span
                   className={`sq-total is-${totalTone(row.total)}`}
                   title={`${row.total / 6} dari 5 dimensi tercapai × 6 poin`}
@@ -190,6 +183,13 @@ function SummaryTable({
                   {row.total}
                 </span>
                 <span className="sq-total-max"> / 30</span>
+              </td>
+              <td className="sq-state-col">
+                {row.total === 30 ? (
+                  <span className="ut-badge is-on">On target</span>
+                ) : (
+                  <span className="ut-badge is-fail">Off target</span>
+                )}
               </td>
             </tr>
           ))}

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Card } from "./ui";
 
-import { formatScore, DM_ORDER, type DmScore, type LeaderScore } from "./data";
+import { formatScore, type DmScore, type LeaderScore } from "./data";
 
 type LeaderBoardProps = {
   leaders: LeaderScore[];
@@ -167,7 +167,7 @@ export default function LeaderBoard({
 
   const dmRows =
     showDmChips && dmScores
-      ? DM_ORDER.map((dm) => dmScores[dm])
+      ? Object.values(dmScores)
           .filter((score) => score?.hasLeaders)
           .sort((a, b) => a.rank - b.rank)
       : [];
