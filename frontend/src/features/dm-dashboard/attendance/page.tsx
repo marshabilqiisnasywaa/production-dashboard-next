@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 // import Link from "next/link";
 import { departmentLabel } from "../departments";
@@ -28,8 +30,8 @@ type TrendDay = {
 
 const STATUS_OPTIONS = ["Semua status", "Tepat waktu", "Telat", "Tidak hadir"];
 
-function formatDate(date: string) {
-  return new Date(`${date}T12:00:00`).toLocaleDateString("id-ID", {
+function formatDate(date: string, locale = "id-ID") {
+  return new Date(`${date}T12:00:00`).toLocaleDateString(locale, {
     day: "2-digit",
 
     month: "short",
@@ -62,6 +64,7 @@ function TrendChart({
   selectedDate: string | null;
   onSelectDate: (date: string) => void;
 }) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const height = 330;
 
   const left = 58;
@@ -123,9 +126,7 @@ function TrendChart({
   return (
     <div className="att-analytics">
       {!hasMeetingData ? (
-        <div className="att-chart-empty">
-          Belum ada data kehadiran pada periode ini.
-        </div>
+        <div className="att-chart-empty">{uiText("Belum ada data kehadiran pada periode ini.")}</div>
       ) : (
         <div className="att-chart-scroll">
           <svg
@@ -133,7 +134,7 @@ function TrendChart({
             viewBox={`0 0 ${width} ${height}`}
             style={data.length > 14 ? { minWidth: width } : undefined}
             role="img"
-            aria-label="Tren komposisi dan tingkat kehadiran"
+            aria-label={uiText("Tren komposisi dan tingkat kehadiran")}
             onMouseLeave={() => setHoveredIndex(null)}
           >
             <defs>
@@ -211,7 +212,7 @@ function TrendChart({
               );
             })}
 
-            {data.map((d, i) => {
+            {uiText(data.map((d, i) => {
               const centerX = left + slot * i + slot / 2;
 
               const x = centerX - barWidth / 2;
@@ -262,10 +263,10 @@ function TrendChart({
                   role={hasMeeting ? "button" : undefined}
                   aria-label={
                     hasMeeting
-                      ? `${formatDate(d.date)}: ${formatPercent(
+                      ? `${formatDate(d.date, uiLocale)}: ${formatPercent(
                           d.onTime + d.late
                         )} hadir`
-                      : `${formatDate(d.date)}: tidak ada meeting`
+                      : `${formatDate(d.date, uiLocale)}: tidak ada meeting`
                   }
                 >
                   <rect
@@ -314,7 +315,7 @@ function TrendChart({
                       textAnchor="middle"
                       className="att-chart-date"
                     >
-                      {d.label} {new Date(`${d.date}T12:00:00`).getDate()}
+                      {uiText(d.label)} {new Date(`${d.date}T12:00:00`).getDate()}
                     </text>
                   ) : null}
 
@@ -330,7 +331,7 @@ function TrendChart({
                   ) : null}
                 </g>
               );
-            })}
+            }))}
 
             <path
               d={linePath}
@@ -375,14 +376,14 @@ function TrendChart({
                   hoveredMeetingDay ? "" : " att-chart-tooltip-empty"
                 }`}
               >
-                <strong>{formatDate(hoveredDay.date)}</strong>
+                <strong>{uiText(formatDate(hoveredDay.date, uiLocale))}</strong>
 
                 <span>
                   {hoveredMeetingDay
-                    ? `${formatPercent(
+                    ? uiText("{{v0}} hadir", { v0: formatPercent(
                         hoveredMeetingDay.onTime + hoveredMeetingDay.late
-                      )} hadir`
-                    : "Tidak ada meeting"}
+                      ) })
+                    : uiText("Tidak ada meeting")}
                 </span>
               </div>
 
@@ -391,7 +392,7 @@ function TrendChart({
                   <div className="att-chart-tooltip-row">
                     <i className="att-tooltip-dot ontime" />
 
-                    <span>Tepat waktu</span>
+                    <span>{uiText("Tepat waktu")}</span>
 
                     <strong>{formatPercent(hoveredMeetingDay.onTime)}</strong>
                   </div>
@@ -399,7 +400,7 @@ function TrendChart({
                   <div className="att-chart-tooltip-row">
                     <i className="att-tooltip-dot late" />
 
-                    <span>Telat</span>
+                    <span>{uiText("Telat")}</span>
 
                     <strong>{formatPercent(hoveredMeetingDay.late)}</strong>
                   </div>
@@ -407,7 +408,7 @@ function TrendChart({
                   <div className="att-chart-tooltip-row">
                     <i className="att-tooltip-dot absent" />
 
-                    <span>Tidak hadir</span>
+                    <span>{uiText("Tidak hadir")}</span>
 
                     <strong>{formatPercent(hoveredMeetingDay.absent)}</strong>
                   </div>
@@ -422,6 +423,7 @@ function TrendChart({
 }
 
 export default function AttendanceDashboardPage() {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [period, setPeriod] = useState("7");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
@@ -464,7 +466,7 @@ export default function AttendanceDashboardPage() {
 
         return {
           date,
-          label: new Date(`${date}T12:00:00`).toLocaleDateString("id-ID", {
+          label: new Date(`${date}T12:00:00`).toLocaleDateString(uiLocale, {
             weekday: "short",
           }),
           onTime: total
@@ -601,18 +603,16 @@ export default function AttendanceDashboardPage() {
       <div className="att-container">
         <section className="att-page-heading">
           <div>
-            <p className="att-eyebrow">DM OPERATIONS</p>
+            <p className="att-eyebrow">{uiText("DM OPERATIONS")}</p>
 
-            <h1>Rekapitulasi Presensi</h1>
+            <h1>{uiText("Rekapitulasi Presensi")}</h1>
 
-            <p className="att-muted">
-              Pantau tingkat kehadiran meeting DM Line dan DM Workshop.
-            </p>
+            <p className="att-muted">{uiText("Pantau tingkat kehadiran meeting DM Line dan DM Workshop.")}</p>
           </div>
 
           <div className="att-filters">
             <label>
-              <span>Periode</span>
+              <span>{uiText("Periode")}</span>
 
               <div className="att-segment">
                 {[
@@ -628,29 +628,29 @@ export default function AttendanceDashboardPage() {
                     className={period === item.value ? "active" : ""}
                     onClick={() => changePeriod(item.value)}
                   >
-                    {item.label}
+                    {uiText(item.label)}
                   </button>
                 ))}
               </div>
             </label>
 
             <label>
-              <span>Level</span>
+              <span>{uiText("Level")}</span>
 
               <select
                 value={level}
                 onChange={(e) => changeLevel(e.target.value)}
               >
-                <option>Semua</option>
+                <option>{uiText("Semua")}</option>
 
-                <option>DM Line</option>
+                <option>{uiText("DM Line")}</option>
 
-                <option>DM Workshop</option>
+                <option>{uiText("DM Workshop")}</option>
               </select>
             </label>
 
             <label>
-              <span>Sesi</span>
+              <span>{uiText("Sesi")}</span>
 
               <select
                 value={session}
@@ -661,7 +661,7 @@ export default function AttendanceDashboardPage() {
                 }}
               >
                 {availableSessions.map((s) => (
-                  <option key={s}>{s}</option>
+                  <option key={s}>{uiText(s)}</option>
                 ))}
               </select>
             </label>
@@ -670,35 +670,33 @@ export default function AttendanceDashboardPage() {
 
         {error && !hasData ? (
           <div className="att-chart-empty" role="alert">
-            {error}{" "}
+            {uiText(error)}{" "}
             <button
               type="button"
               className="att-date-filter-clear"
               onClick={reload}
-            >
-              Coba lagi
-            </button>
+            >{uiText("Coba lagi")}</button>
           </div>
         ) : loading && !hasData ? (
-          <div className="att-chart-empty">Memuat data presensi…</div>
+          <div className="att-chart-empty">{uiText("Memuat data presensi…")}</div>
         ) : (
           <>
-            <section className="att-kpis" aria-label="Ringkasan kehadiran">
+            <section className="att-kpis" aria-label={uiText("Ringkasan kehadiran")}>
               <article className="att-kpi">
                 <div className="att-kpi-top">
-                  <span>Tepat waktu</span>
+                  <span>{uiText("Tepat waktu")}</span>
 
                   <span className="att-kpi-icon green">✓</span>
                 </div>
 
                 <strong>{stats.onTime}</strong>
 
-                <p>{formatPercent(stats.onTimeRate)} dari total presensi</p>
+                <p>{formatPercent(stats.onTimeRate)}{uiText(" dari total presensi")}</p>
               </article>
 
               <article className="att-kpi">
                 <div className="att-kpi-top">
-                  <span>Telat</span>
+                  <span>{uiText("Telat")}</span>
 
                   <span className="att-kpi-icon amber">◷</span>
                 </div>
@@ -708,14 +706,12 @@ export default function AttendanceDashboardPage() {
                 <p>
                   {formatPercent(
                     stats.total ? (stats.late / stats.total) * 100 : 0
-                  )}{" "}
-                  dari total presensi
-                </p>
+                  )}{" "}{uiText("dari total presensi")}</p>
               </article>
 
               <article className="att-kpi">
                 <div className="att-kpi-top">
-                  <span>Tidak hadir</span>
+                  <span>{uiText("Tidak hadir")}</span>
 
                   <span className="att-kpi-icon red">×</span>
                 </div>
@@ -725,21 +721,19 @@ export default function AttendanceDashboardPage() {
                 <p>
                   {formatPercent(
                     stats.total ? (stats.absent / stats.total) * 100 : 0
-                  )}{" "}
-                  dari total presensi
-                </p>
+                  )}{" "}{uiText("dari total presensi")}</p>
               </article>
 
               <article className="att-kpi att-kpi-rate">
                 <div className="att-kpi-top">
-                  <span>Tingkat kehadiran</span>
+                  <span>{uiText("Tingkat kehadiran")}</span>
 
                   <span className="att-kpi-icon green">↗</span>
                 </div>
 
                 <strong>{formatPercent(stats.rate)}</strong>
 
-                <p>Peserta yang hadir, termasuk yang terlambat</p>
+                <p>{uiText("Peserta yang hadir, termasuk yang terlambat")}</p>
 
                 <div className="att-rate-track">
                   <span style={{ width: `${stats.rate}%` }} />
@@ -751,12 +745,12 @@ export default function AttendanceDashboardPage() {
               <section className="att-panel att-trend-panel">
               <div className="att-panel-heading">
                 <div>
-                  <h2>Tren Kehadiran</h2>
+                  <h2>{uiText("Tren Kehadiran")}</h2>
 
-                  <p>Proporsi tepat waktu, telat, dan tidak hadir per hari</p>
+                  <p>{uiText("Proporsi tepat waktu, telat, dan tidak hadir per hari")}</p>
                 </div>
 
-                <span className="att-chart-badge">{periodLabel}</span>
+                <span className="att-chart-badge">{uiText(periodLabel)}</span>
               </div>
 
               <TrendChart
@@ -772,20 +766,16 @@ export default function AttendanceDashboardPage() {
 
               <div className="att-legend">
                 <span>
-                  <i className="legend-dot ontime" /> Tepat waktu
-                </span>
+                  <i className="legend-dot ontime" />{uiText(" Tepat waktu")}</span>
 
                 <span>
-                  <i className="legend-dot late" /> Telat
-                </span>
+                  <i className="legend-dot late" />{uiText(" Telat")}</span>
 
                 <span>
-                  <i className="legend-dot absent" /> Tidak hadir
-                </span>
+                  <i className="legend-dot absent" />{uiText(" Tidak hadir")}</span>
 
                 <span>
-                  <i className="legend-line" /> Tepat waktu (%)
-                </span>
+                  <i className="legend-line" />{uiText(" Tepat waktu (%)")}</span>
               </div>
               </section>
 
@@ -812,11 +802,9 @@ export default function AttendanceDashboardPage() {
             <section className="att-panel att-detail-panel">
               <div className="att-detail-heading">
                 <div>
-                  <h2>Detail Presensi</h2>
+                  <h2>{uiText("Detail Presensi")}</h2>
 
-                  <p>
-                    Rincian kehadiran berdasarkan tanggal, sesi, dan peserta
-                  </p>
+                  <p>{uiText("Rincian kehadiran berdasarkan tanggal, sesi, dan peserta")}</p>
                   {selectedDate && (
                     <button
                       type="button"
@@ -825,8 +813,7 @@ export default function AttendanceDashboardPage() {
                         setSelectedDate(null);
                         setPage(1);
                       }}
-                    >
-                      Filter tanggal: {formatDate(selectedDate)} ×
+                    >{uiText("Filter tanggal: ")}{uiText(formatDate(selectedDate, uiLocale))} ×
                     </button>
                   )}
                   {department && (
@@ -837,15 +824,14 @@ export default function AttendanceDashboardPage() {
                         setDepartment(null);
                         resetPage();
                       }}
-                    >
-                      Departemen: {departmentLabel(department)} ×
+                    >{uiText("Departemen: ")}{uiText(departmentLabel(department))} ×
                     </button>
                   )}
                 </div>
 
                 <div className="att-detail-tools">
                   <label className="att-status-filter">
-                    <span className="sr-only">Filter status</span>
+                    <span className="sr-only">{uiText("Filter status")}</span>
 
                     <select
                       value={status}
@@ -856,13 +842,13 @@ export default function AttendanceDashboardPage() {
                       }}
                     >
                       {STATUS_OPTIONS.map((s) => (
-                        <option key={s}>{s}</option>
+                        <option key={s}>{uiText(s)}</option>
                       ))}
                     </select>
                   </label>
 
                   <label className="att-search">
-                    <span className="sr-only">Cari nama atau peran</span>
+                    <span className="sr-only">{uiText("Cari nama atau peran")}</span>
 
                     <input
                       value={search}
@@ -871,7 +857,7 @@ export default function AttendanceDashboardPage() {
 
                         resetPage();
                       }}
-                      placeholder="Cari nama atau peran..."
+                      placeholder={uiText("Cari nama atau peran...")}
                     />
                   </label>
                 </div>
@@ -881,28 +867,28 @@ export default function AttendanceDashboardPage() {
                 <table className="att-table">
                   <thead>
                     <tr>
-                      <th>Tanggal</th>
+                      <th>{uiText("Tanggal")}</th>
 
-                      <th>Sesi</th>
+                      <th>{uiText("Sesi")}</th>
 
-                      <th>Nama</th>
+                      <th>{uiText("Nama")}</th>
 
-                      <th>Peran</th>
+                      <th>{uiText("Peran")}</th>
 
-                      <th>Level</th>
+                      <th>{uiText("Level")}</th>
 
-                      <th>Waktu presensi</th>
+                      <th>{uiText("Waktu presensi")}</th>
 
-                      <th>Selisih</th>
+                      <th>{uiText("Selisih")}</th>
 
-                      <th>Status</th>
+                      <th>{uiText("Status")}</th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {paginatedRows.map((r) => (
+                    {uiText(paginatedRows.map((r) => (
                       <tr key={r.id}>
-                        <td>{formatDate(r.date)}</td>
+                        <td>{formatDate(r.date, uiLocale)}</td>
 
                         <td>{r.session.replace("Sesi ", "")}</td>
 
@@ -942,17 +928,15 @@ export default function AttendanceDashboardPage() {
                                 : "absent"
                             }`}
                           >
-                            {r.status}
+                            {uiText(r.status)}
                           </span>
                         </td>
                       </tr>
-                    ))}
+                    )))}
 
                     {!paginatedRows.length && (
                       <tr>
-                        <td colSpan={8} className="att-empty-row">
-                          Tidak ada data yang cocok dengan filter.
-                        </td>
+                        <td colSpan={8} className="att-empty-row">{uiText("Tidak ada data yang cocok dengan filter.")}</td>
                       </tr>
                     )}
                   </tbody>
@@ -960,33 +944,26 @@ export default function AttendanceDashboardPage() {
               </div>
 
               <div className="att-table-footer">
-                <span>
-                  Menampilkan{" "}
+                <span>{uiText("Menampilkan")}{" "}
                   {filteredRows.length ? (page - 1) * pageSize + 1 : 0}–
-                  {Math.min(page * pageSize, filteredRows.length)} dari{" "}
-                  {filteredRows.length} data
-                </span>
+                  {Math.min(page * pageSize, filteredRows.length)}{uiText(" dari")}{" "}
+                  {filteredRows.length}{uiText(" data")}</span>
 
                 <div className="att-pagination">
                   <button
                     type="button"
                     disabled={page <= 1}
                     onClick={() => setPage((p) => p - 1)}
-                  >
-                    Sebelumnya
-                  </button>
+                  >{uiText("Sebelumnya")}</button>
 
-                  <span>
-                    Halaman {page} dari {totalPages}
+                  <span>{uiText("Halaman ")}{page}{uiText(" dari ")}{totalPages}
                   </span>
 
                   <button
                     type="button"
                     disabled={page >= totalPages}
                     onClick={() => setPage((p) => p + 1)}
-                  >
-                    Berikutnya
-                  </button>
+                  >{uiText("Berikutnya")}</button>
                 </div>
               </div>
             </section>

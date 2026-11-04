@@ -38,5 +38,5 @@ logs/
 /.agents/
 /.claude/
 /anti-slop/
-
+.pnpm-store/
 .DS_Store

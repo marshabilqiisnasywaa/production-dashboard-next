@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import type { MouseEvent, ReactNode } from "react";
 
 export type ButtonProps = {
@@ -56,12 +58,13 @@ export function Input({
   type?: string;
   className?: string;
 }) {
+  const { text: uiText } = useUiText();
   return (
     <input
       type={type}
       value={value}
       onChange={(event) => onChange?.(event.target.value)}
-      placeholder={placeholder}
+      placeholder={uiText(placeholder)}
       className={`h-10 w-full rounded-lg border border-border bg-white px-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary-soft ${className}`}
     />
   );
@@ -78,11 +81,12 @@ export function Textarea({
   onChange?: (value: string) => void;
   rows?: number;
 }) {
+  const { text: uiText } = useUiText();
   return (
     <textarea
       value={value}
       onChange={(event) => onChange?.(event.target.value)}
-      placeholder={placeholder}
+      placeholder={uiText(placeholder)}
       rows={rows}
       className="w-full resize-y rounded-lg border border-border bg-white px-3 py-2 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary-soft"
     />
@@ -162,14 +166,15 @@ export function SectionTitle({
   description?: string;
   action?: ReactNode;
 }) {
+  const { text: uiText } = useUiText();
   return (
     <div className="mb-5 flex items-start justify-between gap-4">
       <div>
         <div className="text-xl font-bold tracking-tight text-text md:text-2xl">
-          {title}
+          {uiText(title)}
         </div>
         {description && (
-          <div className="mt-1 text-sm text-text-secondary">{description}</div>
+          <div className="mt-1 text-sm text-text-secondary">{uiText(description)}</div>
         )}
       </div>
       {action}

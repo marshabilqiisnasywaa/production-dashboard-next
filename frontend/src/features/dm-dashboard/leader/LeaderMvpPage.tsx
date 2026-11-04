@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useState } from "react";
 import MpvManager from "../admin/MpvManager";
@@ -7,6 +9,7 @@ import { leaderMpvApi, type DmLine } from "../api";
 const call = <T,>(fn: () => Promise<T>): Promise<T> => fn();
 
 export default function LeaderMvpPage() {
+  const { text: uiText } = useUiText();
   const [lines, setLines] = useState<DmLine[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,14 +30,14 @@ export default function LeaderMvpPage() {
     <div>
       <div className="dml-page-head">
         <div>
-          <h1>MVP of the Month</h1>
-          <p>Pilih MVP bulanan dari operator lini atau masukkan data manual untuk lini yang menjadi tanggung jawab Anda.</p>
+          <h1>{uiText("MVP of the Month")}</h1>
+          <p>{uiText("Pilih MVP bulanan dari operator lini atau masukkan data manual untuk lini yang menjadi tanggung jawab Anda.")}</p>
         </div>
       </div>
-      {loading ? <div className="dml-empty" role="status">Memuat lini...</div> : error ? (
+      {loading ? <div className="dml-empty" role="status">{uiText("Memuat lini...")}</div> : error ? (
         <div className="dml-empty" role="alert">
-          <p>{error}</p>
-          <button type="button" className="mpv-sm-btn mpv-btn-soft-primary" onClick={() => setRetry((value) => value + 1)}>Coba lagi</button>
+          <p>{uiText(error)}</p>
+          <button type="button" className="mpv-sm-btn mpv-btn-soft-primary" onClick={() => setRetry((value) => value + 1)}>{uiText("Coba lagi")}</button>
         </div>
       ) : (
         <MpvManager

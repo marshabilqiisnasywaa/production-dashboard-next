@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,15 +37,16 @@ interface SidebarProps {
  * off-canvas drawer when `className` contains `ui-sidebar--drawer`.
  */
 export function Sidebar({ brand, sections, footer, className = "", onNavigate }: SidebarProps) {
+  const { text: uiText } = useUiText();
   const pathname = usePathname();
 
   return (
     <aside className={`ui-sidebar ${className}`.trim()}>
       <div className="ui-sidebar__brand">{brand}</div>
-      <nav className="ui-sidebar__nav" aria-label="Navigasi utama">
+      <nav className="ui-sidebar__nav" aria-label={uiText("Navigasi utama")}>
         {sections.map((section, i) => (
           <div key={section.title ?? i} className="ui-sidebar__section">
-            {section.title && <div className="ui-sidebar__section-title">{section.title}</div>}
+            {section.title && <div className="ui-sidebar__section-title">{uiText(section.title)}</div>}
             {section.items.map((item) => {
               const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
               return (
@@ -55,7 +58,7 @@ export function Sidebar({ brand, sections, footer, className = "", onNavigate }:
                   aria-current={active ? "page" : undefined}
                 >
                   {item.icon}
-                  <span>{item.label}</span>
+                  <span>{uiText(item.label)}</span>
                   {item.badge ? <span className="ui-sidebar__badge">{item.badge}</span> : null}
                 </Link>
               );

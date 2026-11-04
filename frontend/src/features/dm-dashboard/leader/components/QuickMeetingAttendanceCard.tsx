@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import Link from "next/link";
 import { IconCheckCircle, IconUsers } from "@/components/ui/icons";
@@ -17,10 +19,11 @@ export function QuickMeetingAttendanceCard({
   members = [],
   loading = false,
 }: QuickMeetingAttendanceCardProps) {
+  const { text: uiText } = useUiText();
   if (loading) {
     return (
       <div className="dms-card" style={{ minHeight: "135px", justifyContent: "center", alignItems: "center" }}>
-        <span style={{ fontSize: "12px", color: "#94a3b8" }}>Memuat sesi DM meeting...</span>
+        <span style={{ fontSize: "12px", color: "#94a3b8" }}>{uiText("Memuat sesi DM meeting...")}</span>
       </div>
     );
   }
@@ -61,10 +64,10 @@ export function QuickMeetingAttendanceCard({
     return (
       <div key={num} className={itemClass}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span className="dms-session-label">{label}</span>
-          <span className={tagClass}>{statusText}</span>
+          <span className="dms-session-label">{uiText(label)}</span>
+          <span className={tagClass}>{uiText(statusText)}</span>
         </div>
-        <span className="dms-session-time">{time} WIB</span>
+        <span className="dms-session-time">{time}{uiText(" WIB")}</span>
       </div>
     );
   };
@@ -77,18 +80,17 @@ export function QuickMeetingAttendanceCard({
             <IconUsers size={18} />
           </div>
           <div>
-            <h2 className="dms-card-title">Presensi &amp; Sesi DM Meeting</h2>
+            <h2 className="dms-card-title">{uiText("Presensi & Sesi DM Meeting")}</h2>
             <p className="dms-card-subtitle">
               {ordered.length > 0
-                ? `${ordered.length} sesi hari ini: ${ordered.map((x) => x.scheduledTime).join(" · ")} WIB`
-                : "Belum ada jadwal meeting hari ini"}
+                ? uiText("{{v0}} sesi hari ini: {{v1}} WIB", { v0: ordered.length, v1: ordered.map((x) => x.scheduledTime).join(" · ") })
+                : uiText("Belum ada jadwal meeting hari ini")}
             </p>
           </div>
         </div>
         <span className="dms-status-badge dms-status-badge--approved" style={{ fontSize: "11px", padding: "2px 8px" }}>
           <IconCheckCircle size={12} />
-          {completedCount} / {ordered.length} Selesai
-        </span>
+          {completedCount} / {ordered.length}{uiText(" Selesai")}</span>
       </div>
 
       {/* 3 Session Stepper Bar */}
@@ -111,18 +113,15 @@ export function QuickMeetingAttendanceCard({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "11px", color: "#64748b" }}>Presensi Tim:</span>
+          <span style={{ fontSize: "11px", color: "#64748b" }}>{uiText("Presensi Tim:")}</span>
           <strong style={{ fontSize: "12px", color: "#0f172a" }}>
-            {presentCount} / {totalCount} Hadir
-          </strong>
+            {presentCount} / {totalCount}{uiText(" Hadir")}</strong>
         </div>
         <Link
           href={LEADER_ROUTES.meeting}
           className="dms-btn-compact dms-btn-compact--secondary"
           style={{ padding: "3px 9px", fontSize: "11.5px" }}
-        >
-          Buka Ruang Sesi →
-        </Link>
+        >{uiText("Buka Ruang Sesi →")}</Link>
       </div>
     </div>
   );

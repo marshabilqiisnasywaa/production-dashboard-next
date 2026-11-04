@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { leaderAssignmentApi } from "../api";
@@ -32,8 +34,8 @@ function positionLabel(item: LeaderHistoryEntry) {
     : `Leader Line ${item.line_code_snapshot}`;
 }
 
-function dateLabel(value: string) {
-  return new Intl.DateTimeFormat("id-ID", {
+function dateLabel(value: string, locale = "id-ID") {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
@@ -48,6 +50,7 @@ export default function UserHistoryPage({
   onBack,
   onRetryUsers,
 }: Props) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [employeeId, setEmployeeId] = useState(
     initialEmployeeId ? String(initialEmployeeId) : ""
   );
@@ -131,29 +134,24 @@ export default function UserHistoryPage({
     <section className="dm-panel" aria-labelledby="user-history-title">
       <div className="dm-panel-head">
         <div>
-          <h3 id="user-history-title" className="dm-panel-title">
-            Riwayat User
-          </h3>
-          <p className="dm-panel-sub">
-            Perjalanan penugasan leader line dan leader DM, dari yang terbaru.
-          </p>
+          <h3 id="user-history-title" className="dm-panel-title">{uiText("Riwayat User")}</h3>
+          <p className="dm-panel-sub">{uiText("Perjalanan penugasan leader line dan leader DM, dari yang terbaru.")}</p>
         </div>
         <button
           type="button"
           className="dm-admin-btn is-secondary"
           onClick={onBack}
         >
-          <ArrowLeft size={16} /> Daftar User
-        </button>
+          <ArrowLeft size={16} />{uiText(" Daftar User")}</button>
       </div>
       <div className="dm-history-filters">
         <div className="dm-admin-field">
-          <label htmlFor="history-user-search">Cari nama atau NIK</label>
+          <label htmlFor="history-user-search">{uiText("Cari nama atau NIK")}</label>
           <input
             id="history-user-search"
             type="search"
             className="dm-admin-input"
-            placeholder="Ketik nama atau NIK, lalu pilih hasilnya"
+            placeholder={uiText("Ketik nama atau NIK, lalu pilih hasilnya")}
             disabled={loadingUsers || Boolean(usersError)}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -163,15 +161,13 @@ export default function UserHistoryPage({
         {query && !loadingUsers && !usersError && users.length > 0 ? (
           <div>
             {choices.length === 0 ? (
-              <p className="dm-leader-note" role="status">
-                User tidak ditemukan.
-              </p>
+              <p className="dm-leader-note" role="status">{uiText("User tidak ditemukan.")}</p>
             ) : null}
             {choices.length > 0 ? (
               <ul
                 id="history-user-results"
                 className="dm-history-user-results"
-                aria-label="Hasil pencarian User"
+                aria-label={uiText("Hasil pencarian User")}
               >
                 {choices.map((user) => (
                   <li key={user.id}>
@@ -186,7 +182,7 @@ export default function UserHistoryPage({
                       <strong>{user.name}</strong>
                       <span>
                         {user.employeeId}
-                        {user.isActive ? "" : " · Nonaktif"}
+                        {user.isActive ? "" : uiText(" · Nonaktif")}
                       </span>
                     </button>
                   </li>
@@ -197,20 +193,15 @@ export default function UserHistoryPage({
         ) : null}
         {!query && !loadingUsers && !usersError ? (
           <div className="dm-holders">
-            <p className="dm-holders-lead">
-              Posisi saat ini. Pilih satu orang untuk melihat riwayatnya.
-            </p>
+            <p className="dm-holders-lead">{uiText("Posisi saat ini. Pilih satu orang untuk melihat riwayatnya.")}</p>
             {currentError ? (
               <p role="alert">{currentError}</p>
             ) : currentHolders.length === 0 ? (
-              <p className="dm-leader-note" role="status">
-                Belum ada leader aktif yang tercatat. Cari nama di atas untuk
-                melihat riwayat user lain.
-              </p>
+              <p className="dm-leader-note" role="status">{uiText("Belum ada leader aktif yang tercatat. Cari nama di atas untuk melihat riwayat user lain.")}</p>
             ) : (
               <div className="dm-holder-wrap">
-                <ul className="dm-holder-list" aria-label="Leader saat ini">
-                  {currentHolders.map(({ row, holder }) => {
+                <ul className="dm-holder-list" aria-label={uiText("Leader saat ini")}>
+                  {uiText(currentHolders.map(({ row, holder }) => {
                     const selected = String(holder.id) === employeeId;
                     return (
                       <li key={holder.id}>
@@ -247,23 +238,23 @@ export default function UserHistoryPage({
                           <span className="dm-holder-move">
                             <span className="ut-badge is-off">
                               {row.previous
-                                ? positionLabel(row.previous)
-                                : "Belum ada"}
+                                ? uiText(positionLabel(row.previous))
+                                : uiText("Belum ada")}
                             </span>
                             <span
                               className="dm-holder-arrow"
-                              aria-label="menjadi"
+                              aria-label={uiText("menjadi")}
                             >
                               →
                             </span>
                             <span className="ut-badge is-leader">
-                              {positionLabel(row.position)}
+                              {uiText(positionLabel(row.position))}
                             </span>
                           </span>
                         </button>
                       </li>
                     );
-                  })}
+                  }))}
                 </ul>
               </div>
             )}
@@ -271,7 +262,7 @@ export default function UserHistoryPage({
         ) : null}
       </div>
       {loadingUsers ? (
-        <p role="status">Memuat daftar User...</p>
+        <p role="status">{uiText("Memuat daftar User...")}</p>
       ) : usersError ? (
         <div role="alert">
           <p>{usersError}</p>
@@ -279,12 +270,10 @@ export default function UserHistoryPage({
             type="button"
             className="dm-admin-btn is-secondary"
             onClick={() => void onRetryUsers()}
-          >
-            Muat ulang User
-          </button>
+          >{uiText("Muat ulang User")}</button>
         </div>
       ) : users.length === 0 ? (
-        <p>Belum ada User terdaftar.</p>
+        <p>{uiText("Belum ada User terdaftar.")}</p>
       ) : null}
       {employee ? (
         <div className="dm-history-content">
@@ -293,57 +282,52 @@ export default function UserHistoryPage({
             <span className="dm-pill">{employee.employeeId}</span>
           </h4>
           <ol className="dm-leader-timeline">
-            {items.map((item) => (
+            {uiText(items.map((item) => (
               <li key={item.id}>
                 <div className="dm-leader-timeline-title">
                   <strong>
                     {item.kind === "dm_leader"
-                      ? "Leader DM"
-                      : `Leader Line ${item.line_code_snapshot}`}
+                      ? uiText("Leader DM")
+                      : uiText("Leader Line {{v0}}", { v0: item.line_code_snapshot })}
                   </strong>
                   <span className="dm-pill">
-                    {item.ended_at ? "Selesai" : "Aktif"}
+                    {item.ended_at ? uiText("Selesai") : uiText("Aktif")}
                   </span>
                 </div>
                 <p>{item.dm_name_snapshot}</p>
                 <p>
                   <time dateTime={item.started_at}>
-                    {dateLabel(item.started_at)}
+                    {uiText(dateLabel(item.started_at, uiLocale))}
                   </time>{" "}
                   —{" "}
                   {item.ended_at ? (
                     <time dateTime={item.ended_at}>
-                      {dateLabel(item.ended_at)}
+                      {uiText(dateLabel(item.ended_at, uiLocale))}
                     </time>
                   ) : (
                     "Sekarang"
                   )}
                 </p>
                 {item.source === "line_membership" ? (
-                  <p>
-                    Periode mengikuti catatan keanggotaan line; nama DM dan line
-                    mengikuti data saat ini.
-                  </p>
+                  <p>{uiText("Periode mengikuti catatan keanggotaan line; nama DM dan line mengikuti data saat ini.")}</p>
                 ) : null}
                 {item.reason ? <p>{item.reason}</p> : null}
               </li>
-            ))}
+            )))}
           </ol>
-          {loading ? <p role="status">Memuat riwayat...</p> : null}
+          {loading ? <p role="status">{uiText("Memuat riwayat...")}</p> : null}
           {!loading && !error && items.length === 0 ? (
-            <p>Belum ada riwayat yang tercatat untuk User ini.</p>
+            <p>{uiText("Belum ada riwayat yang tercatat untuk User ini.")}</p>
           ) : null}
           {error ? (
             <div role="alert">
-              <p>{error}</p>
+              <p>{uiText(error)}</p>
               <button
                 type="button"
                 className="dm-admin-btn is-secondary"
                 disabled={loading}
                 onClick={() => setRetry((value) => value + 1)}
-              >
-                Coba lagi
-              </button>
+              >{uiText("Coba lagi")}</button>
             </div>
           ) : hasMore ? (
             <button
@@ -351,15 +335,11 @@ export default function UserHistoryPage({
               className="dm-admin-btn is-secondary"
               disabled={loading}
               onClick={() => setPage((value) => value + 1)}
-            >
-              Muat riwayat sebelumnya
-            </button>
+            >{uiText("Muat riwayat sebelumnya")}</button>
           ) : null}
         </div>
       ) : !loadingUsers && !usersError ? (
-        <p className="dm-leader-note">
-          Pilih User untuk menampilkan timeline riwayatnya.
-        </p>
+        <p className="dm-leader-note">{uiText("Pilih User untuk menampilkan timeline riwayatnya.")}</p>
       ) : null}
     </section>
   );

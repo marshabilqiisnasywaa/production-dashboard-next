@@ -1,13 +1,17 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useState } from "react";
 import { IconLogout } from "@/components/ui/icons";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import { accountApi, setToken, type DmMe } from "../../api";
 import { NotificationBellButton } from "../../notifications/NotificationBellButton";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export function LeaderHeader({ onMenuClick }: { onMenuClick?: () => void }) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   // null on first render so server and client markup match (no hydration warning)
   const [now, setNow] = useState<Date | null>(null);
   const [user, setUser] = useState<DmMe | null>(null);
@@ -34,7 +38,7 @@ export function LeaderHeader({ onMenuClick }: { onMenuClick?: () => void }) {
 
   const time = now ? `${pad(now.getHours())}:${pad(now.getMinutes())}` : "--:--";
   const date = now
-    ? now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+    ? now.toLocaleDateString(uiLocale, { weekday: "long", day: "numeric", month: "long", year: "numeric" })
     : "";
 
   const displayName = user?.name || user?.username || "Leader";
@@ -50,7 +54,7 @@ export function LeaderHeader({ onMenuClick }: { onMenuClick?: () => void }) {
       <button
         type="button"
         className="dml-header__menu"
-        aria-label="Buka menu"
+        aria-label={uiText("Buka menu")}
         onClick={onMenuClick}
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -67,13 +71,14 @@ export function LeaderHeader({ onMenuClick }: { onMenuClick?: () => void }) {
       {/* dml-header__right tetap sama seperti sebelumnya */}
 
       <div className="dml-header__right">
+        <LanguageSwitcher />
         <NotificationBellButton
           lineId={user?.line?.id}
           dept={user?.dept || "PROD"}
           role="leader"
           lineName={user?.line?.name}
         />
-        <span className="dml-role-badge">LEADER</span>
+        <span className="dml-role-badge">{uiText("LEADER")}</span>
         <div className="dml-user">
           <span className="dml-avatar">{initials}</span>
           <strong>{displayName}</strong>
@@ -81,7 +86,7 @@ export function LeaderHeader({ onMenuClick }: { onMenuClick?: () => void }) {
         <button
           type="button"
           onClick={handleLogout}
-          title="Keluar dari akun Leader"
+          title={uiText("Keluar dari akun Leader")}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -99,7 +104,7 @@ export function LeaderHeader({ onMenuClick }: { onMenuClick?: () => void }) {
           }}
         >
           <IconLogout size={14} />
-          <span>Keluar</span>
+          <span>{uiText("Keluar")}</span>
         </button>
       </div>
     </header>

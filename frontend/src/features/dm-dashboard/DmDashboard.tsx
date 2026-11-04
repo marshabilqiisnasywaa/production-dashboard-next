@@ -1,4 +1,7 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+
 import { departmentLabel } from "./departments";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -41,17 +44,18 @@ function GearIcon() {
 }
 
 function MemberCard({ member }: { member: DmMember }) {
+  const { text: uiText } = useUiText();
   return (
     <div className="dm-member-card">
       <div className="dm-member-banner">
-        <span className="dm-member-name">{member.name ?? "Belum diisi"}</span>
+        <span className="dm-member-name">{member.name ?? uiText("Belum diisi")}</span>
       </div>
       <div className="dm-member-content">
         <div className="dm-member-photo-frame">
           {member.photoUrl ? (
             <img
               src={member.photoUrl}
-              alt={member.name ?? "Anggota tim"}
+              alt={member.name ?? uiText("Anggota tim")}
               className="dm-member-photo"
             />
           ) : (
@@ -62,26 +66,26 @@ function MemberCard({ member }: { member: DmMember }) {
         </div>
         <dl className="dm-member-specs">
           <div className="dm-spec-row">
-            <dt className="dm-spec-label">Work No:</dt>
+            <dt className="dm-spec-label">{uiText("Work No:")}</dt>
             <dd className="dm-spec-value">{member.employeeId ?? "-"}</dd>
           </div>
           <div className="dm-spec-row">
-            <dt className="dm-spec-label">Dept:</dt>
+            <dt className="dm-spec-label">{uiText("Dept:")}</dt>
             <dd className="dm-spec-value">{member.dept ?? "-"}</dd>
           </div>
           <div className="dm-spec-row">
-            <dt className="dm-spec-label">Position:</dt>
+            <dt className="dm-spec-label">{uiText("Position:")}</dt>
             <dd className="dm-spec-value">{member.position ?? "-"}</dd>
           </div>
           {member.supervisor ? (
             <div className="dm-spec-row">
-              <dt className="dm-spec-label">Supervisor:</dt>
+              <dt className="dm-spec-label">{uiText("Supervisor:")}</dt>
               <dd className="dm-spec-value">{member.supervisor}</dd>
             </div>
           ) : null}
           {member.workPhone && member.workPhone !== "-" ? (
             <div className="dm-spec-row">
-              <dt className="dm-spec-label">Work Phone:</dt>
+              <dt className="dm-spec-label">{uiText("Work Phone:")}</dt>
               <dd className="dm-spec-value">{member.workPhone}</dd>
             </div>
           ) : null}
@@ -100,6 +104,7 @@ type LoadState =
   | { kind: "ready"; board: DmBoard };
 
 export default function DmDashboard({ slug }: { slug: string }) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
 
@@ -156,7 +161,7 @@ export default function DmDashboard({ slug }: { slug: string }) {
   if (state.kind === "loading") {
     return (
       <main className="dm-root dm-state-screen" aria-busy="true">
-        <p role="status">Memuat dashboard {slug}...</p>
+        <p role="status">{uiText("Memuat dashboard ")}{slug}...</p>
       </main>
     );
   }
@@ -164,14 +169,9 @@ export default function DmDashboard({ slug }: { slug: string }) {
   if (state.kind === "missing") {
     return (
       <main className="dm-root dm-state-screen">
-        <h1 className="dm-state-title">Dashboard tidak ditemukan</h1>
-        <p>
-          Tidak ada dashboard dengan alamat &quot;{slug}&quot;. Periksa link-nya
-          atau pilih dari daftar.
-        </p>
-        <Link href="/dm-dashboard" className="dm-state-action">
-          Lihat daftar dashboard
-        </Link>
+        <h1 className="dm-state-title">{uiText("Dashboard tidak ditemukan")}</h1>
+        <p>{uiText("Tidak ada dashboard dengan alamat \"")}{slug}{uiText("\". Periksa link-nya atau pilih dari daftar.")}</p>
+        <Link href="/dm-dashboard" className="dm-state-action">{uiText("Lihat daftar dashboard")}</Link>
       </main>
     );
   }
@@ -179,15 +179,13 @@ export default function DmDashboard({ slug }: { slug: string }) {
   if (state.kind === "error") {
     return (
       <main className="dm-root dm-state-screen">
-        <h1 className="dm-state-title">Dashboard belum bisa dimuat</h1>
-        <p role="alert">{state.message}</p>
+        <h1 className="dm-state-title">{uiText("Dashboard belum bisa dimuat")}</h1>
+        <p role="alert">{uiText(state.message)}</p>
         <button
           type="button"
           className="dm-state-action"
           onClick={() => setAttempt((n) => n + 1)}
-        >
-          Coba lagi
-        </button>
+        >{uiText("Coba lagi")}</button>
       </main>
     );
   }
@@ -204,19 +202,19 @@ export default function DmDashboard({ slug }: { slug: string }) {
         <span className="dm-rail-text dm-rail-zh" lang="zh">
           {board.lineLabelZh}
         </span>
-        <span className="dm-rail-text dm-rail-en">{board.lineLabel}</span>
+        <span className="dm-rail-text dm-rail-en">{uiText(board.lineLabel)}</span>
       </aside>
 
       {/* Main Board Container */}
       <div className="dm-board-wrapper">
         <div className="dm-board-main">
           {/* Left Column: Branding, Code, Model, Status, Team Photo, Core Values */}
-          <section className="dm-col-left" aria-label="Informasi Lini">
+          <section className="dm-col-left" aria-label={uiText("Informasi Lini")}>
             <div className="dm-brand-header">
               <div className="dm-brand-logo-wrap">
                 <img
                   src="/assets/dm/oppo-green-logo.svg"
-                  alt="OPPO"
+                  alt={uiText("OPPO")}
                   className="dm-oppo-logo"
                 />
               </div>
@@ -239,14 +237,14 @@ export default function DmDashboard({ slug }: { slug: string }) {
 
             <div className="dm-facts-row">
               <div className="dm-card dm-fact-card">
-                <span className="dm-fact-label">Model:</span>
+                <span className="dm-fact-label">{uiText("Model:")}</span>
                 <span className="dm-fact-value">{board.model ?? "-"}</span>
               </div>
               <div className="dm-card dm-fact-card">
-                <span className="dm-fact-label">Line Status:</span>
+                <span className="dm-fact-label">{uiText("Line Status:")}</span>
                 <span className={`dm-status-badge is-${board.status}`}>
                   <span className="dm-status-pulse" aria-hidden="true" />
-                  {dmStatusLabels[board.status]}
+                  {uiText(dmStatusLabels[board.status])}
                 </span>
               </div>
             </div>
@@ -255,17 +253,17 @@ export default function DmDashboard({ slug }: { slug: string }) {
               {board.teamPhotoUrl ? (
                 <img
                   src={board.teamPhotoUrl}
-                  alt={`Foto Tim Produksi ${board.lineCode}`}
+                  alt={uiText("Foto Tim Produksi {{v0}}", { v0: board.lineCode })}
                   className="dm-panoramic-img"
                 />
               ) : (
                 <div className="dm-photo-empty">
-                  <p>Foto tim belum diunggah.</p>
+                  <p>{uiText("Foto tim belum diunggah.")}</p>
                 </div>
               )}
             </div>
 
-            <div className="dm-values-footer" aria-label="Nilai Perusahaan">
+            <div className="dm-values-footer" aria-label={uiText("Nilai Perusahaan")}>
               {board.values.map((val, idx) => (
                 <span key={val} className="dm-value-item">
                   {idx > 0 ? (
@@ -280,17 +278,15 @@ export default function DmDashboard({ slug }: { slug: string }) {
           </section>
 
           {/* Right Column: Triangle Team (2x2), MPV of The Month, Line Name, Slogan */}
-          <section className="dm-col-right" aria-label="Tim dan Penghargaan">
+          <section className="dm-col-right" aria-label={uiText("Tim dan Penghargaan")}>
             <header className="dm-team-header">
-              <h2 className="dm-team-title">DM TRIANGLE TEAM</h2>
+              <h2 className="dm-team-title">{uiText("DM TRIANGLE TEAM")}</h2>
+              <LanguageSwitcher />
             </header>
 
             <div className="dm-team-grid">
               {topMembers.length === 0 ? (
-                <p className="dm-team-empty">
-                  Anggota tim belum diatur. Admin bisa menambahkannya di Panel
-                  Admin.
-                </p>
+                <p className="dm-team-empty">{uiText("Anggota tim belum diatur. Admin bisa menambahkannya di Panel Admin.")}</p>
               ) : (
                 topMembers.map((member, idx) => (
                   <MemberCard key={member.id ?? idx} member={member} />
@@ -301,11 +297,11 @@ export default function DmDashboard({ slug }: { slug: string }) {
             <div className="dm-mpv-section">
               <div className="dm-mpv-badge-block">
                 <div className="dm-mpv-title-wrap">
-                  <span className="dm-mpv-heading-main">MVP</span>
-                  <span className="dm-mpv-heading-sub">of The Month</span>
+                  <span className="dm-mpv-heading-main">{uiText("MVP")}</span>
+                  <span className="dm-mpv-heading-sub">{uiText("of The Month")}</span>
                   {displayMpv ? (
                     <span className="dm-mpv-period">
-                      {formatPeriod(displayMpv.period)}
+                      {formatPeriod(displayMpv.period, uiLocale)}
                     </span>
                   ) : null}
                 </div>
@@ -360,7 +356,7 @@ export default function DmDashboard({ slug }: { slug: string }) {
                       {displayMpv.photoUrl ? (
                         <img
                           src={displayMpv.photoUrl}
-                          alt={displayMpv.name ?? "MPV"}
+                          alt={displayMpv.name ?? uiText("MPV")}
                           className="dm-member-photo"
                         />
                       ) : (
@@ -371,19 +367,19 @@ export default function DmDashboard({ slug }: { slug: string }) {
                     </div>
                     <dl className="dm-member-specs">
                       <div className="dm-spec-row">
-                        <dt className="dm-spec-label">Work No:</dt>
+                        <dt className="dm-spec-label">{uiText("Work No:")}</dt>
                         <dd className="dm-spec-value">
                           {displayMpv.employeeId ?? "-"}
                         </dd>
                       </div>
                       <div className="dm-spec-row">
-                        <dt className="dm-spec-label">Dept:</dt>
+                        <dt className="dm-spec-label">{uiText("Dept:")}</dt>
                         <dd className="dm-spec-value">
                           {departmentLabel(displayMpv.dept) || "-"}
                         </dd>
                       </div>
                       <div className="dm-spec-row">
-                        <dt className="dm-spec-label">Position:</dt>
+                        <dt className="dm-spec-label">{uiText("Position:")}</dt>
                         <dd className="dm-spec-value">
                           {displayMpv.position ?? "-"}
                         </dd>
@@ -396,11 +392,11 @@ export default function DmDashboard({ slug }: { slug: string }) {
 
             <div className="dm-bottom-cards">
               <div className="dm-card dm-bottom-card">
-                <span className="dm-bottom-label">Line Name:</span>
+                <span className="dm-bottom-label">{uiText("Line Name:")}</span>
                 <span className="dm-bottom-value">{board.lineName}</span>
               </div>
               <div className="dm-card dm-bottom-card">
-                <span className="dm-bottom-label">Slogan:</span>
+                <span className="dm-bottom-label">{uiText("Slogan:")}</span>
                 <span className="dm-bottom-value dm-slogan-text">
                   {board.slogan ?? "-"}
                 </span>
@@ -411,8 +407,8 @@ export default function DmDashboard({ slug }: { slug: string }) {
       </div>
 
       {/* Right Vertical Rail */}
-      <aside className="dm-rail dm-rail-right" aria-label={board.workshopLabel}>
-        <span className="dm-rail-text dm-rail-en">{board.workshopLabel}</span>
+      <aside className="dm-rail dm-rail-right" aria-label={uiText(board.workshopLabel)}>
+        <span className="dm-rail-text dm-rail-en">{uiText(board.workshopLabel)}</span>
       </aside>
     </main>
   );

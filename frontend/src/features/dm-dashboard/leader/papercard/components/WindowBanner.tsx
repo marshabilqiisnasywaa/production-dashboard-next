@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import {
   IconAlert,
   IconCheckCircle,
@@ -29,19 +31,18 @@ export function WindowBanner({
   supervisorNotes,
   submittedAt,
 }: Props) {
+  const { text: uiText } = useUiText();
   // If already submitted, display the approval/review status directly here!
   if (submissionStatus === "approved") {
     return (
       <div className="dml-banner dml-banner--approved">
         <div>
           <p className="dml-banner__title">
-            <IconCheckCircle size={18} /> Disetujui oleh Supervisor {supervisorName ? `(${supervisorName})` : ""}
+            <IconCheckCircle size={18} />{uiText(" Disetujui oleh Supervisor ")}{supervisorName ? `(${supervisorName})` : ""}
           </p>
-          <p className="dml-banner__sub">
-            Checklist telah diverifikasi dan disetujui. Formulir berstatus terkunci dan tidak dapat diubah lagi hari ini.
-          </p>
+          <p className="dml-banner__sub">{uiText("Checklist telah diverifikasi dan disetujui. Formulir berstatus terkunci dan tidak dapat diubah lagi hari ini.")}</p>
         </div>
-        <span className="dml-banner__pill">Disetujui SPV (Terkunci)</span>
+        <span className="dml-banner__pill">{uiText("Disetujui SPV (Terkunci)")}</span>
       </div>
     );
   }
@@ -51,13 +52,11 @@ export function WindowBanner({
       <div className="dml-banner dml-banner--pending">
         <div>
           <p className="dml-banner__title">
-            <IconClipboardCheck size={18} /> Menunggu Persetujuan Supervisor {supervisorName ? `(${supervisorName})` : ""}
+            <IconClipboardCheck size={18} />{uiText(" Menunggu Persetujuan Supervisor ")}{supervisorName ? `(${supervisorName})` : ""}
           </p>
-          <p className="dml-banner__sub">
-            Papercard sudah dikirim{submittedAt ? ` pukul ${submittedAt}` : ""}. Formulir dikunci sementara menunggu review.
-          </p>
+          <p className="dml-banner__sub">{uiText("Papercard sudah dikirim")}{submittedAt ? uiText(" pukul {{v0}}", { v0: submittedAt }) : ""}{uiText(". Formulir dikunci sementara menunggu review.")}</p>
         </div>
-        <span className="dml-banner__pill">Menunggu Review SPV</span>
+        <span className="dml-banner__pill">{uiText("Menunggu Review SPV")}</span>
       </div>
     );
   }
@@ -67,15 +66,11 @@ export function WindowBanner({
       <div className="dml-banner dml-banner--rejected">
         <div>
           <p className="dml-banner__title">
-            <IconAlert size={18} /> Permintaan Revisi dari SPV {supervisorName ? `(${supervisorName})` : ""}
+            <IconAlert size={18} />{uiText(" Permintaan Revisi dari SPV ")}{supervisorName ? `(${supervisorName})` : ""}
           </p>
-          <p className="dml-banner__sub">
-            Catatan: <strong>"{supervisorNotes || "Silakan perbaiki data checklist sesuai arahan"}"</strong> · Formulir dibuka untuk diedit.
-          </p>
+          <p className="dml-banner__sub">{uiText("Catatan: ")}<strong>"{supervisorNotes || uiText("Silakan perbaiki data checklist sesuai arahan")}"</strong>{uiText(" · Formulir dibuka untuk diedit.")}</p>
         </div>
-        <span className="dml-banner__pill" style={{ borderColor: "#ef4444", color: "#b91c1c" }}>
-          Perlu Revisi (Dapat Diedit)
-        </span>
+        <span className="dml-banner__pill" style={{ borderColor: "#ef4444", color: "#b91c1c" }}>{uiText("Perlu Revisi (Dapat Diedit)")}</span>
       </div>
     );
   }
@@ -106,7 +101,7 @@ export function WindowBanner({
     <div className={`dml-banner dml-banner--${state}`}>
       <div>
         <p className="dml-banner__title">
-          <IconClock size={18} /> {c.title}
+          <IconClock size={18} /> {uiText(c.title)}
         </p>
         <p className="dml-banner__sub">{c.sub}</p>
       </div>

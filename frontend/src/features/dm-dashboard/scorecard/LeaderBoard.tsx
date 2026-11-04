@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
@@ -24,9 +26,9 @@ const TOP_COUNT = 5;
 
 type Scored = { before: number; current: number; after: number };
 
-function monthLabel(value: string) {
+function monthLabel(value: string, locale = "id-ID") {
   const date = new Date(`${value}-01T00:00:00`);
-  return date.toLocaleDateString("id-ID", {
+  return date.toLocaleDateString(locale, {
     month: "long",
     year: "numeric",
   });
@@ -52,13 +54,14 @@ function ScoreGauge({
   onTarget: boolean;
   compact?: boolean;
 }) {
+  const { text: uiText } = useUiText();
   const pct = Math.max(0, Math.min(100, value)) / 100;
 
   return (
     <div
       className={`scorecard-leaderboard-gauge${compact ? " is-compact" : ""}`}
       role="img"
-      aria-label={`Skor total ${formatScore(value)} dari 100`}
+      aria-label={uiText("Skor total {{v0}} dari 100", { v0: formatScore(value) })}
     >
       <svg viewBox="0 0 72 72" aria-hidden="true">
         <circle
@@ -91,6 +94,7 @@ function ScoreGauge({
 }
 
 function MetricList({ item }: { item: Scored }) {
+  const { text: uiText } = useUiText();
   const metrics = [
     { label: "Papercard", value: item.before, max: 30 },
     { label: "Standup Meeting", value: item.current, max: 40 },
@@ -106,7 +110,7 @@ function MetricList({ item }: { item: Scored }) {
     <dl className="scorecard-leaderboard-metrics">
       {metrics.map((metric) => (
         <div key={metric.label} className="scorecard-leaderboard-metric">
-          <dt>{metric.label}</dt>
+          <dt>{uiText(metric.label)}</dt>
 
           <dd>
             <span className="scorecard-leaderboard-metric-value">
@@ -132,6 +136,7 @@ function SeeMore({
   expanded: boolean;
   onToggle: () => void;
 }) {
+  const { text: uiText } = useUiText();
   if (total <= TOP_COUNT) return null;
 
   return (
@@ -141,7 +146,7 @@ function SeeMore({
       aria-expanded={expanded}
       onClick={onToggle}
     >
-      {expanded ? `Tampilkan ${TOP_COUNT} teratas` : `Lihat semua (${total})`}
+      {expanded ? uiText("Tampilkan {{v0}} teratas", { v0: TOP_COUNT }) : uiText("Lihat semua ({{v0}})", { v0: total })}
     </button>
   );
 }
@@ -159,6 +164,7 @@ export default function LeaderBoard({
   onSelectLeader,
   showDmChips = false,
 }: LeaderBoardProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showAllDm, setShowAllDm] = useState(false);
   const [showAllLeaders, setShowAllLeaders] = useState(false);
@@ -183,27 +189,23 @@ export default function LeaderBoard({
     <Card className="scorecard-leaderboard">
       <div className="scorecard-leaderboard-head">
         <div className="scorecard-leaderboard-head-top">
-          <div className="scorecard-leaderboard-title">
-            Peringkat · {monthLabel(month)}
+          <div className="scorecard-leaderboard-title">{uiText("Peringkat · ")}{uiText(monthLabel(month, uiLocale))}
           </div>
 
           <div className="scorecard-leaderboard-legend">
             <span className="scorecard-leaderboard-legend-item">
-              <span className="scorecard-leaderboard-legend-dot is-on" />
-              Di atas target (≥ {formatScore(target, 0)})
+              <span className="scorecard-leaderboard-legend-dot is-on" />{uiText("Di atas target (≥ ")}{formatScore(target, 0)})
             </span>
 
             <span className="scorecard-leaderboard-legend-item">
-              <span className="scorecard-leaderboard-legend-dot is-off" />
-              Di bawah target
-            </span>
+              <span className="scorecard-leaderboard-legend-dot is-off" />{uiText("Di bawah target")}</span>
           </div>
         </div>
       </div>
 
       {dmRows.length > 0 && (
         <>
-          <div className="scorecard-leaderboard-section">Peringkat DM</div>
+          <div className="scorecard-leaderboard-section">{uiText("Peringkat DM")}</div>
 
           <div className="scorecard-leaderboard-list">
             {shownDm.map((score) => {
@@ -229,7 +231,7 @@ export default function LeaderBoard({
                         className={`scorecard-leaderboard-rank ${rankClass(
                           score.rank
                         )}`}
-                        title={`Peringkat ${score.rank} dari ${dmRows.length} DM`}
+                        title={uiText("Peringkat {{v0}} dari {{v1}} DM", { v0: score.rank, v1: dmRows.length })}
                       >
                         {score.rank}
                       </span>
@@ -240,8 +242,7 @@ export default function LeaderBoard({
                         {score.dm}
                       </span>
 
-                      <span className="scorecard-leaderboard-meta">
-  Workshop {areas}{score.leader ? ` · ${score.leader}` : ""}
+                      <span className="scorecard-leaderboard-meta">{uiText("Workshop ")}{areas}{score.leader ? ` · ${score.leader}` : ""}
 </span>
                     </span>
 
@@ -277,8 +278,7 @@ export default function LeaderBoard({
       )}
 
       {dmRows.length > 0 && (
-        <div className="scorecard-leaderboard-section">
-          Peringkat Leader{dmFiltered ? ` · ${selectedDm}` : ""}
+        <div className="scorecard-leaderboard-section">{uiText("Peringkat Leader")}{dmFiltered ? ` · ${selectedDm}` : ""}
         </div>
       )}
 
@@ -290,9 +290,7 @@ export default function LeaderBoard({
             ))}
           </div>
         ) : shownLeaders.length === 0 ? (
-          <div className="scorecard-leaderboard-empty">
-            Belum ada Leader DM
-          </div>
+          <div className="scorecard-leaderboard-empty">{uiText("Belum ada Leader DM")}</div>
         ) : (
           shownLeaders.map((row, index) => {
             const rank = index + 1;
@@ -321,7 +319,7 @@ export default function LeaderBoard({
                       className={`scorecard-leaderboard-rank ${rankClass(
                         rank
                       )}`}
-                      title={`Peringkat ${rank} dari ${leaderTotal}`}
+                      title={uiText("Peringkat {{v0}} dari {{v1}}", { v0: rank, v1: leaderTotal })}
                     >
                       {rank}
                     </span>
@@ -333,7 +331,7 @@ export default function LeaderBoard({
                     </span>
 
                     <span className="scorecard-leaderboard-meta">
-                      {row.line} · {row.dm} · Workshop {row.area}
+                      {row.line} · {row.dm}{uiText(" · Workshop ")}{row.area}
                     </span>
                   </span>
 

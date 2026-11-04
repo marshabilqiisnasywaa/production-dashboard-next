@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import CustomSelect from "@/components/shell/CustomSelect";
 import { useEffect, useState } from "react";
 import {
@@ -82,7 +84,8 @@ function Icon({ name }: { name: "calendar"|"download"|"trend"|"factory"|"arrow"|
 type KpiTone = "good" | "bad" | "warning" | "neutral" | "featured";
 
 function StatusPill({ label, tone = "neutral" }: { label: string; tone?: KpiTone }) {
-  return <span className={`status-pill status-pill--${tone}`}>{label}</span>;
+  const { text: uiText } = useUiText();
+  return <span className={`status-pill status-pill--${tone}`}>{uiText(label)}</span>;
 }
 
 function Sparkline({ tone = "good", featured = false }: { tone?: KpiTone; featured?: boolean }) {
@@ -106,6 +109,7 @@ function Sparkline({ tone = "good", featured = false }: { tone?: KpiTone; featur
 }
 
 function KpiCard({ item, onClick }: { item: { name: string; value: string; unit?: string; target: string; delta: string; go: string; focus?: boolean }; onClick: () => void }) {
+  const { text: uiText } = useUiText();
   const isBad = item.delta.startsWith("-") || item.delta === "Needs action";
   const isWarning = item.delta === "Needs action";
   const tone: KpiTone = item.focus ? "good" : isWarning ? "warning" : isBad ? "bad" : "good";
@@ -116,20 +120,20 @@ function KpiCard({ item, onClick }: { item: { name: string; value: string; unit?
     <button type="button" className={`pd-kpi-card ${item.focus ? "featured" : ""}`} onClick={onClick}>
       <div className="pd-kpi-head">
         <span className="pd-kpi-label">{item.name}</span>
-        <StatusPill label={statusLabel} tone={item.focus ? "featured" : isWarning ? "warning" : isBad ? "bad" : "good"} />
+        <StatusPill label={uiText(statusLabel)} tone={item.focus ? "featured" : isWarning ? "warning" : isBad ? "bad" : "good"} />
       </div>
 
       <div className="pd-kpi-main">
         <span className="pd-kpi-value">{item.value}</span>
-        {item.unit ? <span className="pd-kpi-unit">{item.unit}</span> : null}
+        {item.unit ? <span className="pd-kpi-unit">{uiText(item.unit)}</span> : null}
       </div>
 
       <div className="pd-kpi-foot">
         <div className="pd-kpi-foot-row">
-          <span>Target: {item.target}</span>
+          <span>{uiText("Target: ")}{item.target}</span>
           <span className={`pd-kpi-delta pd-kpi-delta--${item.focus ? "featured" : isWarning ? "warning" : isBad ? "bad" : "good"}`}>{item.delta}</span>
         </div>
-        {helperText ? <span className="pd-kpi-helper">{helperText}</span> : null}
+        {helperText ? <span className="pd-kpi-helper">{uiText(helperText)}</span> : null}
       </div>
 
       <div className="pd-kpi-spark">
@@ -140,6 +144,7 @@ function KpiCard({ item, onClick }: { item: { name: string; value: string; unit?
 }
 
 export default function ProductionDashboard({ onNavigate }: { onNavigate: Navigate }) {
+  const { text: uiText } = useUiText();
   const [loading,setLoading]=useState(true);
   const [period,setPeriod]=useState("2025");
   const [hovered,setHovered]=useState<number|null>(null);
@@ -152,13 +157,13 @@ export default function ProductionDashboard({ onNavigate }: { onNavigate: Naviga
     {name:"Workorder Close",value:"94%",target:"100%",delta:"-6.0%",go:"SQDCIP Overview"},
     {name:"Abnormal Terbuka",value:"7",unit:"kasus",target:"2 overdue",delta:"Needs action",go:"Abnormal Tracker"},
   ];
-  return <div className="production-dashboard"><header className="pd-header"><div><span>PRODUCTION ANALYTICS</span><h1>Production Overview</h1><p>Ringkasan performa semua area produksi</p></div><div><button><Icon name="calendar"/>30 Sep – 06 Oct 2025</button><CustomSelect defaultValue="Semua Shift" options={["Semua Shift", "Shift 1", "Shift 2"]} /><button><Icon name="download"/>Export</button></div></header>
+  return <div className="production-dashboard"><header className="pd-header"><div><span>{uiText("PRODUCTION ANALYTICS")}</span><h1>{uiText("Production Overview")}</h1><p>{uiText("Ringkasan performa semua area produksi")}</p></div><div><button><Icon name="calendar"/>{uiText("30 Sep – 06 Oct 2025")}</button><CustomSelect defaultValue="Semua Shift" options={["Semua Shift", "Shift 1", "Shift 2"]} /><button><Icon name="download"/>{uiText("Export")}</button></div></header>
     <div className="pd-kpis">{kpiCards.map((item)=><KpiCard item={item} onClick={()=>onNavigate(item.go)} key={item.name} />)}</div>
-    <div className="pd-row-two"><article className="pd-panel output-chart"><div className="pd-panel-head"><div><h2>Output vs Target</h2><p>Actual production output per day</p></div><CustomSelect value={period} options={["2025", "2024"]} onChange={(next) => setPeriod(next)} /></div><div className="pd-chart"><ResponsiveContainer><BarChart data={outputData} onMouseMove={(state)=>setHovered(typeof state?.activeTooltipIndex==="number"?state.activeTooltipIndex:null)} onMouseLeave={()=>setHovered(null)}><CartesianGrid vertical={false}/><XAxis dataKey="day" axisLine={false} tickLine={false} tickMargin={10}/><Tooltip cursor={{fill:"var(--chart-cursor)"}}/><Legend/><Bar dataKey="actual" name="Actual" fill="var(--chart-1)" radius={6} maxBarSize={28}>{outputData.map((_,index)=><Cell key={index} opacity={hovered===null||hovered===index?1:.6}/>)}</Bar><Bar dataKey="target" name="Target" fill="var(--chart-2)" radius={6} maxBarSize={28}>{outputData.map((_,index)=><Cell key={index} opacity={hovered===null||hovered===index?1:.6}/>)}</Bar></BarChart></ResponsiveContainer></div><footer><strong>Trending up by 5.2% this month <Icon name="trend"/></strong><span>Showing production output for the last 7 days</span></footer></article>
-      <article className="pd-panel kpi-donut"><div className="pd-panel-head"><div><h2>Status KPI Semua Area</h2><p>Ringkasan pencapaian target</p></div></div><div className="pd-donut"><span><strong>25</strong><small>KPI</small></span></div><div className="pd-donut-legend"><span><i className="good"/>On Target <b>18</b></span><span><i className="bad"/>Off Target <b>7</b></span></div></article></div>
-    <section className="pd-section"><div className="pd-section-head"><div><h2>Ringkasan per Area</h2><p>Status KPI utama seluruh area produksi</p></div></div><div className="pd-area-grid">{areaCards.map((area)=><button className="pd-area-card" onClick={()=>onNavigate(area.target)} key={area.name}><div className="pd-area-head"><span><Icon name="factory"/></span><div><h3>{area.name}</h3><p>{area.score} on target</p></div><i className={area.status}/></div><div className="pd-area-kpis">{area.kpis.map(([name,value,status])=><div key={name}><span>{name}</span><b>{value}</b><i className={status}/></div>)}</div><footer>Lihat detail <Icon name="arrow"/></footer></button>)}<button className="pd-all-areas"><span>7</span><strong>Semua Area</strong><p>Lihat performa lengkap</p><Icon name="arrow"/></button></div></section>
-    <div className="pd-row-four"><article className="pd-panel off-target"><div className="pd-panel-head"><div><h2>KPI Off Target</h2><p>KPI dengan gap terjauh dari target</p></div><button onClick={()=>onNavigate("SQDCIP Overview")}>Lihat semua</button></div><div className="pd-table-wrap"><table><thead><tr><th>KPI</th><th>Area</th><th>SQDCIP</th><th>Actual</th><th>Target</th><th>Gap</th><th>PIC</th><th/></tr></thead><tbody>{offTarget.map((row)=><tr key={row[0]}>{row.slice(0,7).map((value,index)=><td key={index}>{index===0?<strong>{value}</strong>:index===2?<b className="pd-sq-badge">{value}</b>:index===5?<span className="pd-gap">{value}</span>:value}</td>)}<td><button onClick={()=>onNavigate("Abnormal Tracker")}>Lapor Abnormal</button></td></tr>)}</tbody></table></div></article><article className="pd-panel recent-abnormal"><div className="pd-panel-head"><div><h2>Abnormal Terbaru</h2><p>5 laporan terakhir</p></div></div>{abnormalities.map((item)=><div className="pd-abnormal-item" key={item[2]}><div><b>{item[0]}</b><span>{item[1]}</span></div><h3>{item[2]}</h3><p>{item[3]} • PIC {item[4]}</p><em className={item[5].toLowerCase().replace(" ","-")}>{item[5]}</em></div>)}<button className="pd-tracker-link" onClick={()=>onNavigate("Abnormal Tracker")}>Buka Abnormal Tracker <Icon name="arrow"/></button></article></div>
-    <div className="pd-row-five"><article className="pd-panel"><div className="pd-panel-head"><div><h2>WIP per Area</h2><p>Actual inventory dibanding target</p></div></div><div className="pd-wide-chart"><ResponsiveContainer><BarChart data={wipData} layout="vertical"><CartesianGrid horizontal={false}/><XAxis type="number" hide/><YAxis type="category" dataKey="area" axisLine={false} tickLine={false} width={110}/><Tooltip/><Legend/><Bar dataKey="actual" name="Actual" fill="var(--chart-1)" radius={6}/><Bar dataKey="target" name="Target" fill="var(--chart-2)" radius={6}/></BarChart></ResponsiveContainer></div></article><article className="pd-panel"><div className="pd-panel-head"><div><h2>NG Rate per Area</h2><p>7 hari terakhir • Standar 1.00%</p></div></div><div className="pd-wide-chart"><ResponsiveContainer><LineChart data={ngData}><CartesianGrid vertical={false}/><XAxis dataKey="day" axisLine={false} tickLine={false}/><YAxis domain={[0,1.3]} axisLine={false} tickLine={false}/><Tooltip/><Legend/><Line dataKey="pre" name="Pre-Assembly" stroke="var(--chart-1)" strokeWidth={2}/><Line dataKey="assembly" name="Assembly" stroke="var(--chart-2)" strokeWidth={2}/><Line dataKey="packing" name="Packing" stroke="var(--chart-3)" strokeWidth={2}/><Line dataKey="standard" name="Standard" stroke="var(--success)" strokeDasharray="5 5" dot={false}/></LineChart></ResponsiveContainer></div></article></div>
+    <div className="pd-row-two"><article className="pd-panel output-chart"><div className="pd-panel-head"><div><h2>{uiText("Output vs Target")}</h2><p>{uiText("Actual production output per day")}</p></div><CustomSelect value={period} options={["2025", "2024"]} onChange={(next) => setPeriod(next)} /></div><div className="pd-chart"><ResponsiveContainer><BarChart data={outputData} onMouseMove={(state)=>setHovered(typeof state?.activeTooltipIndex==="number"?state.activeTooltipIndex:null)} onMouseLeave={()=>setHovered(null)}><CartesianGrid vertical={false}/><XAxis dataKey="day" axisLine={false} tickLine={false} tickMargin={10}/><Tooltip cursor={{fill:"var(--chart-cursor)"}}/><Legend/><Bar dataKey="actual" name={uiText("Actual")} fill="var(--chart-1)" radius={6} maxBarSize={28}>{outputData.map((_,index)=><Cell key={index} opacity={hovered===null||hovered===index?1:.6}/>)}</Bar><Bar dataKey="target" name={uiText("Target")} fill="var(--chart-2)" radius={6} maxBarSize={28}>{outputData.map((_,index)=><Cell key={index} opacity={hovered===null||hovered===index?1:.6}/>)}</Bar></BarChart></ResponsiveContainer></div><footer><strong>{uiText("Trending up by 5.2% this month ")}<Icon name="trend"/></strong><span>{uiText("Showing production output for the last 7 days")}</span></footer></article>
+      <article className="pd-panel kpi-donut"><div className="pd-panel-head"><div><h2>{uiText("Status KPI Semua Area")}</h2><p>{uiText("Ringkasan pencapaian target")}</p></div></div><div className="pd-donut"><span><strong>25</strong><small>{uiText("KPI")}</small></span></div><div className="pd-donut-legend"><span><i className="good"/>{uiText("On Target ")}<b>18</b></span><span><i className="bad"/>{uiText("Off Target ")}<b>7</b></span></div></article></div>
+    <section className="pd-section"><div className="pd-section-head"><div><h2>{uiText("Ringkasan per Area")}</h2><p>{uiText("Status KPI utama seluruh area produksi")}</p></div></div><div className="pd-area-grid">{areaCards.map((area)=><button className="pd-area-card" onClick={()=>onNavigate(area.target)} key={area.name}><div className="pd-area-head"><span><Icon name="factory"/></span><div><h3>{area.name}</h3><p>{area.score}{uiText(" on target")}</p></div><i className={area.status}/></div><div className="pd-area-kpis">{area.kpis.map(([name,value,status])=><div key={name}><span>{name}</span><b>{value}</b><i className={status}/></div>)}</div><footer>{uiText("Lihat detail ")}<Icon name="arrow"/></footer></button>)}<button className="pd-all-areas"><span>7</span><strong>{uiText("Semua Area")}</strong><p>{uiText("Lihat performa lengkap")}</p><Icon name="arrow"/></button></div></section>
+    <div className="pd-row-four"><article className="pd-panel off-target"><div className="pd-panel-head"><div><h2>{uiText("KPI Off Target")}</h2><p>{uiText("KPI dengan gap terjauh dari target")}</p></div><button onClick={()=>onNavigate("SQDCIP Overview")}>{uiText("Lihat semua")}</button></div><div className="pd-table-wrap"><table><thead><tr><th>{uiText("KPI")}</th><th>{uiText("Area")}</th><th>{uiText("SQDCIP")}</th><th>{uiText("Actual")}</th><th>{uiText("Target")}</th><th>{uiText("Gap")}</th><th>{uiText("PIC")}</th><th/></tr></thead><tbody>{offTarget.map((row)=><tr key={row[0]}>{row.slice(0,7).map((value,index)=><td key={index}>{index===0?<strong>{value}</strong>:index===2?<b className="pd-sq-badge">{value}</b>:index===5?<span className="pd-gap">{value}</span>:value}</td>)}<td><button onClick={()=>onNavigate("Abnormal Tracker")}>{uiText("Lapor Abnormal")}</button></td></tr>)}</tbody></table></div></article><article className="pd-panel recent-abnormal"><div className="pd-panel-head"><div><h2>{uiText("Abnormal Terbaru")}</h2><p>{uiText("5 laporan terakhir")}</p></div></div>{abnormalities.map((item)=><div className="pd-abnormal-item" key={item[2]}><div><b>{item[0]}</b><span>{item[1]}</span></div><h3>{item[2]}</h3><p>{item[3]}{uiText(" • PIC ")}{item[4]}</p><em className={item[5].toLowerCase().replace(" ","-")}>{item[5]}</em></div>)}<button className="pd-tracker-link" onClick={()=>onNavigate("Abnormal Tracker")}>{uiText("Buka Abnormal Tracker ")}<Icon name="arrow"/></button></article></div>
+    <div className="pd-row-five"><article className="pd-panel"><div className="pd-panel-head"><div><h2>{uiText("WIP per Area")}</h2><p>{uiText("Actual inventory dibanding target")}</p></div></div><div className="pd-wide-chart"><ResponsiveContainer><BarChart data={wipData} layout="vertical"><CartesianGrid horizontal={false}/><XAxis type="number" hide/><YAxis type="category" dataKey="area" axisLine={false} tickLine={false} width={110}/><Tooltip/><Legend/><Bar dataKey="actual" name={uiText("Actual")} fill="var(--chart-1)" radius={6}/><Bar dataKey="target" name={uiText("Target")} fill="var(--chart-2)" radius={6}/></BarChart></ResponsiveContainer></div></article><article className="pd-panel"><div className="pd-panel-head"><div><h2>{uiText("NG Rate per Area")}</h2><p>{uiText("7 hari terakhir • Standar 1.00%")}</p></div></div><div className="pd-wide-chart"><ResponsiveContainer><LineChart data={ngData}><CartesianGrid vertical={false}/><XAxis dataKey="day" axisLine={false} tickLine={false}/><YAxis domain={[0,1.3]} axisLine={false} tickLine={false}/><Tooltip/><Legend/><Line dataKey="pre" name={uiText("Pre-Assembly")} stroke="var(--chart-1)" strokeWidth={2}/><Line dataKey="assembly" name={uiText("Assembly")} stroke="var(--chart-2)" strokeWidth={2}/><Line dataKey="packing" name={uiText("Packing")} stroke="var(--chart-3)" strokeWidth={2}/><Line dataKey="standard" name={uiText("Standard")} stroke="var(--success)" strokeDasharray="5 5" dot={false}/></LineChart></ResponsiveContainer></div></article></div>
   </div>;
 }
 

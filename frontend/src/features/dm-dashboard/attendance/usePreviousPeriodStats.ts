@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useCallback, useEffect, useState } from "react";
 
@@ -33,8 +35,8 @@ function dateOffset(daysAgo: number) {
   return `${year}-${month}-${day}`;
 }
 
-function dateLabel(date: string) {
-  return new Date(`${date}T12:00:00`).toLocaleDateString("id-ID", {
+function dateLabel(date: string, locale = "id-ID") {
+  return new Date(`${date}T12:00:00`).toLocaleDateString(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -65,6 +67,7 @@ function summarize(sessions: SessionStat[], dateRange: string): PreviousStats {
 }
 
 export function usePreviousPeriodStats(period: string) {
+  const { locale: uiLocale } = useUiText();
   const [state, setState] = useState<PreviousPeriodState>({
     period: "",
     stats: null,
@@ -89,7 +92,7 @@ export function usePreviousPeriodStats(period: string) {
             if (sessions.length > 0) {
               const stats = summarize(
                 sessions,
-                `Hari meeting sebelumnya: ${dateLabel(date)}`
+                `Hari meeting sebelumnya: ${dateLabel(date, uiLocale)}`
               );
               if (alive) setState({ period, stats, loading: false, error: null });
               return;
@@ -112,7 +115,7 @@ export function usePreviousPeriodStats(period: string) {
         const sessions = recaps.flatMap(attendanceSessionsFromRecap);
         const stats = summarize(
           sessions,
-          `${dateLabel(dates[0])} – ${dateLabel(dates[dates.length - 1])}`
+          `${dateLabel(dates[0], uiLocale)} – ${dateLabel(dates[dates.length - 1], uiLocale)}`
         );
 
         if (alive) {

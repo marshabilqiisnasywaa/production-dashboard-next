@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { departmentLabel } from "../departments";
 import type { DepartmentAttendance, DepartmentKey } from "./useDepartmentAttendance";
@@ -26,53 +28,45 @@ export default function DepartmentRecap({
   onRetry,
   formatPercent,
 }: Props) {
+  const { text: uiText } = useUiText();
   const topDepartment = data.find((item) => item.total > 0);
 
   return (
     <section className="att-panel att-dept-panel">
       <div className="att-panel-heading">
         <div>
-          <h2>Rekap per Departemen</h2>
-          <p>Departemen dengan tingkat tidak hadir tertinggi</p>
+          <h2>{uiText("Rekap per Departemen")}</h2>
+          <p>{uiText("Departemen dengan tingkat tidak hadir tertinggi")}</p>
         </div>
-        <span className="att-chart-badge">{periodLabel}</span>
+        <span className="att-chart-badge">{uiText(periodLabel)}</span>
       </div>
 
       {loading ? (
-        <div className="att-chart-empty">Memuat data departemen…</div>
+        <div className="att-chart-empty">{uiText("Memuat data departemen…")}</div>
       ) : error ? (
         <div className="att-dept-message" role="alert">
-          <p>{error}</p>
-          <button type="button" onClick={onRetry}>
-            Coba lagi
-          </button>
+          <p>{uiText(error)}</p>
+          <button type="button" onClick={onRetry}>{uiText("Coba lagi")}</button>
         </div>
       ) : mismatches.length > 0 ? (
         <div className="att-dept-message" role="alert">
-          <p>
-            Data roster belum cocok dengan ringkasan kehadiran. Rekap departemen
-            disembunyikan agar angka tidak menyesatkan.
-          </p>
+          <p>{uiText("Data roster belum cocok dengan ringkasan kehadiran. Rekap departemen disembunyikan agar angka tidak menyesatkan.")}</p>
           <details>
-            <summary>Lihat perbedaan per sesi ({mismatches.length})</summary>
+            <summary>{uiText("Lihat perbedaan per sesi (")}{mismatches.length})</summary>
             <ul>
               {mismatches.map((mismatch) => (
                 <li key={mismatch}>{mismatch}</li>
               ))}
             </ul>
           </details>
-          <button type="button" onClick={onRetry}>
-            Coba lagi
-          </button>
+          <button type="button" onClick={onRetry}>{uiText("Coba lagi")}</button>
         </div>
       ) : !data.some((item) => item.total > 0) ? (
-        <div className="att-chart-empty">
-          Belum ada data kehadiran pada periode ini.
-        </div>
+        <div className="att-chart-empty">{uiText("Belum ada data kehadiran pada periode ini.")}</div>
       ) : (
         <>
           <div className="att-dept-list">
-            {data.map((item) => {
+            {uiText(data.map((item) => {
               const absentRate = item.total
                 ? (item.absent / item.total) * 100
                 : 0;
@@ -138,30 +132,27 @@ export default function DepartmentRecap({
                       </span>
                       <span className="att-dept-rate">
                         <strong>{formatPercent(absentRate)}</strong>
-                        <small>{item.absent} orang</small>
+                        <small>{item.absent}{uiText(" orang")}</small>
                       </span>
                       {isTop && (
-                        <span className="att-dept-badge">Absen tertinggi</span>
+                        <span className="att-dept-badge">{uiText("Absen tertinggi")}</span>
                       )}
                     </>
                   ) : (
-                    <span className="att-dept-no-data">Belum ada data</span>
+                    <span className="att-dept-no-data">{uiText("Belum ada data")}</span>
                   )}
                 </div>
               );
-            })}
+            }))}
           </div>
 
           <div className="att-legend att-legend--analytics">
             <span>
-              <i className="legend-dot ontime" /> Tepat waktu
-            </span>
+              <i className="legend-dot ontime" />{uiText(" Tepat waktu")}</span>
             <span>
-              <i className="legend-dot late" /> Telat
-            </span>
+              <i className="legend-dot late" />{uiText(" Telat")}</span>
             <span>
-              <i className="legend-dot absent" /> Tidak hadir
-            </span>
+              <i className="legend-dot absent" />{uiText(" Tidak hadir")}</span>
           </div>
         </>
       )}

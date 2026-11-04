@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { departmentLabel } from "../departments";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -78,6 +80,7 @@ const icons = {
 };
 
 export default function UserManager({ call }: UserManagerProps) {
+  const { text: uiText } = useUiText();
   const [users, setUsers] = useState<DmEmployee[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -157,7 +160,7 @@ export default function UserManager({ call }: UserManagerProps) {
   async function resetPassword(user: DmEmployee) {
     if (
       !window.confirm(
-        `Reset password ${user.name} ke NIK (${user.employeeId})? Orangnya wajib menggantinya saat login berikutnya.`,
+        uiText("Reset password {{v0}} ke NIK ({{v1}})? Orangnya wajib menggantinya saat login berikutnya.", { v0: user.name, v1: user.employeeId }),
       )
     )
       return;
@@ -174,7 +177,7 @@ export default function UserManager({ call }: UserManagerProps) {
   async function remove(user: DmEmployee) {
     if (
       !window.confirm(
-        `Hapus ${user.name} secara permanen? Riwayat lininya yang sudah dilepas ikut terhapus dan tidak bisa dikembalikan.`,
+        uiText("Hapus {{v0}} secara permanen? Riwayat lininya yang sudah dilepas ikut terhapus dan tidak bisa dikembalikan.", { v0: user.name }),
       )
     )
       return;
@@ -235,10 +238,8 @@ export default function UserManager({ call }: UserManagerProps) {
       <div className="dm-panel-head">
         <div>
           <div className="dm-panel-titlebar">
-            <h3 id="users-title" className="dm-panel-title">
-              Daftar User
-            </h3>
-            <span className="dm-pill">{users.length} Terdaftar</span>
+            <h3 id="users-title" className="dm-panel-title">{uiText("Daftar User")}</h3>
+            <span className="dm-pill">{users.length}{uiText(" Terdaftar")}</span>
           </div>
           {/* <p className="dm-panel-sub">
             Daftarkan supervisor lebih dulu, lalu pilih mereka saat mengisi
@@ -255,8 +256,7 @@ export default function UserManager({ call }: UserManagerProps) {
               setView("history");
             }}
           >
-            <History size={16} /> Riwayat
-          </button>
+            <History size={16} />{uiText(" Riwayat")}</button>
           <button
             type="button"
             className="dm-admin-btn is-secondary"
@@ -274,18 +274,14 @@ export default function UserManager({ call }: UserManagerProps) {
               aria-hidden="true"
             >
               <path d="M12 16V4M7 9l5-5 5 5M4 20h16" />
-            </svg>
-            Import User
-          </button>
+            </svg>{uiText("Import User")}</button>
 
           <button
             type="button"
             className="dm-admin-btn is-primary dm-btn-add"
             onClick={() => setForm({ open: true, user: null })}
           >
-            <PlusIcon size={14} />
-            Tambah User
-          </button>
+            <PlusIcon size={14} />{uiText("Tambah User")}</button>
         </div>
       </div>
 
@@ -299,7 +295,7 @@ export default function UserManager({ call }: UserManagerProps) {
             type="button"
             className="ut-notice-close"
             onClick={() => setNotice(null)}
-            aria-label="Tutup pesan"
+            aria-label={uiText("Tutup pesan")}
           >
             &times;
           </button>
@@ -307,7 +303,7 @@ export default function UserManager({ call }: UserManagerProps) {
       ) : null}
 
       {loading && users.length === 0 ? (
-        <p role="status">Memuat User...</p>
+        <p role="status">{uiText("Memuat User...")}</p>
       ) : loadError ? (
         <div className="dm-admin-state-block">
           <p role="alert">{loadError}</p>
@@ -315,22 +311,15 @@ export default function UserManager({ call }: UserManagerProps) {
             type="button"
             className="dm-admin-btn is-primary"
             onClick={load}
-          >
-            Coba lagi
-          </button>
+          >{uiText("Coba lagi")}</button>
         </div>
       ) : users.length === 0 ? (
-        <p className="dm-lines-empty">
-          Belum ada User. Klik &quot;Tambah User&quot; untuk mengisi yang
-          pertama.
-        </p>
+        <p className="dm-lines-empty">{uiText("Belum ada User. Klik \"Tambah User\" untuk mengisi yang pertama.")}</p>
       ) : (
         <>
           <div className="dm-lines-toolbar">
             <div className="dm-table-search-box">
-              <label className="dm-admin-sr-only" htmlFor="user-search">
-                Cari User
-              </label>
+              <label className="dm-admin-sr-only" htmlFor="user-search">{uiText("Cari User")}</label>
               <svg
                 width="15"
                 height="15"
@@ -348,14 +337,12 @@ export default function UserManager({ call }: UserManagerProps) {
                 id="user-search"
                 type="search"
                 className="dm-table-search-input"
-                placeholder="Cari nama, NIK, jabatan, atau lini"
+                placeholder={uiText("Cari nama, NIK, jabatan, atau lini")}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
             </div>
-            <label className="dm-admin-sr-only" htmlFor="user-role-filter">
-              Filter role
-            </label>
+            <label className="dm-admin-sr-only" htmlFor="user-role-filter">{uiText("Filter role")}</label>
             <select
               id="user-role-filter"
               className="dm-table-filter-select"
@@ -364,28 +351,26 @@ export default function UserManager({ call }: UserManagerProps) {
                 setRoleFilter(event.target.value as "all" | DmEmployeeRole)
               }
             >
-              <option value="all">Semua role</option>
+              <option value="all">{uiText("Semua role")}</option>
               {dmEmployeeRoles.map((item) => (
                 <option key={item.value} value={item.value}>
-                  {item.label}
+                  {uiText(item.label)}
                 </option>
               ))}
             </select>
-            <label className="dm-admin-sr-only" htmlFor="user-dept-filter">
-              Filter departemen
-            </label>
+            <label className="dm-admin-sr-only" htmlFor="user-dept-filter">{uiText("Filter departemen")}</label>
             <select
               id="user-dept-filter"
               className="dm-table-filter-select"
               value={deptFilter}
               onChange={(event) => setDeptFilter(event.target.value)}
             >
-              <option value="all">Semua departemen</option>
-              {deptChoices.map((item) => (
+              <option value="all">{uiText("Semua departemen")}</option>
+              {uiText(deptChoices.map((item) => (
                 <option key={item} value={item}>
                   {departmentLabel(item)}
                 </option>
-              ))}
+              )))}
             </select>
             {inactiveCount > 0 ? (
               <label className="ut-toggle">
@@ -394,37 +379,34 @@ export default function UserManager({ call }: UserManagerProps) {
                   checked={showInactive}
                   onChange={(event) => setShowInactive(event.target.checked)}
                 />
-                <span>Tampilkan nonaktif ({inactiveCount})</span>
+                <span>{uiText("Tampilkan nonaktif (")}{inactiveCount})</span>
               </label>
             ) : null}
             <span className="dm-pill dm-lines-count" role="status">
-              {shown.length} dari {users.length} User
-            </span>
+              {shown.length}{uiText(" dari ")}{users.length}{uiText(" User")}</span>
           </div>
 
           {shown.length === 0 ? (
-            <p className="dm-lines-none">
-              Tidak ada User yang cocok dengan pencarian atau filter ini.
-            </p>
+            <p className="dm-lines-none">{uiText("Tidak ada User yang cocok dengan pencarian atau filter ini.")}</p>
           ) : (
             <div className="ut-wrap">
               <table className="ut-table">
                 <thead>
                   <tr>
-                    <th>User</th>
-                    <th>Role</th>
-                    <th>Departemen</th>
-                    <th>Line</th>
-                    <th>Supervisor</th>
-                    <th>Face ID</th>
-                    <th>Login</th>
+                    <th>{uiText("User")}</th>
+                    <th>{uiText("Role")}</th>
+                    <th>{uiText("Departemen")}</th>
+                    <th>{uiText("Line")}</th>
+                    <th>{uiText("Supervisor")}</th>
+                    <th>{uiText("Face ID")}</th>
+                    <th>{uiText("Login")}</th>
                     <th className="ut-col-action">
-                      <span className="ut-sr">Aksi</span>
+                      <span className="ut-sr">{uiText("Aksi")}</span>
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {shown.map((user) => {
+                  {uiText(shown.map((user) => {
                     const items: RowMenuItem[] = [
                       {
                         key: "history",
@@ -487,9 +469,7 @@ export default function UserManager({ call }: UserManagerProps) {
                               <span className="ut-name">
                                 {user.name}
                                 {user.isActive ? null : (
-                                  <span className="ut-badge is-off">
-                                    Nonaktif
-                                  </span>
+                                  <span className="ut-badge is-off">{uiText("Nonaktif")}</span>
                                 )}
                               </span>
                               <span className="ut-sub">{user.employeeId}</span>
@@ -534,7 +514,7 @@ export default function UserManager({ call }: UserManagerProps) {
                             </div>
                           ) : (
                             (user.lineLabel ?? (
-                              <span className="ut-muted">Belum ada lini</span>
+                              <span className="ut-muted">{uiText("Belum ada lini")}</span>
                             ))
                           )}
                         </td>
@@ -545,22 +525,18 @@ export default function UserManager({ call }: UserManagerProps) {
                         </td>
                         <td>
                           {user.faceEnrolled ? (
-                            <span className="ut-badge is-leader">Aktif</span>
+                            <span className="ut-badge is-leader">{uiText("Aktif")}</span>
                           ) : user.photoUrl ? (
-                            <span className="ut-badge is-warn">
-                              Belum aktif
-                            </span>
+                            <span className="ut-badge is-warn">{uiText("Belum aktif")}</span>
                           ) : (
-                            <span className="ut-muted">Tanpa foto</span>
+                            <span className="ut-muted">{uiText("Tanpa foto")}</span>
                           )}
                         </td>
                         <td>
                           {user.mustChangePassword ? (
-                            <span className="ut-badge is-warn">
-                              Password awal
-                            </span>
+                            <span className="ut-badge is-warn">{uiText("Password awal")}</span>
                           ) : (
-                            <span className="ut-muted">Sudah diganti</span>
+                            <span className="ut-muted">{uiText("Sudah diganti")}</span>
                           )}
                         </td>
                         <td className="ut-col-action">
@@ -571,7 +547,7 @@ export default function UserManager({ call }: UserManagerProps) {
                         </td>
                       </tr>
                     );
-                  })}
+                  }))}
                 </tbody>
               </table>
             </div>

@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -18,6 +20,7 @@ const GROUPS: { value: "all" | ActivityGroup; label: string }[] = [
 
 /** Read-only audit trail (BR-13): nobody can edit or delete an entry here. */
 export function ActivityLogTab({ entries }: { entries: ActivityEntry[] }) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [query, setQuery] = useState("");
   const [range, setRange] = useState({ from: "", to: "" });
   const [group, setGroup] = useState<"all" | ActivityGroup>("all");
@@ -45,7 +48,7 @@ export function ActivityLogTab({ entries }: { entries: ActivityEntry[] }) {
         <input
           type="search"
           className="ui-input dml-lg-search"
-          placeholder="Cari user, aksi, atau objek…"
+          placeholder={uiText("Cari user, aksi, atau objek…")}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -62,7 +65,7 @@ export function ActivityLogTab({ entries }: { entries: ActivityEntry[] }) {
         />
         <select
           className="ui-select"
-          aria-label="Filter aksi"
+          aria-label={uiText("Filter aksi")}
           value={group}
           onChange={(e) => {
             setGroup(e.target.value as "all" | ActivityGroup);
@@ -71,39 +74,36 @@ export function ActivityLogTab({ entries }: { entries: ActivityEntry[] }) {
         >
           {GROUPS.map((g) => (
             <option key={g.value} value={g.value}>
-              {g.label}
+              {uiText(g.label)}
             </option>
           ))}
         </select>
-        <Button disabled={filtered.length === 0} onClick={() => downloadCsv("activity-log.csv", activityToCsv(filtered))}>
-          <IconDownload size={16} /> Export
-        </Button>
+        <Button disabled={filtered.length === 0} onClick={() => downloadCsv("activity-log.csv", activityToCsv(filtered, uiLocale))}>
+          <IconDownload size={16} />{uiText(" Export")}</Button>
       </div>
 
       <div className="dml-table-wrap">
         <table className="dml-table dml-lg-table">
           <thead>
             <tr>
-              <th>Waktu</th>
-              <th>User</th>
-              <th>Role</th>
-              <th>Aksi</th>
-              <th>Objek</th>
-              <th>Sebelum → Sesudah</th>
+              <th>{uiText("Waktu")}</th>
+              <th>{uiText("User")}</th>
+              <th>{uiText("Role")}</th>
+              <th>{uiText("Aksi")}</th>
+              <th>{uiText("Objek")}</th>
+              <th>{uiText("Sebelum → Sesudah")}</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 && (
               <tr>
-                <td colSpan={6} className="dml-empty">
-                  Belum ada aktivitas yang cocok dengan filter.
-                </td>
+                <td colSpan={6} className="dml-empty">{uiText("Belum ada aktivitas yang cocok dengan filter.")}</td>
               </tr>
             )}
-            {visible.map((e) => (
+            {uiText(visible.map((e) => (
               <tr key={e.id}>
                 <td className="is-strong">
-                  {formatDateTime(e.at)}
+                  {formatDateTime(e.at, uiLocale)}
                   {e.attendanceLateness && <div><span className="dml-lg-late">{e.attendanceLateness}</span></div>}
                 </td>
                 <td>{e.user}</td>
@@ -122,7 +122,7 @@ export function ActivityLogTab({ entries }: { entries: ActivityEntry[] }) {
                   )}
                 </td>
               </tr>
-            ))}
+            )))}
           </tbody>
         </table>
       </div>

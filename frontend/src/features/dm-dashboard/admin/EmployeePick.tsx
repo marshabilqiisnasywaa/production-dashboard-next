@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useState } from "react";
 import type { FormEvent } from "react";
 import type { DmEmployee } from "../api";
@@ -31,6 +33,7 @@ export default function EmployeePick({
   submitLabel,
   onSubmit,
 }: EmployeePickProps) {
+  const { text: uiText } = useUiText();
   const [pk, setPk] = useState("");
   const [sortOrder, setSortOrder] = useState(String(defaultSortOrder));
   const [busy, setBusy] = useState(false);
@@ -64,10 +67,10 @@ export default function EmployeePick({
   return (
     <form className="dm-admin-member-card" onSubmit={submit} noValidate>
       <div className="dm-admin-member-head">
-        <span className="dm-admin-member-role">{title}</span>
+        <span className="dm-admin-member-role">{uiText(title)}</span>
         {showSortOrder ? (
           <span className="dm-admin-member-idx">
-            <label htmlFor={`${idPrefix}-sort`}>Urutan </label>
+            <label htmlFor={`${idPrefix}-sort`}>{uiText("Urutan ")}</label>
             <input
               id={`${idPrefix}-sort`}
               type="number"
@@ -80,8 +83,7 @@ export default function EmployeePick({
       </div>
       <div className="dm-admin-member-body">
         <div className="dm-admin-field">
-          <label htmlFor={`${idPrefix}-pick`}>
-            Nama<span className="dm-required-mark"> *</span>
+          <label htmlFor={`${idPrefix}-pick`}>{uiText("Nama")}<span className="dm-required-mark"> *</span>
           </label>
           <select
             id={`${idPrefix}-pick`}
@@ -89,37 +91,37 @@ export default function EmployeePick({
             value={pk}
             onChange={(event) => setPk(event.target.value)}
           >
-            <option value="">Pilih dari daftar User</option>
+            <option value="">{uiText("Pilih dari daftar User")}</option>
             {preferred.length > 0 ? (
-              <optgroup label="Anggota lini ini">
-                {preferred.map((employee) => (
-                  <option key={employee.id} value={employee.id}>{optionLabel(employee)}</option>
-                ))}
+              <optgroup label={uiText("Anggota lini ini")}>
+                {uiText(preferred.map((employee) => (
+                  <option key={employee.id} value={employee.id}>{uiText(optionLabel(employee))}</option>
+                )))}
               </optgroup>
             ) : null}
             {preferLine && others.length > 0 ? (
-              <optgroup label="User lain">
-                {others.map((employee) => (
-                  <option key={employee.id} value={employee.id}>{optionLabel(employee)}</option>
-                ))}
+              <optgroup label={uiText("User lain")}>
+                {uiText(others.map((employee) => (
+                  <option key={employee.id} value={employee.id}>{uiText(optionLabel(employee))}</option>
+                )))}
               </optgroup>
             ) : null}
-            {!preferLine ? others.map((employee) => (
-              <option key={employee.id} value={employee.id}>{optionLabel(employee)}</option>
-            )) : null}
+            {!preferLine ? uiText(others.map((employee) => (
+              <option key={employee.id} value={employee.id}>{uiText(optionLabel(employee))}</option>
+            ))) : null}
           </select>
         </div>
         {pool.length === 0 ? (
           <p className="dm-admin-empty-note">
             {hideAssigned
-              ? "Tidak ada User yang bebas. Tambahkan di menu User, atau lepas seseorang dari lini lain."
-              : "Belum ada User aktif. Tambahkan di menu User."}
+              ? uiText("Tidak ada User yang bebas. Tambahkan di menu User, atau lepas seseorang dari lini lain.")
+              : uiText("Belum ada User aktif. Tambahkan di menu User.")}
           </p>
         ) : null}
-        {error ? <p className="dm-admin-inline-error" role="alert">{error}</p> : null}
+        {error ? <p className="dm-admin-inline-error" role="alert">{uiText(error)}</p> : null}
         <div className="dm-admin-member-actions">
           <button type="submit" className="dm-admin-btn is-primary" disabled={busy || pool.length === 0}>
-            {busy ? "Menyimpan..." : submitLabel}
+            {busy ? uiText("Menyimpan...") : submitLabel}
           </button>
         </div>
       </div>

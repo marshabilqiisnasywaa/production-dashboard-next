@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useMemo, useState } from "react";
 import { ProblemTable } from "../../leader/problems/components/ProblemTable";
@@ -11,6 +13,7 @@ import { useSupervisor } from "../SupervisorProvider";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export default function SupervisorEscalationsPage() {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const { escalatedRows, allProblemRows, escalationsError, escalationsReady, refreshEscalations } = useSupervisor();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProblemFilter>("all");
@@ -60,30 +63,30 @@ export default function SupervisorEscalationsPage() {
     <div className="dml-pb">
       <div className="dml-page-head dml-pb-heading">
         <div>
-          <h1>Eskalasi Masalah</h1>
-          <p>Daftar masalah bawahan yang melewati tenggat waktu (due date) dan belum diselesaikan.</p>
+          <h1>{uiText("Eskalasi Masalah")}</h1>
+          <p>{uiText("Daftar masalah bawahan yang melewati tenggat waktu (due date) dan belum diselesaikan.")}</p>
         </div>
       </div>
 
       <div className="dml-pb-summary">
         <div className="dml-pb-stat">
-          <span className="dml-pb-stat__label">Total Eskalasi</span>
+          <span className="dml-pb-stat__label">{uiText("Total Eskalasi")}</span>
           <strong>{escalatedRows.length}</strong>
         </div>
 
         <div className="dml-pb-stat">
-          <span className="dml-pb-stat__label">Terlambat &gt; 1 Hari</span>
+          <span className="dml-pb-stat__label">{uiText("Terlambat > 1 Hari")}</span>
           <strong>{lateOverDay}</strong>
         </div>
 
         <div className="dml-pb-stat">
-          <span className="dml-pb-stat__label">Line Terdampak</span>
+          <span className="dml-pb-stat__label">{uiText("Line Terdampak")}</span>
           <strong>{lines.length}</strong>
         </div>
 
         <div className="dml-pb-stat">
-          <span className="dml-pb-stat__label">Terlama</span>
-          <strong>{overdueMax > 0 ? formatOverdue(overdueMax) : "-"}</strong>
+          <span className="dml-pb-stat__label">{uiText("Terlama")}</span>
+          <strong>{overdueMax > 0 ? formatOverdue(overdueMax, uiLocale) : "-"}</strong>
         </div>
       </div>
 
@@ -92,8 +95,8 @@ export default function SupervisorEscalationsPage() {
           <div className="dml-pb-search">
             <input
               type="search"
-              aria-label="Cari masalah"
-              placeholder="Cari masalah, PIC, line, atau sesi..."
+              aria-label={uiText("Cari masalah")}
+              placeholder={uiText("Cari masalah, PIC, line, atau sesi...")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -101,25 +104,25 @@ export default function SupervisorEscalationsPage() {
 
           <div className="dml-pb-filters">
             <select
-              aria-label="Filter status"
+              aria-label={uiText("Filter status")}
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value as ProblemFilter)}
             >
-              <option value="all">Semua status ({counts.all})</option>
-              <option value="unsolved">Belum selesai ({counts.unsolved})</option>
-              <option value="escalated">Eskalasi SPV ({counts.escalated})</option>
-              <option value="solved">Selesai ({counts.solved})</option>
+              <option value="all">{uiText("Semua status (")}{counts.all})</option>
+              <option value="unsolved">{uiText("Belum selesai (")}{counts.unsolved})</option>
+              <option value="escalated">{uiText("Eskalasi SPV (")}{counts.escalated})</option>
+              <option value="solved">{uiText("Selesai (")}{counts.solved})</option>
             </select>
 
             <select
-              aria-label="Filter line"
+              aria-label={uiText("Filter line")}
               value={lineFilter}
               onChange={(event) => setLineFilter(event.target.value)}
             >
-              <option value="all">Semua line</option>
+              <option value="all">{uiText("Semua line")}</option>
               {lines.map((line) => (
                 <option key={line} value={line}>
-                  {line}
+                  {uiText(line)}
                 </option>
               ))}
             </select>
@@ -129,16 +132,14 @@ export default function SupervisorEscalationsPage() {
                 type="button"
                 className="dml-pb-reset"
                 onClick={resetFilters}
-              >
-                Reset
-              </button>
+              >{uiText("Reset")}</button>
             )}
           </div>
         </div>
 
-        {escalationsError ? <ProblemLoadError error={escalationsError} onRetry={refreshEscalations} /> : !escalationsReady ? <div className="dml-empty">Memuat eskalasi masalah...</div> : <ProblemTable
+        {escalationsError ? <ProblemLoadError error={escalationsError} onRetry={refreshEscalations} /> : !escalationsReady ? <div className="dml-empty">{uiText("Memuat eskalasi masalah...")}</div> : <ProblemTable
           rows={visible}
-          emptyMessage={hasFilters ? "Tidak ada masalah yang sesuai dengan filter." : "Tidak ada masalah bawahan yang tercatat saat ini."}
+          emptyMessage={hasFilters ? uiText("Tidak ada masalah yang sesuai dengan filter.") : uiText("Tidak ada masalah bawahan yang tercatat saat ini.")}
         />}
       </section>
     </div>

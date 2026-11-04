@@ -1,4 +1,7 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import "./DmDashboardSupervisor.css";
@@ -217,10 +220,11 @@ function PersonIcon() {
 }
 
 function Avatar({ person, label }: { person: Person; label: string }) {
+  const { text: uiText } = useUiText();
   return person.photoUrl ? (
     <img
       src={person.photoUrl}
-      alt={person.name ?? label}
+      alt={uiText(person.name ?? label)}
       className="dsv-photo"
     />
   ) : (
@@ -231,10 +235,11 @@ function Avatar({ person, label }: { person: Person; label: string }) {
 }
 
 function OppoLogo() {
+  const { text: uiText } = useUiText();
   return (
     <Image
       src="/assets/oppo-logo-light.png"
-      alt="OPPO Indonesia Manufacturing"
+      alt={uiText("OPPO Indonesia Manufacturing")}
       width={200}
       height={60}
       priority
@@ -251,6 +256,7 @@ function SupervisorBoardView({
   board: DmBoard;
   structure: Structure;
 }) {
+  const { text: uiText } = useUiText();
   const { hod, people, workshopTitle, areaLabel } = structure;
   const count = ROLE_SLOTS.length;
   // x position (%) of each column's center, used to draw the org-chart lines
@@ -263,9 +269,9 @@ function SupervisorBoardView({
         <OppoLogo />
 
         <div className="dsv-header-title">
-          <h1 className="dsv-ws-code">{board.workshopLabel}</h1>
+          <h1 className="dsv-ws-code">{uiText(board.workshopLabel)}</h1>
           <p className="dsv-header-sub">
-            <span lang="zh">车间组织架构</span>
+            <span>{uiText("车间组织架构")}</span>
           </p>
         </div>
         {/* 
@@ -278,25 +284,26 @@ function SupervisorBoardView({
         </div> */}
 
         <div className="dsv-header-brand">
-          <strong>DM WORKSHOP TEAM</strong>
+          <strong>{uiText("DM WORKSHOP TEAM")}</strong>
+          <LanguageSwitcher />
           {/* <span>VIEW-ONLY SIGNAGE MODE</span> */}
         </div>
       </header>
 
       {/* ---------- HOD ---------- */}
-      <section className="dsv-hod" aria-label="Head of Department">
+      <section className="dsv-hod" aria-label={uiText("Head of Department")}>
         <div className="dsv-hod-bar">
-          <span>HEAD OF DEPARTMENT</span>
+          <span>{uiText("HEAD OF DEPARTMENT")}</span>
           <strong>{hod.title.toUpperCase()}</strong>
-          <span className="dsv-hod-area">{areaLabel}</span>
+          <span className="dsv-hod-area">{uiText(areaLabel)}</span>
         </div>
         <div className="dsv-hod-body">
           <div className="dsv-hod-who">
-            <span className="dsv-hod-name">{hod.name ?? "Belum diisi"}</span>
-            <span className="dsv-hod-title">{hod.title}</span>
+            <span className="dsv-hod-name">{hod.name ?? uiText("Belum diisi")}</span>
+            <span className="dsv-hod-title">{uiText(hod.title)}</span>
           </div>
           <div className="dsv-contact">
-            <span className="dsv-contact-label">TELEPHONE / CONTACT</span>
+            <span className="dsv-contact-label">{uiText("TELEPHONE / CONTACT")}</span>
             <span className="dsv-contact-value">{hod.phone ?? "-"}</span>
           </div>
         </div>
@@ -322,7 +329,7 @@ function SupervisorBoardView({
       </div>
 
       {/* ---------- 5 positions ---------- */}
-      <section className="dsv-columns" aria-label="Struktur tim">
+      <section className="dsv-columns" aria-label={uiText("Struktur tim")}>
         {ROLE_SLOTS.map((slot) => {
           const p = people[slot.key] ?? toPerson();
           return (
@@ -331,22 +338,22 @@ function SupervisorBoardView({
 
               <dl className="dsv-info">
                 <div>
-                  <dt>Name:</dt>
-                  <dd className="dsv-info-name">{p.name ?? "Belum diisi"}</dd>
+                  <dt>{uiText("Name:")}</dt>
+                  <dd className="dsv-info-name">{p.name ?? uiText("Belum diisi")}</dd>
                 </div>
                 <div>
-                  <dt>Tlp:</dt>
+                  <dt>{uiText("Tlp:")}</dt>
                   <dd className="dsv-info-phone">{p.phone ?? "-"}</dd>
                 </div>
               </dl>
 
               <div className="dsv-photo-frame">
-                <Avatar person={p} label={slot.title} />
+                <Avatar person={p} label={uiText(slot.title)} />
                 {/* <span className="dsv-tag">{slot.tag}</span> */}
               </div>
 
-              <h3 className="dsv-col-title">{slot.title}</h3>
-              <p className="dsv-col-desc">{slot.description}</p>
+              <h3 className="dsv-col-title">{uiText(slot.title)}</h3>
+              <p className="dsv-col-desc">{uiText(slot.description)}</p>
             </article>
           );
         })}
@@ -376,6 +383,7 @@ export default function DmSupervisorDashboard({
 }: {
   slug?: string;
 }) {
+  const { text: uiText } = useUiText();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
 
@@ -419,7 +427,7 @@ export default function DmSupervisorDashboard({
   if (state.kind === "loading") {
     return (
       <main className="dsv-root dsv-state" aria-busy="true">
-        <p role="status">Memuat struktur tim {slug}...</p>
+        <p role="status">{uiText("Memuat struktur tim ")}{slug}...</p>
       </main>
     );
   }
@@ -427,14 +435,9 @@ export default function DmSupervisorDashboard({
   if (state.kind === "missing") {
     return (
       <main className="dsv-root dsv-state">
-        <h1 className="dsv-state-title">Dashboard tidak ditemukan</h1>
-        <p>
-          Tidak ada dashboard dengan alamat &quot;{slug}&quot;. Periksa link-nya
-          atau pilih dari daftar.
-        </p>
-        <Link href="/dm-dashboard" className="dsv-state-action">
-          Lihat daftar dashboard
-        </Link>
+        <h1 className="dsv-state-title">{uiText("Dashboard tidak ditemukan")}</h1>
+        <p>{uiText("Tidak ada dashboard dengan alamat \"")}{slug}{uiText("\". Periksa link-nya atau pilih dari daftar.")}</p>
+        <Link href="/dm-dashboard" className="dsv-state-action">{uiText("Lihat daftar dashboard")}</Link>
       </main>
     );
   }
@@ -442,17 +445,15 @@ export default function DmSupervisorDashboard({
   if (state.kind === "error" || !structure) {
     return (
       <main className="dsv-root dsv-state">
-        <h1 className="dsv-state-title">Struktur tim belum bisa dimuat</h1>
+        <h1 className="dsv-state-title">{uiText("Struktur tim belum bisa dimuat")}</h1>
         <p role="alert">
-          {state.kind === "error" ? state.message : "Data belum tersedia."}
+          {state.kind === "error" ? uiText(state.message) : uiText("Data belum tersedia.")}
         </p>
         <button
           type="button"
           className="dsv-state-action"
           onClick={() => setAttempt((n) => n + 1)}
-        >
-          Coba lagi
-        </button>
+        >{uiText("Coba lagi")}</button>
       </main>
     );
   }

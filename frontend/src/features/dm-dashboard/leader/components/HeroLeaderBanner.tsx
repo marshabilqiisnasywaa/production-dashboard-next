@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import Link from "next/link";
 import { IconClipboardCheck, IconUsers } from "@/components/ui/icons";
@@ -25,11 +27,12 @@ export function HeroLeaderBanner({
   completedSessionsCount = 0,
   totalSessionsCount = 0,
 }: HeroLeaderBannerProps) {
+  const { text: uiText } = useUiText();
   return (
     <div className="dms-hero-compact">
       <div className="dms-hero-left">
         <div className="dms-hero-title-group">
-          <h1 className="dms-hero-compact-title">Dashboard Leader — {userName}</h1>
+          <h1 className="dms-hero-compact-title">{uiText("Dashboard Leader — ")}{userName}</h1>
           <div className="dms-hero-badges-inline">
             <span className="dms-pill dms-pill--line">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -38,13 +41,12 @@ export function HeroLeaderBanner({
               </svg>
               {lineName} ({lineCode}) · {workshopName}
             </span>
-            <span className="dms-pill dms-pill--supervisor" title="Supervisor yang bertindak sebagai Approver">
+            <span className="dms-pill dms-pill--supervisor" title={uiText("Supervisor yang bertindak sebagai Approver")}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
                 <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-              </svg>
-              SPV Approver: <strong>{supervisorName}</strong>
+              </svg>{uiText("SPV Approver: ")}<strong>{supervisorName}</strong>
             </span>
           </div>
         </div>
@@ -54,24 +56,24 @@ export function HeroLeaderBanner({
         <Link
           href={LEADER_ROUTES.papercard}
           className="dms-btn-compact dms-btn-compact--primary"
-          title={isPapercardSubmitted ? "Papercard hari ini sudah dikirim" : "Isi papercard kesiapan shift"}
+          title={isPapercardSubmitted ? uiText("Papercard hari ini sudah dikirim") : uiText("Isi papercard kesiapan shift")}
         >
           <IconClipboardCheck size={14} />
-          <span>Isi Papercard</span>
+          <span>{uiText("Isi Papercard")}</span>
           {isPapercardSubmitted ? (
-            <span className="dms-dot dms-dot--green" title="Sudah disubmit" />
+            <span className="dms-dot dms-dot--green" title={uiText("Sudah disubmit")} />
           ) : (
-            <span className="dms-dot dms-dot--amber" title="Belum disubmit" />
+            <span className="dms-dot dms-dot--amber" title={uiText("Belum disubmit")} />
           )}
         </Link>
         <Link
           href={LEADER_ROUTES.meeting}
           className="dms-btn-compact dms-btn-compact--secondary"
-          title="Buka Ruang DM Meeting"
+          title={uiText("Buka Ruang DM Meeting")}
         >
           <IconUsers size={14} />
-          <span>DM Meeting</span>
-          <span className="dms-counter-badge">{completedSessionsCount}/{totalSessionsCount} Selesai</span>
+          <span>{uiText("DM Meeting")}</span>
+          <span className="dms-counter-badge">{completedSessionsCount}/{totalSessionsCount}{uiText(" Selesai")}</span>
         </Link>
       </div>
     </div>

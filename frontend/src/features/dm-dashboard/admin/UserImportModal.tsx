@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { departmentLabel } from "../departments";
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
@@ -32,6 +34,7 @@ export default function UserImportModal({
   onImported,
   onClose,
 }: UserImportModalProps) {
+  const { text: uiText } = useUiText();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [rows, setRows] = useState<ImportRow[] | null>(null);
   const [fileName, setFileName] = useState("");
@@ -68,7 +71,7 @@ export default function UserImportModal({
     if (
       rows &&
       !outcomes &&
-      !window.confirm("Pratinjau import akan dibuang. Tutup?")
+      !window.confirm(uiText("Pratinjau import akan dibuang. Tutup?"))
     )
       return;
     onClose();
@@ -180,16 +183,14 @@ export default function UserImportModal({
               className="um-title"
               tabIndex={-1}
               autoFocus
-            >
-              Import User
-            </h2>
+            >{uiText("Import User")}</h2>
             {rows && !outcomes ? <p className="um-sub">{fileName}</p> : null}
           </div>
           <button
             type="button"
             className="um-close"
             onClick={requestClose}
-            aria-label="Tutup"
+            aria-label={uiText("Tutup")}
           >
             <svg
               width="16"
@@ -211,7 +212,7 @@ export default function UserImportModal({
         <div className="um-body">
           {error ? (
             <p className="um-error" role="alert">
-              {error}
+              {uiText(error)}
             </p>
           ) : null}
 
@@ -219,12 +220,10 @@ export default function UserImportModal({
             <>
               <p className="ui-stats" role="status">
                 <span className="ui-stat is-ok">
-                  <strong>{savedCount}</strong> User tersimpan
-                </span>
+                  <strong>{savedCount}</strong>{uiText(" User tersimpan")}</span>
                 {failed.length > 0 ? (
                   <span className="ui-stat is-bad">
-                    <strong>{failed.length}</strong> gagal atau dilewati
-                  </span>
+                    <strong>{failed.length}</strong>{uiText(" gagal atau dilewati")}</span>
                 ) : null}
               </p>
               {failed.length > 0 ? (
@@ -232,15 +231,15 @@ export default function UserImportModal({
                   className="ui-wrap"
                   tabIndex={0}
                   role="region"
-                  aria-label="Baris yang gagal"
+                  aria-label={uiText("Baris yang gagal")}
                 >
                   <table className="ui-table">
                     <thead>
                       <tr>
-                        <th>Baris</th>
-                        <th>NIK</th>
-                        <th>Nama</th>
-                        <th>Alasan</th>
+                        <th>{uiText("Baris")}</th>
+                        <th>{uiText("NIK")}</th>
+                        <th>{uiText("Nama")}</th>
+                        <th>{uiText("Alasan")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -250,7 +249,7 @@ export default function UserImportModal({
                           <td className="ui-mono">{item.nik || "-"}</td>
                           <td>{item.name || "-"}</td>
                           <td>
-                            <span className="ui-why">{item.error}</span>
+                            <span className="ui-why">{uiText(item.error)}</span>
                           </td>
                         </tr>
                       ))}
@@ -259,44 +258,39 @@ export default function UserImportModal({
                 </div>
               ) : null}
               <div className="um-note">
-                <p>
-                  Password awal tiap User sama dengan NIK-nya dan wajib diganti
-                  saat login pertama.
-                </p>
+                <p>{uiText("Password awal tiap User sama dengan NIK-nya dan wajib diganti saat login pertama.")}</p>
               </div>
             </>
           ) : rows ? (
             <>
               <p className="ui-stats" role="status">
                 <span className="ui-stat is-ok">
-                  <strong>{validCount}</strong> siap diimpor
-                </span>
+                  <strong>{validCount}</strong>{uiText(" siap diimpor")}</span>
                 {badCount > 0 ? (
                   <span className="ui-stat is-bad">
-                    <strong>{badCount}</strong> akan dilewati
-                  </span>
+                    <strong>{badCount}</strong>{uiText(" akan dilewati")}</span>
                 ) : null}
               </p>
               <div
                 className="ui-wrap"
                 tabIndex={0}
                 role="region"
-                aria-label="Pratinjau isi file"
+                aria-label={uiText("Pratinjau isi file")}
               >
                 <table className="ui-table">
                   <thead>
                     <tr>
-                      <th>Baris</th>
-                      <th>NIK</th>
-                      <th>Nama</th>
-                      <th>Role</th>
-                      <th>Dept</th>
-                      <th>Supervisor</th>
-                      <th>Status</th>
+                      <th>{uiText("Baris")}</th>
+                      <th>{uiText("NIK")}</th>
+                      <th>{uiText("Nama")}</th>
+                      <th>{uiText("Role")}</th>
+                      <th>{uiText("Dept")}</th>
+                      <th>{uiText("Supervisor")}</th>
+                      <th>{uiText("Status")}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((row) => (
+                    {uiText(rows.map((row) => (
                       <tr key={row.line}>
                         <td className="ui-num">{row.line}</td>
                         <td className="ui-mono">
@@ -309,17 +303,17 @@ export default function UserImportModal({
                         <td>
                           {row.errors.length > 0 ? (
                             <>
-                              <span className="ui-tag is-bad">Dilewati</span>
+                              <span className="ui-tag is-bad">{uiText("Dilewati")}</span>
                               <span className="ui-why">
                                 {row.errors.join(" ")}
                               </span>
                             </>
                           ) : (
-                            <span className="ui-tag is-ok">Siap</span>
+                            <span className="ui-tag is-ok">{uiText("Siap")}</span>
                           )}
                         </td>
                       </tr>
-                    ))}
+                    )))}
                   </tbody>
                 </table>
               </div>
@@ -328,10 +322,9 @@ export default function UserImportModal({
                   <progress
                     value={progress.done}
                     max={progress.total}
-                    aria-label="Progres penyimpanan"
+                    aria-label={uiText("Progres penyimpanan")}
                   />
-                  <span>
-                    Menyimpan {progress.done} dari {progress.total}
+                  <span>{uiText("Menyimpan ")}{progress.done}{uiText(" dari ")}{progress.total}
                   </span>
                 </div>
               ) : null}
@@ -340,10 +333,8 @@ export default function UserImportModal({
             <>
               <ol className="ui-steps">
                 <li>
-                  <span className="ui-step-title">Siapkan file</span>
-                  <span className="ui-step-text">
-                    Pakai template supaya nama kolomnya pas.
-                  </span>
+                  <span className="ui-step-title">{uiText("Siapkan file")}</span>
+                  <span className="ui-step-text">{uiText("Pakai template supaya nama kolomnya pas.")}</span>
                   <button
                     type="button"
                     className="um-btn ui-btn-outline"
@@ -352,18 +343,12 @@ export default function UserImportModal({
                         setError("Template gagal dibuat.")
                       )
                     }
-                  >
-                    Unduh template
-                  </button>
+                  >{uiText("Unduh template")}</button>
                 </li>
                 <li>
-                  <span className="ui-step-title">Unggah file Excel</span>
-                  <span className="ui-step-text">
-                    Format .xlsx, sheet pertama, maks. 2 MB dan 500 baris.
-                  </span>
-                  <label className="um-btn is-primary ui-pick">
-                    Pilih file Excel
-                    <input
+                  <span className="ui-step-title">{uiText("Unggah file Excel")}</span>
+                  <span className="ui-step-text">{uiText("Format .xlsx, sheet pertama, maks. 2 MB dan 500 baris.")}</span>
+                  <label className="um-btn is-primary ui-pick">{uiText("Pilih file Excel")}<input
                       type="file"
                       accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                       className="um-file-input"
@@ -372,27 +357,20 @@ export default function UserImportModal({
                   </label>
                 </li>
               </ol>
-              <p className="um-hint">
-                Format kolom NIK sebagai Text supaya angka 0 di depan tidak
-                hilang.
-              </p>
+              <p className="um-hint">{uiText("Format kolom NIK sebagai Text supaya angka 0 di depan tidak hilang.")}</p>
               <details className="ui-rules">
-                <summary>Aturan kolom</summary>
+                <summary>{uiText("Aturan kolom")}</summary>
                 <dl>
-                  <dt>nik, nama</dt>
-                  <dd>Wajib diisi.</dd>
-                  <dt>role</dt>
-                  <dd>
-                    member, leader, atau supervisor. Kosong dianggap member.
-                  </dd>
-                  <dt>departemen</dt>
-                  <dd>ME, PE, Produksi, atau Quality. PROD, QC, dan QA juga diterima.</dd>
-                  <dt>supervisor_nik</dt>
-                  <dd>
-                    NIK supervisor yang sudah ada, atau yang ada di file ini.
-                  </dd>
-                  <dt>position, work_phone</dt>
-                  <dd>Opsional.</dd>
+                  <dt>{uiText("nik, nama")}</dt>
+                  <dd>{uiText("Wajib diisi.")}</dd>
+                  <dt>{uiText("role")}</dt>
+                  <dd>{uiText("member, leader, atau supervisor. Kosong dianggap member.")}</dd>
+                  <dt>{uiText("departemen")}</dt>
+                  <dd>{uiText("ME, PE, Produksi, atau Quality. PROD, QC, dan QA juga diterima.")}</dd>
+                  <dt>{uiText("supervisor_nik")}</dt>
+                  <dd>{uiText("NIK supervisor yang sudah ada, atau yang ada di file ini.")}</dd>
+                  <dt>{uiText("position, work_phone")}</dt>
+                  <dd>{uiText("Opsional.")}</dd>
                 </dl>
               </details>
             </>
@@ -405,9 +383,7 @@ export default function UserImportModal({
               type="button"
               className="um-btn is-primary"
               onClick={onClose}
-            >
-              Selesai
-            </button>
+            >{uiText("Selesai")}</button>
           ) : (
             <>
               <button
@@ -415,9 +391,7 @@ export default function UserImportModal({
                 className="um-btn is-ghost"
                 disabled={busy}
                 onClick={requestClose}
-              >
-                Batal
-              </button>
+              >{uiText("Batal")}</button>
               {rows ? (
                 <button
                   type="button"
@@ -425,7 +399,7 @@ export default function UserImportModal({
                   disabled={busy || validCount === 0}
                   onClick={run}
                 >
-                  {busy ? "Menyimpan..." : `Impor ${validCount} User`}
+                  {busy ? uiText("Menyimpan...") : uiText("Impor {{v0}} User", { v0: validCount })}
                 </button>
               ) : null}
             </>

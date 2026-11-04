@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useState } from "react";
 import type { TrendPoint } from "../types";
@@ -20,10 +22,11 @@ const IH = H - PAD.top - PAD.bottom;
 const TICKS = [0, 25, 50, 75, 100];
 
 export function InspectionTrendChart({ data, selectedKey, onSelect, target = TARGET }: Props) {
+  const { text: uiText } = useUiText();
   const [hover, setHover] = useState<number | null>(null);
 
   if (data.length === 0) {
-    return <div className="dml-empty">Belum ada data inspeksi pada periode ini</div>;
+    return <div className="dml-empty">{uiText("Belum ada data inspeksi pada periode ini")}</div>;
   }
 
   const x = (i: number) => (data.length === 1 ? PAD.left + IW / 2 : PAD.left + (i * IW) / (data.length - 1));
@@ -38,7 +41,7 @@ export function InspectionTrendChart({ data, selectedKey, onSelect, target = TAR
 
   return (
     <div className="dml-chart">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Grafik tren Inspection Rate">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={uiText("Grafik tren Inspection Rate")}>
         {TICKS.map((t) => (
           <g key={t}>
             <line className="dml-chart__grid" x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} />
@@ -51,8 +54,7 @@ export function InspectionTrendChart({ data, selectedKey, onSelect, target = TAR
         <polygon className="dml-chart__area" points={area} />
 
         <line className="dml-chart__target" x1={PAD.left} x2={W - PAD.right} y1={y(target)} y2={y(target)} />
-        <text className="dml-chart__target-label" x={W - PAD.right} y={y(target) + 16} textAnchor="end">
-          Target {target}%
+        <text className="dml-chart__target-label" x={W - PAD.right} y={y(target) + 16} textAnchor="end">{uiText("Target ")}{target}%
         </text>
 
         <polyline className="dml-chart__line" points={line} />
@@ -67,7 +69,7 @@ export function InspectionTrendChart({ data, selectedKey, onSelect, target = TAR
               className="dml-chart__point"
               tabIndex={0}
               role="button"
-              aria-label={`${p.label}: ${p.value}% (${p.submitted} dari ${p.total} papercard)`}
+              aria-label={uiText("{{v0}}: {{v1}}% ({{v2}} dari {{v3}} papercard)", { v0: p.label, v1: p.value, v2: p.submitted, v3: p.total })}
               aria-pressed={selected}
               onMouseEnter={() => setHover(i)}
               onMouseLeave={() => setHover(null)}
@@ -102,7 +104,7 @@ export function InspectionTrendChart({ data, selectedKey, onSelect, target = TAR
           (p, i) =>
             i % labelStep === 0 && (
               <text key={p.key} className="dml-chart__axis" x={x(i)} y={H - 10} textAnchor="middle">
-                {p.label}
+                {uiText(p.label)}
               </text>
             ),
         )}
@@ -114,9 +116,9 @@ export function InspectionTrendChart({ data, selectedKey, onSelect, target = TAR
           style={{ left: `${(x(hover) / W) * 100}%`, top: `${(y(hovered.value) / H) * 100}%` }}
           role="status"
         >
-          <strong>{hovered.label}</strong>
+          <strong>{uiText(hovered.label)}</strong>
           <span>
-            {hovered.submitted}/{hovered.total} papercard · {hovered.value}%
+            {hovered.submitted}/{hovered.total}{uiText(" papercard · ")}{hovered.value}%
           </span>
         </div>
       )}

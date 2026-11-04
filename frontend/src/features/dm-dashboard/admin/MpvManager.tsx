@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { departmentLabel } from "../departments";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -48,6 +50,7 @@ export default function MpvManager({
   allowManual = true,
   emptyLinesMessage,
 }: MpvManagerProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [lineId, setLineId] = useState<number | null>(lines[0]?.id ?? null);
   const [period, setPeriod] = useState(previousPeriod());
   const [history, setHistory] = useState<DmMpv[]>([]);
@@ -122,7 +125,7 @@ export default function MpvManager({
 
         <div className="mpv-content">
           <div className="dm-admin-state-block">
-            <h3>Belum ada lini</h3>
+            <h3>{uiText("Belum ada lini")}</h3>
             <p>
               {emptyLinesMessage ??
                 (allowManual
@@ -161,7 +164,7 @@ export default function MpvManager({
       );
       const emp = employees.find((x) => x.id === Number(pickEmpPk));
       setStatus(
-        `✓ MPV ${formatPeriod(period)} (${
+        `✓ MPV ${formatPeriod(period, uiLocale)} (${
           emp?.name ?? "Operator"
         }) berhasil disimpan.`
       );
@@ -199,13 +202,13 @@ export default function MpvManager({
     e.target.value = "";
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
-      alert("Ukuran foto maksimal 10 MB.");
+      alert(uiText("Ukuran foto maksimal 10 MB."));
       return;
     }
     try {
       setEditPhotoUrl(await uploadPhoto(file));
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Foto gagal diunggah.");
+      alert(err instanceof Error ? err.message : uiText("Foto gagal diunggah."));
     }
   }
 
@@ -226,7 +229,7 @@ export default function MpvManager({
         workPhone: null,
       };
       await call(() => api.saveMpv(lineId, period, data));
-      setStatus(`✓ Data MPV ${formatPeriod(period)} berhasil diperbarui.`);
+      setStatus(`✓ Data MPV ${formatPeriod(period, uiLocale)} berhasil diperbarui.`);
       setShowEditModal(false);
       await load();
     } catch (err) {
@@ -242,14 +245,14 @@ export default function MpvManager({
     if (lineId === null) return;
     if (
       !window.confirm(
-        `Hapus MPV ${formatPeriod(targetPeriod)} (${targetName}) dari riwayat?`
+        uiText("Hapus MPV {{v0}} ({{v1}}) dari riwayat?", { v0: formatPeriod(targetPeriod, uiLocale), v1: targetName })
       )
     )
       return;
     setSavingAction(true);
     try {
       await call(() => api.deleteMpv(lineId, targetPeriod));
-      setStatus(`MPV ${formatPeriod(targetPeriod)} dihapus dari riwayat.`);
+      setStatus(`MPV ${formatPeriod(targetPeriod, uiLocale)} dihapus dari riwayat.`);
       await load();
     } catch (err) {
       setStatus(`Gagal menghapus: ${messageOf(err)}`);
@@ -271,9 +274,9 @@ export default function MpvManager({
       <div className="mpv-bar">
         <div className="mpv-bar-left">
           <div className="mpv-control-group">
-            <label className="mpv-bar-label">Lini:</label>
+            <label className="mpv-bar-label">{uiText("Lini:")}</label>
             <select
-              aria-label="Lini MVP"
+              aria-label={uiText("Lini MVP")}
               className="mpv-bar-select"
               value={lineId ?? ""}
               disabled={savingAction}
@@ -291,20 +294,20 @@ export default function MpvManager({
           </div>
 
           <div className="mpv-control-group">
-            <label className="mpv-bar-label">Periode:</label>
+            <label className="mpv-bar-label">{uiText("Periode:")}</label>
             <div className="mpv-month-stepper">
               <button
                 type="button"
                 className="mpv-step-btn"
                 onClick={() => setPeriod((p) => shiftPeriod(p, -1))}
                 disabled={savingAction || !validPeriod}
-                title="Bulan sebelumnya"
+                title={uiText("Bulan sebelumnya")}
               >
                 ‹
               </button>
               <input
                 type="month"
-                aria-label="Periode MVP"
+                aria-label={uiText("Periode MVP")}
                 disabled={savingAction}
                 className="mpv-month-field"
                 value={period}
@@ -318,7 +321,7 @@ export default function MpvManager({
                 className="mpv-step-btn"
                 onClick={() => setPeriod((p) => shiftPeriod(p, 1))}
                 disabled={savingAction || !validPeriod}
-                title="Bulan berikutnya"
+                title={uiText("Bulan berikutnya")}
               >
                 ›
               </button>
@@ -329,10 +332,8 @@ export default function MpvManager({
                 }`}
                 onClick={() => setPeriod(previousPeriod())}
                 disabled={savingAction}
-                title="Bulan kemarin (standar tayang dashboard)"
-              >
-                Bulan Kemarin
-              </button>
+                title={uiText("Bulan kemarin (standar tayang dashboard)")}
+              >{uiText("Bulan Kemarin")}</button>
             </div>
           </div>
         </div>
@@ -342,9 +343,9 @@ export default function MpvManager({
           className="mpv-refresh-btn"
           onClick={load}
           disabled={loading || savingAction}
-          title="Segarkan data dari server"
+          title={uiText("Segarkan data dari server")}
         >
-          {loading ? "Memuat..." : "↻ Segarkan"}
+          {loading ? uiText("Memuat...") : uiText("↻ Segarkan")}
         </button>
       </div>
 
@@ -355,7 +356,7 @@ export default function MpvManager({
             status.startsWith("✓") ? "is-ok" : "is-warn"
           }`}
         >
-          <span>{status}</span>
+          <span>{uiText(status)}</span>
           <button
             type="button"
             className="mpv-toast-close"
@@ -374,35 +375,30 @@ export default function MpvManager({
             type="button"
             className="mpv-sm-btn mpv-btn-soft-primary"
             onClick={load}
-          >
-            Coba lagi
-          </button>
+          >{uiText("Coba lagi")}</button>
         </div>
       ) : loading || loadedLineId !== lineId ? (
-        <div className="mpv-empty-notice" role="status">
-          Memuat MVP...
-        </div>
+        <div className="mpv-empty-notice" role="status">{uiText("Memuat MVP...")}</div>
       ) : (
         <div className="mpv-grid">
           {/* Left Column: Active / Selected Period Card */}
           <section className="mpv-card mpv-card-focus">
             <div className="mpv-card-head">
               <div className="mpv-head-title-wrap">
-                <h4 className="mpv-card-title">MVP {formatPeriod(period)}</h4>
+                <h4 className="mpv-card-title">{uiText("MVP ")}{formatPeriod(period, uiLocale)}</h4>
               </div>
               {existing ? (
                 shownOnDashboard?.id === existing.id ? (
                   <span
                     className="mpv-badge is-live"
-                    title="Tampil di banner bawah shopfloor layar lini"
+                    title={uiText("Tampil di banner bawah shopfloor layar lini")}
                   >
-                    <span className="mpv-dot-pulse" /> Sedang Tayang
-                  </span>
+                    <span className="mpv-dot-pulse" />{uiText(" Sedang Tayang")}</span>
                 ) : (
-                  <span className="mpv-badge is-archived">Arsip Periode</span>
+                  <span className="mpv-badge is-archived">{uiText("Arsip Periode")}</span>
                 )
               ) : (
-                <span className="mpv-badge is-unassigned">Belum Diatur</span>
+                <span className="mpv-badge is-unassigned">{uiText("Belum Diatur")}</span>
               )}
             </div>
 
@@ -413,7 +409,7 @@ export default function MpvManager({
                     {existing.photoUrl ? (
                       <img
                         src={existing.photoUrl}
-                        alt={existing.name ?? ""}
+                        alt={uiText(existing.name ?? "")}
                         className="mpv-avatar"
                       />
                     ) : (
@@ -430,10 +426,10 @@ export default function MpvManager({
                       </div>
                       <div className="mpv-tags">
                         <span className="mpv-tag-dept">
-                          {departmentLabel(existing.dept ?? "PROD")}
+                          {uiText(departmentLabel(existing.dept ?? "PROD"))}
                         </span>
                         <span className="mpv-tag-pos">
-                          {existing.position ?? "Operator Lini"}
+                          {existing.position ?? uiText("Operator Lini")}
                         </span>
                       </div>
                     </div>
@@ -445,20 +441,16 @@ export default function MpvManager({
                         type="button"
                         className="mpv-sm-btn mpv-btn-soft-primary"
                         onClick={openEditor}
-                        title="Ubah teks nama, jabatan atau foto"
-                      >
-                        Ubah Data
-                      </button>
+                        title={uiText("Ubah teks nama, jabatan atau foto")}
+                      >{uiText("Ubah Data")}</button>
                     )}
                     <button
                       type="button"
                       className="mpv-sm-btn mpv-btn-soft-ghost"
                       onClick={() => setIsReassigning(true)}
                       disabled={savingAction}
-                      title="Ganti ke karyawan lain"
-                    >
-                      Ganti Orang
-                    </button>
+                      title={uiText("Ganti ke karyawan lain")}
+                    >{uiText("Ganti Orang")}</button>
                     <button
                       type="button"
                       className="mpv-sm-btn mpv-btn-soft-danger"
@@ -466,43 +458,39 @@ export default function MpvManager({
                         handleRemove(existing.period, existing.name)
                       }
                       disabled={savingAction}
-                      title="Hapus MPV dari periode ini"
-                    >
-                      Hapus
-                    </button>
+                      title={uiText("Hapus MPV dari periode ini")}
+                    >{uiText("Hapus")}</button>
                   </div>
                 </div>
               ) : (
                 <form onSubmit={handleAssign} className="mpv-assign-box">
                   <div className="mpv-assign-prompt">
                     {isReassigning ? (
-                      <span>
-                        Ganti pemenang <strong>{formatPeriod(period)}</strong>:
+                      <span>{uiText("Ganti pemenang ")}<strong>{formatPeriod(period, uiLocale)}</strong>:
                       </span>
                     ) : (
-                      <span>
-                        Pilih operator teladan untuk{" "}
-                        <strong>{formatPeriod(period)}</strong>:
+                      <span>{uiText("Pilih operator teladan untuk")}{" "}
+                        <strong>{formatPeriod(period, uiLocale)}</strong>:
                       </span>
                     )}
                   </div>
 
                   <select
-                    aria-label="Karyawan penerima MVP"
+                    aria-label={uiText("Karyawan penerima MVP")}
                     className="mpv-assign-dropdown"
                     value={pickEmpPk}
                     onChange={(e) => setPickEmpPk(e.target.value)}
                     disabled={savingAction}
                     required
                   >
-                    <option value="">-- Pilih Operator / Karyawan --</option>
-                    {employees
+                    <option value="">{uiText("-- Pilih Operator / Karyawan --")}</option>
+                    {uiText(employees
                       .filter((e) => e.isActive)
                       .map((emp) => (
                         <option key={emp.id} value={emp.id}>
                           {emp.name} ({emp.employeeId}) · {departmentLabel(emp.dept) || "-"}
                         </option>
-                      ))}
+                      )))}
                   </select>
 
                   <div className="mpv-assign-actions">
@@ -511,7 +499,7 @@ export default function MpvManager({
                       className="mpv-sm-btn mpv-btn-solid-green"
                       disabled={savingAction || !pickEmpPk || !validPeriod}
                     >
-                      {savingAction ? "Menyimpan..." : "Tetapkan MPV"}
+                      {savingAction ? uiText("Menyimpan...") : uiText("Tetapkan MPV")}
                     </button>
 
                     {allowManual && (
@@ -519,10 +507,8 @@ export default function MpvManager({
                         type="button"
                         className="mpv-sm-btn mpv-btn-soft-ghost"
                         onClick={openEditor}
-                        title="Input manual jika karyawan belum terdaftar"
-                      >
-                        + Input Manual
-                      </button>
+                        title={uiText("Input manual jika karyawan belum terdaftar")}
+                      >{uiText("+ Input Manual")}</button>
                     )}
 
                     {isReassigning && (
@@ -530,9 +516,7 @@ export default function MpvManager({
                         type="button"
                         className="mpv-sm-btn mpv-btn-soft-ghost"
                         onClick={() => setIsReassigning(false)}
-                      >
-                        Batal
-                      </button>
+                      >{uiText("Batal")}</button>
                     )}
                   </div>
                 </form>
@@ -540,10 +524,7 @@ export default function MpvManager({
 
               <div className="mpv-hint-note">
                 {/* <span className="mpv-hint-icon">💡</span> */}
-                <span>
-                  MVP ditampilkan pada baris bawah dashboard line. Standar
-                  tayang adalah periode bulan kemarin (
-                  <strong>{formatPeriod(previousPeriod())}</strong>).
+                <span>{uiText("MVP ditampilkan pada baris bawah dashboard line. Standar tayang adalah periode bulan kemarin (")}<strong>{formatPeriod(previousPeriod(), uiLocale)}</strong>).
                 </span>
               </div>
             </div>
@@ -553,30 +534,27 @@ export default function MpvManager({
           <section className="mpv-card mpv-card-history">
             <div className="mpv-card-head">
               <div className="mpv-head-title-wrap">
-                <h4 className="mpv-card-title">Riwayat MVP Line {line.code}</h4>
-                <span className="mpv-count-pill">{history.length} Periode</span>
+                <h4 className="mpv-card-title">{uiText("Riwayat MVP Line ")}{line.code}</h4>
+                <span className="mpv-count-pill">{history.length}{uiText(" Periode")}</span>
               </div>
             </div>
 
             <div className="mpv-card-body mpv-history-scroll">
               {history.length === 0 ? (
-                <div className="mpv-empty-notice">
-                  Belum ada riwayat MPV untuk lini ini. Tetapkan MVP pada form
-                  di samping.
-                </div>
+                <div className="mpv-empty-notice">{uiText("Belum ada riwayat MPV untuk lini ini. Tetapkan MVP pada form di samping.")}</div>
               ) : (
                 <table className="mpv-mini-table">
                   <thead>
                     <tr>
-                      <th>Bulan</th>
-                      <th>Nama Operator</th>
-                      <th>Dept</th>
-                      <th>Status</th>
-                      <th style={{ textAlign: "right" }}>Aksi</th>
+                      <th>{uiText("Bulan")}</th>
+                      <th>{uiText("Nama Operator")}</th>
+                      <th>{uiText("Dept")}</th>
+                      <th>{uiText("Status")}</th>
+                      <th style={{ textAlign: "right" }}>{uiText("Aksi")}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {history.map((item) => {
+                    {uiText(history.map((item) => {
                       const isSelected = item.period === period;
                       const isLive = shownOnDashboard?.id === item.id;
 
@@ -587,7 +565,7 @@ export default function MpvManager({
                         >
                           <td className="mpv-td-period">
                             <span className="mpv-period-text">
-                              {formatPeriod(item.period)}
+                              {formatPeriod(item.period, uiLocale)}
                             </span>
                           </td>
                           <td className="mpv-td-person">
@@ -606,16 +584,11 @@ export default function MpvManager({
                           <td>
                             {isLive ? (
                               <span className="mpv-status-chip is-live">
-                                <span className="mpv-dot" /> Tayang
-                              </span>
+                                <span className="mpv-dot" />{uiText(" Tayang")}</span>
                             ) : item.period > previousPeriod() ? (
-                              <span className="mpv-status-chip is-upcoming">
-                                Mendatang
-                              </span>
+                              <span className="mpv-status-chip is-upcoming">{uiText("Mendatang")}</span>
                             ) : (
-                              <span className="mpv-status-chip is-past">
-                                Arsip
-                              </span>
+                              <span className="mpv-status-chip is-past">{uiText("Arsip")}</span>
                             )}
                           </td>
                           <td style={{ textAlign: "right" }}>
@@ -630,9 +603,9 @@ export default function MpvManager({
                                   setPeriod(item.period);
                                   setStatus(null);
                                 }}
-                                title="Tampilkan di kartu sebelah kiri"
+                                title={uiText("Tampilkan di kartu sebelah kiri")}
                               >
-                                {isSelected ? "Dipilih" : "Pilih"}
+                                {isSelected ? uiText("Dipilih") : uiText("Pilih")}
                               </button>
                               <button
                                 type="button"
@@ -641,7 +614,7 @@ export default function MpvManager({
                                   handleRemove(item.period, item.name)
                                 }
                                 disabled={savingAction}
-                                title="Hapus dari riwayat"
+                                title={uiText("Hapus dari riwayat")}
                               >
                                 ×
                               </button>
@@ -649,7 +622,7 @@ export default function MpvManager({
                           </td>
                         </tr>
                       );
-                    })}
+                    }))}
                   </tbody>
                 </table>
               )}
@@ -669,8 +642,8 @@ export default function MpvManager({
             <div className="mpv-modal-top">
               <h4 className="mpv-modal-heading">
                 {existing
-                  ? `Ubah Data MPV · ${formatPeriod(period)}`
-                  : `Input MPV · ${formatPeriod(period)}`}
+                  ? uiText("Ubah Data MPV · {{v0}}", { v0: formatPeriod(period, uiLocale) })
+                  : uiText("Input MPV · {{v0}}", { v0: formatPeriod(period, uiLocale) })}
               </h4>
               <button
                 type="button"
@@ -686,63 +659,63 @@ export default function MpvManager({
               className="mpv-modal-form-content"
             >
               <div className="mpv-form-group">
-                <label className="mpv-form-label">Nama Lengkap *</label>
+                <label className="mpv-form-label">{uiText("Nama Lengkap *")}</label>
                 <input
                   type="text"
                   required
                   className="mpv-form-input"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Nama Operator"
+                  placeholder={uiText("Nama Operator")}
                 />
               </div>
 
               <div className="mpv-form-group">
-                <label className="mpv-form-label">NIK / Employee ID *</label>
+                <label className="mpv-form-label">{uiText("NIK / Employee ID *")}</label>
                 <input
                   type="text"
                   required
                   className="mpv-form-input"
                   value={editEmployeeId}
                   onChange={(e) => setEditEmployeeId(e.target.value)}
-                  placeholder="Contoh: 009878"
+                  placeholder={uiText("Contoh: 009878")}
                 />
               </div>
 
               <div className="mpv-form-row">
                 <div className="mpv-form-group">
-                  <label className="mpv-form-label">Departemen</label>
+                  <label className="mpv-form-label">{uiText("Departemen")}</label>
                   <select
                     className="mpv-form-select"
                     value={editDept}
                     onChange={(e) => setEditDept(e.target.value)}
                   >
-                    <option value="PROD">Produksi</option>
-                    <option value="ME">ME</option>
-                    <option value="PE">PE</option>
-                    <option value="QC">Quality</option>
+                    <option value="PROD">{uiText("Produksi")}</option>
+                    <option value="ME">{uiText("ME")}</option>
+                    <option value="PE">{uiText("PE")}</option>
+                    <option value="QC">{uiText("Quality")}</option>
                   </select>
                 </div>
 
                 <div className="mpv-form-group">
-                  <label className="mpv-form-label">Jabatan</label>
+                  <label className="mpv-form-label">{uiText("Jabatan")}</label>
                   <input
                     type="text"
                     className="mpv-form-input"
                     value={editPosition}
                     onChange={(e) => setEditPosition(e.target.value)}
-                    placeholder="Operator Lini"
+                    placeholder={uiText("Operator Lini")}
                   />
                 </div>
               </div>
 
               <div className="mpv-form-group">
-                <label className="mpv-form-label">Foto Profil</label>
+                <label className="mpv-form-label">{uiText("Foto Profil")}</label>
                 <div className="mpv-photo-picker-box">
                   {editPhotoUrl ? (
                     <img
                       src={editPhotoUrl}
-                      alt="Pratinjau foto"
+                      alt={uiText("Pratinjau foto")}
                       className="mpv-photo-thumb"
                     />
                   ) : (
@@ -752,7 +725,7 @@ export default function MpvManager({
                   )}
                   <div className="mpv-photo-picker-actions">
                     <label className="mpv-file-picker-btn">
-                      {editPhotoUrl ? "Ganti Foto" : "Pilih Foto"}
+                      {editPhotoUrl ? uiText("Ganti Foto") : uiText("Pilih Foto")}
                       <input
                         type="file"
                         accept="image/*"
@@ -765,13 +738,9 @@ export default function MpvManager({
                         type="button"
                         className="mpv-photo-del-btn"
                         onClick={() => setEditPhotoUrl("")}
-                      >
-                        Hapus Foto
-                      </button>
+                      >{uiText("Hapus Foto")}</button>
                     ) : (
-                      <span className="mpv-photo-hint">
-                        Maks. 2 MB (JPG / PNG)
-                      </span>
+                      <span className="mpv-photo-hint">{uiText("Maks. 2 MB (JPG / PNG)")}</span>
                     )}
                   </div>
                 </div>
@@ -782,15 +751,13 @@ export default function MpvManager({
                   type="button"
                   className="mpv-sm-btn mpv-btn-soft-ghost"
                   onClick={() => setShowEditModal(false)}
-                >
-                  Batal
-                </button>
+                >{uiText("Batal")}</button>
                 <button
                   type="submit"
                   className="mpv-sm-btn mpv-btn-solid-green"
                   disabled={savingAction}
                 >
-                  {savingAction ? "Menyimpan..." : "Simpan MPV"}
+                  {savingAction ? uiText("Menyimpan...") : uiText("Simpan MPV")}
                 </button>
               </div>
             </form>

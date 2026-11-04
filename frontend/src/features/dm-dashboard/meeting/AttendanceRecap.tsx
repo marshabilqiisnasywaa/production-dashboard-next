@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, RefreshCw } from "lucide-react";
@@ -59,6 +61,7 @@ interface Props {
 }
 
 export default function AttendanceRecap({ lines, call }: Props) {
+  const { text: uiText } = useUiText();
   const [today, setToday] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [lineId, setLineId] = useState<number | null>(null);
@@ -131,27 +134,27 @@ export default function AttendanceRecap({ lines, call }: Props) {
     <div className="dm-recap-container">
       <div className="dm-recap-filters-bar">
         <div className="dm-recap-filter-group">
-          <span className="dm-recap-filter-label">TANGGAL:</span>
+          <span className="dm-recap-filter-label">{uiText("TANGGAL:")}</span>
           <input
             type="date"
             className="dm-recap-date-input"
             value={selectedDate}
-            aria-label="Pilih tanggal"
+            aria-label={uiText("Pilih tanggal")}
             onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
           />
         </div>
 
         <div className="dm-recap-filter-group">
-          <span className="dm-recap-filter-label">LINE:</span>
+          <span className="dm-recap-filter-label">{uiText("LINE:")}</span>
           <select
             className="dm-recap-date-input"
-            aria-label="Pilih line"
+            aria-label={uiText("Pilih line")}
             value={lineId ?? ""}
             onChange={(e) =>
               setLineId(e.target.value ? Number(e.target.value) : null)
             }
           >
-            <option value="">Semua line</option>
+            <option value="">{uiText("Semua line")}</option>
             {lines.map((line) => (
               <option key={line.id} value={line.id}>
                 {line.code} · {line.workshopName}
@@ -161,7 +164,7 @@ export default function AttendanceRecap({ lines, call }: Props) {
         </div>
 
         <div className="dm-recap-filter-group">
-          <span className="dm-recap-filter-label">SESI MEETING:</span>
+          <span className="dm-recap-filter-label">{uiText("SESI MEETING:")}</span>
           <div className="dm-recap-pills">
             <button
               type="button"
@@ -169,8 +172,7 @@ export default function AttendanceRecap({ lines, call }: Props) {
                 "dm-recap-pill " + (selectedMeeting === 0 ? "is-active" : "")
               }
               onClick={() => setSelectedMeeting(0)}
-            >
-              Semua Sesi ({rows.length})
+            >{uiText("Semua Sesi (")}{rows.length})
             </button>
             {cards.map((c) => (
               <button
@@ -182,7 +184,7 @@ export default function AttendanceRecap({ lines, call }: Props) {
                 }
                 onClick={() => setSelectedMeeting(c.n)}
               >
-                {c.title} ({c.total})
+                {uiText(c.title)} ({c.total})
               </button>
             ))}
           </div>
@@ -194,8 +196,8 @@ export default function AttendanceRecap({ lines, call }: Props) {
             className="dm-recap-icon-btn"
             disabled={loading}
             onClick={reload}
-            aria-label="Muat ulang data"
-            title="Muat ulang data"
+            aria-label={uiText("Muat ulang data")}
+            title={uiText("Muat ulang data")}
           >
             <RefreshCw
               size={16}
@@ -210,7 +212,7 @@ export default function AttendanceRecap({ lines, call }: Props) {
 
       {error && (
         <div className="dm-recap-empty-state" role="alert">
-          <p className="dm-recap-empty-text">{error}</p>
+          <p className="dm-recap-empty-text">{uiText(error)}</p>
         </div>
       )}
 
@@ -225,13 +227,13 @@ export default function AttendanceRecap({ lines, call }: Props) {
               }
             >
               <div className="dm-recap-card-head">
-                <span className="dm-recap-session-tag">SESI {c.n}</span>
-                <span className="dm-recap-card-title">{c.title}</span>
+                <span className="dm-recap-session-tag">{uiText("SESI ")}{c.n}</span>
+                <span className="dm-recap-card-title">{uiText(c.title)}</span>
               </div>
               <div className="dm-recap-card-body">
                 <div className="dm-recap-stat-number">
                   {c.present}{" "}
-                  <span className="dm-recap-stat-sub">/ {c.team} Hadir</span>
+                  <span className="dm-recap-stat-sub">/ {c.team}{uiText(" Hadir")}</span>
                 </div>
                 <div className="dm-recap-progress-bar">
                   <div
@@ -245,17 +247,14 @@ export default function AttendanceRecap({ lines, call }: Props) {
                 </div>
               </div>
               <div className="dm-recap-card-footer">
-                <span>
-                  Jadwal: {c.times}
+                <span>{uiText("Jadwal: ")}{c.times}
                   {c.guests > 0 ? " · +" + c.guests + " tamu" : ""}
                   {c.represented > 0
                     ? " · " + c.represented + " diwakilkan"
                     : ""}
                 </span>
                 <span className="dm-recap-percent">
-                  {c.team ? Math.round((c.present / c.team) * 100) : 0}%
-                  Kehadiran
-                </span>
+                  {c.team ? Math.round((c.present / c.team) * 100) : 0}{uiText("% Kehadiran")}</span>
               </div>
             </div>
           ))}
@@ -264,21 +263,19 @@ export default function AttendanceRecap({ lines, call }: Props) {
 
       <div className="dm-recap-table-wrapper">
         <div className="dm-recap-table-head-bar">
-          <h4 className="dm-recap-table-title">
-            Riwayat Absensi: {selectedLabel} (
-            {selectedDate ? formatDateLabel(selectedDate, today) : "…"})
+          <h4 className="dm-recap-table-title">{uiText("Riwayat Absensi: ")}{uiText(selectedLabel)} (
+            {selectedDate ? uiText(formatDateLabel(selectedDate, today)) : "…"})
           </h4>
           <span className="dm-recap-count-badge">
-            {filtered.length} Peserta Tercatat
-          </span>
+            {filtered.length}{uiText(" Peserta Tercatat")}</span>
         </div>
 
         {!loading && !error && filtered.length === 0 ? (
           <div className="dm-recap-empty-state">
             <p className="dm-recap-empty-text">
               {sessions.length === 0
-                ? "Belum ada sesi meeting pada tanggal ini."
-                : "Belum ada data absensi untuk pilihan ini."}
+                ? uiText("Belum ada sesi meeting pada tanggal ini.")
+                : uiText("Belum ada data absensi untuk pilihan ini.")}
             </p>
           </div>
         ) : (
@@ -286,13 +283,13 @@ export default function AttendanceRecap({ lines, call }: Props) {
             <table className="dm-recap-table">
               <thead>
                 <tr>
-                  <th scope="col">No</th>
-                  <th scope="col">Nama &amp; NIK</th>
-                  <th scope="col">Line</th>
-                  <th scope="col">Peran / Jabatan</th>
-                  <th scope="col">Sesi Meeting</th>
-                  <th scope="col">Waktu Absen</th>
-                  <th scope="col">Status Kehadiran</th>
+                  <th scope="col">{uiText("No")}</th>
+                  <th scope="col">{uiText("Nama & NIK")}</th>
+                  <th scope="col">{uiText("Line")}</th>
+                  <th scope="col">{uiText("Peran / Jabatan")}</th>
+                  <th scope="col">{uiText("Sesi Meeting")}</th>
+                  <th scope="col">{uiText("Waktu Absen")}</th>
+                  <th scope="col">{uiText("Status Kehadiran")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -327,8 +324,7 @@ export default function AttendanceRecap({ lines, call }: Props) {
                       <td>
                         {row.lineCode}
                         {row.isGuest && row.homeLine ? (
-                          <span className="dm-recap-status-note">
-                            asal {row.homeLine}
+                          <span className="dm-recap-status-note">{uiText("asal ")}{row.homeLine}
                           </span>
                         ) : null}
                       </td>
@@ -345,8 +341,7 @@ export default function AttendanceRecap({ lines, call }: Props) {
                             "dm-recap-session-badge " +
                             (SESSION_BADGE[row.sessionNumber] ?? "is-pre")
                           }
-                        >
-                          Sesi {row.sessionNumber}
+                        >{uiText("Sesi ")}{row.sessionNumber}
                         </span>
                       </td>
                       <td>
@@ -359,10 +354,10 @@ export default function AttendanceRecap({ lines, call }: Props) {
                       <td>
                         <span className={"dm-recap-status-pill " + status.css}>
                           <span className="dm-recap-dot" aria-hidden="true" />
-                          {status.label}
+                          {uiText(status.label)}
                         </span>
                         {row.isGuest && (
-                          <span className="dm-recap-guest-tag">Tamu</span>
+                          <span className="dm-recap-guest-tag">{uiText("Tamu")}</span>
                         )}
                         {detail && (
                           <span className="dm-recap-status-note">{detail}</span>
@@ -379,17 +374,13 @@ export default function AttendanceRecap({ lines, call }: Props) {
       {lineId === null && (
         <div className="dm-recap-table-wrapper">
           <div className="dm-recap-table-head-bar">
-            <h4 className="dm-recap-table-title">
-              Riwayat Absensi: Workshop (
-              {selectedDate ? formatDateLabel(selectedDate, today) : "…"})
+            <h4 className="dm-recap-table-title">{uiText("Riwayat Absensi: Workshop (")}{selectedDate ? uiText(formatDateLabel(selectedDate, today)) : "…"})
             </h4>
             <span className="dm-recap-count-badge">
               {workshopSessions.reduce(
                 (total, session) => total + session.attendances.length,
                 0
-              )}{" "}
-              Peserta Tercatat
-            </span>
+              )}{" "}{uiText("Peserta Tercatat")}</span>
           </div>
 
           {!loading &&
@@ -403,21 +394,19 @@ export default function AttendanceRecap({ lines, call }: Props) {
                 className="dm-recap-empty-icon"
                 aria-hidden="true"
               />
-              <p className="dm-recap-empty-text">
-                Belum ada data absensi Workshop pada tanggal ini.
-              </p>
+              <p className="dm-recap-empty-text">{uiText("Belum ada data absensi Workshop pada tanggal ini.")}</p>
             </div>
           ) : !error ? (
             <div className="dm-recap-table-scroll">
               <table className="dm-recap-table">
                 <thead>
                   <tr>
-                    <th scope="col">No</th>
-                    <th scope="col">Nama &amp; NIK</th>
-                    <th scope="col">Peran / Jabatan</th>
-                    <th scope="col">Sesi Meeting</th>
-                    <th scope="col">Waktu Absen</th>
-                    <th scope="col">Status Kehadiran</th>
+                    <th scope="col">{uiText("No")}</th>
+                    <th scope="col">{uiText("Nama & NIK")}</th>
+                    <th scope="col">{uiText("Peran / Jabatan")}</th>
+                    <th scope="col">{uiText("Sesi Meeting")}</th>
+                    <th scope="col">{uiText("Waktu Absen")}</th>
+                    <th scope="col">{uiText("Status Kehadiran")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -471,8 +460,7 @@ export default function AttendanceRecap({ lines, call }: Props) {
                             </span>
                           </td>
                           <td>
-                            <span className="dm-recap-session-badge is-pre">
-                              Workshop ({session.scheduledTime})
+                            <span className="dm-recap-session-badge is-pre">{uiText("Workshop (")}{session.scheduledTime})
                             </span>
                           </td>
                           <td>
@@ -490,7 +478,7 @@ export default function AttendanceRecap({ lines, call }: Props) {
                                 className="dm-recap-dot"
                                 aria-hidden="true"
                               />
-                              {status.label}
+                              {uiText(status.label)}
                             </span>
                           </td>
                         </tr>

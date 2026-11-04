@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -93,6 +95,7 @@ export function AttendanceScanner({
   onFinish,
   mode = "initial",
 }: Props) {
+  const { text: uiText } = useUiText();
   const api = useMeetingApi();
   const isLateAttendance = mode === "late";
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -205,12 +208,10 @@ export function AttendanceScanner({
   return (
     <Card
       title={
-        isLateAttendance ? "Presensi Peserta Terlambat" : "Presensi Berlangsung"
+        isLateAttendance ? uiText("Presensi Peserta Terlambat") : uiText("Presensi Berlangsung")
       }
       subtitle={
-        isLateAttendance
-          ? "ScaN wajah peserta"
-          : "Arahkan wajah ke kamera dan klik scan"
+        isLateAttendance ? uiText("ScaN wajah peserta") : uiText("Arahkan wajah ke kamera dan klik scan")
       }
     >
       <div className="dml-mt-cam">
@@ -218,16 +219,15 @@ export function AttendanceScanner({
         {camera !== "on" && (
           <div className="dml-mt-cam__fallback">
             {camera === "loading"
-              ? "Membuka kamera…"
-              : "Kamera tidak tersedia. Izinkan akses kamera di browser."}
+              ? uiText("Membuka kamera…")
+              : uiText("Kamera tidak tersedia. Izinkan akses kamera di browser.")}
           </div>
         )}
         <span className={frameClass(scanning, result)} aria-hidden="true" />
         {scanning && (
           <div className="dml-mt-cam__prompt" aria-hidden="true">
             {stepNumber(step) !== null && (
-              <span className="dml-mt-cam__stepno">
-                Langkah {stepNumber(step)} dari {SCAN_STEPS}
+              <span className="dml-mt-cam__stepno">{uiText("Langkah ")}{stepNumber(step)}{uiText(" dari ")}{SCAN_STEPS}
               </span>
             )}
             <span className="dml-mt-cam__instruction">
@@ -247,7 +247,7 @@ export function AttendanceScanner({
               <div className="dml-mt-cam__card is-ok">
                 <span className="dml-mt-cam__badge">
                   <IconCheckCircle size={18} />{" "}
-                  {result.already ? "Sudah hadir" : "Hadir"}
+                  {result.already ? uiText("Sudah hadir") : uiText("Hadir")}
                 </span>
                 <MeetingAvatar
                   className="dml-mt-cam__avatar"
@@ -264,7 +264,7 @@ export function AttendanceScanner({
                       <span className="dml-mt-cam__line">{result.line}</span>
                     )}
                     {result.guest && (
-                      <span className="dml-mt-cam__guest">Tamu</span>
+                      <span className="dml-mt-cam__guest">{uiText("Tamu")}</span>
                     )}
                   </span>
                 )}
@@ -277,9 +277,8 @@ export function AttendanceScanner({
             ) : (
               <div className="dml-mt-cam__card is-fail">
                 <span className="dml-mt-cam__badge">
-                  <IconAlert size={18} /> Tidak berhasil
-                </span>
-                <span className="dml-mt-cam__reason">{result.message}</span>
+                  <IconAlert size={18} />{uiText(" Tidak berhasil")}</span>
+                <span className="dml-mt-cam__reason">{uiText(result.message)}</span>
                 <span
                   className="dml-mt-cam__timer"
                   style={{ animationDuration: RESULT_MS + "ms" }}
@@ -295,7 +294,7 @@ export function AttendanceScanner({
         {!scanning && result?.ok && (
           <span className="is-ok">
             <IconCheckCircle size={18} />{" "}
-            {result.already ? "Sudah hadir" : "Berhasil"} · {result.name}
+            {result.already ? uiText("Sudah hadir") : uiText("Berhasil")} · {result.name}
             {result.nik || result.role
               ? " (" +
                 [result.nik, result.role].filter(Boolean).join(" · ") +
@@ -303,16 +302,14 @@ export function AttendanceScanner({
               : ""}{" "}
             · {result.time}
             {result.guest
-              ? ` · tamu${
-                  result.guest.line ? ` dari ${result.guest.line}` : ""
-                }`
+              ? uiText(" · tamu{{v0}}", { v0: result.guest.line ? ` dari ${result.guest.line}` : "" })
               : ""}
           </span>
         )}
         {!scanning && result && !result.ok && (
-          <span className="is-fail">{result.message}</span>
+          <span className="is-fail">{uiText(result.message)}</span>
         )}
-        {!scanning && !result && <span>Menunggu member berikutnya…</span>}
+        {!scanning && !result && <span>{uiText("Menunggu member berikutnya…")}</span>}
       </div>
 
       <div className="dml-mt-scanactions">
@@ -322,7 +319,7 @@ export function AttendanceScanner({
           disabled={!canScan}
           onClick={handleScan}
         >
-          {scanning ? "Memindai…" : "Scan wajah"}
+          {scanning ? uiText("Memindai…") : uiText("Scan wajah")}
         </Button>
         <Button
           variant="primary"
@@ -330,18 +327,18 @@ export function AttendanceScanner({
           disabled={!canFinish}
           onClick={onFinish}
         >
-          {isLateAttendance ? "Tutup Presensi" : "Selesai Presensi"}
+          {isLateAttendance ? uiText("Tutup Presensi") : uiText("Selesai Presensi")}
         </Button>
       </div>
 
       <p className="dml-mt-hint">
         {pending.length === 0
-          ? "Semua member sudah hadir."
+          ? uiText("Semua member sudah hadir.")
           : isLateAttendance
-          ? `${pending.length} member belum hadir. Menutup scanner tidak mengubah status mereka.`
+          ? uiText("{{v0}} member belum hadir. Menutup scanner tidak mengubah status mereka.", { v0: pending.length })
           : requireAllPresent
-          ? `Menunggu ${pending.length} member lagi. Semua member wajib hadir.`
-          : `${pending.length} member yang belum scan akan dicatat tidak hadir saat presensi ditutup.`}
+          ? uiText("Menunggu {{v0}} member lagi. Semua member wajib hadir.", { v0: pending.length })
+          : uiText("{{v0}} member yang belum scan akan dicatat tidak hadir saat presensi ditutup.", { v0: pending.length })}
       </p>
     </Card>
   );

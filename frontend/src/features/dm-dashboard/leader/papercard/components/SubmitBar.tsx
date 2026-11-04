@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { Button } from "@/components/ui/Button";
 import { IconCheck } from "@/components/ui/icons";
 
@@ -21,21 +23,21 @@ export function SubmitBar({
   isRevision = false,
   buttonText,
 }: Props) {
+  const { text: uiText } = useUiText();
   return (
     <div className="dml-submitbar">
       <div className="dml-submitbar__inner">
         <div>
           <strong>
-            {done}/{total} selesai
-          </strong>
+            {done}/{total}{uiText(" selesai")}</strong>
           <p>
             {submitted
-              ? "Papercard berstatus terkunci dan tidak dapat diubah lagi hari ini."
+              ? uiText("Papercard berstatus terkunci dan tidak dapat diubah lagi hari ini.")
               : isRevision
-                ? "Mode Revisi: Perbaiki poin yang diminta lalu kirim ulang ke Supervisor."
+                ? uiText("Mode Revisi: Perbaiki poin yang diminta lalu kirim ulang ke Supervisor.")
                 : complete
-                  ? "Semua item sudah terisi. Siap dikirim."
-                  : "Lengkapi semua jawaban dan detail wajib."}
+                  ? uiText("Semua item sudah terisi. Siap dikirim.")
+                  : uiText("Lengkapi semua jawaban dan detail wajib.")}
           </p>
         </div>
         {!submitted && (

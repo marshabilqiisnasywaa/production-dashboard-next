@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useEffect, useRef, useState } from "react";
 import { Flag, Plus, Trash2, X } from "lucide-react";
 import { IconClose } from "@/components/ui/icons";
@@ -118,6 +120,7 @@ function resizeTextarea(element: HTMLTextAreaElement) {
 }
 
 function EvidenceMenu({ canEdit, ariaLabel, onAdd }: EvidenceMenuProps) {
+  const { text: uiText } = useUiText();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -150,43 +153,37 @@ function EvidenceMenu({ canEdit, ariaLabel, onAdd }: EvidenceMenuProps) {
         className="dm-5w-evidence-trigger"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={ariaLabel}
+        aria-label={uiText(ariaLabel)}
         disabled={!canEdit}
         onClick={() => setOpen((current) => !current)}
       >
         <Plus size={13} aria-hidden="true" />
-        <span>Bukti</span>
+        <span>{uiText("Bukti")}</span>
       </button>
       {open ? (
         <div
           className="dm-5w-evidence-menu-panel"
           role="menu"
-          aria-label={ariaLabel}
+          aria-label={uiText(ariaLabel)}
         >
           <button
             type="button"
             role="menuitem"
             className="dm-5w-evidence-menu-item"
             onClick={() => choose("single")}
-          >
-            Foto atau catatan
-          </button>
+          >{uiText("Foto atau catatan")}</button>
           <button
             type="button"
             role="menuitem"
             className="dm-5w-evidence-menu-item"
             onClick={() => choose("pair-ok-ng")}
-          >
-            Pasangan OK / NG
-          </button>
+          >{uiText("Pasangan OK / NG")}</button>
           <button
             type="button"
             role="menuitem"
             className="dm-5w-evidence-menu-item"
             onClick={() => choose("pair-standar-aktual")}
-          >
-            Pasangan Standar / Aktual
-          </button>
+          >{uiText("Pasangan Standar / Aktual")}</button>
         </div>
       ) : null}
     </div>
@@ -203,6 +200,7 @@ export default function WhyTree({
   onSave,
   onNotify,
 }: WhyTreeProps) {
+  const { text: uiText } = useUiText();
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [customLabelFor, setCustomLabelFor] = useState<string | null>(null);
@@ -366,7 +364,7 @@ export default function WhyTree({
     const filled = Boolean(entry.text.trim() || entry.photos.length > 0);
     if (
       filled &&
-      !window.confirm("Hapus blok bukti ini? Isian dan foto akan dibuang.")
+      !window.confirm(uiText("Hapus blok bukti ini? Isian dan foto akan dibuang."))
     ) {
       return;
     }
@@ -463,7 +461,7 @@ export default function WhyTree({
     );
     if (
       filled &&
-      !window.confirm("Hapus hipotesis ini? Isian dan bukti akan dibuang.")
+      !window.confirm(uiText("Hapus hipotesis ini? Isian dan bukti akan dibuang."))
     ) {
       return;
     }
@@ -547,7 +545,7 @@ export default function WhyTree({
       <button
         type="button"
         className="dm-5w-evidence-summary"
-        aria-label={`Buka bukti ${positionLabel}`}
+        aria-label={uiText("Buka bukti {{v0}}", { v0: positionLabel })}
         onClick={() =>
           openManyEvidence(
             owner,
@@ -555,7 +553,7 @@ export default function WhyTree({
           )
         }
       >
-        {evidenceCountLabel(evidence.length)}: {labels}
+        {uiText(evidenceCountLabel(evidence.length))}: {labels}
       </button>
     );
   }
@@ -582,7 +580,7 @@ export default function WhyTree({
                 className="dm-5w-evidence-label-input"
                 value={evidence.label}
                 style={{ width: evidenceLabelWidth(evidence.label) }}
-                placeholder="Nama label"
+                placeholder={uiText("Nama label")}
                 onChange={(event) =>
                   updateEvidence(owner, evidence.id, {
                     label: event.target.value,
@@ -591,7 +589,7 @@ export default function WhyTree({
                 onBlur={() => finishCustomLabel(owner, evidence)}
                 disabled={!canEdit}
                 autoFocus
-                aria-label={`Nama label bukti ${positionLabel}`}
+                aria-label={uiText("Nama label bukti {{v0}}", { v0: positionLabel })}
               />
             ) : (
               <select
@@ -604,17 +602,17 @@ export default function WhyTree({
                   handleEvidenceLabel(owner, evidence, event.target.value)
                 }
                 disabled={!canEdit}
-                aria-label={`Label bukti ${positionLabel}`}
+                aria-label={uiText("Label bukti {{v0}}", { v0: positionLabel })}
               >
                 {customOption ? (
-                  <option value={customOption}>{customOption}</option>
+                  <option value={customOption}>{uiText(customOption)}</option>
                 ) : null}
                 {PRESET_EVIDENCE_LABELS.map((label) => (
                   <option key={label} value={label}>
-                    {label}
+                    {uiText(label)}
                   </option>
                 ))}
-                <option value="Lainnya...">Lainnya...</option>
+                <option value="Lainnya...">{uiText("Lainnya...")}</option>
               </select>
             )}
           </span>
@@ -623,7 +621,7 @@ export default function WhyTree({
             className="dm-5w-evidence-remove"
             onClick={() => removeEvidence(owner, evidence.id)}
             disabled={!canEdit}
-            aria-label={`Hapus blok bukti ${positionLabel}`}
+            aria-label={uiText("Hapus blok bukti {{v0}}", { v0: positionLabel })}
           >
             <IconClose size={14} />
           </button>
@@ -636,13 +634,13 @@ export default function WhyTree({
             if (element) resizeTextarea(element);
           }}
           value={evidence.text}
-          placeholder={getEvidencePlaceholder(evidence.label)}
+          placeholder={uiText(getEvidencePlaceholder(evidence.label))}
           onChange={(event) => {
             resizeTextarea(event.currentTarget);
             updateEvidence(owner, evidence.id, { text: event.target.value });
           }}
           disabled={!canEdit}
-          aria-label={`Isi bukti ${positionLabel}`}
+          aria-label={uiText("Isi bukti {{v0}}", { v0: positionLabel })}
         />
 
         <div className="dm-5w-evidence-photos">
@@ -655,7 +653,7 @@ export default function WhyTree({
                 type="button"
                 className="dm-5w-evidence-thumb-open"
                 onClick={() => setPreviewUrl(photo)}
-                aria-label="Lihat foto lebih besar"
+                aria-label={uiText("Lihat foto lebih besar")}
               >
                 <img src={photo} alt="" />
               </button>
@@ -664,7 +662,7 @@ export default function WhyTree({
                 className="dm-5w-evidence-thumb-remove"
                 onClick={() => removePhoto(owner, evidence.id, index)}
                 disabled={!canEdit}
-                aria-label="Hapus foto bukti"
+                aria-label={uiText("Hapus foto bukti")}
               >
                 <IconClose size={9} />
               </button>
@@ -677,14 +675,14 @@ export default function WhyTree({
               accept="image/*"
               className="dm-5w-sr-only"
               disabled={!canEdit}
-              aria-label={`Unggah foto bukti ${positionLabel}`}
+              aria-label={uiText("Unggah foto bukti {{v0}}", { v0: positionLabel })}
               onChange={(event) => {
                 const files = event.target.files;
                 event.target.value = "";
                 void addPhotos(owner, evidence.id, files);
               }}
             />
-            <span>Unggah foto</span>
+            <span>{uiText("Unggah foto")}</span>
           </label>
         </div>
       </article>
@@ -717,8 +715,7 @@ export default function WhyTree({
                 >
                   <header className="dm-5w-why-head">
                     <div className="dm-5w-why-head-left">
-                      <span className="dm-5w-why-badge">
-                        Why {node.level}
+                      <span className="dm-5w-why-badge">{uiText("Why ")}{node.level}
                       </span>
                     </div>
                     <button
@@ -731,7 +728,7 @@ export default function WhyTree({
                       disabled={!canEdit}
                     >
                       <Flag size={12} aria-hidden="true" />
-                      <span>Root Cause</span>
+                      <span>{uiText("Root Cause")}</span>
                     </button>
                   </header>
 
@@ -744,13 +741,13 @@ export default function WhyTree({
                         if (element) resizeTextarea(element);
                       }}
                       value={node.statement}
-                      placeholder={WHY_PLACEHOLDERS[node.level] ?? "Tulis sebabnya"}
+                      placeholder={WHY_PLACEHOLDERS[node.level] ?? uiText("Tulis sebabnya")}
                       onChange={(event) => {
                         resizeTextarea(event.currentTarget);
                         updateNode(node.id, { statement: event.target.value });
                       }}
                       disabled={!canEdit}
-                      aria-label={`Pernyataan Why ${node.level}`}
+                      aria-label={uiText("Pernyataan Why {{v0}}", { v0: node.level })}
                     />
                   </label>
 
@@ -772,9 +769,7 @@ export default function WhyTree({
                       className="dm-5w-add-field dm-5w-why-actions-end"
                       onClick={() => addBranch(node.id)}
                       disabled={!canEdit}
-                    >
-                      Hipotesis lain
-                    </button>
+                    >{uiText("Hipotesis lain")}</button>
                   </div>
 
                   {openNodeEvidence.length > 0 ? (
@@ -795,7 +790,7 @@ export default function WhyTree({
                 {node.branches.length > 0 ? (
                   <div
                     className="dm-5w-branches"
-                    aria-label={`Hipotesis Why ${node.level}`}
+                    aria-label={uiText("Hipotesis Why {{v0}}", { v0: node.level })}
                   >
                     {node.branches.map((branch) => {
                       const owner = {
@@ -811,8 +806,8 @@ export default function WhyTree({
                             <span
                               className="dm-5w-branch-reject"
                               role="img"
-                              title="Hipotesis ditolak"
-                              aria-label="Hipotesis ditolak"
+                              title={uiText("Hipotesis ditolak")}
+                              aria-label={uiText("Hipotesis ditolak")}
                             >
                               <X size={11} aria-hidden="true" />
                             </span>
@@ -820,7 +815,7 @@ export default function WhyTree({
                               className="dm-5w-branch-input"
                               rows={1}
                               value={branch.statement}
-                              placeholder="Tulis dugaan lain yang sudah dicek, misalnya: port USB PC sudah rusak"
+                              placeholder={uiText("Tulis dugaan lain yang sudah dicek, misalnya: port USB PC sudah rusak")}
                               ref={(element) => {
                                 if (element) resizeTextarea(element);
                               }}
@@ -831,7 +826,7 @@ export default function WhyTree({
                                 });
                               }}
                               disabled={!canEdit}
-                              aria-label={`Pernyataan dugaan Why ${node.level}`}
+                              aria-label={uiText("Pernyataan dugaan Why {{v0}}", { v0: node.level })}
                             />
                             <EvidenceMenu
                               canEdit={canEdit}
@@ -843,7 +838,7 @@ export default function WhyTree({
                               className="dm-5w-branch-remove"
                               onClick={() => removeBranch(node.id, branch.id)}
                               disabled={!canEdit}
-                              aria-label={`Hapus hipotesis Why ${node.level}`}
+                              aria-label={uiText("Hapus hipotesis Why {{v0}}", { v0: node.level })}
                             >
                               <Trash2 size={13} aria-hidden="true" />
                             </button>
@@ -895,14 +890,14 @@ export default function WhyTree({
             }
           >
             <Plus size={13} aria-hidden="true" />
-            <span>Lanjutkan: Kenapa lagi?</span>
+            <span>{uiText("Lanjutkan: Kenapa lagi?")}</span>
           </button>
         ) : null}
       </div>
 
-      <aside className="dm-5w-why-rail" aria-label="Ringkasan rantai sebab">
+      <aside className="dm-5w-why-rail" aria-label={uiText("Ringkasan rantai sebab")}>
         <div className="dm-5w-card dm-5w-why-summary">
-          <h2 className="dm-5w-card-title">Ringkasan rantai sebab</h2>
+          <h2 className="dm-5w-card-title">{uiText("Ringkasan rantai sebab")}</h2>
           {chainRows.length > 0 ? (
             <div className="dm-5w-chain-list">
               {chainRows.map((row, index) => (
@@ -917,8 +912,8 @@ export default function WhyTree({
                       row.text ? "" : "is-empty"
                     } ${row.isRoot ? "is-root-cause" : ""}`}
                   >
-                    <strong>{index === 0 ? "Karena" : "maka"}</strong>{" "}
-                    {row.text || `(Why ${row.level} belum diisi)`}
+                    <strong>{index === 0 ? uiText("Karena") : uiText("maka")}</strong>{" "}
+                    {row.text || uiText("(Why {{v0}} belum diisi)", { v0: row.level })}
                   </p>
                 </div>
               ))}
@@ -927,24 +922,20 @@ export default function WhyTree({
                   ↑
                 </span>
                 <p className="dm-5w-chain-line">
-                  <strong>sehingga terjadi</strong>{" "}
-                  {problemLabel.trim() || "(judul abnormal belum diisi)"}
+                  <strong>{uiText("sehingga terjadi")}</strong>{" "}
+                  {problemLabel.trim() || uiText("(judul abnormal belum diisi)")}
                 </p>
               </div>
             </div>
           ) : (
-            <p className="dm-5w-chain-text">
-              Rantai sebab akan muncul setelah Why diisi.
-            </p>
+            <p className="dm-5w-chain-text">{uiText("Rantai sebab akan muncul setelah Why diisi.")}</p>
           )}
           {rootCount === 0 ? (
-            <p className="dm-5w-chain-warn">
-              Tandai satu Why sebagai Root Cause
-            </p>
+            <p className="dm-5w-chain-warn">{uiText("Tandai satu Why sebagai Root Cause")}</p>
           ) : null}
           <div className="dm-5w-progress">
             <div className="dm-5w-progress-item">
-              <span className="dm-5w-progress-label">Why terisi</span>
+              <span className="dm-5w-progress-label">{uiText("Why terisi")}</span>
               <span className="dm-5w-progress-value">{filled}/5</span>
             </div>
             <div
@@ -952,11 +943,11 @@ export default function WhyTree({
                 rootCount > 0 ? "is-root-cause" : ""
               }`}
             >
-              <span className="dm-5w-progress-label">Root Cause</span>
+              <span className="dm-5w-progress-label">{uiText("Root Cause")}</span>
               <span className="dm-5w-progress-value">{rootCount}</span>
             </div>
             <div className="dm-5w-progress-item">
-              <span className="dm-5w-progress-label">Hipotesis ditolak</span>
+              <span className="dm-5w-progress-label">{uiText("Hipotesis ditolak")}</span>
               <span className="dm-5w-progress-value">{rejectedCount}</span>
             </div>
           </div>
@@ -965,9 +956,7 @@ export default function WhyTree({
               type="button"
               className="dm-5w-btn dm-5w-btn-primary dm-5w-btn-block"
               onClick={onSave}
-            >
-              Simpan analisis
-            </button>
+            >{uiText("Simpan analisis")}</button>
           ) : null}
         </div>
       </aside>
@@ -977,20 +966,20 @@ export default function WhyTree({
           className="dm-5w-lightbox"
           role="dialog"
           aria-modal="true"
-          aria-label="Foto bukti"
+          aria-label={uiText("Foto bukti")}
           onClick={() => setPreviewUrl(null)}
         >
           <button
             type="button"
             className="dm-5w-lightbox-close"
             onClick={() => setPreviewUrl(null)}
-            aria-label="Tutup foto"
+            aria-label={uiText("Tutup foto")}
           >
             <IconClose size={16} />
           </button>
           <img
             src={previewUrl}
-            alt="Foto bukti diperbesar"
+            alt={uiText("Foto bukti diperbesar")}
             onClick={(event) => event.stopPropagation()}
           />
         </div>

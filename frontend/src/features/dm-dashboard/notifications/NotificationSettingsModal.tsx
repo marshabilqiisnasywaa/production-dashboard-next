@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -35,6 +37,7 @@ export function NotificationSettingsModal({
   onToggleSound,
   onTestNotification,
 }: NotificationSettingsModalProps) {
+  const { text: uiText } = useUiText();
   const [papercardMinutes, setPapercardMinutes] = useState<number>(15);
   const [papercardEnabled, setPapercardEnabled] = useState<boolean>(true);
   const [meetingMinutes, setMeetingMinutes] = useState<number>(15);
@@ -128,16 +131,16 @@ export function NotificationSettingsModal({
         {/* Modal Header */}
         <div className="dm-liquid-modal-head">
           <div className="dm-liquid-modal-title">
-            <span>Pengaturan Pengingat</span>
+            <span>{uiText("Pengaturan Pengingat")}</span>
             <span className={`dm-liquid-modal-line${targetLineId === 0 ? " is-all" : ""}`}>
-              {activeLabel}
+              {uiText(activeLabel)}
             </span>
           </div>
           <button
             type="button"
             className="dm-liquid-modal-close"
             onClick={onClose}
-            aria-label="Tutup"
+            aria-label={uiText("Tutup")}
           >
             &times;
           </button>
@@ -148,13 +151,13 @@ export function NotificationSettingsModal({
           {/* Admin Target Scope Selector - Default to 'Semua Lini' */}
           {isAdmin && lines && lines.length > 0 && (
             <div className="dm-liquid-scope-bar">
-              <span className="dm-liquid-scope-label">Terapkan Ke:</span>
+              <span className="dm-liquid-scope-label">{uiText("Terapkan Ke:")}</span>
               <select
                 className="dm-liquid-scope-select"
                 value={targetLineId}
                 onChange={(e) => setTargetLineId(Number(e.target.value))}
               >
-                <option value={0}>Semua Lini (Default)</option>
+                <option value={0}>{uiText("Semua Lini (Default)")}</option>
                 {lines.map((l) => (
                   <option key={l.id} value={l.id}>
                     {l.name}
@@ -171,9 +174,9 @@ export function NotificationSettingsModal({
                 <span className="dm-setting-icon">
                   <ClipboardCheck size={16} strokeWidth={1.8} />
                 </span>
-                <span>Pengingat Papercard</span>
+                <span>{uiText("Pengingat Papercard")}</span>
               </span>
-              <label className="dm-liquid-switch" title="Aktif / Nonaktif">
+              <label className="dm-liquid-switch" title={uiText("Aktif / Nonaktif")}>
                 <input
                   type="checkbox"
                   checked={papercardEnabled}
@@ -186,7 +189,7 @@ export function NotificationSettingsModal({
 
             {papercardEnabled && (
               <div className="dm-liquid-segmented-wrap">
-                <span className="dm-liquid-subtext">Beri notifikasi sebelum window buka:</span>
+                <span className="dm-liquid-subtext">{uiText("Beri notifikasi sebelum window buka:")}</span>
                 <div className="dm-liquid-segmented">
                   {PRESET_MINUTES.map((m) => (
                     <button
@@ -199,17 +202,14 @@ export function NotificationSettingsModal({
                         setCustomPapercard(false);
                       }}
                     >
-                      {m}m
-                    </button>
+                      {m}{uiText("m")}</button>
                   ))}
                   <button
                     type="button"
                     disabled={!isAdmin}
                     className={`dm-liquid-seg-btn${customPapercard ? " is-active" : ""}`}
                     onClick={() => setCustomPapercard(true)}
-                  >
-                    Kustom
-                  </button>
+                  >{uiText("Kustom")}</button>
                 </div>
 
                 {customPapercard && (
@@ -223,7 +223,7 @@ export function NotificationSettingsModal({
                       onChange={(e) => setPapercardMinutes(Math.max(1, Number(e.target.value)))}
                       className="dm-liquid-custom-input"
                     />
-                    <span>menit sebelum jadwal</span>
+                    <span>{uiText("menit sebelum jadwal")}</span>
                   </div>
                 )}
               </div>
@@ -239,9 +239,9 @@ export function NotificationSettingsModal({
                 <span className="dm-setting-icon">
                   <Users size={16} strokeWidth={1.8} />
                 </span>
-                <span>Pengingat Meeting</span>
+                <span>{uiText("Pengingat Meeting")}</span>
               </span>
-              <label className="dm-liquid-switch" title="Aktif / Nonaktif">
+              <label className="dm-liquid-switch" title={uiText("Aktif / Nonaktif")}>
                 <input
                   type="checkbox"
                   checked={meetingEnabled}
@@ -254,7 +254,7 @@ export function NotificationSettingsModal({
 
             {meetingEnabled && (
               <div className="dm-liquid-segmented-wrap">
-                <span className="dm-liquid-subtext">Beri notifikasi sebelum meeting:</span>
+                <span className="dm-liquid-subtext">{uiText("Beri notifikasi sebelum meeting:")}</span>
                 <div className="dm-liquid-segmented">
                   {PRESET_MINUTES.map((m) => (
                     <button
@@ -267,17 +267,14 @@ export function NotificationSettingsModal({
                         setCustomMeeting(false);
                       }}
                     >
-                      {m}m
-                    </button>
+                      {m}{uiText("m")}</button>
                   ))}
                   <button
                     type="button"
                     disabled={!isAdmin}
                     className={`dm-liquid-seg-btn${customMeeting ? " is-active" : ""}`}
                     onClick={() => setCustomMeeting(true)}
-                  >
-                    Kustom
-                  </button>
+                  >{uiText("Kustom")}</button>
                 </div>
 
                 {customMeeting && (
@@ -291,7 +288,7 @@ export function NotificationSettingsModal({
                       onChange={(e) => setMeetingMinutes(Math.max(1, Number(e.target.value)))}
                       className="dm-liquid-custom-input"
                     />
-                    <span>menit sebelum jadwal</span>
+                    <span>{uiText("menit sebelum jadwal")}</span>
                   </div>
                 )}
               </div>
@@ -307,17 +304,15 @@ export function NotificationSettingsModal({
                 <span className="dm-setting-icon">
                   <Bell size={16} strokeWidth={1.8} />
                 </span>
-                <span>Suara Notifikasi</span>
+                <span>{uiText("Suara Notifikasi")}</span>
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <button
                   type="button"
                   onClick={onTestNotification}
                   className="dm-liquid-btn-test"
-                  title="Putar suara dan uji coba notifikasi"
-                >
-                  Tes Notif
-                </button>
+                  title={uiText("Putar suara dan uji coba notifikasi")}
+                >{uiText("Tes Notif")}</button>
                 <label className="dm-liquid-switch">
                   <input
                     type="checkbox"
@@ -347,18 +342,18 @@ export function NotificationSettingsModal({
                 <Check size={13} strokeWidth={1.8} />
                 <span>
                   {targetLineId === 0
-                    ? "Tersimpan ke semua lini"
-                    : `Tersimpan untuk ${activeLabel}`}
+                    ? uiText("Tersimpan ke semua lini")
+                    : uiText("Tersimpan untuk {{v0}}", { v0: activeLabel })}
                 </span>
               </span>
             ) : !isAdmin ? (
-              <span>Pengaturan hanya dapat diubah oleh Admin</span>
+              <span>{uiText("Pengaturan hanya dapat diubah oleh Admin")}</span>
             ) : null}
           </div>
 
           <div style={{ display: "flex", gap: "6px" }}>
             <button type="button" className="dm-liquid-btn-ghost" onClick={onClose}>
-              {isAdmin ? "Batal" : "Tutup"}
+              {isAdmin ? uiText("Batal") : uiText("Tutup")}
             </button>
             {isAdmin && (
               <button
@@ -367,7 +362,7 @@ export function NotificationSettingsModal({
                 onClick={handleSave}
                 disabled={saving}
               >
-                {saving ? "Menyimpan..." : targetLineId === 0 ? "Simpan Semua" : "Simpan"}
+                {saving ? uiText("Menyimpan...") : targetLineId === 0 ? uiText("Simpan Semua") : uiText("Simpan")}
               </button>
             )}
           </div>

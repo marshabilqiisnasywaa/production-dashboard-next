@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useState } from "react";
 import "./log.css";
@@ -16,6 +18,7 @@ const TABS: { id: LogTab; label: string; icon: React.ReactNode }[] = [
 
 /** Composition only: data in hooks/useLogData + buildLog.ts, each tab in components/. */
 export default function LogPage() {
+  const { text: uiText } = useUiText();
   const [tab, setTab] = useState<LogTab>("meetings");
   const { records, activity, now, ready, error } = useLogData();
 
@@ -23,12 +26,12 @@ export default function LogPage() {
     <div className="dml-lg">
       <div className="dml-page-head">
         <div>
-          <h1>Log &amp; Riwayat</h1>
-          <p>Riwayat meeting dan aktivitas DM Digital.</p>
+          <h1>{uiText("Log & Riwayat")}</h1>
+          <p>{uiText("Riwayat meeting dan aktivitas DM Digital.")}</p>
         </div>
       </div>
 
-      <div className="dml-lg-tabs" role="tablist" aria-label="Log">
+      <div className="dml-lg-tabs" role="tablist" aria-label={uiText("Log")}>
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -40,16 +43,16 @@ export default function LogPage() {
             className={tab === t.id ? "is-active" : undefined}
             onClick={() => setTab(t.id)}
           >
-            {t.icon} {t.label}
+            {t.icon} {uiText(t.label)}
           </button>
         ))}
       </div>
 
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="dml-lg-panel">
       {error ? (
-          <div className="dml-empty" role="alert">{error}</div>
+          <div className="dml-empty" role="alert">{uiText(error)}</div>
         ) : !ready || !now ? (
-          <div className="dml-empty">Memuat riwayat…</div>
+          <div className="dml-empty">{uiText("Memuat riwayat…")}</div>
         ) : tab === "meetings" ? (
           <MeetingHistoryTab records={records} now={now} />
         ) : (

@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useMemo } from "react";
 import Link from "next/link";
@@ -17,6 +19,7 @@ export function LeaderPapercardStatusCard({
   supervisorName = "Belum diatur admin",
   loading = false,
 }: LeaderPapercardStatusCardProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const isSubmitted = Boolean(submission);
   const statusUpper = (submission?.approvalStatus || "").toUpperCase();
   const isApproved = statusUpper === "APPROVED";
@@ -61,14 +64,14 @@ export function LeaderPapercardStatusCard({
   // Format submit time
   const submitTimeStr = submission?.submittedAt
     ? submission.submittedAt.includes("T")
-      ? new Date(submission.submittedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
+      ? new Date(submission.submittedAt).toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" }) + " WIB"
       : submission.submittedAt + " WIB"
     : "-";
 
   if (loading) {
     return (
       <div className="dms-card" style={{ minHeight: "135px", justifyContent: "center", alignItems: "center" }}>
-        <span style={{ fontSize: "12px", color: "#94a3b8" }}>Memuat status papercard...</span>
+        <span style={{ fontSize: "12px", color: "#94a3b8" }}>{uiText("Memuat status papercard...")}</span>
       </div>
     );
   }
@@ -81,8 +84,8 @@ export function LeaderPapercardStatusCard({
             <IconClipboardCheck size={18} />
           </div>
           <div>
-            <h2 className="dms-card-title">Papercard Kesiapan Leader</h2>
-            <p className="dms-card-subtitle">Checklist 5M &amp; 5S Kesiapan Lini Shift 1</p>
+            <h2 className="dms-card-title">{uiText("Papercard Kesiapan Leader")}</h2>
+            <p className="dms-card-subtitle">{uiText("Checklist 5M & 5S Kesiapan Lini Shift 1")}</p>
           </div>
         </div>
         <Link
@@ -98,12 +101,12 @@ export function LeaderPapercardStatusCard({
           }}
         >
           {isRejected
-            ? "Perbaiki Checklist"
+            ? uiText("Perbaiki Checklist")
             : isApproved
-            ? "Lihat Checklist (Terkunci)"
+            ? uiText("Lihat Checklist (Terkunci)")
             : isSubmitted
-            ? "Lihat Pengajuan"
-            : "Isi Sekarang"}
+            ? uiText("Lihat Pengajuan")
+            : uiText("Isi Sekarang")}
         </Link>
       </div>
 
@@ -111,32 +114,26 @@ export function LeaderPapercardStatusCard({
         <>
           <div className="dms-leader-pc-status">
             <div>
-              <span style={{ fontSize: "11px", color: "#64748b", display: "block" }}>Status Pengajuan Hari Ini</span>
+              <span style={{ fontSize: "11px", color: "#64748b", display: "block" }}>{uiText("Status Pengajuan Hari Ini")}</span>
               <strong style={{ fontSize: "13.5px", color: "#0f172a", marginTop: "1px", display: "block" }}>
-                {okItems} / {totalItems} Item OK {isNG ? `· ${ngCount > 0 ? `${ngCount} Temuan NG` : "1 Temuan NG"}` : "· Kondisi Siap"}
+                {okItems} / {totalItems}{uiText(" Item OK ")}{isNG ? `· ${ngCount > 0 ? `${ngCount} Temuan NG` : "1 Temuan NG"}` : uiText("· Kondisi Siap")}
               </strong>
             </div>
 
             {isApproved && (
               <span className="dms-status-badge dms-status-badge--approved">
-                <IconCheckCircle size={13} />
-                Disetujui SPV
-              </span>
+                <IconCheckCircle size={13} />{uiText("Disetujui SPV")}</span>
             )}
             {isPending && (
               <span className="dms-status-badge dms-status-badge--waiting">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
-                </svg>
-                Menunggu Review SPV
-              </span>
+                </svg>{uiText("Menunggu Review SPV")}</span>
             )}
             {isRejected && (
               <span className="dms-status-badge dms-status-badge--ng">
-                <IconAlert size={13} />
-                Perlu Revisi
-              </span>
+                <IconAlert size={13} />{uiText("Perlu Revisi")}</span>
             )}
           </div>
 
@@ -153,8 +150,7 @@ export function LeaderPapercardStatusCard({
                 color: "#991b1b",
                 lineHeight: "1.35",
               }}
-            >
-              Catatan SPV: <strong>"{submission.supervisorNotes}"</strong>
+            >{uiText("Catatan SPV: ")}<strong>"{submission.supervisorNotes}"</strong>
             </div>
           )}
 
@@ -176,7 +172,7 @@ export function LeaderPapercardStatusCard({
                       className="dms-cat-val"
                       style={{ color: isAllOk ? "#059669" : "#dc2626" }}
                     >
-                      {cat.ok}/{cat.total} OK {cat.ng > 0 && `(${cat.ng} NG)`}
+                      {cat.ok}/{cat.total}{uiText(" OK ")}{cat.ng > 0 && uiText("({{v0}} NG)", { v0: cat.ng })}
                     </span>
                   </div>
                 );
@@ -190,22 +186,17 @@ export function LeaderPapercardStatusCard({
               <line x1="12" y1="16" x2="12" y2="12" />
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
-            <div>
-              Disubmit pukul <strong>{submitTimeStr}</strong> · Approver SPV: <strong>{submission?.approvedByName || supervisorName}</strong>
+            <div>{uiText("Disubmit pukul ")}<strong>{submitTimeStr}</strong>{uiText(" · Approver SPV: ")}<strong>{submission?.approvedByName || supervisorName}</strong>
             </div>
           </div>
         </>
       ) : (
         <div style={{ padding: "10px 12px", background: "#f8fafc", borderRadius: "8px", border: "1px dashed #cbd5e1" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-            <span style={{ fontSize: "12px", fontWeight: 600, color: "#334155" }}>Belum Disubmit Hari Ini</span>
-            <span className="dms-status-badge dms-status-badge--pending" style={{ fontSize: "11px" }}>
-              Menunggu Input
-            </span>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "#334155" }}>{uiText("Belum Disubmit Hari Ini")}</span>
+            <span className="dms-status-badge dms-status-badge--pending" style={{ fontSize: "11px" }}>{uiText("Menunggu Input")}</span>
           </div>
-          <p style={{ margin: 0, fontSize: "11.5px", color: "#64748b" }}>
-            Pastikan checklist 5M &amp; 5S Leader diselesaikan sebelum lini start beroperasi.
-          </p>
+          <p style={{ margin: 0, fontSize: "11.5px", color: "#64748b" }}>{uiText("Pastikan checklist 5M & 5S Leader diselesaikan sebelum lini start beroperasi.")}</p>
         </div>
       )}
     </div>

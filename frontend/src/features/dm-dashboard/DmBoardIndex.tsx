@@ -1,4 +1,7 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { publicApi } from "./api";
@@ -33,6 +36,7 @@ const FILTERS: { key: StatusFilter; label: string }[] = [
 
 /** Isi tab "Line": logika lama DmBoardIndex (fetch, cari, filter status, daftar per workshop). */
 function LineBoards() {
+  const { text: uiText } = useUiText();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [query, setQuery] = useState("");
@@ -76,7 +80,7 @@ function LineBoards() {
   if (state.kind === "loading") {
     return (
       <div className="dmi-state" aria-busy="true">
-        <p role="status">Memuat daftar dashboard...</p>
+        <p role="status">{uiText("Memuat daftar dashboard...")}</p>
       </div>
     );
   }
@@ -84,11 +88,9 @@ function LineBoards() {
   if (state.kind === "error") {
     return (
       <div className="dmi-state">
-        <h2 className="dm-state-title">Daftar dashboard belum bisa dimuat</h2>
-        <p role="alert">{state.message}</p>
-        <button type="button" className="dm-state-action" onClick={() => setAttempt((n) => n + 1)}>
-          Coba lagi
-        </button>
+        <h2 className="dm-state-title">{uiText("Daftar dashboard belum bisa dimuat")}</h2>
+        <p role="alert">{uiText(state.message)}</p>
+        <button type="button" className="dm-state-action" onClick={() => setAttempt((n) => n + 1)}>{uiText("Coba lagi")}</button>
       </div>
     );
   }
@@ -96,9 +98,9 @@ function LineBoards() {
   if (state.workshops.length === 0) {
     return (
       <div className="dmi-state">
-        <h2 className="dm-state-title">Belum ada dashboard</h2>
-        <p>Admin perlu menambahkan workshop dan lini lebih dulu. Setiap lini otomatis punya satu dashboard.</p>
-        <Link href="/dm-dashboard/masuk" className="dm-state-action">Masuk sebagai Admin</Link>
+        <h2 className="dm-state-title">{uiText("Belum ada dashboard")}</h2>
+        <p>{uiText("Admin perlu menambahkan workshop dan lini lebih dulu. Setiap lini otomatis punya satu dashboard.")}</p>
+        <Link href="/dm-dashboard/masuk" className="dm-state-action">{uiText("Masuk sebagai Admin")}</Link>
       </div>
     );
   }
@@ -117,23 +119,23 @@ function LineBoards() {
   return (
     <>
       <header className="dmi-head">
-        <h1>Dashboard lini</h1>
+        <LanguageSwitcher />
+        <h1>{uiText("Dashboard lini")}</h1>
         <p>
-          {boards.length} lini &middot; {counts.running} berjalan &middot; {counts.idle} idle &middot; {counts.stopped} berhenti
-        </p>
+          {boards.length}{uiText(" lini · ")}{counts.running}{uiText(" berjalan · ")}{counts.idle}{uiText(" idle · ")}{counts.stopped}{uiText(" berhenti")}</p>
       </header>
 
       <div className="dmi-tools">
         <label className="dmi-search">
-          <span className="dmi-sr">Cari lini</span>
+          <span className="dmi-sr">{uiText("Cari lini")}</span>
           <input
             type="search"
-            placeholder="Cari lini atau workshop"
+            placeholder={uiText("Cari lini atau workshop")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
-        <div className="dmi-filters" role="group" aria-label="Filter status">
+        <div className="dmi-filters" role="group" aria-label={uiText("Filter status")}>
           {FILTERS.map((f) => (
             <button
               key={f.key}
@@ -142,21 +144,21 @@ function LineBoards() {
               aria-pressed={filter === f.key}
               onClick={() => setFilter(f.key)}
             >
-              {f.label}
+              {uiText(f.label)}
             </button>
           ))}
         </div>
       </div>
 
-      {groups.length === 0 && <p className="dmi-empty">Tidak ada lini atau workshop yang cocok.</p>}
+      {groups.length === 0 && <p className="dmi-empty">{uiText("Tidak ada lini atau workshop yang cocok.")}</p>}
 
       {groups.map(({ id, name, items }) => (
         <section key={id} className="dmi-group" aria-label={name}>
           <h2>{name}</h2>
           <div className="dmi-grid">
             <Link href={`/dm-dashboard/workshop/${id}`} className="dmi-card">
-              <span className="dmi-card__code">DM Workshop</span>
-              <span className="dmi-card__name">Struktur Tim {name}</span>
+              <span className="dmi-card__code">{uiText("DM Workshop")}</span>
+              <span className="dmi-card__name">{uiText("Struktur Tim ")}{name}</span>
             </Link>
             {items.map((board) => (
               <Link key={board.slug} href={`/dm-dashboard/${board.slug}`} className="dmi-card">
@@ -164,7 +166,7 @@ function LineBoards() {
                 <span className="dmi-card__name">{board.lineName}</span>
                 <span className={`dmi-status is-${board.status}`}>
                   <i aria-hidden="true" />
-                  {dmStatusLabels[board.status]}
+                  {uiText(dmStatusLabels[board.status])}
                 </span>
               </Link>
             ))}
@@ -177,15 +179,17 @@ function LineBoards() {
 
 /** Penampung sementara untuk tab yang isinya belum dibuat. */
 function TabPlaceholder({ title, text }: { title: string; text: string }) {
+  const { text: uiText } = useUiText();
   return (
     <div className="dmi-state">
-      <h1 className="dmi-placeholder-title">{title}</h1>
+      <h1 className="dmi-placeholder-title">{uiText(title)}</h1>
       <p>{text}</p>
     </div>
   );
 }
 
 export default function DmBoardIndex() {
+  const { text: uiText } = useUiText();
   const [tab, setTab] = useState<IndexTab>("line");
 
   return (
@@ -203,9 +207,9 @@ export default function DmBoardIndex() {
         <path d="M150 680 270 900H30L150 680Z" fill="currentColor" opacity="0.06" />
       </svg>
       <div className="dmi">
-        <nav className="dmi-top" aria-label="Navigasi utama">
-          <span className="dmi-brand">DM Triangle Team</span>
-          <div className="dmi-tabs" role="tablist" aria-label="Menu dashboard">
+        <nav className="dmi-top" aria-label={uiText("Navigasi utama")}>
+          <span className="dmi-brand">{uiText("DM Triangle Team")}</span>
+          <div className="dmi-tabs" role="tablist" aria-label={uiText("Menu dashboard")}>
             {TABS.map((t) => (
               <button
                 key={t.key}
@@ -217,13 +221,11 @@ export default function DmBoardIndex() {
                 className={`dmi-tab${tab === t.key ? " is-active" : ""}`}
                 onClick={() => setTab(t.key)}
               >
-                {t.label}
+                {uiText(t.label)}
               </button>
             ))}
           </div>
-          <Link href="/dm-dashboard/masuk" className="dmi-login">
-            Masuk
-          </Link>
+          <Link href="/dm-dashboard/masuk" className="dmi-login">{uiText("Masuk")}</Link>
         </nav>
 
         {/* LineBoards tetap ter-mount saat pindah tab, jadi data dan filter tidak hilang. */}

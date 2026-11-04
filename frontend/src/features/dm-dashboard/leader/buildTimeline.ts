@@ -32,7 +32,7 @@ function formatDuration(ms: number): string {
   return rest === 0 ? `${hours} jam` : `${hours}j ${rest}m`;
 }
 
-export function buildTimeline({ now, today, leaderSubmission, leaderTemplate, submissions, sessions }: Input): TimelineModel {
+export function buildTimeline({ now, today, leaderSubmission, leaderTemplate, submissions, sessions }: Input, locale = "id-ID"): TimelineModel {
   const nowMs = now.getTime();
   const startById = new Map<string, number>();
   const roles: TimelineRole[] = ROLES.map((role) => ({
@@ -67,7 +67,7 @@ export function buildTimeline({ now, today, leaderSubmission, leaderTemplate, su
       };
     } else {
       const late = sentAt > end;
-      const sentText = new Intl.DateTimeFormat("id-ID", {
+      const sentText = new Intl.DateTimeFormat(locale, {
         timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
       }).format(new Date(sentAt));
       pre = {

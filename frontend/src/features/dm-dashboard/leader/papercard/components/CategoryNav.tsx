@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { IconCheck } from "@/components/ui/icons";
 import type { ChecklistCategory } from "../types";
 
@@ -10,8 +12,9 @@ interface Props {
 
 /** Left category list on desktop, horizontal scroll tabs on tablet/mobile. */
 export function CategoryNav({ categories, activeId, progress, onSelect }: Props) {
+  const { text: uiText } = useUiText();
   return (
-    <nav className="ui-card dml-catnav" aria-label="Kategori checklist">
+    <nav className="ui-card dml-catnav" aria-label={uiText("Kategori checklist")}>
       <ul>
         {categories.map((c, i) => {
           const p = progress[c.id] ?? { done: 0, total: 0 };

@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import Link from "next/link";
 import { IconClipboardCheck } from "@/components/ui/icons";
 import type { DepartmentKey } from "../../leader/types";
@@ -23,6 +25,7 @@ export function MemberPapercardStatusCard({
   supervisorNotes,
   dbTemplateCount,
 }: MemberPapercardStatusCardProps) {
+  const { text: uiText } = useUiText();
   return (
     <div className="member-card">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -40,47 +43,36 @@ export function MemberPapercardStatusCard({
           >
             <IconClipboardCheck size={16} />
           </div>
-          <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#0f172a" }}>
-            Papercard {selectedDept}
+          <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#0f172a" }}>{uiText("Papercard ")}{selectedDept}
           </span>
         </div>
 
         {status === "APPROVED" ? (
-          <span className="dms-status-badge dms-status-badge--approved" style={{ fontSize: "11px", padding: "2px 8px" }}>
-            ✓ Disetujui
-          </span>
+          <span className="dms-status-badge dms-status-badge--approved" style={{ fontSize: "11px", padding: "2px 8px" }}>{uiText("✓ Disetujui")}</span>
         ) : status === "PENDING_APPROVAL" ? (
-          <span className="dms-status-badge dms-status-badge--waiting" style={{ fontSize: "11px", padding: "2px 8px" }}>
-            Menunggu SPV
-          </span>
+          <span className="dms-status-badge dms-status-badge--waiting" style={{ fontSize: "11px", padding: "2px 8px" }}>{uiText("Menunggu SPV")}</span>
         ) : status === "REVISION" ? (
-          <span className="dms-status-badge dms-status-badge--revision" style={{ fontSize: "11px", padding: "2px 8px" }}>
-            Perlu Revisi
-          </span>
+          <span className="dms-status-badge dms-status-badge--revision" style={{ fontSize: "11px", padding: "2px 8px" }}>{uiText("Perlu Revisi")}</span>
         ) : (
-          <span style={{ fontSize: "11px", background: "#f1f5f9", color: "#64748b", padding: "2px 8px", borderRadius: "999px", fontWeight: 600 }}>
-            Belum Diisi
-          </span>
+          <span style={{ fontSize: "11px", background: "#f1f5f9", color: "#64748b", padding: "2px 8px", borderRadius: "999px", fontWeight: 600 }}>{uiText("Belum Diisi")}</span>
         )}
       </div>
 
       <div>
         <div style={{ fontSize: "12.5px", color: "#475569", marginBottom: "4px" }}>
           {status === "APPROVED"
-            ? `Disetujui oleh ${supervisorName} (${approvalTime ?? "08:00"} WIB)`
+            ? uiText("Disetujui oleh {{v0}} ({{v1}} WIB)", { v0: supervisorName, v1: approvalTime ?? "08:00" })
             : status === "PENDING_APPROVAL"
-            ? `Terkirim pukul ${submitTime} WIB · Menunggu review`
+            ? uiText("Terkirim pukul {{v0}} WIB · Menunggu review", { v0: submitTime })
             : status === "REVISION"
-            ? `Catatan revisi: "${supervisorNotes || "Periksa kembali butir checklist"}"`
+            ? uiText("Catatan revisi: \"{{v0}}\"", { v0: supervisorNotes || "Periksa kembali butir checklist" })
             : dbTemplateCount === null
-            ? "Memuat konfigurasi checklist dari database..."
+            ? uiText("Memuat konfigurasi checklist dari database...")
             : dbTemplateCount > 0
-            ? `Total ${dbTemplateCount} butir checklist kesiapan kerja sebelum DM Meeting`
-            : `Belum ada template papercard di database untuk departemen ${selectedDept}`}
+            ? uiText("Total {{v0}} butir checklist kesiapan kerja sebelum DM Meeting", { v0: dbTemplateCount })
+            : uiText("Belum ada template papercard di database untuk departemen {{v0}}", { v0: selectedDept })}
         </div>
-        <div style={{ fontSize: "11.5px", color: "#94a3b8" }}>
-          Standar {selectedDept} · Shift 1
-        </div>
+        <div style={{ fontSize: "11.5px", color: "#94a3b8" }}>{uiText("Standar ")}{selectedDept}{uiText(" · Shift 1")}</div>
       </div>
 
       <Link
@@ -100,12 +92,12 @@ export function MemberPapercardStatusCard({
         <IconClipboardCheck size={14} />
         <span>
           {status === "NOT_SUBMITTED"
-            ? "Isi Papercard Sekarang"
+            ? uiText("Isi Papercard Sekarang")
             : status === "REVISION"
-            ? "Perbaiki Papercard"
+            ? uiText("Perbaiki Papercard")
             : status === "APPROVED"
-            ? "Sudah Di Isi"
-            : "Lihat Pengajuan"}
+            ? uiText("Sudah Di Isi")
+            : uiText("Lihat Pengajuan")}
         </span>
       </Link>
     </div>

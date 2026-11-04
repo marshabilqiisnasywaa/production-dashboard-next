@@ -1,0 +1,9 @@
+{
+  "language": "Bahasa",
+  "roles": {
+    "Leader": "Leader",
+    "Member": "Member",
+    "Supervisor": "Supervisor",
+    "Admin": "Admin"
+  }
+}

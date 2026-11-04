@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { departmentLabel } from "../../departments";
 import { IconCheck, IconClock } from "@/components/ui/icons";
 import type { DepartmentKey } from "../../leader/types";
@@ -48,6 +50,7 @@ export function MemberTeamSection({
   topTeamMembers,
   mpvTeamMember,
 }: MemberTeamSectionProps) {
+  const { text: uiText } = useUiText();
   return (
     <section className="member-team">
       <div
@@ -62,10 +65,9 @@ export function MemberTeamSection({
         }}
       >
         <div>
-          <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#0f172a" }}>
-            DM TRIANGLE TEAM Line {lineName}
+          <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#0f172a" }}>{uiText("DM TRIANGLE TEAM Line ")}{lineName}
           </h2>
-          <span style={{ fontSize: "12px", color: "#64748b" }}>Status Papercard</span>
+          <span style={{ fontSize: "12px", color: "#64748b" }}>{uiText("Status Papercard")}</span>
         </div>
 
         <span
@@ -77,19 +79,15 @@ export function MemberTeamSection({
             borderRadius: "999px",
             border: "1px solid #e2e8f0",
           }}
-        >
-          DM TRIANGLE TEAM
-        </span>
+        >{uiText("DM TRIANGLE TEAM")}</span>
       </div>
 
       {/* 4 Compact Team Member Cards */}
       {topTeamMembers.length === 0 && (
-        <div style={{ fontSize: "12.5px", color: "#94a3b8", fontStyle: "italic", textAlign: "center", padding: "20px 0" }}>
-          Belum ada member di lini ini yang diatur admin.
-        </div>
+        <div style={{ fontSize: "12.5px", color: "#94a3b8", fontStyle: "italic", textAlign: "center", padding: "20px 0" }}>{uiText("Belum ada member di lini ini yang diatur admin.")}</div>
       )}
       <div className="member-team__grid">
-        {topTeamMembers.map((member) => {
+        {uiText(topTeamMembers.map((member) => {
           const isCurrentUser = member.employeeNo === currentUsername || member.name === currentName;
           const isLeader = member.role === "leader";
 
@@ -105,13 +103,11 @@ export function MemberTeamSection({
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
                   <span className={`dms-dept-badge dms-dept-badge--${member.dept}`} style={{ fontSize: "10px", padding: "1px 6px" }}>
-                    {isLeader ? " LEADER" : departmentLabel(member.dept)}
+                    {isLeader ? uiText(" LEADER") : departmentLabel(member.dept)}
                   </span>
 
                   {isCurrentUser && (
-                    <span style={{ fontSize: "10px", fontWeight: 700, background: "#0f766e", color: "#fff", padding: "1px 6px", borderRadius: "999px" }}>
-                      Kamu
-                    </span>
+                    <span style={{ fontSize: "10px", fontWeight: 700, background: "#0f766e", color: "#fff", padding: "1px 6px", borderRadius: "999px" }}>{uiText("Kamu")}</span>
                   )}
                 </div>
 
@@ -152,24 +148,22 @@ export function MemberTeamSection({
                 }}
               >
                 <span style={{ color: "#64748b" }}>
-                  {member.submittedAt !== "-" ? `Submit: ${member.submittedAt}` : "Belum diisi"}
+                  {member.submittedAt !== "-" ? `Submit: ${member.submittedAt}` : uiText("Belum diisi")}
                 </span>
 
                 {member.approvalStatus === "APPROVED" ? (
                   <span style={{ color: "#047857", fontWeight: 700, display: "flex", alignItems: "center", gap: "2px" }}>
-                    <IconCheck size={11} /> Approved
-                  </span>
+                    <IconCheck size={11} />{uiText(" Approved")}</span>
                 ) : member.approvalStatus === "PENDING_APPROVAL" ? (
                   <span style={{ color: "#b45309", fontWeight: 700, display: "flex", alignItems: "center", gap: "2px" }}>
-                    <IconClock size={11} /> Pending
-                  </span>
+                    <IconClock size={11} />{uiText(" Pending")}</span>
                 ) : (
-                  <span style={{ color: "#94a3b8" }}>Belum submit</span>
+                  <span style={{ color: "#94a3b8" }}>{uiText("Belum submit")}</span>
                 )}
               </div>
             </div>
           );
-        })}
+        }))}
       </div>
 
       {/* MPV of the Month (Compact 1-row banner) */}

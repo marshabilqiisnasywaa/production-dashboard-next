@@ -1,12 +1,16 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useState } from "react";
 import { IconLogout } from "@/components/ui/icons";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import { accountApi, setToken, type DmMe } from "../api";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export function HodHeader() {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [now, setNow] = useState<Date | null>(null);
   const [user, setUser] = useState<DmMe | null>(null);
 
@@ -34,7 +38,7 @@ export function HodHeader() {
     ? `${pad(now.getHours())}:${pad(now.getMinutes())}`
     : "--:--";
   const date = now
-    ? now.toLocaleDateString("id-ID", {
+    ? now.toLocaleDateString(uiLocale, {
         weekday: "long",
         day: "numeric",
         month: "long",
@@ -60,7 +64,8 @@ export function HodHeader() {
       </div>
 
       <div className="dml-header__right">
-        <span className="dml-role-badge">HOD</span>
+        <LanguageSwitcher />
+        <span className="dml-role-badge">{uiText("HOD")}</span>
         <div className="dml-user">
           <span className="dml-avatar">{initials}</span>
           <strong>{displayName}</strong>
@@ -68,7 +73,7 @@ export function HodHeader() {
         <button
           type="button"
           onClick={handleLogout}
-          title="Keluar dari akun HOD"
+          title={uiText("Keluar dari akun HOD")}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -86,7 +91,7 @@ export function HodHeader() {
           }}
         >
           <IconLogout size={14} />
-          <span>Keluar</span>
+          <span>{uiText("Keluar")}</span>
         </button>
       </div>
     </header>

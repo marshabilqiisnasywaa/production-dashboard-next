@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
@@ -18,6 +20,7 @@ const GRANULARITY_OPTIONS: { value: TrendGranularity; label: string }[] = [
 
 /** Chart + table card. Clicking a chart point filters the table to that period. */
 export function InspectionSection({ rows }: { rows: InspectionRow[] }) {
+  const { text: uiText } = useUiText();
   const [granularity, setGranularity] = useState<TrendGranularity>("day");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
@@ -34,7 +37,7 @@ export function InspectionSection({ rows }: { rows: InspectionRow[] }) {
   return (
     <Card
       flush
-      title="Inspection Rate"
+      title={uiText("Inspection Rate")}
       actions={
         <SegmentedControl
           ariaLabel="Satuan waktu grafik"
@@ -49,8 +52,7 @@ export function InspectionSection({ rows }: { rows: InspectionRow[] }) {
     >
       <div className="dml-section__chart">
         {activeKey && (
-          <button type="button" className="dml-filter-pill" onClick={() => setSelectedKey(null)}>
-            Periode: {periodLabel(activeKey, granularity)} <IconClose size={14} />
+          <button type="button" className="dml-filter-pill" onClick={() => setSelectedKey(null)}>{uiText("Periode: ")}{uiText(periodLabel(activeKey, granularity))} <IconClose size={14} />
           </button>
         )}
         <InspectionTrendChart data={trend} selectedKey={activeKey} onSelect={setSelectedKey} />

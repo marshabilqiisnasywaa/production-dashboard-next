@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import type { KpiStatus } from "@/utils/kpiStatus";
 import SimulationBadge from "@/features/morning-meeting/SimulationBadge";
 
@@ -13,5 +15,6 @@ type KpiStatusCardProps = {
 };
 
 export default function KpiStatusCard({ title, meta, value, target, status, reason, actions, onDetail }: KpiStatusCardProps) {
-  return <article className={`mm-kpi-card ${status}`}><div><span className="mm-status-dot" /><p>{meta}</p>{actions && <SimulationBadge label="AI Simulasi" />}</div><h3>{title}</h3><strong>{value}</strong><small>{target}</small><em>{reason}</em>{actions && <div className="mm-card-actions"><button>Acknowledge</button><button>Beri instruksi</button><button>Eskalasi</button><button onClick={onDetail}>Lihat saran</button></div>}</article>;
+  const { text: uiText } = useUiText();
+  return <article className={`mm-kpi-card ${status}`}><div><span className="mm-status-dot" /><p>{meta}</p>{actions && <SimulationBadge label={uiText("AI Simulasi")} />}</div><h3>{uiText(title)}</h3><strong>{value}</strong><small>{target}</small><em>{reason}</em>{actions && <div className="mm-card-actions"><button>{uiText("Acknowledge")}</button><button>{uiText("Beri instruksi")}</button><button>{uiText("Eskalasi")}</button><button onClick={onDetail}>{uiText("Lihat saran")}</button></div>}</article>;
 }

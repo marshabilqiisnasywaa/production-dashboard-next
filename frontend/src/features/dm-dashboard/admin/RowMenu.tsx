@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -21,6 +23,7 @@ const MENU_GAP = 6;
 const EDGE = 8;
 
 export default function RowMenu({ label, items }: RowMenuProps) {
+  const { text: uiText } = useUiText();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -101,7 +104,7 @@ export default function RowMenu({ label, items }: RowMenuProps) {
         ref={triggerRef}
         type="button"
         className={`rm-trigger${open ? " is-open" : ""}`}
-        aria-label={label}
+        aria-label={uiText(label)}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => (open ? close(false) : setOpen(true))}
@@ -117,7 +120,7 @@ export default function RowMenu({ label, items }: RowMenuProps) {
             <div
               ref={menuRef}
               role="menu"
-              aria-label={label}
+              aria-label={uiText(label)}
               className="rm-menu"
               style={{ top: pos?.top ?? 0, left: pos?.left ?? 0, visibility: pos ? "visible" : "hidden" }}
               onKeyDown={onMenuKeyDown}
@@ -133,7 +136,7 @@ export default function RowMenu({ label, items }: RowMenuProps) {
                     onClick={() => select(item)}
                   >
                     <span className="rm-icon" aria-hidden="true">{item.icon}</span>
-                    {item.label}
+                    {uiText(item.label)}
                   </button>
                 </div>
               ))}

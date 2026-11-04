@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 interface WizardStepperProps {
   steps: readonly string[];
@@ -23,8 +25,9 @@ function stateOf(step: number, current: number) {
 const stateText = { done: "selesai", active: "langkah saat ini", todo: "belum dikerjakan" } as const;
 
 export default function WizardStepper({ steps, current, reached, onSelect }: WizardStepperProps) {
+  const { text: uiText } = useUiText();
   return (
-    <div className="lw-stepper" role="group" aria-label="Langkah pengaturan lini">
+    <div className="lw-stepper" role="group" aria-label={uiText("Langkah pengaturan lini")}>
       <ol className="lw-steps">
         {steps.map((label, index) => {
           const step = index + 1;
@@ -34,8 +37,8 @@ export default function WizardStepper({ steps, current, reached, onSelect }: Wiz
               <button type="button" className="lw-step-btn" disabled={step > reached} onClick={() => onSelect(step)}>
                 <span className="lw-step-dot" aria-hidden="true">{state === "done" ? <CheckIcon /> : step}</span>
                 <span className="lw-step-label">
-                  {label}
-                  <span className="lw-sr">, {stateText[state]}</span>
+                  {uiText(label)}
+                  <span className="lw-sr">, {uiText(stateText[state])}</span>
                 </span>
               </button>
             </li>

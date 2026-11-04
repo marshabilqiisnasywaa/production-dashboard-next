@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { createContext, useContext, useEffect, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
@@ -18,7 +20,7 @@ import {
   subMonths,
   subWeeks,
 } from "date-fns";
-import { id as idLocale } from "date-fns/locale";
+import { enGB, id as idLocale } from "date-fns/locale";
 import { CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import "./ScorecardFilters.css";
 
@@ -46,12 +48,13 @@ export function FilterSelect({
   className?: string;
   ariaLabel?: string;
 }) {
+  const { text: uiText } = useUiText();
   const container = useContext(FilterPortalContext);
 
   return (
     <Select.Root value={value} onValueChange={onChange}>
       <Select.Trigger
-        aria-label={ariaLabel}
+        aria-label={uiText(ariaLabel)}
         className={`dmf-trigger ${className}`}
       >
         <Select.Value />
@@ -77,7 +80,7 @@ export function FilterSelect({
                 <Select.ItemIndicator className="dmf-item-check">
                   <Check size={14} strokeWidth={2.5} />
                 </Select.ItemIndicator>
-                <Select.ItemText>{option}</Select.ItemText>
+                <Select.ItemText>{uiText(option)}</Select.ItemText>
               </Select.Item>
             ))}
           </Select.Viewport>
@@ -101,11 +104,14 @@ const WEEK = { weekStartsOn: 1 } as const; // Senin
 
 const toDate = (value: string) => parse(value, ISO, new Date());
 const toIso = (date: Date) => format(date, ISO);
-const show = (date: Date) => format(date, "d MMM yyyy", { locale: idLocale });
+const show = (date: Date, locale = idLocale) => format(date, "d MMM yyyy", { locale });
 
 type Preset = { key: string; label: string; range: (today: Date) => { from: Date; to: Date } };
 
-const WEEKDAY_SHORT = ["Mg", "Sn", "Sl", "Rb", "Km", "Jm", "Sb"];
+const WEEKDAY_SHORT = {
+  id: ["Mg", "Sn", "Sl", "Rb", "Km", "Jm", "Sb"],
+  en: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
+};
 const PRESETS: Preset[] = [
   { key: "today", label: "Hari ini", range: (t) => ({ from: t, to: t }) },
   { key: "yesterday", label: "Kemarin", range: (t) => ({ from: subDays(t, 1), to: subDays(t, 1) }) },
@@ -179,6 +185,9 @@ export function DateRangePicker({
   maxDate?: string;
   className?: string;
 }) {
+  const { text: uiText, locale: uiLocale } = useUiText();
+  const calendarLocale = uiLocale === "en-GB" ? enGB : idLocale;
+  const weekdays = uiLocale === "en-GB" ? WEEKDAY_SHORT.en : WEEKDAY_SHORT.id;
   const container = useContext(FilterPortalContext);
   const narrow = useIsNarrow();
   const [open, setOpen] = useState(false);
@@ -257,13 +266,13 @@ export function DateRangePicker({
     setOpen(false);
   };
 
-  const label = !valid ? "Pilih periode" : isSameDay(from, to) ? show(from) : `${show(from)} – ${show(to)}`;
+  const label = !valid ? uiText("Pilih periode") : isSameDay(from, to) ? show(from, calendarLocale) : `${show(from, calendarLocale)} – ${show(to, calendarLocale)}`;
 
   return (
     <Popover.Root open={open} onOpenChange={handleOpenChange}>
       <Popover.Trigger asChild>
         <button type="button" className={`dmf-trigger dmf-trigger--date ${className}`}>
-          <span>{label}</span>
+          <span>{uiText(label)}</span>
           <CalendarDays size={16} />
         </button>
       </Popover.Trigger>
@@ -278,13 +287,13 @@ export function DateRangePicker({
   month={month}
   onMonthChange={setMonth}
   onDayClick={pick}
-  locale={idLocale}
+  locale={calendarLocale}
   weekStartsOn={1}
   disabled={disabled}
   showOutsideDays={false}
   classNames={CALENDAR_CLASSES}
   components={{ Chevron: CalendarChevron }}
-  formatters={{ formatWeekdayName: (date) => WEEKDAY_SHORT[date.getDay()] }}
+  formatters={{ formatWeekdayName: (date) => weekdays[date.getDay()] }}
   mode="range"
 selected={draft}
 />
@@ -297,9 +306,9 @@ selected={draft}
                   onChange={(event) => setFromText(event.target.value)}
                   onBlur={commitFromText}
                   onKeyDown={(event) => event.key === "Enter" && commitFromText()}
-                  placeholder="DD/MM/YYYY"
+                  placeholder={uiText("DD/MM/YYYY")}
                   inputMode="numeric"
-                  aria-label="Tanggal mulai"
+                  aria-label={uiText("Tanggal mulai")}
                 />
                 <span className="dmf-footer-dash">–</span>
                 <input
@@ -308,23 +317,19 @@ selected={draft}
                   onChange={(event) => setToText(event.target.value)}
                   onBlur={commitToText}
                   onKeyDown={(event) => event.key === "Enter" && commitToText()}
-                  placeholder="DD/MM/YYYY"
+                  placeholder={uiText("DD/MM/YYYY")}
                   inputMode="numeric"
-                  aria-label="Tanggal akhir"
+                  aria-label={uiText("Tanggal akhir")}
                 />
                 <div className="dmf-footer-actions">
-                  <button type="button" className="dmf-btn" onClick={() => setOpen(false)}>
-                    Batal
-                  </button>
-                  <button type="button" className="dmf-btn dmf-btn--primary" onClick={apply} disabled={!draft?.from}>
-                    Terapkan
-                  </button>
+                  <button type="button" className="dmf-btn" onClick={() => setOpen(false)}>{uiText("Batal")}</button>
+                  <button type="button" className="dmf-btn dmf-btn--primary" onClick={apply} disabled={!draft?.from}>{uiText("Terapkan")}</button>
                 </div>
               </div>
             </div>
 
             <div className="dmf-presets">
-  <div className="dmf-presets-title">Pilih cepat</div>
+  <div className="dmf-presets-title">{uiText("Pilih cepat")}</div>
   {PRESETS.map((preset) => {
                 const range = preset.range(today);
                 const active =
@@ -339,7 +344,7 @@ selected={draft}
                     onClick={() => applyPreset(preset)}
                     className={`dmf-preset${active ? " is-active" : ""}`}
                   >
-                    {preset.label}
+                    {uiText(preset.label)}
                   </button>
                 );
               })}

@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { departmentLabel } from "../../../departments";
 import {
@@ -46,6 +48,7 @@ export function SupervisorApprovalsTab({
   onBatchApproveLine,
   onSelectReview,
 }: SupervisorApprovalsTabProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const filteredMemberCount = filteredLines.reduce(
     (total, line) => total + line.members.length,
     0,
@@ -63,7 +66,7 @@ export function SupervisorApprovalsTab({
             <IconSearch size={14} style={{ color: "#94a3b8", flexShrink: 0 }} />
             <input
               type="text"
-              placeholder="Cari nama atau NIK..."
+              placeholder={uiText("Cari nama atau NIK...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -83,9 +86,9 @@ export function SupervisorApprovalsTab({
             value={selectedLineFilter}
             onChange={(e) => setSelectedLineFilter(e.target.value)}
             className="spv-select"
-            aria-label="Filter Lini"
+            aria-label={uiText("Filter Lini")}
           >
-            <option value="ALL">Semua Lini ({dbLines.length})</option>
+            <option value="ALL">{uiText("Semua Lini (")}{dbLines.length})</option>
             {dbLines.map((l) => (
               <option key={l.lineId} value={String(l.lineId)}>
                 {l.lineName}
@@ -98,13 +101,13 @@ export function SupervisorApprovalsTab({
             value={selectedDeptFilter}
             onChange={(e) => setSelectedDeptFilter(e.target.value)}
             className="spv-select"
-            aria-label="Filter Departemen"
+            aria-label={uiText("Filter Departemen")}
           >
-            <option value="ALL">Semua Dept</option>
-            <option value="PROD">Produksi</option>
-            <option value="ME">ME</option>
-            <option value="PE">PE</option>
-            <option value="QC">Quality</option>
+            <option value="ALL">{uiText("Semua Dept")}</option>
+            <option value="PROD">{uiText("Produksi")}</option>
+            <option value="ME">{uiText("ME")}</option>
+            <option value="PE">{uiText("PE")}</option>
+            <option value="QC">{uiText("Quality")}</option>
           </select>
 
           {/* Filter Status */}
@@ -112,30 +115,28 @@ export function SupervisorApprovalsTab({
             value={selectedStatusFilter}
             onChange={(e) => setSelectedStatusFilter(e.target.value)}
             className="spv-select"
-            aria-label="Filter Status"
+            aria-label={uiText("Filter Status")}
           >
-            <option value="ALL">Semua Status</option>
-            <option value="PENDING">Menunggu Persetujuan</option>
-            <option value="APPROVED">Sudah Disetujui</option>
-            <option value="REVISION">Perlu Revisi</option>
-            <option value="NG">Ada Temuan NG</option>
-            <option value="NOT_SUBMITTED">Belum Submit</option>
+            <option value="ALL">{uiText("Semua Status")}</option>
+            <option value="PENDING">{uiText("Menunggu Persetujuan")}</option>
+            <option value="APPROVED">{uiText("Sudah Disetujui")}</option>
+            <option value="REVISION">{uiText("Perlu Revisi")}</option>
+            <option value="NG">{uiText("Ada Temuan NG")}</option>
+            <option value="NOT_SUBMITTED">{uiText("Belum Submit")}</option>
           </select>
         </div>
 
         <div className="spv-toolbar__right">
           <span>
             {hasActiveFilters
-              ? `${filteredLines.length} lini · ${filteredMemberCount} dari ${totalMemberCount} anggota`
-              : `${dbLines.length} Lini Produksi`}
+              ? uiText("{{v0}} lini · {{v1}} dari {{v2}} anggota", { v0: filteredLines.length, v1: filteredMemberCount, v2: totalMemberCount })
+              : uiText("{{v0}} Lini Produksi", { v0: dbLines.length })}
           </span>
         </div>
       </div>
 
       {dbLines.length === 0 ? (
-        <div className="spv-empty-box">
-          Belum ada data lini di database.
-        </div>
+        <div className="spv-empty-box">{uiText("Belum ada data lini di database.")}</div>
       ) : filteredLines.length === 0 ? (
         <div
           className="spv-empty-box"
@@ -146,14 +147,12 @@ export function SupervisorApprovalsTab({
             gap: "10px",
           }}
         >
-          <span>Tidak ada anggota yang cocok dengan filter</span>
+          <span>{uiText("Tidak ada anggota yang cocok dengan filter")}</span>
           <button
             type="button"
             onClick={onResetFilters}
             className="spv-btn spv-btn--secondary spv-btn--sm"
-          >
-            Reset filter
-          </button>
+          >{uiText("Reset filter")}</button>
         </div>
       ) : (
             filteredLines.map((line) => {
@@ -188,7 +187,7 @@ export function SupervisorApprovalsTab({
                           hasAbnormal ? "has-ng" : allApproved ? "is-all-approved" : ""
                         }`}
                       >
-                        {originalLine.lineCode ? originalLine.lineCode.slice(-3) : `L${originalLine.lineId}`}
+                        {originalLine.lineCode ? originalLine.lineCode.slice(-3) : uiText("L{{v0}}", { v0: originalLine.lineId })}
                       </div>
                       <div>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -198,30 +197,23 @@ export function SupervisorApprovalsTab({
                           <span className="spv-chip spv-chip--neutral">{originalLine.shift}</span>
                           <span className="spv-chip spv-chip--neutral">{originalLine.workshopName}</span>
                         </div>
-                        <div className="spv-line-header__meta">
-                          Leader: <strong>{originalLine.leader?.name || "Belum Ditentukan"}</strong> ({originalLine.leader?.employeeNo || "-"})
-                          {" · "}{originalLine.members.length} Anggota
-                        </div>
+                        <div className="spv-line-header__meta">{uiText("Leader: ")}<strong>{originalLine.leader?.name || uiText("Belum Ditentukan")}</strong> ({originalLine.leader?.employeeNo || "-"})
+                          {" · "}{originalLine.members.length}{uiText(" Anggota")}</div>
                       </div>
                     </div>
 
                     <div className="spv-line-header__actions">
                       {allApproved ? (
                         <span className="spv-status-badge spv-status-badge--approved">
-                          <IconCheckCircle size={12} /> Disetujui Penuh
-                        </span>
+                          <IconCheckCircle size={12} />{uiText(" Disetujui Penuh")}</span>
                       ) : hasAbnormal ? (
                         <span className="spv-status-badge spv-status-badge--ng">
-                          <IconAlert size={12} /> Ada Temuan NG
-                        </span>
+                          <IconAlert size={12} />{uiText(" Ada Temuan NG")}</span>
                       ) : pendingLineCount > 0 ? (
                         <span className="spv-status-badge spv-status-badge--waiting">
-                          {pendingLineCount} Menunggu Review
-                        </span>
+                          {pendingLineCount}{uiText(" Menunggu Review")}</span>
                       ) : (
-                        <span className="spv-status-badge spv-status-badge--empty">
-                          Menunggu Lengkap
-                        </span>
+                        <span className="spv-status-badge spv-status-badge--empty">{uiText("Menunggu Lengkap")}</span>
                       )}
 
                       <button
@@ -230,18 +222,18 @@ export function SupervisorApprovalsTab({
                         aria-disabled={!canApprove}
                         onClick={() => onBatchApproveLine(originalLine)}
                         className="spv-btn spv-btn--primary spv-btn--sm"
-                        title={approveTitle}
+                        title={uiText(approveTitle)}
                       >
                         {canApprove
-                          ? `✓ Setujui Semua (${pendingLineCount})`
-                          : "✓ Setujui Semua"}
+                          ? uiText("✓ Setujui Semua ({{v0}})", { v0: pendingLineCount })
+                          : uiText("✓ Setujui Semua")}
                       </button>
                     </div>
                   </div>
 
                   {/* Members Grid in this Line */}
                   <div className="spv-member-grid">
-                    {line.members.map((member) => {
+                    {uiText(line.members.map((member) => {
                       const sub = member.submission;
                       const isSubmitted = Boolean(sub);
                       const isApproved = sub?.approvalStatus === "approved";
@@ -269,7 +261,7 @@ export function SupervisorApprovalsTab({
                               ? "is-waiting"
                               : ""
                           } ${isSubmitted ? "" : "is-not-submitted"}`}
-                          title="Klik untuk membuka rincian checklist & persetujuan"
+                          title={uiText("Klik untuk membuka rincian checklist & persetujuan")}
                         >
                           <div className="spv-member-card__top">
                             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
@@ -277,42 +269,30 @@ export function SupervisorApprovalsTab({
                                 {departmentLabel(member.dept)}
                               </span>
                               {member.role === "leader" && (
-                                <span className="spv-chip spv-chip--neutral">Leader</span>
+                                <span className="spv-chip spv-chip--neutral">{uiText("Leader")}</span>
                               )}
                             </div>
 
                             {isApproved ? (
-                              <span className="spv-status-badge spv-status-badge--approved">
-                                ✓ Disetujui
-                              </span>
+                              <span className="spv-status-badge spv-status-badge--approved">{uiText("✓ Disetujui")}</span>
                             ) : isRevision ? (
-                              <span className="spv-status-badge spv-status-badge--revision">
-                                Revisi
-                              </span>
+                              <span className="spv-status-badge spv-status-badge--revision">{uiText("Revisi")}</span>
                             ) : isNG ? (
-                              <span className="spv-status-badge spv-status-badge--ng">
-                                ! Ada NG
-                              </span>
+                              <span className="spv-status-badge spv-status-badge--ng">{uiText("! Ada NG")}</span>
                             ) : isWaiting ? (
-                              <span className="spv-status-badge spv-status-badge--waiting">
-                                Menunggu
-                              </span>
+                              <span className="spv-status-badge spv-status-badge--waiting">{uiText("Menunggu")}</span>
                             ) : (
-                              <span className="spv-status-badge spv-status-badge--empty">
-                                Belum Submit
-                              </span>
+                              <span className="spv-status-badge spv-status-badge--empty">{uiText("Belum Submit")}</span>
                             )}
                           </div>
 
                           <div className="spv-member-card__name">
                             {member.name}
                           </div>
-                          <span className="spv-member-card__sub">
-                            NIK: {member.employeeNo} · {member.position}
+                          <span className="spv-member-card__sub">{uiText("NIK: ")}{member.employeeNo} · {member.position}
                           </span>
                           {member.substitutedBy && (
-                            <span className="spv-member-card__sub">
-                              Diwakilkan oleh <strong>{member.substitutedBy.name}</strong> ({member.substitutedBy.employeeNo})
+                            <span className="spv-member-card__sub">{uiText("Diwakilkan oleh ")}<strong>{member.substitutedBy.name}</strong> ({member.substitutedBy.employeeNo})
                             </span>
                           )}
 
@@ -320,22 +300,22 @@ export function SupervisorApprovalsTab({
                             <IconClock size={11} />
                             <span>
                               {sub?.submittedAt
-                                ? `${new Date(sub.submittedAt).toLocaleTimeString("id-ID", {
+                                ? `${new Date(sub.submittedAt).toLocaleTimeString(uiLocale, {
                                     hour: "2-digit",
                                     minute: "2-digit",
                                   })} WIB`
-                                : "Belum submit hari ini"}
+                                : uiText("Belum submit hari ini")}
                             </span>
                           </div>
 
                           {isNG && sub?.abnormalNotes && (
-                            <div className="spv-member-card__ng-note" title={sub.abnormalNotes}>
+                            <div className="spv-member-card__ng-note" title={uiText(sub.abnormalNotes)}>
                               ⚠️ {sub.abnormalNotes}
                             </div>
                           )}
                         </div>
                       );
-                    })}
+                    }))}
                   </div>
                 </div>
               );

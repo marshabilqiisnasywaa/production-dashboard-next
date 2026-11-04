@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useMemo, useState } from "react";
 import "./problems.css";
@@ -13,6 +15,7 @@ export default function ProblemsPage({
 }: {
   adminLayout?: boolean;
 }) {
+  const { text: uiText } = useUiText();
   const { rows, counts, ready, error, refresh } = useProblems();
 
   const [search, setSearch] = useState("");
@@ -67,38 +70,35 @@ export default function ProblemsPage({
       {!adminLayout && (
         <div className="dml-page-head dml-pb-heading">
           <div>
-            <h1>Tracking Masalah</h1>
-            <p>
-              Pantau penanggung jawab, tenggat waktu, dan status tindak lanjut
-              dari DM meeting.
-            </p>
+            <h1>{uiText("Tracking Masalah")}</h1>
+            <p>{uiText("Pantau penanggung jawab, tenggat waktu, dan status tindak lanjut dari DM meeting.")}</p>
           </div>
         </div>
       )}
 
       <div className="dml-pb-summary">
         <div className="dml-pb-stat">
-          <span className="dml-pb-stat__label">Total Masalah</span>
+          <span className="dml-pb-stat__label">{uiText("Total Masalah")}</span>
           <strong>{counts.all}</strong>
-          <span className="dml-pb-stat__note">Semua masalah tercatat</span>
+          <span className="dml-pb-stat__note">{uiText("Semua masalah tercatat")}</span>
         </div>
 
         <div className="dml-pb-stat">
-          <span className="dml-pb-stat__label">Belum Selesai</span>
+          <span className="dml-pb-stat__label">{uiText("Belum Selesai")}</span>
           <strong>{counts.unsolved}</strong>
-          <span className="dml-pb-stat__note">Perlu ditindaklanjuti</span>
+          <span className="dml-pb-stat__note">{uiText("Perlu ditindaklanjuti")}</span>
         </div>
 
         <div className="dml-pb-stat">
-          <span className="dml-pb-stat__label">Selesai</span>
+          <span className="dml-pb-stat__label">{uiText("Selesai")}</span>
           <strong>{counts.solved}</strong>
-          <span className="dml-pb-stat__note">Tindak lanjut selesai</span>
+          <span className="dml-pb-stat__note">{uiText("Tindak lanjut selesai")}</span>
         </div>
 
         <div className="dml-pb-stat">
-          <span className="dml-pb-stat__label">Eskalasi SPV</span>
+          <span className="dml-pb-stat__label">{uiText("Eskalasi SPV")}</span>
           <strong>{counts.escalated}</strong>
-          <span className="dml-pb-stat__note">Perlu perhatian supervisor</span>
+          <span className="dml-pb-stat__note">{uiText("Perlu perhatian supervisor")}</span>
         </div>
       </div>
 
@@ -107,8 +107,8 @@ export default function ProblemsPage({
           <div className="dml-pb-search">
             <input
               type="search"
-              aria-label="Cari masalah"
-              placeholder="Cari masalah, PIC, line, atau sesi..."
+              aria-label={uiText("Cari masalah")}
+              placeholder={uiText("Cari masalah, PIC, line, atau sesi...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -116,39 +116,39 @@ export default function ProblemsPage({
 
           <div className="dml-pb-filters">
             <select
-              aria-label="Filter status"
+              aria-label={uiText("Filter status")}
               value={statusFilter}
               onChange={(e) =>
                 setStatusFilter(e.target.value as ProblemFilter)
               }
             >
-              <option value="all">Semua status ({counts.all})</option>
-              <option value="unsolved">Belum selesai ({counts.unsolved})</option>
-              <option value="escalated">Eskalasi SPV ({counts.escalated})</option>
-              <option value="solved">Selesai ({counts.solved})</option>
+              <option value="all">{uiText("Semua status (")}{counts.all})</option>
+              <option value="unsolved">{uiText("Belum selesai (")}{counts.unsolved})</option>
+              <option value="escalated">{uiText("Eskalasi SPV (")}{counts.escalated})</option>
+              <option value="solved">{uiText("Selesai (")}{counts.solved})</option>
             </select>
 
             <select
-              aria-label="Filter line"
+              aria-label={uiText("Filter line")}
               value={lineFilter}
               onChange={(e) => setLineFilter(e.target.value)}
             >
-              <option value="all">Semua line</option>
+              <option value="all">{uiText("Semua line")}</option>
               {lines.map((line) => (
                 <option key={line} value={line}>
-                  {line}
+                  {uiText(line)}
                 </option>
               ))}
             </select>
 
             <select
-              aria-label="Filter tenggat"
+              aria-label={uiText("Filter tenggat")}
               value={dueFilter}
               onChange={(e) => setDueFilter(e.target.value)}
             >
-              <option value="all">Semua tenggat</option>
-              <option value="overdue">Terlambat</option>
-              <option value="not-overdue">Belum terlambat</option>
+              <option value="all">{uiText("Semua tenggat")}</option>
+              <option value="overdue">{uiText("Terlambat")}</option>
+              <option value="not-overdue">{uiText("Belum terlambat")}</option>
             </select>
 
             {hasFilters && (
@@ -156,22 +156,18 @@ export default function ProblemsPage({
                 type="button"
                 className="dml-pb-reset"
                 onClick={resetFilters}
-              >
-                Reset
-              </button>
+              >{uiText("Reset")}</button>
             )}
           </div>
         </div>
 
-        <div className="dml-pb-result-count">
-          Menampilkan <strong>{visible.length}</strong> dari{" "}
-          <strong>{rows.length}</strong> masalah
-        </div>
+        <div className="dml-pb-result-count">{uiText("Menampilkan ")}<strong>{visible.length}</strong>{uiText(" dari")}{" "}
+          <strong>{rows.length}</strong>{uiText(" masalah")}</div>
 
         {error ? <ProblemLoadError error={error} onRetry={refresh} /> : ready ? (
           <ProblemTable rows={visible} />
         ) : (
-          <div className="dml-empty">Memuat masalah…</div>
+          <div className="dml-empty">{uiText("Memuat masalah…")}</div>
         )}
       </section>
     </div>

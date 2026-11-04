@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useRef, useState } from "react";
 import {
@@ -69,6 +71,7 @@ function ActionMenu({
   onDelete?: () => void;
   orientation?: "horizontal" | "vertical";
 }) {
+  const { text: uiText } = useUiText();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -92,8 +95,8 @@ function ActionMenu({
           e.stopPropagation();
           setOpen((prev) => !prev);
         }}
-        aria-label={`Aksi untuk ${label}`}
-        title="Menu aksi"
+        aria-label={uiText("Aksi untuk {{v0}}", { v0: label })}
+        title={uiText("Menu aksi")}
       >
         {orientation === "vertical" ? (
           <MoreVertical size={15} />
@@ -115,7 +118,7 @@ function ActionMenu({
               }}
             >
               <Pencil size={13} />
-              <span>Ubah Nama</span>
+              <span>{uiText("Ubah Nama")}</span>
             </button>
           )}
           {onMove && (
@@ -130,7 +133,7 @@ function ActionMenu({
                   onMove(-1);
                 }}
               >
-                <span>↑ Pindah ke Atas</span>
+                <span>{uiText("↑ Pindah ke Atas")}</span>
               </button>
               <button
                 type="button"
@@ -142,7 +145,7 @@ function ActionMenu({
                   onMove(1);
                 }}
               >
-                <span>↓ Pindah ke Bawah</span>
+                <span>{uiText("↓ Pindah ke Bawah")}</span>
               </button>
             </>
           )}
@@ -157,7 +160,7 @@ function ActionMenu({
               }}
             >
               <Trash2 size={13} />
-              <span>Hapus</span>
+              <span>{uiText("Hapus")}</span>
             </button>
           )}
         </div>
@@ -179,6 +182,7 @@ function NameForm({
   onSave: (value: string) => void;
   onCancel: () => void;
 }) {
+  const { text: uiText } = useUiText();
   const [value, setValue] = useState(initial);
   return (
     <form
@@ -191,7 +195,7 @@ function NameForm({
       <input
         autoFocus
         value={value}
-        placeholder={placeholder}
+        placeholder={uiText(placeholder)}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => e.key === "Escape" && onCancel()}
         className="tte-inline-input"
@@ -202,15 +206,13 @@ function NameForm({
           className="tte-btn tte-btn--primary"
           disabled={!value.trim()}
         >
-          {saveLabel}
+          {uiText(saveLabel)}
         </button>
         <button
           type="button"
           className="tte-btn tte-btn--cancel"
           onClick={onCancel}
-        >
-          Batal
-        </button>
+        >{uiText("Batal")}</button>
       </div>
     </form>
   );
@@ -227,6 +229,7 @@ function ItemForm({
   onSave: (draft: ItemDraft) => void;
   onCancel: () => void;
 }) {
+  const { text: uiText } = useUiText();
   const [draft, setDraft] = useState<ItemDraft>({
     title: initial?.title ?? "",
     answerType: initial?.answerType ?? "ok_ng",
@@ -246,17 +249,17 @@ function ItemForm({
     >
       <div className="tte-form-grid">
         <label className="tte-field tte-field--full">
-          <span>Nama pos / item yang diperiksa</span>
+          <span>{uiText("Nama pos / item yang diperiksa")}</span>
           <input
             autoFocus
             value={draft.title}
-            placeholder="Contoh: Pengecekan pos penting"
+            placeholder={uiText("Contoh: Pengecekan pos penting")}
             onChange={(e) => set({ title: e.target.value })}
             className="tte-input"
           />
         </label>
         <label className="tte-field">
-          <span>Jenis jawaban</span>
+          <span>{uiText("Jenis jawaban")}</span>
           <select
             value={draft.answerType}
             onChange={(e) =>
@@ -264,13 +267,13 @@ function ItemForm({
             }
             className="tte-select"
           >
-            <option value="ok_ng">OK / NG</option>
-            <option value="text">Isian teks</option>
+            <option value="ok_ng">{uiText("OK / NG")}</option>
+            <option value="text">{uiText("Isian teks")}</option>
           </select>
         </label>
         {draft.answerType === "ok_ng" && (
           <label className="tte-field">
-            <span>Cara menjawab</span>
+            <span>{uiText("Cara menjawab")}</span>
             <select
               value={draft.answerMode}
               onChange={(e) =>
@@ -280,20 +283,16 @@ function ItemForm({
               }
               className="tte-select"
             >
-              <option value="per_rule">
-                OK / NG untuk setiap aturan pengecekan
-              </option>
-              <option value="item">
-                Satu OK / NG untuk seluruh pos / item
-              </option>
+              <option value="per_rule">{uiText("OK / NG untuk setiap aturan pengecekan")}</option>
+              <option value="item">{uiText("Satu OK / NG untuk seluruh pos / item")}</option>
             </select>
           </label>
         )}
         <label className="tte-field tte-field--full">
-          <span>Catatan bantuan (opsional)</span>
+          <span>{uiText("Catatan bantuan (opsional)")}</span>
           <input
             value={draft.ruleInfo}
-            placeholder="Catatan petunjuk bagi operator"
+            placeholder={uiText("Catatan petunjuk bagi operator")}
             onChange={(e) => set({ ruleInfo: e.target.value })}
             className="tte-input"
           />
@@ -305,15 +304,13 @@ function ItemForm({
           className="tte-btn tte-btn--primary"
           disabled={!draft.title.trim()}
         >
-          {saveLabel}
+          {uiText(saveLabel)}
         </button>
         <button
           type="button"
           className="tte-btn tte-btn--cancel"
           onClick={onCancel}
-        >
-          Batal
-        </button>
+        >{uiText("Batal")}</button>
       </div>
     </form>
   );
@@ -324,6 +321,7 @@ export default function TemplateTreeEditor({
   saving,
   onChange,
 }: TemplateTreeEditorProps) {
+  const { text: uiText } = useUiText();
   const [activeCatId, setActiveCatId] = useState<string>(
     categories[0]?.id ?? ""
   );
@@ -427,7 +425,7 @@ export default function TemplateTreeEditor({
   return (
     <div className="tte-layout">
       {/* LEFT COLUMN: Category Navigation (Member-style) */}
-      <aside className="tte-cat-nav" aria-label="Navigasi Kategori Checklist">
+      <aside className="tte-cat-nav" aria-label={uiText("Navigasi Kategori Checklist")}>
         <ul className="tte-cat-list">
           {categories.map((cat, ci) => {
             const isSelected = cat.id === activeCatId;
@@ -441,7 +439,7 @@ export default function TemplateTreeEditor({
                 <li key={cat.id} className="tte-cat-item-edit">
                   <NameForm
                     initial={cat.name}
-                    placeholder="Nama kategori"
+                    placeholder={uiText("Nama kategori")}
                     saveLabel="Simpan"
                     onCancel={() => setMode(null)}
                     onSave={(name) => {
@@ -478,7 +476,7 @@ export default function TemplateTreeEditor({
                   <span className="tte-cat-count">{catItemCount}</span>
 
                   <ActionMenu
-                    label={`kategori ${cat.name}`}
+                    label={uiText("kategori {{v0}}", { v0: cat.name })}
                     index={ci}
                     total={categories.length}
                     orientation="vertical"
@@ -493,7 +491,7 @@ export default function TemplateTreeEditor({
                         : `Hapus kategori "${cat.name}"?`;
                       if (
                         window.confirm(
-                          `${msg}\nPerubahan langsung tersimpan.`
+                          uiText("{{v0}}\nPerubahan langsung tersimpan.", { v0: msg })
                         )
                       ) {
                         const next = categories.filter((c) => c.id !== cat.id);
@@ -513,7 +511,7 @@ export default function TemplateTreeEditor({
         {mode === "addCat" ? (
           <div className="tte-add-cat-form">
             <NameForm
-              placeholder="Contoh: Manusia"
+              placeholder={uiText("Contoh: Manusia")}
               saveLabel="Tambah"
               onCancel={() => setMode(null)}
               onSave={(name) => {
@@ -532,20 +530,17 @@ export default function TemplateTreeEditor({
             onClick={() => setMode("addCat")}
           >
             <Plus size={14} />
-            <span>Tambah kategori</span>
+            <span>{uiText("Tambah kategori")}</span>
           </button>
         )}
       </aside>
 
       {/* RIGHT COLUMN: Selected Category Detail & Checklist Editor */}
-      <section className="tte-cat-panel" aria-label="Editor Checklist Kategori">
+      <section className="tte-cat-panel" aria-label={uiText("Editor Checklist Kategori")}>
         {!activeCategory ? (
           <div className="tte-empty-panel">
-            <p className="tte-empty-title">Belum ada kategori checklist</p>
-            <p className="tte-empty-sub">
-              Klik <strong>+ Tambah kategori</strong> di kolom kiri untuk
-              membuat kategori pertama (misalnya Manusia, Mesin, atau Material).
-            </p>
+            <p className="tte-empty-title">{uiText("Belum ada kategori checklist")}</p>
+            <p className="tte-empty-sub">{uiText("Klik ")}<strong>{uiText("+ Tambah kategori")}</strong>{uiText(" di kolom kiri untuk membuat kategori pertama (misalnya Manusia, Mesin, atau Material).")}</p>
           </div>
         ) : (
           <>
@@ -555,7 +550,7 @@ export default function TemplateTreeEditor({
                 {mode === `editCatHeader:${activeCategory.id}` ? (
                   <NameForm
                     initial={activeCategory.name}
-                    placeholder="Nama kategori"
+                    placeholder={uiText("Nama kategori")}
                     saveLabel="Simpan"
                     onCancel={() => setMode(null)}
                     onSave={(name) => {
@@ -574,16 +569,15 @@ export default function TemplateTreeEditor({
                       onClick={() =>
                         setMode(`editCatHeader:${activeCategory.id}`)
                       }
-                      title="Ubah nama kategori"
-                      aria-label="Ubah nama kategori"
+                      title={uiText("Ubah nama kategori")}
+                      aria-label={uiText("Ubah nama kategori")}
                     >
                       <Pencil size={14} />
                     </button>
                   </div>
                 )}
                 <span className="tte-panel-sub">
-                  {activeCatTotal} pos / item
-                </span>
+                  {activeCatTotal}{uiText(" pos / item")}</span>
               </div>
 
               <div className="tte-panel-header-right">
@@ -598,7 +592,7 @@ export default function TemplateTreeEditor({
                 </button> */}
 
                 <ActionMenu
-                  label={`kategori ${activeCategory.name}`}
+                  label={uiText("kategori {{v0}}", { v0: activeCategory.name })}
                   index={activeCatIndex}
                   total={categories.length}
                   orientation="horizontal"
@@ -614,7 +608,7 @@ export default function TemplateTreeEditor({
                       ? `Hapus kategori "${activeCategory.name}" beserta ${activeCatTotal} pos / item di dalamnya?`
                       : `Hapus kategori "${activeCategory.name}"?`;
                     if (
-                      window.confirm(`${msg}\nPerubahan langsung tersimpan.`)
+                      window.confirm(uiText("{{v0}}\nPerubahan langsung tersimpan.", { v0: msg }))
                     ) {
                       const next = categories.filter(
                         (c) => c.id !== activeCategory.id
@@ -634,7 +628,7 @@ export default function TemplateTreeEditor({
             {activeCategory.groups.length === 0 &&
               mode !== `addGrp:${activeCategory.id}` && (
                 <div className="tte-empty-subjects">
-                  <p>Belum ada subjek penilaian di kategori ini.</p>
+                  <p>{uiText("Belum ada subjek penilaian di kategori ini.")}</p>
                 </div>
               )}
 
@@ -656,7 +650,7 @@ export default function TemplateTreeEditor({
                         {mode === `editGrp:${grp.id}` ? (
                           <NameForm
                             initial={grp.title}
-                            placeholder="Nama subjek penilaian"
+                            placeholder={uiText("Nama subjek penilaian")}
                             saveLabel="Simpan"
                             onCancel={() => setMode(null)}
                             onSave={(title) => {
@@ -672,20 +666,19 @@ export default function TemplateTreeEditor({
                         ) : (
                           <>
                             <h3 className="tte-subject-title">
-                              {grp.title || "Tanpa subjek"}
+                              {grp.title || uiText("Tanpa subjek")}
                             </h3>
                             <button
                               type="button"
                               className="tte-icon-btn"
                               onClick={() => setMode(`editGrp:${grp.id}`)}
-                              title="Ubah nama subjek"
-                              aria-label="Ubah nama subjek"
+                              title={uiText("Ubah nama subjek")}
+                              aria-label={uiText("Ubah nama subjek")}
                             >
                               <Pencil size={13} />
                             </button>
                             <span className="tte-subject-count">
-                              {grp.items.length} pos
-                            </span>
+                              {grp.items.length}{uiText(" pos")}</span>
                           </>
                         )}
                       </div>
@@ -697,14 +690,10 @@ export default function TemplateTreeEditor({
                           onClick={() => toggleSubject(grp.id)}
                           aria-expanded={!isSubjectCollapsed}
                           aria-label={
-                            isSubjectCollapsed
-                              ? `Buka subjek ${grp.title}`
-                              : `Tutup subjek ${grp.title}`
+                            isSubjectCollapsed ? uiText("Buka subjek {{v0}}", { v0: grp.title }) : uiText("Tutup subjek {{v0}}", { v0: grp.title })
                           }
                           title={
-                            isSubjectCollapsed
-                              ? "Tampilkan pos / item"
-                              : "Sembunyikan pos / item"
+                            isSubjectCollapsed ? uiText("Tampilkan pos / item") : uiText("Sembunyikan pos / item")
                           }
                         >
                           {isSubjectCollapsed ? (
@@ -715,7 +704,7 @@ export default function TemplateTreeEditor({
                         </button>
 
                         <ActionMenu
-                          label={`subjek ${grp.title || "tanpa nama"}`}
+                          label={uiText("subjek {{v0}}", { v0: grp.title || "tanpa nama" })}
                           index={gi}
                           total={activeCategory.groups.length}
                           orientation="horizontal"
@@ -735,7 +724,7 @@ export default function TemplateTreeEditor({
                               : `Hapus subjek "${grp.title || "Tanpa subjek"}"?`;
                             if (
                               window.confirm(
-                                `${msg}\nPerubahan langsung tersimpan.`
+                                uiText("{{v0}}\nPerubahan langsung tersimpan.", { v0: msg })
                               )
                             ) {
                               commit(
@@ -758,9 +747,7 @@ export default function TemplateTreeEditor({
                       <div className="tte-subject-body">
                         {grp.items.length === 0 &&
                           mode !== `addItem:${grp.id}` && (
-                            <p className="tte-empty-note">
-                              Belum ada nama pos / item di subjek ini.
-                            </p>
+                            <p className="tte-empty-note">{uiText("Belum ada nama pos / item di subjek ini.")}</p>
                           )}
 
                         <div className="tte-items-list">
@@ -851,7 +838,7 @@ export default function TemplateTreeEditor({
 
                                   <div className="tte-item-title-wrap">
                                     <span className="tte-item-title">
-                                      {item.title}
+                                      {uiText(item.title)}
                                     </span>
                                     <button
                                       type="button"
@@ -859,8 +846,8 @@ export default function TemplateTreeEditor({
                                       onClick={() =>
                                         setMode(`editItem:${item.id}`)
                                       }
-                                      title="Ubah nama pos"
-                                      aria-label="Ubah nama pos"
+                                      title={uiText("Ubah nama pos")}
+                                      aria-label={uiText("Ubah nama pos")}
                                     >
                                       <Pencil size={12} />
                                     </button>
@@ -873,7 +860,7 @@ export default function TemplateTreeEditor({
                                         : ""
                                     }`}
                                   >
-                                    {badgeLabel}
+                                    {uiText(badgeLabel)}
                                   </span>
 
                                   {rules.length > 0 && (
@@ -884,14 +871,10 @@ export default function TemplateTreeEditor({
                                         toggleItemRules(item.id)
                                       }
                                       title={
-                                        isRulesExpanded
-                                          ? "Sembunyikan aturan pengecekan"
-                                          : "Tampilkan aturan pengecekan"
+                                        isRulesExpanded ? uiText("Sembunyikan aturan pengecekan") : uiText("Tampilkan aturan pengecekan")
                                       }
                                       aria-label={
-                                        isRulesExpanded
-                                          ? "Sembunyikan aturan pengecekan"
-                                          : "Tampilkan aturan pengecekan"
+                                        isRulesExpanded ? uiText("Sembunyikan aturan pengecekan") : uiText("Tampilkan aturan pengecekan")
                                       }
                                     >
                                       {isRulesExpanded ? (
@@ -903,7 +886,7 @@ export default function TemplateTreeEditor({
                                   )}
 
                                   <ActionMenu
-                                    label={`pos ${item.number}`}
+                                    label={uiText("pos {{v0}}", { v0: item.number })}
                                     index={ii}
                                     total={grp.items.length}
                                     orientation="horizontal"
@@ -930,7 +913,7 @@ export default function TemplateTreeEditor({
                                     onDelete={() => {
                                       if (
                                         window.confirm(
-                                          `Hapus pos / item "${item.title}" beserta aturannya?\nPerubahan langsung tersimpan.`
+                                          uiText("Hapus pos / item \"{{v0}}\" beserta aturannya?\nPerubahan langsung tersimpan.", { v0: item.title })
                                         )
                                       ) {
                                         commit(
@@ -975,7 +958,7 @@ export default function TemplateTreeEditor({
                                         `editRule:${item.id}:${ri}` ? (
                                           <NameForm
                                             initial={line}
-                                            placeholder="Aturan pengecekan"
+                                            placeholder={uiText("Aturan pengecekan")}
                                             saveLabel="Simpan"
                                             onCancel={() => setMode(null)}
                                             onSave={(text) => {
@@ -993,7 +976,7 @@ export default function TemplateTreeEditor({
                                               {ri + 1}. {line}
                                             </span>
                                             <ActionMenu
-                                              label={`aturan ${ri + 1}`}
+                                              label={uiText("aturan {{v0}}", { v0: ri + 1 })}
                                               index={ri}
                                               total={rules.length}
                                               orientation="horizontal"
@@ -1011,7 +994,7 @@ export default function TemplateTreeEditor({
                                               onDelete={() => {
                                                 if (
                                                   window.confirm(
-                                                    `Hapus aturan ini?\n${line}`
+                                                    uiText("Hapus aturan ini?\n{{v0}}", { v0: line })
                                                   )
                                                 ) {
                                                   saveRules(
@@ -1031,7 +1014,7 @@ export default function TemplateTreeEditor({
                                     {mode === `addRule:${item.id}` ? (
                                       <div className="tte-add-rule-form">
                                         <NameForm
-                                          placeholder="Contoh: Ada penandaan pada pos pergerakan operator"
+                                          placeholder={uiText("Contoh: Ada penandaan pada pos pergerakan operator")}
                                           saveLabel="Tambah aturan"
                                           onCancel={() => setMode(null)}
                                           onSave={(text) => {
@@ -1053,7 +1036,7 @@ export default function TemplateTreeEditor({
                                         }
                                       >
                                         <Plus size={12} />
-                                        <span>Tambah aturan pengecekan</span>
+                                        <span>{uiText("Tambah aturan pengecekan")}</span>
                                       </button>
                                     )}
                                   </div>
@@ -1111,7 +1094,7 @@ export default function TemplateTreeEditor({
                             onClick={() => setMode(`addItem:${grp.id}`)}
                           >
                             <Plus size={13} />
-                            <span>Tambah nama pos / item</span>
+                            <span>{uiText("Tambah nama pos / item")}</span>
                           </button>
                         )}
                       </div>
@@ -1125,7 +1108,7 @@ export default function TemplateTreeEditor({
             {mode === `addGrp:${activeCategory.id}` ? (
               <div className="tte-add-subject-form">
                 <NameForm
-                  placeholder="Contoh: 1. Pergerakan Operator"
+                  placeholder={uiText("Contoh: 1. Pergerakan Operator")}
                   saveLabel="Tambah subjek"
                   onCancel={() => setMode(null)}
                   onSave={(title) => {
@@ -1152,7 +1135,7 @@ export default function TemplateTreeEditor({
                 onClick={() => setMode(`addGrp:${activeCategory.id}`)}
               >
                 <Plus size={14} />
-                <span>Tambah subjek penilaian</span>
+                <span>{uiText("Tambah subjek penilaian")}</span>
               </button>
             )}
           </>

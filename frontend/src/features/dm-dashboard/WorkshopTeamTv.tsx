@@ -1,4 +1,7 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+
 
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
@@ -24,6 +27,7 @@ function Avatar({ name, photoUrl }: { name: string; photoUrl: string | null }) {
 }
 
 export default function WorkshopTeamTv({ workshopId }: { workshopId: number }) {
+  const { text: uiText } = useUiText();
   const [team, setTeam] = useState<DmPublicWorkshopTeam | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
@@ -72,11 +76,11 @@ export default function WorkshopTeamTv({ workshopId }: { workshopId: number }) {
     return (
       <main className="dsv-root dsv-state">
         <h1 className="dsv-state-title">
-          {missing ? "Workshop tidak ditemukan" : error ? "Data belum bisa dimuat" : "Memuat tim workshop..."}
+          {missing ? uiText("Workshop tidak ditemukan") : error ? uiText("Data belum bisa dimuat") : uiText("Memuat tim workshop...")}
         </h1>
-        {missing ? <p>Periksa kembali link workshop ini.</p> : error ? <p role="alert">{error}</p> : <p role="status">Mengambil data workshop.</p>}
+        {missing ? <p>{uiText("Periksa kembali link workshop ini.")}</p> : error ? <p role="alert">{uiText(error)}</p> : <p role="status">{uiText("Mengambil data workshop.")}</p>}
         {(error || missing) && (
-          <button className="dsv-state-action" onClick={() => setAttempt((value) => value + 1)}>Coba lagi</button>
+          <button className="dsv-state-action" onClick={() => setAttempt((value) => value + 1)}>{uiText("Coba lagi")}</button>
         )}
       </main>
     );
@@ -88,25 +92,25 @@ export default function WorkshopTeamTv({ workshopId }: { workshopId: number }) {
   return (
     <main className="dsv-root wtv-root">
       <header className="dsv-card dsv-header">
-        <Image src="/assets/oppo-logo-light.png" alt="OPPO Indonesia Manufacturing" width={120} height={36} className="dsv-logo" priority />
+        <Image src="/assets/oppo-logo-light.png" alt={uiText("OPPO Indonesia Manufacturing")} width={120} height={36} className="dsv-logo" priority />
         <div className="dsv-header-title">
           <h1 className="dsv-ws-code">{team.workshopName}</h1>
-          <p className="dsv-header-sub" lang="zh">车间组织架构</p>
+          <p className="dsv-header-sub">{uiText("车间组织架构")}</p>
         </div>
-        <div className="dsv-header-brand"><strong>DM WORKSHOP TEAM</strong></div>
+        <div className="dsv-header-brand"><strong>{uiText("DM WORKSHOP TEAM")}</strong><LanguageSwitcher /></div>
       </header>
 
-      {error && <p className="wtv-notice" role="status">Pembaruan gagal. Menampilkan data terakhir. {error}</p>}
+      {error && <p className="wtv-notice" role="status">{uiText("Pembaruan gagal. Menampilkan data terakhir. ")}{uiText(error)}</p>}
 
-      <section className="dsv-hod" aria-label="Head of Department">
-        <div className="dsv-hod-bar"><span>HEAD OF DEPARTMENT</span><strong>{team.hod?.position ?? ""}</strong></div>
+      <section className="dsv-hod" aria-label={uiText("Head of Department")}>
+        <div className="dsv-hod-bar"><span>{uiText("HEAD OF DEPARTMENT")}</span><strong>{team.hod?.position ?? ""}</strong></div>
         <div className="dsv-hod-body">
           <div className="dsv-hod-avatar"><Avatar key={team.hod?.photoUrl} name={team.hod?.name ?? "HOD"} photoUrl={team.hod?.photoUrl ?? null} /></div>
           <div className="dsv-hod-who">
-            <span className="dsv-hod-name">{team.hod?.name ?? "Belum diisi"}</span>
+            <span className="dsv-hod-name">{team.hod?.name ?? uiText("Belum diisi")}</span>
             {team.hod && <span className="dsv-hod-title">{team.hod.position}</span>}
           </div>
-          {team.hod && <div className="dsv-contact"><span className="dsv-contact-label">TELEPHONE / CONTACT</span><span className="dsv-contact-value">{team.hod.workPhone || "-"}</span></div>}
+          {team.hod && <div className="dsv-contact"><span className="dsv-contact-label">{uiText("TELEPHONE / CONTACT")}</span><span className="dsv-contact-value">{team.hod.workPhone || "-"}</span></div>}
         </div>
       </section>
 
@@ -119,21 +123,21 @@ export default function WorkshopTeamTv({ workshopId }: { workshopId: number }) {
       )}
 
       {count === 0 ? (
-        <p className="wtv-empty" role="status">Belum ada supervisor yang ditambahkan ke workshop ini.</p>
+        <p className="wtv-empty" role="status">{uiText("Belum ada supervisor yang ditambahkan ke workshop ini.")}</p>
       ) : (
-        <section className="dsv-columns" aria-label="Supervisor workshop" style={{ "--wtv-columns": Math.min(count, 5) } as CSSProperties}>
+        <section className="dsv-columns" aria-label={uiText("Supervisor workshop")} style={{ "--wtv-columns": Math.min(count, 5) } as CSSProperties}>
           {team.supervisors.map((person) => {
             const position = person.position?.trim() || "Posisi belum diisi";
             return (
               <article key={person.employeeId} className="dsv-col">
                 <h2 className="dsv-col-head">{position}</h2>
                 <dl className="dsv-info">
-                  <div><dt>Nama:</dt><dd className="dsv-info-name">{person.name}</dd></div>
-                  <div><dt>Tlp:</dt><dd className="dsv-info-phone">{person.workPhone || "-"}</dd></div>
+                  <div><dt>{uiText("Nama:")}</dt><dd className="dsv-info-name">{person.name}</dd></div>
+                  <div><dt>{uiText("Tlp:")}</dt><dd className="dsv-info-phone">{person.workPhone || "-"}</dd></div>
                 </dl>
                 <div className="dsv-photo-frame"><Avatar key={person.photoUrl} name={person.name} photoUrl={person.photoUrl} /></div>
                 <h3 className="dsv-col-title">{position}</h3>
-                <p className="dsv-col-desc">{person.responsibility?.trim() || "Tugas belum diisi."}</p>
+                <p className="dsv-col-desc">{person.responsibility?.trim() || uiText("Tugas belum diisi.")}</p>
               </article>
             );
           })}

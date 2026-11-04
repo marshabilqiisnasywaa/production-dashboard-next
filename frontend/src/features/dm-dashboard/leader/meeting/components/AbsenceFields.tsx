@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { useEffect, useState } from "react";
 import type { MeetingRepresentative } from "../../../api";
 import { useMeetingApi } from "../MeetingApiContext";
@@ -13,6 +15,7 @@ interface Props {
 }
 
 export function AbsenceFields({ idPrefix, name, employeeNo, value, onChange }: Props) {
+  const { text: uiText } = useUiText();
   const api = useMeetingApi();
   const represented = value.reason === "represented";
   const [users, setUsers] = useState<MeetingRepresentative[]>([]);
@@ -40,9 +43,7 @@ export function AbsenceFields({ idPrefix, name, employeeNo, value, onChange }: P
   const selected = savedOption ?? (legacyMatches.length === 1 ? legacyMatches[0] : undefined);
   return (
     <>
-      <label className="dml-mt-sr" htmlFor={idPrefix + "-reason"}>
-        Alasan {name} tidak hadir
-      </label>
+      <label className="dml-mt-sr" htmlFor={idPrefix + "-reason"}>{uiText("Alasan ")}{name}{uiText(" tidak hadir")}</label>
       <select
         id={idPrefix + "-reason"}
         className="ui-select"
@@ -51,12 +52,12 @@ export function AbsenceFields({ idPrefix, name, employeeNo, value, onChange }: P
       >
         {ABSENCE_REASONS.map((r) => (
           <option key={r.value} value={r.value}>
-            {r.label}
+            {uiText(r.label)}
           </option>
         ))}
       </select>
       <label className="dml-mt-sr" htmlFor={idPrefix + "-note"}>
-        {represented ? "Nama yang mewakili " : "Keterangan "}
+        {represented ? uiText("Nama yang mewakili ") : uiText("Keterangan ")}
         {name}
       </label>
       {represented ? (
@@ -68,16 +69,16 @@ export function AbsenceFields({ idPrefix, name, employeeNo, value, onChange }: P
             value={selected ? representativeValue(selected) : ""}
             onChange={(e) => onChange({ ...value, note: e.target.value })}
           >
-            <option value="">{loading ? "Memuat daftar user…" : "Pilih user yang mewakili"}</option>
+            <option value="">{loading ? uiText("Memuat daftar user…") : uiText("Pilih user yang mewakili")}</option>
             {options.map((user) => (
               <option key={user.employeeNo} value={representativeValue(user)}>
                 {representativeValue(user)}
               </option>
             ))}
           </select>
-          {error && <span role="alert">Daftar user gagal dimuat. <button type="button" onClick={() => setRetry((n) => n + 1)}>Coba lagi</button></span>}
-          {!loading && !error && options.length === 0 && <span>Tidak ada user aktif yang dapat dipilih.</span>}
-          {!loading && !error && value.note && !selected && <span>Wakil sebelumnya: {value.note}. Pilih ulang dari daftar user aktif.</span>}
+          {error && <span role="alert">{uiText("Daftar user gagal dimuat. ")}<button type="button" onClick={() => setRetry((n) => n + 1)}>{uiText("Coba lagi")}</button></span>}
+          {!loading && !error && options.length === 0 && <span>{uiText("Tidak ada user aktif yang dapat dipilih.")}</span>}
+          {!loading && !error && value.note && !selected && <span>{uiText("Wakil sebelumnya: ")}{value.note}{uiText(". Pilih ulang dari daftar user aktif.")}</span>}
         </>
       ) : (
         <input
@@ -85,7 +86,7 @@ export function AbsenceFields({ idPrefix, name, employeeNo, value, onChange }: P
           type="text"
           className="ui-input"
           maxLength={200}
-          placeholder="Keterangan (opsional)"
+          placeholder={uiText("Keterangan (opsional)")}
           value={value.note}
           onChange={(e) => onChange({ ...value, note: e.target.value })}
         />

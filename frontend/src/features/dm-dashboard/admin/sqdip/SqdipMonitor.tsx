@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, ReactNode } from "react";
@@ -109,6 +111,7 @@ function SummaryTable({
   sortDir: SortDir;
   onSort: () => void;
 }) {
+  const { text: uiText } = useUiText();
   return (
     <div className="ut-wrap sq-wrap">
       <table className="ut-table sq-table sq-table-fixed">
@@ -130,16 +133,14 @@ function SummaryTable({
                 type="button"
                 className="sq-sort"
                 onClick={onSort}
-                aria-label={`Urutkan tanggal, saat ini ${sortDir === "asc" ? "terlama dulu" : "terbaru dulu"}`}
-              >
-                Tanggal
-                <Svg size={12}>
+                aria-label={uiText("Urutkan tanggal, saat ini {{v0}}", { v0: sortDir === "asc" ? "terlama dulu" : "terbaru dulu" })}
+              >{uiText("Tanggal")}<Svg size={12}>
                   {sortDir === "asc" ? <path d="M12 19V5M5 12l7-7 7 7" /> : <path d="M12 5v14M19 12l-7 7-7-7" />}
                 </Svg>
               </button>
             </th>
-            <th>Line</th>
-            <th>Leader</th>
+            <th>{uiText("Line")}</th>
+            <th>{uiText("Leader")}</th>
             {DIMS.map((dim) => (
               <th key={dim.key}>
                 <div className="sq-th-name">{dim.key}</div>
@@ -147,16 +148,16 @@ function SummaryTable({
               </th>
             ))}
             <th>
-                <div className="sq-th-name">Total</div>
-                <div className="sq-th-rule">5 × 6 poin = 30</div>
+                <div className="sq-th-name">{uiText("Total")}</div>
+                <div className="sq-th-rule">{uiText("5 × 6 poin = 30")}</div>
               </th>
-            <th className="sq-state-col">Status</th>
+            <th className="sq-state-col">{uiText("Status")}</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {uiText(rows.map((row) => (
             <tr key={`${row.date}|${row.line}|${row.leader}`}>
-              <td className="sq-num">{dateLabel(row.date)}</td>
+              <td className="sq-num">{uiText(dateLabel(row.date))}</td>
               <td className="sq-num">{row.line}</td>
               <td>{row.leader}</td>
               {row.cells.map((cell, i) => {
@@ -166,19 +167,19 @@ function SummaryTable({
                   <td
                     key={DIMS[i].key}
                     className={ok && !cell.flag ? "sq-cell" : "sq-cell is-fail"}
-                    title={`${DIMS[i].key} · target ${fmtTarget(i)} · poin ${cell.points}${note ? ` · ${note}` : ""}`}
+                    title={uiText("{{v0}} · target {{v1}} · poin {{v2}}{{v3}}", { v0: DIMS[i].key, v1: fmtTarget(i), v2: cell.points, v3: note ? ` · ${note}` : "" })}
                   >
                     <div className="sq-cell-main">
                       <span className="sq-num sq-val">{fmtActual(i, cell.actual)}</span>
                     </div>
-                    <div className="sq-num sq-sub">{cell.points} poin</div>
+                    <div className="sq-num sq-sub">{cell.points}{uiText(" poin")}</div>
                   </td>
                 );
               })}
               <td>
                 <span
                   className={`sq-total is-${totalTone(row.total)}`}
-                  title={`${row.total / 6} dari 5 dimensi tercapai × 6 poin`}
+                  title={uiText("{{v0}} dari 5 dimensi tercapai × 6 poin", { v0: row.total / 6 })}
                 >
                   {row.total}
                 </span>
@@ -186,13 +187,13 @@ function SummaryTable({
               </td>
               <td className="sq-state-col">
                 {row.total === 30 ? (
-                  <span className="ut-badge is-on">On target</span>
+                  <span className="ut-badge is-on">{uiText("On target")}</span>
                 ) : (
-                  <span className="ut-badge is-fail">Off target</span>
+                  <span className="ut-badge is-fail">{uiText("Off target")}</span>
                 )}
               </td>
             </tr>
-          ))}
+          )))}
         </tbody>
       </table>
     </div>
@@ -200,6 +201,7 @@ function SummaryTable({
 }
 
 function DetailTable({ rows }: { rows: SqdipDetailRow[] }) {
+  const { text: uiText } = useUiText();
   return (
     <div className="ut-wrap sq-wrap">
       <table className="ut-table sq-table">
@@ -207,20 +209,20 @@ function DetailTable({ rows }: { rows: SqdipDetailRow[] }) {
           <tr>
             {["Tanggal ↓", "Line", "Leader", "Rincian", "Target", "Aktual", "Selisih", "Poin", "Catatan"].map(
               (name) => (
-                <th key={name}>{name}</th>
+                <th key={name}>{uiText(name)}</th>
               )
             )}
           </tr>
         </thead>
         <tbody>
-          {rows.map(({ day, index, first }) => {
+          {uiText(rows.map(({ day, index, first }) => {
             const cell = day.cells[index];
             const ok = cell.points === 6;
             const classes = [first ? "is-first" : "", ok ? "" : "is-fail"].filter(Boolean).join(" ");
             return (
               <tr key={`${day.date}|${day.line}|${day.leader}|${index}`} className={classes}>
                 <td className={first ? "sq-num sq-strong" : "sq-num sq-faint"}>
-                  {first ? dateLabel(day.date) : ""}
+                  {first ? uiText(dateLabel(day.date)) : ""}
                 </td>
                 <td className={first ? "sq-num sq-strong" : "sq-num sq-faint"}>{first ? day.line : ""}</td>
                 <td className={first ? "sq-strong" : "sq-faint"}>{first ? day.leader : ""}</td>
@@ -235,7 +237,7 @@ function DetailTable({ rows }: { rows: SqdipDetailRow[] }) {
                 <td className="sq-note">{flagNote(index, cell)}</td>
               </tr>
             );
-          })}
+          }))}
         </tbody>
       </table>
     </div>
@@ -243,6 +245,7 @@ function DetailTable({ rows }: { rows: SqdipDetailRow[] }) {
 }
 
 export default function SqdipMonitor() {
+  const { text: uiText } = useUiText();
   const [dataset, setDataset] = useState<SqdipDataset | null>(null);
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -387,9 +390,7 @@ export default function SqdipMonitor() {
       <div className="dm-panel-head">
         <div>
           <div className="dm-panel-titlebar">
-            <h3 id="sqdip-title" className="dm-panel-title">
-              SQDIP Monitoring
-            </h3>
+            <h3 id="sqdip-title" className="dm-panel-title">{uiText("SQDIP Monitoring")}</h3>
           </div>
           {/* <p className="dm-panel-sub">
             Aturan: Safety 0 insiden · Quality ≥ 93% · Delivery 100% · Inventory ≤ 400 · Productivity ≥ 87%
@@ -404,14 +405,12 @@ export default function SqdipMonitor() {
           >
             <Svg>
               <path d="M12 4v12M7 11l5 5 5-5M4 20h16" />
-            </Svg>
-            Export
-          </button>
+            </Svg>{uiText("Export")}</button>
           <div className="sq-info" ref={infoRef}>
             <button
               type="button"
               className="sq-info-btn"
-              aria-label="Petunjuk menambah data"
+              aria-label={uiText("Petunjuk menambah data")}
               aria-expanded={infoOpen}
               aria-controls="sqdip-info"
               onClick={() => setInfoOpen((open) => !open)}
@@ -422,14 +421,9 @@ export default function SqdipMonitor() {
               </Svg>
             </button>
             {infoOpen ? (
-              <div id="sqdip-info" className="sq-info-pop" role="region" aria-label="Cara menambah data">
-                <strong>Cara menambah data</strong>
-                <p>
-                  Unduh file melalui tombol Export, lalu tambahkan data terbaru pada baris di bagian bawah file
-                  tersebut. Setelah itu, unggah kembali melalui tombol Impor SQDIP. Data baru akan ditambahkan
-                  secara otomatis, sedangkan data lama dengan tanggal, line, dan leader yang sama akan
-                  diperbarui.
-                </p>
+              <div id="sqdip-info" className="sq-info-pop" role="region" aria-label={uiText("Cara menambah data")}>
+                <strong>{uiText("Cara menambah data")}</strong>
+                <p>{uiText("Unduh file melalui tombol Export, lalu tambahkan data terbaru pada baris di bagian bawah file tersebut. Setelah itu, unggah kembali melalui tombol Impor SQDIP. Data baru akan ditambahkan secara otomatis, sedangkan data lama dengan tanggal, line, dan leader yang sama akan diperbarui.")}</p>
               </div>
             ) : null}
           </div>
@@ -442,7 +436,7 @@ export default function SqdipMonitor() {
             <Svg>
               <path d="M12 16V4M7 9l5-5 5 5M4 20h16" />
             </Svg>
-            {busy ? "Membaca file..." : "Impor SQDIP"}
+            {busy ? uiText("Membaca file...") : uiText("Impor SQDIP")}
           </button>
           <input
             ref={fileRef}
@@ -464,7 +458,7 @@ export default function SqdipMonitor() {
             type="button"
             className="ut-notice-close"
             onClick={() => setNotice(null)}
-            aria-label="Tutup notifikasi"
+            aria-label={uiText("Tutup notifikasi")}
           >
             &times;
           </button>
@@ -472,20 +466,14 @@ export default function SqdipMonitor() {
       ) : null}
 
       {!ready ? (
-        <p className="dm-lines-empty" role="status">
-          Memuat data SQDIP...
-        </p>
+        <p className="dm-lines-empty" role="status">{uiText("Memuat data SQDIP...")}</p>
       ) : !dataset ? (
-        <p className="dm-lines-empty">
-          Belum ada data SQDIP. Unduh template melalui tombol Export, isi datanya, lalu unggah melalui tombol Impor SQDIP.
-        </p>
+        <p className="dm-lines-empty">{uiText("Belum ada data SQDIP. Unduh template melalui tombol Export, isi datanya, lalu unggah melalui tombol Impor SQDIP.")}</p>
       ) : (
         <>
           <div className="dm-lines-toolbar">
             <div className="dm-table-search-box">
-              <label className="dm-admin-sr-only" htmlFor="sqdip-search">
-                Cari leader atau line
-              </label>
+              <label className="dm-admin-sr-only" htmlFor="sqdip-search">{uiText("Cari leader atau line")}</label>
               <svg
                 width="15"
                 height="15"
@@ -503,7 +491,7 @@ export default function SqdipMonitor() {
                 id="sqdip-search"
                 type="search"
                 className="dm-table-search-input"
-                placeholder="Nama leader atau kode line"
+                placeholder={uiText("Nama leader atau kode line")}
                 value={filters.search}
                 onChange={(event) => patch({ search: event.target.value })}
               />
@@ -539,15 +527,13 @@ export default function SqdipMonitor() {
                   setFilters(EMPTY_FILTERS);
                   setPage(1);
                 }}
-              >
-                Reset
-              </button>
+              >{uiText("Reset")}</button>
             ) : null}
           </div>
 
           {unit === 0 ? (
             <p className="dm-lines-none">
-              <span>Tidak ada data untuk filter ini</span>
+              <span>{uiText("Tidak ada data untuk filter ini")}</span>
             </p>
           ) : view === "summary" ? (
             <SummaryTable
@@ -564,30 +550,25 @@ export default function SqdipMonitor() {
 
           <div className="sq-pager">
             <span>
-              {unit === 0 ? "Tidak ada data" : `Menampilkan ${start + 1}–${end} dari ${unit} ${unitName}`}
+              {unit === 0 ? uiText("Tidak ada data") : uiText("Menampilkan {{v0}}–{{v1}} dari {{v2}} {{v3}}", { v0: start + 1, v1: end, v2: unit, v3: unitName })}
             </span>
             <div className="sq-pager-ctrl">
               <button
                 type="button"
                 className="dm-admin-btn is-secondary sq-page-btn"
-                aria-label="Halaman sebelumnya"
+                aria-label={uiText("Halaman sebelumnya")}
                 disabled={current <= 1}
                 onClick={() => setPage(current - 1)}
-              >
-                Sebelumnya
-              </button>
-              <span className="sq-num sq-page-label">
-                Hal {current} / {pages}
+              >{uiText("Sebelumnya")}</button>
+              <span className="sq-num sq-page-label">{uiText("Hal ")}{current} / {pages}
               </span>
               <button
                 type="button"
                 className="dm-admin-btn is-secondary sq-page-btn"
-                aria-label="Halaman berikutnya"
+                aria-label={uiText("Halaman berikutnya")}
                 disabled={current >= pages}
                 onClick={() => setPage(current + 1)}
-              >
-                Berikutnya
-              </button>
+              >{uiText("Berikutnya")}</button>
             </div>
           </div>
         </>

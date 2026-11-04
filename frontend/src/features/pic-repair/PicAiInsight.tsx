@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import type { Direction } from "@/features/repair/RepairDashboard";
 
 type PicAiInsightProps = {
@@ -51,6 +53,7 @@ function buildActions(metricName: string): string[] {
 }
 
 export default function PicAiInsight({ metricName, actualLabel, targetLabel, gapLabel, direction, onClose }: PicAiInsightProps) {
+  const { text: uiText } = useUiText();
   const analysis = buildAnalysis(metricName, direction);
   const actions = buildActions(metricName);
   return (
@@ -58,26 +61,26 @@ export default function PicAiInsight({ metricName, actualLabel, targetLabel, gap
       <div className="repair-dialog pic-ai-dialog" onMouseDown={(event) => event.stopPropagation()}>
         <div className="repair-dialog-head">
           <div>
-            <p className="pic-ai-kicker">P-AI • ANALISA CEPAT</p>
+            <p className="pic-ai-kicker">{uiText("P-AI • ANALISA CEPAT")}</p>
             <h2>{metricName}</h2>
-            <p>Actual {actualLabel} • Target {targetLabel} • Selisih {gapLabel}</p>
+            <p>{uiText("Actual ")}{uiText(actualLabel)}{uiText(" • Target ")}{uiText(targetLabel)}{uiText(" • Selisih ")}{uiText(gapLabel)}</p>
           </div>
-          <button type="button" aria-label="Tutup" onClick={onClose}>✕</button>
+          <button type="button" aria-label={uiText("Tutup")} onClick={onClose}>✕</button>
         </div>
         <div className="pic-ai-body">
-          <h3>Analisa</h3>
+          <h3>{uiText("Analisa")}</h3>
           <p>{analysis}</p>
-          <h3>Rekomendasi tindak lanjut</h3>
+          <h3>{uiText("Rekomendasi tindak lanjut")}</h3>
           <ol>
             {actions.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ol>
-          <p className="pic-ai-note">Hasil simulasi asisten untuk PIC. Verifikasi kembali dengan data lapangan sebelum dieksekusi.</p>
+          <p className="pic-ai-note">{uiText("Hasil simulasi asisten untuk PIC. Verifikasi kembali dengan data lapangan sebelum dieksekusi.")}</p>
         </div>
         <div className="repair-dialog-actions">
-          <button type="button" className="repair-outline" onClick={onClose}>Tutup</button>
-          <button type="button" className="repair-primary" onClick={onClose}>Salin ke Follow-up</button>
+          <button type="button" className="repair-outline" onClick={onClose}>{uiText("Tutup")}</button>
+          <button type="button" className="repair-primary" onClick={onClose}>{uiText("Salin ke Follow-up")}</button>
         </div>
       </div>
     </div>

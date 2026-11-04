@@ -1,7 +1,10 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { IconAlert } from "@/components/ui/icons";
 
 /** KPI-style card: how many follow-ups are waiting on this member. */
 export function OpenProblemsCard({ open, escalated }: { open: number; escalated: number }) {
+  const { text: uiText } = useUiText();
   const tone = escalated > 0 ? "bad" : open > 0 ? "warn" : "ok";
   const hint =
     escalated > 0
@@ -13,13 +16,13 @@ export function OpenProblemsCard({ open, escalated }: { open: number; escalated:
   return (
     <article className="dml-kpi">
       <div className="dml-kpi__top">
-        <h3>Tindak lanjut saya</h3>
+        <h3>{uiText("Tindak lanjut saya")}</h3>
         <span className={`dml-kpi__icon dml-kpi__icon--${tone}`}>
           <IconAlert size={20} />
         </span>
       </div>
       <p className="dml-kpi__value">{open}</p>
-      <p className="dml-kpi__hint">{hint}</p>
+      <p className="dml-kpi__hint">{uiText(hint)}</p>
     </article>
   );
 }

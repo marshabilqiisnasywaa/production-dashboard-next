@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { departmentLabel } from "../departments";
 import { useEffect, useRef, useState } from "react";
 import { ClipboardList, MoreHorizontal } from "lucide-react";
@@ -83,6 +85,7 @@ type WhyFocus = {
 };
 
 export default function FiveWhyPage() {
+  const { text: uiText } = useUiText();
   const [store, setStore] = useState<FiveWhyStore>({
     selectedAbnormalId: "",
     records: [],
@@ -317,7 +320,7 @@ export default function FiveWhyPage() {
     if (!canEdit) return;
     if (
       !window.confirm(
-        `Hapus analisis ${source.nomor}? Analisis akan dihapus permanen.`
+        uiText("Hapus analisis {{v0}}? Analisis akan dihapus permanen.", { v0: source.nomor })
       )
     ) {
       return;
@@ -352,10 +355,8 @@ export default function FiveWhyPage() {
       <div className="dm-5w-page">
         <header className="dm-5w-page-head">
           <div>
-            <h1 className="dm-5w-page-title">5Why + PDCA</h1>
-            <p className="dm-5w-page-sub">
-              Analisis akar masalah dan rencana tindak lanjutnya.
-            </p>
+            <h1 className="dm-5w-page-title">{uiText("5Why + PDCA")}</h1>
+            <p className="dm-5w-page-sub">{uiText("Analisis akar masalah dan rencana tindak lanjutnya.")}</p>
           </div>
           <div className="dm-5w-page-head-actions">
             <button
@@ -367,41 +368,33 @@ export default function FiveWhyPage() {
               aria-controls="dm-5w-history-drawer"
               onClick={() => setHistoryOpen(true)}
             >
-              <IconClock size={14} />
-              Riwayat
-            </button>
+              <IconClock size={14} />{uiText("Riwayat")}</button>
             <button
               type="button"
               className="dm-5w-btn dm-5w-btn-secondary"
               disabled={!canEdit || !canSubmitChecklist}
               title={
-                canSubmitChecklist
-                  ? "Ajukan perubahan checklist"
-                  : "Aktif setelah minimal satu solusi berstatus Selesai & standar"
+                canSubmitChecklist ? uiText("Ajukan perubahan checklist") : uiText("Aktif setelah minimal satu solusi berstatus Selesai & standar")
               }
               onClick={() => notify("Pengajuan perubahan checklist dikirim.")}
-            >
-              Ajukan perubahan checklist
-            </button>
+            >{uiText("Ajukan perubahan checklist")}</button>
           </div>
         </header>
 
         {!hydrated ? (
-          <div className="dm-5w-empty dm-5w-card">Memuat analisis...</div>
+          <div className="dm-5w-empty dm-5w-card">{uiText("Memuat analisis...")}</div>
         ) : store.records.length === 0 ? (
           <div className="dm-5w-empty dm-5w-card">
             <span className="dm-5w-empty-icon" aria-hidden="true">
               <ClipboardList size={24} />
             </span>
-            <p className="dm-5w-empty-title">Belum ada analisis</p>
+            <p className="dm-5w-empty-title">{uiText("Belum ada analisis")}</p>
             <button
               type="button"
               className="dm-5w-btn dm-5w-btn-primary"
               onClick={createAnalysis}
               disabled={!canEdit}
-            >
-              + Analisis baru
-            </button>
+            >{uiText("+ Analisis baru")}</button>
           </div>
         ) : (
           <>
@@ -410,15 +403,13 @@ export default function FiveWhyPage() {
               aria-labelledby="dm-5w-picker-title"
             >
               <div className="dm-5w-picker-head">
-                <h2 className="dm-5w-card-title" id="dm-5w-picker-title">
-                  Analisis 5Why
-                </h2>
+                <h2 className="dm-5w-card-title" id="dm-5w-picker-title">{uiText("Analisis 5Why")}</h2>
                 {record ? (
                   <div className="dm-5w-menu" ref={menuRef}>
                     <button
                       type="button"
                       className="dm-5w-menu-trigger"
-                      aria-label="Aksi analisis"
+                      aria-label={uiText("Aksi analisis")}
                       aria-haspopup="menu"
                       aria-expanded={menuOpen}
                       disabled={!canEdit}
@@ -433,17 +424,13 @@ export default function FiveWhyPage() {
                           role="menuitem"
                           className="dm-5w-menu-item"
                           onClick={duplicateAnalysis}
-                        >
-                          Duplikat analisis
-                        </button>
+                        >{uiText("Duplikat analisis")}</button>
                         <button
                           type="button"
                           role="menuitem"
                           className="dm-5w-menu-item is-danger"
                           onClick={deleteAnalysis}
-                        >
-                          Hapus analisis
-                        </button>
+                        >{uiText("Hapus analisis")}</button>
                       </div>
                     ) : null}
                   </div>
@@ -455,9 +442,7 @@ export default function FiveWhyPage() {
                   <label
                     className="dm-5w-label"
                     htmlFor="dm-5w-analysis-select"
-                  >
-                    Pilih analisis
-                  </label>
+                  >{uiText("Pilih analisis")}</label>
                   <select
                     id="dm-5w-analysis-select"
                     className="dm-5w-select"
@@ -481,9 +466,7 @@ export default function FiveWhyPage() {
                   className="dm-5w-btn dm-5w-btn-primary"
                   onClick={createAnalysis}
                   disabled={!canEdit}
-                >
-                  + Analisis baru
-                </button>
+                >{uiText("+ Analisis baru")}</button>
               </div>
 
               {record ? (
@@ -501,7 +484,7 @@ export default function FiveWhyPage() {
                       })
                     }
                     disabled={!canEdit}
-                    aria-label="Status analisis"
+                    aria-label={uiText("Status analisis")}
                   >
                     {(
                       Object.keys(
@@ -515,12 +498,8 @@ export default function FiveWhyPage() {
                   </select>
                   {majorProblem ? (
                     <span className="dm-5w-major">
-                      <span className="dm-5w-chip is-danger">
-                        Major problem
-                      </span>
-                      <span className="dm-5w-major-note">
-                        Terpicu oleh downtime ≥ 30 menit
-                      </span>
+                      <span className="dm-5w-chip is-danger">{uiText("Major problem")}</span>
+                      <span className="dm-5w-major-note">{uiText("Terpicu oleh downtime ≥ 30 menit")}</span>
                     </span>
                   ) : null}
                 </div>
@@ -532,9 +511,9 @@ export default function FiveWhyPage() {
                 <div
                   className="dm-5w-stepper"
                   role="tablist"
-                  aria-label="Langkah analisis 5Why dan PDCA"
+                  aria-label={uiText("Langkah analisis 5Why dan PDCA")}
                 >
-                  {TABS.map((tab) => {
+                  {uiText(TABS.map((tab) => {
                     const status = getTabStatus(record, tab.key);
                     return (
                       <button
@@ -561,10 +540,10 @@ export default function FiveWhyPage() {
                             tab.key
                           )}
                         </span>
-                        <span className="dm-5w-step-label">{tab.label}</span>
+                        <span className="dm-5w-step-label">{uiText(tab.label)}</span>
                       </button>
                     );
-                  })}
+                  }))}
                 </div>
 
                 <section
@@ -610,9 +589,7 @@ export default function FiveWhyPage() {
                 </section>
               </>
             ) : (
-              <div className="dm-5w-empty dm-5w-card">
-                Pilih analisis untuk mulai.
-              </div>
+              <div className="dm-5w-empty dm-5w-card">{uiText("Pilih analisis untuk mulai.")}</div>
             )}
           </>
         )}

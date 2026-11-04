@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -33,6 +35,7 @@ interface LiquidToastItemProps {
 }
 
 function LiquidToastItem({ toast, onDismiss }: LiquidToastItemProps) {
+  const { text: uiText } = useUiText();
   const [isPaused, setIsPaused] = useState(false);
   const { notification, isExiting, durationMs } = toast;
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -55,17 +58,17 @@ function LiquidToastItem({ toast, onDismiss }: LiquidToastItemProps) {
     notification.type === "meeting" ? (
       <>
         <Users size={12} strokeWidth={1.8} />
-        <span>Meeting</span>
+        <span>{uiText("Meeting")}</span>
       </>
     ) : notification.type === "escalation" ? (
       <>
         <TriangleAlert size={12} strokeWidth={1.8} />
-        <span>Eskalasi</span>
+        <span>{uiText("Eskalasi")}</span>
       </>
     ) : (
       <>
         <ClipboardCheck size={12} strokeWidth={1.8} />
-        <span>Papercard</span>
+        <span>{uiText("Papercard")}</span>
       </>
     );
   const isLate = notification.severity === "urgent"; // Telat -> Soft Merah
@@ -89,26 +92,26 @@ function LiquidToastItem({ toast, onDismiss }: LiquidToastItemProps) {
         <div className="dm-toast-meta-left">
           <span className="dm-toast-dot" />
           <span className="dm-toast-status-badge">
-            {isLate ? "TELAT" : isReminder ? "PENGINGAT" : "INFO"}
+            {isLate ? uiText("TELAT") : isReminder ? uiText("PENGINGAT") : uiText("INFO")}
           </span>
           <span
             className="dm-toast-category"
             style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
           >
-            {typeLabel}
+            {uiText(typeLabel)}
           </span>
         </div>
 
         <div className="dm-toast-meta-right">
           {notification.timeLabel && (
-            <span className="dm-toast-time-badge">{notification.timeLabel}</span>
+            <span className="dm-toast-time-badge">{uiText(notification.timeLabel)}</span>
           )}
           <button
             type="button"
             className="dm-toast-close-btn"
             onClick={onDismiss}
-            aria-label="Tutup notifikasi"
-            title="Tutup"
+            aria-label={uiText("Tutup notifikasi")}
+            title={uiText("Tutup")}
           >
             &times;
           </button>
@@ -117,8 +120,8 @@ function LiquidToastItem({ toast, onDismiss }: LiquidToastItemProps) {
 
       {/* Main Body - Full text display, simple and padat */}
       <div className="dm-toast-body">
-        <h4 className="dm-toast-title">{notification.title}</h4>
-        <p className="dm-toast-message">{notification.message}</p>
+        <h4 className="dm-toast-title">{uiText(notification.title)}</h4>
+        <p className="dm-toast-message">{uiText(notification.message)}</p>
       </div>
 
       {/* Action Footer if available */}
@@ -129,7 +132,7 @@ function LiquidToastItem({ toast, onDismiss }: LiquidToastItemProps) {
             className="dm-toast-cta"
             onClick={onDismiss}
           >
-            <span>{notification.actionLabel}</span>
+            <span>{uiText(notification.actionLabel)}</span>
             <span className="dm-toast-cta-arrow">&rarr;</span>
           </Link>
         </div>

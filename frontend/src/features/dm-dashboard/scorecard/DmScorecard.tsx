@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 ﻿import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BarChart3,
@@ -58,6 +60,7 @@ export default function DmScorecard({
   isLeader?: boolean;
   canExport?: boolean;
 }) {
+  const { text: uiText } = useUiText();
   const [workshop, setWorkshop] = useState("Semua");
   const [selectedLeader, setSelectedLeader] = useState<string | null>(null);
   const [selectedDm, setSelectedDm] = useState("Semua");
@@ -143,18 +146,14 @@ export default function DmScorecard({
 
   const filters = (
     <>
-      <label className="grid gap-1 text-xs font-semibold text-text-secondary">
-        Periode
-        <DateRangePicker
+      <label className="grid gap-1 text-xs font-semibold text-text-secondary">{uiText("Periode")}<DateRangePicker
           value={range}
           onChange={setRange}
           maxDate={jakartaToday()}
         />
       </label>
       {!isLeader && (
-        <label className="grid gap-1 text-xs font-semibold text-text-secondary">
-          Workshop
-          <FilterSelect
+        <label className="grid gap-1 text-xs font-semibold text-text-secondary">{uiText("Workshop")}<FilterSelect
             value={workshop}
             onChange={setWorkshop}
             options={["Semua", ...workshopNames]}
@@ -174,8 +173,8 @@ export default function DmScorecard({
     return (
       <div>
         <SectionTitle
-          title="KPI Scorecard"
-          description="Nilai Daily Management per DM dan leader"
+          title={uiText("KPI Scorecard")}
+          description={uiText("Nilai Daily Management per DM dan leader")}
         />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 8 }, (_, index) => (
@@ -193,15 +192,11 @@ export default function DmScorecard({
       <div ref={setRoot} className="scorecard-tv bg-section">
         <div className="scorecard-top scorecard-top-leader mb-5">
           <div className="scorecard-heading">
-            <div className="whitespace-nowrap text-2xl font-bold tracking-tight text-text">
-              KPI Scorecard
-            </div>
+            <div className="whitespace-nowrap text-2xl font-bold tracking-tight text-text">{uiText("KPI Scorecard")}</div>
             <div
               className="mt-1 whitespace-normal text-sm text-text-secondary"
-              title="Nilai Daily Management per DM dan leader"
-            >
-              Nilai Daily Management per DM dan leader
-            </div>
+              title={uiText("Nilai Daily Management per DM dan leader")}
+            >{uiText("Nilai Daily Management per DM dan leader")}</div>
           </div>
           <div className="scorecard-controls scorecard-controls-leader">
             <div className="scorecard-controls-desktop hidden flex-wrap items-end justify-end gap-4 md:flex">
@@ -211,8 +206,7 @@ export default function DmScorecard({
               <div className="scorecard-actions flex items-center gap-2">
                 {canExport && (
                   <Button variant="outline">
-                    <Download size={16} /> Export
-                  </Button>
+                    <Download size={16} />{uiText(" Export")}</Button>
                 )}
                 <Button
                   variant="outline"
@@ -224,18 +218,16 @@ export default function DmScorecard({
                   }
                 >
                   <Expand size={16} />{" "}
-                  {isFullscreen ? "Keluar layar penuh" : ""}
+                  {isFullscreen ? uiText("Keluar layar penuh") : ""}
                 </Button>
               </div>
             </div>
             <div className="scorecard-controls-mobile flex items-center justify-between md:hidden">
               <Button variant="outline" onClick={() => setFilterOpen(true)}>
-                <Settings2 size={16} /> Filter
-              </Button>
+                <Settings2 size={16} />{uiText(" Filter")}</Button>
               {canExport && (
                 <Button variant="ghost">
-                  <Download size={16} /> Export
-                </Button>
+                  <Download size={16} />{uiText(" Export")}</Button>
               )}
             </div>
           </div>
@@ -244,7 +236,7 @@ export default function DmScorecard({
           <div className="fixed inset-0 z-50 bg-overlay md:hidden">
             <Card className="absolute bottom-0 left-0 right-0 rounded-b-none p-5">
               <div className="mb-5 flex items-center justify-between">
-                <strong>Filter Scorecard</strong>
+                <strong>{uiText("Filter Scorecard")}</strong>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -255,9 +247,7 @@ export default function DmScorecard({
               </div>
               <div className="grid gap-4">
                 {filters}
-                <Button onClick={() => setFilterOpen(false)}>
-                  Terapkan filter
-                </Button>
+                <Button onClick={() => setFilterOpen(false)}>{uiText("Terapkan filter")}</Button>
               </div>
             </Card>
           </div>
@@ -268,24 +258,20 @@ export default function DmScorecard({
             role="status"
             className="mb-4 rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning-dark"
           >
-            {error}
+            {uiText(error)}
           </div>
         )}
         {lines.length === 0 ? (
           <Card className="scorecard-empty flex min-h-empty flex-col items-center justify-center p-8 text-center">
             <BarChart3 size={34} className="text-border-strong" />
-            <div className="mt-4 font-bold">
-              Belum ada leader yang ditugaskan
-            </div>
-            <div className="mt-1 text-sm text-text-secondary">
-              Tetapkan leader pada line di dashboard admin.
-            </div>
+            <div className="mt-4 font-bold">{uiText("Belum ada leader yang ditugaskan")}</div>
+            <div className="mt-1 text-sm text-text-secondary">{uiText("Tetapkan leader pada line di dashboard admin.")}</div>
           </Card>
         ) : (
           <>
             <div className="scorecard-kpi-row mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <SummaryScoreCard
-                title="Total Nilai"
+                title={uiText("Total Nilai")}
                 icon={BarChart3}
                 highlighted
                 value={scoreConfig?.total}
@@ -293,21 +279,21 @@ export default function DmScorecard({
                 targetEquivalent={90}
               />
               <SummaryScoreCard
-                title="Papercard System (Before)"
+                title={uiText("Papercard System (Before)")}
                 icon={ClipboardList}
                 value={scoreConfig?.before}
                 max={30}
                 targetEquivalent={27}
               />
               <SummaryScoreCard
-                title="Standup Meeting (Current)"
+                title={uiText("Standup Meeting (Current)")}
                 icon={Users}
                 value={scoreConfig?.current}
                 max={40}
                 targetEquivalent={36}
               />
               <SummaryScoreCard
-                title="SQDIP (After)"
+                title={uiText("SQDIP (After)")}
                 icon={ShieldCheck}
                 value={scoreConfig?.after}
                 max={30}
@@ -331,7 +317,7 @@ export default function DmScorecard({
               <Card className="scorecard-trend p-5">
                 <div className="scorecard-trend-head flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <div className="font-bold">Tren nilai harian</div>
+                    <div className="font-bold">{uiText("Tren nilai harian")}</div>
                   </div>
                   <Segmented<ScoreTrend>
                     items={["Total", "Before", "Current", "After"]}
@@ -360,22 +346,16 @@ export default function DmScorecard({
                       sqdipTrend && sqdipTrend.series.length > 1 ? (
                         <TrendChart metric={trend} custom={sqdipTrend} />
                       ) : (
-                        <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">
-                          Belum cukup data SQDIP pada periode ini
-                        </div>
+                        <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">{uiText("Belum cukup data SQDIP pada periode ini")}</div>
                       )
                     ) : trendSeries.dates.length > 1 ? (
                       <TrendChart metric={trend} trend={trendSeries} />
                     ) : (
-                      <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">
-                        Belum cukup data pada periode ini
-                      </div>
+                      <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">{uiText("Belum cukup data pada periode ini")}</div>
                     )}
                   </div>
                 ) : (
-                  <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">
-                    Belum ada data
-                  </div>
+                  <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">{uiText("Belum ada data")}</div>
                 )}
               </Card>
             </div>
@@ -402,15 +382,13 @@ export default function DmScorecard({
                   {statusCount && (
                     <div
                       className="scorecard-status-count"
-                      aria-label="Jumlah status"
+                      aria-label={uiText("Jumlah status")}
                     >
                       <span className="scorecard-status-count-item is-ok">
-                        <span className="scorecard-status-count-dot" />
-                        OK <strong>{statusCount.ok}</strong>
+                        <span className="scorecard-status-count-dot" />{uiText("OK ")}<strong>{statusCount.ok}</strong>
                       </span>
                       <span className="scorecard-status-count-item is-ng">
-                        <span className="scorecard-status-count-dot" />
-                        NG <strong>{statusCount.ng}</strong>
+                        <span className="scorecard-status-count-dot" />{uiText("NG ")}<strong>{statusCount.ng}</strong>
                       </span>
                     </div>
                   )}

@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { departmentLabel } from "../../../departments";
 import { useEffect, useMemo, useState } from "react";
@@ -20,6 +22,7 @@ interface SupervisorHistoryTabProps {
 }
 
 export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   // Default date to today
   const todayIso = useMemo(() => new Date().toISOString().split("T")[0], []);
   const [selectedDate, setSelectedDate] = useState<string>(todayIso);
@@ -69,7 +72,7 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
   const formattedDateTitle = useMemo(() => {
     try {
       const d = new Date(selectedDate);
-      return d.toLocaleDateString("id-ID", {
+      return d.toLocaleDateString(uiLocale, {
         weekday: "long",
         day: "numeric",
         month: "long",
@@ -100,13 +103,9 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
             <IconHistory size={16} />
-            <h3 style={{ margin: 0, fontSize: "14.5px", fontWeight: 700, color: "#0f172a" }}>
-              Riwayat Checklist Harian
-            </h3>
+            <h3 style={{ margin: 0, fontSize: "14.5px", fontWeight: 700, color: "#0f172a" }}>{uiText("Riwayat Checklist Harian")}</h3>
           </div>
-          <span style={{ fontSize: "11.5px", color: "#64748b" }}>
-            Audit kepatuhan pengisian papercard seluruh lini pada tanggal terpilih
-          </span>
+          <span style={{ fontSize: "11.5px", color: "#64748b" }}>{uiText("Audit kepatuhan pengisian papercard seluruh lini pada tanggal terpilih")}</span>
         </div>
 
         {/* Date Selector & Quick Buttons */}
@@ -126,9 +125,7 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
                 color: isToday ? "#0f766e" : "#475569",
                 cursor: "pointer",
               }}
-            >
-              Hari Ini
-            </button>
+            >{uiText("Hari Ini")}</button>
             <button
               type="button"
               onClick={() => setQuickDate(1)}
@@ -142,9 +139,7 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
                 color: "#475569",
                 cursor: "pointer",
               }}
-            >
-              Kemarin
-            </button>
+            >{uiText("Kemarin")}</button>
             <button
               type="button"
               onClick={() => setQuickDate(2)}
@@ -158,9 +153,7 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
                 color: "#475569",
                 cursor: "pointer",
               }}
-            >
-              2 Hari Lalu
-            </button>
+            >{uiText("2 Hari Lalu")}</button>
           </div>
 
           <input
@@ -191,28 +184,26 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
         }}
       >
         <div style={{ padding: "8px 12px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "7px" }}>
-          <span style={{ fontSize: "10.5px", color: "#64748b", display: "block" }}>Lini Terdaftar</span>
-          <strong style={{ fontSize: "15px", color: "#0f172a" }}>{totalLines} Lini</strong>
+          <span style={{ fontSize: "10.5px", color: "#64748b", display: "block" }}>{uiText("Lini Terdaftar")}</span>
+          <strong style={{ fontSize: "15px", color: "#0f172a" }}>{totalLines}{uiText(" Lini")}</strong>
         </div>
         <div style={{ padding: "8px 12px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "7px" }}>
-          <span style={{ fontSize: "10.5px", color: "#64748b", display: "block" }}>Sudah Terisi</span>
+          <span style={{ fontSize: "10.5px", color: "#64748b", display: "block" }}>{uiText("Sudah Terisi")}</span>
           <strong style={{ fontSize: "15px", color: "#0f766e" }}>{submittedCount} / {totalLines}</strong>
         </div>
         <div style={{ padding: "8px 12px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "7px" }}>
-          <span style={{ fontSize: "10.5px", color: "#64748b", display: "block" }}>Telah Disetujui</span>
-          <strong style={{ fontSize: "15px", color: "#047857" }}>{approvedCount} Papercard</strong>
+          <span style={{ fontSize: "10.5px", color: "#64748b", display: "block" }}>{uiText("Telah Disetujui")}</span>
+          <strong style={{ fontSize: "15px", color: "#047857" }}>{approvedCount}{uiText(" Papercard")}</strong>
         </div>
         <div style={{ padding: "8px 12px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "7px" }}>
-          <span style={{ fontSize: "10.5px", color: "#64748b", display: "block" }}>Temuan Abnormal</span>
+          <span style={{ fontSize: "10.5px", color: "#64748b", display: "block" }}>{uiText("Temuan Abnormal")}</span>
           <strong style={{ fontSize: "15px", color: ngCount > 0 ? "#e11d48" : "#64748b" }}>
-            {ngCount} Kasus NG
-          </strong>
+            {ngCount}{uiText(" Kasus NG")}</strong>
         </div>
         <div style={{ padding: "8px 12px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "7px" }}>
-          <span style={{ fontSize: "10.5px", color: "#64748b", display: "block" }}>Belum Mengisi</span>
+          <span style={{ fontSize: "10.5px", color: "#64748b", display: "block" }}>{uiText("Belum Mengisi")}</span>
           <strong style={{ fontSize: "15px", color: missingCount > 0 ? "#f59e0b" : "#64748b" }}>
-            {missingCount} Lini
-          </strong>
+            {missingCount}{uiText(" Lini")}</strong>
         </div>
       </div>
 
@@ -230,18 +221,15 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
           color: "#334155",
         }}
       >
-        <span>
-          Menampilkan catatan tanggal: <strong>{formattedDateTitle}</strong>
+        <span>{uiText("Menampilkan catatan tanggal: ")}<strong>{formattedDateTitle}</strong>
         </span>
-        <span style={{ fontSize: "11px", color: "#64748b" }}>
-          Departemen: <strong>{departmentLabel(data?.supervisor.dept || "PROD")}</strong>
+        <span style={{ fontSize: "11px", color: "#64748b" }}>{uiText("Departemen: ")}<strong>{uiText(departmentLabel(data?.supervisor.dept || "PROD"))}</strong>
         </span>
       </div>
 
       {/* 4. Grid of Line Cards */}
       {loading ? (
-        <div style={{ padding: "32px", textAlign: "center", color: "#64748b", fontSize: "12.5px" }}>
-          Memuat riwayat checklist lini untuk tanggal {selectedDate}...
+        <div style={{ padding: "32px", textAlign: "center", color: "#64748b", fontSize: "12.5px" }}>{uiText("Memuat riwayat checklist lini untuk tanggal ")}{selectedDate}...
         </div>
       ) : subordinates.length === 0 ? (
         <div
@@ -254,9 +242,7 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
             border: "1px dashed #cbd5e1",
             fontSize: "12.5px",
           }}
-        >
-          Tidak ada bawahan langsung yang terikat dengan akun Anda pada tanggal ini.
-        </div>
+        >{uiText("Tidak ada bawahan langsung yang terikat dengan akun Anda pada tanggal ini.")}</div>
       ) : (
         <div
           style={{
@@ -265,7 +251,7 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
             gap: "10px",
           }}
         >
-          {subordinates.map((member) => {
+          {uiText(subordinates.map((member) => {
             const sub = member.submission;
             const isSubmitted = Boolean(sub);
             const isApproved = sub?.approvalStatus === "approved";
@@ -298,7 +284,7 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
                       }}
                     />
                     <strong style={{ fontSize: "13px", color: "#0f172a" }}>
-                      {member.lineName || "Lini Lain"}
+                      {member.lineName || uiText("Lini Lain")}
                     </strong>
                   </div>
 
@@ -313,21 +299,19 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
                       border: `1px solid ${!isSubmitted ? "#e2e8f0" : hasNg ? "#fecdd3" : "#bbf7d0"}`,
                     }}
                   >
-                    {!isSubmitted ? "Belum Diisi" : hasNg ? "Ada Abnormal (NG)" : "Semua OK"}
+                    {!isSubmitted ? uiText("Belum Diisi") : hasNg ? uiText("Ada Abnormal (NG)") : uiText("Semua OK")}
                   </span>
                 </div>
 
                 {/* PIC Karyawan Info */}
                 <div style={{ fontSize: "11.5px", color: "#475569" }}>
-                  <div>
-                    PIC: <strong>{member.name}</strong> · <span style={{ color: "#64748b" }}>{member.employeeNo}</span>
+                  <div>{uiText("PIC: ")}<strong>{member.name}</strong> · <span style={{ color: "#64748b" }}>{member.employeeNo}</span>
                   </div>
                   <div style={{ color: "#64748b", fontSize: "11px", marginTop: "1px" }}>
                     {member.position} · {departmentLabel(member.dept)}
                   </div>
                   {member.substitutedBy && (
-                    <div style={{ color: "#64748b", fontSize: "11px", marginTop: "1px" }}>
-                      Diwakilkan oleh <strong>{member.substitutedBy.name}</strong> ({member.substitutedBy.employeeNo})
+                    <div style={{ color: "#64748b", fontSize: "11px", marginTop: "1px" }}>{uiText("Diwakilkan oleh ")}<strong>{member.substitutedBy.name}</strong> ({member.substitutedBy.employeeNo})
                     </div>
                   )}
                 </div>
@@ -345,11 +329,10 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
                     justifyContent: "space-between",
                   }}
                 >
-                  <span>
-                    Jam Submit:{" "}
+                  <span>{uiText("Jam Submit:")}{" "}
                     <strong>
                       {sub?.submittedAt
-                        ? `${new Date(sub.submittedAt).toLocaleTimeString("id-ID", {
+                        ? `${new Date(sub.submittedAt).toLocaleTimeString(uiLocale, {
                             hour: "2-digit",
                             minute: "2-digit",
                           })} WIB`
@@ -363,10 +346,10 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
                     }}
                   >
                     {isApproved
-                      ? "✓ Disetujui"
+                      ? uiText("✓ Disetujui")
                       : isSubmitted
-                      ? "Menunggu SPV"
-                      : "Belum Ada Data"}
+                      ? uiText("Menunggu SPV")
+                      : uiText("Belum Ada Data")}
                   </span>
                 </div>
 
@@ -383,7 +366,7 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
                       lineHeight: 1.3,
                     }}
                   >
-                    <strong>Temuan:</strong> {sub.abnormalNotes}
+                    <strong>{uiText("Temuan:")}</strong> {sub.abnormalNotes}
                   </div>
                 )}
 
@@ -406,11 +389,11 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
                     textAlign: "center",
                   }}
                 >
-                  {isSubmitted ? "Tinjau Detail Checklist →" : "Belum Ada Pengisian"}
+                  {isSubmitted ? uiText("Tinjau Detail Checklist →") : uiText("Belum Ada Pengisian")}
                 </button>
               </div>
             );
-          })}
+          }))}
         </div>
       )}
     </div>

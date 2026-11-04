@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { DIMS } from "../admin/sqdip/sqdipModel";
 import { formatScore, SQDIP_DIMS } from "./data";
 import type { SqdipTableRow } from "./useScorecardData";
@@ -32,14 +34,12 @@ export function SqdipSummary({
   query?: string;
   onQuery?: (value: string) => void;
 }) {
+  const { text: uiText } = useUiText();
   const scoped = data;
 
   if (scoped.length === 0) {
     return (
-      <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">
-        Belum ada data SQDIP pada periode ini. Impor data di Admin → SQDIP
-        Monitoring.
-      </div>
+      <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">{uiText("Belum ada data SQDIP pada periode ini. Impor data di Admin → SQDIP Monitoring.")}</div>
     );
   }
 
@@ -63,24 +63,16 @@ export function SqdipSummary({
         options={options}
       />
       {rows.length === 0 ? (
-        <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">
-          Tidak ada hasil pencarian
-        </div>
+        <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">{uiText("Tidak ada hasil pencarian")}</div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border">
           <table className="w-full table-auto text-left text-sm">
-            <caption className="sr-only">Poin SQDIP harian per leader</caption>
+            <caption className="sr-only">{uiText("Poin SQDIP harian per leader")}</caption>
             <thead>
               <tr>
-                <th scope="col" className={TH} style={thStyle("left")}>
-                  Tanggal
-                </th>
-                <th scope="col" className={TH} style={thStyle("left")}>
-                  Line
-                </th>
-                <th scope="col" className={TH} style={thStyle("left")}>
-                  Nama Leader
-                </th>
+                <th scope="col" className={TH} style={thStyle("left")}>{uiText("Tanggal")}</th>
+                <th scope="col" className={TH} style={thStyle("left")}>{uiText("Line")}</th>
+                <th scope="col" className={TH} style={thStyle("left")}>{uiText("Nama Leader")}</th>
                 {SQDIP_DIMS.map((dim, index) => (
                   <th
                     key={dim.key}
@@ -90,12 +82,10 @@ export function SqdipSummary({
                       index === SQDIP_DIMS.length - 1 ? " border-r" : ""
                     }`}
                   >
-                    <span title={dim.label}>{dim.label.charAt(0)}</span>
+                    <span title={uiText(dim.label)}>{dim.label.charAt(0)}</span>
                   </th>
                 ))}
-                <th scope="col" className={TH} style={thStyle("center")}>
-                  Total
-                </th>
+                <th scope="col" className={TH} style={thStyle("center")}>{uiText("Total")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -119,10 +109,10 @@ export function SqdipSummary({
                     return (
                       <td
                         key={dim.key}
-                        title={`${dim.label}: aktual ${actualText(
+                        title={uiText("{{v0}}: aktual {{v1}} · target {{v2}}", { v0: dim.label, v1: actualText(
                           index,
                           cell?.actual ?? null
-                        )} · target ${DIMS[index].label}`}
+                        ), v2: DIMS[index].label })}
                         className={`whitespace-nowrap border-l border-border px-4 py-3 text-center${
                           index === SQDIP_DIMS.length - 1 ? " border-r" : ""
                         }`}
@@ -150,9 +140,7 @@ export function SqdipSummary({
                 <td
                   colSpan={3}
                   className="px-4 py-3 text-left font-semibold text-text-secondary"
-                >
-                  Rata-rata
-                </td>
+                >{uiText("Rata-rata")}</td>
                 {SQDIP_DIMS.map((dim, index) => (
                   <td
                     key={dim.key}

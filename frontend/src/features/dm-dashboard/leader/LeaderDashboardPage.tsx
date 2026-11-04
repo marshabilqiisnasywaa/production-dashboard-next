@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useMemo, useState } from "react";
 import "./dmSoft.css";
@@ -33,6 +35,7 @@ const KPI_ICON = {
 
 /** Composition only. Today's live data comes from useLeaderToday; analysis data from useInspection. */
 export default function LeaderDashboardPage() {
+  const { text: uiText, locale: uiLocale } = useUiText();
   // Analisis Kepatuhan & Waktu (unchanged)
   const [range, setRange] = useState<DateRangeKey>("7d");
 
@@ -71,7 +74,7 @@ export default function LeaderDashboardPage() {
             leaderTemplate,
             submissions,
             sessions,
-          })
+          }, uiLocale)
         : null,
     [now, today, loading, timelineError, leaderSubmission, leaderTemplate, submissions, sessions]
   );
@@ -145,20 +148,20 @@ export default function LeaderDashboardPage() {
             <article className="dml-kpi" style={{ gridColumn: "span 2" }}>
               <p role={inspectionError ? "alert" : "status"}>
                 {inspectionLoading
-                  ? "Memuat inspection..."
-                  : inspectionError || "Belum ada pengisian pada periode ini."}
+                  ? uiText("Memuat inspection...")
+                  : inspectionError || uiText("Belum ada pengisian pada periode ini.")}
               </p>
             </article>
           ) : (
             <>
               <KpiCard
-                title="Inspection Rate"
+                title={uiText("Inspection Rate")}
                 value={summary.rate}
                 delta={summary.delta}
                 icon={KPI_ICON.clipboard}
               />
               <KpiCard
-                title="Papercard tepat waktu"
+                title={uiText("Papercard tepat waktu")}
                 value={onTimeRate}
                 icon={KPI_ICON.clipboard}
               />
@@ -167,17 +170,17 @@ export default function LeaderDashboardPage() {
           <div>
             {abnormalReady && abnormal.data && abnormal.data.rate !== null ? (
               <KpiCard
-                title="Penanganan abnormal tepat waktu"
+                title={uiText("Penanganan abnormal tepat waktu")}
                 value={abnormal.data.rate}
                 icon={KPI_ICON.alert}
               />
             ) : (
               <article className="dml-kpi">
                 <div className="dml-kpi__top">
-                  <h3>Penanganan abnormal tepat waktu</h3>
+                  <h3>{uiText("Penanganan abnormal tepat waktu")}</h3>
                 </div>
                 <p role={abnormal.error ? "alert" : "status"}>
-                  {abnormalMessage}
+                  {uiText(abnormalMessage)}
                 </p>
               </article>
             )}
@@ -203,10 +206,7 @@ export default function LeaderDashboardPage() {
 
                 {abnormal.data.invalidDeadline > 0 && (
                   <p className="dml-kpi__hint">
-                    {abnormal.data.invalidDeadline} masalah pada lini dan shift
-                    ini tidak memiliki deadline valid, lintas periode. Tidak
-                    dimasukkan dalam perhitungan.
-                  </p>
+                    {abnormal.data.invalidDeadline}{uiText(" masalah pada lini dan shift ini tidak memiliki deadline valid, lintas periode. Tidak dimasukkan dalam perhitungan.")}</p>
                 )}
               </>
             )}
@@ -220,7 +220,7 @@ export default function LeaderDashboardPage() {
           closure.data.rate !== null ? (
             <div>
               <KpiCard
-                title="Closure rate masalah meeting"
+                title={uiText("Closure rate masalah meeting")}
                 value={closure.data.rate}
                 icon={KPI_ICON.check}
               />
@@ -232,22 +232,22 @@ export default function LeaderDashboardPage() {
           ) : (
             <article className="dml-kpi">
               <div className="dml-kpi__top">
-                <h3>Closure rate masalah meeting</h3>
+                <h3>{uiText("Closure rate masalah meeting")}</h3>
               </div>
               <p role={closure.error ? "alert" : "status"}>
                 {loading
-                  ? "Memuat akun..."
+                  ? uiText("Memuat akun...")
                   : !currentUser
-                  ? "Data akun belum tersedia."
+                  ? uiText("Data akun belum tersedia.")
                   : !currentUser.line?.id
-                  ? "Akun belum memiliki penugasan lini."
+                  ? uiText("Akun belum memiliki penugasan lini.")
                   : closure.loading
-                  ? "Memuat closure rate..."
+                  ? uiText("Memuat closure rate...")
                   : closure.error
-                  ? closure.error
+                  ? uiText(closure.error)
                   : closure.data?.total === 0
-                  ? "Belum ada masalah pada periode ini."
-                  : "Data closure rate belum tersedia."}
+                  ? uiText("Belum ada masalah pada periode ini.")
+                  : uiText("Data closure rate belum tersedia.")}
               </p>
             </article>
           )}
@@ -259,13 +259,13 @@ export default function LeaderDashboardPage() {
         </div> */}
           <div style={{ minWidth: 0 }}>
             {inspectionLoading && (
-              <p role="status">Memuat detail inspection...</p>
+              <p role="status">{uiText("Memuat detail inspection...")}</p>
             )}
 
             {inspectionError && <p role="alert">{inspectionError}</p>}
 
             {!inspectionLoading && !inspectionError && rows.length === 0 && (
-              <p>Belum ada pengisian pada periode ini.</p>
+              <p>{uiText("Belum ada pengisian pada periode ini.")}</p>
             )}
 
             <InspectionSection rows={rows} />
@@ -276,8 +276,7 @@ export default function LeaderDashboardPage() {
           <aside className="dml-aside">
             {/* "Today" first: it is the only card the Leader can act on */}
             {timelineError ? (
-              <div role="alert">
-                Timeline hari ini gagal diperbarui: {timelineError}
+              <div role="alert">{uiText("Timeline hari ini gagal diperbarui: ")}{timelineError}
               </div>
             ) : (
               <SessionTimeline model={timeline} />

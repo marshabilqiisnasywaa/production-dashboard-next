@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { labelWithDepartment } from "../../departments";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -40,6 +42,7 @@ export default function MemberPapercardPage({
   initialDept = "PROD",
   onBackToDashboard,
 }: MemberPapercardPageProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [selectedDept, setSelectedDept] = useState<DepartmentKey>(initialDept);
   const [line, setLine] = useState(PAPERCARD_LINES[0]);
   const [currentUser, setCurrentUser] = useState<DmMe | null>(null);
@@ -267,7 +270,7 @@ export default function MemberPapercardPage({
     supervisorNotes: realSubmission?.supervisorNotes,
     submittedAt: realSubmission?.submittedAt
       ? (realSubmission.submittedAt.includes("T")
-          ? new Date(realSubmission.submittedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+          ? new Date(realSubmission.submittedAt).toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" })
           : realSubmission.submittedAt) + " WIB"
       : null,
   };
@@ -294,7 +297,7 @@ export default function MemberPapercardPage({
       window.dispatchEvent(new Event(PAPERCARD_CHANGED_EVENT));
     } catch (e: any) {
       console.warn("Papercard API submission warning:", e);
-      alert(e?.message || "Gagal mengirimkan papercard.");
+      alert(e?.message || uiText("Gagal mengirimkan papercard."));
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -304,15 +307,10 @@ export default function MemberPapercardPage({
     <div className="dml-pc">
       <div className="dml-page-head" style={{ marginBottom: 12 }}>
         <div>
-          <h1 className="dml-pc__title" style={{ fontSize: 18, margin: "0 0 4px" }}>
-            Papercard Kesiapan Anggota Lini
-          </h1>
-          <p className="dml-pc__intro" style={{ fontSize: 12.5, lineHeight: 1.5, margin: 0 }}>
-            Checklist kesiapan kerja sebelum DM Meeting khusus departemen{" "}
-            <strong>{labelWithDepartment(activeProfile.deptLabel, selectedDept)}</strong> pada{" "}
-            <strong>{activeProfile.lineName}</strong>. Hasil pemeriksaan otomatis diteruskan ke
-            Supervisor {supervisor.name} untuk persetujuan.
-          </p>
+          <h1 className="dml-pc__title" style={{ fontSize: 18, margin: "0 0 4px" }}>{uiText("Papercard Kesiapan Anggota Lini")}</h1>
+          <p className="dml-pc__intro" style={{ fontSize: 12.5, lineHeight: 1.5, margin: 0 }}>{uiText("Checklist kesiapan kerja sebelum DM Meeting khusus departemen")}{" "}
+            <strong>{labelWithDepartment(activeProfile.deptLabel, selectedDept)}</strong>{uiText(" pada")}{" "}
+            <strong>{activeProfile.lineName}</strong>{uiText(". Hasil pemeriksaan otomatis diteruskan ke Supervisor ")}{supervisor.name}{uiText(" untuk persetujuan.")}</p>
         </div>
       </div>
 
@@ -346,7 +344,7 @@ export default function MemberPapercardPage({
         leader={`${activeProfile.name} (${selectedDept})`}
         operatorLabel="Operator / Anggota"
         shift={PAPERCARD_CONFIG.shift}
-        date={win.now ? formatDateId(win.now) : ""}
+        date={win.now ? formatDateId(win.now, uiLocale) : ""}
         supervisorField={<SupervisorSelect selection={supervisor} disabled={readOnly} />}
         lineLocked={!(currentUser?.lines && currentUser.lines.length > 1)}
       >
@@ -384,11 +382,8 @@ export default function MemberPapercardPage({
               marginBottom: "12px",
             }}
           />
-          <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>
-            Memuat Checklist Papercard dari Database...
-          </div>
-          <div style={{ fontSize: "12.5px", color: "#64748b", marginTop: "4px" }}>
-            Mengambil konfigurasi resmi untuk {labelWithDepartment(activeProfile.deptLabel, selectedDept)} pada {activeProfile.lineName}
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{uiText("Memuat Checklist Papercard dari Database...")}</div>
+          <div style={{ fontSize: "12.5px", color: "#64748b", marginTop: "4px" }}>{uiText("Mengambil konfigurasi resmi untuk ")}{labelWithDepartment(activeProfile.deptLabel, selectedDept)}{uiText(" pada ")}{activeProfile.lineName}
           </div>
         </div>
       ) : dynamicTemplate.categories.length === 0 ? (
@@ -404,11 +399,8 @@ export default function MemberPapercardPage({
           }}
         >
           <div style={{ fontSize: "36px", marginBottom: "12px" }}>📋</div>
-          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
-            Belum Ada Template Papercard di Database
-          </h3>
-          <p style={{ fontSize: "13px", color: "#64748b", maxWidth: "480px", margin: "0 auto 16px", lineHeight: "1.5" }}>
-            Database belum memiliki konfigurasi checklist pertanyaan papercard untuk Lini <strong>{activeProfile.lineName}</strong> dan Departemen <strong>{selectedDept}</strong>.
+          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>{uiText("Belum Ada Template Papercard di Database")}</h3>
+          <p style={{ fontSize: "13px", color: "#64748b", maxWidth: "480px", margin: "0 auto 16px", lineHeight: "1.5" }}>{uiText("Database belum memiliki konfigurasi checklist pertanyaan papercard untuk Lini ")}<strong>{activeProfile.lineName}</strong>{uiText(" dan Departemen ")}<strong>{selectedDept}</strong>.
           </p>
           <div
             style={{
@@ -421,8 +413,7 @@ export default function MemberPapercardPage({
               border: "1px solid #ccfbf1",
               fontWeight: 500,
             }}
-          >
-            💡 Silakan hubungi Administrator untuk membuat template melalui menu <strong>Admin Panel &gt; Papercard Template</strong>.
+          >{uiText("💡 Silakan hubungi Administrator untuk membuat template melalui menu ")}<strong>{uiText("Admin Panel > Papercard Template")}</strong>.
           </div>
         </div>
       ) : (

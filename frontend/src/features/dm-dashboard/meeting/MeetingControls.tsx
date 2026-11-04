@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useState } from "react";
 import AttendanceModal from "./AttendanceModal";
 import ChecklistModal from "./ChecklistModal";
@@ -12,6 +14,7 @@ type OpenModal = "none" | "checklist" | "attendance";
 const meetingSlots = Array.from({ length: dmMeetingsPerDay }, (_, index) => index + 1);
 
 export default function MeetingControls({ members = [], onOpenAdmin }: { members?: readonly DmMember[]; onOpenAdmin?: () => void } = {}) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [meetings, setMeetings] = useState<readonly DmMeeting[]>([]);
   const [attendance, setAttendance] = useState<readonly DmAttendance[]>([]);
   const [user, setUser] = useState<string | null>(null);
@@ -25,7 +28,7 @@ export default function MeetingControls({ members = [], onOpenAdmin }: { members
   const currentNumber = running ? meetings.length : Math.min(meetings.length + 1, dmMeetingsPerDay);
 
   function toggleMeeting() {
-    const at = clock(new Date());
+    const at = clock(new Date(), uiLocale);
     if (running) {
       setMeetings((list) => list.map((meeting) => (meeting.endedAt === null ? { ...meeting, endedAt: at } : meeting)));
       return;
@@ -54,8 +57,8 @@ export default function MeetingControls({ members = [], onOpenAdmin }: { members
     <div className="dm-ops-container">
       <div className="dm-ops-header">
         <div className="dm-ops-title-group">
-          <span className="dm-ops-tag">OPERATIONAL HUB</span>
-          <h2 className="dm-ops-title">Meeting &amp; Quality Checklist</h2>
+          <span className="dm-ops-tag">{uiText("OPERATIONAL HUB")}</span>
+          <h2 className="dm-ops-title">{uiText("Meeting & Quality Checklist")}</h2>
         </div>
         <div className="dm-actions">
           <button type="button" className="dm-btn is-secondary" onClick={openChecklist}>
@@ -63,7 +66,7 @@ export default function MeetingControls({ members = [], onOpenAdmin }: { members
               <path d="M9 11l3 3L22 4" />
               <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
             </svg>
-            <span>Checklist Sheet</span>
+            <span>{uiText("Checklist Sheet")}</span>
           </button>
           <button
             type="button"
@@ -74,14 +77,14 @@ export default function MeetingControls({ members = [], onOpenAdmin }: { members
             {running ? (
               <>
                 <span className="dm-btn-pulse" aria-hidden="true" />
-                <span>End Meeting</span>
+                <span>{uiText("End Meeting")}</span>
               </>
             ) : (
               <>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
-                <span>Start Meeting</span>
+                <span>{uiText("Start Meeting")}</span>
               </>
             )}
           </button>
@@ -92,7 +95,7 @@ export default function MeetingControls({ members = [], onOpenAdmin }: { members
               <path d="M23 21v-2a4 4 0 00-3-3.87" />
               <path d="M16 3.13a4 4 0 010 7.75" />
             </svg>
-            <span>Absensi</span>
+            <span>{uiText("Absensi")}</span>
           </button>
           {onOpenAdmin ? (
             <button type="button" className="dm-btn is-secondary" onClick={onOpenAdmin}>
@@ -100,7 +103,7 @@ export default function MeetingControls({ members = [], onOpenAdmin }: { members
                 <circle cx="12" cy="12" r="3" />
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
-              <span>Pengaturan Lini</span>
+              <span>{uiText("Pengaturan Lini")}</span>
             </button>
           ) : null}
         </div>
@@ -109,25 +112,25 @@ export default function MeetingControls({ members = [], onOpenAdmin }: { members
       <div className="dm-ops-body">
         {/* Meeting Slots Timeline */}
         <div className="dm-ops-slots">
-          {meetingSlots.map((number) => {
+          {uiText(meetingSlots.map((number) => {
             const status = getMeetingStatus(number);
             return (
               <div key={number} className={`dm-slot-card is-${status.state}`}>
                 <div className="dm-slot-top">
                   <span className="dm-slot-label">{getMeetingLabel(number)}</span>
                   <span className={`dm-slot-badge is-${status.state}`}>
-                    {status.state === "running" ? "Sedang Berlangsung" : status.state === "done" ? "Selesai" : "Standby"}
+                    {status.state === "running" ? uiText("Sedang Berlangsung") : status.state === "done" ? uiText("Selesai") : uiText("Standby")}
                   </span>
                 </div>
                 <div className="dm-slot-info">
                   <span className="dm-slot-time">{status.text}</span>
                   {status.present > 0 ? (
-                    <span className="dm-slot-attendance">{status.present} hadir</span>
+                    <span className="dm-slot-attendance">{status.present}{uiText(" hadir")}</span>
                   ) : null}
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
 
         {/* Morning Checklist Status Card */}
@@ -139,15 +142,15 @@ export default function MeetingControls({ members = [], onOpenAdmin }: { members
             </svg>
           </div>
           <div className="dm-checks-detail">
-            <span className="dm-checks-title">Checklist Pagi</span>
+            <span className="dm-checks-title">{uiText("Checklist Pagi")}</span>
             <span className="dm-checks-status" role="status">
-              {checklist ? `Tersimpan ${checklist.at} oleh ${checklist.by}` : "Belum diisi hari ini"}
+              {checklist ? uiText("Tersimpan {{v0}} oleh {{v1}}", { v0: checklist.at, v1: checklist.by }) : uiText("Belum diisi hari ini")}
             </span>
           </div>
         </div>
       </div>
 
-      {allDone ? <p className="dm-note dm-note-done">Semua meeting hari ini sudah selesai.</p> : null}
+      {allDone ? <p className="dm-note dm-note-done">{uiText("Semua meeting hari ini sudah selesai.")}</p> : null}
 
       <ChecklistModal
         open={modal === "checklist"}

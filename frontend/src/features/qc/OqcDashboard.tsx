@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import CustomSelect from "@/components/shell/CustomSelect";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -39,10 +41,11 @@ function MetricCard({
   tone?: "up" | "down" | "neutral";
   statusClass?: string;
 }) {
+  const { text: uiText } = useUiText();
   return (
     <article className={`oqc-metric-card ${statusClass ?? ""}`}>
       <span className="metric-accent" />
-      <div className="oqc-metric-label">{label}</div>
+      <div className="oqc-metric-label">{uiText(label)}</div>
       <div className={`oqc-metric-value ${tone}`}>{value}</div>
       <div className={`oqc-metric-delta ${tone}`}>{delta}</div>
     </article>
@@ -50,6 +53,7 @@ function MetricCard({
 }
 
 function KpiCard({ label, value, unit }: { label: string; value: number; unit: string }) {
+  const { text: uiText } = useUiText();
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
@@ -77,17 +81,18 @@ function KpiCard({ label, value, unit }: { label: string; value: number; unit: s
 
   return (
     <article className="qc-kpi-card">
-      <span className="kpi-label">{label}</span>
+      <span className="kpi-label">{uiText(label)}</span>
       <strong>{formatted}</strong>
-      <span className="kpi-unit">{unit}</span>
+      <span className="kpi-unit">{uiText(unit)}</span>
     </article>
   );
 }
 
 function SummaryCard({ label, value, note }: { label: string; value: string; note: string }) {
+  const { text: uiText } = useUiText();
   return (
     <article className="qc-summary-card">
-      <span>{label}</span>
+      <span>{uiText(label)}</span>
       <strong>{value}</strong>
       <small>{note}</small>
     </article>
@@ -105,17 +110,18 @@ function DonutChartCard({
   items: Array<{ name: string; percent: number; count: number; unit: string }>;
   filterLabel: string;
 }) {
+  const { text: uiText } = useUiText();
   const [filter, setFilter] = useState("Semua Area");
 
   return (
     <article className="qc-card large-card">
       <div className="qc-card-header compact">
         <div>
-          <h3>Defect Fenomena Problem</h3>
-          <p>Gabungan semua lini</p>
+          <h3>{uiText("Defect Fenomena Problem")}</h3>
+          <p>{uiText("Gabungan semua lini")}</p>
         </div>
         <label className="qc-select-wrap">
-          <span>Filter Area / Material</span>
+          <span>{uiText("Filter Area / Material")}</span>
           <CustomSelect value={filter} options={["Semua Area", "Top Cover", "Bottom Cover", "Battery Cover", "Kamera", "Decorative", "Lainnya"]} onChange={(next) => setFilter(next)} />
         </label>
       </div>
@@ -143,12 +149,12 @@ function DonutChartCard({
             <div key={item.name} className="qc-legend-row">
               <span><i style={{ background: item.name === "Gores" ? "var(--chart-1)" : item.name === "Penyok" ? "var(--chart-2)" : item.name === "Warna" ? "var(--chart-3)" : item.name === "Komponen" ? "var(--chart-4)" : "var(--chart-5)" }} />{item.name}</span>
               <strong>{item.percent}%</strong>
-              <span>{item.count} {item.unit}</span>
+              <span>{item.count} {uiText(item.unit)}</span>
             </div>
           ))}
         </div>
       </div>
-      <div className="qc-filter-note">{filterLabel}</div>
+      <div className="qc-filter-note">{uiText(filterLabel)}</div>
     </article>
   );
 }
@@ -168,12 +174,13 @@ function AreaTrendCard({
   xLabel: string;
   color: string;
 }) {
+  const { text: uiText } = useUiText();
   return (
     <article className="qc-card large-card">
       <div className="qc-card-header">
         <div>
-          <h3>{title}</h3>
-          <p>{subtitle}</p>
+          <h3>{uiText(title)}</h3>
+          <p>{uiText(subtitle)}</p>
         </div>
       </div>
       <div className="qc-chart-wrap">
@@ -186,8 +193,8 @@ function AreaTrendCard({
               </linearGradient>
             </defs>
             <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="date" tickLine={false} axisLine={false} label={{ value: xLabel, position: "insideBottom", offset: -4, fontSize: 11, fontFamily: "Montserrat", fill: "var(--muted)", fontWeight: 600 }} tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "Montserrat" }} />
-            <YAxis tickLine={false} axisLine={false} label={{ value: yLabel, angle: -90, position: "insideLeft", offset: 8, fontSize: 11, fontFamily: "Montserrat", fill: "var(--muted)", fontWeight: 600 }} tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "Montserrat" }} domain={[0, "dataMax + 2"]} />
+            <XAxis dataKey="date" tickLine={false} axisLine={false} label={uiText({ value: xLabel, position: "insideBottom", offset: -4, fontSize: 11, fontFamily: "Montserrat", fill: "var(--muted)", fontWeight: 600 })} tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "Montserrat" }} />
+            <YAxis tickLine={false} axisLine={false} label={uiText({ value: yLabel, angle: -90, position: "insideLeft", offset: 8, fontSize: 11, fontFamily: "Montserrat", fill: "var(--muted)", fontWeight: 600 })} tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "Montserrat" }} domain={[0, "dataMax + 2"]} />
             <Tooltip contentStyle={{ fontFamily: "Montserrat", fontSize: 12, background: "rgba(27, 43, 35, 0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#fff" }} />
             <Area type="monotone" dataKey="value" stroke={color} fill={`url(#area-${title})`} strokeWidth={3} />
           </AreaChart>
@@ -214,20 +221,21 @@ function BarCard({
   valueKey: string;
   color: string;
 }) {
+  const { text: uiText } = useUiText();
   return (
     <article className="qc-card large-card">
       <div className="qc-card-header">
         <div>
-          <h3>{title}</h3>
-          <p>{subtitle}</p>
+          <h3>{uiText(title)}</h3>
+          <p>{uiText(subtitle)}</p>
         </div>
       </div>
       <div className="qc-chart-wrap">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 18, left: 0, bottom: 0 }}>
             <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey={Object.keys(data[0] ?? {})[0]} tickLine={false} axisLine={false} label={{ value: xLabel, position: "insideBottom", offset: -4, fontSize: 11, fontFamily: "Montserrat", fill: "var(--muted)", fontWeight: 600 }} tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "Montserrat" }} />
-            <YAxis tickLine={false} axisLine={false} label={{ value: yLabel, angle: -90, position: "insideLeft", offset: 8, fontSize: 11, fontFamily: "Montserrat", fill: "var(--muted)", fontWeight: 600 }} tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "Montserrat" }} />
+            <XAxis dataKey={Object.keys(data[0] ?? {})[0]} tickLine={false} axisLine={false} label={uiText({ value: xLabel, position: "insideBottom", offset: -4, fontSize: 11, fontFamily: "Montserrat", fill: "var(--muted)", fontWeight: 600 })} tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "Montserrat" }} />
+            <YAxis tickLine={false} axisLine={false} label={uiText({ value: yLabel, angle: -90, position: "insideLeft", offset: 8, fontSize: 11, fontFamily: "Montserrat", fill: "var(--muted)", fontWeight: 600 })} tick={{ fontSize: 11, fill: "var(--muted)", fontFamily: "Montserrat" }} />
             <Tooltip contentStyle={{ fontFamily: "Montserrat", fontSize: 12, background: "rgba(27, 43, 35, 0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#fff" }} />
             <Bar dataKey={valueKey} fill={color} radius={[8, 8, 0, 0]} />
           </BarChart>
@@ -246,12 +254,13 @@ function HBarCard({
   subtitle: string;
   data: Array<{ name: string; value: number }>;
 }) {
+  const { text: uiText } = useUiText();
   return (
     <article className="qc-card large-card">
       <div className="qc-card-header">
         <div>
-          <h3>{title}</h3>
-          <p>{subtitle}</p>
+          <h3>{uiText(title)}</h3>
+          <p>{uiText(subtitle)}</p>
         </div>
       </div>
       <div className="qc-hbar-list">
@@ -272,13 +281,14 @@ function HBarCard({
 }
 
 function QcAchievement() {
+  const { text: uiText } = useUiText();
   return (
     <div className="qc-page-shell">
       <header className="qc-page-header">
         <div>
-          <div className="qc-kicker">QC</div>
-          <h1>QC Summary</h1>
-          <p>Ringkasan FQC dan OQC produksi</p>
+          <div className="qc-kicker">{uiText("QC")}</div>
+          <h1>{uiText("QC Summary")}</h1>
+          <p>{uiText("Ringkasan FQC dan OQC produksi")}</p>
         </div>
       </header>
 
@@ -290,7 +300,7 @@ function QcAchievement() {
           return (
             <MetricCard
               key={item.title}
-              label={item.title}
+              label={uiText(item.title)}
               value={item.value}
               delta={item.label}
               tone={tone}
@@ -302,16 +312,16 @@ function QcAchievement() {
 
       <div className="qc-grid-2">
         <AreaTrendCard
-          title="Trend NG FQC"
-          subtitle="7 hari terakhir"
+          title={uiText("Trend NG FQC")}
+          subtitle={uiText("7 hari terakhir")}
           data={fqcData.trend.map((point) => ({ date: point.date, value: point.value }))}
           yLabel="Jumlah NG"
           xLabel="Tanggal"
           color="var(--chart-1)"
         />
         <AreaTrendCard
-          title="Trend NG OQC"
-          subtitle="Per jam hari ini"
+          title={uiText("Trend NG OQC")}
+          subtitle={uiText("Per jam hari ini")}
           data={oqcData.trend.map((point) => ({ date: point.date, value: point.value }))}
           yLabel="Jumlah NG"
           xLabel="Jam"
@@ -323,11 +333,12 @@ function QcAchievement() {
 }
 
 function FqcPage() {
-  const [updatedAt, setUpdatedAt] = useState(() => new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+  const { text: uiText, locale: uiLocale } = useUiText();
+  const [updatedAt, setUpdatedAt] = useState(() => new Date().toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" }));
   const [toast, setToast] = useState<string | null>(null);
 
   const refreshData = () => {
-    const time = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+    const time = new Date().toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" });
     setUpdatedAt(time);
     setToast("Data FQC dimuat ulang");
   };
@@ -342,15 +353,15 @@ function FqcPage() {
     <div className="qc-page-shell">
       <header className="qc-page-header">
         <div>
-          <div className="qc-kicker">Kualitas / FQC</div>
-          <h1>FQC — Final Quality Control</h1>
+          <div className="qc-kicker">{uiText("Kualitas / FQC")}</div>
+          <h1>{uiText("FQC — Final Quality Control")}</h1>
         </div>
         <div className="qc-toolbar">
           <div className="qc-live">
             <span className="live-dot" />
-            <span>Terakhir diperbarui: {updatedAt}</span>
+            <span>{uiText("Terakhir diperbarui: ")}{updatedAt}</span>
           </div>
-          <button className="qc-primary-button" onClick={refreshData}>Muat Ulang</button>
+          <button className="qc-primary-button" onClick={refreshData}>{uiText("Muat Ulang")}</button>
         </div>
       </header>
 
@@ -358,30 +369,30 @@ function FqcPage() {
 
       <div className="qc-kpi-grid">
         {fqcData.kpis.map((item) => (
-          <KpiCard key={item.label} label={item.label} value={item.value} unit={item.unit} />
+          <KpiCard key={item.label} label={uiText(item.label)} value={item.value} unit={item.unit} />
         ))}
       </div>
 
       <div className="qc-grid-2">
-        <AreaTrendCard title="Tren NG FQC per Tanggal" subtitle="7 hari terakhir" data={fqcData.trend.map((point) => ({ date: point.date, value: point.value }))} yLabel="Jumlah NG (unit)" xLabel="Tanggal" color="var(--chart-1)" />
-        <BarCard title="NG Rate per Model" subtitle="Persentase NG" data={fqcData.modelRates.map((point) => ({ Model: point.model, "NG Rate": point.value }))} yLabel="NG Rate (%)" xLabel="Model" valueKey="NG Rate" color="var(--chart-2)" />
+        <AreaTrendCard title={uiText("Tren NG FQC per Tanggal")} subtitle={uiText("7 hari terakhir")} data={fqcData.trend.map((point) => ({ date: point.date, value: point.value }))} yLabel="Jumlah NG (unit)" xLabel="Tanggal" color="var(--chart-1)" />
+        <BarCard title={uiText("NG Rate per Model")} subtitle={uiText("Persentase NG")} data={fqcData.modelRates.map((point) => ({ Model: point.model, "NG Rate": point.value }))} yLabel="NG Rate (%)" xLabel="Model" valueKey="NG Rate" color="var(--chart-2)" />
       </div>
 
       <div className="qc-grid-2">
-        <HBarCard title="Area Material" subtitle="Detil per area" data={fqcData.areaMaterial} />
+        <HBarCard title={uiText("Area Material")} subtitle={uiText("Detil per area")} data={fqcData.areaMaterial} />
         <DonutChartCard headline="54" sublabel="Total NG" items={fqcData.defectBreakdown} filterLabel="Semua Area" />
       </div>
 
       <article className="qc-card summary-panel">
         <div className="qc-card-header compact">
           <div>
-            <h3>Summary Data Analysis</h3>
-            <p>Rangkuman penyebab</p>
+            <h3>{uiText("Summary Data Analysis")}</h3>
+            <p>{uiText("Rangkuman penyebab")}</p>
           </div>
         </div>
         <div className="qc-summary-grid">
           {fqcData.summaryCards.map((item) => (
-            <SummaryCard key={item.label} label={item.label} value={item.value} note={item.note} />
+            <SummaryCard key={item.label} label={uiText(item.label)} value={item.value} note={item.note} />
           ))}
         </div>
       </article>
@@ -390,11 +401,12 @@ function FqcPage() {
 }
 
 function OqcPage() {
-  const [updatedAt, setUpdatedAt] = useState(() => new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+  const { text: uiText, locale: uiLocale } = useUiText();
+  const [updatedAt, setUpdatedAt] = useState(() => new Date().toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" }));
   const [toast, setToast] = useState<string | null>(null);
 
   const refreshData = () => {
-    const time = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+    const time = new Date().toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" });
     setUpdatedAt(time);
     setToast("Data OQC dimuat ulang");
   };
@@ -409,15 +421,15 @@ function OqcPage() {
     <div className="qc-page-shell">
       <header className="qc-page-header">
         <div>
-          <div className="qc-kicker">Kualitas / OQC</div>
-          <h1>OQC — Outgoing Quality Control</h1>
+          <div className="qc-kicker">{uiText("Kualitas / OQC")}</div>
+          <h1>{uiText("OQC — Outgoing Quality Control")}</h1>
         </div>
         <div className="qc-toolbar">
           <div className="qc-live">
             <span className="live-dot" />
-            <span>Terakhir diperbarui: {updatedAt}</span>
+            <span>{uiText("Terakhir diperbarui: ")}{updatedAt}</span>
           </div>
-          <button className="qc-primary-button" onClick={refreshData}>Muat Ulang</button>
+          <button className="qc-primary-button" onClick={refreshData}>{uiText("Muat Ulang")}</button>
         </div>
       </header>
 
@@ -425,30 +437,30 @@ function OqcPage() {
 
       <div className="qc-kpi-grid">
         {oqcData.kpis.map((item) => (
-          <KpiCard key={item.label} label={item.label} value={item.value} unit={item.unit} />
+          <KpiCard key={item.label} label={uiText(item.label)} value={item.value} unit={item.unit} />
         ))}
       </div>
 
       <div className="qc-grid-2">
-        <AreaTrendCard title="Tren NG OQC per Jam" subtitle="Real-time hari ini" data={oqcData.trend.map((point) => ({ date: point.date, value: point.value }))} yLabel="Jumlah NG (unit)" xLabel="Jam" color="var(--chart-1)" />
-        <BarCard title="NG OQC per Lini" subtitle="Hari ini" data={oqcData.lineRates.map((point) => ({ Lini: point.line, NG: point.value }))} yLabel="Jumlah NG (unit)" xLabel="Lini" valueKey="NG" color="var(--chart-4)" />
+        <AreaTrendCard title={uiText("Tren NG OQC per Jam")} subtitle={uiText("Real-time hari ini")} data={oqcData.trend.map((point) => ({ date: point.date, value: point.value }))} yLabel="Jumlah NG (unit)" xLabel="Jam" color="var(--chart-1)" />
+        <BarCard title={uiText("NG OQC per Lini")} subtitle={uiText("Hari ini")} data={oqcData.lineRates.map((point) => ({ Lini: point.line, NG: point.value }))} yLabel="Jumlah NG (unit)" xLabel="Lini" valueKey="NG" color="var(--chart-4)" />
       </div>
 
       <div className="qc-grid-2">
-        <HBarCard title="Area Material" subtitle="Detil per area" data={oqcData.areaMaterial} />
+        <HBarCard title={uiText("Area Material")} subtitle={uiText("Detil per area")} data={oqcData.areaMaterial} />
         <DonutChartCard headline="74" sublabel="Total NG" items={oqcData.defectBreakdown} filterLabel="Semua Area" />
       </div>
 
       <article className="qc-card summary-panel">
         <div className="qc-card-header compact">
           <div>
-            <h3>Summary Data Analysis</h3>
-            <p>Rangkuman penyebab</p>
+            <h3>{uiText("Summary Data Analysis")}</h3>
+            <p>{uiText("Rangkuman penyebab")}</p>
           </div>
         </div>
         <div className="qc-summary-grid">
           {oqcData.summaryCards.map((item) => (
-            <SummaryCard key={item.label} label={item.label} value={item.value} note={item.note} />
+            <SummaryCard key={item.label} label={uiText(item.label)} value={item.value} note={item.note} />
           ))}
         </div>
       </article>
@@ -457,6 +469,7 @@ function OqcPage() {
 }
 
 function SolusiImprovementPage() {
+  const { text: uiText } = useUiText();
   const [source, setSource] = useState<SolutionSource>("FQC");
   const [model, setModel] = useState("");
   const [solution, setSolution] = useState("");
@@ -502,57 +515,57 @@ function SolusiImprovementPage() {
     <div className="qc-page-shell">
       <header className="qc-page-header">
         <div>
-          <div className="qc-kicker">Improvement</div>
-          <h1>🛠 Solusi Improvement</h1>
+          <div className="qc-kicker">{uiText("Improvement")}</div>
+          <h1>{uiText("🛠 Solusi Improvement")}</h1>
         </div>
       </header>
 
       <article className="qc-card form-card">
         <div className="qc-card-header compact">
           <div>
-            <h3>Solusi Improvement</h3>
-            <p>Input perbaikan yang perlu ditindaklanjuti</p>
+            <h3>{uiText("Solusi Improvement")}</h3>
+            <p>{uiText("Input perbaikan yang perlu ditindaklanjuti")}</p>
           </div>
         </div>
 
         <div className="qc-form-grid">
           <label>
-            <span>Sumber</span>
+            <span>{uiText("Sumber")}</span>
             <CustomSelect value={source} options={[{ value: "FQC", label: "FQC" }, { value: "OQC", label: "OQC" }]} onChange={(next) => setSource(next as SolutionSource)} />
           </label>
 
           <label>
-            <span>Model</span>
-            <input value={model} onChange={(e) => setModel(e.target.value)} placeholder="Contoh: DB5" />
+            <span>{uiText("Model")}</span>
+            <input value={model} onChange={(e) => setModel(e.target.value)} placeholder={uiText("Contoh: DB5")} />
           </label>
 
           <label className="full-width">
-            <span>Solusi</span>
-            <textarea value={solution} onChange={(e) => setSolution(e.target.value)} placeholder="Tulis solusi perbaikan..." rows={4} />
+            <span>{uiText("Solusi")}</span>
+            <textarea value={solution} onChange={(e) => setSolution(e.target.value)} placeholder={uiText("Tulis solusi perbaikan...")} rows={4} />
           </label>
 
           <label>
-            <span>Due Date</span>
+            <span>{uiText("Due Date")}</span>
             <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </label>
 
           <label>
-            <span>Bukti (Evidence)</span>
+            <span>{uiText("Bukti (Evidence)")}</span>
             <input type="file" accept="image/*" onChange={(e) => setEvidence(e.target.files?.[0]?.name ?? "")} />
           </label>
         </div>
 
         <div className="qc-actions">
-          <button className="qc-primary-button" onClick={handleSave}>💾 Save</button>
-          <button className="qc-secondary-button" onClick={handleDelete}>🗑 Delete</button>
+          <button className="qc-primary-button" onClick={handleSave}>{uiText("💾 Save")}</button>
+          <button className="qc-secondary-button" onClick={handleDelete}>{uiText("🗑 Delete")}</button>
         </div>
       </article>
 
       <article className="qc-card log-card">
         <div className="qc-card-header compact">
           <div>
-            <h3>📋 Log Historical Problem</h3>
-            <p>Riwayat solusi tersimpan</p>
+            <h3>{uiText("📋 Log Historical Problem")}</h3>
+            <p>{uiText("Riwayat solusi tersimpan")}</p>
           </div>
           <div className="qc-filter-group">
             {(["Semua", "FQC", "OQC"] as const).map((option) => (
@@ -562,7 +575,7 @@ function SolusiImprovementPage() {
         </div>
 
         {filteredRecords.length === 0 ? (
-          <div className="qc-empty-state">Belum ada solusi tercatat.</div>
+          <div className="qc-empty-state">{uiText("Belum ada solusi tercatat.")}</div>
         ) : (
           <div className="qc-log-list">
             {filteredRecords.map((record) => (
@@ -573,7 +586,7 @@ function SolusiImprovementPage() {
                 </div>
                 <p>{record.solution}</p>
                 <div className="qc-log-foot">
-                  <small>Due: {record.dueDate}</small>
+                  <small>{uiText("Due: ")}{record.dueDate}</small>
                   <small>{record.evidence}</small>
                 </div>
               </div>

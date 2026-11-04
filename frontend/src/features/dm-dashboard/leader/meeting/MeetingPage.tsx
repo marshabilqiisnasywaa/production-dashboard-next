@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { meetingApi, workshopMeetingApi } from "../../api";
 import { MeetingApiProvider, useMeetingApi } from "./MeetingApiContext";
@@ -59,6 +61,7 @@ export function WorkshopMeetingPage() {
 
 /** Composition only: state machine in hooks/useMeetingFlow, every card in components/. */
 function MeetingView(props: MeetingViewProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const { variant } = props;
   const api = useMeetingApi();
   const now = useNow(60_000);
@@ -423,11 +426,10 @@ function MeetingView(props: MeetingViewProps) {
     variant === "workshop"
       ? ws &&
         ws.workshops.length > 1 && (
-          <label>
-            Workshop{" "}
+          <label>{uiText("Workshop")}{" "}
             <select
               className="ui-select"
-              aria-label="Pilih workshop meeting"
+              aria-label={uiText("Pilih workshop meeting")}
               value={ws.workshop?.id ?? ""}
               onChange={(event) => {
                 ws.selectWorkshop(Number(event.target.value));
@@ -444,11 +446,10 @@ function MeetingView(props: MeetingViewProps) {
           </label>
         )
       : workspace.ownLines.length > 1 && (
-          <label>
-            Lini saya{" "}
+          <label>{uiText("Lini saya")}{" "}
             <select
               className="ui-select"
-              aria-label="Pilih lini meeting"
+              aria-label={uiText("Pilih lini meeting")}
               value={workspace.line?.id ?? ""}
               onChange={(event) => {
                 workspace.selectLine(Number(event.target.value));
@@ -478,7 +479,7 @@ function MeetingView(props: MeetingViewProps) {
         </div>
         <div className="dml-empty">
           {sessionsLoading
-            ? "Memuat jadwal meeting…"
+            ? uiText("Memuat jadwal meeting…")
             : workspace.error ??
               (variant === "workshop"
               ? "Belum ada workshop yang ditugaskan ke akun ini. Hubungi admin."
@@ -510,7 +511,7 @@ function MeetingView(props: MeetingViewProps) {
 
       {variant === "dm" && phase === "idle" && !serverSession?.rosterPrepared && !readOnly && (
         <section className="ui-card dml-meeting-scope">
-          <strong>Peserta meeting</strong>
+          <strong>{uiText("Peserta meeting")}</strong>
           <SegmentedControl
             ariaLabel="Cakupan meeting"
             value={scope}
@@ -531,30 +532,26 @@ function MeetingView(props: MeetingViewProps) {
           />
           <p>
             {scope === "dm"
-              ? "Satu leader mengambil presensi seluruh DM. Hasilnya tetap masuk ke lini masing-masing. Jadwal mengikuti sesi lini yang dipilih."
+              ? uiText("Satu leader mengambil presensi seluruh DM. Hasilnya tetap masuk ke lini masing-masing. Jadwal mengikuti sesi lini yang dipilih.")
               : workspace.group
-              ? "Presensi hanya untuk tim lini yang dipilih."
-              : "Lini ini belum masuk DM. Meeting tersedia per lini."}
+              ? uiText("Presensi hanya untuk tim lini yang dipilih.")
+              : uiText("Lini ini belum masuk DM. Meeting tersedia per lini.")}
           </p>
         </section>
       )}
       {readOnly && (
-        <div className="dml-empty" role="status">
-          Meeting ini dikelola oleh {serverSession?.leaderName ?? "leader lain"}
+        <div className="dml-empty" role="status">{uiText("Meeting ini dikelola oleh ")}{serverSession?.leaderName ?? uiText("leader lain")}
           {serverSession?.dmGroupName
-            ? ` untuk ${serverSession.dmGroupName}`
+            ? uiText(" untuk {{v0}}", { v0: serverSession.dmGroupName })
             : ""}
-          . {variant === "workshop" ? "Presensi workshop ini" : "Presensi lini ini"} tersinkron dari meeting tersebut.
-        </div>
+          . {variant === "workshop" ? uiText("Presensi workshop ini") : uiText("Presensi lini ini")}{uiText(" tersinkron dari meeting tersebut.")}</div>
       )}
       {preparing && (
-        <div className="dml-empty" role="status">
-          Menyiapkan presensi…
-        </div>
+        <div className="dml-empty" role="status">{uiText("Menyiapkan presensi…")}</div>
       )}
 
       <MeetingHeaderCard
-        title={`${
+        title={uiText(`${
           effectiveScope === "dm"
             ? serverSession?.dmGroupName ??
               workspace.group?.name ??
@@ -562,12 +559,12 @@ function MeetingView(props: MeetingViewProps) {
             : variant === "workshop"
             ? workspace.workshop?.name ?? "Workshop"
             : workspace.line?.name ?? MEETING_AREA
-        } · ${session.label}`}
+        } · ${session.label}`)}
         phase={phase}
         lines={meetingLines}
         dateText={
           now
-            ? now.toLocaleDateString("id-ID", {
+            ? now.toLocaleDateString(uiLocale, {
                 day: "numeric",
                 month: "short",
                 year: "numeric",
@@ -588,7 +585,7 @@ function MeetingView(props: MeetingViewProps) {
       )}
 
       {!hydrated ? (
-        <div className="dml-empty">Memuat sesi…</div>
+        <div className="dml-empty">{uiText("Memuat sesi…")}</div>
       ) : (
         <div className="dml-mt__grid">
           <div className="dml-mt__main">
@@ -648,22 +645,17 @@ function MeetingView(props: MeetingViewProps) {
                     size="lg"
                     style={{ justifyContent: "center", textAlign: "center" }}
                     onClick={() => setLateAttendanceSessionId(session.dbId)}
-                  >
-                    Absen
-                  </Button>
+                  >{uiText("Absen")}</Button>
                 )}
 
                 {summaryOptionsError ? (
-                  <p role="alert">
-                    Daftar line dan PIC gagal dimuat.{" "}
+                  <p role="alert">{uiText("Daftar line dan PIC gagal dimuat.")}{" "}
                     <Button
                       onClick={() => setSummaryOptionsRetry((n) => n + 1)}
-                    >
-                      Coba lagi
-                    </Button>
+                    >{uiText("Coba lagi")}</Button>
                   </p>
                 ) : !summaryOptions ? (
-                  <p role="status">Memuat daftar line dan PIC…</p>
+                  <p role="status">{uiText("Memuat daftar line dan PIC…")}</p>
                 ) : (
                   <SummaryForm
                     items={state.items}
@@ -687,8 +679,7 @@ function MeetingView(props: MeetingViewProps) {
                   }
                   onClick={handleEndClick}
                 >
-                  <IconStop size={16} /> End Meeting
-                </Button>
+                  <IconStop size={16} />{uiText(" End Meeting")}</Button>
               </>
             )}
 
@@ -706,7 +697,7 @@ function MeetingView(props: MeetingViewProps) {
 
           <aside className="dml-mt__aside">
             <AttendanceRoster
-              title={rosterTitle}
+              title={uiText(rosterTitle)}
               members={members}
               attendance={state.attendance}
               absences={state.absences}
@@ -722,9 +713,7 @@ function MeetingView(props: MeetingViewProps) {
       )}
 
       {MEETING_CONFIG.faceScanSimulation && hydrated && phase !== "idle" && (
-        <button type="button" className="dml-mt-reset" onClick={actions.reset}>
-          Reset sesi ini (dev)
-        </button>
+        <button type="button" className="dml-mt-reset" onClick={actions.reset}>{uiText("Reset sesi ini (dev)")}</button>
       )}
 
       <EndMeetingDialog

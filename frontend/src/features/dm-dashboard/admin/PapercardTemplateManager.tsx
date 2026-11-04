@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { departmentLabel } from "../departments";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -55,6 +57,7 @@ export default function PapercardTemplateManager({
   workshops,
   lines,
 }: PapercardTemplateManagerProps) {
+  const { text: uiText } = useUiText();
   const [selectedWorkshopId, setSelectedWorkshopId] = useState<string>(
     workshops[0] ? String(workshops[0].id) : "1"
   );
@@ -499,7 +502,7 @@ export default function PapercardTemplateManager({
   ) => {
     if (
       !window.confirm(
-        `Lepas penugasan ${memberName} dari lini ${currentLine?.name}?`
+        uiText("Lepas penugasan {{v0}} dari lini {{v1}}?", { v0: memberName, v1: currentLine?.name })
       )
     )
       return;
@@ -529,7 +532,7 @@ export default function PapercardTemplateManager({
         <div className="ptm-selectors">
           {/* Workshop Selector */}
           <div className="ptm-select-box">
-            <span className="ptm-field-label">WORKSHOP</span>
+            <span className="ptm-field-label">{uiText("WORKSHOP")}</span>
             <div className="ptm-select-wrapper">
               <FactoryIcon size={14} />
               <select
@@ -555,7 +558,7 @@ export default function PapercardTemplateManager({
 
           {/* Line Selector */}
           <div className="ptm-select-box">
-            <span className="ptm-field-label">LINE</span>
+            <span className="ptm-field-label">{uiText("LINE")}</span>
             <div className="ptm-select-wrapper">
               <Layers size={14} />
               <select
@@ -575,7 +578,7 @@ export default function PapercardTemplateManager({
 
 
           <div className="ptm-select-box">
-            <span className="ptm-field-label">Department</span>
+            <span className="ptm-field-label">{uiText("Department")}</span>
           <div className="ptm-dept-group" role="tablist">
             
             {DEPARTMENTS.map((d) => {
@@ -603,7 +606,7 @@ export default function PapercardTemplateManager({
                   >
                     {hasTmpl ? "●" : "○"}
                   </span>
-                  <span>{d.label}</span>
+                  <span>{uiText(d.label)}</span>
                 </button>
               );
             })}
@@ -634,7 +637,7 @@ export default function PapercardTemplateManager({
               className="ptm-btn ptm-btn-dropdown"
               onClick={() => setShowTemplateMenu((prev) => !prev)}
             >
-              <span>Template</span>
+              <span>{uiText("Template")}</span>
               <ChevronDown size={14} />
             </button>
 
@@ -648,9 +651,7 @@ export default function PapercardTemplateManager({
                     setCopySourceLineId("");
                     setShowCopyModal(true);
                   }}
-                >
-                  Salin dari Lini Lain
-                </button>
+                >{uiText("Salin dari Lini Lain")}</button>
                 <button
                   type="button"
                   className="ptm-dropdown-item"
@@ -658,9 +659,7 @@ export default function PapercardTemplateManager({
                     setShowTemplateMenu(false);
                     handleOpenBulkModal();
                   }}
-                >
-                  Terapkan Masal ke Lini Lain
-                </button>
+                >{uiText("Terapkan Masal ke Lini Lain")}</button>
               </div>
             )}
           </div>
@@ -672,7 +671,7 @@ export default function PapercardTemplateManager({
             onClick={handleSaveToDatabase}
             disabled={saving || loadingTemplate}
           >
-            {saving ? "Menyimpan..." : "Simpan Template"}
+            {saving ? uiText("Menyimpan...") : uiText("Simpan Template")}
           </button>
         </div>
       </div>
@@ -685,10 +684,9 @@ export default function PapercardTemplateManager({
         >
           <Clock size={18} className="ptm-setting-icon" aria-hidden="true" />
           <span className="ptm-setting-copy">
-            <span className="ptm-setting-title">Window Pengerjaan</span>
+            <span className="ptm-setting-title">{uiText("Window Pengerjaan")}</span>
             <span className="ptm-setting-subtitle">
-              {activeTemplate.windowStart}–{activeTemplate.windowEnd} · Shift 1
-            </span>
+              {activeTemplate.windowStart}–{activeTemplate.windowEnd}{uiText(" · Shift 1")}</span>
           </span>
           <ChevronRight size={18} className="ptm-setting-chevron" aria-hidden="true" />
         </button>
@@ -699,10 +697,9 @@ export default function PapercardTemplateManager({
         >
           <Users size={18} className="ptm-setting-icon" aria-hidden="true" />
           <span className="ptm-setting-copy">
-            <span className="ptm-setting-title">Petugas Pengisi</span>
+            <span className="ptm-setting-title">{uiText("Petugas Pengisi")}</span>
             <span className="ptm-setting-subtitle">
-              {assignedMembers.length} orang ditugaskan
-            </span>
+              {assignedMembers.length}{uiText(" orang ditugaskan")}</span>
           </span>
           <ChevronRight size={18} className="ptm-setting-chevron" aria-hidden="true" />
         </button>
@@ -711,12 +708,12 @@ export default function PapercardTemplateManager({
       {/* Notice Banner */}
       {savedNotice && (
         <div className={`ptm-notice is-${savedNotice.type}`}>
-          <span>{savedNotice.message}</span>
+          <span>{uiText(savedNotice.message)}</span>
           <button
             type="button"
             onClick={() => setSavedNotice(null)}
             className="ptm-notice-close"
-            aria-label="Tutup notifikasi"
+            aria-label={uiText("Tutup notifikasi")}
           >
             &times;
           </button>
@@ -745,9 +742,7 @@ export default function PapercardTemplateManager({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="ptm-modal-head">
-              <h3 className="ptm-modal-title">
-                Terapkan Template ke Lini Lain
-              </h3>
+              <h3 className="ptm-modal-title">{uiText("Terapkan Template ke Lini Lain")}</h3>
               <button
                 type="button"
                 onClick={() => setShowBulkModal(false)}
@@ -757,16 +752,10 @@ export default function PapercardTemplateManager({
               </button>
             </div>
 
-            <p className="ptm-modal-desc">
-              Pilih lini target. Template <strong>{selectedDept}</strong>{" "}
-              yang sedang dibuka akan disalin dan disimpan langsung ke
-              database seluruh lini terpilih.
-            </p>
+            <p className="ptm-modal-desc">{uiText("Pilih lini target. Template ")}<strong>{selectedDept}</strong>{" "}{uiText("yang sedang dibuka akan disalin dan disimpan langsung ke database seluruh lini terpilih.")}</p>
 
             <div className="ptm-modal-subheader">
-              <span className="ptm-modal-count-label">
-                LINI TARGET ({selectedTargetLineIds.length} Dipilih):
-              </span>
+              <span className="ptm-modal-count-label">{uiText("LINI TARGET (")}{selectedTargetLineIds.length}{uiText(" Dipilih):")}</span>
               <button
                 type="button"
                 onClick={() => {
@@ -779,8 +768,8 @@ export default function PapercardTemplateManager({
                 className="ptm-modal-toggle-all"
               >
                 {selectedTargetLineIds.length === lines.length
-                  ? "Hapus Semua"
-                  : "Pilih Semua"}
+                  ? uiText("Hapus Semua")
+                  : uiText("Pilih Semua")}
               </button>
             </div>
 
@@ -832,9 +821,7 @@ export default function PapercardTemplateManager({
                 type="button"
                 className="ptm-btn ptm-btn-ghost"
                 onClick={() => setShowBulkModal(false)}
-              >
-                Batal
-              </button>
+              >{uiText("Batal")}</button>
               <button
                 type="button"
                 className="ptm-btn ptm-btn-primary"
@@ -844,8 +831,8 @@ export default function PapercardTemplateManager({
                 onClick={handleExecuteBulkApply}
               >
                 {bulkApplying
-                  ? "Menerapkan..."
-                  : `Terapkan ke ${selectedTargetLineIds.length} Lini`}
+                  ? uiText("Menerapkan...")
+                  : uiText("Terapkan ke {{v0}} Lini", { v0: selectedTargetLineIds.length })}
               </button>
             </div>
           </div>
@@ -863,7 +850,7 @@ export default function PapercardTemplateManager({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="ptm-modal-head">
-              <h3 className="ptm-modal-title">Salin dari Lini Lain</h3>
+              <h3 className="ptm-modal-title">{uiText("Salin dari Lini Lain")}</h3>
               <button
                 type="button"
                 onClick={() => setShowCopyModal(false)}
@@ -873,12 +860,9 @@ export default function PapercardTemplateManager({
               </button>
             </div>
 
-            <p className="ptm-modal-desc">
-              Pilih lini sumber. Pertanyaan departemen{" "}
-              <strong>{selectedDept}</strong> akan ditarik ke editor lini{" "}
-              <strong>{currentLine?.name}</strong>. Anda dapat mengedit dan
-              menyimpannya.
-            </p>
+            <p className="ptm-modal-desc">{uiText("Pilih lini sumber. Pertanyaan departemen")}{" "}
+              <strong>{selectedDept}</strong>{uiText(" akan ditarik ke editor lini")}{" "}
+              <strong>{currentLine?.name}</strong>{uiText(". Anda dapat mengedit dan menyimpannya.")}</p>
 
             <div
               style={{
@@ -893,16 +877,14 @@ export default function PapercardTemplateManager({
                   fontWeight: 700,
                   color: "#64748b",
                 }}
-              >
-                PILIH LINI SUMBER:
-              </label>
+              >{uiText("PILIH LINI SUMBER:")}</label>
               <select
                 value={copySourceLineId}
                 onChange={(e) => setCopySourceLineId(e.target.value)}
                 className="ptm-select-compact"
                 style={{ width: "100%" }}
               >
-                <option value="">-- Pilih Lini Sumber --</option>
+                <option value="">{uiText("-- Pilih Lini Sumber --")}</option>
                 {lines
                   .filter((l) => l.id !== currentLine?.id)
                   .map((l) => (
@@ -918,16 +900,14 @@ export default function PapercardTemplateManager({
                 type="button"
                 className="ptm-btn ptm-btn-ghost"
                 onClick={() => setShowCopyModal(false)}
-              >
-                Batal
-              </button>
+              >{uiText("Batal")}</button>
               <button
                 type="button"
                 className="ptm-btn ptm-btn-primary"
                 disabled={copyLoading || !copySourceLineId}
                 onClick={handleExecuteCopy}
               >
-                {copyLoading ? "Menyalin..." : "Salin Pertanyaan"}
+                {copyLoading ? uiText("Menyalin...") : uiText("Salin Pertanyaan")}
               </button>
             </div>
           </div>
@@ -945,9 +925,7 @@ export default function PapercardTemplateManager({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="ptm-modal-head">
-              <h3 className="ptm-modal-title">
-                Pengaturan Waktu & Standar (Shift 1)
-              </h3>
+              <h3 className="ptm-modal-title">{uiText("Pengaturan Waktu & Standar (Shift 1)")}</h3>
               <button
                 type="button"
                 onClick={() => setShowTimeModal(false)}
@@ -966,9 +944,7 @@ export default function PapercardTemplateManager({
               }}
             >
               <div className="ptm-form-group">
-                <label className="ptm-input-label">
-                  Window Pengerjaan (Shift 1)
-                </label>
+                <label className="ptm-input-label">{uiText("Window Pengerjaan (Shift 1)")}</label>
                 <div className="ptm-time-row">
                   <input
                     type="text"
@@ -981,9 +957,7 @@ export default function PapercardTemplateManager({
                     className="ptm-input ptm-time-input"
                     placeholder="08:00"
                   />
-                  <span style={{ color: "#94a3b8", fontSize: "12px" }}>
-                    s/d
-                  </span>
+                  <span style={{ color: "#94a3b8", fontSize: "12px" }}>{uiText("s/d")}</span>
                   <input
                     type="text"
                     value={activeTemplate.windowEnd}
@@ -995,16 +969,12 @@ export default function PapercardTemplateManager({
                     className="ptm-input ptm-time-input"
                     placeholder="09:00"
                   />
-                  <span style={{ fontSize: "11px", color: "#64748b" }}>
-                    WIB
-                  </span>
+                  <span style={{ fontSize: "11px", color: "#64748b" }}>{uiText("WIB")}</span>
                 </div>
               </div>
 
               <div className="ptm-form-group">
-                <label className="ptm-input-label">
-                  Kriteria Penilaian OK
-                </label>
+                <label className="ptm-input-label">{uiText("Kriteria Penilaian OK")}</label>
                 <input
                   type="text"
                   value={activeTemplate.okRule}
@@ -1012,14 +982,12 @@ export default function PapercardTemplateManager({
                     handleUpdateTemplateMeta({ okRule: e.target.value })
                   }
                   className="ptm-input"
-                  placeholder="Contoh: OK jika seluruh pos normal."
+                  placeholder={uiText("Contoh: OK jika seluruh pos normal.")}
                 />
               </div>
 
               <div className="ptm-form-group">
-                <label className="ptm-input-label">
-                  Kriteria Penilaian NG
-                </label>
+                <label className="ptm-input-label">{uiText("Kriteria Penilaian NG")}</label>
                 <input
                   type="text"
                   value={activeTemplate.ngRule}
@@ -1027,7 +995,7 @@ export default function PapercardTemplateManager({
                     handleUpdateTemplateMeta({ ngRule: e.target.value })
                   }
                   className="ptm-input"
-                  placeholder="Contoh: NG jika terdapat kelainan pos."
+                  placeholder={uiText("Contoh: NG jika terdapat kelainan pos.")}
                 />
               </div>
             </div>
@@ -1037,9 +1005,7 @@ export default function PapercardTemplateManager({
                 type="button"
                 className="ptm-btn ptm-btn-ghost"
                 onClick={() => setShowTimeModal(false)}
-              >
-                Tutup
-              </button>
+              >{uiText("Tutup")}</button>
               <button
                 type="button"
                 className="ptm-btn ptm-btn-primary"
@@ -1047,9 +1013,7 @@ export default function PapercardTemplateManager({
                   await handleSaveToDatabase();
                   setShowTimeModal(false);
                 }}
-              >
-                Simpan ke Database
-              </button>
+              >{uiText("Simpan ke Database")}</button>
             </div>
           </div>
         </div>
@@ -1066,8 +1030,7 @@ export default function PapercardTemplateManager({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="ptm-modal-head">
-              <h3 className="ptm-modal-title">
-                Petugas Pengisi Papercard ({selectedDept})
+              <h3 className="ptm-modal-title">{uiText("Petugas Pengisi Papercard (")}{selectedDept})
               </h3>
               <button
                 type="button"
@@ -1078,17 +1041,14 @@ export default function PapercardTemplateManager({
               </button>
             </div>
 
-            <p className="ptm-modal-desc">
-              Daftar anggota yang ditugaskan mengisi form papercard{" "}
-              <strong>{selectedDept}</strong> pada lini{" "}
+            <p className="ptm-modal-desc">{uiText("Daftar anggota yang ditugaskan mengisi form papercard")}{" "}
+              <strong>{selectedDept}</strong>{uiText(" pada lini")}{" "}
               <strong>{currentLine?.name}</strong>.
             </p>
 
             <div style={{ marginTop: "10px" }}>
               {assignedMembers.length === 0 ? (
-                <div className="ptm-empty-worker-note">
-                  Belum ada personil pengisi {selectedDept} di lini ini.
-                </div>
+                <div className="ptm-empty-worker-note">{uiText("Belum ada personil pengisi ")}{selectedDept}{uiText(" di lini ini.")}</div>
               ) : (
                 <div className="ptm-worker-chips">
                   {assignedMembers.map((m) => (
@@ -1098,11 +1058,10 @@ export default function PapercardTemplateManager({
                     >
                       <div className="ptm-worker-info">
                         <span className="ptm-worker-name">{m.name}</span>
-                        <span className="ptm-worker-sub">
-                          NIK: {m.employeeId}{" "}
+                        <span className="ptm-worker-sub">{uiText("NIK: ")}{m.employeeId}{" "}
                           {((m as any).role === "leader" ||
                             selectedDept === "PROD") &&
-                            "· Leader"}
+                            uiText("· Leader")}
                         </span>
                       </div>
                       {m.id && (
@@ -1115,7 +1074,7 @@ export default function PapercardTemplateManager({
                               m.name ?? "Anggota"
                             )
                           }
-                          title="Lepas dari lini ini"
+                          title={uiText("Lepas dari lini ini")}
                         >
                           &times;
                         </button>
@@ -1137,21 +1096,19 @@ export default function PapercardTemplateManager({
                   className="ptm-input"
                   style={{ fontSize: "0.82rem" }}
                 >
-                  <option value="">+ Tugaskan Karyawan...</option>
-                  {candidateEmployees.map((emp) => (
+                  <option value="">{uiText("+ Tugaskan Karyawan...")}</option>
+                  {uiText(candidateEmployees.map((emp) => (
                     <option key={emp.id} value={emp.id}>
                       {emp.name} ({departmentLabel(emp.dept) || "-"})
                     </option>
-                  ))}
+                  )))}
                 </select>
                 <button
                   type="submit"
                   disabled={!assigningEmpId || assignBusy}
                   className="ptm-btn ptm-btn-primary"
                   style={{ padding: "6px 14px", fontSize: "0.82rem" }}
-                >
-                  Tugaskan
-                </button>
+                >{uiText("Tugaskan")}</button>
               </form>
             </div>
 
@@ -1160,9 +1117,7 @@ export default function PapercardTemplateManager({
                 type="button"
                 className="ptm-btn ptm-btn-primary"
                 onClick={() => setShowWorkersModal(false)}
-              >
-                Selesai
-              </button>
+              >{uiText("Selesai")}</button>
             </div>
           </div>
         </div>

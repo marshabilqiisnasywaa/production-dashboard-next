@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import CustomSelect from "@/components/shell/CustomSelect";
 import { useMemo, useState } from "react";
 import {
@@ -51,7 +53,8 @@ import {
 } from "@/data/woCloseData";
 
 function StatusPill({ label, tone = "neutral" }: { label: string; tone?: "neutral" | "success" | "danger" | "warning" }) {
-  return <span className={`status-pill ${tone}`}>{label}</span>;
+  const { text: uiText } = useUiText();
+  return <span className={`status-pill ${tone}`}>{uiText(label)}</span>;
 }
 
 function Sparkline({ success }: { success: boolean }) {
@@ -59,14 +62,15 @@ function Sparkline({ success }: { success: boolean }) {
 }
 
 function PageHeader({ eyebrow, title, subtitle, actionLabel }: { eyebrow: string; title: string; subtitle?: string; actionLabel?: string }) {
+  const { text: uiText } = useUiText();
   return (
     <header className="material-header glass-card">
       <div>
-        <div className="qc-kicker">{eyebrow}</div>
-        <h1>{title}</h1>
-        {subtitle ? <p>{subtitle}</p> : null}
+        <div className="qc-kicker">{uiText(eyebrow)}</div>
+        <h1>{uiText(title)}</h1>
+        {subtitle ? <p>{uiText(subtitle)}</p> : null}
       </div>
-      {actionLabel ? <button className="btn btn-primary">{actionLabel}</button> : null}
+      {actionLabel ? <button className="btn btn-primary">{uiText(actionLabel)}</button> : null}
     </header>
   );
 }
@@ -86,26 +90,28 @@ function KpiCard({
   onClick?: () => void;
   selected?: boolean;
 }) {
+  const { text: uiText } = useUiText();
   const success = tone === "success" || tone === "primary" || tone === "neutral";
   return (
     <button type="button" className={`repair-kpi material-kpi-card ${selected ? "selected" : ""} ${tone}`} onClick={onClick}>
-      <div className="repair-kpi-top"><span>{label}</span><span className={`repair-status ${success ? "good" : "bad"}`}>{success ? "On Target" : "Off Target"}</span></div>
+      <div className="repair-kpi-top"><span>{uiText(label)}</span><span className={`repair-status ${success ? "good" : "bad"}`}>{success ? uiText("On Target") : uiText("Off Target")}</span></div>
       <strong>{value}</strong>
-      <p>Target: {target}</p>
+      <p>{uiText("Target: ")}{target}</p>
       <Sparkline success={success} />
     </button>
   );
 }
 
 function MaterialOverview({ onNavigate }: { onNavigate: (page: string) => void }) {
+  const { text: uiText } = useUiText();
   return (
     <div className="material-page">
-      <PageHeader eyebrow="MATERIAL" title="Material Overview" subtitle="Ringkasan material dan pengendalian WO close." actionLabel="Export" />
+      <PageHeader eyebrow="MATERIAL" title={uiText("Material Overview")} subtitle={uiText("Ringkasan material dan pengendalian WO close.")} actionLabel="Export" />
       <div className="material-kpi-grid">
         {materialOverviewCards.map((card) => (
           <KpiCard
             key={card.key}
-            label={card.label}
+            label={uiText(card.label)}
             value={card.value}
             target={card.target}
             tone={card.tone}
@@ -118,17 +124,18 @@ function MaterialOverview({ onNavigate }: { onNavigate: (page: string) => void }
 }
 
 function ClearanceSummaryTab() {
+  const { text: uiText } = useUiText();
   return (
     <div className="material-section-stack">
       <div className="material-kpi-grid compact">
         {clearanceSummaryKpis.map((item, index) => (
-          <KpiCard key={item.label} label={item.label} value={item.value} target={item.target as string} tone={(item.tone as "danger" | "primary" | "neutral" | "success" | "warning" | undefined) ?? (index === 1 ? "danger" : "neutral")} />
+          <KpiCard key={item.label} label={uiText(item.label)} value={item.value} target={item.target as string} tone={(item.tone as "danger" | "primary" | "neutral" | "success" | "warning" | undefined) ?? (index === 1 ? "danger" : "neutral")} />
         ))}
       </div>
 
       <div className="material-grid-two">
         <article className="glass-card material-card">
-          <div className="card-head"><div><h3>Frekuensi Clearance per Model</h3><p>Jumlah clearances per model</p></div></div>
+          <div className="card-head"><div><h3>{uiText("Frekuensi Clearance per Model")}</h3><p>{uiText("Jumlah clearances per model")}</p></div></div>
           <div className="material-chart-wrap">
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={clearanceFrequencyData} layout="vertical" margin={{ left: 10, right: 20 }}>
@@ -147,7 +154,7 @@ function ClearanceSummaryTab() {
         </article>
 
         <article className="glass-card material-card">
-          <div className="card-head"><div><h3>Penanganan Sisa Material</h3><p>Distribusi status material</p></div></div>
+          <div className="card-head"><div><h3>{uiText("Penanganan Sisa Material")}</h3><p>{uiText("Distribusi status material")}</p></div></div>
           <div className="material-pie-wrap">
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
@@ -163,7 +170,7 @@ function ClearanceSummaryTab() {
 
       <div className="material-grid-two">
         <article className="glass-card material-card">
-          <div className="card-head"><div><h3>Masalah Dominan</h3><p>Cause by owner</p></div></div>
+          <div className="card-head"><div><h3>{uiText("Masalah Dominan")}</h3><p>{uiText("Cause by owner")}</p></div></div>
           <div className="material-chart-wrap">
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={dominantIssueData} margin={{ left: 10, right: 10 }}>
@@ -178,7 +185,7 @@ function ClearanceSummaryTab() {
         </article>
 
         <article className="glass-card material-card">
-          <div className="card-head"><div><h3>Waktu Clearance: Target vs Aktual (jam)</h3><p>Actual above target highlighted</p></div></div>
+          <div className="card-head"><div><h3>{uiText("Waktu Clearance: Target vs Aktual (jam)")}</h3><p>{uiText("Actual above target highlighted")}</p></div></div>
           <div className="material-chart-wrap">
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={clearanceTimeData} margin={{ left: 10, right: 20 }}>
@@ -187,8 +194,8 @@ function ClearanceSummaryTab() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10, fontFamily: "Montserrat" }} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="target" fill="var(--accent-amber)" radius={[4, 4, 0, 0]} name="Target" />
-                <Bar dataKey="actual" fill="var(--danger)" radius={[4, 4, 0, 0]} name="Actual" />
+                <Bar dataKey="target" fill="var(--accent-amber)" radius={[4, 4, 0, 0]} name={uiText("Target")} />
+                <Bar dataKey="actual" fill="var(--danger)" radius={[4, 4, 0, 0]} name={uiText("Actual")} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -196,7 +203,7 @@ function ClearanceSummaryTab() {
       </div>
 
       <article className="glass-card material-card">
-        <div className="card-head"><div><h3>Sekali Habis per Bulan</h3><p>YES vs NO clearance</p></div></div>
+        <div className="card-head"><div><h3>{uiText("Sekali Habis per Bulan")}</h3><p>{uiText("YES vs NO clearance")}</p></div></div>
         <div className="material-chart-wrap">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={monthlyClearanceData}>
@@ -205,8 +212,8 @@ function ClearanceSummaryTab() {
               <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10, fontFamily: "Montserrat" }} />
               <Tooltip />
               <Legend />
-              <Bar dataKey="yes" stackId="a" fill="var(--primary)" name="YES" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="no" stackId="a" fill="var(--accent-slate)" name="NO" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="yes" stackId="a" fill="var(--primary)" name={uiText("YES")} radius={[8, 8, 0, 0]} />
+              <Bar dataKey="no" stackId="a" fill="var(--accent-slate)" name={uiText("NO")} radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -216,20 +223,21 @@ function ClearanceSummaryTab() {
 }
 
 function PrepTrackingTab() {
+  const { text: uiText } = useUiText();
   return (
     <div className="material-section-stack">
       <article className="glass-card material-card">
-        <div className="card-head"><div><h3>Preparation checklist matrix</h3><p>Checklist per model and checkpoint</p></div></div>
+        <div className="card-head"><div><h3>{uiText("Preparation checklist matrix")}</h3><p>{uiText("Checklist per model and checkpoint")}</p></div></div>
         <div className="material-table-wrap">
           <table className="material-table">
             <thead>
               <tr>
-                <th>Line</th>
-                <th>Meeting Backup Material</th>
-                <th>Meeting Internal</th>
-                <th>Material Backup Tiba</th>
-                <th>Material Terkumpul</th>
-                <th>PIC</th>
+                <th>{uiText("Line")}</th>
+                <th>{uiText("Meeting Backup Material")}</th>
+                <th>{uiText("Meeting Internal")}</th>
+                <th>{uiText("Material Backup Tiba")}</th>
+                <th>{uiText("Material Terkumpul")}</th>
+                <th>{uiText("PIC")}</th>
               </tr>
             </thead>
             <tbody>
@@ -253,13 +261,13 @@ function PrepTrackingTab() {
           <article className="glass-card material-card" key={card.model}>
             <div className="card-head"><div><h3>{card.model}</h3><p>{card.note}</p></div></div>
             <div className="tracking-row">
-              <div><span>Plan</span><strong>{card.plan.toLocaleString()}</strong></div>
-              <div><span>Output</span><strong>{card.output.toLocaleString()}</strong></div>
-              <div><span>Remaining</span><strong>{card.remaining.toLocaleString()}</strong></div>
+              <div><span>{uiText("Plan")}</span><strong>{card.plan.toLocaleString()}</strong></div>
+              <div><span>{uiText("Output")}</span><strong>{card.output.toLocaleString()}</strong></div>
+              <div><span>{uiText("Remaining")}</span><strong>{card.remaining.toLocaleString()}</strong></div>
             </div>
             <div className="tracking-progress">
               <div className="progress-bar"><span style={{ width: `${card.progress}%` }} /></div>
-              <small>{card.progress}% complete</small>
+              <small>{card.progress}{uiText("% complete")}</small>
             </div>
           </article>
         ))}
@@ -269,20 +277,21 @@ function PrepTrackingTab() {
 }
 
 function HistoryTab() {
+  const { text: uiText } = useUiText();
   return (
     <article className="glass-card material-card">
-      <div className="card-head"><div><h3>Riwayat Clearance</h3><p>History of material clearance</p></div></div>
+      <div className="card-head"><div><h3>{uiText("Riwayat Clearance")}</h3><p>{uiText("History of material clearance")}</p></div></div>
       <div className="material-table-wrap">
         <table className="material-table">
           <thead>
             <tr>
-              <th>Bulan</th>
-              <th>Model</th>
-              <th>Tanggal Clearance</th>
-              <th>Penanganan</th>
-              <th>Sekali Habis</th>
-              <th>PIC</th>
-              <th>Status</th>
+              <th>{uiText("Bulan")}</th>
+              <th>{uiText("Model")}</th>
+              <th>{uiText("Tanggal Clearance")}</th>
+              <th>{uiText("Penanganan")}</th>
+              <th>{uiText("Sekali Habis")}</th>
+              <th>{uiText("PIC")}</th>
+              <th>{uiText("Status")}</th>
             </tr>
           </thead>
           <tbody>
@@ -292,9 +301,9 @@ function HistoryTab() {
                 <td>{row.model}</td>
                 <td>{row.tanggalClearance}</td>
                 <td>{row.penanganan}</td>
-                <td><StatusPill label={row.sekaliHabis} tone={row.sekaliHabis === "YES" ? "success" : "danger"} /></td>
+                <td><StatusPill label={uiText(row.sekaliHabis)} tone={row.sekaliHabis === "YES" ? "success" : "danger"} /></td>
                 <td>{row.pic}</td>
-                <td><StatusPill label={row.status} tone={row.status === "Closed" ? "success" : row.status === "Open" ? "danger" : "warning"} /></td>
+                <td><StatusPill label={uiText(row.status)} tone={row.status === "Closed" ? "success" : row.status === "Open" ? "danger" : "warning"} /></td>
               </tr>
             ))}
           </tbody>
@@ -305,18 +314,19 @@ function HistoryTab() {
 }
 
 function LossTab() {
+  const { text: uiText } = useUiText();
   return (
     <div className="material-section-stack">
       <div className="material-kpi-grid compact">
-        <KpiCard label="Total Idle Price" value="IDR 180.7K" target="Target 200K" tone="neutral" />
-        <KpiCard label="Loss per Unit vs Target" value="8.5" target="Target 6.0" tone="danger" />
-        <KpiCard label="Material Belum Selesai" value="11" target="Target 5" tone="warning" />
-        <KpiCard label="Good Material Scrap vs Target" value="42.6" target="Target 32" tone="neutral" />
+        <KpiCard label={uiText("Total Idle Price")} value="IDR 180.7K" target="Target 200K" tone="neutral" />
+        <KpiCard label={uiText("Loss per Unit vs Target")} value="8.5" target="Target 6.0" tone="danger" />
+        <KpiCard label={uiText("Material Belum Selesai")} value="11" target="Target 5" tone="warning" />
+        <KpiCard label={uiText("Good Material Scrap vs Target")} value="42.6" target="Target 32" tone="neutral" />
       </div>
 
       <div className="material-grid-two">
         <article className="glass-card material-card">
-          <div className="card-head"><div><h3>Kerugian per Departemen</h3><p>Idle price by department</p></div></div>
+          <div className="card-head"><div><h3>{uiText("Kerugian per Departemen")}</h3><p>{uiText("Idle price by department")}</p></div></div>
           <div className="material-pie-wrap">
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
@@ -330,7 +340,7 @@ function LossTab() {
         </article>
 
         <article className="glass-card material-card">
-          <div className="card-head"><div><h3>Good Material Scrap per Bulan</h3><p>Actual vs target</p></div></div>
+          <div className="card-head"><div><h3>{uiText("Good Material Scrap per Bulan")}</h3><p>{uiText("Actual vs target")}</p></div></div>
           <div className="material-chart-wrap">
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={goodMaterialScrapData}>
@@ -339,8 +349,8 @@ function LossTab() {
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10, fontFamily: "Montserrat" }} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="actual" fill="var(--primary)" name="Actual" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="target" fill="var(--accent-amber)" name="Target" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="actual" fill="var(--primary)" name={uiText("Actual")} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="target" fill="var(--accent-amber)" name={uiText("Target")} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -348,16 +358,16 @@ function LossTab() {
       </div>
 
       <article className="glass-card material-card">
-        <div className="card-head"><div><h3>Kerugian per Model</h3><p>Idle qty and loss per unit</p></div></div>
+        <div className="card-head"><div><h3>{uiText("Kerugian per Model")}</h3><p>{uiText("Idle qty and loss per unit")}</p></div></div>
         <div className="material-table-wrap">
           <table className="material-table">
             <thead>
               <tr>
-                <th>Model</th>
-                <th>Idle Qty</th>
-                <th>Idle Price</th>
-                <th>Loss / Unit vs Target</th>
-                <th>Status</th>
+                <th>{uiText("Model")}</th>
+                <th>{uiText("Idle Qty")}</th>
+                <th>{uiText("Idle Price")}</th>
+                <th>{uiText("Loss / Unit vs Target")}</th>
+                <th>{uiText("Status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -367,7 +377,7 @@ function LossTab() {
                   <td>{row.idleQty}</td>
                   <td>{row.idlePrice.toLocaleString()}</td>
                   <td>{row.lossUnit}</td>
-                  <td><StatusPill label={row.status} tone={row.status === "Closed" ? "success" : row.status === "Monitoring" ? "warning" : "danger"} /></td>
+                  <td><StatusPill label={uiText(row.status)} tone={row.status === "Closed" ? "success" : row.status === "Monitoring" ? "warning" : "danger"} /></td>
                 </tr>
               ))}
             </tbody>
@@ -376,19 +386,19 @@ function LossTab() {
       </article>
 
       <article className="glass-card material-card">
-        <div className="card-head"><div><h3>Rencana Aksi</h3><p>Improvement actions</p></div></div>
+        <div className="card-head"><div><h3>{uiText("Rencana Aksi")}</h3><p>{uiText("Improvement actions")}</p></div></div>
         <div className="material-table-wrap">
           <table className="material-table">
             <thead>
-              <tr><th>PIC</th><th>Dept</th><th>Due date</th><th>Status</th></tr>
+              <tr><th>{uiText("PIC")}</th><th>{uiText("Dept")}</th><th>{uiText("Due date")}</th><th>{uiText("Status")}</th></tr>
             </thead>
             <tbody>
               {actionPlanRows.map((row) => (
                 <tr key={`${row.pic}-${row.dept}`}>
                   <td>{row.pic}</td>
-                  <td>{row.dept}</td>
+                  <td>{uiText(row.dept)}</td>
                   <td>{row.dueDate}</td>
-                  <td><StatusPill label={row.status} tone={row.status === "On track" ? "success" : row.status === "Pending" ? "warning" : "neutral"} /></td>
+                  <td><StatusPill label={uiText(row.status)} tone={row.status === "On track" ? "success" : row.status === "Pending" ? "warning" : "neutral"} /></td>
                 </tr>
               ))}
             </tbody>
@@ -400,10 +410,11 @@ function LossTab() {
 }
 
 function ClearancePage() {
+  const { text: uiText } = useUiText();
   const [tab, setTab] = useState<ClearanceTab>("Ringkasan");
   return (
     <div className="material-page">
-      <PageHeader eyebrow="MATERIAL" title="Clearance Discontinue" subtitle="Penghabisan material saat model berhenti diproduksi." actionLabel="Export" />
+      <PageHeader eyebrow="MATERIAL" title={uiText("Clearance Discontinue")} subtitle={uiText("Penghabisan material saat model berhenti diproduksi.")} actionLabel="Export" />
       <div className="material-tabs">
         {(["Ringkasan", "Persiapan & Tracking", "Riwayat", "Kerugian Material"] as ClearanceTab[]).map((tabName) => (
           <button key={tabName} type="button" className={tab === tabName ? "active" : ""} onClick={() => setTab(tabName)}>{tabName}</button>
@@ -415,6 +426,7 @@ function ClearancePage() {
 }
 
 function NewModelPage() {
+  const { text: uiText } = useUiText();
   const total = newModelRows.length;
   const running = newModelRows.filter((row) => row.status === "On track").length;
   const completed = newModelRows.filter((row) => row.status === "Completed").length;
@@ -422,20 +434,20 @@ function NewModelPage() {
 
   return (
     <div className="material-page">
-      <PageHeader eyebrow="MATERIAL" title="New Model Progress" subtitle="Progress model baru sesuai milestone pembuatan material." actionLabel="Export" />
+      <PageHeader eyebrow="MATERIAL" title={uiText("New Model Progress")} subtitle={uiText("Progress model baru sesuai milestone pembuatan material.")} actionLabel="Export" />
       <div className="material-kpi-grid compact">
-        <KpiCard label="Total Model Baru" value={total} target="Target 6" tone="neutral" />
-        <KpiCard label="Sedang Berjalan" value={running} target="Target 3" tone="primary" />
-        <KpiCard label="Selesai" value={completed} target="Target 2" tone="success" />
-        <KpiCard label="Terlambat" value={delayed} target="Target 1" tone="danger" />
+        <KpiCard label={uiText("Total Model Baru")} value={total} target="Target 6" tone="neutral" />
+        <KpiCard label={uiText("Sedang Berjalan")} value={running} target="Target 3" tone="primary" />
+        <KpiCard label={uiText("Selesai")} value={completed} target="Target 2" tone="success" />
+        <KpiCard label={uiText("Terlambat")} value={delayed} target="Target 1" tone="danger" />
       </div>
 
       <article className="glass-card material-card">
-        <div className="card-head"><div><h3>Model baru</h3><p>Progress and milestone checklist</p></div></div>
+        <div className="card-head"><div><h3>{uiText("Model baru")}</h3><p>{uiText("Progress and milestone checklist")}</p></div></div>
         <div className="material-table-wrap">
           <table className="material-table">
             <thead>
-              <tr><th>Model</th><th>Target Launch</th><th>Milestone</th><th>Progress %</th><th>PIC</th><th>Status</th></tr>
+              <tr><th>{uiText("Model")}</th><th>{uiText("Target Launch")}</th><th>{uiText("Milestone")}</th><th>{uiText("Progress %")}</th><th>{uiText("PIC")}</th><th>{uiText("Status")}</th></tr>
             </thead>
             <tbody>
               {newModelRows.map((row) => (
@@ -448,7 +460,7 @@ function NewModelPage() {
                     <small>{row.progress}%</small>
                   </td>
                   <td>{row.pic}</td>
-                  <td><StatusPill label={row.status} tone={row.status === "Completed" ? "success" : row.status === "Delayed" ? "danger" : "warning"} /></td>
+                  <td><StatusPill label={uiText(row.status)} tone={row.status === "Completed" ? "success" : row.status === "Delayed" ? "danger" : "warning"} /></td>
                 </tr>
               ))}
             </tbody>
@@ -461,6 +473,7 @@ function NewModelPage() {
 }
 
 function WoClosePage() {
+  const { text: uiText } = useUiText();
   const [workOrderType, setWorkOrderType] = useState<WoType>("Non-Standard");
   const [selectedKpiKey, setSelectedKpiKey] = useState<"launch" | "completion" | "closing">("closing");
   const [search, setSearch] = useState("");
@@ -479,40 +492,40 @@ function WoClosePage() {
 
   return (
     <div className="material-page wo-close-page">
-      <PageHeader eyebrow="MATERIAL" title="WO Close Rate Monitoring" subtitle="工单按时关闭率" actionLabel="Export" />
+      <PageHeader eyebrow="MATERIAL" title={uiText("WO Close Rate Monitoring")} subtitle={uiText("工单按时关闭率")} actionLabel="Export" />
 
       <div className="wo-filter-card glass-card">
         <div className="wo-filter-head">
           <div>
-            <strong>Filter</strong>
+            <strong>{uiText("Filter")}</strong>
           </div>
-          <button type="button" className="btn btn-outline">Retract</button>
+          <button type="button" className="btn btn-outline">{uiText("Retract")}</button>
         </div>
         <div className="wo-filter-grid">
-          <label><span>Report type</span><CustomSelect defaultValue="Daily report" options={["Daily report", "Weekly report", "Monthly report"]} /></label>
-          <label><span>Target closing time</span><div className="range-field"><input defaultValue="2026-03-01" /><span>to</span><input defaultValue="2026-03-13" /></div></label>
-          <label><span>Workshop type</span><CustomSelect defaultValue="Mass production" options={["Mass production", "All"]} /></label>
-          <label><span>Work order type</span><CustomSelect value={workOrderType} options={["Standard", "Non-Standard"]} onChange={(next) => setWorkOrderType(next as WoType)} /></label>
-          <label><span>Work order classification</span><button type="button" className="chip-select">all +5</button></label>
-          <label><span>Factory Area</span><button type="button" className="chip-select">all +4</button></label>
-          <label><span>Workshop</span><button type="button" className="chip-select">all +11</button></label>
-          <label><span>Line ID</span><button type="button" className="chip-select">all +154</button></label>
-          <div className="wo-filter-actions"><button className="btn btn-primary">Search</button><button className="btn btn-outline">Reset</button></div>
+          <label><span>{uiText("Report type")}</span><CustomSelect defaultValue="Daily report" options={["Daily report", "Weekly report", "Monthly report"]} /></label>
+          <label><span>{uiText("Target closing time")}</span><div className="range-field"><input defaultValue="2026-03-01" /><span>{uiText("to")}</span><input defaultValue="2026-03-13" /></div></label>
+          <label><span>{uiText("Workshop type")}</span><CustomSelect defaultValue="Mass production" options={["Mass production", "All"]} /></label>
+          <label><span>{uiText("Work order type")}</span><CustomSelect value={workOrderType} options={["Standard", "Non-Standard"]} onChange={(next) => setWorkOrderType(next as WoType)} /></label>
+          <label><span>{uiText("Work order classification")}</span><button type="button" className="chip-select">{uiText("all +5")}</button></label>
+          <label><span>{uiText("Factory Area")}</span><button type="button" className="chip-select">{uiText("all +4")}</button></label>
+          <label><span>{uiText("Workshop")}</span><button type="button" className="chip-select">{uiText("all +11")}</button></label>
+          <label><span>{uiText("Line ID")}</span><button type="button" className="chip-select">{uiText("all +154")}</button></label>
+          <div className="wo-filter-actions"><button className="btn btn-primary">{uiText("Search")}</button><button className="btn btn-outline">{uiText("Reset")}</button></div>
         </div>
       </div>
 
       <div className="wo-kpi-wrap">
         <div className="material-kpi-group">
-          <h3>Work orders are prepared on time</h3>
+          <h3>{uiText("Work orders are prepared on time")}</h3>
           <div className="material-kpi-grid compact wo-kpi-grid">
-            <KpiCard label={woCloseKpiByType[workOrderType].launch.label} value={`${woCloseKpiByType[workOrderType].launch.value.toFixed(2)}%`} target={`${woCloseKpiByType[workOrderType].launch.target.toFixed(2)}%`} tone={woCloseKpiByType[workOrderType].launch.value >= woCloseKpiByType[workOrderType].launch.target ? "primary" : "danger"} selected={selectedKpiKey === "launch"} onClick={() => setSelectedKpiKey("launch")} />
+            <KpiCard label={uiText(woCloseKpiByType[workOrderType].launch.label)} value={`${woCloseKpiByType[workOrderType].launch.value.toFixed(2)}%`} target={`${woCloseKpiByType[workOrderType].launch.target.toFixed(2)}%`} tone={woCloseKpiByType[workOrderType].launch.value >= woCloseKpiByType[workOrderType].launch.target ? "primary" : "danger"} selected={selectedKpiKey === "launch"} onClick={() => setSelectedKpiKey("launch")} />
           </div>
         </div>
         <div className="material-kpi-group">
-          <h3>Work order process progress</h3>
+          <h3>{uiText("Work order process progress")}</h3>
           <div className="material-kpi-grid compact wo-kpi-grid">
-            <KpiCard label={woCloseKpiByType[workOrderType].completion.label} value={`${woCloseKpiByType[workOrderType].completion.value.toFixed(2)}%`} target={`${woCloseKpiByType[workOrderType].completion.target.toFixed(2)}%`} tone={woCloseKpiByType[workOrderType].completion.value >= woCloseKpiByType[workOrderType].completion.target ? "primary" : "danger"} selected={selectedKpiKey === "completion"} onClick={() => setSelectedKpiKey("completion")} />
-            <KpiCard label={woCloseKpiByType[workOrderType].closing.label} value={`${woCloseKpiByType[workOrderType].closing.value.toFixed(2)}%`} target={`${woCloseKpiByType[workOrderType].closing.target.toFixed(2)}%`} tone={woCloseKpiByType[workOrderType].closing.value >= woCloseKpiByType[workOrderType].closing.target ? "primary" : "danger"} selected={selectedKpiKey === "closing"} onClick={() => setSelectedKpiKey("closing")} />
+            <KpiCard label={uiText(woCloseKpiByType[workOrderType].completion.label)} value={`${woCloseKpiByType[workOrderType].completion.value.toFixed(2)}%`} target={`${woCloseKpiByType[workOrderType].completion.target.toFixed(2)}%`} tone={woCloseKpiByType[workOrderType].completion.value >= woCloseKpiByType[workOrderType].completion.target ? "primary" : "danger"} selected={selectedKpiKey === "completion"} onClick={() => setSelectedKpiKey("completion")} />
+            <KpiCard label={uiText(woCloseKpiByType[workOrderType].closing.label)} value={`${woCloseKpiByType[workOrderType].closing.value.toFixed(2)}%`} target={`${woCloseKpiByType[workOrderType].closing.target.toFixed(2)}%`} tone={woCloseKpiByType[workOrderType].closing.value >= woCloseKpiByType[workOrderType].closing.target ? "primary" : "danger"} selected={selectedKpiKey === "closing"} onClick={() => setSelectedKpiKey("closing")} />
           </div>
         </div>
       </div>
@@ -532,7 +545,7 @@ function WoClosePage() {
       </div>
 
       <article className="glass-card material-card wo-chart-card">
-        <div className="card-head"><div><h3>WO Close Achievement 2026</h3><p>Day rate and closed rate trend</p></div></div>
+        <div className="card-head"><div><h3>{uiText("WO Close Achievement 2026")}</h3><p>{uiText("Day rate and closed rate trend")}</p></div></div>
         <div className="material-chart-wrap wo-achievement-wrap">
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={woAchievementData} margin={{ top: 12, right: 18, left: 8, bottom: 8 }}>
@@ -551,9 +564,9 @@ function WoClosePage() {
                 labelStyle={{ color: "var(--text)", fontWeight: 600 }}
               />
               <Legend wrapperStyle={{ paddingTop: 12, fontSize: 11 }} iconType="circle" />
-              <Area type="monotone" dataKey="dayRate" name="Day Rate" stroke="var(--primary)" strokeWidth={2} fill="url(#dayRateFill)" fillOpacity={1} />
-              <Line type="monotone" dataKey="closedRate" name="Closed Rate" stroke="var(--primary)" strokeWidth={3} dot={{ r: 5, fill: "var(--primary)", stroke: "var(--card)", strokeWidth: 2 }} activeDot={{ r: 7, fill: "var(--primary)", stroke: "var(--card)", strokeWidth: 2 }} />
-              <Line type="monotone" dataKey="target" name="Target" stroke="var(--accent-amber)" strokeDasharray="6 6" strokeWidth={2} dot={false} />
+              <Area type="monotone" dataKey="dayRate" name={uiText("Day Rate")} stroke="var(--primary)" strokeWidth={2} fill="url(#dayRateFill)" fillOpacity={1} />
+              <Line type="monotone" dataKey="closedRate" name={uiText("Closed Rate")} stroke="var(--primary)" strokeWidth={3} dot={{ r: 5, fill: "var(--primary)", stroke: "var(--card)", strokeWidth: 2 }} activeDot={{ r: 7, fill: "var(--primary)", stroke: "var(--card)", strokeWidth: 2 }} />
+              <Line type="monotone" dataKey="target" name={uiText("Target")} stroke="var(--accent-amber)" strokeDasharray="6 6" strokeWidth={2} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -561,7 +574,7 @@ function WoClosePage() {
 
       <div className="material-grid-two">
         <article className="glass-card material-card">
-          <div className="card-head"><div><h3>Quantity of work order distribution</h3><p>Closed on time vs total</p></div><button className="icon-btn">Export</button></div>
+          <div className="card-head"><div><h3>{uiText("Quantity of work order distribution")}</h3><p>{uiText("Closed on time vs total")}</p></div><button className="icon-btn">{uiText("Export")}</button></div>
           <div className="material-chart-wrap">
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={filteredDistribution} margin={{ top: 20, right: 10, left: 10, bottom: 20 }}>
@@ -571,17 +584,17 @@ function WoClosePage() {
                 <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontSize: 10, fontFamily: "Montserrat" }} domain={[0, 100]} />
                 <Tooltip />
                 <Legend />
-                <Bar yAxisId="left" dataKey="closedOnTime" name="Number of work orders closed on time" fill="var(--primary)" radius={[8, 8, 0, 0]} />
-                <Bar yAxisId="left" dataKey="total" name="Total number of work orders" fill="var(--accent-teal)" radius={[8, 8, 0, 0]} />
-                <Line yAxisId="right" type="monotone" dataKey="rate" name="On-time closing rate of work orders" stroke="var(--primary)" strokeWidth={2} dot={{ r: 3 }} />
-                <Line yAxisId="right" type="monotone" dataKey="target" name="Target of Standard" stroke="var(--accent-amber)" strokeDasharray="6 6" strokeWidth={2} dot={false} />
+                <Bar yAxisId="left" dataKey="closedOnTime" name={uiText("Number of work orders closed on time")} fill="var(--primary)" radius={[8, 8, 0, 0]} />
+                <Bar yAxisId="left" dataKey="total" name={uiText("Total number of work orders")} fill="var(--accent-teal)" radius={[8, 8, 0, 0]} />
+                <Line yAxisId="right" type="monotone" dataKey="rate" name={uiText("On-time closing rate of work orders")} stroke="var(--primary)" strokeWidth={2} dot={{ r: 3 }} />
+                <Line yAxisId="right" type="monotone" dataKey="target" name={uiText("Target of Standard")} stroke="var(--accent-amber)" strokeDasharray="6 6" strokeWidth={2} dot={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </article>
 
         <article className="glass-card material-card">
-          <div className="card-head"><div><h3>Factory Achievements</h3><p>Achievement by factory</p></div></div>
+          <div className="card-head"><div><h3>{uiText("Factory Achievements")}</h3><p>{uiText("Achievement by factory")}</p></div></div>
           <div className="material-chart-wrap">
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={factoryAchievementByType[workOrderType]} margin={{ top: 16, right: 10, left: 10, bottom: 20 }}>
@@ -602,7 +615,7 @@ function WoClosePage() {
 
       <div className="material-grid-two">
         <article className="glass-card material-card ranking-card">
-          <div className="card-head"><div><h3>Workshop ranking</h3><p>By rate</p></div></div>
+          <div className="card-head"><div><h3>{uiText("Workshop ranking")}</h3><p>{uiText("By rate")}</p></div></div>
           <div className="ranking-list">
             {workshopRankingByType[workOrderType].map((item) => (
               <div className="ranking-item" key={item.name}>
@@ -615,7 +628,7 @@ function WoClosePage() {
         </article>
 
         <article className="glass-card material-card ranking-card">
-          <div className="card-head"><div><h3>Line ranking</h3><p>By rate</p></div></div>
+          <div className="card-head"><div><h3>{uiText("Line ranking")}</h3><p>{uiText("By rate")}</p></div></div>
           <div className="ranking-list">
             {lineRankingByType[workOrderType].map((name) => (
               <div className="ranking-item" key={name}>

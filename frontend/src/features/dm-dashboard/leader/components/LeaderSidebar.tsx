@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useState } from "react";
 import {
@@ -21,6 +23,7 @@ interface Props {
 }
 
 export function LeaderSidebar({ open = false, onNavigate }: Props) {
+  const { text: uiText } = useUiText();
   const [me, setMe] = useState<DmMe | null>(null);
 
   useEffect(() => {
@@ -108,7 +111,7 @@ export function LeaderSidebar({ open = false, onNavigate }: Props) {
           <span className="dml-logo">
             <IconGauge size={22} />
           </span>
-          <strong>DM Digital</strong>
+          <strong>{uiText("DM Digital")}</strong>
         </>
       }
       sections={sections}

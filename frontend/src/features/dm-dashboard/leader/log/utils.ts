@@ -3,14 +3,13 @@ import type { ActivityEntry, AttendanceEntry } from "./types";
 
 
 const pad = (n: number) => String(n).padStart(2, "0");
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 
 export const localDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 /** "2026-10-21" -> "21 Okt 2026" */
-export const formatDate = (date: string) => {
+export const formatDate = (date: string, locale = "id-ID") => {
   const [y, m, d] = date.split("-").map(Number);
-  return `${d} ${MONTHS[m - 1]} ${y}`;
+  return new Date(y, m - 1, d).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
 };
 
 /** ISO -> "08:18" */
@@ -20,9 +19,9 @@ export const formatHm = (iso: string) => {
 };
 
 /** ISO -> "21 Okt 2026, 08:18:05" */
-export const formatDateTime = (iso: string) => {
+export const formatDateTime = (iso: string, locale = "id-ID") => {
   const d = new Date(iso);
-  return `${formatDate(localDate(d))}, ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  return `${formatDate(localDate(d), locale)}, ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
 export const addDays = (date: string, n: number) => {
@@ -36,10 +35,10 @@ export const slotEndMs = (date: string, start: string, durationMin: number) =>
 
 /* ---------- CSV (audit export) ---------- */
 
-export function activityToCsv(rows: ActivityEntry[]): string {
+export function activityToCsv(rows: ActivityEntry[], locale = "id-ID"): string {
   const head = ["Waktu", "User", "Role", "Aksi", "Objek", "Sebelum", "Sesudah", "Keterangan kehadiran"];
   const lines = rows.map((r) =>
-    [formatDateTime(r.at), r.user, r.role, r.action, r.object, r.before ?? "", r.after ?? "", r.attendanceLateness ?? ""]
+    [formatDateTime(r.at, locale), r.user, r.role, r.action, r.object, r.before ?? "", r.after ?? "", r.attendanceLateness ?? ""]
       .map((c) => `"${String(c).replace(/"/g, '""')}"`)
       .join(","),
   );

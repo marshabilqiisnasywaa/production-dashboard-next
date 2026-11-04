@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useEffect, useMemo, useState } from "react";
 import { QC_PIC_NAME, useQcPic } from "@/features/pic-qc/QcPicContext";
 import type { PicRepairInput, PicRepairRecord, PicRepairStatus } from "@/features/pic-repair/RepairPicContext";
@@ -32,7 +34,8 @@ function formatDisplayDate(iso: string) {
   return `${parts[2]} ${monthNames[Number(parts[1]) - 1] ?? parts[1]} ${parts[0]}`;
 }
 
-export default function PicQcAbnormality() {  const { records, addRecord } = useQcPic();
+export default function PicQcAbnormality() {
+  const { text: uiText } = useUiText();  const { records, addRecord } = useQcPic();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [areaFilter, setAreaFilter] = useState("All");
@@ -134,19 +137,19 @@ export default function PicQcAbnormality() {  const { records, addRecord } = use
     <div className="abnormality-page pic-page">
       <header className="qc-page-header">
         <div>
-          <div className="qc-kicker">REPORTS</div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Abnormality Log</h1>
-          <p>All recorded findings and issue tracking for QC area.</p>
+          <div className="qc-kicker">{uiText("REPORTS")}</div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{uiText("Abnormality Log")}</h1>
+          <p>{uiText("All recorded findings and issue tracking for QC area.")}</p>
         </div>
         <div className="qc-toolbar">
-          <button className="qc-secondary-button" type="button">07 Oct 2026</button>
+          <button className="qc-secondary-button" type="button">{uiText("07 Oct 2026")}</button>
         </div>
       </header>
 
       <section className="qc-kpi-grid abnormality-kpis pic-kpis">
         {summary.map((item) => (
           <article key={item.label} className={`sq-kpi ${metricCardClass[item.tone]}`}>
-            <div className="sq-kpi-head flex justify-between items-start"><span>{item.label}</span><div className={`p-2.5 rounded-xl ${item.iconBox}`}><item.icon className="w-5 h-5" /></div></div>
+            <div className="sq-kpi-head flex justify-between items-start"><span>{uiText(item.label)}</span><div className={`p-2.5 rounded-xl ${item.iconBox}`}><item.icon className="w-5 h-5" /></div></div>
             <strong className={metricValueClass[item.tone]}>{item.value}</strong>
             <p>{item.helper}</p>
           </article>
@@ -156,34 +159,34 @@ export default function PicQcAbnormality() {  const { records, addRecord } = use
       <section className="sq-panel">
         <div className="sq-panel-head">
           <div>
-            <h2>Abnormality Findings</h2>
-            <p>Click the camera icon to view photo evidence.</p>
+            <h2>{uiText("Abnormality Findings")}</h2>
+            <p>{uiText("Click the camera icon to view photo evidence.")}</p>
           </div>
-          <button type="button" className="repair-primary text-white font-bold" style={{ background: "linear-gradient(135deg,var(--accent-1),var(--accent-2))", color: "#fff" }} onClick={() => setModalOpen(true)}>+ Add Issue</button>
+          <button type="button" className="repair-primary text-white font-bold" style={{ background: "linear-gradient(135deg,var(--accent-1),var(--accent-2))", color: "#fff" }} onClick={() => setModalOpen(true)}>{uiText("+ Add Issue")}</button>
         </div>
 
         <div className="abnormality-filter-row">
           <label className="abnormality-search">
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search problems, causes..." />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={uiText("Search problems, causes...")} />
           </label>
           <CustomSelect value={areaFilter} options={[{ value: "All", label: "All Areas" }, ...areaOptions]} onChange={setAreaFilter} ariaLabel="Area filter" />
           <CustomSelect value={factorFilter} options={[{ value: "All", label: "All 5M1E Factors" }, ...factorOptions]} onChange={setFactorFilter} ariaLabel="Factor filter" />
           <CustomSelect value={statusFilter} options={[{ value: "All", label: "All Statuses" }, ...statusOptions]} onChange={setStatusFilter} ariaLabel="Status filter" />
-          <button type="button" className="qc-secondary-button abnormality-reset" onClick={resetFilters}>Reset</button>
+          <button type="button" className="qc-secondary-button abnormality-reset" onClick={resetFilters}>{uiText("Reset")}</button>
         </div>
 
         {filteredRows.length === 0 ? (
-          <div className="abnormality-empty">No findings match the filters.</div>
+          <div className="abnormality-empty">{uiText("No findings match the filters.")}</div>
         ) : (
           <>
             <AbnormalityTable rows={pageRows} onPreview={setPreview} />
             <div className="pic-pagination">
-              <span>Showing {startIndex + 1}-{Math.min(startIndex + pageSize, filteredRows.length)} of {filteredRows.length} data</span>
+              <span>{uiText("Showing ")}{startIndex + 1}-{Math.min(startIndex + pageSize, filteredRows.length)}{uiText(" of ")}{filteredRows.length}{uiText(" data")}</span>
               <div className="pic-pagination-controls">
                 <CustomSelect value={String(pageSize)} options={[{ value: "5", label: "5 / page" }, { value: "10", label: "10 / page" }]} onChange={(next) => setPageSize(Number(next))} ariaLabel="Rows per page" />
-                <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Previous</button>
+                <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>{uiText("Previous")}</button>
                 <b>{safePage} / {totalPages}</b>
-                <button type="button" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Next</button>
+                <button type="button" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>{uiText("Next")}</button>
               </div>
             </div>
           </>
@@ -194,28 +197,28 @@ export default function PicQcAbnormality() {  const { records, addRecord } = use
         <div className="repair-modal-backdrop" onMouseDown={closeModal}>
           <form className="repair-dialog" onMouseDown={(event) => event.stopPropagation()} onSubmit={submit}>
             <div className="repair-dialog-head">
-              <div><h2>Add Issue</h2><p>New findings are automatically recorded under {QC_PIC_NAME}.</p></div>
-              <button type="button" aria-label="Close" onClick={closeModal}>✕</button>
+              <div><h2>{uiText("Add Issue")}</h2><p>{uiText("New findings are automatically recorded under ")}{QC_PIC_NAME}.</p></div>
+              <button type="button" aria-label={uiText("Close")} onClick={closeModal}>✕</button>
             </div>
             <div className="repair-form">
               <div className="form-grid">
-                <label>Issue Date<input type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} required /></label>
-                <label>Line Area<CustomSelect value={form.area} options={areaOptions} onChange={(next) => setForm({ ...form, area: next })} /></label>
+                <label>{uiText("Issue Date")}<input type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} required /></label>
+                <label>{uiText("Line Area")}<CustomSelect value={form.area} options={areaOptions} onChange={(next) => setForm({ ...form, area: next })} /></label>
               </div>
-              <label>Problem Factor (5M1E)<CustomSelect value={form.factor} options={factorOptions} onChange={(next) => setForm({ ...form, factor: next })} /></label>
-              <label>Problem Description<textarea rows={3} value={form.problem} onChange={(event) => setForm({ ...form, problem: event.target.value })} placeholder="Describe the problem found" required /></label>
+              <label>{uiText("Problem Factor (5M1E)")}<CustomSelect value={form.factor} options={factorOptions} onChange={(next) => setForm({ ...form, factor: next })} /></label>
+              <label>{uiText("Problem Description")}<textarea rows={3} value={form.problem} onChange={(event) => setForm({ ...form, problem: event.target.value })} placeholder={uiText("Describe the problem found")} required /></label>
               <PicPlanUpload values={attachment ? [attachment] : []} onSelect={(files) => { const file = files[0]; if (file) selectFile(file); }} onRemove={() => clearFile()} />
-              <label>Root Cause<textarea rows={2} value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} placeholder="Root cause" /></label>
-              <label>Effect (Impact)<textarea rows={2} value={form.impact} onChange={(event) => setForm({ ...form, impact: event.target.value })} placeholder="Operational impact, e.g. Line Stop 10 Min" /></label>
-              <label>Solution Plan<textarea rows={2} value={form.countermeasure} onChange={(event) => setForm({ ...form, countermeasure: event.target.value })} placeholder="Solution plan for Follow-up" /></label>
+              <label>{uiText("Root Cause")}<textarea rows={2} value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} placeholder={uiText("Root cause")} /></label>
+              <label>{uiText("Effect (Impact)")}<textarea rows={2} value={form.impact} onChange={(event) => setForm({ ...form, impact: event.target.value })} placeholder={uiText("Operational impact, e.g. Line Stop 10 Min")} /></label>
+              <label>{uiText("Solution Plan")}<textarea rows={2} value={form.countermeasure} onChange={(event) => setForm({ ...form, countermeasure: event.target.value })} placeholder={uiText("Solution plan for Follow-up")} /></label>
               <div className="form-grid">
-                <label>Due Date<input type="date" value={form.dueDate} onChange={(event) => setForm({ ...form, dueDate: event.target.value })} /></label>
-                <label>Status<CustomSelect value={form.status} options={statusOptions} onChange={(next) => setForm({ ...form, status: next as PicRepairStatus })} /></label>
+                <label>{uiText("Due Date")}<input type="date" value={form.dueDate} onChange={(event) => setForm({ ...form, dueDate: event.target.value })} /></label>
+                <label>{uiText("Status")}<CustomSelect value={form.status} options={statusOptions} onChange={(next) => setForm({ ...form, status: next as PicRepairStatus })} /></label>
               </div>
             </div>
             <div className="repair-dialog-actions">
-              <button type="button" className="repair-outline" onClick={closeModal}>Cancel</button>
-              <button type="submit" className="repair-primary">Save Issue</button>
+              <button type="button" className="repair-outline" onClick={closeModal}>{uiText("Cancel")}</button>
+              <button type="submit" className="repair-primary">{uiText("Save Issue")}</button>
             </div>
           </form>
         </div>

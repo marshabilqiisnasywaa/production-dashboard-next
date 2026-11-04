@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
@@ -11,6 +13,7 @@ export default function WorkshopHodSection({ workshop, disabled }: {
   workshop: DmWorkshop;
   disabled?: boolean;
 }) {
+  const { text: uiText } = useUiText();
   const [saved, setSaved] = useState<DmWorkshopHod | null>(null);
   const [data, setData] = useState<DmWorkshopHod>(EMPTY_HOD);
   const [editing, setEditing] = useState(false);
@@ -95,43 +98,43 @@ export default function WorkshopHodSection({ workshop, disabled }: {
 
   return (
     <div className="dm-ws-supervisors dm-ws-hod">
-      {loading ? <span role="status">Memuat HOD...</span> : loadError ? (
+      {loading ? <span role="status">{uiText("Memuat HOD...")}</span> : loadError ? (
         <div role="alert">
           <p>{loadError}</p>
-          <button type="button" className="dm-admin-btn is-tonal" onClick={() => setAttempt((value) => value + 1)}>Coba lagi</button>
+          <button type="button" className="dm-admin-btn is-tonal" onClick={() => setAttempt((value) => value + 1)}>{uiText("Coba lagi")}</button>
         </div>
       ) : editing ? (
         <form className="dm-ws-sup-form" onSubmit={save}>
-          <label className="dm-ws-edit-label" htmlFor={fieldId("name")}>Nama HOD</label>
+          <label className="dm-ws-edit-label" htmlFor={fieldId("name")}>{uiText("Nama HOD")}</label>
           <input id={fieldId("name")} className="dm-admin-input" value={data.name} maxLength={120} required disabled={busy} onChange={(event) => setData({ ...data, name: event.target.value })} />
-          <label className="dm-ws-edit-label" htmlFor={fieldId("position")}>Jabatan</label>
+          <label className="dm-ws-edit-label" htmlFor={fieldId("position")}>{uiText("Jabatan")}</label>
           <input id={fieldId("position")} className="dm-admin-input" value={data.position} maxLength={120} required disabled={busy} onChange={(event) => setData({ ...data, position: event.target.value })} />
-          <label className="dm-ws-edit-label" htmlFor={fieldId("phone")}>Nomor telepon</label>
+          <label className="dm-ws-edit-label" htmlFor={fieldId("phone")}>{uiText("Nomor telepon")}</label>
           <input id={fieldId("phone")} type="tel" className="dm-admin-input" value={data.workPhone ?? ""} maxLength={32} disabled={busy} onChange={(event) => setData({ ...data, workPhone: event.target.value })} />
-          <label className="dm-ws-edit-label" htmlFor={fieldId("photo")}>Foto (opsional)</label>
+          <label className="dm-ws-edit-label" htmlFor={fieldId("photo")}>{uiText("Foto (opsional)")}</label>
           <input id={fieldId("photo")} type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={pickPhoto} aria-describedby={fieldId("photo-help")} />
-          <small id={fieldId("photo-help")}>JPEG, PNG, atau WebP. Maksimal 2 MB.</small>
+          <small id={fieldId("photo-help")}>{uiText("JPEG, PNG, atau WebP. Maksimal 2 MB.")}</small>
           {data.photoUrl && (
             <div className="dm-ws-sup-actions">
-              <img className="dm-ws-hod-preview" src={data.photoUrl} alt="Pratinjau foto HOD" />
-              <button type="button" className="dm-admin-btn is-tonal" disabled={busy} onClick={() => setData({ ...data, photoUrl: null })}>Hapus foto</button>
+              <img className="dm-ws-hod-preview" src={data.photoUrl} alt={uiText("Pratinjau foto HOD")} />
+              <button type="button" className="dm-admin-btn is-tonal" disabled={busy} onClick={() => setData({ ...data, photoUrl: null })}>{uiText("Hapus foto")}</button>
             </div>
           )}
-          {error && <p className="dm-admin-inline-error" role="alert">{error}</p>}
+          {error && <p className="dm-admin-inline-error" role="alert">{uiText(error)}</p>}
           <div className="dm-ws-sup-actions">
-            <button type="submit" className="dm-admin-btn is-primary" disabled={busy}>{saving ? "Menyimpan..." : reading ? "Mengunggah foto..." : "Simpan"}</button>
-            {saved && <button type="button" className="dm-admin-btn is-tonal" disabled={busy} onClick={cancelEdit}>Batal</button>}
+            <button type="submit" className="dm-admin-btn is-primary" disabled={busy}>{saving ? uiText("Menyimpan...") : reading ? uiText("Mengunggah foto...") : uiText("Simpan")}</button>
+            {saved && <button type="button" className="dm-admin-btn is-tonal" disabled={busy} onClick={cancelEdit}>{uiText("Batal")}</button>}
           </div>
         </form>
       ) : saved ? (
         <div className="dm-ws-sup-row">
-          {saved.photoUrl && <img className="dm-ws-hod-preview" src={saved.photoUrl} alt={`Foto ${saved.name}`} />}
+          {saved.photoUrl && <img className="dm-ws-hod-preview" src={saved.photoUrl} alt={uiText("Foto {{v0}}", { v0: saved.name })} />}
           <div className="dm-ws-sup-person">
             <span>{saved.name}</span>
             <small>{saved.position}{saved.workPhone ? ` · ${saved.workPhone}` : ""}</small>
           </div>
           <div className="dm-ws-sup-actions">
-            <button type="button" className="dm-admin-btn is-tonal" aria-label={`Edit HOD ${saved.name}`} disabled={busy} onClick={() => setEditing(true)}>Edit</button>
+            <button type="button" className="dm-admin-btn is-tonal" aria-label={uiText("Edit HOD {{v0}}", { v0: saved.name })} disabled={busy} onClick={() => setEditing(true)}>{uiText("Edit")}</button>
           </div>
         </div>
       ) : null}

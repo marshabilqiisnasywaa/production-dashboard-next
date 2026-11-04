@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { IconCheck, IconClock } from "@/components/ui/icons";
 import type { HeatCell, HeatRow, ViewMode } from "../types";
 import { dayHeader, formatLongDate } from "../utils";
@@ -19,14 +21,13 @@ function cellLabel(roleLabel: string, cell: HeatCell): string {
 }
 
 export function ResultsHeatmap({ days, rows, today, mode, selectedId, onOpen }: Props) {
+  const { text: uiText } = useUiText();
   return (
     <div className="dmr-gridwrap">
       <table className="dmr-grid">
         <thead>
           <tr>
-            <th scope="col" className="dmr-grid__corner">
-              Role
-            </th>
+            <th scope="col" className="dmr-grid__corner">{uiText("Role")}</th>
             {days.map((d) => {
               const h = dayHeader(d);
               return (
@@ -34,17 +35,17 @@ export function ResultsHeatmap({ days, rows, today, mode, selectedId, onOpen }: 
                   <span>
                     {h.weekday} {h.day}
                   </span>
-                  {d === today && <i aria-label="Hari ini" className="dmr-dot" />}
+                  {d === today && <i aria-label={uiText("Hari ini")} className="dmr-dot" />}
                 </th>
               );
             })}
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {uiText(rows.map((row) => (
             <tr key={row.role}>
               <th scope="row" className="dmr-grid__role">
-                {row.label}
+                {uiText(row.label)}
               </th>
               {row.cells.map((cell) => {
                 const r = cell.result;
@@ -58,8 +59,8 @@ export function ResultsHeatmap({ days, rows, today, mode, selectedId, onOpen }: 
                       <button
                         type="button"
                         className={`dmr-cell dmr-cell--${cell.state}${dim ? " is-dim" : ""}${selectedId === r.id ? " is-selected" : ""}`}
-                        aria-label={label}
-                        title={label}
+                        aria-label={uiText(label)}
+                        title={uiText(label)}
                         onClick={() => onOpen(r.id)}
                       >
                         {cell.state === "ok" ? <IconCheck size={18} /> : <span>{r.ngCount}</span>}
@@ -76,7 +77,7 @@ export function ResultsHeatmap({ days, rows, today, mode, selectedId, onOpen }: 
                 if (cell.state === "missing") {
                   return (
                     <td key={cell.date} className={td}>
-                      <span className="dmr-cell dmr-cell--missing" title="Belum diisi. Lihat Inspection Rate.">
+                      <span className="dmr-cell dmr-cell--missing" title={uiText("Belum diisi. Lihat Inspection Rate.")}>
                         –
                       </span>
                     </td>
@@ -90,7 +91,7 @@ export function ResultsHeatmap({ days, rows, today, mode, selectedId, onOpen }: 
                 );
               })}
             </tr>
-          ))}
+          )))}
         </tbody>
       </table>
     </div>

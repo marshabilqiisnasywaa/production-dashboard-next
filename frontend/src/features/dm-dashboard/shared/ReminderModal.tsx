@@ -1,5 +1,7 @@
 
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { notificationApi, papercardApi, type DmMeetingSession } from "../api";
@@ -104,6 +106,7 @@ export function ReminderModal({
   meetingHref,
   enabled = true,
 }: ReminderModalProps) {
+  const { text: uiText } = useUiText();
   const [now, setNow] = useState<Date | null>(null);
   const [windowStart, setWindowStart] = useState<string | null>(null);
   const [windowEnd, setWindowEnd] = useState<string | null>(null);
@@ -327,7 +330,7 @@ export function ReminderModal({
             <button
               className="dm-reminder-close"
               type="button"
-              aria-label="Tutup pengingat"
+              aria-label={uiText("Tutup pengingat")}
               onClick={() => dismiss(current)}
             >
               ×
@@ -338,15 +341,15 @@ export function ReminderModal({
             </div>
 
             <p className="dm-reminder-eyebrow">
-              {current.type === "papercard" ? "PRE-MANAGEMENT" : "DURING MANAGEMENT"}
+              {current.type === "papercard" ? uiText("PRE-MANAGEMENT") : uiText("DURING MANAGEMENT")}
             </p>
 
-            <h2 id="dm-reminder-title">{current.title}</h2>
-            <p className="dm-reminder-description">{current.description}</p>
+            <h2 id="dm-reminder-title">{uiText(current.title)}</h2>
+            <p className="dm-reminder-description">{uiText(current.description)}</p>
 
             <div className="dm-reminder-time">
               <span className="dm-reminder-time-label">
-                {current.type === "papercard" ? "Durasi pengisian" : "Waktu meeting"}
+                {current.type === "papercard" ? uiText("Durasi pengisian") : uiText("Waktu meeting")}
               </span>
 
               <strong>
@@ -355,9 +358,7 @@ export function ReminderModal({
                   : formatTime(current.startTime)}
               </strong>
 
-              <span className="dm-reminder-time-note">
-                Pengingat {current.leadMinutes} menit sebelum waktu dimulai
-              </span>
+              <span className="dm-reminder-time-note">{uiText("Pengingat ")}{current.leadMinutes}{uiText(" menit sebelum waktu dimulai")}</span>
             </div>
 
             <div className="dm-reminder-actions">
@@ -365,9 +366,7 @@ export function ReminderModal({
                 type="button"
                 className="dm-reminder-secondary"
                 onClick={() => dismiss(current)}
-              >
-                Tutup
-              </button>
+              >{uiText("Tutup")}</button>
 
               <button
                 type="button"
@@ -377,15 +376,13 @@ export function ReminderModal({
                   window.location.assign(current.href);
                 }}
               >
-                {current.type === "papercard" ? "Isi Papercard" : "Lihat Dashboard"}
+                {current.type === "papercard" ? uiText("Isi Papercard") : uiText("Lihat Dashboard")}
                 <span aria-hidden="true"> →</span>
               </button>
             </div>
 
             {demo && (
-              <p className="dm-reminder-demo-note">
-                Mode demo — tidak mengubah status Papercard atau meeting.
-              </p>
+              <p className="dm-reminder-demo-note">{uiText("Mode demo — tidak mengubah status Papercard atau meeting.")}</p>
             )}
           </section>
         </div>

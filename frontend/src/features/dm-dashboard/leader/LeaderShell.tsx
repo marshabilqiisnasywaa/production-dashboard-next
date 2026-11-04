@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
@@ -9,6 +11,7 @@ import { LeaderSidebar } from "./components/LeaderSidebar";
 
 /** Frame for every /leader/* page: sidebar (drawer on mobile) + header + content area. */
 export default function LeaderShell({ children }: { children: ReactNode }) {
+  const { text: uiText } = useUiText();
   const [navOpen, setNavOpen] = useState(false);
   const pathname = usePathname();
 
@@ -30,7 +33,7 @@ export default function LeaderShell({ children }: { children: ReactNode }) {
         <button
           type="button"
           className="ui-sidebar-backdrop"
-          aria-label="Tutup menu"
+          aria-label={uiText("Tutup menu")}
           onClick={() => setNavOpen(false)}
         />
       )}

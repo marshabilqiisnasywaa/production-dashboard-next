@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import CostImprovement from "./CostImprovement";
 import CostMonitoring from "./CostMonitoring";
 import CostTransfer from "./CostTransfer";
@@ -7,7 +9,8 @@ import type { CostNav, CostPage, NavigateCost } from "@/data/costData";
 import "./Cost.css";
 
 function Placeholder({ page }: { page: CostPage }) {
-  return <div className="sqcdip-content cm-page"><header className="sq-header"><div><div className="sq-eyebrow">COST / {page.toUpperCase()}</div><h1>{page}</h1><p>Halaman cost sedang disiapkan.</p></div></header><section className="sq-panel cm-empty">Data untuk halaman ini belum tersedia.</section></div>;
+  const { text: uiText } = useUiText();
+  return <div className="sqcdip-content cm-page"><header className="sq-header"><div><div className="sq-eyebrow">{uiText("COST / ")}{page.toUpperCase()}</div><h1>{page}</h1><p>{uiText("Halaman cost sedang disiapkan.")}</p></div></header><section className="sq-panel cm-empty">{uiText("Data untuk halaman ini belum tersedia.")}</section></div>;
 }
 
 export default function CostDashboard({ page, focus, onNavigate }: { page: CostPage; focus?: CostNav; onNavigate: NavigateCost }) {

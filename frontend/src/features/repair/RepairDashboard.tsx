@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import CustomSelect from "@/components/shell/CustomSelect";
 import PeriodControl, { periodView, type PeriodKey } from "@/components/shell/PeriodControl";
 import { useEffect, useMemo, useState } from "react";
@@ -97,9 +99,10 @@ export function Sparkline({ success }: { success: boolean }) {
 type ChartDatum = { period: string; actual: number | null; target: number };
 
 function RepairTooltip({ active, payload, label }: { active?: boolean; payload?: readonly { payload?: ChartDatum }[]; label?: string }) {
+  const { text: uiText } = useUiText();
   if (!active || !payload?.[0]?.payload) return null;
   const point = payload[0].payload;
-  return <div className="repair-tooltip"><strong>{label}</strong>{point.actual === null ? <p>Belum ada data</p> : <><div><span>Target</span><b>{point.target.toLocaleString()}</b></div><div><span>Actual</span><b>{point.actual.toLocaleString()}</b></div><div><span>Selisih</span><b>{(point.actual - point.target).toLocaleString()}</b></div></>}</div>;
+  return <div className="repair-tooltip"><strong>{uiText(label)}</strong>{point.actual === null ? <p>{uiText("Belum ada data")}</p> : <><div><span>{uiText("Target")}</span><b>{point.target.toLocaleString()}</b></div><div><span>{uiText("Actual")}</span><b>{point.actual.toLocaleString()}</b></div><div><span>{uiText("Selisih")}</span><b>{(point.actual - point.target).toLocaleString()}</b></div></>}</div>;
 }
 
 function StatusDot(props: { cx?: number; cy?: number; payload?: ChartDatum; direction: Direction }) {
@@ -111,6 +114,7 @@ function StatusDot(props: { cx?: number; cy?: number; payload?: ChartDatum; dire
 export function MetricChart({ id, title, values, target, direction, domain, full = false }: {
   id: string; title: string; values: (number | null)[]; target: number | number[]; direction: Direction; domain?: [number, number]; full?: boolean;
 }) {
+  const { text: uiText } = useUiText();
   const [labels, setLabels] = useState(false);
   const [period, setPeriod] = useState<PeriodKey>("Week");
   const flatTarget = Array.isArray(target) ? target[target.length - 1] : target;
@@ -121,7 +125,7 @@ export function MetricChart({ id, title, values, target, direction, domain, full
     target: flatTarget,
   }));
   return <article id={`chart-${id}`} className={`repair-panel metric-chart ${full ? "wide" : ""}`}>
-    <div className="repair-card-head"><div><h2>{title}</h2><p>Performa aktual terhadap target • 2025</p></div><div className="flex items-center justify-end gap-4"><label className="label-toggle flex items-center gap-2 text-xs text-slate-500 font-medium"><input type="checkbox" checked={labels} onChange={(event) => setLabels(event.target.checked)}/><span/>Tampilkan label</label><PeriodControl value={period} onChange={setPeriod} /></div></div>
+    <div className="repair-card-head"><div><h2>{uiText(title)}</h2><p>{uiText("Performa aktual terhadap target • 2025")}</p></div><div className="flex items-center justify-end gap-4"><label className="label-toggle flex items-center gap-2 text-xs text-slate-500 font-medium"><input type="checkbox" checked={labels} onChange={(event) => setLabels(event.target.checked)}/><span/>{uiText("Tampilkan label")}</label><PeriodControl value={period} onChange={setPeriod} /></div></div>
     <div className="line-chart-wrap">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 18, right: 18, left: 6, bottom: 8 }}>
@@ -130,74 +134,81 @@ export function MetricChart({ id, title, values, target, direction, domain, full
           <YAxis domain={domain ?? ["auto", "auto"]} axisLine={false} tickLine={false} width={48}/>
           <Tooltip content={<RepairTooltip/>} cursor={{ stroke: "var(--line)" }}/>
           <Legend wrapperStyle={{ paddingTop: 8, marginTop: 0 }} iconType="line" />
-          <Line type="natural" dataKey="target" name="Target" stroke="var(--success)" strokeDasharray="5 5" dot={false} strokeWidth={2} connectNulls={false}/>
-          <Line type="natural" dataKey="actual" name="Actual" stroke="var(--chart-1)" strokeWidth={2} connectNulls={false} dot={(props) => <StatusDot {...props} direction={direction}/>}>
+          <Line type="natural" dataKey="target" name={uiText("Target")} stroke="var(--success)" strokeDasharray="5 5" dot={false} strokeWidth={2} connectNulls={false}/>
+          <Line type="natural" dataKey="actual" name={uiText("Actual")} stroke="var(--chart-1)" strokeWidth={2} connectNulls={false} dot={(props) => <StatusDot {...props} direction={direction}/>}>
             {labels && <LabelList dataKey="actual" position="top" className="repair-point-label"/>}
           </Line>
         </LineChart>
       </ResponsiveContainer>
     </div>
-    <div className="metric-chart-footer"><strong><Glyph name="trend"/> Trending down 12% vs last week</strong><span>Target and actual for the selected reporting period</span></div>
+    <div className="metric-chart-footer"><strong><Glyph name="trend"/>{uiText(" Trending down 12% vs last week")}</strong><span>{uiText("Target and actual for the selected reporting period")}</span></div>
   </article>;
 }
 
 export function WipTable() {
-  return <div className="repair-table-scroll"><table className="repair-data-table wip-table"><thead><tr><th className="sticky-col">Proses</th><th>T</th>{periods.slice(0,15).map((period) => <th key={period}>{period}</th>)}</tr></thead><tbody>
-    <tr><td className="sticky-col"><strong>Target WIP</strong></td><td>—</td>{wipTargets.slice(0,15).map((value,index) => <td key={index}>{value.toLocaleString()}</td>)}</tr>
-    <tr><td className="sticky-col"><strong>Actual WIP</strong></td><td>—</td>{wipActual.slice(0,15).map((value,index) => <td className={value !== null && value <= wipTargets[index] ? "pass-cell" : "fail-cell"} key={index}>{value?.toLocaleString() ?? "—"}</td>)}</tr>
+  const { text: uiText } = useUiText();
+  return <div className="repair-table-scroll"><table className="repair-data-table wip-table"><thead><tr><th className="sticky-col">{uiText("Proses")}</th><th>{uiText("T")}</th>{periods.slice(0,15).map((period) => <th key={period}>{uiText(period)}</th>)}</tr></thead><tbody>
+    <tr><td className="sticky-col"><strong>{uiText("Target WIP")}</strong></td><td>—</td>{wipTargets.slice(0,15).map((value,index) => <td key={index}>{value.toLocaleString()}</td>)}</tr>
+    <tr><td className="sticky-col"><strong>{uiText("Actual WIP")}</strong></td><td>—</td>{wipActual.slice(0,15).map((value,index) => <td className={value !== null && value <= wipTargets[index] ? "pass-cell" : "fail-cell"} key={index}>{value?.toLocaleString() ?? "—"}</td>)}</tr>
     {wipProcesses.map((row) => <tr key={row.model}><td className="sticky-col"><strong>{row.process}</strong><small>{row.model}</small></td><td>{row.target}</td>{row.values.map((value,index) => <td className={value > row.target ? "fail-cell" : "pass-cell"} key={index}>{value.toLocaleString()}</td>)}</tr>)}
   </tbody></table></div>;
 }
 
 function NgProductionCard() {
+  const { text: uiText } = useUiText();
   const [showTable, setShowTable] = useState(false);
   const miniData = ["2026","Jan","Feb","Mar","Apr","Mei","Jun"].map((period,index) => ({ period, actual: ngRows[1].values[index], target: 1 }));
-  return <article className="repair-panel wide ng-panel"><div className="repair-card-head"><div><h2>NG Production Rate</h2><p>Actual NG Rate compared with standard</p></div><div className="chart-card-actions"><span className="repair-status good">Target ≤ 1.00%</span><button type="button" className={`chart-toggle ${showTable ? "active" : ""}`} onClick={() => setShowTable((value) => !value)}>{showTable ? "Sembunyikan Tabel" : "Tampilkan Tabel"}</button></div></div>
+  return <article className="repair-panel wide ng-panel"><div className="repair-card-head"><div><h2>{uiText("NG Production Rate")}</h2><p>{uiText("Actual NG Rate compared with standard")}</p></div><div className="chart-card-actions"><span className="repair-status good">{uiText("Target ≤ 1.00%")}</span><button type="button" className={`chart-toggle ${showTable ? "active" : ""}`} onClick={() => setShowTable((value) => !value)}>{showTable ? uiText("Sembunyikan Tabel") : uiText("Tampilkan Tabel")}</button></div></div>
     <div className="ng-mini-chart"><ResponsiveContainer width="100%" height="100%"><LineChart data={miniData}><CartesianGrid vertical={false}/><XAxis dataKey="period" axisLine={false} tickLine={false}/><YAxis domain={[0,2.1]} axisLine={false} tickLine={false}/><Tooltip/><Legend/><Line dataKey="target" stroke="var(--success)" strokeDasharray="5 5" dot={false}/><Line dataKey="actual" stroke="var(--chart-1)" strokeWidth={2}/></LineChart></ResponsiveContainer></div>
-    {showTable && <div className="chart-detail-table-wrap"><table className="repair-data-table chart-detail-table"><thead><tr><th className="sticky-col">Metric</th>{["2026","Jan","Feb","Mar","Apr","Mei","Jun"].map((p)=><th key={p}>{p}</th>)}</tr></thead><tbody>{ngRows.map((row)=><tr key={row.label}><td className="sticky-col"><strong>{row.label}</strong></td>{row.values.map((value,index)=>{const status = row.target === undefined ? "" : ((row.lower ? value <= row.target : value >= row.target) ? "pass-cell":"fail-cell"); return <td className={status} key={index}>{value.toLocaleString()}{row.percent ? "%" : ""}</td>})}</tr>)}</tbody></table></div>}
+    {showTable && <div className="chart-detail-table-wrap"><table className="repair-data-table chart-detail-table"><thead><tr><th className="sticky-col">{uiText("Metric")}</th>{["2026","Jan","Feb","Mar","Apr","Mei","Jun"].map((p)=><th key={p}>{uiText(p)}</th>)}</tr></thead><tbody>{ngRows.map((row)=><tr key={row.label}><td className="sticky-col"><strong>{uiText(row.label)}</strong></td>{row.values.map((value,index)=>{const status = row.target === undefined ? "" : ((row.lower ? value <= row.target : value >= row.target) ? "pass-cell":"fail-cell"); return <td className={status} key={index}>{value.toLocaleString()}{row.percent ? "%" : ""}</td>})}</tr>)}</tbody></table></div>}
   </article>;
 }
 
 export function Header({ page, onInput }: { page: string; onInput: () => void }) {
+  const { text: uiText } = useUiText();
   const [periodType,setPeriodType] = useState("Harian");
   const [exportOpen,setExportOpen] = useState(false);
-  return <div className="repair-header"><div><div className="repair-eyebrow">REPAIR CENTER</div><div className="repair-title-row"><h1>{page}</h1></div><p>Monitor performa repair dan quality secara real-time.</p></div><div className="repair-actions">
+  return <div className="repair-header"><div><div className="repair-eyebrow">{uiText("REPAIR CENTER")}</div><div className="repair-title-row"><h1>{page}</h1></div><p>{uiText("Monitor performa repair dan quality secara real-time.")}</p></div><div className="repair-actions">
     <div className="period-tabs">{["Harian","Mingguan","Bulanan"].map((type)=><button className={periodType===type?"active":""} onClick={()=>setPeriodType(type)} key={type}>{type}</button>)}</div>
-    <button className="repair-outline"><Glyph name="calendar"/>30 Sep 2025</button>
-    <div className="export-wrap"><button className="repair-outline" onClick={()=>setExportOpen(!exportOpen)}><Glyph name="download"/>Export</button>{exportOpen&&<div><button>Excel (.xlsx)</button><button>PDF</button></div>}</div>
-    <button className="repair-primary" onClick={onInput}><Glyph name="plus"/>Input Data</button>
+    <button className="repair-outline"><Glyph name="calendar"/>{uiText("30 Sep 2025")}</button>
+    <div className="export-wrap"><button className="repair-outline" onClick={()=>setExportOpen(!exportOpen)}><Glyph name="download"/>{uiText("Export")}</button>{exportOpen&&<div><button>{uiText("Excel (.xlsx)")}</button><button>{uiText("PDF")}</button></div>}</div>
+    <button className="repair-primary" onClick={onInput}><Glyph name="plus"/>{uiText("Input Data")}</button>
   </div></div>;
 }
 
 export function InputDialog({ onClose, onSave }: { onClose: () => void; onSave: (id: string, actual: number) => void }) {
+  const { text: uiText } = useUiText();
   const [tab,setTab] = useState<"manual"|"import">("manual");
   const [selectedKpi,setSelectedKpi] = useState("wip");
   return <div className="repair-modal-backdrop" onMouseDown={onClose}><form className="repair-dialog" onMouseDown={(event)=>event.stopPropagation()} onSubmit={(event)=>{event.preventDefault();const data=new FormData(event.currentTarget);onSave(String(data.get("kpi")),Number(data.get("actual")));}}>
-    <div className="repair-dialog-head"><div><h2>Input Data KPI</h2><p>Tambahkan data aktual untuk periode baru.</p></div><button type="button" onClick={onClose}><Glyph name="close"/></button></div>
-    <div className="dialog-tabs"><button type="button" className={tab==="manual"?"active":""} onClick={()=>setTab("manual")}>Input Manual</button><button type="button" className={tab==="import"?"active":""} onClick={()=>setTab("import")}>Import Excel</button></div>
-    {tab==="manual"?<div className="repair-form"><label>Pilih KPI<CustomSelect value={selectedKpi} options={kpiSeed.map((kpi) => ({ value: kpi.id, label: kpi.name }))} onChange={(next) => setSelectedKpi(next)} /></label><div className="form-grid"><label>Periode<input type="date" required/></label><label>Tipe<CustomSelect defaultValue="Harian" options={["Harian", "Mingguan", "Bulanan"]} /></label><label>Target<input name="target" type="number" step="any" required/></label><label>Actual<input name="actual" type="number" step="any" required/></label></div>{selectedKpi==="wip"&&<div className="form-grid detail-fields"><label>Judgement Area<input type="number"/></label><label>Top Cover<input type="number"/></label><label>Frame<input type="number"/></label><label>LCD<input type="number"/></label></div>}{selectedKpi==="ng"&&<div className="form-grid detail-fields"><label>Total NGS<input type="number"/></label><label>Total NGP<input type="number"/></label><label>TC Preassembly<input type="number"/></label><label>NG Proses<input type="number"/></label></div>}<label>Catatan<textarea rows={3} placeholder="Catatan PIC..."/></label></div>:<div className="repair-dropzone"><Glyph name="upload"/><strong>Drop file Excel atau CSV di sini</strong><span>.xlsx, .xls, atau .csv maksimal 10 MB</span><input type="file" accept=".xlsx,.xls,.csv"/><div className="import-preview"><span>Preview akan tampil setelah file dipilih</span></div></div>}
-    <div className="repair-dialog-actions"><button type="button" className="repair-outline" onClick={onClose}>Batal</button><button className="repair-primary">{tab==="manual"?"Simpan":"Konfirmasi Import"}</button></div>
+    <div className="repair-dialog-head"><div><h2>{uiText("Input Data KPI")}</h2><p>{uiText("Tambahkan data aktual untuk periode baru.")}</p></div><button type="button" onClick={onClose}><Glyph name="close"/></button></div>
+    <div className="dialog-tabs"><button type="button" className={tab==="manual"?"active":""} onClick={()=>setTab("manual")}>{uiText("Input Manual")}</button><button type="button" className={tab==="import"?"active":""} onClick={()=>setTab("import")}>{uiText("Import Excel")}</button></div>
+    {tab==="manual"?<div className="repair-form"><label>{uiText("Pilih KPI")}<CustomSelect value={selectedKpi} options={kpiSeed.map((kpi) => ({ value: kpi.id, label: kpi.name }))} onChange={(next) => setSelectedKpi(next)} /></label><div className="form-grid"><label>{uiText("Periode")}<input type="date" required/></label><label>{uiText("Tipe")}<CustomSelect defaultValue="Harian" options={["Harian", "Mingguan", "Bulanan"]} /></label><label>{uiText("Target")}<input name="target" type="number" step="any" required/></label><label>{uiText("Actual")}<input name="actual" type="number" step="any" required/></label></div>{selectedKpi==="wip"&&<div className="form-grid detail-fields"><label>{uiText("Judgement Area")}<input type="number"/></label><label>{uiText("Top Cover")}<input type="number"/></label><label>{uiText("Frame")}<input type="number"/></label><label>{uiText("LCD")}<input type="number"/></label></div>}{selectedKpi==="ng"&&<div className="form-grid detail-fields"><label>{uiText("Total NGS")}<input type="number"/></label><label>{uiText("Total NGP")}<input type="number"/></label><label>{uiText("TC Preassembly")}<input type="number"/></label><label>{uiText("NG Proses")}<input type="number"/></label></div>}<label>{uiText("Catatan")}<textarea rows={3} placeholder={uiText("Catatan PIC...")}/></label></div>:<div className="repair-dropzone"><Glyph name="upload"/><strong>{uiText("Drop file Excel atau CSV di sini")}</strong><span>{uiText(".xlsx, .xls, atau .csv maksimal 10 MB")}</span><input type="file" accept=".xlsx,.xls,.csv"/><div className="import-preview"><span>{uiText("Preview akan tampil setelah file dipilih")}</span></div></div>}
+    <div className="repair-dialog-actions"><button type="button" className="repair-outline" onClick={onClose}>{uiText("Batal")}</button><button className="repair-primary">{tab==="manual"?uiText("Simpan"):uiText("Konfirmasi Import")}</button></div>
   </form></div>;
 }
 
 function KpiSheet({ kpi, onClose, onInput }: { kpi: typeof kpiSeed[number]; onClose: () => void; onInput: () => void }) {
+  const { text: uiText } = useUiText();
   const good = isOnTarget(kpi.value,kpi.target,kpi.direction);
-  return <><button className="repair-sheet-overlay" onClick={onClose}/><aside className="repair-sheet"><div className="repair-dialog-head"><div><p>DETAIL KPI</p><h2>{kpi.name}</h2></div><button onClick={onClose}><Glyph name="close"/></button></div><div className="sheet-value"><strong>{kpi.display}</strong><span className={`repair-status ${good?"good":"bad"}`}>{good?"On Target":"Off Target"}</span><p>Target: {kpi.targetLabel}</p></div><MetricChart id={`sheet-${kpi.id}`} title="Trend KPI" values={inputRate} target={kpi.target} direction={kpi.direction} full/><div className="sheet-notes"><h3>Catatan PIC</h3><p>Performa dipantau harian. Follow-up dilakukan pada setiap nilai yang berada di luar target.</p></div><div className="repair-dialog-actions"><button className="repair-outline"><Glyph name="upload"/>Import Excel</button><button className="repair-primary" onClick={onInput}>Input Actual</button></div></aside></>;
+  return <><button className="repair-sheet-overlay" onClick={onClose}/><aside className="repair-sheet"><div className="repair-dialog-head"><div><p>{uiText("DETAIL KPI")}</p><h2>{uiText(kpi.name)}</h2></div><button onClick={onClose}><Glyph name="close"/></button></div><div className="sheet-value"><strong>{kpi.display}</strong><span className={`repair-status ${good?"good":"bad"}`}>{good?uiText("On Target"):uiText("Off Target")}</span><p>{uiText("Target: ")}{uiText(kpi.targetLabel)}</p></div><MetricChart id={`sheet-${kpi.id}`} title={uiText("Trend KPI")} values={inputRate} target={kpi.target} direction={kpi.direction} full/><div className="sheet-notes"><h3>{uiText("Catatan PIC")}</h3><p>{uiText("Performa dipantau harian. Follow-up dilakukan pada setiap nilai yang berada di luar target.")}</p></div><div className="repair-dialog-actions"><button className="repair-outline"><Glyph name="upload"/>{uiText("Import Excel")}</button><button className="repair-primary" onClick={onInput}>{uiText("Input Actual")}</button></div></aside></>;
 }
 
 function QualityIssues() {
+  const { text: uiText } = useUiText();
   const [dialog,setDialog] = useState(false);
   const [query,setQuery] = useState("");
   const [status,setStatus] = useState("All");
   const [selected,setSelected] = useState<(typeof issueSeed)[number]|null>(null);
   const filtered=issueSeed.filter((issue)=>(status==="All"||issue.status===status)&&issue.problem.toLowerCase().includes(query.toLowerCase()));
-  return <article id="quality-issues" className="repair-panel wide quality-panel"><div className="repair-card-head"><div><h2>Quality Issue</h2><p>Daftar issue terbuka dan improvement plan</p></div><button className="repair-primary" onClick={()=>setDialog(true)}><Glyph name="plus"/>Tambah Issue</button></div><div className="issue-toolbar"><label><Glyph name="search"/><input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Cari problem..."/></label><CustomSelect value={status} options={["All", "Open", "On Progress", "Done"]} onChange={(next) => setStatus(next)} /></div><div className="repair-table-scroll"><table className="repair-data-table"><thead><tr><th>No</th><th>Tanggal</th><th>Problem</th><th>Improvement</th><th>Plan</th><th>PIC</th><th>Status</th><th>Attachment</th></tr></thead><tbody>{filtered.map((issue)=><tr key={issue.no} onClick={()=>setSelected(issue)}><td>{issue.no}</td><td>{issue.date}</td><td><strong>{issue.problem}</strong></td><td>{issue.improvement}</td><td>{issue.plan}</td><td>{issue.pic}</td><td><span className={`issue-status ${issue.status.toLowerCase().replace(" ","-")}`}>{issue.status}</span></td><td><button className="attachment-thumb"><Glyph name="alert"/></button></td></tr>)}</tbody></table></div>
-    {dialog&&<div className="repair-modal-backdrop" onMouseDown={()=>setDialog(false)}><form className="repair-dialog" onMouseDown={(e)=>e.stopPropagation()} onSubmit={(e)=>{e.preventDefault();setDialog(false)}}><div className="repair-dialog-head"><div><h2>Tambah Quality Issue</h2><p>Lengkapi detail issue dan improvement.</p></div><button type="button" onClick={()=>setDialog(false)}><Glyph name="close"/></button></div><div className="repair-form"><label>Tanggal<input type="date" required/></label><label>Problem<textarea rows={3} required/></label><label>Improvement<textarea rows={3}/></label><div className="form-grid"><label>Due date<input type="date"/></label><label>PIC<CustomSelect defaultValue="Yusriyadi" options={["Yusriyadi", "Andri", "Rina"]} /></label><label>Status<CustomSelect defaultValue="Open" options={["Open", "On Progress", "Done"]} /></label></div><label className="repair-dropzone"><Glyph name="upload"/><strong>Upload foto</strong><span>Drag & drop atau klik untuk pilih beberapa file</span><input type="file" multiple accept="image/*"/></label></div><div className="repair-dialog-actions"><button type="button" className="repair-outline" onClick={()=>setDialog(false)}>Batal</button><button className="repair-primary">Simpan Issue</button></div></form></div>}
-    {selected&&<><button className="repair-sheet-overlay" onClick={()=>setSelected(null)}/><aside className="repair-sheet issue-sheet"><div className="repair-dialog-head"><div><p>QUALITY ISSUE #{selected.no}</p><h2>{selected.problem}</h2></div><button onClick={()=>setSelected(null)}><Glyph name="close"/></button></div><dl><dt>Status</dt><dd><span className={`issue-status ${selected.status.toLowerCase().replace(" ","-")}`}>{selected.status}</span></dd><dt>Improvement</dt><dd>{selected.improvement}</dd><dt>Plan</dt><dd>{selected.plan}</dd><dt>PIC</dt><dd>{selected.pic}</dd></dl><div className="repair-dialog-actions"><button className="danger-button">Hapus</button><button className="repair-primary">Edit</button></div></aside></>}
+  return <article id="quality-issues" className="repair-panel wide quality-panel"><div className="repair-card-head"><div><h2>{uiText("Quality Issue")}</h2><p>{uiText("Daftar issue terbuka dan improvement plan")}</p></div><button className="repair-primary" onClick={()=>setDialog(true)}><Glyph name="plus"/>{uiText("Tambah Issue")}</button></div><div className="issue-toolbar"><label><Glyph name="search"/><input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder={uiText("Cari problem...")}/></label><CustomSelect value={status} options={["All", "Open", "On Progress", "Done"]} onChange={(next) => setStatus(next)} /></div><div className="repair-table-scroll"><table className="repair-data-table"><thead><tr><th>{uiText("No")}</th><th>{uiText("Tanggal")}</th><th>{uiText("Problem")}</th><th>{uiText("Improvement")}</th><th>{uiText("Plan")}</th><th>{uiText("PIC")}</th><th>{uiText("Status")}</th><th>{uiText("Attachment")}</th></tr></thead><tbody>{filtered.map((issue)=><tr key={issue.no} onClick={()=>setSelected(issue)}><td>{issue.no}</td><td>{issue.date}</td><td><strong>{issue.problem}</strong></td><td>{issue.improvement}</td><td>{issue.plan}</td><td>{issue.pic}</td><td><span className={`issue-status ${issue.status.toLowerCase().replace(" ","-")}`}>{uiText(issue.status)}</span></td><td><button className="attachment-thumb"><Glyph name="alert"/></button></td></tr>)}</tbody></table></div>
+    {dialog&&<div className="repair-modal-backdrop" onMouseDown={()=>setDialog(false)}><form className="repair-dialog" onMouseDown={(e)=>e.stopPropagation()} onSubmit={(e)=>{e.preventDefault();setDialog(false)}}><div className="repair-dialog-head"><div><h2>{uiText("Tambah Quality Issue")}</h2><p>{uiText("Lengkapi detail issue dan improvement.")}</p></div><button type="button" onClick={()=>setDialog(false)}><Glyph name="close"/></button></div><div className="repair-form"><label>{uiText("Tanggal")}<input type="date" required/></label><label>{uiText("Problem")}<textarea rows={3} required/></label><label>{uiText("Improvement")}<textarea rows={3}/></label><div className="form-grid"><label>{uiText("Due date")}<input type="date"/></label><label>{uiText("PIC")}<CustomSelect defaultValue="Yusriyadi" options={["Yusriyadi", "Andri", "Rina"]} /></label><label>{uiText("Status")}<CustomSelect defaultValue="Open" options={["Open", "On Progress", "Done"]} /></label></div><label className="repair-dropzone"><Glyph name="upload"/><strong>{uiText("Upload foto")}</strong><span>{uiText("Drag & drop atau klik untuk pilih beberapa file")}</span><input type="file" multiple accept="image/*"/></label></div><div className="repair-dialog-actions"><button type="button" className="repair-outline" onClick={()=>setDialog(false)}>{uiText("Batal")}</button><button className="repair-primary">{uiText("Simpan Issue")}</button></div></form></div>}
+    {selected&&<><button className="repair-sheet-overlay" onClick={()=>setSelected(null)}/><aside className="repair-sheet issue-sheet"><div className="repair-dialog-head"><div><p>{uiText("QUALITY ISSUE #")}{selected.no}</p><h2>{selected.problem}</h2></div><button onClick={()=>setSelected(null)}><Glyph name="close"/></button></div><dl><dt>{uiText("Status")}</dt><dd><span className={`issue-status ${selected.status.toLowerCase().replace(" ","-")}`}>{uiText(selected.status)}</span></dd><dt>{uiText("Improvement")}</dt><dd>{selected.improvement}</dd><dt>{uiText("Plan")}</dt><dd>{selected.plan}</dd><dt>{uiText("PIC")}</dt><dd>{selected.pic}</dd></dl><div className="repair-dialog-actions"><button className="danger-button">{uiText("Hapus")}</button><button className="repair-primary">{uiText("Edit")}</button></div></aside></>}
   </article>;
 }
 
 export function Preassembly() {
+  const { text: uiText } = useUiText();
   const [sheetKpi,setSheetKpi] = useState<typeof kpiSeed[number]|null>(null);
   const [inputOpen,setInputOpen] = useState(false);
   const [values,setValues] = useState<Record<string,number>>({});
@@ -205,28 +216,30 @@ export function Preassembly() {
   const [showWipTable,setShowWipTable] = useState(false);
   const kpis=useMemo(()=>kpiSeed.map((kpi)=>values[kpi.id]===undefined?kpi:{...kpi,value:values[kpi.id],display:kpi.unit==="pcs"?values[kpi.id].toLocaleString():`${values[kpi.id].toFixed(2)}%`}),[values]);
   const save=(id:string,actual:number)=>{setValues((current)=>({...current,[id]:actual}));setInputOpen(false);setToast(true);window.setTimeout(()=>setToast(false),2600)};
-  return <><Header page="Preassembly" onInput={()=>setInputOpen(true)}/><div className="repair-kpis">{kpis.map((kpi)=>{const good=isOnTarget(kpi.value,kpi.target,kpi.direction);return <button className="repair-kpi" key={kpi.id} onClick={()=>setSheetKpi(kpi)}><div className="repair-kpi-top"><span>{kpi.name}</span><span className={`repair-status ${good?"good":"bad"}`}>{good?"On Target":"Off Target"}</span></div><strong>{kpi.display} <small>{kpi.unit}</small></strong><p>Target: {kpi.targetLabel} <b className={good?"good-text":"bad-text"}>{good?"↓":"↑"} {Math.abs(kpi.value-kpi.target).toLocaleString()}</b></p><Sparkline success={good}/></button>})}<button className="repair-kpi issue-kpi" onClick={()=>document.getElementById("quality-issues")?.scrollIntoView({behavior:"smooth"})}><div className="repair-kpi-top"><span>Quality Issue</span><span className="repair-status bad">Needs action</span></div><strong>3 <small>Open</small></strong><p>2 due this week</p><Glyph name="alert"/></button></div>
-    <div className="repair-charts"><div className="repair-panel wide wip-combo"><div className="repair-card-head"><div><h2>WIP / Inventory Qty</h2><p>Data stok dan performa inventori harian</p></div><button type="button" className={`chart-toggle ${showWipTable ? "active" : ""}`} onClick={()=>setShowWipTable((value)=>!value)}>{showWipTable ? "Sembunyikan Tabel" : "Tampilkan Tabel"}</button></div><MetricChart id="wip" title="WIP / Inventory Qty" values={wipActual} target={wipTargets} direction="lower" full/>{showWipTable && <WipTable/>}</div><MetricChart id="input" title="Input Rate" values={inputRate} target={1} direction="lower" domain={[0,2.1]}/><MetricChart id="assembly" title="Passrate Preassembly" values={preassemblyRate} target={99} direction="higher" domain={[95,102]}/><MetricChart id="qa" title="QA Pass Rate" values={qaRate} target={99} direction="higher" domain={[95,101]}/><MetricChart id="frame" title="Pass Rate Repair Frame" values={frameRate} target={80} direction="higher" domain={[30,120]}/><MetricChart id="lcd" title="Pass Rate Repair LCD" values={lcdRate} target={80} direction="higher" domain={[50,120]}/><NgProductionCard/><QualityIssues/></div>
+  return <><Header page="Preassembly" onInput={()=>setInputOpen(true)}/><div className="repair-kpis">{kpis.map((kpi)=>{const good=isOnTarget(kpi.value,kpi.target,kpi.direction);return <button className="repair-kpi" key={kpi.id} onClick={()=>setSheetKpi(kpi)}><div className="repair-kpi-top"><span>{uiText(kpi.name)}</span><span className={`repair-status ${good?"good":"bad"}`}>{good?uiText("On Target"):uiText("Off Target")}</span></div><strong>{kpi.display} <small>{uiText(kpi.unit)}</small></strong><p>{uiText("Target: ")}{uiText(kpi.targetLabel)} <b className={good?"good-text":"bad-text"}>{good?"↓":"↑"} {Math.abs(kpi.value-kpi.target).toLocaleString()}</b></p><Sparkline success={good}/></button>})}<button className="repair-kpi issue-kpi" onClick={()=>document.getElementById("quality-issues")?.scrollIntoView({behavior:"smooth"})}><div className="repair-kpi-top"><span>{uiText("Quality Issue")}</span><span className="repair-status bad">{uiText("Needs action")}</span></div><strong>3 <small>{uiText("Open")}</small></strong><p>{uiText("2 due this week")}</p><Glyph name="alert"/></button></div>
+    <div className="repair-charts"><div className="repair-panel wide wip-combo"><div className="repair-card-head"><div><h2>{uiText("WIP / Inventory Qty")}</h2><p>{uiText("Data stok dan performa inventori harian")}</p></div><button type="button" className={`chart-toggle ${showWipTable ? "active" : ""}`} onClick={()=>setShowWipTable((value)=>!value)}>{showWipTable ? uiText("Sembunyikan Tabel") : uiText("Tampilkan Tabel")}</button></div><MetricChart id="wip" title={uiText("WIP / Inventory Qty")} values={wipActual} target={wipTargets} direction="lower" full/>{showWipTable && <WipTable/>}</div><MetricChart id="input" title={uiText("Input Rate")} values={inputRate} target={1} direction="lower" domain={[0,2.1]}/><MetricChart id="assembly" title={uiText("Passrate Preassembly")} values={preassemblyRate} target={99} direction="higher" domain={[95,102]}/><MetricChart id="qa" title={uiText("QA Pass Rate")} values={qaRate} target={99} direction="higher" domain={[95,101]}/><MetricChart id="frame" title={uiText("Pass Rate Repair Frame")} values={frameRate} target={80} direction="higher" domain={[30,120]}/><MetricChart id="lcd" title={uiText("Pass Rate Repair LCD")} values={lcdRate} target={80} direction="higher" domain={[50,120]}/><NgProductionCard/><QualityIssues/></div>
     {sheetKpi&&<KpiSheet kpi={sheetKpi} onClose={()=>setSheetKpi(null)} onInput={()=>setInputOpen(true)}/>}
     {inputOpen&&<InputDialog onClose={()=>setInputOpen(false)} onSave={save}/>}
-    {toast&&<div className="repair-toast"><span>✓</span>Data berhasil disimpan</div>}
+    {toast&&<div className="repair-toast"><span>✓</span>{uiText("Data berhasil disimpan")}</div>}
   </>;
 }
 
 export const reworkPlanning=[{date:"28 Sep",model:"A5 Pro",plan:120,actual:126},{date:"29 Sep",model:"Reno 14",plan:100,actual:94},{date:"30 Sep",model:"A5 Pro",plan:130,actual:132},{date:"1 Oct",model:"Reno 14",plan:110,actual:101}];
 
 export function Rework() {
+  const { text: uiText } = useUiText();
   const [dialog,setDialog]=useState(false);
   const planning=reworkPlanning;
-  return <><Header page="Rework" onInput={()=>setDialog(true)}/><div className="repair-kpis two"><button className="repair-kpi"><div className="repair-kpi-top"><span>WIP Rework</span><span className="repair-status good">On Target</span></div><strong>1,284 <small>pcs</small></strong><p>Target: 1,500 pcs</p><Sparkline success/></button><button className="repair-kpi"><div className="repair-kpi-top"><span>Planning Harian</span><span className="repair-status good">Achieved</span></div><strong>102.4%</strong><p>Target: 100%</p><Sparkline success/></button></div><div className="repair-charts"><MetricChart id="rework" title="WIP Rework" values={wipActual.map((v)=>v===null?null:Math.round(v*.45))} target={1500} direction="lower" full/><article className="repair-panel wide"><div className="repair-card-head"><div><h2>Planning Harian</h2><p>Plan vs actual output per hari</p></div><button className="repair-primary" onClick={()=>setDialog(true)}><Glyph name="plus"/>Input Planning</button></div><div className="planning-chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={planning}><CartesianGrid vertical={false}/><XAxis dataKey="date" axisLine={false} tickLine={false}/><Tooltip/><Legend/><Bar dataKey="plan" name="Plan" fill="var(--chart-1)" radius={6}/><Bar dataKey="actual" name="Actual" fill="var(--chart-2)" radius={6}/></BarChart></ResponsiveContainer></div><div className="repair-table-scroll"><table className="repair-data-table"><thead><tr><th>Tanggal</th><th>Model</th><th>Plan Qty</th><th>Actual Qty</th><th>Achievement</th><th>Status</th><th>Catatan</th></tr></thead><tbody>{planning.map((row)=><tr key={row.date}><td>{row.date}</td><td>{row.model}</td><td>{row.plan}</td><td>{row.actual}</td><td><div className="achievement"><i style={{width:`${Math.min(row.actual/row.plan*100,100)}%`}}/><span>{(row.actual/row.plan*100).toFixed(1)}%</span></div></td><td><span className={`repair-status ${row.actual>=row.plan?"good":"bad"}`}>{row.actual>=row.plan?"Achieved":"Behind"}</span></td><td>Monitoring</td></tr>)}</tbody></table></div></article></div>{dialog&&<InputDialog onClose={()=>setDialog(false)} onSave={()=>setDialog(false)}/>}</>;
+  return <><Header page="Rework" onInput={()=>setDialog(true)}/><div className="repair-kpis two"><button className="repair-kpi"><div className="repair-kpi-top"><span>{uiText("WIP Rework")}</span><span className="repair-status good">{uiText("On Target")}</span></div><strong>1,284 <small>{uiText("pcs")}</small></strong><p>{uiText("Target: 1,500 pcs")}</p><Sparkline success/></button><button className="repair-kpi"><div className="repair-kpi-top"><span>{uiText("Planning Harian")}</span><span className="repair-status good">{uiText("Achieved")}</span></div><strong>102.4%</strong><p>{uiText("Target: 100%")}</p><Sparkline success/></button></div><div className="repair-charts"><MetricChart id="rework" title={uiText("WIP Rework")} values={wipActual.map((v)=>v===null?null:Math.round(v*.45))} target={1500} direction="lower" full/><article className="repair-panel wide"><div className="repair-card-head"><div><h2>{uiText("Planning Harian")}</h2><p>{uiText("Plan vs actual output per hari")}</p></div><button className="repair-primary" onClick={()=>setDialog(true)}><Glyph name="plus"/>{uiText("Input Planning")}</button></div><div className="planning-chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={planning}><CartesianGrid vertical={false}/><XAxis dataKey="date" axisLine={false} tickLine={false}/><Tooltip/><Legend/><Bar dataKey="plan" name={uiText("Plan")} fill="var(--chart-1)" radius={6}/><Bar dataKey="actual" name={uiText("Actual")} fill="var(--chart-2)" radius={6}/></BarChart></ResponsiveContainer></div><div className="repair-table-scroll"><table className="repair-data-table"><thead><tr><th>{uiText("Tanggal")}</th><th>{uiText("Model")}</th><th>{uiText("Plan Qty")}</th><th>{uiText("Actual Qty")}</th><th>{uiText("Achievement")}</th><th>{uiText("Status")}</th><th>{uiText("Catatan")}</th></tr></thead><tbody>{planning.map((row)=><tr key={row.date}><td>{row.date}</td><td>{row.model}</td><td>{row.plan}</td><td>{row.actual}</td><td><div className="achievement"><i style={{width:`${Math.min(row.actual/row.plan*100,100)}%`}}/><span>{(row.actual/row.plan*100).toFixed(1)}%</span></div></td><td><span className={`repair-status ${row.actual>=row.plan?"good":"bad"}`}>{row.actual>=row.plan?uiText("Achieved"):uiText("Behind")}</span></td><td>{uiText("Monitoring")}</td></tr>)}</tbody></table></div></article></div>{dialog&&<InputDialog onClose={()=>setDialog(false)} onSave={()=>setDialog(false)}/>}</>;
 }
 
 export const warrantyDaily = [{day:"25 Sep",input:32,off:4},{day:"26 Sep",input:41,off:6},{day:"27 Sep",input:36,off:3},{day:"28 Sep",input:48,off:8},{day:"29 Sep",input:44,off:5},{day:"30 Sep",input:52,off:7}];
 
 export function Warranty() {
+  const { text: uiText } = useUiText();
   const [dialog,setDialog]=useState(false);
   const daily=warrantyDaily;
-  return <><Header page="Warranty" onInput={()=>setDialog(true)}/><div className="repair-kpis two"><button className="repair-kpi"><div className="repair-kpi-top"><span>Input Unit Market</span><span className="repair-status good">Active</span></div><strong>52 <small>units</small></strong><p>Hari ini</p><Sparkline success/></button><button className="repair-kpi"><div className="repair-kpi-top"><span>Phone Off</span><span className="repair-status bad">7 units</span></div><strong>13.5%</strong><p>dari input market</p><Sparkline success={false}/></button></div><div className="repair-charts"><article className="repair-panel"><div className="repair-card-head"><div><h2>Input Unit Market</h2><p>Jumlah unit masuk harian</p></div><button className="repair-primary" onClick={()=>setDialog(true)}><Glyph name="plus"/>Input</button></div><div className="warranty-chart"><ResponsiveContainer><BarChart data={daily}><CartesianGrid vertical={false}/><XAxis dataKey="day" axisLine={false} tickLine={false}/><Tooltip/><Bar dataKey="input" fill="var(--chart-1)" radius={6}/></BarChart></ResponsiveContainer></div></article><article className="repair-panel"><div className="repair-card-head"><div><h2>Phone Off</h2><p>Temuan phone off harian</p></div><button className="repair-primary" onClick={()=>setDialog(true)}><Glyph name="plus"/>Input</button></div><div className="warranty-chart"><ResponsiveContainer><LineChart data={daily}><CartesianGrid vertical={false}/><XAxis dataKey="day" axisLine={false} tickLine={false}/><Tooltip/><Line dataKey="off" stroke="var(--chart-5)" strokeWidth={2}/></LineChart></ResponsiveContainer></div></article><article className="repair-panel wide"><div className="repair-card-head"><div><h2>Warranty recap</h2><p>Rekap unit berdasarkan tanggal dan model</p></div></div><div className="repair-table-scroll"><table className="repair-data-table"><thead><tr><th>Tanggal</th><th>Model</th><th>Input Unit Market</th><th>Phone Off</th><th>Keterangan</th></tr></thead><tbody>{daily.map((row)=><tr key={row.day}><td>{row.day}</td><td>OPPO A5 Pro</td><td>{row.input}</td><td className={row.off>5?"fail-cell":"pass-cell"}>{row.off}</td><td>Warranty inspection</td></tr>)}</tbody></table></div></article></div>{dialog&&<InputDialog onClose={()=>setDialog(false)} onSave={()=>setDialog(false)}/>}</>;
+  return <><Header page="Warranty" onInput={()=>setDialog(true)}/><div className="repair-kpis two"><button className="repair-kpi"><div className="repair-kpi-top"><span>{uiText("Input Unit Market")}</span><span className="repair-status good">{uiText("Active")}</span></div><strong>52 <small>{uiText("units")}</small></strong><p>{uiText("Hari ini")}</p><Sparkline success/></button><button className="repair-kpi"><div className="repair-kpi-top"><span>{uiText("Phone Off")}</span><span className="repair-status bad">{uiText("7 units")}</span></div><strong>13.5%</strong><p>{uiText("dari input market")}</p><Sparkline success={false}/></button></div><div className="repair-charts"><article className="repair-panel"><div className="repair-card-head"><div><h2>{uiText("Input Unit Market")}</h2><p>{uiText("Jumlah unit masuk harian")}</p></div><button className="repair-primary" onClick={()=>setDialog(true)}><Glyph name="plus"/>{uiText("Input")}</button></div><div className="warranty-chart"><ResponsiveContainer><BarChart data={daily}><CartesianGrid vertical={false}/><XAxis dataKey="day" axisLine={false} tickLine={false}/><Tooltip/><Bar dataKey="input" fill="var(--chart-1)" radius={6}/></BarChart></ResponsiveContainer></div></article><article className="repair-panel"><div className="repair-card-head"><div><h2>{uiText("Phone Off")}</h2><p>{uiText("Temuan phone off harian")}</p></div><button className="repair-primary" onClick={()=>setDialog(true)}><Glyph name="plus"/>{uiText("Input")}</button></div><div className="warranty-chart"><ResponsiveContainer><LineChart data={daily}><CartesianGrid vertical={false}/><XAxis dataKey="day" axisLine={false} tickLine={false}/><Tooltip/><Line dataKey="off" stroke="var(--chart-5)" strokeWidth={2}/></LineChart></ResponsiveContainer></div></article><article className="repair-panel wide"><div className="repair-card-head"><div><h2>{uiText("Warranty recap")}</h2><p>{uiText("Rekap unit berdasarkan tanggal dan model")}</p></div></div><div className="repair-table-scroll"><table className="repair-data-table"><thead><tr><th>{uiText("Tanggal")}</th><th>{uiText("Model")}</th><th>{uiText("Input Unit Market")}</th><th>{uiText("Phone Off")}</th><th>{uiText("Keterangan")}</th></tr></thead><tbody>{daily.map((row)=><tr key={row.day}><td>{row.day}</td><td>{uiText("OPPO A5 Pro")}</td><td>{row.input}</td><td className={row.off>5?"fail-cell":"pass-cell"}>{row.off}</td><td>{uiText("Warranty inspection")}</td></tr>)}</tbody></table></div></article></div>{dialog&&<InputDialog onClose={()=>setDialog(false)} onSave={()=>setDialog(false)}/>}</>;
 }
 
 type AbnormalStatus = "Open" | "In Progress" | "Closed-Loop" | "Draft";
@@ -321,29 +334,29 @@ function formatDateTime(date: Date) {
 }
 
 export function AbnormalPageHeader() {
+  const { text: uiText } = useUiText();
   return (
     <header className="qc-page-header">
       <div>
-        <div className="qc-kicker">ABNORMALITY</div>
-        <h1>Abnormality</h1>
-        <p>Track unresolved nonconformities and quality exceptions across production lines.</p>
+        <div className="qc-kicker">{uiText("ABNORMALITY")}</div>
+        <h1>{uiText("Abnormality")}</h1>
+        <p>{uiText("Track unresolved nonconformities and quality exceptions across production lines.")}</p>
       </div>
       <div className="qc-toolbar">
         <div className="qc-live">
           <span className="live-dot" />
-          <span>PIC: Yusriyadi</span>
+          <span>{uiText("PIC: Yusriyadi")}</span>
         </div>
-        <button className="qc-secondary-button" type="button">30 Sep 2026</button>
+        <button className="qc-secondary-button" type="button">{uiText("30 Sep 2026")}</button>
         <button className="qc-primary-button" type="button">
-          <Download size={14} />
-          Export
-        </button>
+          <Download size={14} />{uiText("Export")}</button>
       </div>
     </header>
   );
 }
 
 export function AbnormalPage() {
+  const { text: uiText } = useUiText();
   const [rows, setRows] = useState<AbnormalRecord[]>(abnormalSeed);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -453,7 +466,7 @@ export function AbnormalPage() {
       <section className="qc-kpi-grid abnormality-kpis">
         {summary.map((item) => (
           <article key={item.label} className="qc-kpi-card abnormality-kpi-card">
-            <span className="kpi-label">{item.label}</span>
+            <span className="kpi-label">{uiText(item.label)}</span>
             <strong>{item.value}</strong>
             <span className="kpi-unit">{item.helper}</span>
           </article>
@@ -463,19 +476,17 @@ export function AbnormalPage() {
       <article className="abnormality-panel">
         <div className="abnormality-panel-head">
           <div>
-            <h2>Abnormal log</h2>
-            <p>Filter by SQDCIP, 5M1E, or status.</p>
+            <h2>{uiText("Abnormal log")}</h2>
+            <p>{uiText("Filter by SQDCIP, 5M1E, or status.")}</p>
           </div>
           <button type="button" className="qc-primary-button" onClick={openCreate}>
-            <Plus size={14} />
-            Add abnormal
-          </button>
+            <Plus size={14} />{uiText("Add abnormal")}</button>
         </div>
 
         <div className="abnormality-filter-row">
           <label className="abnormality-search">
             <Search size={14} />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search abnormal..." />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={uiText("Search abnormal...")} />
           </label>
 
           <CustomSelect value={sqcdipFilter} options={[{ value: "All", label: "All SQDCIP" }, "Safety", "Quality", "Delivery", "Cost", "Inventory", "Productivity"]} onChange={(next) => setSqcdipFilter(next)} />
@@ -485,27 +496,25 @@ export function AbnormalPage() {
           <CustomSelect value={statusFilter} options={[{ value: "All", label: "All status" }, "Open", "In Progress", "Closed-Loop", "Draft"]} onChange={(next) => setStatusFilter(next)} />
 
           <button type="button" className="qc-secondary-button abnormality-reset" onClick={resetFilters}>
-            <Filter size={14} />
-            Reset
-          </button>
+            <Filter size={14} />{uiText("Reset")}</button>
         </div>
 
         {filteredRows.length === 0 ? (
-          <div className="abnormality-empty">No abnormals match the selected filters.</div>
+          <div className="abnormality-empty">{uiText("No abnormals match the selected filters.")}</div>
         ) : (
           <div className="repair-table-scroll">
             <table className="repair-data-table abnormality-table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Date</th>
-                  <th>Area</th>
-                  <th>SQDCIP</th>
-                  <th>5M1E</th>
-                  <th>Problem</th>
-                  <th>PIC</th>
-                  <th>Status</th>
-                  <th>Action</th>
+                  <th>{uiText("ID")}</th>
+                  <th>{uiText("Date")}</th>
+                  <th>{uiText("Area")}</th>
+                  <th>{uiText("SQDCIP")}</th>
+                  <th>{uiText("5M1E")}</th>
+                  <th>{uiText("Problem")}</th>
+                  <th>{uiText("PIC")}</th>
+                  <th>{uiText("Status")}</th>
+                  <th>{uiText("Action")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -528,13 +537,13 @@ export function AbnormalPage() {
                     </td>
                     <td>{item.pic}</td>
                     <td>
-                      <span className={`status-chip ${abnormalStatusClass[item.status]}`}>{item.status}</span>
+                      <span className={`status-chip ${abnormalStatusClass[item.status]}`}>{uiText(item.status)}</span>
                     </td>
                     <td className="abnormality-actions">
-                      <button type="button" className="icon-button" aria-label="Edit abnormal" onClick={() => openEdit(item)}>
+                      <button type="button" className="icon-button" aria-label={uiText("Edit abnormal")} onClick={() => openEdit(item)}>
                         <PencilLine size={14} />
                       </button>
-                      <button type="button" className="icon-button danger" aria-label="Delete abnormal" onClick={() => handleDelete(item.id)}>
+                      <button type="button" className="icon-button danger" aria-label={uiText("Delete abnormal")} onClick={() => handleDelete(item.id)}>
                         <Trash2 size={14} />
                       </button>
                     </td>
@@ -551,82 +560,64 @@ export function AbnormalPage() {
           <form className="repair-dialog" onMouseDown={(event) => event.stopPropagation()} onSubmit={handleSubmit}>
             <div className="repair-dialog-head">
               <div>
-                <h2>{editingId ? "Edit abnormal" : "Add abnormal"}</h2>
-                <p>{editingId ? "Update the selected abnormal record." : "Create a new abnormal record and add it to the log."}</p>
+                <h2>{editingId ? uiText("Edit abnormal") : uiText("Add abnormal")}</h2>
+                <p>{editingId ? uiText("Update the selected abnormal record.") : uiText("Create a new abnormal record and add it to the log.")}</p>
               </div>
-              <button type="button" aria-label="Close" onClick={() => setIsFormOpen(false)}>
+              <button type="button" aria-label={uiText("Close")} onClick={() => setIsFormOpen(false)}>
                 <X size={16} />
               </button>
             </div>
 
             <div className="repair-form">
               <div className="form-grid">
-                <label>
-                  Area
-                  <CustomSelect value={draft.area} options={["Pre Assembly", "Rework", "Warranty", "Service", "QC", "Material", "Packing", "Instalasi"]} onChange={(next) => setDraft((current) => ({ ...current, area: next }))} />
+                <label>{uiText("Area")}<CustomSelect value={draft.area} options={["Pre Assembly", "Rework", "Warranty", "Service", "QC", "Material", "Packing", "Instalasi"]} onChange={(next) => setDraft((current) => ({ ...current, area: next }))} />
                 </label>
 
-                <label>
-                  SQDCIP
-                  <CustomSelect value={draft.sqcdip} options={["Safety", "Quality", "Delivery", "Cost", "Inventory", "Productivity"]} onChange={(next) => setDraft((current) => ({ ...current, sqcdip: next }))} />
+                <label>{uiText("SQDCIP")}<CustomSelect value={draft.sqcdip} options={["Safety", "Quality", "Delivery", "Cost", "Inventory", "Productivity"]} onChange={(next) => setDraft((current) => ({ ...current, sqcdip: next }))} />
                 </label>
 
-                <label>
-                  5M1E
-                  <CustomSelect value={draft.factor} options={["Machine", "Man", "Material", "Method", "Measurement", "Environment"]} onChange={(next) => setDraft((current) => ({ ...current, factor: next }))} />
+                <label>{uiText("5M1E")}<CustomSelect value={draft.factor} options={["Machine", "Man", "Material", "Method", "Measurement", "Environment"]} onChange={(next) => setDraft((current) => ({ ...current, factor: next }))} />
                 </label>
 
-                <label>
-                  PIC
-                  <input
+                <label>{uiText("PIC")}<input
                     value={draft.pic}
                     onChange={(event) => setDraft((current) => ({ ...current, pic: event.target.value }))}
-                    placeholder="PIC name"
+                    placeholder={uiText("PIC name")}
                     required
                   />
                 </label>
               </div>
 
-              <label>
-                Problem
-                <textarea
+              <label>{uiText("Problem")}<textarea
                   rows={3}
                   value={draft.problem}
                   onChange={(event) => setDraft((current) => ({ ...current, problem: event.target.value }))}
-                  placeholder="Detailed problem"
+                  placeholder={uiText("Detailed problem")}
                   required
                 />
               </label>
 
-              <label>
-                Improvement
-                <textarea
+              <label>{uiText("Improvement")}<textarea
                   rows={3}
                   value={draft.improvement}
                   onChange={(event) => setDraft((current) => ({ ...current, improvement: event.target.value }))}
-                  placeholder="Corrective action taken"
+                  placeholder={uiText("Corrective action taken")}
                 />
               </label>
 
-              <label>
-                Action plan
-                <textarea
+              <label>{uiText("Action plan")}<textarea
                   rows={3}
                   value={draft.plan}
                   onChange={(event) => setDraft((current) => ({ ...current, plan: event.target.value }))}
-                  placeholder="Follow-up plan"
+                  placeholder={uiText("Follow-up plan")}
                 />
               </label>
 
               <div className="form-grid">
-                <label>
-                  Status
-                  <CustomSelect value={draft.status} options={["Open", "In Progress", "Closed-Loop", "Draft"]} onChange={(next) => setDraft((current) => ({ ...current, status: next as AbnormalStatus }))} />
+                <label>{uiText("Status")}<CustomSelect value={draft.status} options={["Open", "In Progress", "Closed-Loop", "Draft"]} onChange={(next) => setDraft((current) => ({ ...current, status: next as AbnormalStatus }))} />
                 </label>
 
-                <label>
-                  Date & time
-                  <input
+                <label>{uiText("Date & time")}<input
                     type="datetime-local"
                     value={draft.date.replace(" ", "T").slice(0, 16)}
                     onChange={(event) => setDraft((current) => ({ ...current, date: event.target.value.replace("T", " ") }))}
@@ -636,12 +627,8 @@ export function AbnormalPage() {
             </div>
 
             <div className="repair-dialog-actions">
-              <button type="button" className="repair-outline" onClick={() => setIsFormOpen(false)}>
-                Cancel
-              </button>
-              <button type="submit" className="repair-primary">
-                Save
-              </button>
+              <button type="button" className="repair-outline" onClick={() => setIsFormOpen(false)}>{uiText("Cancel")}</button>
+              <button type="submit" className="repair-primary">{uiText("Save")}</button>
             </div>
           </form>
         </div>
@@ -651,77 +638,78 @@ export function AbnormalPage() {
 }
 
 function AbnormalDetail({ abnormal, onBack }: { abnormal: { id: string; date: string; name: string; workshop: string; proposer: string; source: string; frequency: string; track: string; status: string; attachment: number }; onBack: () => void }) {
+  const { text: uiText } = useUiText();
   return <div className="abnormal-page detail-page">
     <header className="abnormal-header detail-header">
       <div>
-        <div className="abnormal-breadcrumb">Repair / Abnormal / {abnormal.id}</div>
+        <div className="abnormal-breadcrumb">{uiText("Repair / Abnormal / ")}{abnormal.id}</div>
         <h1>{abnormal.name}</h1>
       </div>
       <div className="abnormal-actions">
-        <button className="repair-outline" onClick={onBack}>Kembali</button>
-        <button className="repair-primary">Edit</button>
+        <button className="repair-outline" onClick={onBack}>{uiText("Kembali")}</button>
+        <button className="repair-primary">{uiText("Edit")}</button>
       </div>
     </header>
 
     <div className="detail-grid">
       <div className="detail-main">
         <div className="abnormal-card info-grid">
-          <div><label>Workshop Line</label><strong>{abnormal.workshop}</strong></div>
-          <div><label>Proposer</label><strong>{abnormal.proposer}</strong></div>
-          <div><label>Tanggal</label><strong>{abnormal.date}</strong></div>
-          <div><label>Exception source</label><span className="abnormal-chip source-chip">{abnormal.source}</span></div>
-          <div><label>Frequency</label><span className="abnormal-chip">{abnormal.frequency}</span></div>
-          <div><label>Status</label><span className={`repair-status ${abnormal.status === "Closed" ? "good" : "bad"}`}>{abnormal.status}</span></div>
+          <div><label>{uiText("Workshop Line")}</label><strong>{abnormal.workshop}</strong></div>
+          <div><label>{uiText("Proposer")}</label><strong>{abnormal.proposer}</strong></div>
+          <div><label>{uiText("Tanggal")}</label><strong>{abnormal.date}</strong></div>
+          <div><label>{uiText("Exception source")}</label><span className="abnormal-chip source-chip">{abnormal.source}</span></div>
+          <div><label>{uiText("Frequency")}</label><span className="abnormal-chip">{abnormal.frequency}</span></div>
+          <div><label>{uiText("Status")}</label><span className={`repair-status ${abnormal.status === "Closed" ? "good" : "bad"}`}>{uiText(abnormal.status)}</span></div>
         </div>
 
         <div className="abnormal-card">
-          <h3>Problem Statement</h3>
-          <p>Tgl 4/10, line TAC20501 Zenit kekurangan material bracket kode 612210001971 (-223pcs) mengakibatkan plan mundur dan lead time naik.</p>
+          <h3>{uiText("Problem Statement")}</h3>
+          <p>{uiText("Tgl 4/10, line TAC20501 Zenit kekurangan material bracket kode 612210001971 (-223pcs) mengakibatkan plan mundur dan lead time naik.")}</p>
         </div>
 
         <div className="abnormal-card why-tree">
-          <h3>5 Why Analysis</h3>
+          <h3>{uiText("5 Why Analysis")}</h3>
           <div className="why-columns">
             <div className="why-column">
-              <div className="why-root">Problem</div>
-              <div className="why-node"><span className="why-badge">Why 1</span><p>Material bracket tidak tersedia pada saat line running.</p></div>
-              <div className="why-node"><span className="why-badge">Why 2</span><p>Reorder dilakukan terlambat dan pengiriman supplier tidak sesuai jadwal.</p></div>
-              <div className="why-node root-cause"><span className="why-badge">ROOT CAUSE</span><p>Stock planning tidak memadai untuk kode material 612210001971.</p></div>
+              <div className="why-root">{uiText("Problem")}</div>
+              <div className="why-node"><span className="why-badge">{uiText("Why 1")}</span><p>{uiText("Material bracket tidak tersedia pada saat line running.")}</p></div>
+              <div className="why-node"><span className="why-badge">{uiText("Why 2")}</span><p>{uiText("Reorder dilakukan terlambat dan pengiriman supplier tidak sesuai jadwal.")}</p></div>
+              <div className="why-node root-cause"><span className="why-badge">{uiText("ROOT CAUSE")}</span><p>{uiText("Stock planning tidak memadai untuk kode material 612210001971.")}</p></div>
             </div>
             <div className="why-column">
-              <div className="why-root">Management</div>
-              <div className="why-node"><span className="why-badge">Why 1</span><p>Review replenishment dilakukan tanpa escalation cepat.</p></div>
-              <div className="why-node"><span className="why-badge">Why 2</span><p>Lead time supplier belum di-update ke owner line.</p></div>
-              <div className="why-node root-cause"><span className="why-badge">ROOT CAUSE</span><p>Proses review vendor dan stock buffer belum terintegrasi.</p></div>
+              <div className="why-root">{uiText("Management")}</div>
+              <div className="why-node"><span className="why-badge">{uiText("Why 1")}</span><p>{uiText("Review replenishment dilakukan tanpa escalation cepat.")}</p></div>
+              <div className="why-node"><span className="why-badge">{uiText("Why 2")}</span><p>{uiText("Lead time supplier belum di-update ke owner line.")}</p></div>
+              <div className="why-node root-cause"><span className="why-badge">{uiText("ROOT CAUSE")}</span><p>{uiText("Proses review vendor dan stock buffer belum terintegrasi.")}</p></div>
             </div>
           </div>
         </div>
 
         <div className="abnormal-card">
-          <h3>Risk & Evaluation</h3>
+          <h3>{uiText("Risk & Evaluation")}</h3>
           <ol>
-            <li>Risiko keterlambatan produksi pada line TAC20501.</li>
-            <li>Potensi kenaikan backlog produksi 6–8%.</li>
-            <li>Pengaruh ke service SLA customer.</li>
+            <li>{uiText("Risiko keterlambatan produksi pada line TAC20501.")}</li>
+            <li>{uiText("Potensi kenaikan backlog produksi 6–8%.")}</li>
+            <li>{uiText("Pengaruh ke service SLA customer.")}</li>
           </ol>
         </div>
       </div>
 
       <aside className="detail-side">
         <div className="abnormal-card">
-          <h3>Attachment</h3>
+          <h3>{uiText("Attachment")}</h3>
           <ul className="attachment-list">
-            <li>IMG_20261004_1.jpg</li>
-            <li>IMG_20261004_2.png</li>
-            <li>IMG_20261004_3.png</li>
+            <li>{uiText("IMG_20261004_1.jpg")}</li>
+            <li>{uiText("IMG_20261004_2.png")}</li>
+            <li>{uiText("IMG_20261004_3.png")}</li>
           </ul>
         </div>
         <div className="abnormal-card">
-          <h3>Riwayat Aktivitas</h3>
+          <h3>{uiText("Riwayat Aktivitas")}</h3>
           <ul className="timeline-list">
-            <li><strong>2026-10-04</strong><span>Dibuat oleh Galuh</span></li>
-            <li><strong>2026-10-05</strong><span>Status diubah ke Closed</span></li>
-            <li><strong>2026-10-06</strong><span>Upload foto evidence</span></li>
+            <li><strong>2026-10-04</strong><span>{uiText("Dibuat oleh Galuh")}</span></li>
+            <li><strong>2026-10-05</strong><span>{uiText("Status diubah ke Closed")}</span></li>
+            <li><strong>2026-10-06</strong><span>{uiText("Upload foto evidence")}</span></li>
           </ul>
         </div>
       </aside>
@@ -730,6 +718,7 @@ function AbnormalDetail({ abnormal, onBack }: { abnormal: { id: string; date: st
 }
 
 function AbnormalWizard({ onQuit }: { onQuit: () => void }) {
+  const { text: uiText } = useUiText();
   const [step, setStep] = useState(1);
   const [saved, setSaved] = useState(true);
   const [source, setSource] = useState("After Occurring");
@@ -800,12 +789,12 @@ function AbnormalWizard({ onQuit }: { onQuit: () => void }) {
   return <div className="abnormal-wizard-shell">
     <div className="abnormal-wizard-header">
       <div>
-        <div className="abnormal-breadcrumb">Repair / Abnormal / Baru</div>
-        <h1>Abnormal Baru</h1>
+        <div className="abnormal-breadcrumb">{uiText("Repair / Abnormal / Baru")}</div>
+        <h1>{uiText("Abnormal Baru")}</h1>
       </div>
       <div className="abnormal-actions">
-        <span className="autosave-indicator">{saved ? "Tersimpan otomatis" : "Belum tersimpan"}</span>
-        <button className="repair-outline" onClick={onQuit}>Batal</button>
+        <span className="autosave-indicator">{saved ? uiText("Tersimpan otomatis") : uiText("Belum tersimpan")}</span>
+        <button className="repair-outline" onClick={onQuit}>{uiText("Batal")}</button>
       </div>
     </div>
 
@@ -820,110 +809,108 @@ function AbnormalWizard({ onQuit }: { onQuit: () => void }) {
 
     <div className="abnormal-wizard-body">
       {step === 1 && <div className="form-grid-large">
-        <label>Abnormal Name<input value={problemStatement} onChange={(event) => { setProblemStatement(event.target.value); setSaved(false); }} /></label>
-        <label>Workshop Line<CustomSelect defaultValue="Workshop 5" options={["Workshop 5", "Workshop 3", "Workshop 2"]} onChange={() => setSaved(false)} /></label>
-        <label>Proposer<input value="Galuh / Irfan N" onChange={() => setSaved(false)} /></label>
-        <label>Tanggal kejadian<input type="date" value="2026-10-04" onChange={() => setSaved(false)} /></label>
-        <label className="segmented-block">Exception source
-          <div className="segmented-row">
+        <label>{uiText("Abnormal Name")}<input value={problemStatement} onChange={(event) => { setProblemStatement(event.target.value); setSaved(false); }} /></label>
+        <label>{uiText("Workshop Line")}<CustomSelect defaultValue="Workshop 5" options={["Workshop 5", "Workshop 3", "Workshop 2"]} onChange={() => setSaved(false)} /></label>
+        <label>{uiText("Proposer")}<input value="Galuh / Irfan N" onChange={() => setSaved(false)} /></label>
+        <label>{uiText("Tanggal kejadian")}<input type="date" value="2026-10-04" onChange={() => setSaved(false)} /></label>
+        <label className="segmented-block">{uiText("Exception source")}<div className="segmented-row">
             {['Before Occurring', 'Current Occurring', 'After Occurring', 'Other'].map((item) => (
               <button type="button" key={item} className={source === item ? 'active' : ''} onClick={() => { setSource(item); setSaved(false); }}>{item}</button>
             ))}
           </div>
         </label>
-        <label className="segmented-block">Frequency
-          <div className="segmented-row">
+        <label className="segmented-block">{uiText("Frequency")}<div className="segmented-row">
             {['Frequent occurrence', 'Long processing cycle', 'Others'].map((item) => (
               <button type="button" key={item} className={frequency === item ? 'active' : ''} onClick={() => { setFrequency(item); setSaved(false); }}>{item}</button>
             ))}
           </div>
         </label>
-        <label className="full-span">Problem Statement<textarea rows={5} value={problemStatement} onChange={(event) => { setProblemStatement(event.target.value); setSaved(false); }} /></label>
-        <div className="full-span upload-box"><h3>Foto / attachment kondisi awal</h3><input type="file" multiple accept="image/png,image/jpeg" /><div className="thumb-stack"><span>initial-line.jpg</span><span>warning-1.png</span></div></div>
+        <label className="full-span">{uiText("Problem Statement")}<textarea rows={5} value={problemStatement} onChange={(event) => { setProblemStatement(event.target.value); setSaved(false); }} /></label>
+        <div className="full-span upload-box"><h3>{uiText("Foto / attachment kondisi awal")}</h3><input type="file" multiple accept="image/png,image/jpeg" /><div className="thumb-stack"><span>{uiText("initial-line.jpg")}</span><span>{uiText("warning-1.png")}</span></div></div>
       </div>}
 
       {step === 2 && <div className="why-form-step">
-        <div className="abnormal-card why-readonly"><strong>Problem Statement</strong><p>{problemStatement}</p></div>
+        <div className="abnormal-card why-readonly"><strong>{uiText("Problem Statement")}</strong><p>{problemStatement}</p></div>
         {technicalWhys.map((item, index) => (
           <div key={item.id} className={`why-entry ${item.root ? 'root-entry' : ''}`}>
-            <div className="why-entry-head"><h3>Why {index + 1}: Kenapa {index === 0 ? 'masalah ini terjadi?' : technicalWhys[index - 1].answer || 'jawaban sebelumnya'} terjadi?</h3>{technicalWhys.length > 1 && <button type="button" onClick={() => removeWhy('technical', item.id)}>Hapus</button>}</div>
-            <textarea value={item.answer} onChange={(event) => updateWhy('technical', item.id, event.target.value)} placeholder="Jawaban why..." rows={3} />
-            <div className="why-upload-area"><input type="file" multiple accept="image/png,image/jpeg" /><span>Upload foto</span></div>
-            {item.root ? <div className="root-indicator">ROOT CAUSE</div> : <label className="root-toggle"><input type="checkbox" checked={item.root} onChange={() => setRoot('technical', item.id)} /> Ini akar masalah (Root Cause)</label>}
+            <div className="why-entry-head"><h3>{uiText("Why ")}{index + 1}{uiText(": Kenapa ")}{index === 0 ? uiText("masalah ini terjadi?") : technicalWhys[index - 1].answer || uiText("jawaban sebelumnya")}{uiText(" terjadi?")}</h3>{technicalWhys.length > 1 && <button type="button" onClick={() => removeWhy('technical', item.id)}>{uiText("Hapus")}</button>}</div>
+            <textarea value={item.answer} onChange={(event) => updateWhy('technical', item.id, event.target.value)} placeholder={uiText("Jawaban why...")} rows={3} />
+            <div className="why-upload-area"><input type="file" multiple accept="image/png,image/jpeg" /><span>{uiText("Upload foto")}</span></div>
+            {item.root ? <div className="root-indicator">{uiText("ROOT CAUSE")}</div> : <label className="root-toggle"><input type="checkbox" checked={item.root} onChange={() => setRoot('technical', item.id)} />{uiText(" Ini akar masalah (Root Cause)")}</label>}
           </div>
         ))}
-        {!technicalWhys.some((item) => item.root) && technicalWhys.length < 5 && <button type="button" className="repair-primary inline-button" onClick={() => addWhy('technical')}>+ Tambah Why berikutnya</button>}
+        {!technicalWhys.some((item) => item.root) && technicalWhys.length < 5 && <button type="button" className="repair-primary inline-button" onClick={() => addWhy('technical')}>{uiText("+ Tambah Why berikutnya")}</button>}
       </div>}
 
       {step === 3 && <div className="why-form-step">
-        <div className="abnormal-card why-readonly"><strong>Problem Statement</strong><p>{problemStatement}</p></div>
+        <div className="abnormal-card why-readonly"><strong>{uiText("Problem Statement")}</strong><p>{problemStatement}</p></div>
         {managementWhys.map((item, index) => (
           <div key={item.id} className={`why-entry ${item.root ? 'root-entry' : ''}`}>
-            <div className="why-entry-head"><h3>Why {index + 1}: Kenapa {index === 0 ? 'masalah ini terjadi?' : managementWhys[index - 1].answer || 'jawaban sebelumnya'} terjadi?</h3>{managementWhys.length > 1 && <button type="button" onClick={() => removeWhy('management', item.id)}>Hapus</button>}</div>
-            <textarea value={item.answer} onChange={(event) => updateWhy('management', item.id, event.target.value)} placeholder="Jawaban why..." rows={3} />
-            <div className="why-upload-area"><input type="file" multiple accept="image/png,image/jpeg" /><span>Upload foto</span></div>
-            {item.root ? <div className="root-indicator">ROOT CAUSE</div> : <label className="root-toggle"><input type="checkbox" checked={item.root} onChange={() => setRoot('management', item.id)} /> Ini akar masalah (Root Cause)</label>}
+            <div className="why-entry-head"><h3>{uiText("Why ")}{index + 1}{uiText(": Kenapa ")}{index === 0 ? uiText("masalah ini terjadi?") : managementWhys[index - 1].answer || uiText("jawaban sebelumnya")}{uiText(" terjadi?")}</h3>{managementWhys.length > 1 && <button type="button" onClick={() => removeWhy('management', item.id)}>{uiText("Hapus")}</button>}</div>
+            <textarea value={item.answer} onChange={(event) => updateWhy('management', item.id, event.target.value)} placeholder={uiText("Jawaban why...")} rows={3} />
+            <div className="why-upload-area"><input type="file" multiple accept="image/png,image/jpeg" /><span>{uiText("Upload foto")}</span></div>
+            {item.root ? <div className="root-indicator">{uiText("ROOT CAUSE")}</div> : <label className="root-toggle"><input type="checkbox" checked={item.root} onChange={() => setRoot('management', item.id)} />{uiText(" Ini akar masalah (Root Cause)")}</label>}
           </div>
         ))}
-        {!managementWhys.some((item) => item.root) && managementWhys.length < 5 && <button type="button" className="repair-primary inline-button" onClick={() => addWhy('management')}>+ Tambah Why berikutnya</button>}
+        {!managementWhys.some((item) => item.root) && managementWhys.length < 5 && <button type="button" className="repair-primary inline-button" onClick={() => addWhy('management')}>{uiText("+ Tambah Why berikutnya")}</button>}
       </div>}
 
       {step === 4 && <div className="summary-form-step">
         <div className="summary-stack">
           <div className="abnormal-card">
-            <h3>Risk & Evaluation</h3>
+            <h3>{uiText("Risk & Evaluation")}</h3>
             {risks.map((item, index) => (
               <div key={index} className="list-row">
                 <input value={item} onChange={(event) => updateListRow('risk', index, event.target.value)} />
-                <button type="button" onClick={() => setRisks((current) => current.filter((_, idx) => idx !== index))}>Hapus</button>
+                <button type="button" onClick={() => setRisks((current) => current.filter((_, idx) => idx !== index))}>{uiText("Hapus")}</button>
               </div>
             ))}
-            <button type="button" className="repair-primary inline-button" onClick={() => addListRow('risk')}>+ Tambah poin</button>
+            <button type="button" className="repair-primary inline-button" onClick={() => addListRow('risk')}>{uiText("+ Tambah poin")}</button>
           </div>
 
           <div className="abnormal-card">
-            <h3>Kesimpulan</h3>
+            <h3>{uiText("Kesimpulan")}</h3>
             {conclusions.map((item, index) => (
               <div key={index} className="list-row">
                 <input value={item} onChange={(event) => updateListRow('conclusion', index, event.target.value)} />
-                <button type="button" onClick={() => setConclusions((current) => current.filter((_, idx) => idx !== index))}>Hapus</button>
+                <button type="button" onClick={() => setConclusions((current) => current.filter((_, idx) => idx !== index))}>{uiText("Hapus")}</button>
               </div>
             ))}
-            <button type="button" className="repair-primary inline-button" onClick={() => addListRow('conclusion')}>+ Tambah poin</button>
+            <button type="button" className="repair-primary inline-button" onClick={() => addListRow('conclusion')}>{uiText("+ Tambah poin")}</button>
           </div>
 
           <div className="abnormal-card">
-            <h3>Short-term Solution</h3>
+            <h3>{uiText("Short-term Solution")}</h3>
             {actions.map((item, index) => (
               <div key={index} className="action-row">
-                <input value={item.text} onChange={(event) => updateAction(index, 'text', event.target.value)} placeholder="Tindakan" />
+                <input value={item.text} onChange={(event) => updateAction(index, 'text', event.target.value)} placeholder={uiText("Tindakan")} />
                 <CustomSelect value={item.pic} options={[{ value: "", label: "PIC" }, "Galuh", "Irfan N", "Bayu"]} onChange={(next) => updateAction(index, 'pic', next)} />
                 <input type="date" value={item.dueDate} onChange={(event) => updateAction(index, 'dueDate', event.target.value)} />
                 <CustomSelect value={item.status} options={["Belum", "Proses", "Selesai"]} onChange={(next) => updateAction(index, 'status', next)} />
-                <button type="button" onClick={() => setActions((current) => current.filter((_, idx) => idx !== index))}>Hapus</button>
+                <button type="button" onClick={() => setActions((current) => current.filter((_, idx) => idx !== index))}>{uiText("Hapus")}</button>
               </div>
             ))}
-            <button type="button" className="repair-primary inline-button" onClick={addAction}>+ Tambah item</button>
+            <button type="button" className="repair-primary inline-button" onClick={addAction}>{uiText("+ Tambah item")}</button>
           </div>
         </div>
       </div>}
 
       {step === 5 && <div className="review-step">
         <div className="abnormal-card review-box">
-          <h3>Review dan Submit</h3>
-          <p><strong>Abnormal Name:</strong> {problemStatement}</p>
-          <p><strong>Source:</strong> {source}</p>
-          <p><strong>Frequency:</strong> {frequency}</p>
-          <div className="review-why-block"><h4>5 Why Teknis</h4>{technicalWhys.map((item, index) => <div key={item.id} className="review-why-item"><span>Why {index + 1}</span><p>{item.answer || "Belum diisi"}</p></div>)}</div>
-          <div className="review-why-block"><h4>5 Why Management</h4>{managementWhys.map((item, index) => <div key={item.id} className="review-why-item"><span>Why {index + 1}</span><p>{item.answer || "Belum diisi"}</p></div>)}</div>
+          <h3>{uiText("Review dan Submit")}</h3>
+          <p><strong>{uiText("Abnormal Name:")}</strong> {problemStatement}</p>
+          <p><strong>{uiText("Source:")}</strong> {source}</p>
+          <p><strong>{uiText("Frequency:")}</strong> {frequency}</p>
+          <div className="review-why-block"><h4>{uiText("5 Why Teknis")}</h4>{technicalWhys.map((item, index) => <div key={item.id} className="review-why-item"><span>{uiText("Why ")}{index + 1}</span><p>{item.answer || uiText("Belum diisi")}</p></div>)}</div>
+          <div className="review-why-block"><h4>{uiText("5 Why Management")}</h4>{managementWhys.map((item, index) => <div key={item.id} className="review-why-item"><span>{uiText("Why ")}{index + 1}</span><p>{item.answer || uiText("Belum diisi")}</p></div>)}</div>
         </div>
       </div>}
     </div>
 
     <footer className="abnormal-footer">
-      <button type="button" className="repair-outline" onClick={() => setStep((current) => Math.max(1, current - 1))} disabled={step === 1}>Kembali</button>
-      <button type="button" className="repair-outline" onClick={() => setSaved(true)}>Simpan Draft</button>
-      <button type="button" className="repair-primary" onClick={() => setStep((current) => Math.min(5, current + 1))}>{step === 5 ? "Submit" : "Lanjut"}</button>
+      <button type="button" className="repair-outline" onClick={() => setStep((current) => Math.max(1, current - 1))} disabled={step === 1}>{uiText("Kembali")}</button>
+      <button type="button" className="repair-outline" onClick={() => setSaved(true)}>{uiText("Simpan Draft")}</button>
+      <button type="button" className="repair-primary" onClick={() => setStep((current) => Math.min(5, current + 1))}>{step === 5 ? uiText("Submit") : uiText("Lanjut")}</button>
     </footer>
   </div>;
 }

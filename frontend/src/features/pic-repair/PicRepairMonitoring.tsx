@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useState } from "react";
 import {
   CartesianGrid,
@@ -57,6 +59,7 @@ const ngDaily = [1.29, 1.46, 1.39, 1.82, 1.99, 1.02, 0.98];
 const inputDaily = [1.39, 1.82, 1.99, 1.02, 0.98, 1.5, 1.18];
 
 function DailyTrend({ title, subtitle, series, target }: { title: string; subtitle: string; series: { key: string; name: string; color: string; values: number[] }[]; target: number }) {
+  const { text: uiText } = useUiText();
   const [period, setPeriod] = useState<PeriodKey>("Week");
   const views = series.map((item) => periodView(dailyLabels, item.values, period));
   const headLabels = views.length > 0 ? views[0].labels : [];
@@ -69,7 +72,7 @@ function DailyTrend({ title, subtitle, series, target }: { title: string; subtit
   });
   return (
     <article className="repair-panel">
-      <div className="repair-card-head"><div><h2>{title}</h2><p>{subtitle}</p></div><div className="flex items-center justify-end gap-4"><PeriodControl value={period} onChange={setPeriod} /></div></div>
+      <div className="repair-card-head"><div><h2>{uiText(title)}</h2><p>{uiText(subtitle)}</p></div><div className="flex items-center justify-end gap-4"><PeriodControl value={period} onChange={setPeriod} /></div></div>
       <div className="warranty-chart">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
@@ -90,20 +93,21 @@ function DailyTrend({ title, subtitle, series, target }: { title: string; subtit
 }
 
 function PreassemblyDeepDive() {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [aiCard, setAiCard] = useState<OpsCard | null>(null);
   const [showWipTable, setShowWipTable] = useState(false);
   return (
     <div className="pic-page">
       <div className="repair-header">
         <div>
-          <div className="repair-eyebrow">MONITORING • DEEP DIVE</div>
+          <div className="repair-eyebrow">{uiText("MONITORING • DEEP DIVE")}</div>
           <div className="repair-title-row">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Pre-Assembly</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{uiText("Pre-Assembly")}</h1>
           </div>
-          <p>Metric operasional dan tren histori harian area Pre-assembly.</p>
+          <p>{uiText("Metric operasional dan tren histori harian area Pre-assembly.")}</p>
         </div>
         <div className="repair-actions">
-          <button className="repair-outline" type="button">07 Oct 2026</button>
+          <button className="repair-outline" type="button">{uiText("07 Oct 2026")}</button>
         </div>
       </div>
 
@@ -112,13 +116,13 @@ function PreassemblyDeepDive() {
           const good = isOnTarget(card.value, card.target, card.direction);
           return (
             <article className="repair-kpi pic-kpi" key={card.id}>
-              <div className="repair-kpi-top"><span>{card.name}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? "On Target" : "Off Target"}</span></div>
-              <strong>{card.display} <small>{card.unit}</small></strong>
-              <p>Target: {card.targetLabel}</p>
+              <div className="repair-kpi-top"><span>{card.name}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? uiText("On Target") : uiText("Off Target")}</span></div>
+              <strong>{card.display} <small>{uiText(card.unit)}</small></strong>
+              <p>{uiText("Target: ")}{uiText(card.targetLabel)}</p>
               <Sparkline success={good} />
               {!good && (
                 <div className="pic-kpi-actions">
-                  <button type="button" className="pic-ai-btn" onClick={() => setAiCard(card)}>Tanya AI</button>
+                  <button type="button" className="pic-ai-btn" onClick={() => setAiCard(card)}>{uiText("Tanya AI")}</button>
                 </div>
               )}
             </article>
@@ -127,11 +131,11 @@ function PreassemblyDeepDive() {
       </div>
 
       <div className="repair-charts">
-        <MetricChart id="pic-pre-wip" title="WIP / Inventory Qty" values={wipActual} target={wipTargets} direction="lower" full />
-        <MetricChart id="pic-pre-input" title="Input Rate" values={inputRate} target={1} direction="lower" domain={[0, 2.1]} />
+        <MetricChart id="pic-pre-wip" title={uiText("WIP / Inventory Qty")} values={wipActual} target={wipTargets} direction="lower" full />
+        <MetricChart id="pic-pre-input" title={uiText("Input Rate")} values={inputRate} target={1} direction="lower" domain={[0, 2.1]} />
         <DailyTrend
-          title="Assembly Output & QA Pass Rate"
-          subtitle="Histori harian 30 Sep - 6 Oct • target 99%"
+          title={uiText("Assembly Output & QA Pass Rate")}
+          subtitle={uiText("Histori harian 30 Sep - 6 Oct • target 99%")}
           target={99}
           series={[
             { key: "output", name: "Assembly Output", color: "var(--chart-1)", values: outputDaily },
@@ -139,8 +143,8 @@ function PreassemblyDeepDive() {
           ]}
         />
         <DailyTrend
-          title="Input Rate & NG Production Rate"
-          subtitle="Histori harian 30 Sep - 6 Oct • target max 1.00%"
+          title={uiText("Input Rate & NG Production Rate")}
+          subtitle={uiText("Histori harian 30 Sep - 6 Oct • target max 1.00%")}
           target={1}
           series={[
             { key: "input", name: "Input Rate", color: "var(--chart-1)", values: inputDaily },
@@ -149,8 +153,8 @@ function PreassemblyDeepDive() {
         />
         <article className="repair-panel wide">
           <div className="repair-card-head">
-            <div><h2>Breakdown WIP per Proses</h2><p>Stok per proses dan model Pre-assembly</p></div>
-            <button type="button" className={`chart-toggle ${showWipTable ? "active" : ""}`} onClick={() => setShowWipTable((value) => !value)}>{showWipTable ? "Sembunyikan Tabel" : "Tampilkan Tabel"}</button>
+            <div><h2>{uiText("Breakdown WIP per Proses")}</h2><p>{uiText("Stok per proses dan model Pre-assembly")}</p></div>
+            <button type="button" className={`chart-toggle ${showWipTable ? "active" : ""}`} onClick={() => setShowWipTable((value) => !value)}>{showWipTable ? uiText("Sembunyikan Tabel") : uiText("Tampilkan Tabel")}</button>
           </div>
           {showWipTable && <WipTable />}
         </article>
@@ -161,7 +165,7 @@ function PreassemblyDeepDive() {
           metricName={aiCard.name}
           actualLabel={`${aiCard.display} ${aiCard.unit}`.trim()}
           targetLabel={aiCard.targetLabel}
-          gapLabel={aiCard.unit === "pcs" ? Math.abs(aiCard.value - aiCard.target).toLocaleString("en-US") : `${Math.abs(aiCard.value - aiCard.target).toFixed(2)}%`}
+          gapLabel={aiCard.unit === "pcs" ? Math.abs(aiCard.value - aiCard.target).toLocaleString(uiLocale) : `${Math.abs(aiCard.value - aiCard.target).toFixed(2)}%`}
           direction={aiCard.direction}
           onClose={() => setAiCard(null)}
         />
