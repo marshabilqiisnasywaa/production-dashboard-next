@@ -13,6 +13,7 @@ class Settings(BaseSettings):
         r"^https?://(localhost|127\.0\.0\.1|10(\.\d{1,3}){3}|192\.168(\.\d{1,3}){2}"
         r"|172\.(1[6-9]|2\d|3[01])(\.\d{1,3}){2})(:\d+)?$"
     )
+    upload_dir: str = "uploads"
     teamtalk_enabled: bool = False
     teamtalk_webhook_url: str | None = None
 

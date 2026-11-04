@@ -46,6 +46,7 @@ from app.schemas import (
 from app.services.accounts import active_line, active_lines
 from app.services.holidays import is_holiday
 from app.services.meeting_attendance import home_line_code
+from app.services.representatives import same_dept_representatives, validate_representative
 from app.services import joint_meetings, workshop_problems
 from app.services.problem_access import is_pic, pic_filter as problem_pic_filter, with_pic_dept
 from app.services.meeting_schedule import (
@@ -356,13 +357,16 @@ def summary_options(
 
 @router.get("/representatives", response_model=list[MeetingRepresentativeOut])
 def list_representatives(
+    for_employee_no: str,
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_active_principal),
 ) -> list[MeetingRepresentativeOut]:
     if principal.role == "member":
         raise HTTPException(status_code=403, detail="Hanya Leader yang berwenang memilih wakil.")
-    employees = db.scalars(select(Employee).where(Employee.is_active.is_(True)).order_by(Employee.name, Employee.employee_no))
-    return [MeetingRepresentativeOut(employee_no=e.employee_no, name=e.name) for e in employees]
+    absent = db.scalars(select(Employee).where(Employee.employee_no == for_employee_no)).first()
+    if absent is None:
+        raise HTTPException(status_code=404, detail="Peserta tidak ditemukan.")
+    return [MeetingRepresentativeOut(employee_no=e.employee_no, name=e.name) for e in same_dept_representatives(db, absent)]
 
 
 @router.get("/employees/{employee_no}/photo", response_model=EmployeePhotoOut)
@@ -581,6 +585,8 @@ def save_absence_notes(
             db.add(attendance)
         text = (item.note or "").strip()
         if item.reason == "represented":
+            if text:
+                validate_representative(db, employee, text)
             attendance.status = "absent"
             attendance.notes = "Diwakilkan oleh " + text if text else "Diwakilkan"
         elif item.reason == "permit":

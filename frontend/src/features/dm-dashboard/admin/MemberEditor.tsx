@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import { uploadPhoto } from "../api";
 import type { DmMemberInput } from "../api";
 import type { DmMember } from "../dmData";
 
-const MAX_PHOTO_BYTES = 1024 * 1024;
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 interface MemberEditorProps {
   idPrefix: string;
@@ -45,20 +46,20 @@ export default function MemberEditor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function pickPhoto(event: ChangeEvent<HTMLInputElement>) {
+  async function pickPhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
     if (file.size > MAX_PHOTO_BYTES) {
-      setError("Foto lebih dari 1 MB. Kecilkan ukurannya dulu.");
+      setError("Foto lebih dari 10 MB.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPhotoUrl(String(reader.result));
+    try {
+      setPhotoUrl(await uploadPhoto(file));
       setError(null);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Foto gagal diunggah.");
+    }
   }
 
   async function submit(event: FormEvent) {

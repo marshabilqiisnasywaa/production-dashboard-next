@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
-import { adminApi } from "../api";
+import { adminApi, uploadPhoto } from "../api";
 import type { DmLine, DmLineInput, DmWorkshop } from "../api";
 import type { DmLineStatus, DmMember } from "../dmData";
 import CustomSelect from "@/components/shell/CustomSelect";
@@ -10,7 +10,7 @@ import TeamManager from "./TeamManager";
 import WizardStepper from "./WizardStepper";
 import "./LineWizard.css";
 
-const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 type TabKey = "general" | "culture" | "media" | "team";
 
@@ -214,20 +214,20 @@ export default function LineDetailModal({
     onClose();
   }
 
-  function pickPhoto(event: ChangeEvent<HTMLInputElement>) {
+  async function pickPhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
     if (file.size > MAX_PHOTO_BYTES) {
-      setError("Foto tim lebih dari 2 MB. Kecilkan ukurannya dulu.");
+      setError("Foto tim lebih dari 10 MB.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      change("teamPhotoUrl", String(reader.result));
+    try {
+      change("teamPhotoUrl", await uploadPhoto(file));
       setError(null);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Foto gagal diunggah.");
+    }
   }
 
   function buildInput(publish: boolean | undefined): DmLineInput | null {

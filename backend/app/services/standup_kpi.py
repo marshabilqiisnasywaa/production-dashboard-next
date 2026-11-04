@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.models import DmMeetingAttendance, DmMeetingSession, DmMeetingSummary
+from app.services.representatives import REPRESENTED_PREFIX
 from app.services.joint_meetings import build_roster
 from app.services.papercard_kpi import to_jakarta, working_days
 
@@ -81,7 +82,13 @@ def line_standup(db: Session, line_id: int, start: date, end: date, shift: str, 
         for attendance in db.scalars(
             select(DmMeetingAttendance).where(
                 DmMeetingAttendance.session_id.in_([s.id for s in sessions]),
-                DmMeetingAttendance.status == "present",
+                or_(
+                    DmMeetingAttendance.status == "present",
+                    and_(
+                        DmMeetingAttendance.status == "absent",
+                        DmMeetingAttendance.notes.like(REPRESENTED_PREFIX + "%"),
+                    ),
+                ),
             )
         ):
             present.setdefault(attendance.session_id, set()).add(attendance.employee_id)

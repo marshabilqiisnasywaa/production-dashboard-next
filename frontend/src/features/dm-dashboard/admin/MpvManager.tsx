@@ -2,7 +2,7 @@
 
 import { departmentLabel } from "../departments";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { adminApi } from "../api";
+import { adminApi, uploadPhoto } from "../api";
 import type { DmMvpCandidate, DmLine, DmMpvInput } from "../api";
 import { formatPeriod, previousPeriod } from "../dmData";
 import type { DmMpv } from "../dmData";
@@ -194,19 +194,19 @@ export default function MpvManager({
     setShowEditModal(true);
   }
 
-  function pickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+  async function pickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Ukuran foto maksimal 2 MB.");
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Ukuran foto maksimal 10 MB.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setEditPhotoUrl(String(reader.result));
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
+    try {
+      setEditPhotoUrl(await uploadPhoto(file));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Foto gagal diunggah.");
+    }
   }
 
   // Save from Edit Modal

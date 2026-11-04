@@ -37,6 +37,7 @@ from app.services.face.engine import FaceError, FaceResult, extract_face
 from app.services.face.matcher import matcher
 from app.services.holidays import is_holiday
 from app.services.meeting_schedule import ALL_DAYS, format_days, parse_days
+from app.services.representatives import same_dept_representatives, validate_representative
 from app.services.teamtalk import notify_new_problems
 
 router = APIRouter(prefix="/workshop-meetings", tags=["workshop-meetings"])
@@ -196,31 +197,6 @@ def sync_sessions(db: Session, source: WorkshopMeetingSession) -> None:
     ):
         for field in ("status", "started_at", "ended_at", "duration_seconds", "host_id"):
             setattr(target, field, getattr(source, field))
-
-
-def same_dept_representatives(db: Session, absent: Employee) -> list[Employee]:
-    dept = (absent.dept or "").strip().upper()
-    if not dept:
-        return []
-    return [
-        e
-        for e in db.scalars(
-            select(Employee)
-            .where(Employee.is_active.is_(True), Employee.id != absent.id)
-            .order_by(Employee.name, Employee.employee_no)
-        )
-        if (e.dept or "").strip().upper() == dept
-    ]
-
-
-def validate_representative(db: Session, absent: Employee, text: str) -> None:
-    if not text.endswith(")") or "(" not in text:
-        raise HTTPException(400, "Pilih wakil dari daftar karyawan.")
-    employee_no = text[text.rindex("(") + 1 : -1].strip()
-    if not absent.dept:
-        raise HTTPException(400, f"Departemen {absent.name} belum diisi, jadi wakil belum bisa dipilih.")
-    if not any(e.employee_no == employee_no for e in same_dept_representatives(db, absent)):
-        raise HTTPException(400, f"Wakil {absent.name} harus dari departemen {absent.dept}.")
 
 
 def require_participant(db: Session, session: WorkshopMeetingSession, employee_id: int) -> None:

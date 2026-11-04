@@ -2,11 +2,11 @@
 import { departmentLabel } from "../departments";
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { dmDepartments, dmEmployeeRoles } from "../api";
+import { dmDepartments, dmEmployeeRoles, uploadPhoto } from "../api";
 import type { DmEmployee, DmEmployeeInput, DmEmployeeRole } from "../api";
 import "./UserModal.css";
 
-const MAX_PHOTO_BYTES = 1024 * 1024;
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 type FormState = {
   name: string;
@@ -93,20 +93,20 @@ export default function UserModal({ open, user, supervisors, onSave, onResetPass
     onClose();
   }
 
-  function pickPhoto(event: ChangeEvent<HTMLInputElement>) {
+  async function pickPhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
     if (file.size > MAX_PHOTO_BYTES) {
-      setError("Foto lebih dari 1 MB. Kecilkan ukurannya dulu.");
+      setError("Foto lebih dari 10 MB.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      change("photoUrl", String(reader.result));
+    try {
+      change("photoUrl", await uploadPhoto(file));
       setError(null);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Foto gagal diunggah.");
+    }
   }
 
   async function submit(event: FormEvent) {

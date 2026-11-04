@@ -16,8 +16,8 @@ import "./login.css";
 const SHOW_DEMO = process.env.NEXT_PUBLIC_SHOW_DEMO_LOGIN !== "false";
 
 const DEMO_ACCOUNTS = [
-  { role: "Leader", nik: "leader", password: "leader123" },
-  { role: "Member", nik: "member", password: "member123" },
+  { role: "Leader", nik: "112233", password: "11111111" },
+  { role: "Member", nik: "123123", password: "member123" },
   { role: "Supervisor", nik: "supervisor", password: "super123" },
   { role: "Admin", nik: "admin", password: "admin123" },
 ] as const;
@@ -184,8 +184,8 @@ export default function UserLogin() {
               type="text"
               value={nik}
               onChange={(e) => setNik(e.target.value)}
-              autoComplete="username"
-              placeholder="NIK atau username"
+              autoComplete="nik"
+              placeholder="NIK"
               aria-invalid={error ? true : undefined}
             />
           </div>

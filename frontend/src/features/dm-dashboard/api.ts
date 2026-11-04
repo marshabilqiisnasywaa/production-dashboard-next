@@ -291,6 +291,13 @@ async function request<T>(
   return body as T;
 }
 
+export async function uploadPhoto(file: File): Promise<string> {
+  const form = new FormData();
+  form.append("photo", file);
+  const { url } = await request<{ url: string }>("/photos", { method: "POST", body: form }, true);
+  return url;
+}
+
 const json = (method: string, data: unknown): RequestInit => ({
   method,
   body: JSON.stringify(data),
@@ -1118,8 +1125,12 @@ export const meetingApi = {
       lines: string[];
       users: (MeetingRepresentative & { id: number })[];
     }>("/meetings/summary-options", {}, true),
-  representatives: (_forEmployeeNo?: string) =>
-    request<MeetingRepresentative[]>("/meetings/representatives", {}, true),
+  representatives: (forEmployeeNo?: string) =>
+    request<MeetingRepresentative[]>(
+      `/meetings/representatives?for_employee_no=${encodeURIComponent(forEmployeeNo ?? "")}`,
+      {},
+      true
+    ),
   prepare: (sessionId: number, scope: "line" | "dm") =>
     request<DmMeetingSession>(
       `/meetings/sessions/${sessionId}/prepare`,

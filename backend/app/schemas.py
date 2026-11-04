@@ -91,7 +91,7 @@ class WorkshopHod(CamelModel):
         if not self.name or not self.position:
             raise ValueError("Nama dan jabatan HOD wajib diisi.")
         if self.photo_url and not self.photo_url.startswith((
-            "data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,"
+            "/api/photos/", "data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,"
         )):
             raise ValueError("Foto HOD harus berupa JPEG, PNG, atau WebP.")
         return self

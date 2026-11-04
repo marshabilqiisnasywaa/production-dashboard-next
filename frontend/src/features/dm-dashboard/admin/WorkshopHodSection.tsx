@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { adminApi } from "../api";
+import { adminApi, uploadPhoto } from "../api";
 import type { DmWorkshop, DmWorkshopHod } from "../api";
 
 const EMPTY_HOD: DmWorkshopHod = { name: "", position: "HOD Produksi", workPhone: null, photoUrl: null };
@@ -11,7 +11,6 @@ export default function WorkshopHodSection({ workshop, disabled }: {
   workshop: DmWorkshop;
   disabled?: boolean;
 }) {
-  const readerRef = useRef<FileReader | null>(null);
   const [saved, setSaved] = useState<DmWorkshopHod | null>(null);
   const [data, setData] = useState<DmWorkshopHod>(EMPTY_HOD);
   const [editing, setEditing] = useState(false);
@@ -23,7 +22,6 @@ export default function WorkshopHodSection({ workshop, disabled }: {
   const [attempt, setAttempt] = useState(0);
   const busy = saving || reading || Boolean(disabled);
 
-  useEffect(() => () => { readerRef.current?.abort(); }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,24 +38,24 @@ export default function WorkshopHodSection({ workshop, disabled }: {
     return () => { cancelled = true; };
   }, [workshop.id, attempt]);
 
-  function pickPhoto(event: ChangeEvent<HTMLInputElement>) {
+  async function pickPhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
     setError(null);
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 2 * 1024 * 1024) {
-      setError("Pilih foto JPEG, PNG, atau WebP maksimal 2 MB.");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 10 * 1024 * 1024) {
+      setError("Pilih foto JPEG, PNG, atau WebP maksimal 10 MB.");
       return;
     }
     setReading(true);
-    const reader = new FileReader();
-    readerRef.current = reader;
-    reader.onload = () => {
-      setData((prev) => ({ ...prev, photoUrl: String(reader.result) }));
+    try {
+      const url = await uploadPhoto(file);
+      setData((prev) => ({ ...prev, photoUrl: url }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Foto gagal diunggah.");
+    } finally {
       setReading(false);
-    };
-    reader.onerror = () => { setError("Foto tidak bisa dibaca."); setReading(false); };
-    reader.readAsDataURL(file);
+    }
   }
 
   function cancelEdit() {
@@ -121,7 +119,7 @@ export default function WorkshopHodSection({ workshop, disabled }: {
           )}
           {error && <p className="dm-admin-inline-error" role="alert">{error}</p>}
           <div className="dm-ws-sup-actions">
-            <button type="submit" className="dm-admin-btn is-primary" disabled={busy}>{saving ? "Menyimpan..." : reading ? "Membaca foto..." : "Simpan"}</button>
+            <button type="submit" className="dm-admin-btn is-primary" disabled={busy}>{saving ? "Menyimpan..." : reading ? "Mengunggah foto..." : "Simpan"}</button>
             {saved && <button type="button" className="dm-admin-btn is-tonal" disabled={busy} onClick={cancelEdit}>Batal</button>}
           </div>
         </form>

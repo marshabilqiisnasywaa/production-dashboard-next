@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Employee, FaceTemplate
 from app.services.face.engine import FaceError, extract_face
+from app.services.photos import read_stored_photo
 
 MIN_PHOTO_QUALITY = 0.6
 
@@ -65,7 +66,7 @@ def sync_photo(db: Session, employee: Employee) -> str | None:
     if not employee.photo_url:
         remove_templates(db, employee.id)
         return None
-    data = decode_data_url(employee.photo_url)
+    data = decode_data_url(employee.photo_url) or read_stored_photo(employee.photo_url)
     if data is None:
         remove_photo_templates(db, employee.id)
         return "Format foto tidak didukung untuk Face ID. Unggah foto dari perangkat."
