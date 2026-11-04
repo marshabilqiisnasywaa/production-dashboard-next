@@ -1,9 +1,9 @@
 import asyncio
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from typing import Set
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
@@ -33,10 +33,11 @@ logger = logging.getLogger("teamtalk_scheduler")
 # Cache memori agar tidak mengirim pesan ganda untuk event yang sama pada hari yang sama
 _sent_events_cache: Set[str] = set()
 _last_cache_cleanup_date: date | None = None
-_last_escalation_alert_time: datetime | None = None
 
-# Jeda pengingat eskalasi otomatis agar tidak spam (setiap 30 menit)
-ESCALATION_ALERT_COOLDOWN_MINUTES = 30
+ESCALATION_WORK_START = time(8, 0)
+ESCALATION_WORK_END = time(17, 0)
+ESCALATION_BATCH_SIZE = 10
+MEETING_START_GRACE_MINUTES = 5
 
 
 def _cleanup_old_cache(today: date):
@@ -56,13 +57,17 @@ def get_line_setting(db: Session, line_id: int) -> DmNotificationSetting | None:
 async def check_meeting_reminders(db: Session, now: datetime):
     today = now.date()
     lines = db.scalars(select(Line).where(Line.status != "stopped")).all()
+    due_slots: list[dict] = []
+    due_keys: list[str] = []
+    start_slots: list[dict] = []
+    start_keys: list[str] = []
 
     for line in lines:
         setting = get_line_setting(db, line.id)
         meeting_enabled = setting.meeting_enabled if setting else True
         reminder_mins = setting.meeting_reminder_minutes if setting else 15
 
-        if not meeting_enabled or reminder_mins <= 0:
+        if not meeting_enabled:
             continue
 
         if is_holiday(db, today):
@@ -82,21 +87,43 @@ async def check_meeting_reminders(db: Session, now: datetime):
                 diff_sec = (target_dt - now).total_seconds()
                 diff_min = diff_sec / 60.0
 
-                # Jika waktu sekarang berada di antara 0 sampai reminder_mins sebelum meeting
-                if 0 <= diff_min <= reminder_mins:
+                entry = {
+                    "line_code": line.code,
+                    "session_label": slot.label,
+                    "scheduled_time": slot.time,
+                    "minutes_left": max(1, int(diff_min)),
+                }
+
+                # Pengingat pertama: sesuai menit yang diatur admin sebelum meeting
+                if reminder_mins > 0 and 0 < diff_min <= reminder_mins:
                     event_key = f"meeting_{line.id}_{slot.label}_{today}"
                     if event_key not in _sent_events_cache:
-                        logger.info("Mengirim pengingat meeting: %s Line %s", slot.label, line.code)
-                        sent = await notify_meeting_reminder(
-                            line_code=line.code,
-                            session_label=slot.label,
-                            scheduled_time=slot.time,
-                            minutes_left=max(1, int(diff_min)),
-                        )
-                        if sent:
-                            _sent_events_cache.add(event_key)
+                        due_slots.append(entry)
+                        due_keys.append(event_key)
+                # Pengingat kedua: tepat saat jam meeting, kecuali meeting sudah dimulai
+                elif -MEETING_START_GRACE_MINUTES < diff_min <= 0:
+                    event_key = f"meeting_start_{line.id}_{slot.label}_{today}"
+                    if event_key not in _sent_events_cache:
+                        already_started = db.scalar(select(DmMeetingSession.id).where(
+                            DmMeetingSession.line_id == line.id,
+                            DmMeetingSession.date == today,
+                            DmMeetingSession.session_number == slot.number,
+                            DmMeetingSession.status != "pending",
+                        ))
+                        if already_started is None:
+                            start_slots.append(entry)
+                            start_keys.append(event_key)
             except Exception as e:
                 logger.error("Error saat evaluasi slot meeting %s: %s", slot, e)
+
+    if due_slots:
+        logger.info("Mengirim pengingat meeting untuk %d line", len(due_slots))
+        if await notify_meeting_reminder(due_slots):
+            _sent_events_cache.update(due_keys)
+    if start_slots:
+        logger.info("Mengirim pengingat jam meeting untuk %d line", len(start_slots))
+        if await notify_meeting_reminder(start_slots, started=True):
+            _sent_events_cache.update(start_keys)
 
 
 async def check_workshop_meeting_reminders(db: Session, now: datetime):
@@ -143,6 +170,8 @@ async def check_workshop_meeting_reminders(db: Session, now: datetime):
 async def check_papercard_reminders(db: Session, now: datetime):
     today = now.date()
     lines = db.scalars(select(Line).where(Line.status != "stopped")).all()
+    due_entries: list[dict] = []
+    due_keys: list[str] = []
 
     for line in lines:
         setting = get_line_setting(db, line.id)
@@ -174,29 +203,29 @@ async def check_papercard_reminders(db: Session, now: datetime):
                             )
                         )
                         if not has_submission:
-                            logger.info("Mengirim pengingat papercard Line %s Dept %s", line.code, tpl.department)
-                            sent = await notify_papercard_reminder(
-                                line_code=line.code,
-                                shift=f"Papercard {tpl.department}",
-                                pending_count=1,
-                                minutes_left=max(1, int(diff_min)),
-                            )
-                            if sent:
-                                _sent_events_cache.add(event_key)
+                            due_entries.append({
+                                "line_code": line.code,
+                                "department": tpl.department,
+                                "window_end": window_end,
+                                "minutes_left": max(1, int(diff_min)),
+                            })
+                            due_keys.append(event_key)
             except Exception as e:
                 logger.error("Error evaluasi papercard template %s: %s", tpl.id, e)
 
+    if due_entries:
+        logger.info("Mengirim pengingat papercard untuk %d line-departemen", len(due_entries))
+        if await notify_papercard_reminder(due_entries):
+            _sent_events_cache.update(due_keys)
+
 
 async def check_escalated_reminders(db: Session, now: datetime):
-    global _last_escalation_alert_time
+    today = now.date()
+    if now.isoweekday() > 5 or is_holiday(db, today):
+        return
+    if not ESCALATION_WORK_START <= now.time() < ESCALATION_WORK_END:
+        return
 
-    # Cek jeda cooldown
-    if _last_escalation_alert_time is not None:
-        elapsed = (now - _last_escalation_alert_time).total_seconds() / 60.0
-        if elapsed < ESCALATION_ALERT_COOLDOWN_MINUTES:
-            return
-
-    # Ambil masalah yang statusnya belum selesai dan sudah melewati due date
     now_iso = now.strftime("%Y-%m-%dT%H:%M")
     stmt = (
         select(DmMeetingSummary)
@@ -204,25 +233,33 @@ async def check_escalated_reminders(db: Session, now: datetime):
             DmMeetingSummary.status != "resolved",
             DmMeetingSummary.due_date.isnot(None),
             DmMeetingSummary.due_date < now_iso,
+            or_(
+                DmMeetingSummary.last_escalated_on.is_(None),
+                DmMeetingSummary.last_escalated_on < today,
+            ),
         )
-        .order_by(DmMeetingSummary.id.desc())
+        .order_by(DmMeetingSummary.due_date, DmMeetingSummary.id)
     )
     overdue_summaries = db.scalars(stmt).all()
 
-    if overdue_summaries:
-        logger.info("Ditemukan %d masalah overdue, mengirim pengingat eskalasi ke TeamTalk", len(overdue_summaries))
+    for start in range(0, len(overdue_summaries), ESCALATION_BATCH_SIZE):
+        batch = overdue_summaries[start:start + ESCALATION_BATCH_SIZE]
+        logger.info("Mengirim pengingat eskalasi untuk %d masalah overdue ke TeamTalk", len(batch))
         items = [
             {
                 "line_code": sm.line_code or "-",
                 "problem": sm.problem,
                 "pic_name": sm.pic_name or "-",
+                "pic_id": sm.pic_id,
                 "due_date": sm.due_date,
             }
-            for sm in overdue_summaries[:5]  # Batasi 5 item teratas agar pesan tidak terlalu panjang
+            for sm in batch
         ]
-        sent = await notify_escalated_problems(items)
-        if sent:
-            _last_escalation_alert_time = now
+        if not await notify_escalated_problems(items):
+            break
+        for sm in batch:
+            sm.last_escalated_on = today
+        db.commit()
 
 
 async def run_teamtalk_scheduler():
