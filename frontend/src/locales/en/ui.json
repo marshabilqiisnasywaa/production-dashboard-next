@@ -5124,5 +5124,13 @@
   "Data tidak valid.": "Invalid data.",
   "tidak valid": "invalid",
   "Permintaan gagal ({{v0}}).": "Request failed ({{v0}}).",
-  "Server tidak bisa dihubungi. Pastikan backend sudah berjalan.": "Unable to connect to the server. Please try again later."
+  "Server tidak bisa dihubungi. Pastikan backend sudah berjalan.": "Unable to connect to the server. Please try again later.",
+  "dari total": "of total",
+  "of total": "of total",
+  "Semua kategori": "All categories",
+  "All categories": "All categories",
+  "Filter kategori masalah": "Filter problem category",
+  "Filter problem category": "Filter problem category",
+  "Persentase dari total masalah": "Share of all problems",
+  "Share of all problems": "Share of all problems"
 }

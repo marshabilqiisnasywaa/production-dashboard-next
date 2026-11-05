@@ -5124,5 +5124,13 @@
   "Data tidak valid.": "Data tidak valid.",
   "tidak valid": "tidak valid",
   "Permintaan gagal ({{v0}}).": "Permintaan gagal ({{v0}}).",
-  "Server tidak bisa dihubungi. Pastikan backend sudah berjalan.": "Server tidak bisa dihubungi. Pastikan backend sudah berjalan."
+  "Server tidak bisa dihubungi. Pastikan backend sudah berjalan.": "Server tidak bisa dihubungi. Pastikan backend sudah berjalan.",
+  "dari total": "dari total",
+  "of total": "dari total",
+  "Semua kategori": "Semua kategori",
+  "All categories": "Semua kategori",
+  "Filter kategori masalah": "Filter kategori masalah",
+  "Filter problem category": "Filter kategori masalah",
+  "Persentase dari total masalah": "Persentase dari total masalah",
+  "Share of all problems": "Persentase dari total masalah"
 }

@@ -22,6 +22,17 @@ export default function ProblemsPage({
   const [statusFilter, setStatusFilter] = useState<ProblemFilter>("all");
   const [lineFilter, setLineFilter] = useState("all");
   const [dueFilter, setDueFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+
+  /** Share of all problems, rounded to a whole percent (0 when there is no data). */
+  const rate = (n: number) =>
+    counts.all > 0 ? Math.round((n / counts.all) * 100) : 0;
+
+  const categories = useMemo(
+    () =>
+      [...new Set(rows.flatMap((r) => r.problemCategories ?? []).filter(Boolean))].sort(),
+    [rows],
+  );
 
   const lines = useMemo(
     () => [...new Set(rows.map((r) => r.line).filter((line) => line && line !== "-"))].sort(),
@@ -34,7 +45,7 @@ export default function ProblemsPage({
     return rows.filter((r) => {
       const matchesSearch =
         !q ||
-        [r.problem, r.line, r.picName, r.sessionLabel, r.date]
+        [r.problem, r.line, r.picName, r.sessionLabel, r.date, (r.problemCategories ?? []).join(" ")]
           .some((value) => String(value ?? "").toLowerCase().includes(q));
 
       const matchesStatus =
@@ -48,21 +59,33 @@ export default function ProblemsPage({
         (dueFilter === "overdue" && r.status === "escalated") ||
         (dueFilter === "not-overdue" && r.status !== "escalated");
 
-      return matchesSearch && matchesStatus && matchesLine && matchesDue;
+      const matchesCategory =
+        categoryFilter === "all" ||
+        (r.problemCategories ?? []).includes(categoryFilter);
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesLine &&
+        matchesDue &&
+        matchesCategory
+      );
     });
-  }, [rows, search, statusFilter, lineFilter, dueFilter]);
+  }, [rows, search, statusFilter, lineFilter, dueFilter, categoryFilter]);
 
   const hasFilters =
     search !== "" ||
     statusFilter !== "all" ||
     lineFilter !== "all" ||
-    dueFilter !== "all";
+    dueFilter !== "all" ||
+    categoryFilter !== "all";
 
   function resetFilters() {
     setSearch("");
     setStatusFilter("all");
     setLineFilter("all");
     setDueFilter("all");
+    setCategoryFilter("all");
   }
 
   return (
@@ -87,18 +110,39 @@ export default function ProblemsPage({
           <span className="dml-pb-stat__label">{uiText("Belum Selesai")}</span>
           <strong>{counts.unsolved}</strong>
           <span className="dml-pb-stat__note">{uiText("Perlu ditindaklanjuti")}</span>
+          <span
+            className="dml-pb-stat__rate dml-pb-stat__rate--warn"
+            title={uiText("Persentase dari total masalah")}
+          >
+            <b>{rate(counts.unsolved)}%</b>
+            <small>{uiText("dari total")}</small>
+          </span>
         </div>
 
         <div className="dml-pb-stat">
           <span className="dml-pb-stat__label">{uiText("Selesai")}</span>
           <strong>{counts.solved}</strong>
           <span className="dml-pb-stat__note">{uiText("Tindak lanjut selesai")}</span>
+          <span
+            className="dml-pb-stat__rate dml-pb-stat__rate--ok"
+            title={uiText("Persentase dari total masalah")}
+          >
+            <b>{rate(counts.solved)}%</b>
+            <small>{uiText("dari total")}</small>
+          </span>
         </div>
 
         <div className="dml-pb-stat">
           <span className="dml-pb-stat__label">{uiText("Eskalasi SPV")}</span>
           <strong>{counts.escalated}</strong>
           <span className="dml-pb-stat__note">{uiText("Perlu perhatian supervisor")}</span>
+          <span
+            className="dml-pb-stat__rate dml-pb-stat__rate--bad"
+            title={uiText("Persentase dari total masalah")}
+          >
+            <b>{rate(counts.escalated)}%</b>
+            <small>{uiText("dari total")}</small>
+          </span>
         </div>
       </div>
 
@@ -137,6 +181,19 @@ export default function ProblemsPage({
               {lines.map((line) => (
                 <option key={line} value={line}>
                   {uiText(line)}
+                </option>
+              ))}
+            </select>
+
+            <select
+              aria-label={uiText("Filter kategori masalah")}
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="all">{uiText("Semua kategori")}</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
                 </option>
               ))}
             </select>

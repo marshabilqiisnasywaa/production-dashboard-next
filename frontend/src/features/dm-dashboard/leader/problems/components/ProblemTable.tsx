@@ -202,7 +202,7 @@ async function handleSaveDueDate() {
 
   return (
     <div className="dml-table-wrap dml-pb-table-wrap">
-      <table className="dml-table dml-pb-table">
+      <table className="dml-table dml-pb-table dml-pb-table--tracking">
         <thead>
           <tr>
             <th>{uiText("Tanggal")}</th>
@@ -292,7 +292,9 @@ async function handleSaveDueDate() {
                     )}
                   </td>
 
-                  <td title={uiText(r.picName)}>{r.picName || "-"}</td>
+                  <td title={uiText(r.picName)}>
+                    <span className="dml-pb-truncate">{r.picName || "-"}</span>
+                  </td>
 
 <td>
   {editingDueId === r.id ? (
