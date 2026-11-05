@@ -74,20 +74,36 @@
   line-height: 1.4;
 }
 
-/* Rate (% of all problems) on the right of the KPI cards */
+/* Rate (% of all problems) on the right of a KPI card, after a short vertical divider.
+   Card = 2-column grid: text on the left, rate block on the right (vertically centered). */
 .dml-pb-stat {
-  position: relative;
-  padding-right: 76px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0;
+  row-gap: 5px;
+  align-items: start;
+}
+.dml-pb-stat > * {
+  grid-column: 1;
+}
+.dml-pb-stat > .dml-pb-stat__rate {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: center;
 }
 .dml-pb-stat__rate {
-  position: absolute;
-  top: 14px;
-  right: 16px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
   gap: 1px;
-  line-height: 1.15;
+  min-width: 64px;
+  height: 36px; /* keeps the divider short */
+  margin-left: 12px;
+  padding-left: 14px;
+  border-left: 1px solid #e3e7eb;
+  line-height: 1.1;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
 .dml-pb-stat__rate b {
@@ -382,12 +398,14 @@
   }
 
   .dml-pb-stat {
-    padding: 12px 58px 12px 12px;
+    padding: 12px;
   }
 
   .dml-pb-stat__rate {
-    top: 12px;
-    right: 10px;
+    min-width: 50px;
+    height: 32px;
+    margin-left: 8px;
+    padding-left: 9px;
   }
 
   .dml-pb-stat__rate b {
@@ -395,7 +413,7 @@
   }
 
   .dml-pb-stat__rate small {
-    display: none;
+    font-size: 10px;
   }
 
   .dml-pb-stat strong {

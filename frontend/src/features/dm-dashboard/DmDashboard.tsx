@@ -43,6 +43,9 @@ function GearIcon() {
   );
 }
 
+/** Labels come translated with a trailing ":"; the colon is drawn by CSS so all colons line up in one column. */
+const stripColon = (label: unknown) => String(label).replace(/\s*:\s*$/, "");
+
 function MemberCard({ member }: { member: DmMember }) {
   const { text: uiText } = useUiText();
   return (
@@ -66,26 +69,26 @@ function MemberCard({ member }: { member: DmMember }) {
         </div>
         <dl className="dm-member-specs">
           <div className="dm-spec-row">
-            <dt className="dm-spec-label">{uiText("Work No:")}</dt>
+            <dt className="dm-spec-label">{stripColon(uiText("Work No:"))}</dt>
             <dd className="dm-spec-value">{member.employeeId ?? "-"}</dd>
           </div>
           <div className="dm-spec-row">
-            <dt className="dm-spec-label">{uiText("Dept:")}</dt>
+            <dt className="dm-spec-label">{stripColon(uiText("Dept:"))}</dt>
             <dd className="dm-spec-value">{member.dept ?? "-"}</dd>
           </div>
           <div className="dm-spec-row">
-            <dt className="dm-spec-label">{uiText("Position:")}</dt>
+            <dt className="dm-spec-label">{stripColon(uiText("Position:"))}</dt>
             <dd className="dm-spec-value">{member.position ?? "-"}</dd>
           </div>
           {member.supervisor ? (
             <div className="dm-spec-row">
-              <dt className="dm-spec-label">{uiText("Supervisor:")}</dt>
+              <dt className="dm-spec-label">{stripColon(uiText("Supervisor:"))}</dt>
               <dd className="dm-spec-value">{member.supervisor}</dd>
             </div>
           ) : null}
           {member.workPhone && member.workPhone !== "-" ? (
             <div className="dm-spec-row">
-              <dt className="dm-spec-label">{uiText("Work Phone:")}</dt>
+              <dt className="dm-spec-label">{stripColon(uiText("Work Phone:"))}</dt>
               <dd className="dm-spec-value">{member.workPhone}</dd>
             </div>
           ) : null}
@@ -367,19 +370,19 @@ export default function DmDashboard({ slug }: { slug: string }) {
                     </div>
                     <dl className="dm-member-specs">
                       <div className="dm-spec-row">
-                        <dt className="dm-spec-label">{uiText("Work No:")}</dt>
+                        <dt className="dm-spec-label">{stripColon(uiText("Work No:"))}</dt>
                         <dd className="dm-spec-value">
                           {displayMpv.employeeId ?? "-"}
                         </dd>
                       </div>
                       <div className="dm-spec-row">
-                        <dt className="dm-spec-label">{uiText("Dept:")}</dt>
+                        <dt className="dm-spec-label">{stripColon(uiText("Dept:"))}</dt>
                         <dd className="dm-spec-value">
                           {departmentLabel(displayMpv.dept) || "-"}
                         </dd>
                       </div>
                       <div className="dm-spec-row">
-                        <dt className="dm-spec-label">{uiText("Position:")}</dt>
+                        <dt className="dm-spec-label">{stripColon(uiText("Position:"))}</dt>
                         <dd className="dm-spec-value">
                           {displayMpv.position ?? "-"}
                         </dd>

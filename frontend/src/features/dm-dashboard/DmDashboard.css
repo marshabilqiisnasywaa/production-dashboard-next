@@ -409,8 +409,16 @@
 .dm-spec-label {
   font-weight: 700;
   color: var(--dm-text-label);
-  margin: 0 0.5rem 0 0;
+  margin: 0 0.15rem 0 0;
   white-space: nowrap;
+}
+
+/* The colon sits at the start of the value column, so every ":" lines up like a tab stop */
+.dm-spec-value::before {
+  content: ":";
+  margin-right: 0.5rem;
+  font-weight: 700;
+  color: var(--dm-text-label);
 }
 
 .dm-spec-value {
