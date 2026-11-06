@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { leaderAssignmentApi } from "../api";
@@ -12,8 +14,8 @@ type Props = {
   onClose: () => void;
 };
 
-function dateLabel(value: string) {
-  return new Intl.DateTimeFormat("id-ID", {
+function dateLabel(value: string, locale = "id-ID") {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
@@ -24,6 +26,7 @@ export default function LeaderHistoryDialog({
   call,
   onClose,
 }: Props) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const dialog = useRef<HTMLDialogElement>(null);
   const [items, setItems] = useState<LeaderHistoryEntry[]>([]);
   const [page, setPage] = useState(0);
@@ -79,43 +82,41 @@ export default function LeaderHistoryDialog({
     >
       <div className="dm-dialog-card dm-leader-card">
         <header className="dm-dialog-head">
-          <h2 id="leader-history-title" className="dm-dialog-title">
-            Riwayat — {employee.name}
+          <h2 id="leader-history-title" className="dm-dialog-title">{uiText("Riwayat — ")}{employee.name}
           </h2>
           <button
             type="button"
             className="dm-dialog-close"
-            aria-label="Tutup"
+            aria-label={uiText("Tutup")}
             onClick={onClose}
           >
             <X size={18} />
           </button>
         </header>
         <p className="dm-leader-note">
-          {employee.employeeId} · Penugasan terbaru ditampilkan lebih dulu.
-        </p>
+          {employee.employeeId}{uiText(" · Penugasan terbaru ditampilkan lebih dulu.")}</p>
         <ol className="dm-leader-timeline">
-          {items.map((item) => (
+          {uiText(items.map((item) => (
             <li key={item.id}>
               <div className="dm-leader-timeline-title">
                 <strong>
                   {item.kind === "dm_leader"
-                    ? "Leader DM"
-                    : `Leader ${item.line_code_snapshot}`}
+                    ? uiText("Leader DM")
+                    : uiText("Leader {{v0}}", { v0: item.line_code_snapshot })}
                 </strong>
                 {item.ended_at === null ? (
-                  <span className="dm-pill">Aktif</span>
+                  <span className="dm-pill">{uiText("Aktif")}</span>
                 ) : null}
               </div>
               <p>{item.dm_name_snapshot}</p>
               <p>
                 <time dateTime={item.started_at}>
-                  {dateLabel(item.started_at)}
+                  {uiText(dateLabel(item.started_at, uiLocale))}
                 </time>{" "}
                 —{" "}
                 {item.ended_at ? (
                   <time dateTime={item.ended_at}>
-                    {dateLabel(item.ended_at)}
+                    {uiText(dateLabel(item.ended_at, uiLocale))}
                   </time>
                 ) : (
                   "Sekarang"
@@ -123,17 +124,15 @@ export default function LeaderHistoryDialog({
               </p>
               {item.reason ? <p>{item.reason}</p> : null}
             </li>
-          ))}
+          )))}
         </ol>
-        {loading ? <p role="status">Memuat riwayat...</p> : null}
+        {loading ? <p role="status">{uiText("Memuat riwayat...")}</p> : null}
         {!loading && !error && items.length === 0 ? (
-          <p className="dm-leader-note">
-            Belum ada riwayat penugasan leader yang tercatat.
-          </p>
+          <p className="dm-leader-note">{uiText("Belum ada riwayat penugasan leader yang tercatat.")}</p>
         ) : null}
         {error ? (
           <p className="dm-dialog-error" role="alert">
-            {error}
+            {uiText(error)}
           </p>
         ) : null}
         <footer className="dm-dialog-foot">
@@ -143,26 +142,20 @@ export default function LeaderHistoryDialog({
               className="dm-dialog-btn is-outline"
               disabled={loading}
               onClick={() => setRetry((value) => value + 1)}
-            >
-              Coba lagi
-            </button>
+            >{uiText("Coba lagi")}</button>
           ) : hasMore ? (
             <button
               type="button"
               className="dm-dialog-btn is-outline"
               disabled={loading}
               onClick={() => setPage((value) => value + 1)}
-            >
-              Muat riwayat sebelumnya
-            </button>
+            >{uiText("Muat riwayat sebelumnya")}</button>
           ) : null}
           <button
             type="button"
             className="dm-dialog-btn is-primary"
             onClick={onClose}
-          >
-            Tutup
-          </button>
+          >{uiText("Tutup")}</button>
         </footer>
       </div>
     </dialog>

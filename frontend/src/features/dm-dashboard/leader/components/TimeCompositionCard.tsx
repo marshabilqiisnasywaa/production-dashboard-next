@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { Card } from "@/components/ui/Card";
 import { IconCheckCircle, IconAlert } from "@/components/ui/icons";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -10,17 +12,18 @@ function onTarget(s: TimeShare): boolean {
 }
 
 export function TimeCompositionCard({ items }: { items: TimeShare[] }) {
+  const { text: uiText } = useUiText();
   const allOk = items.every(onTarget);
 
   return (
-    <Card title="Komposisi waktu DM" subtitle="Aktual dibanding target harian">
+    <Card title={uiText("Komposisi waktu DM")} subtitle={uiText("Aktual dibanding target harian")}>
       <ul className="dml-time">
         {items.map((s) => (
           <li key={s.label}>
             <div className="dml-time__row">
-              <span>{s.label}</span>
+              <span>{uiText(s.label)}</span>
               <span>
-                <strong>{s.value}%</strong> / {s.targetText}
+                <strong>{s.value}%</strong> / {uiText(s.targetText)}
               </span>
             </div>
             <ProgressBar value={s.value} target={s.target} tone={onTarget(s) ? "ok" : "warn"} size="sm" />
@@ -31,11 +34,11 @@ export function TimeCompositionCard({ items }: { items: TimeShare[] }) {
       <div className={allOk ? "dml-note dml-note--ok" : "dml-note dml-note--warn"}>
         {allOk ? <IconCheckCircle size={20} /> : <IconAlert size={20} />}
         <div>
-          <strong>{allOk ? "Komposisi waktu sesuai target" : "Komposisi waktu belum sesuai target"}</strong>
+          <strong>{allOk ? uiText("Komposisi waktu sesuai target") : uiText("Komposisi waktu belum sesuai target")}</strong>
           <p>
             {allOk
-              ? "Pre telah mencapai minimum 60%, During mendekati 20%, dan Post tetap di bawah batas 20%."
-              : "Periksa fase yang belum memenuhi target di atas."}
+              ? uiText("Pre telah mencapai minimum 60%, During mendekati 20%, dan Post tetap di bawah batas 20%.")
+              : uiText("Periksa fase yang belum memenuhi target di atas.")}
           </p>
         </div>
       </div>

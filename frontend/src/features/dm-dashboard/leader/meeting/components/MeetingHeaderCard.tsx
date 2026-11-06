@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import { IconClock, IconUsers } from "@/components/ui/icons";
 import type { MeetingPhase } from "../types";
@@ -21,19 +23,20 @@ interface Props {
 }
 
 export function MeetingHeaderCard({ title, phase, lines, dateText, timeText, location }: Props) {
+  const { text: uiText } = useUiText();
   const status = STATUS[phase];
   return (
     <section className="ui-card dml-mt-head">
       <div className="dml-mt-head__left">
         <div className="dml-mt-head__title">
-          <h2>{title}</h2>
+          <h2>{uiText(title)}</h2>
           <StatusChip tone={status.tone}>
-            <span className="dml-mt-dot" /> {status.label}
+            <span className="dml-mt-dot" /> {uiText(status.label)}
           </StatusChip>
         </div>
-        <ul className="dml-mt-head__lines" aria-label="Line yang dibahas">
+        <ul className="dml-mt-head__lines" aria-label={uiText("Line yang dibahas")}>
           {lines.map((l) => (
-            <li key={l}>Line {l}</li>
+            <li key={l}>{uiText("Line ")}{l}</li>
           ))}
         </ul>
       </div>
@@ -41,17 +44,17 @@ export function MeetingHeaderCard({ title, phase, lines, dateText, timeText, loc
       <dl className="dml-mt-head__meta">
         <div>
           <IconCalendar size={18} />
-          <dt>Tanggal</dt>
+          <dt>{uiText("Tanggal")}</dt>
           <dd>{dateText || "\u00a0"}</dd>
         </div>
         <div>
           <IconClock size={18} />
-          <dt>Waktu</dt>
-          <dd>{timeText}</dd>
+          <dt>{uiText("Waktu")}</dt>
+          <dd>{uiText(timeText)}</dd>
         </div>
         <div>
           <IconUsers size={18} />
-          <dt>Lokasi</dt>
+          <dt>{uiText("Lokasi")}</dt>
           <dd>{location}</dd>
         </div>
       </dl>

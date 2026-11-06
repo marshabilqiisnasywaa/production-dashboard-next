@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconCheck } from "@/components/ui/icons";
@@ -16,22 +18,22 @@ interface Props {
 }
 
 export function CategoryPanel({ category, rule, done, total, readOnly, getAnswer, onChange, onMarkAllOk }: Props) {
+  const { text: uiText } = useUiText();
   return (
     <Card
       flush
       title={category.name}
-      subtitle={`${done}/${total} item terjawab`}
+      subtitle={uiText(`${done}/${total} item terjawab`)}
       actions={
         !readOnly && (
           <Button variant="outline" onClick={onMarkAllOk}>
-            <IconCheck size={16} /> Semua OK
-          </Button>
+            <IconCheck size={16} />{uiText(" Semua OK")}</Button>
         )
       }
     >
       {category.groups.map((group) => (
         <div key={group.id} className="dml-group">
-          {group.title && <h3 className="dml-group__title">{group.title}</h3>}
+          {group.title && <h3 className="dml-group__title">{uiText(group.title)}</h3>}
           <ol className="dml-items">
             {group.items.map((item) => (
               <ChecklistItemCard

@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { Fragment, useEffect, useRef } from "react";
 import { IconCheck } from "@/components/ui/icons";
 import {
@@ -57,6 +59,7 @@ export default function ProblemSummary({
   focusTitleToken = 0,
   onChange,
 }: ProblemSummaryProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const titleRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -95,12 +98,12 @@ export default function ProblemSummary({
   }
 
   function renderSummary() {
-    const parts = buildProblemSummary(abnormal.summary).split("(belum diisi)");
+    const parts = buildProblemSummary(abnormal.summary, uiLocale).split("(belum diisi)");
     return parts.map((part, index) => (
       <Fragment key={`summary-${index}`}>
         {part}
         {index < parts.length - 1 ? (
-          <span className="dm-5w-summary-missing">(belum diisi)</span>
+          <span className="dm-5w-summary-missing">{uiText("(belum diisi)")}</span>
         ) : null}
       </Fragment>
     ));
@@ -114,31 +117,28 @@ export default function ProblemSummary({
         className="dm-5w-card dm-5w-problem-card"
         aria-labelledby="dm-5w-metadata-title"
       >
-        <h2 className="dm-5w-card-title" id="dm-5w-metadata-title">
-          Metadata abnormal
-        </h2>
+        <h2 className="dm-5w-card-title" id="dm-5w-metadata-title">{uiText("Metadata abnormal")}</h2>
 
         <div className="dm-5w-summary-grid">
           <label className="dm-5w-field dm-5w-field-wide">
-            <span className="dm-5w-label">
-              Judul abnormal <span className="dm-5w-required">*</span>
+            <span className="dm-5w-label">{uiText("Judul abnormal ")}<span className="dm-5w-required">*</span>
             </span>
             <input
               ref={titleRef}
               className="dm-5w-input"
               value={abnormal.label}
-              placeholder="Tulis ringkas masalahnya, misalnya: PC Upgrade fail"
+              placeholder={uiText("Tulis ringkas masalahnya, misalnya: PC Upgrade fail")}
               onChange={(event) =>
                 onChange({ ...abnormal, label: event.target.value })
               }
               disabled={!canEdit}
-              aria-label="Judul abnormal"
+              aria-label={uiText("Judul abnormal")}
               aria-required="true"
             />
           </label>
 
           <label className="dm-5w-field">
-            <span className="dm-5w-label">Teruntuk (Line)</span>
+            <span className="dm-5w-label">{uiText("Teruntuk (Line)")}</span>
             <input
               className="dm-5w-input"
               value={abnormal.line}
@@ -146,12 +146,12 @@ export default function ProblemSummary({
                 onChange({ ...abnormal, line: event.target.value })
               }
               disabled={!canEdit}
-              aria-label="Teruntuk line"
+              aria-label={uiText("Teruntuk line")}
             />
           </label>
 
           <label className="dm-5w-field">
-            <span className="dm-5w-label">Pengusul</span>
+            <span className="dm-5w-label">{uiText("Pengusul")}</span>
             <input
               className="dm-5w-input"
               value={abnormal.pengusul}
@@ -159,12 +159,12 @@ export default function ProblemSummary({
                 onChange({ ...abnormal, pengusul: event.target.value })
               }
               disabled={!canEdit}
-              aria-label="Pengusul"
+              aria-label={uiText("Pengusul")}
             />
           </label>
 
           <label className="dm-5w-field dm-5w-field-wide">
-            <span className="dm-5w-label">Jenis perbaikan abnormal</span>
+            <span className="dm-5w-label">{uiText("Jenis perbaikan abnormal")}</span>
             <input
               className="dm-5w-input"
               value={abnormal.jenis}
@@ -172,17 +172,17 @@ export default function ProblemSummary({
                 onChange({ ...abnormal, jenis: event.target.value })
               }
               disabled={!canEdit}
-              aria-label="Jenis perbaikan abnormal"
+              aria-label={uiText("Jenis perbaikan abnormal")}
             />
           </label>
 
           <div className="dm-5w-choice-grid dm-5w-field-wide">
             <div className="dm-5w-choice-group">
-              <span className="dm-5w-label">Sumber abnormal</span>
+              <span className="dm-5w-label">{uiText("Sumber abnormal")}</span>
               <div
                 className="dm-5w-choice-row"
                 role="group"
-                aria-label="Sumber abnormal"
+                aria-label={uiText("Sumber abnormal")}
               >
                 {SUMBER_ABNORMAL_OPTIONS.map((option) => {
                   const selected = abnormal.sumberAbnormal.includes(
@@ -200,7 +200,7 @@ export default function ProblemSummary({
                       <span className="dm-5w-choice-box" aria-hidden="true">
                         {selected ? <IconCheck size={9} /> : null}
                       </span>
-                      <span>{option.label}</span>
+                      <span>{uiText(option.label)}</span>
                     </button>
                   );
                 })}
@@ -210,7 +210,7 @@ export default function ProblemSummary({
                   <input
                     className="dm-5w-input dm-5w-choice-input"
                     value={abnormal.sumberLainnya}
-                    placeholder="Sebutkan"
+                    placeholder={uiText("Sebutkan")}
                     onChange={(event) =>
                       onChange({
                         ...abnormal,
@@ -218,22 +218,22 @@ export default function ProblemSummary({
                       })
                     }
                     disabled={!canEdit}
-                    aria-label="Sumber abnormal lainnya"
+                    aria-label={uiText("Sumber abnormal lainnya")}
                     aria-required="true"
                   />
                   {!abnormal.sumberLainnya.trim() ? (
-                    <span className="dm-5w-field-error">Wajib diisi</span>
+                    <span className="dm-5w-field-error">{uiText("Wajib diisi")}</span>
                   ) : null}
                 </>
               ) : null}
             </div>
 
             <div className="dm-5w-choice-group">
-              <span className="dm-5w-label">Tingkat pengaruh</span>
+              <span className="dm-5w-label">{uiText("Tingkat pengaruh")}</span>
               <div
                 className="dm-5w-choice-row"
                 role="group"
-                aria-label="Tingkat pengaruh"
+                aria-label={uiText("Tingkat pengaruh")}
               >
                 {TINGKAT_PENGARUH_OPTIONS.map((option) => {
                   const selected = abnormal.tingkatPengaruh.includes(
@@ -251,7 +251,7 @@ export default function ProblemSummary({
                       <span className="dm-5w-choice-box" aria-hidden="true">
                         {selected ? <IconCheck size={9} /> : null}
                       </span>
-                      <span>{option.label}</span>
+                      <span>{uiText(option.label)}</span>
                     </button>
                   );
                 })}
@@ -261,7 +261,7 @@ export default function ProblemSummary({
                   <input
                     className="dm-5w-input dm-5w-choice-input"
                     value={abnormal.pengaruhLainnya}
-                    placeholder="Sebutkan"
+                    placeholder={uiText("Sebutkan")}
                     onChange={(event) =>
                       onChange({
                         ...abnormal,
@@ -269,11 +269,11 @@ export default function ProblemSummary({
                       })
                     }
                     disabled={!canEdit}
-                    aria-label="Tingkat pengaruh lainnya"
+                    aria-label={uiText("Tingkat pengaruh lainnya")}
                     aria-required="true"
                   />
                   {!abnormal.pengaruhLainnya.trim() ? (
-                    <span className="dm-5w-field-error">Wajib diisi</span>
+                    <span className="dm-5w-field-error">{uiText("Wajib diisi")}</span>
                   ) : null}
                 </>
               ) : null}
@@ -286,12 +286,10 @@ export default function ProblemSummary({
         className="dm-5w-card dm-5w-problem-card"
         aria-labelledby="dm-5w-statement-title"
       >
-        <h2 className="dm-5w-card-title" id="dm-5w-statement-title">
-          Pernyataan masalah (4W + 1H)
-        </h2>
+        <h2 className="dm-5w-card-title" id="dm-5w-statement-title">{uiText("Pernyataan masalah (4W + 1H)")}</h2>
         <div className="dm-5w-statement-grid">
           <div className="dm-5w-field">
-            <span className="dm-5w-label">When</span>
+            <span className="dm-5w-label">{uiText("When")}</span>
             <div className="dm-5w-datetime">
               <input
                 type="date"
@@ -303,7 +301,7 @@ export default function ProblemSummary({
                   })
                 }
                 disabled={!canEdit}
-                aria-label="Tanggal kejadian"
+                aria-label={uiText("Tanggal kejadian")}
               />
               <input
                 type="time"
@@ -315,29 +313,29 @@ export default function ProblemSummary({
                   })
                 }
                 disabled={!canEdit}
-                aria-label="Jam kejadian"
+                aria-label={uiText("Jam kejadian")}
               />
             </div>
           </div>
 
           {STATEMENT_FIELDS.slice(0, 3).map((field) => (
             <label className="dm-5w-field" key={field.key}>
-              <span className="dm-5w-label">{field.label}</span>
+              <span className="dm-5w-label">{uiText(field.label)}</span>
               <input
                 className="dm-5w-input"
                 value={abnormal.summary[field.key]}
-                placeholder={field.placeholder}
+                placeholder={uiText(field.placeholder)}
                 onChange={(event) =>
                   updateSummary({ [field.key]: event.target.value })
                 }
                 disabled={!canEdit}
-                aria-label={field.label}
+                aria-label={uiText(field.label)}
               />
             </label>
           ))}
 
           <label className="dm-5w-field dm-5w-field-wide">
-            <span className="dm-5w-label">How</span>
+            <span className="dm-5w-label">{uiText("How")}</span>
             <textarea
               className="dm-5w-textarea"
               rows={2}
@@ -345,32 +343,32 @@ export default function ProblemSummary({
                 if (element) resizeTextarea(element);
               }}
               value={abnormal.summary.how}
-              placeholder="Kronologi singkat: bagaimana masalah ini terjadi"
+              placeholder={uiText("Kronologi singkat: bagaimana masalah ini terjadi")}
               onChange={(event) => {
                 resizeTextarea(event.currentTarget);
                 updateSummary({ how: event.target.value });
               }}
               disabled={!canEdit}
-              aria-label="How"
+              aria-label={uiText("How")}
             />
           </label>
 
           <label className="dm-5w-field">
-            <span className="dm-5w-label">How much</span>
+            <span className="dm-5w-label">{uiText("How much")}</span>
             <input
               className="dm-5w-input"
               value={abnormal.summary.howMuch}
-              placeholder="Berapa besar dampaknya"
+              placeholder={uiText("Berapa besar dampaknya")}
               onChange={(event) =>
                 updateSummary({ howMuch: event.target.value })
               }
               disabled={!canEdit}
-              aria-label="How much"
+              aria-label={uiText("How much")}
             />
           </label>
 
           <label className="dm-5w-field">
-            <span className="dm-5w-label">Downtime (menit)</span>
+            <span className="dm-5w-label">{uiText("Downtime (menit)")}</span>
             <input
               type="number"
               min="0"
@@ -382,26 +380,26 @@ export default function ProblemSummary({
                 updateSummary({ downtime: event.target.value })
               }
               disabled={!canEdit}
-              aria-label="Downtime menit"
+              aria-label={uiText("Downtime menit")}
             />
           </label>
 
           <label className="dm-5w-field">
-            <span className="dm-5w-label">Short-term solution</span>
+            <span className="dm-5w-label">{uiText("Short-term solution")}</span>
             <input
               className="dm-5w-input"
               value={abnormal.summary.shortTermSolution}
-              placeholder="Tindakan sementara yang dilakukan"
+              placeholder={uiText("Tindakan sementara yang dilakukan")}
               onChange={(event) =>
                 updateSummary({ shortTermSolution: event.target.value })
               }
               disabled={!canEdit}
-              aria-label="Short-term solution"
+              aria-label={uiText("Short-term solution")}
             />
           </label>
         </div>
         <div className="dm-5w-summary-preview">
-          <span className="dm-5w-label">Ringkasan masalah (otomatis)</span>
+          <span className="dm-5w-label">{uiText("Ringkasan masalah (otomatis)")}</span>
           <p>{renderSummary()}</p>
         </div>
       </section>

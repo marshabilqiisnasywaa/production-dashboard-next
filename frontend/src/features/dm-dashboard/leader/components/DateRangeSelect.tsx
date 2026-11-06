@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import type { DateRangeKey } from "../types";
 
 const OPTIONS: { value: DateRangeKey; label: string }[] = [
@@ -8,13 +10,14 @@ const OPTIONS: { value: DateRangeKey; label: string }[] = [
 ];
 
 export function DateRangeSelect({ value, onChange }: { value: DateRangeKey; onChange: (v: DateRangeKey) => void }) {
+  const { text: uiText } = useUiText();
   return (
     <label className="dml-daterange">
-      <span>Date Range</span>
+      <span>{uiText("Date Range")}</span>
       <select className="ui-select" value={value} onChange={(e) => onChange(e.target.value as DateRangeKey)}>
         {OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
-            {o.label}
+            {uiText(o.label)}
           </option>
         ))}
       </select>

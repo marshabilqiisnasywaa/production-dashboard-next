@@ -22,8 +22,8 @@ export const dmChecklist: readonly DmChecklistItem[] = [
   { id: "item-3", label: "Item checklist 3 (belum diisi)" },
 ];
 
-export function clock(date: Date) {
-  return date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+export function clock(date: Date, locale = "id-ID") {
+  return date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 }
 
 export function isMorning(date: Date) {

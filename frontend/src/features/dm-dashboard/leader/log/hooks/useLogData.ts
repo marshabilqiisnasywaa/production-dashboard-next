@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useMemo, useState } from "react";
 import { accountApi, meetingApi, type DmMeetingSession } from "../../../api";
@@ -13,6 +15,7 @@ const HISTORY_DAYS = 60;
 
 /** Everything the Log page needs: meeting history rows + the activity trail, plus "now". */
 export function useLogData() {
+  const { locale: uiLocale } = useUiText();
   const now = useNow(60_000);
   const members = useMeetingMembers();
   const [lineId, setLineId] = useState<number | null>(null);
@@ -62,7 +65,7 @@ export function useLogData() {
     return buildMeetingRecords({ server, samples, members, leaderName, sessions, now, lineCodes });
   }, [now, server, members, leaderName, sessions, lineCodes]);
 
-  const activity = useMemo(() => buildActivity(records), [records]);
+  const activity = useMemo(() => buildActivity(records, uiLocale), [records]);
 
   return { records, activity, now, error, ready: now !== null && (server !== null || error !== null) };
 }

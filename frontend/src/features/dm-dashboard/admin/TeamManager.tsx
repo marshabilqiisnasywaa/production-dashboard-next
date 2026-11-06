@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { adminApi } from "../api";
 import type { DmEmployee, DmLine } from "../api";
@@ -14,6 +16,7 @@ type Props = {
 };
 
 export default function TeamManager({ line, call, onChanged, onBusyChange }: Props) {
+  const { text: uiText } = useUiText();
   const [members, setMembers] = useState<DmMember[]>([]);
   const [employees, setEmployees] = useState<DmEmployee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +64,7 @@ export default function TeamManager({ line, call, onChanged, onBusyChange }: Pro
   }
 
   async function release(member: DmMember) {
-    if (member.id === undefined || busy || !window.confirm(`Lepas ${member.name} dari Line ${line.code}?`)) return;
+    if (member.id === undefined || busy || !window.confirm(uiText("Lepas {{v0}} dari Line {{v1}}?", { v0: member.name, v1: line.code }))) return;
     setBusy(true);
     setError(null);
     try {
@@ -72,34 +75,34 @@ export default function TeamManager({ line, call, onChanged, onBusyChange }: Pro
     finally { setBusy(false); }
   }
 
-  if (loading) return <p role="status">Memuat tim line...</p>;
-  if (loadError) return <div role="alert"><p>{loadError}</p><button type="button" className="ltm-btn-add" onClick={() => void load()}>Coba lagi</button></div>;
+  if (loading) return <p role="status">{uiText("Memuat tim line...")}</p>;
+  if (loadError) return <div role="alert"><p>{loadError}</p><button type="button" className="ltm-btn-add" onClick={() => void load()}>{uiText("Coba lagi")}</button></div>;
 
   return <div className="ltm-fixed-team">
-    <p className="ltm-fixed-note">Klik slot kosong untuk memilih anggota dari departemen tersebut.</p>
+    <p className="ltm-fixed-note">{uiText("Klik slot kosong untuk memilih anggota dari departemen tersebut.")}</p>
     <div className="ltm-slots-grid">{teamSlots.map((item) => {
       const occupants = members.filter((member) => teamDepartment(member.dept) === item.department);
-      return occupants.length ? <section key={item.order} className={`ltm-slot-card${item.order === 1 ? " is-leader" : ""}`} aria-label={`Slot ${item.order} ${item.label}`}>
-        <div className="ltm-slot-head"><span className="ltm-slot-badge">#{item.order} {item.label}</span></div>
+      return occupants.length ? <section key={item.order} className={`ltm-slot-card${item.order === 1 ? " is-leader" : ""}`} aria-label={uiText("Slot {{v0}} {{v1}}", { v0: item.order, v1: item.label })}>
+        <div className="ltm-slot-head"><span className="ltm-slot-badge">#{item.order} {uiText(item.label)}</span></div>
         {occupants.map((member) => <div key={member.id ?? member.employeeId} className="ltm-fixed-occupant">
-          <div className="ltm-member-details"><strong className="ltm-member-name">{member.name}</strong><span className="ltm-member-meta">NIK: {member.employeeId}</span></div>
-          {item.order === 1 && member.role !== "leader" ? <p className="ltm-fixed-error">User ini belum memiliki role Leader. Lepas dan pilih leader Produksi.</p> : null}
-          <button type="button" className="ltm-btn-release" disabled={busy} onClick={() => void release(member)}>Keluarkan</button>
+          <div className="ltm-member-details"><strong className="ltm-member-name">{member.name}</strong><span className="ltm-member-meta">{uiText("NIK: ")}{member.employeeId}</span></div>
+          {item.order === 1 && member.role !== "leader" ? <p className="ltm-fixed-error">{uiText("User ini belum memiliki role Leader. Lepas dan pilih leader Produksi.")}</p> : null}
+          <button type="button" className="ltm-btn-release" disabled={busy} onClick={() => void release(member)}>{uiText("Keluarkan")}</button>
         </div>)}
-        {occupants.length > 1 ? <p className="ltm-fixed-error">Slot berisi lebih dari satu anggota. Sisakan satu anggota.</p> : null}
+        {occupants.length > 1 ? <p className="ltm-fixed-error">{uiText("Slot berisi lebih dari satu anggota. Sisakan satu anggota.")}</p> : null}
       </section> : <button key={item.order} type="button" className={`ltm-slot-card is-empty${selectedSlot === item.order ? " is-active-target" : ""}`} disabled={busy} aria-pressed={selectedSlot === item.order} onClick={() => { setSelectedSlot(item.order); setSearch(""); setError(null); }}>
-        <strong>#{item.order} {item.label}</strong><span>Pilih {item.label}</span>
+        <strong>#{item.order} {uiText(item.label)}</strong><span>{uiText("Pilih ")}{uiText(item.label)}</span>
       </button>;
     })}</div>
-    {slot ? <section className="ltm-fixed-picker" aria-label={`Pilih ${slot.label}`}>
-      <div className="ltm-fixed-picker-head"><strong>Pilih {slot.label}</strong><button type="button" className="ltm-btn-release" disabled={busy} onClick={() => setSelectedSlot(null)}>Batal</button></div>
-      <label className="ltm-label" htmlFor={`team-search-${line.id}`}>Cari nama atau NIK</label>
-      <input ref={searchInput} id={`team-search-${line.id}`} type="search" className="ltm-search-input" placeholder={`Cari anggota ${slot.label}`} value={search} disabled={busy} onChange={(event) => setSearch(event.target.value)} />
+    {slot ? <section className="ltm-fixed-picker" aria-label={uiText("Pilih {{v0}}", { v0: slot.label })}>
+      <div className="ltm-fixed-picker-head"><strong>{uiText("Pilih ")}{uiText(slot.label)}</strong><button type="button" className="ltm-btn-release" disabled={busy} onClick={() => setSelectedSlot(null)}>{uiText("Batal")}</button></div>
+      <label className="ltm-label" htmlFor={`team-search-${line.id}`}>{uiText("Cari nama atau NIK")}</label>
+      <input ref={searchInput} id={`team-search-${line.id}`} type="search" className="ltm-search-input" placeholder={uiText("Cari anggota {{v0}}", { v0: slot.label })} value={search} disabled={busy} onChange={(event) => setSearch(event.target.value)} />
       <ul className="ltm-fixed-candidates">{candidates.map((employee) => <li key={employee.id}><button type="button" disabled={busy} onClick={() => void add(employee)}><strong>{employee.name}</strong><span>{employee.employeeId}</span></button></li>)}</ul>
-      {candidates.length === 0 ? <p className="ltm-fixed-note">Tidak ada User aktif {slot.label} yang cocok. Tambahkan atau periksa departemen User di menu User.</p> : null}
-      {busy ? <p role="status">Menyimpan...</p> : null}
+      {candidates.length === 0 ? <p className="ltm-fixed-note">{uiText("Tidak ada User aktif ")}{uiText(slot.label)}{uiText(" yang cocok. Tambahkan atau periksa departemen User di menu User.")}</p> : null}
+      {busy ? <p role="status">{uiText("Menyimpan...")}</p> : null}
     </section> : null}
-    {extraMembers.length ? <section><strong>Anggota dengan departemen di luar empat slot</strong>{extraMembers.map((member) => <div key={member.id ?? member.employeeId} className="ltm-fixed-extra"><span>{member.name} — {member.dept ?? "Tanpa departemen"}</span><button type="button" className="ltm-btn-release" disabled={busy} onClick={() => void release(member)}>Keluarkan</button></div>)}</section> : null}
-    {error ? <p className="ltm-fixed-error" role="alert">{error}</p> : null}
+    {extraMembers.length ? <section><strong>{uiText("Anggota dengan departemen di luar empat slot")}</strong>{extraMembers.map((member) => <div key={member.id ?? member.employeeId} className="ltm-fixed-extra"><span>{member.name} — {member.dept ?? uiText("Tanpa departemen")}</span><button type="button" className="ltm-btn-release" disabled={busy} onClick={() => void release(member)}>{uiText("Keluarkan")}</button></div>)}</section> : null}
+    {error ? <p className="ltm-fixed-error" role="alert">{uiText(error)}</p> : null}
   </div>;
 }

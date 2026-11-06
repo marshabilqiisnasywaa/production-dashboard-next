@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { departmentLabel } from "../departments";
 import { useEffect, useMemo, useState } from "react";
@@ -23,6 +25,7 @@ export default function PapercardProblems({
   lines: DmLine[];
   call: <T>(fn: () => Promise<T>) => Promise<T>;
 }) {
+  const { text: uiText } = useUiText();
   const [date, setDate] = useState(today);
   const [line, setLine] = useState("");
   const [department, setDepartment] = useState("");
@@ -85,35 +88,33 @@ export default function PapercardProblems({
     <div className="dml-pb is-admin dm-papercard-problems">
       <section
         className="dml-pb-panel"
-        aria-label="Log masalah papercard"
+        aria-label={uiText("Log masalah papercard")}
         aria-busy={loading}
       >
         <div className="dml-pb-toolbar">
           <div className="dml-pb-search">
             <input
               type="search"
-              aria-label="Cari masalah papercard"
-              placeholder="Cari kategori, masalah, penyebab, atau solusi..."
+              aria-label={uiText("Cari masalah papercard")}
+              placeholder={uiText("Cari kategori, masalah, penyebab, atau solusi...")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
           <div className="dml-pb-filters">
-            <label className="dm-papercard-date">
-              Tanggal
-              <input
+            <label className="dm-papercard-date">{uiText("Tanggal")}<input
                 type="date"
-                aria-label="Tanggal papercard"
+                aria-label={uiText("Tanggal papercard")}
                 value={date}
                 onChange={(event) => setDate(event.target.value)}
               />
             </label>
             <select
-              aria-label="Filter line papercard"
+              aria-label={uiText("Filter line papercard")}
               value={line}
               onChange={(event) => setLine(event.target.value)}
             >
-              <option value="">Semua line</option>
+              <option value="">{uiText("Semua line")}</option>
               {lines.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.code || item.name}
@@ -121,11 +122,11 @@ export default function PapercardProblems({
               ))}
             </select>
             <select
-              aria-label="Filter departemen papercard"
+              aria-label={uiText("Filter departemen papercard")}
               value={department}
               onChange={(event) => setDepartment(event.target.value)}
             >
-              <option value="">Semua departemen</option>
+              <option value="">{uiText("Semua departemen")}</option>
               {[
                 ...new Set([
                   ...departments,
@@ -135,7 +136,7 @@ export default function PapercardProblems({
                 .sort()
                 .map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {uiText(item)}
                   </option>
                 ))}
             </select>
@@ -148,17 +149,13 @@ export default function PapercardProblems({
                 setDepartment("");
                 setSearch("");
               }}
-            >
-              Reset
-            </button>
+            >{uiText("Reset")}</button>
             <button
               type="button"
               className="dml-pb-reset"
               disabled={loading}
               onClick={() => setAttempt((value) => value + 1)}
-            >
-              Muat ulang
-            </button>
+            >{uiText("Muat ulang")}</button>
           </div>
         </div>
         {error ? (
@@ -167,22 +164,16 @@ export default function PapercardProblems({
             onRetry={() => setAttempt((value) => value + 1)}
           />
         ) : loading ? (
-          <div className="dml-empty" role="status">
-            Memuat log papercard...
-          </div>
+          <div className="dml-empty" role="status">{uiText("Memuat log papercard...")}</div>
         ) : (
           <>
-            <div className="dml-pb-result-count" role="status">
-              Menampilkan <strong>{visible.length}</strong> dari{" "}
-              <strong>{rows.length}</strong> masalah NG
-              {!date && " · Semua tanggal"}. Hanya papercard dengan temuan NG
-              atau keterlambatan yang ditampilkan.
-            </div>
+            <div className="dml-pb-result-count" role="status">{uiText("Menampilkan ")}<strong>{visible.length}</strong>{uiText(" dari")}{" "}
+              <strong>{rows.length}</strong>{uiText(" masalah NG")}{!date && uiText(" · Semua tanggal")}{uiText(". Hanya papercard dengan temuan NG atau keterlambatan yang ditampilkan.")}</div>
             <div
               className="dml-pb-table-wrap"
               tabIndex={0}
               role="region"
-              aria-label="Tabel masalah papercard, geser untuk melihat semua kolom"
+              aria-label={uiText("Tabel masalah papercard, geser untuk melihat semua kolom")}
             >
               <table className="dml-pb-table dm-papercard-problems-table">
                 <thead>
@@ -198,7 +189,7 @@ export default function PapercardProblems({
                       "keterangan",
                     ].map((heading) => (
                       <th key={heading} scope="col">
-                        {heading}
+                        {uiText(heading)}
                       </th>
                     ))}
                   </tr>
@@ -208,8 +199,8 @@ export default function PapercardProblems({
                     <tr>
                       <td colSpan={8} className="dml-empty">
                         {rows.length
-                          ? "Tidak ada masalah NG yang sesuai filter."
-                          : "Tidak ada masalah NG papercard pada tanggal yang dipilih."}
+                          ? uiText("Tidak ada masalah NG yang sesuai filter.")
+                          : uiText("Tidak ada masalah NG papercard pada tanggal yang dipilih.")}
                       </td>
                     </tr>
                   ) : (
@@ -221,13 +212,13 @@ export default function PapercardProblems({
                         </td>
                         <td>
                           {lineNames.get(row.submission.lineId) ||
-                            `Line #${row.submission.lineId}`}
+                            uiText("Line #{{v0}}", { v0: row.submission.lineId })}
                         </td>
-                        <td>{departmentLabel(row.submission.department)}</td>
+                        <td>{uiText(departmentLabel(row.submission.department))}</td>
                         <td>{row.category}</td>
                         <td>
                           <strong className="dm-papercard-ng">
-                            {row.late ? "NG telat" : "NG"}
+                            {row.late ? uiText("NG telat") : uiText("NG")}
                           </strong>
                           {!row.late && <div>{row.problem}</div>}
                         </td>
@@ -237,7 +228,7 @@ export default function PapercardProblems({
                         <td>
                           {row.solution || (row.late ? "-" : "Belum dicatat")}
                         </td>
-                        <td>{row.description}</td>
+                        <td>{uiText(row.description)}</td>
                       </tr>
                     ))
                   )}

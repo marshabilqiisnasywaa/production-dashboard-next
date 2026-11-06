@@ -44,8 +44,8 @@ export function previousPeriod(): string {
   return `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export function formatPeriod(period: string): string {
+export function formatPeriod(period: string, locale = "id-ID"): string {
   const [year, month] = period.split("-").map(Number);
   if (!year || !month) return period;
-  return new Date(year, month - 1, 1).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+  return new Date(year, month - 1, 1).toLocaleDateString(locale, { month: "long", year: "numeric" });
 }

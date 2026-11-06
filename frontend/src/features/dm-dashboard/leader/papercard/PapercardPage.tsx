@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useState } from "react";
 import "./papercard.css";
@@ -29,6 +31,7 @@ const EMPTY_LEADER_TEMPLATE: ChecklistTemplate = {
 
 /** Composition only: logic is in hooks/, UI pieces are in components/. */
 export default function PapercardPage() {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [currentUser, setCurrentUser] = useState<DmMe | null>(null);
   const [line, setLine] = useState(PAPERCARD_LINES[0]);
   const [dynamicTemplate, setDynamicTemplate] = useState<ChecklistTemplate>(EMPTY_LEADER_TEMPLATE);
@@ -211,7 +214,7 @@ export default function PapercardPage() {
       window.dispatchEvent(new Event(PAPERCARD_CHANGED_EVENT));
     } catch (e: any) {
       console.warn("Papercard API submission warning:", e);
-      alert(e?.message || "Gagal mengirimkan papercard. Pastikan server aktif.");
+      alert(e?.message || uiText("Gagal mengirimkan papercard. Pastikan server aktif."));
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -229,7 +232,7 @@ export default function PapercardPage() {
     supervisorNotes: dbSubmission?.supervisorNotes,
     submittedAt: dbSubmission?.submittedAt
       ? (dbSubmission.submittedAt.includes("T")
-          ? new Date(dbSubmission.submittedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+          ? new Date(dbSubmission.submittedAt).toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" })
           : dbSubmission.submittedAt) + " WIB"
       : null,
   };
@@ -240,14 +243,9 @@ export default function PapercardPage() {
 
 <div className="dml-page-head dml-pc-page-head">
   <div>
-    <h1 className="dml-pc__title">
-      Papercard Leader
-    </h1>
-    <p className="dml-pc__intro">
-      Isi checklist harian sebelum DM Meeting tepat waktu untuk{" "}
-      <strong>{lineDisplayName}</strong>. Hasil pemeriksaan otomatis dikirim
-      ke Supervisor <strong>{supervisorName}</strong> untuk persetujuan.
-    </p>
+    <h1 className="dml-pc__title">{uiText("Papercard Leader")}</h1>
+    <p className="dml-pc__intro">{uiText("Isi checklist harian sebelum DM Meeting tepat waktu untuk")}{" "}
+      <strong>{lineDisplayName}</strong>{uiText(". Hasil pemeriksaan otomatis dikirim ke Supervisor ")}<strong>{supervisorName}</strong>{uiText(" untuk persetujuan.")}</p>
   </div>
 </div>
 
@@ -263,7 +261,7 @@ export default function PapercardPage() {
         onLineChange={() => {}}
         leader={`${currentUser?.name || "Leader"} (Leader Produksi)`}
         shift={PAPERCARD_CONFIG.shift}
-        date={win.now ? formatDateId(win.now) : ""}
+        date={win.now ? formatDateId(win.now, uiLocale) : ""}
         supervisorField={<SupervisorSelect selection={supervisor} disabled={readOnly || submissionLoading} />}
         lineLocked={true}
       >
@@ -301,11 +299,8 @@ export default function PapercardPage() {
               marginBottom: "12px",
             }}
           />
-          <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>
-            Memuat Checklist Papercard dari Database...
-          </div>
-          <div style={{ fontSize: "12.5px", color: "#64748b", marginTop: "4px" }}>
-            Mengambil konfigurasi resmi untuk Lini {lineDisplayName}
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{uiText("Memuat Checklist Papercard dari Database...")}</div>
+          <div style={{ fontSize: "12.5px", color: "#64748b", marginTop: "4px" }}>{uiText("Mengambil konfigurasi resmi untuk Lini ")}{lineDisplayName}
           </div>
         </div>
       ) : dynamicTemplate.categories.length === 0 ? (
@@ -321,11 +316,8 @@ export default function PapercardPage() {
           }}
         >
           <div style={{ fontSize: "36px", marginBottom: "12px" }}>📋</div>
-          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
-            Belum Ada Papercard yang harus anda checklist.
-          </h3>
-          <p style={{ fontSize: "13px", color: "#64748b", maxWidth: "480px", margin: "0 auto 16px", lineHeight: "1.5" }}>
-            Database belum memiliki konfigurasi checklist pertanyaan papercard untuk Line <strong>{lineDisplayName}</strong> dan Departemen <strong>Produksi</strong>.
+          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>{uiText("Belum Ada Papercard yang harus anda checklist.")}</h3>
+          <p style={{ fontSize: "13px", color: "#64748b", maxWidth: "480px", margin: "0 auto 16px", lineHeight: "1.5" }}>{uiText("Database belum memiliki konfigurasi checklist pertanyaan papercard untuk Line ")}<strong>{lineDisplayName}</strong>{uiText(" dan Departemen ")}<strong>{uiText("Produksi")}</strong>.
           </p>
           <div
             style={{
@@ -338,8 +330,7 @@ export default function PapercardPage() {
               border: "1px solid #ccfbf1",
               fontWeight: 500,
             }}
-          >
-           Silakan Hubungi <strong>Admin</strong>.
+          >{uiText("Silakan Hubungi ")}<strong>{uiText("Admin")}</strong>.
           </div>
         </div>
       ) : (

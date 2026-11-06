@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { useEffect, useRef, useState, type TouchEvent } from "react";
 import {
   CheckCircle2,
@@ -93,6 +95,7 @@ export function SummaryScoreCard({
   totalComposition?: { before: number; current: number; after: number };
   rank?: number;
 }) {
+  const { text: uiText } = useUiText();
   const normalized = value === undefined ? 0 : (value / max) * 100;
   const [titleText, subtitle] = title.split(" · ");
   const iconTone =
@@ -112,9 +115,9 @@ export function SummaryScoreCard({
       <div className="scorecard-kpi-main">
         <div className="scorecard-kpi-head">
           <div className="min-w-0">
-            <div className="scorecard-kpi-title">{titleText}</div>
+            <div className="scorecard-kpi-title">{uiText(titleText)}</div>
             {subtitle && (
-              <div className="scorecard-kpi-subtitle">{subtitle}</div>
+              <div className="scorecard-kpi-subtitle">{uiText(subtitle)}</div>
             )}
           </div>
           <span
@@ -130,7 +133,7 @@ export function SummaryScoreCard({
           </span>
         </div>
         {value === undefined && (
-          <div className="scorecard-kpi-hint">Belum ada data</div>
+          <div className="scorecard-kpi-hint">{uiText("Belum ada data")}</div>
         )}
         {value === undefined ? (
           <div className="scorecard-kpi-progress scorecard-kpi-progress--empty">
@@ -161,6 +164,7 @@ export function ScoreGauge({
   selected: boolean;
   onClick: () => void;
 }) {
+  const { text: uiText } = useUiText();
   const color =
     score === undefined
       ? "var(--color-border)"
@@ -180,11 +184,11 @@ export function ScoreGauge({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 font-bold text-text">
           {dm}
-          <span title="Nilai DM dihitung dari data level DM milik Leader DM, sehingga bisa berbeda dari nilai line yang dipimpinnya di tabel ranking.">
+          <span title={uiText("Nilai DM dihitung dari data level DM milik Leader DM, sehingga bisa berbeda dari nilai line yang dipimpinnya di tabel ranking.")}>
             <Info size={14} className="text-text-secondary" />
           </span>
         </div>
-        {selected && <Badge tone="primary">Dipilih</Badge>}
+        {selected && <Badge tone="primary">{uiText("Dipilih")}</Badge>}
       </div>
       <div className="score-gauge-body">
         <div className="score-gauge-visual">
@@ -192,7 +196,7 @@ export function ScoreGauge({
             viewBox="0 0 200 112"
             className="mx-auto mt-1 w-full max-w-56"
             role="img"
-            aria-label={`Nilai ${dm}`}
+            aria-label={uiText("Nilai {{v0}}", { v0: dm })}
           >
             <path
               d="M 20 100 A 80 80 0 0 1 180 100"
@@ -233,33 +237,27 @@ export function ScoreGauge({
               y="108"
               textAnchor="middle"
               className="fill-text-secondary text-xs"
-            >
-              Target 90
-            </text>
+            >{uiText("Target 90")}</text>
           </svg>
         </div>
         {leader ? (
           <div className="score-gauge-info mt-2 grid grid-rows-4 gap-1 border-t border-border pt-3 text-xs">
             <div className="flex justify-between">
-              <span className="text-text-secondary">Ass SPV</span>
-              <strong>Ikhwan</strong>
+              <span className="text-text-secondary">{uiText("Ass SPV")}</span>
+              <strong>{uiText("Ikhwan")}</strong>
             </div>
             <div className="flex justify-between gap-2">
-              <span className="text-text-secondary">Leader DM</span>
+              <span className="text-text-secondary">{uiText("Leader DM")}</span>
               <strong className="text-right">{leader}</strong>
             </div>
             <div className="flex justify-between">
-              <span className="text-text-secondary">Peringkat DM</span>
+              <span className="text-text-secondary">{uiText("Peringkat DM")}</span>
               <strong>{rank}</strong>
             </div>
-            <div className="text-warning-dark">
-              Kurang {formatScore(gap ?? 0)} poin dari target
-            </div>
+            <div className="text-warning-dark">{uiText("Kurang ")}{formatScore(gap ?? 0)}{uiText(" poin dari target")}</div>
           </div>
         ) : (
-          <div className="score-gauge-info mt-2 flex items-start justify-center border-t border-border pt-4 text-center text-sm text-text-secondary">
-            Belum ada Leader DM
-          </div>
+          <div className="score-gauge-info mt-2 flex items-start justify-center border-t border-border pt-4 text-center text-sm text-text-secondary">{uiText("Belum ada Leader DM")}</div>
         )}
       </div>
     </Card>
@@ -345,6 +343,7 @@ export function SqdipDimTiles({
   selected: DimKey;
   onSelect: (key: DimKey) => void;
 }) {
+  const { text: uiText } = useUiText();
   return (
     <div
       className="grid grid-cols-5 gap-2 sm:gap-3"
@@ -378,7 +377,7 @@ export function SqdipDimTiles({
           <button
             key={key}
             type="button"
-            title={key}
+            title={uiText(key)}
             aria-pressed={active}
             onClick={() => onSelect(key)}
             className={`flex min-w-0 flex-col justify-between rounded-xl border bg-white px-3 py-2.5 text-left transition hover:-translate-y-0.5 ${
@@ -408,8 +407,7 @@ export function SqdipDimTiles({
               {actual === null ? "—" : formatSqdipValue(actual, trend.kind)}
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-xs font-medium text-text-secondary">
-                Target : {trend.dir === "max" ? "≤ " : ""}
+              <span className="truncate text-xs font-medium text-text-secondary">{uiText("Target : ")}{trend.dir === "max" ? "≤ " : ""}
                 {formatSqdipValue(trend.target, trend.kind)}
               </span>
               {ok !== null && (
@@ -418,7 +416,7 @@ export function SqdipDimTiles({
                   style={{ fontSize: 10 }}
                 >
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
-                  {ok ? "On Target" : "Off Target"}
+                  {ok ? uiText("On Target") : uiText("Off Target")}
                 </span>
               )}
             </div>
@@ -438,6 +436,7 @@ export function TrendChart({
   custom?: SqdipTrend;
   trend?: TrendSeries;
 }) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const seriesByMetric = {
     Total: trend?.total ?? [],
     Before: trend?.before ?? [],
@@ -459,7 +458,7 @@ export function TrendChart({
   const fmt = (value: number) =>
     custom
       ? formatSqdipValue(value, custom.kind)
-      : value.toLocaleString("id-ID");
+      : value.toLocaleString(uiLocale);
   const meetsTarget = (value: number) =>
     custom?.dir === "max" ? value <= scale.target : value >= scale.target;
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -561,7 +560,7 @@ export function TrendChart({
         className="score-trend-svg h-score-chart min-w-trend-chart w-full"
         style={custom ? { height: SQDIP_CHART_HEIGHT } : undefined}
         role="img"
-        aria-label="Tren nilai harian"
+        aria-label={uiText("Tren nilai harian")}
         onTouchStart={handleTouch}
         onTouchMove={handleTouch}
         onTouchEnd={() => {
@@ -633,8 +632,7 @@ export function TrendChart({
           x={width - padding.right + 8}
           y={y(scale.target) + 4}
           className="fill-warning-dark text-xs font-semibold"
-        >
-          Target {fmt(scale.target)}
+        >{uiText("Target ")}{fmt(scale.target)}
         </text>
         <polygon
           points={`${x(0)},${height - padding.bottom} ${points} ${x(
@@ -723,11 +721,11 @@ export function TrendChart({
               </div>
               <div className="mt-1.5 space-y-0.5">
                 <div className="flex items-center justify-between gap-3 font-bold text-text">
-                  <span>Aktual</span>
+                  <span>{uiText("Aktual")}</span>
                   <span>{fmt(series[hovered.index])}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3 text-text-secondary">
-                  <span>Target</span>
+                  <span>{uiText("Target")}</span>
                   <span>{fmt(scale.target)}</span>
                 </div>
               </div>
@@ -739,10 +737,8 @@ export function TrendChart({
                 }`}
               >
                 {meetsTarget(series[hovered.index])
-                  ? "Memenuhi target"
-                  : `${fmt(Math.abs(gap))} ${
-                      gap > 0 ? "di atas" : "di bawah"
-                    } target`}
+                  ? uiText("Memenuhi target")
+                  : uiText("{{v0}} {{v1}} target", { v0: fmt(Math.abs(gap)), v1: gap > 0 ? "di atas" : "di bawah" })}
               </div>
             </>
           ) : (
@@ -775,8 +771,8 @@ export function TrendChart({
                 }`}
               >
                 {gap >= 0
-                  ? `+${formatScore(gap)} di atas target`
-                  : `-${formatScore(Math.abs(gap))} di bawah target`}
+                  ? uiText("+{{v0}} di atas target", { v0: formatScore(gap) })
+                  : uiText("-{{v0}} di bawah target", { v0: formatScore(Math.abs(gap)) })}
               </div>
             </>
           )}
@@ -826,6 +822,7 @@ function DetailSearch({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const { text: uiText } = useUiText();
   return (
     <label className="scorecard-detail-search">
       <Search size={14} aria-hidden="true" />
@@ -833,8 +830,8 @@ function DetailSearch({
         type="text"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Cari line atau leader"
-        aria-label="Cari line atau leader"
+        placeholder={uiText("Cari line atau leader")}
+        aria-label={uiText("Cari line atau leader")}
         autoComplete="off"
         spellCheck={false}
       />
@@ -854,18 +851,18 @@ export function DetailHeader({
   onQuery?: (value: string) => void;
   options?: string[];
 }) {
+  const { text: uiText } = useUiText();
   return (
     <div className="mb-4 flex items-start justify-between gap-4">
       <div className="flex min-w-0 flex-wrap items-center gap-3">
         {onQuery && <DetailSearch value={query ?? ""} onChange={onQuery} />}
         {caption && (
-          <div className="text-sm text-text-secondary">{caption}</div>
+          <div className="text-sm text-text-secondary">{uiText(caption)}</div>
         )}
       </div>
       {canExport && (
         <Button variant="ghost" size="sm">
-          <Download size={15} /> Export
-        </Button>
+          <Download size={15} />{uiText(" Export")}</Button>
       )}
     </div>
   );
@@ -897,13 +894,12 @@ export function PapercardDetail({
   canExport: boolean;
   rows: PapercardRow[];
 }) {
+  const { text: uiText } = useUiText();
   return (
     <>
       <DetailHeader canExport={canExport} caption="" />
       {visibleRows.length === 0 ? (
-        <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">
-          Belum ada data
-        </div>
+        <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">{uiText("Belum ada data")}</div>
       ) : (
         <div className="scorecard-tab-table overflow-x-auto rounded-xl border border-border">
           <table className="w-full table-auto text-left text-sm">
@@ -912,57 +908,39 @@ export function PapercardDetail({
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap px-4 py-3 text-left font-semibold"
-                >
-                  Tanggal
-                </th>
+                >{uiText("Tanggal")}</th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap px-4 py-3 text-left font-semibold"
-                >
-                  Line
-                </th>
+                >{uiText("Line")}</th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap px-4 py-3 text-left font-semibold"
-                >
-                  Nama Leader
-                </th>
+                >{uiText("Nama Leader")}</th>
                 <th
                   colSpan={4}
                   className="whitespace-nowrap border-x border-b border-border px-4 py-2 text-center font-semibold"
-                >
-                  Status pengisian
-                </th>
+                >{uiText("Status pengisian")}</th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap px-4 py-3 text-center font-semibold"
-                >
-                  Rate
-                </th>
+                >{uiText("Rate")}</th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-                >
-                  Tepat waktu
-                </th>
+                >{uiText("Tepat waktu")}</th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-                >
-                  Terdaftar
-                </th>
+                >{uiText("Terdaftar")}</th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-                >
-                  Close loop
-                </th>
+                >{uiText("Close loop")}</th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-                >
-                  Total harian
-                </th>
+                >{uiText("Total harian")}</th>
               </tr>
               <tr>
                 {["Leader", "ME", "PE", "IPQC"].map((role, index) => (
@@ -972,7 +950,7 @@ export function PapercardDetail({
                       index === 3 ? " border-r" : ""
                     }`}
                   >
-                    {role}
+                    {uiText(role)}
                   </th>
                 ))}
               </tr>
@@ -999,10 +977,9 @@ export function PapercardDetail({
                     >
                       {status === "OK terlambat" ? (
                         <Badge tone="warning">
-                          <Clock3 size={11} /> OK terlambat
-                        </Badge>
+                          <Clock3 size={11} />{uiText(" OK terlambat")}</Badge>
                       ) : status === "Belum diisi" || status === "-" ? (
-                        <Badge tone="neutral">{status}</Badge>
+                        <Badge tone="neutral">{uiText(status)}</Badge>
                       ) : (
                         <StatusChip value={status} />
                       )}
@@ -1038,15 +1015,17 @@ function MeetingCell({
 }: {
   meeting: StandupRow["meetings"][number] | undefined;
 }) {
-  if (!meeting || !meeting.held) return <Badge tone="neutral">Tidak ada</Badge>;
+  const { text: uiText } = useUiText();
+  if (!meeting || !meeting.held) return <Badge tone="neutral">{uiText("Tidak ada")}</Badge>;
   return (
     <Badge tone={meeting.complete ? "success" : "danger"}>
-      {meeting.complete ? "OK" : "NG"} {meeting.present}/{meeting.required}
+      {meeting.complete ? uiText("OK") : uiText("NG")} {meeting.present}/{meeting.required}
     </Badge>
   );
 }
 
 export function StandupDetail({ canExport, rows }: { canExport: boolean; rows: StandupRow[] }) {
+  const { text: uiText } = useUiText();
   return (
     <>
       <DetailHeader canExport={canExport} caption="" />
@@ -1057,51 +1036,35 @@ export function StandupDetail({ canExport, rows }: { canExport: boolean; rows: S
               <th
                 rowSpan={2}
                 className="whitespace-nowrap px-4 py-3 text-left font-semibold"
-              >
-                Tanggal
-              </th>
+              >{uiText("Tanggal")}</th>
               <th
                 rowSpan={2}
                 className="whitespace-nowrap px-4 py-3 text-left font-semibold"
-              >
-                Line
-              </th>
+              >{uiText("Line")}</th>
               <th
                 rowSpan={2}
                 className="whitespace-nowrap px-4 py-3 text-left font-semibold"
-              >
-                Nama Leader
-              </th>
+              >{uiText("Nama Leader")}</th>
               <th
                 colSpan={2}
                 className="whitespace-nowrap border-x border-b border-border px-4 py-2 text-center font-semibold"
-              >
-                Status kehadiran
-              </th>
+              >{uiText("Status kehadiran")}</th>
               <th
                 rowSpan={2}
                 className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-              >
-                Presensi
-              </th>
+              >{uiText("Presensi")}</th>
               <th
                 rowSpan={2}
                 className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-              >
-                Isi rapat
-              </th>
+              >{uiText("Isi rapat")}</th>
               <th
                 rowSpan={2}
                 className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-              >
-                Close loop
-              </th>
+              >{uiText("Close loop")}</th>
               <th
                 rowSpan={2}
                 className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-              >
-                Total harian
-              </th>
+              >{uiText("Total harian")}</th>
             </tr>
             <tr>
               {["Meeting 1", "Meeting 2"].map((role, index) => (
@@ -1111,14 +1074,14 @@ export function StandupDetail({ canExport, rows }: { canExport: boolean; rows: S
                     index === 1 ? " border-r" : ""
                   }`}
                 >
-                  {role}
+                  {uiText(role)}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {rows.length === 0 && (
-              <tr><td colSpan={9} className="px-4 py-3 text-center text-text-secondary">Belum ada data</td></tr>
+              <tr><td colSpan={9} className="px-4 py-3 text-center text-text-secondary">{uiText("Belum ada data")}</td></tr>
             )}
             {rows.map((row) => {
               return (
@@ -1170,6 +1133,7 @@ export function StandupDetail({ canExport, rows }: { canExport: boolean; rows: S
 }
 
 export function SqdipDetail({ canExport }: { canExport: boolean }) {
+  const { text: uiText } = useUiText();
   const rows = [
     ["Safety", "0", "0", "0", 6],
     ["Quality", "93%", "91,24%", "-1,76%", 0],
@@ -1181,7 +1145,7 @@ export function SqdipDetail({ canExport }: { canExport: boolean }) {
     <>
       <DetailHeader
         canExport={canExport}
-        caption="Lima dimensi, masing-masing 6 poin jika target tercapai"
+        caption={uiText("Lima dimensi, masing-masing 6 poin jika target tercapai")}
       />
       <div className="scorecard-tab-subhead flex flex-wrap gap-3">
         <Input
@@ -1191,8 +1155,8 @@ export function SqdipDetail({ canExport }: { canExport: boolean }) {
           className="w-auto"
         />
         <Select value="TAC20604" onChange={() => undefined}>
-          <option>TAC20604</option>
-          <option>TAC20603</option>
+          <option>{uiText("TAC20604")}</option>
+          <option>{uiText("TAC20603")}</option>
         </Select>
       </div>
       <div className="overflow-x-auto rounded-xl border border-border">
@@ -1202,7 +1166,7 @@ export function SqdipDetail({ canExport }: { canExport: boolean }) {
               {["Dimensi", "Target", "Aktual", "Selisih", "Poin"].map(
                 (item) => (
                   <th key={item} className="px-4 py-3">
-                    {item}
+                    {uiText(item)}
                   </th>
                 )
               )}
@@ -1232,16 +1196,14 @@ export function SqdipDetail({ canExport }: { canExport: boolean }) {
           </tbody>
           <tfoot className="border-t border-border bg-section">
             <tr>
-              <td colSpan={4} className="px-4 py-4 font-bold">
-                Total
-              </td>
-              <td className="px-4 py-4 font-bold text-danger">18 dari 30</td>
+              <td colSpan={4} className="px-4 py-4 font-bold">{uiText("Total")}</td>
+              <td className="px-4 py-4 font-bold text-danger">{uiText("18 dari 30")}</td>
             </tr>
           </tfoot>
         </table>
       </div>
       <div className="mt-5">
-        <div className="mb-3 text-sm font-bold">Kalender skor September</div>
+        <div className="mb-3 text-sm font-bold">{uiText("Kalender skor September")}</div>
         <div className="grid grid-cols-7 gap-2">
           {Array.from({ length: 30 }, (_, index) => {
             const score = [18, 24, 30, 24, 18, 30][index % 6];
@@ -1268,6 +1230,7 @@ export function SqdipDetail({ canExport }: { canExport: boolean }) {
 }
 
 export function RewardDetail({ canExport }: { canExport: boolean }) {
+  const { text: uiText } = useUiText();
   const rules = [
     "Attendance: tidak ada konfirmasi",
     "Papercard: pengisian tidak tepat waktu (maksimal 2 jam setelah masuk kerja)",
@@ -1278,11 +1241,11 @@ export function RewardDetail({ canExport }: { canExport: boolean }) {
     <>
       <DetailHeader
         canExport={canExport}
-        caption="Rekap reward dan punishment bulanan berdasarkan aturan assessment."
+        caption={uiText("Rekap reward dan punishment bulanan berdasarkan aturan assessment.")}
       />
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <Card className="p-5">
-          <div className="font-bold text-danger">Punishment</div>
+          <div className="font-bold text-danger">{uiText("Punishment")}</div>
           <div className="mt-3 space-y-2">
             {rules.map((rule, index) => (
               <div
@@ -1294,9 +1257,7 @@ export function RewardDetail({ canExport }: { canExport: boolean }) {
               </div>
             ))}
           </div>
-          <div className="mt-4 rounded-lg border border-danger-border bg-danger-soft p-3 text-xs text-danger">
-            Salah satu dari 4 poin NG: punishment −5 poin per hari
-          </div>
+          <div className="mt-4 rounded-lg border border-danger-border bg-danger-soft p-3 text-xs text-danger">{uiText("Salah satu dari 4 poin NG: punishment −5 poin per hari")}</div>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-rate text-left text-xs">
               <thead>
@@ -1310,14 +1271,14 @@ export function RewardDetail({ canExport }: { canExport: boolean }) {
                     "Total punishment",
                   ].map((item) => (
                     <th key={item} className="px-2 py-3">
-                      {item}
+                      {uiText(item)}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 <tr className="border-t border-border">
-                  <td className="px-2 py-3 font-semibold">Ahmad Riswanto</td>
+                  <td className="px-2 py-3 font-semibold">{uiText("Ahmad Riswanto")}</td>
                   <td className="px-2 py-3">0</td>
                   <td className="px-2 py-3">0</td>
                   <td className="px-2 py-3">0</td>
@@ -1325,7 +1286,7 @@ export function RewardDetail({ canExport }: { canExport: boolean }) {
                   <td className="px-2 py-3 font-bold">0</td>
                 </tr>
                 <tr className="border-t border-border">
-                  <td className="px-2 py-3 font-semibold">Rudiyansyah</td>
+                  <td className="px-2 py-3 font-semibold">{uiText("Rudiyansyah")}</td>
                   <td className="px-2 py-3">1</td>
                   <td className="px-2 py-3">0</td>
                   <td className="px-2 py-3">2</td>
@@ -1337,22 +1298,17 @@ export function RewardDetail({ canExport }: { canExport: boolean }) {
           </div>
         </Card>
         <Card className="p-5">
-          <div className="font-bold text-primary">Reward</div>
-          <div className="mt-3 rounded-lg border border-primary-border bg-primary-soft p-4 text-sm font-semibold text-primary">
-            Juara 1 (nilai tertinggi): Leader +20 poin, Member +10 poin
-          </div>
+          <div className="font-bold text-primary">{uiText("Reward")}</div>
+          <div className="mt-3 rounded-lg border border-primary-border bg-primary-soft p-4 text-sm font-semibold text-primary">{uiText("Juara 1 (nilai tertinggi): Leader +20 poin, Member +10 poin")}</div>
           <div className="mt-4 space-y-2 text-sm text-text-secondary">
-            <div>Nilai DM di bawah 80 tidak mendapat reward bulanan</div>
-            <div>
-              Jika juara 1 punya poin punishment, reward dipotong sesuai poin
-            </div>
+            <div>{uiText("Nilai DM di bawah 80 tidak mendapat reward bulanan")}</div>
+            <div>{uiText("Jika juara 1 punya poin punishment, reward dipotong sesuai poin")}</div>
           </div>
           <div className="mt-6 rounded-xl border border-primary-border p-5 text-center">
             <Trophy size={28} className="mx-auto text-primary" />
-            <div className="mt-3 font-bold">Ahmad Riswanto</div>
+            <div className="mt-3 font-bold">{uiText("Ahmad Riswanto")}</div>
             <div className="mt-1 text-2xl font-bold text-primary">90,9</div>
-            <div className="mt-4 text-sm">
-              Reward 20 − punishment 0 ={" "}
+            <div className="mt-4 text-sm">{uiText("Reward 20 − punishment 0 =")}{" "}
               <strong className="text-primary">20</strong>
             </div>
           </div>
@@ -1363,16 +1319,17 @@ export function RewardDetail({ canExport }: { canExport: boolean }) {
 }
 
 export function AnnualDetail({ canExport }: { canExport: boolean }) {
+  const { text: uiText } = useUiText();
   const months = Array.from({ length: 12 }, (_, index) => index + 1);
   const dmRows = ["DM 1", "DM 2", "DM 3", "DM 4"];
   return (
     <>
       <DetailHeader
         canExport={canExport}
-        caption="Rekap target, perolehan nilai, dan evaluasi tahunan per DM."
+        caption={uiText("Rekap target, perolehan nilai, dan evaluasi tahunan per DM.")}
       />
       <Card className="mb-5 p-4">
-        <div className="mb-3 font-bold">Tren nilai tahunan</div>
+        <div className="mb-3 font-bold">{uiText("Tren nilai tahunan")}</div>
         <svg viewBox="0 0 600 180" className="w-full min-w-rate">
           <polyline
             points="25,120 275,120 325,70 575,70"
@@ -1404,14 +1361,14 @@ export function AnnualDetail({ canExport }: { canExport: boolean }) {
         <table className="min-w-table w-full text-center text-xs">
           <thead className="bg-section">
             <tr>
-              <th className="px-3 py-3 text-left">DM / Ass SPV</th>
-              <th className="px-3 py-3 text-left">Jenis</th>
+              <th className="px-3 py-3 text-left">{uiText("DM / Ass SPV")}</th>
+              <th className="px-3 py-3 text-left">{uiText("Jenis")}</th>
               {months.map((month) => (
                 <th key={month} className="px-3 py-3">
-                  {month}
+                  {uiText(month)}
                 </th>
               ))}
-              <th className="px-3 py-3">Rata-rata</th>
+              <th className="px-3 py-3">{uiText("Rata-rata")}</th>
             </tr>
           </thead>
           <tbody>
@@ -1422,7 +1379,7 @@ export function AnnualDetail({ canExport }: { canExport: boolean }) {
                     {typeIndex === 0 && (
                       <td rowSpan={3} className="px-3 py-3 text-left">
                         <strong>{dm}</strong>
-                        <div className="mt-1 text-text-secondary">Ikhwan</div>
+                        <div className="mt-1 text-text-secondary">{uiText("Ikhwan")}</div>
                       </td>
                     )}
                     <td className="whitespace-nowrap px-3 py-3 text-left font-semibold">

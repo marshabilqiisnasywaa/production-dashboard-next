@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import type { ReactNode } from "react";
 import { Field } from "@/components/ui/Field";
 
@@ -29,10 +31,11 @@ export function PapercardMetaCard({
   supervisorField,
   children,
 }: Props) {
+  const { text: uiText } = useUiText();
   return (
     <section className="ui-card dml-pc-meta">
       <div className="dml-pc-meta__fields">
-        <Field label="Line" htmlFor="pc-line">
+        <Field label={uiText("Line")} htmlFor="pc-line">
           {lineLocked ? (
             <div
               className="ui-field__value"
@@ -44,7 +47,7 @@ export function PapercardMetaCard({
                 color: "#0f766e",
               }}
             >
-              <span>Line {line}</span>
+              <span>{uiText("Line ")}{line}</span>
               <span
                 style={{
                   fontSize: "11px",
@@ -67,19 +70,19 @@ export function PapercardMetaCard({
             >
               {lines.map((l) => (
                 <option key={l} value={l}>
-                  {l}
+                  {uiText(l)}
                 </option>
               ))}
             </select>
           )}
         </Field>
-        <Field label={operatorLabel || "Leader"}>
+        <Field label={operatorLabel || uiText("Leader")}>
           <div className="ui-field__value">{leader}</div>
         </Field>
-        <Field label="Shift">
+        <Field label={uiText("Shift")}>
           <div className="ui-field__value">{shift}</div>
         </Field>
-        <Field label="Tanggal">
+        <Field label={uiText("Tanggal")}>
           <div className="ui-field__value">{date || "\u00a0"}</div>
         </Field>
         {supervisorField && <div className="dml-pc-meta__supervisor">{supervisorField}</div>}

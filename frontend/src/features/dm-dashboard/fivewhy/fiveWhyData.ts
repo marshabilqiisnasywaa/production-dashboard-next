@@ -270,12 +270,12 @@ export function joinDateTime(date: string, time: string) {
   return `${date}T${time || "00:00"}`;
 }
 
-export function formatDateTimeLabel(value: string) {
+export function formatDateTimeLabel(value: string, locale = "id-ID") {
   const { date, time } = splitDateTime(value);
   if (!date) return value.trim();
   const parsed = new Date(`${date}T${time || "00:00"}:00`);
   if (Number.isNaN(parsed.getTime())) return value.trim();
-  const day = parsed.toLocaleDateString("id-ID", {
+  const day = parsed.toLocaleDateString(locale, {
     day: "2-digit",
     month: "long",
     year: "numeric",
@@ -291,10 +291,10 @@ function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-export function buildProblemSummary(fields: ProblemSummaryFields) {
+export function buildProblemSummary(fields: ProblemSummaryFields, locale = "id-ID") {
   const missing = "(belum diisi)";
   const when = cleanText(fields.when)
-    ? formatDateTimeLabel(fields.when)
+    ? formatDateTimeLabel(fields.when, locale)
     : missing;
   const where = cleanText(fields.where) || missing;
   const what = cleanText(fields.what) || missing;

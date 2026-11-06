@@ -164,8 +164,43 @@
 }
 .dml-login__formlogo {
   align-self: flex-start;
-  margin-bottom: 44px;
   color: var(--green);
+}
+.dml-login__formtop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 44px;
+}
+.dml-login__language {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+}
+.dml-login__language button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px;
+  border: 1px solid var(--muted);
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+.dml-login__language button:hover {
+  border-color: var(--green);
+  background: var(--green-50);
+  color: var(--green);
+}
+.dml-login__language button[aria-pressed="true"] {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
 }
 .dml-login__form h1 {
   margin: 0;
@@ -372,7 +407,7 @@
   .dml-login__copy {
     display: none;
   }
-  .dml-login__formlogo {
+  .dml-login__formtop {
     margin-bottom: 28px;
   }
 }

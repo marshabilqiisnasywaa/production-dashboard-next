@@ -389,33 +389,41 @@
   fill: currentColor;
 }
 
-/* Member Specs */
+/* Member Specs
+   Two-column grid (label | value) so every value in a card starts at the same x.
+   .dm-spec-row uses display: contents, so rows stay in the markup but share the columns. */
 .dm-member-specs {
   margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.18rem;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.18rem 0;
   font-size: 0.72rem;
   line-height: 1.25;
 }
 
 .dm-spec-row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.35rem;
-  min-width: 0;
+  display: contents;
 }
 
 .dm-spec-label {
-  flex: none;
   font-weight: 700;
   color: var(--dm-text-label);
-  margin: 0;
+  margin: 0 0.15rem 0 0;
   white-space: nowrap;
+}
+
+/* The colon sits at the start of the value column, so every ":" lines up like a tab stop */
+.dm-spec-value::before {
+  content: ":";
+  margin-right: 0.5rem;
+  font-weight: 700;
+  color: var(--dm-text-label);
 }
 
 .dm-spec-value {
   margin: 0;
+  min-width: 0;
   font-weight: 700;
   color: var(--dm-text-main);
   overflow: hidden;
@@ -599,7 +607,7 @@
   }
 
   .dm-member-specs {
-    gap: 0.3rem;
+    row-gap: 0.3rem;
     font-size: clamp(0.72rem, 1.55vh, 1.1rem);
   }
 }

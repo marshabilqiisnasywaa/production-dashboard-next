@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { holidayApi } from "../api";
@@ -18,8 +20,8 @@ const SOURCE_LABEL: Record<DmHoliday["source"], string> = {
   custom: "Admin",
 };
 
-function formatDate(date: string) {
-  return new Date(`${date}T12:00:00`).toLocaleDateString("id-ID", {
+function formatDate(date: string, locale = "id-ID") {
+  return new Date(`${date}T12:00:00`).toLocaleDateString(locale, {
     weekday: "long",
     day: "2-digit",
     month: "long",
@@ -28,6 +30,7 @@ function formatDate(date: string) {
 }
 
 export default function HolidayManager({ lines, workshops }: HolidayManagerProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [items, setItems] = useState<DmHoliday[] | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -115,7 +118,7 @@ export default function HolidayManager({ lines, workshops }: HolidayManagerProps
       flash(
         "ok",
         created > 0
-          ? `${created} sesi dibuat untuk ${formatDate(openDate)}.${res.skipped ? ` ${res.skipped} sesi sudah ada.` : ""}`
+          ? `${created} sesi dibuat untuk ${formatDate(openDate, uiLocale)}.${res.skipped ? ` ${res.skipped} sesi sudah ada.` : ""}`
           : "Semua sesi yang dipilih sudah ada."
       );
       setLineIds([]);
@@ -130,25 +133,20 @@ export default function HolidayManager({ lines, workshops }: HolidayManagerProps
       <section className="hm-card" aria-labelledby="hm-list-title">
         <div className="hm-head">
           <div>
-            <h3 id="hm-list-title" className="msm-editor__title">
-              Hari libur
-            </h3>
-            <p className="msm-editor__sub">
-              Di hari libur sesi meeting tidak dibuat otomatis dan pengingat tidak dikirim. Libur nasional terisi dari
-              kalender, cuti bersama ditambahkan manual.
-            </p>
+            <h3 id="hm-list-title" className="msm-editor__title">{uiText("Hari libur")}</h3>
+            <p className="msm-editor__sub">{uiText("Di hari libur sesi meeting tidak dibuat otomatis dan pengingat tidak dikirim. Libur nasional terisi dari kalender, cuti bersama ditambahkan manual.")}</p>
           </div>
           <label className="hm-year">
-            <span>Tahun</span>
+            <span>{uiText("Tahun")}</span>
             <select
               className="dm-admin-select"
               value={year}
               onChange={(e) => setYear(Number(e.target.value))}
-              aria-label="Tahun"
+              aria-label={uiText("Tahun")}
             >
               {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 1 + i).map((y) => (
                 <option key={y} value={y}>
-                  {y}
+                  {uiText(y)}
                 </option>
               ))}
             </select>
@@ -157,75 +155,66 @@ export default function HolidayManager({ lines, workshops }: HolidayManagerProps
 
         <div className="hm-add">
           <label className="hm-field">
-            <span>Tanggal</span>
+            <span>{uiText("Tanggal")}</span>
             <input className="msm-input" type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
           </label>
           <label className="hm-field hm-field--grow">
-            <span>Nama libur</span>
+            <span>{uiText("Nama libur")}</span>
             <input
               className="msm-input"
               value={newName}
               maxLength={120}
-              placeholder="Contoh: Cuti bersama Idul Fitri"
+              placeholder={uiText("Contoh: Cuti bersama Idul Fitri")}
               onChange={(e) => setNewName(e.target.value)}
             />
           </label>
-          <button type="button" className="msm-btn msm-btn--primary" onClick={handleAdd} disabled={busy}>
-            Tambah libur
-          </button>
+          <button type="button" className="msm-btn msm-btn--primary" onClick={handleAdd} disabled={busy}>{uiText("Tambah libur")}</button>
         </div>
 
-        {!items && !notice && <p className="msm-empty">Memuat...</p>}
-        {items && items.length === 0 && <p className="msm-empty">Belum ada hari libur di tahun {year}.</p>}
+        {!items && !notice && <p className="msm-empty">{uiText("Memuat...")}</p>}
+        {items && items.length === 0 && <p className="msm-empty">{uiText("Belum ada hari libur di tahun ")}{year}.</p>}
         {items && items.length > 0 && (
           <ul className="hm-list">
-            {items.map((h) => (
+            {uiText(items.map((h) => (
               <li key={h.date} className={`hm-row${h.active ? "" : " is-off"}`}>
                 <div className="hm-row__main">
                   <strong>{h.name}</strong>
-                  <span>{formatDate(h.date)}</span>
+                  <span>{uiText(formatDate(h.date, uiLocale))}</span>
                 </div>
-                <span className="ut-badge hm-badge">{h.active ? SOURCE_LABEL[h.source] : "Dibatalkan"}</span>
+                <span className="ut-badge hm-badge">{h.active ? uiText(SOURCE_LABEL[h.source]) : uiText("Dibatalkan")}</span>
                 {h.active ? (
                   <button type="button" className="msm-remove" disabled={busy} onClick={() => handleRemove(h)}>
-                    {h.source === "custom" ? "Hapus" : "Batalkan"}
+                    {h.source === "custom" ? uiText("Hapus") : uiText("Batalkan")}
                   </button>
                 ) : (
-                  <button type="button" className="msm-btn" disabled={busy} onClick={() => handleRestore(h)}>
-                    Pulihkan
-                  </button>
+                  <button type="button" className="msm-btn" disabled={busy} onClick={() => handleRestore(h)}>{uiText("Pulihkan")}</button>
                 )}
               </li>
-            ))}
+            )))}
           </ul>
         )}
       </section>
 
       <section className="hm-card" aria-labelledby="hm-open-title">
-        <h3 id="hm-open-title" className="msm-editor__title">
-          Buka meeting di hari libur
-        </h3>
-        <p className="msm-editor__sub">
-          Kalau ada lembur di tanggal libur, buat sesinya di sini. Jam mengikuti jadwal lini atau workshop, dan sesi
-          yang dibuat langsung muncul di halaman leader dan supervisor.
-        </p>
+        <h3 id="hm-open-title" className="msm-editor__title">{uiText("Buka meeting di hari libur")}</h3>
+        <p className="msm-editor__sub">{uiText("Kalau ada lembur di tanggal libur, buat sesinya di sini. Jam mengikuti jadwal lini atau workshop, dan sesi yang dibuat langsung muncul di halaman leader dan supervisor.")}</p>
 
         <label className="hm-field hm-open-date">
-          <span>Tanggal libur</span>
+          <span>{uiText("Tanggal libur")}</span>
           <select className="dm-admin-select" value={openDate} onChange={(e) => setOpenDate(e.target.value)}>
-            <option value="">Pilih tanggal</option>
-            {activeDates.map((d) => (
+            <option value="">{uiText("Pilih tanggal")}</option>
+            {uiText(activeDates.map((d) => (
               <option key={d} value={d}>
-                {formatDate(d)}
+                {uiText(formatDate(d, uiLocale))}
               </option>
-            ))}
+            )))}
           </select>
         </label>
 
         <div className="hm-pick">
           <fieldset className="hm-fieldset">
-            <legend>Lini (DM meeting)</legend>
-            {lines.length === 0 && <p className="msm-empty">Belum ada lini.</p>}
+            <legend>{uiText("Lini (DM meeting)")}</legend>
+            {lines.length === 0 && <p className="msm-empty">{uiText("Belum ada lini.")}</p>}
             <div className="hm-checks">
               {lines.map((l) => (
                 <label key={l.id} className="msm-check">
@@ -246,14 +235,14 @@ export default function HolidayManager({ lines, workshops }: HolidayManagerProps
                 className="msm-btn hm-all"
                 onClick={() => setLineIds(lineIds.length === lines.length ? [] : lines.map((l) => l.id))}
               >
-                {lineIds.length === lines.length ? "Kosongkan lini" : "Pilih semua lini"}
+                {lineIds.length === lines.length ? uiText("Kosongkan lini") : uiText("Pilih semua lini")}
               </button>
             )}
           </fieldset>
 
           <fieldset className="hm-fieldset">
-            <legend>Workshop meeting</legend>
-            {workshops.length === 0 && <p className="msm-empty">Belum ada workshop.</p>}
+            <legend>{uiText("Workshop meeting")}</legend>
+            {workshops.length === 0 && <p className="msm-empty">{uiText("Belum ada workshop.")}</p>}
             <div className="hm-checks">
               {workshops.map((w) => (
                 <label key={w.id} className="msm-check">
@@ -270,7 +259,7 @@ export default function HolidayManager({ lines, workshops }: HolidayManagerProps
         </div>
 
         <button type="button" className="msm-btn msm-btn--primary" onClick={handleOpen} disabled={busy}>
-          {busy ? "Memproses..." : "Buat sesi meeting"}
+          {busy ? uiText("Memproses...") : uiText("Buat sesi meeting")}
         </button>
       </section>
     </div>

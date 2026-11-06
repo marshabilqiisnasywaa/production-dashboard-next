@@ -23,8 +23,8 @@ export function formatCountdown(ms: number): string {
   return `${pad(Math.floor(total / 3600))}:${pad(Math.floor((total % 3600) / 60))}:${pad(total % 60)}`;
 }
 
-export const formatDateId = (d: Date) =>
-  d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+export const formatDateId = (d: Date, locale = "id-ID") =>
+  d.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
 
 export const formatTimeHm = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 

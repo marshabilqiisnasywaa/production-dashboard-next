@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { useState } from "react";
 import Icon from "@/components/shell/Icon";
 import CustomSelect from "@/components/shell/CustomSelect";
@@ -52,25 +54,26 @@ export default function ShellTopbar({
   onToggleSidebar,
   onNavigate,
 }: ShellTopbarProps) {
+  const { text: uiText } = useUiText();
   const [notificationOpen, setNotificationOpen] = useState(false);
   const notifications = mode === "morning-meeting" ? getNotifications(role, picArea) : [];
   return (
     <header className="topbar">
       <div className="navbar-left">
-        <button className="ghost-button sidebar-trigger" aria-label="Toggle sidebar" onClick={onToggleSidebar}><Icon name="panel" size={18} /></button>
+        <button className="ghost-button sidebar-trigger" aria-label={uiText("Toggle sidebar")} onClick={onToggleSidebar}><Icon name="panel" size={18} /></button>
         <span className="divider" />
-        <nav className="breadcrumb" aria-label="Breadcrumb">
+        <nav className="breadcrumb" aria-label={uiText("Breadcrumb")}>
           <ol>
             {page.breadcrumb.map((item, idx) => {
               const isLast = idx === page.breadcrumb.length - 1;
               return (
                 <li key={idx} className={isLast ? "current" : ""}>
                   {item.href && !isLast ? (
-                    <button onClick={() => onNavigate(item.href!)}>{item.label}</button>
+                    <button onClick={() => onNavigate(item.href!)}>{uiText(item.label)}</button>
                   ) : isLast ? (
-                    <strong aria-current="page">{item.label}</strong>
+                    <strong aria-current="page">{uiText(item.label)}</strong>
                   ) : (
-                    <button>{item.label}</button>
+                    <button>{uiText(item.label)}</button>
                   )}
                   {!isLast && <Icon name="chevron" size={11} aria-hidden />}
                 </li>
@@ -80,7 +83,7 @@ export default function ShellTopbar({
         </nav>
       </div>
       <div className="navbar-right">
-        <button className="command-search" onClick={onOpenCommand}><Icon name="search" size={16} /><span>Search...</span><kbd>{isMac ? "⌘K" : "Ctrl K"}</kbd></button>
+        <button className="command-search" onClick={onOpenCommand}><Icon name="search" size={16} /><span>{uiText("Search...")}</span><kbd>{isMac ? uiText("⌘K") : uiText("Ctrl K")}</kbd></button>
         <div className="topbar-selects">
           <CustomSelect value={mode} options={[{ value: "klasik", label: "Classic" }, { value: "morning-meeting", label: "Morning Meeting" }]} onChange={(next) => onSelectMode(next as DisplayMode)} ariaLabel="Display mode" />
           <CustomSelect value={role} options={appRoles.map((item) => ({ value: item, label: item }))} onChange={(next) => onSelectRole(next as Role)} ariaLabel="User role" />
@@ -89,12 +92,12 @@ export default function ShellTopbar({
         <div className="language-wrap">
           <button className="ghost-button language-button" onClick={onToggleLanguageMenu}><Icon name="globe" size={17} /><span>{language}</span></button>
           {languageOpen && <div className="language-menu">
-            <button onClick={() => onSelectLanguage("ID")}><span>🇮🇩 Bahasa Indonesia</span>{language === "ID" && <b>✓</b>}</button>
-            <button onClick={() => onSelectLanguage("EN")}><span>🇬🇧 English</span>{language === "EN" && <b>✓</b>}</button>
+            <button onClick={() => onSelectLanguage("ID")}><span>{uiText("🇮🇩 Bahasa Indonesia")}</span>{language === "ID" && <b>✓</b>}</button>
+            <button onClick={() => onSelectLanguage("EN")}><span>{uiText("🇬🇧 English")}</span>{language === "EN" && <b>✓</b>}</button>
           </div>}
         </div>
-        <button className="ghost-button theme-button" onClick={onToggleTheme} aria-label="Switch theme"><Icon name={dark ? "sun" : "moon"} size={17} /></button>
-        {mode === "morning-meeting" ? <div className="mm-notification-wrap"><button className="ghost-button notification" aria-label="Notifications" onClick={() => setNotificationOpen((value) => !value)}><Icon name="bell" size={18} /><i /><b>{notifications.length}</b></button>{notificationOpen && <div className="mm-notification-menu"><div><strong>Notifications</strong><SimulationBadge /></div>{notifications.map((item) => <button key={item.id} className={item.severity} onClick={() => { onNavigate(item.target); setNotificationOpen(false); }}><b>{item.title}</b><span>{item.body}</span></button>)}</div>}</div> : <button className="ghost-button notification" aria-label="Notifications"><Icon name="bell" size={18} /><i /></button>}
+        <button className="ghost-button theme-button" onClick={onToggleTheme} aria-label={uiText("Switch theme")}><Icon name={dark ? "sun" : "moon"} size={17} /></button>
+        {mode === "morning-meeting" ? <div className="mm-notification-wrap"><button className="ghost-button notification" aria-label={uiText("Notifications")} onClick={() => setNotificationOpen((value) => !value)}><Icon name="bell" size={18} /><i /><b>{notifications.length}</b></button>{notificationOpen && <div className="mm-notification-menu"><div><strong>{uiText("Notifications")}</strong><SimulationBadge /></div>{notifications.map((item) => <button key={item.id} className={item.severity} onClick={() => { onNavigate(item.target); setNotificationOpen(false); }}><b>{uiText(item.title)}</b><span>{item.body}</span></button>)}</div>}</div> : <button className="ghost-button notification" aria-label={uiText("Notifications")}><Icon name="bell" size={18} /><i /></button>}
         <span className="divider" />
         <button className="profile-button">
           <span className="avatar">{user.initials}</span>

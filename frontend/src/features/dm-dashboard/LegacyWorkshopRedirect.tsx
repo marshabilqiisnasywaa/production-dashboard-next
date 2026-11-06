@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -6,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { publicApi } from "./api";
 
 export default function LegacyWorkshopRedirect({ slug }: { slug: string }) {
+  const { text: uiText } = useUiText();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
@@ -24,8 +27,8 @@ export default function LegacyWorkshopRedirect({ slug }: { slug: string }) {
 
   return (
     <main>
-      <p role={error ? "alert" : "status"}>{error ?? "Membuka TV workshop..."}</p>
-      <Link href="/dm-dashboard">Daftar workshop</Link>
+      <p role={error ? "alert" : "status"}>{error ?? uiText("Membuka TV workshop...")}</p>
+      <Link href="/dm-dashboard">{uiText("Daftar workshop")}</Link>
     </main>
   );
 }

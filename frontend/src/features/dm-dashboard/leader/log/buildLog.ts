@@ -140,12 +140,12 @@ export function buildMeetingRecords(input: BuildInput): MeetingRecord[] {
 }
 
 
-export function buildActivity(records: MeetingRecord[]): ActivityEntry[] {
+export function buildActivity(records: MeetingRecord[], locale = "id-ID"): ActivityEntry[] {
   const out: ActivityEntry[] = [];
 
   for (const r of records) {
     if (r.status === "missed") continue;
-    const object = `${r.sessionName} · ${formatDate(r.date)}`;
+    const object = `${r.sessionName} · ${formatDate(r.date, locale)}`;
 
     if (r.startedAt) {
       out.push({ id: `${r.id}:start`, at: r.startedAt, user: r.leaderName, role: "Leader", group: "meeting", action: "Memulai meeting", object, before: "Belum dimulai", after: "Berlangsung" });

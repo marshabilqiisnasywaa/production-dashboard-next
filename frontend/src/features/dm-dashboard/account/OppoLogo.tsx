@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import Image from "next/image";
 
 type Variant = "green" | "white";
@@ -15,10 +17,11 @@ interface Props {
 }
 
 export function OppoLogo({ variant = "green", height = 28, className }: Props) {
+  const { text: uiText } = useUiText();
   return (
     <Image
       src={SRC[variant]}
-      alt="OPPO"
+      alt={uiText("OPPO")}
       width={height * 3} // only a size hint for Next; the real width follows the image ratio
       height={height}
       style={{ height, width: "auto" }}

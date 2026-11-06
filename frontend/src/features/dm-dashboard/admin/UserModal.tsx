@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { departmentLabel } from "../departments";
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
@@ -52,6 +54,7 @@ function initials(name: string) {
 }
 
 export default function UserModal({ open, user, supervisors, onSave, onResetPassword, onClose }: UserModalProps) {
+  const { text: uiText } = useUiText();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<FormState>(toState(user));
@@ -89,7 +92,7 @@ export default function UserModal({ open, user, supervisors, onSave, onResetPass
 
   function requestClose() {
     if (busy) return;
-    if (dirty && !window.confirm("Ada perubahan yang belum disimpan. Tutup tanpa menyimpan?")) return;
+    if (dirty && !window.confirm(uiText("Ada perubahan yang belum disimpan. Tutup tanpa menyimpan?"))) return;
     onClose();
   }
 
@@ -176,11 +179,11 @@ export default function UserModal({ open, user, supervisors, onSave, onResetPass
         <header className="um-head">
           <div>
             <h2 id="user-modal-heading" className="um-title" tabIndex={-1} autoFocus>
-              {user ? "Ubah pengguna" : "Pengguna baru"}
+              {user ? uiText("Ubah pengguna") : uiText("Pengguna baru")}
             </h2>
-            {user ? <p className="um-sub">{user.employeeId}{user.isActive ? "" : " · Nonaktif"}</p> : null}
+            {user ? <p className="um-sub">{user.employeeId}{user.isActive ? "" : uiText(" · Nonaktif")}</p> : null}
           </div>
-          <button type="button" className="um-close" onClick={requestClose} aria-label="Tutup">
+          <button type="button" className="um-close" onClick={requestClose} aria-label={uiText("Tutup")}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
@@ -189,35 +192,35 @@ export default function UserModal({ open, user, supervisors, onSave, onResetPass
         </header>
 
         <div className="um-body" ref={bodyRef}>
-          {error ? <p className="um-error" role="alert">{error}</p> : null}
+          {error ? <p className="um-error" role="alert">{uiText(error)}</p> : null}
 
           <div className="um-grid">
             <div className="um-field">
-              <label htmlFor="um-name" className="um-label">Nama <span className="um-req">*</span></label>
+              <label htmlFor="um-name" className="um-label">{uiText("Nama ")}<span className="um-req">*</span></label>
               <input
                 id="um-name"
                 type="text"
                 className="um-input"
                 value={form.name}
                 onChange={(event) => change("name", event.target.value)}
-                placeholder="Nama lengkap"
+                placeholder={uiText("Nama lengkap")}
               />
             </div>
             <div className="um-field">
-              <label htmlFor="um-nik" className="um-label">NIK <span className="um-req">*</span></label>
+              <label htmlFor="um-nik" className="um-label">{uiText("NIK ")}<span className="um-req">*</span></label>
               <input
                 id="um-nik"
                 type="text"
                 className="um-input is-mono"
                 value={form.employeeId}
                 onChange={(event) => change("employeeId", event.target.value)}
-                placeholder="Nomor induk"
+                placeholder={uiText("Nomor induk")}
                 autoComplete="off"
               />
             </div>
 
             <fieldset className="um-field is-wide um-fieldset">
-              <legend className="um-label">Role</legend>
+              <legend className="um-label">{uiText("Role")}</legend>
               <div className="um-seg">
                 {dmEmployeeRoles.map((item) => (
                   <label key={item.value} className="um-seg-item">
@@ -228,37 +231,36 @@ export default function UserModal({ open, user, supervisors, onSave, onResetPass
                       checked={form.role === item.value}
                       onChange={() => change("role", item.value)}
                     />
-                    <span>{item.label}</span>
+                    <span>{uiText(item.label)}</span>
                   </label>
                 ))}
               </div>
             </fieldset>
 
             <div className="um-field">
-              <label htmlFor="um-dept" className="um-label">Departemen</label>
+              <label htmlFor="um-dept" className="um-label">{uiText("Departemen")}</label>
               <select id="um-dept" className="um-input" value={form.dept} onChange={(event) => change("dept", event.target.value)}>
-                <option value="">Belum dipilih</option>
-                {deptOptions.map((item) => (
-                  <option key={item} value={item}>{departmentLabel(item)}</option>
-                ))}
+                <option value="">{uiText("Belum dipilih")}</option>
+                {uiText(deptOptions.map((item) => (
+                  <option key={item} value={item}>{uiText(departmentLabel(item))}</option>
+                )))}
               </select>
             </div>
             <div className="um-field">
-              <label htmlFor="um-position" className="um-label">Position</label>
+              <label htmlFor="um-position" className="um-label">{uiText("Position")}</label>
               <input
                 id="um-position"
                 type="text"
                 className="um-input"
                 value={form.position}
                 onChange={(event) => change("position", event.target.value)}
-                placeholder="Contoh: PE Technician"
+                placeholder={uiText("Contoh: PE Technician")}
               />
             </div>
 
             {form.role === "supervisor" ? null : (
               <div className="um-field">
-                <label htmlFor="um-sup" className="um-label">
-                  Supervisor <span className="um-hint">opsional</span>
+                <label htmlFor="um-sup" className="um-label">{uiText("Supervisor ")}<span className="um-hint">{uiText("opsional")}</span>
                 </label>
                 <select
                   id="um-sup"
@@ -267,20 +269,20 @@ export default function UserModal({ open, user, supervisors, onSave, onResetPass
                   disabled={supervisorChoices.length === 0}
                   onChange={(event) => change("supervisorId", event.target.value)}
                 >
-                  <option value="">{supervisorChoices.length === 0 ? "Belum ada supervisor" : "Tanpa supervisor"}</option>
+                  <option value="">{supervisorChoices.length === 0 ? uiText("Belum ada supervisor") : uiText("Tanpa supervisor")}</option>
                   {supervisorChoices.map((item) => (
                     <option key={item.id} value={item.id}>{item.name} ({item.employeeId})</option>
                   ))}
                 </select>
                 {supervisorChoices.length === 0 ? (
-                  <span className="um-hint">Daftarkan akun supervisor dulu supaya bisa dipilih.</span>
+                  <span className="um-hint">{uiText("Daftarkan akun supervisor dulu supaya bisa dipilih.")}</span>
                 ) : legacySupervisor ? (
-                  <span className="um-hint">Tertulis sebelumnya: {legacySupervisor}. Pilih supervisor untuk menggantinya.</span>
+                  <span className="um-hint">{uiText("Tertulis sebelumnya: ")}{legacySupervisor}{uiText(". Pilih supervisor untuk menggantinya.")}</span>
                 ) : null}
               </div>
             )}
             <div className="um-field">
-              <label htmlFor="um-phone" className="um-label">Work phone</label>
+              <label htmlFor="um-phone" className="um-label">{uiText("Work phone")}</label>
               <input
                 id="um-phone"
                 type="text"
@@ -288,27 +290,27 @@ export default function UserModal({ open, user, supervisors, onSave, onResetPass
                 className="um-input"
                 value={form.workPhone}
                 onChange={(event) => change("workPhone", event.target.value)}
-                placeholder="Nomor kontak"
+                placeholder={uiText("Nomor kontak")}
               />
             </div>
 
             <div className="um-field is-wide um-photo">
               {form.photoUrl ? (
-                <img src={form.photoUrl} alt={form.name ? `Foto ${form.name}` : "Pratinjau foto"} className="um-avatar" />
+                <img src={form.photoUrl} alt={form.name ? uiText("Foto {{v0}}", { v0: form.name }) : uiText("Pratinjau foto")} className="um-avatar" />
               ) : (
                 <span className="um-avatar is-initials" aria-hidden="true">{initials(form.name)}</span>
               )}
               <div className="um-photo-text">
-                <span className="um-label">Foto profil</span>
+                <span className="um-label">{uiText("Foto profil")}</span>
                 <span className="um-photo-actions">
                   <label className="um-link um-file">
-                    {form.photoUrl ? "Ganti foto" : "Pilih foto"}
+                    {form.photoUrl ? uiText("Ganti foto") : uiText("Pilih foto")}
                     <input type="file" accept="image/*" className="um-file-input" onChange={pickPhoto} />
                   </label>
                   {form.photoUrl ? (
-                    <button type="button" className="um-link is-danger" onClick={() => change("photoUrl", "")}>Hapus</button>
+                    <button type="button" className="um-link is-danger" onClick={() => change("photoUrl", "")}>{uiText("Hapus")}</button>
                   ) : (
-                    <span className="um-hint">maks. 1 MB</span>
+                    <span className="um-hint">{uiText("maks. 1 MB")}</span>
                   )}
                 </span>
               </div>
@@ -318,15 +320,15 @@ export default function UserModal({ open, user, supervisors, onSave, onResetPass
           <div className="um-note">
             <p>{passwordNote}</p>
             {user ? (
-              <button type="button" className="um-link" disabled={busy} onClick={reset}>Reset password</button>
+              <button type="button" className="um-link" disabled={busy} onClick={reset}>{uiText("Reset password")}</button>
             ) : null}
           </div>
         </div>
 
         <footer className="um-foot">
-          <button type="button" className="um-btn is-ghost" disabled={busy} onClick={requestClose}>Batal</button>
+          <button type="button" className="um-btn is-ghost" disabled={busy} onClick={requestClose}>{uiText("Batal")}</button>
           <button type="submit" className="um-btn is-primary" disabled={busy}>
-            {busy ? "Menyimpan..." : user ? "Simpan" : "Tambah"}
+            {busy ? uiText("Menyimpan...") : user ? uiText("Simpan") : uiText("Tambah")}
           </button>
         </footer>
       </form>

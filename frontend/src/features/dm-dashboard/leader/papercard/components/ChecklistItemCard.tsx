@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useId, useState } from "react";
 import type { Answer, AnswerStatus, ChecklistItem, RuleTemplate } from "../types";
@@ -25,6 +27,7 @@ function OkNgControls({
   labelId: string;
   onChange: (patch: Partial<Answer>) => void;
 }) {
+  const { text: uiText } = useUiText();
   const [touched, setTouched] = useState({ cause: false, solution: false });
   const uid = useId();
   const causeInvalid = touched.cause && answer.cause.trim() === "";
@@ -54,38 +57,34 @@ function OkNgControls({
       {answer.status === "NG" && (
         <div className="dml-ng">
           <div className="dml-ng__field">
-            <label className="dml-ng__label" htmlFor={`${uid}-cause`}>
-              Penyebab (wajib)
-            </label>
+            <label className="dml-ng__label" htmlFor={`${uid}-cause`}>{uiText("Penyebab (wajib)")}</label>
             <textarea
               id={`${uid}-cause`}
               className="ui-textarea"
               rows={2}
-              placeholder="Jelaskan penyebab secara spesifik"
+              placeholder={uiText("Jelaskan penyebab secara spesifik")}
               value={answer.cause}
               disabled={readOnly}
               aria-invalid={causeInvalid}
               onChange={(e) => onChange({ cause: e.target.value })}
               onBlur={() => setTouched((t) => ({ ...t, cause: true }))}
             />
-            {causeInvalid && <span className="dml-ng__error">Penyebab wajib diisi</span>}
+            {causeInvalid && <span className="dml-ng__error">{uiText("Penyebab wajib diisi")}</span>}
           </div>
           <div className="dml-ng__field">
-            <label className="dml-ng__label" htmlFor={`${uid}-solution`}>
-              Solusi (wajib)
-            </label>
+            <label className="dml-ng__label" htmlFor={`${uid}-solution`}>{uiText("Solusi (wajib)")}</label>
             <textarea
               id={`${uid}-solution`}
               className="ui-textarea"
               rows={2}
-              placeholder="Tindakan perbaikan yang dilakukan"
+              placeholder={uiText("Tindakan perbaikan yang dilakukan")}
               value={answer.solution}
               disabled={readOnly}
               aria-invalid={solutionInvalid}
               onChange={(e) => onChange({ solution: e.target.value })}
               onBlur={() => setTouched((t) => ({ ...t, solution: true }))}
             />
-            {solutionInvalid && <span className="dml-ng__error">Solusi wajib diisi</span>}
+            {solutionInvalid && <span className="dml-ng__error">{uiText("Solusi wajib diisi")}</span>}
           </div>
         </div>
       )}
@@ -99,6 +98,7 @@ function OkNgControls({
  * With answerMode "per_rule" every rule line gets its own OK / NG answer.
  */
 export function ChecklistItemCard({ item, rule, getAnswer, readOnly = false, onChange }: Props) {
+  const { text: uiText } = useUiText();
   const [showRule, setShowRule] = useState(false);
   const uid = useId();
   const titleId = `${uid}-title`;
@@ -118,7 +118,7 @@ export function ChecklistItemCard({ item, rule, getAnswer, readOnly = false, onC
       <div className="dml-item__body">
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
           <p id={titleId} className="dml-item__title" style={{ margin: 0 }}>
-            {item.title}
+            {uiText(item.title)}
           </p>
 
           {!perRule && (item.ruleInfo || item.rule) && (
@@ -139,11 +139,9 @@ export function ChecklistItemCard({ item, rule, getAnswer, readOnly = false, onC
                 cursor: "pointer",
                 padding: 0,
               }}
-              title={item.ruleInfo || item.rule || "Lihat aturan"}
-              aria-label="Lihat aturan"
-            >
-              i
-            </button>
+              title={item.ruleInfo || item.rule || uiText("Lihat aturan")}
+              aria-label={uiText("Lihat aturan")}
+            >{uiText("i")}</button>
           )}
         </div>
 
@@ -181,14 +179,13 @@ export function ChecklistItemCard({ item, rule, getAnswer, readOnly = false, onC
               aria-controls={ruleId}
               onClick={() => setShowRule((v) => !v)}
             >
-              {showRule ? "Sembunyikan aturan" : "Lihat aturan"}
+              {showRule ? uiText("Sembunyikan aturan") : uiText("Lihat aturan")}
             </button>
 
             {showRule && (
               <div id={ruleId} className="dml-rule">
                 {item.ruleInfo && (
-                  <p style={{ marginBottom: "6px", color: "#0369a1", fontWeight: 600 }}>
-                    ℹ️ {item.ruleInfo}
+                  <p style={{ marginBottom: "6px", color: "#0369a1", fontWeight: 600 }}>{uiText("ℹ️ ")}{item.ruleInfo}
                   </p>
                 )}
                 {item.rule ? (
@@ -196,10 +193,10 @@ export function ChecklistItemCard({ item, rule, getAnswer, readOnly = false, onC
                 ) : (
                   <>
                     <p>
-                      <strong>OK:</strong> {rule.ok}
+                      <strong>{uiText("OK:")}</strong> {rule.ok}
                     </p>
                     <p>
-                      <strong>NG:</strong> {rule.ng}
+                      <strong>{uiText("NG:")}</strong> {rule.ng}
                     </p>
                   </>
                 )}
@@ -210,8 +207,8 @@ export function ChecklistItemCard({ item, rule, getAnswer, readOnly = false, onC
               <input
                 className="ui-input ui-input--block"
                 type="text"
-                placeholder="Nama pos/proses yang diperiksa"
-                aria-label={`Nama pos/proses untuk item ${item.number}`}
+                placeholder={uiText("Nama pos/proses yang diperiksa")}
+                aria-label={uiText("Nama pos/proses untuk item {{v0}}", { v0: item.number })}
                 value={answer.posName}
                 disabled={readOnly}
                 onChange={(e) => onChange(item.id, { posName: e.target.value })}
@@ -223,7 +220,7 @@ export function ChecklistItemCard({ item, rule, getAnswer, readOnly = false, onC
                 <input
                   type="text"
                   className="ui-input ui-input--block"
-                  placeholder="Catat nilai hasil pengukuran / informasi..."
+                  placeholder={uiText("Catat nilai hasil pengukuran / informasi...")}
                   value={answer.textValue ?? ""}
                   disabled={readOnly}
                   onChange={(e) =>

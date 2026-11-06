@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { meetingApi, notificationApi } from "../api";
@@ -31,6 +33,7 @@ function summarize(schedule: DmMeetingSchedule | undefined): string {
 }
 
 export default function MeetingScheduleManager({ lines }: MeetingScheduleManagerProps) {
+  const { text: uiText } = useUiText();
   const [selectedId, setSelectedId] = useState<number | null>(lines[0]?.id ?? null);
   const [schedules, setSchedules] = useState<Record<number, DmMeetingSchedule>>({});
   const [rows, setRows] = useState<Row[]>([]);
@@ -203,16 +206,16 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
   };
 
   if (lines.length === 0) {
-    return <p className="msm-empty">Belum ada lini. Buat lini dulu di tab Lini, Workshop & Tim.</p>;
+    return <p className="msm-empty">{uiText("Belum ada lini. Buat lini dulu di tab Lini, Workshop & Tim.")}</p>;
   }
 
   return (
     <div className="msm">
-      <aside className="msm-lines" aria-label="Pilih lini">
+      <aside className="msm-lines" aria-label={uiText("Pilih lini")}>
         <input
           type="search"
           className="msm-search"
-          placeholder="Cari lini atau workshop"
+          placeholder={uiText("Cari lini atau workshop")}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
@@ -235,7 +238,7 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
               ))}
             </div>
           ))}
-          {grouped.length === 0 && <p className="msm-empty">Tidak ada lini yang cocok.</p>}
+          {grouped.length === 0 && <p className="msm-empty">{uiText("Tidak ada lini yang cocok.")}</p>}
         </div>
       </aside>
 
@@ -249,22 +252,22 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
                 </h3>
                 <p className="msm-editor__sub">
                   {selectedSchedule?.isDefault
-                    ? "Lini ini belum punya jadwal sendiri dan memakai jadwal bawaan. Simpan untuk mengaturnya sendiri."
-                    : "Jam, jumlah sesi, dan hari berlaku diatur per lini."}
+                    ? uiText("Lini ini belum punya jadwal sendiri dan memakai jadwal bawaan. Simpan untuk mengaturnya sendiri.")
+                    : uiText("Jam, jumlah sesi, dan hari berlaku diatur per lini.")}
                 </p>
               </div>
-              {dirty && <span className="msm-dirty">Belum disimpan</span>}
+              {dirty && <span className="msm-dirty">{uiText("Belum disimpan")}</span>}
             </header>
 
             {notice && <div className={`msm-notice is-${notice.type}`}>{notice.text}</div>}
 
-            <div className="msm-table" role="table" aria-label="Sesi meeting">
+            <div className="msm-table" role="table" aria-label={uiText("Sesi meeting")}>
               <div className="msm-row msm-row--head" role="row">
-                <span role="columnheader">Nama sesi</span>
-                <span role="columnheader">Jam</span>
-                <span role="columnheader">Hari berlaku</span>
-                <span role="columnheader">Aktif</span>
-                <span role="columnheader" className="msm-sr">Hapus</span>
+                <span role="columnheader">{uiText("Nama sesi")}</span>
+                <span role="columnheader">{uiText("Jam")}</span>
+                <span role="columnheader">{uiText("Hari berlaku")}</span>
+                <span role="columnheader">{uiText("Aktif")}</span>
+                <span role="columnheader" className="msm-sr">{uiText("Hapus")}</span>
               </div>
               {rows.map((row) => (
                 <div key={row.key} className={`msm-row${row.isActive ? "" : " is-off"}`} role="row">
@@ -272,17 +275,17 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
                     className="msm-input"
                     value={row.label}
                     maxLength={60}
-                    aria-label="Nama sesi"
+                    aria-label={uiText("Nama sesi")}
                     onChange={(e) => update(row.key, { label: e.target.value })}
                   />
                   <input
                     className="msm-input msm-input--time"
                     type="time"
                     value={row.time}
-                    aria-label={`Jam ${row.label}`}
+                    aria-label={uiText("Jam {{v0}}", { v0: row.label })}
                     onChange={(e) => update(row.key, { time: e.target.value })}
                   />
-                  <div className="msm-days" role="group" aria-label={`Hari berlaku ${row.label}`}>
+                  <div className="msm-days" role="group" aria-label={uiText("Hari berlaku {{v0}}", { v0: row.label })}>
                     {DAY_LABELS.map((label, i) => {
                       const day = i + 1;
                       const on = row.days.includes(day);
@@ -294,7 +297,7 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
                           aria-pressed={on}
                           onClick={() => toggleDay(row, day)}
                         >
-                          {label}
+                          {uiText(label)}
                         </button>
                       );
                     })}
@@ -304,33 +307,29 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
                       type="checkbox"
                       checked={row.isActive}
                       onChange={(e) => update(row.key, { isActive: e.target.checked })}
-                      aria-label={`Aktifkan ${row.label}`}
+                      aria-label={uiText("Aktifkan {{v0}}", { v0: row.label })}
                     />
                     <span />
                   </label>
                   <button
                     type="button"
                     className="msm-remove"
-                    aria-label={`Hapus ${row.label}`}
+                    aria-label={uiText("Hapus {{v0}}", { v0: row.label })}
                     onClick={() => setRows((prev) => prev.filter((r) => r.key !== row.key))}
-                  >
-                    Hapus
-                  </button>
+                  >{uiText("Hapus")}</button>
                 </div>
               ))}
             </div>
 
-            <button type="button" className="msm-add" onClick={addRow} disabled={rows.length >= 12}>
-              + Tambah sesi
-            </button>
+            <button type="button" className="msm-add" onClick={addRow} disabled={rows.length >= 12}>{uiText("+ Tambah sesi")}</button>
 
             <div className="msm-preview">
-              <h4>Jadwal per hari</h4>
+              <h4>{uiText("Jadwal per hari")}</h4>
               <dl>
                 {perDay.map(({ day, times }) => (
                   <div key={day} className="msm-preview__row">
-                    <dt>{DAY_LABELS[day - 1]}</dt>
-                    <dd>{times.length ? times.join(" · ") : "Tidak ada meeting"}</dd>
+                    <dt>{uiText(DAY_LABELS[day - 1])}</dt>
+                    <dd>{times.length ? times.join(" · ") : uiText("Tidak ada meeting")}</dd>
                   </div>
                 ))}
               </dl>
@@ -338,19 +337,15 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
 
             <footer className="msm-foot">
               <button type="button" className="msm-btn msm-btn--primary" onClick={handleSave} disabled={saving || !dirty}>
-                {saving ? "Menyimpan..." : "Simpan jadwal"}
+                {saving ? uiText("Menyimpan...") : uiText("Simpan jadwal")}
               </button>
-              <button type="button" className="msm-btn" onClick={() => setRows(toRows(DEFAULT_ROWS))} disabled={saving}>
-                Isi Dengan Jadwal Standar
-              </button>
+              <button type="button" className="msm-btn" onClick={() => setRows(toRows(DEFAULT_ROWS))} disabled={saving}>{uiText("Isi Dengan Jadwal Standar")}</button>
               <button
                 type="button"
                 className="msm-btn msm-btn--ghost"
                 onClick={() => setShowNotifModal(true)}
-                title="Atur berapa menit sebelum meeting dan papercard notifikasi dikirimkan ke Member & Leader"
-              >
-                🔔 Pengaturan Pengingat ({notifSettings.meetingReminderMinutes}m)
-              </button>
+                title={uiText("Atur berapa menit sebelum meeting dan papercard notifikasi dikirimkan ke Member & Leader")}
+              >{uiText("🔔 Pengaturan Pengingat (")}{notifSettings.meetingReminderMinutes}{uiText("m)")}</button>
               <button
                 type="button"
                 className="msm-btn msm-btn--ghost"
@@ -359,16 +354,12 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
                   setApplyTargets([]);
                   setShowApply((v) => !v);
                 }}
-              >
-                Terapkan ke lini lain
-              </button>
+              >{uiText("Terapkan ke lini lain")}</button>
             </footer>
 
             {showApply && (
               <div className="msm-apply">
-                <p>
-                  Jadwal di atas akan menggantikan jadwal lini yang dipilih. Lini ini ikut tersimpan.
-                </p>
+                <p>{uiText("Jadwal di atas akan menggantikan jadwal lini yang dipilih. Lini ini ikut tersimpan.")}</p>
                 <div className="msm-apply__list">
                   {lines
                     .filter((l) => l.id !== selectedId)
@@ -392,17 +383,13 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
                     type="button"
                     className="msm-btn"
                     onClick={() => setApplyTargets(lines.filter((l) => l.id !== selectedId).map((l) => l.id))}
-                  >
-                    Pilih semua
-                  </button>
+                  >{uiText("Pilih semua")}</button>
                   <button
                     type="button"
                     className="msm-btn msm-btn--primary"
                     disabled={saving || applyTargets.length === 0}
                     onClick={handleApply}
-                  >
-                    Terapkan ke {applyTargets.length} lini
-                  </button>
+                  >{uiText("Terapkan ke ")}{applyTargets.length}{uiText(" lini")}</button>
                 </div>
               </div>
             )}

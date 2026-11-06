@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field } from "@/components/ui/Field";
@@ -23,6 +25,7 @@ function CategorySelect({
   value: string[];
   onChange: (value: string[]) => void;
 }) {
+  const { text: uiText } = useUiText();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -85,14 +88,14 @@ function CategorySelect({
       >
         {selectedLabels.length
           ? selectedLabels.join(", ")
-          : "Pilih kategori masalah"}
+          : uiText("Pilih kategori masalah")}
       </button>
 
       {open && (
         <div
           id={`${id}-options`}
           role="group"
-          aria-label="Kategori masalah"
+          aria-label={uiText("Kategori masalah")}
           style={{
             position: "absolute",
             top: "calc(100% + 4px)",
@@ -132,7 +135,7 @@ function CategorySelect({
                   )
                 }
               />
-              <span>{category.label}</span>
+              <span>{uiText(category.label)}</span>
             </label>
           ))}
         </div>
@@ -164,24 +167,24 @@ export function SummaryForm({
   onChange,
   onRemove,
 }: Props) {
+  const { text: uiText } = useUiText();
   return (
     <Card
-      title="Input Summary & Action Item"
-      subtitle="Catat poin kendala, penanggung jawab (PIC), dan batas waktu tindak lanjut dari sesi meeting ini. Hanya diisi oleh Leader."
+      title={uiText("Input Summary & Action Item")}
+      subtitle={uiText("Catat poin kendala, penanggung jawab (PIC), dan batas waktu tindak lanjut dari sesi meeting ini. Hanya diisi oleh Leader.")}
     >
       <div className="dml-mt-items">
         {items.map((item, index) => {
           const err = showErrors ? errors[item.id] ?? {} : {};
           return (
             <fieldset key={item.id} className="dml-mt-item">
-              <legend className="dml-mt-item__legend">
-                Poin Masalah #{index + 1}
+              <legend className="dml-mt-item__legend">{uiText("Poin Masalah #")}{index + 1}
               </legend>
               {items.length > 1 && (
                 <button
                   type="button"
                   className="dml-mt-item__remove"
-                  aria-label={`Hapus poin masalah ${index + 1}`}
+                  aria-label={uiText("Hapus poin masalah {{v0}}", { v0: index + 1 })}
                   onClick={() => onRemove(item.id)}
                 >
                   <IconTrash size={16} />
@@ -190,12 +193,12 @@ export function SummaryForm({
 
               {/* <div className="dml-mt-item__top"> */}
 
-              <Field label="Masalah / Kendala" htmlFor={`p-${item.id}`}>
+              <Field label={uiText("Masalah / Kendala")} htmlFor={`p-${item.id}`}>
                 <textarea
                   id={`p-${item.id}`}
                   className="ui-textarea"
                   rows={2}
-                  placeholder="Contoh: Suhu solder station #4 berfluktuasi di atas batas SOP"
+                  placeholder={uiText("Contoh: Suhu solder station #4 berfluktuasi di atas batas SOP")}
                   value={item.problem}
                   aria-invalid={Boolean(err.problem)}
                   onChange={(e) =>
@@ -210,7 +213,7 @@ export function SummaryForm({
 
               <div className="dml-mt-item__row">
                 <Field
-                  label="Kategori Masalah"
+                  label={uiText("Kategori Masalah")}
                   htmlFor={`categories-${item.id}`}
                 >
                   <CategorySelect
@@ -222,7 +225,7 @@ export function SummaryForm({
                   />
                 </Field>
 
-                <Field label="Line" htmlFor={`l-${item.id}`}>
+                <Field label={uiText("Line")} htmlFor={`l-${item.id}`}>
                   <select
                     id={`l-${item.id}`}
                     className="ui-select ui-select--block"
@@ -232,16 +235,16 @@ export function SummaryForm({
                       onChange(item.id, { line: e.target.value })
                     }
                   >
-                    <option value="">Pilih line</option>
+                    <option value="">{uiText("Pilih line")}</option>
                     {lines.map((l) => (
                       <option key={l} value={l}>
-                        {l}
+                        {uiText(l)}
                       </option>
                     ))}
                   </select>
                   {err.line && <span className="dml-mt-error">{err.line}</span>}
                 </Field>
-                <Field label="PIC (Penanggung Jawab)" htmlFor={`c-${item.id}`}>
+                <Field label={uiText("PIC (Penanggung Jawab)")} htmlFor={`c-${item.id}`}>
                   <select
                     id={`c-${item.id}`}
                     className="ui-select ui-select--block"
@@ -251,10 +254,10 @@ export function SummaryForm({
                       onChange(item.id, { picId: e.target.value })
                     }
                   >
-                    <option value="">Pilih PIC</option>
+                    <option value="">{uiText("Pilih PIC")}</option>
                     {members.map((m) => (
                       <option key={m.id} value={m.id}>
-                        {m.name} ({m.employeeNo ?? m.roleLabel})
+                        {m.name} ({m.employeeNo ?? uiText(m.roleLabel)})
                       </option>
                     ))}
                   </select>
@@ -263,7 +266,7 @@ export function SummaryForm({
                   )}
                 </Field>
 
-                <Field label="Due Date / Target Waktu" htmlFor={`d-${item.id}`}>
+                <Field label={uiText("Due Date / Target Waktu")} htmlFor={`d-${item.id}`}>
                   <input
                     id={`d-${item.id}`}
                     type="datetime-local"
@@ -281,8 +284,7 @@ export function SummaryForm({
       </div>
 
       <button type="button" className="dml-mt-add" onClick={onAdd}>
-        <IconPlus size={16} /> Tambah Poin Masalah Lain
-      </button>
+        <IconPlus size={16} />{uiText(" Tambah Poin Masalah Lain")}</button>
     </Card>
   );
 }

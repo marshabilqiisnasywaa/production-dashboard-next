@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 interface Option<T extends string> {
   value: T;
   label: string;
@@ -16,8 +18,9 @@ export function SegmentedControl<T extends string>({
   onChange,
   ariaLabel,
 }: SegmentedControlProps<T>) {
+  const { text: uiText } = useUiText();
   return (
-    <div className="ui-segmented" role="group" aria-label={ariaLabel}>
+    <div className="ui-segmented" role="group" aria-label={uiText(ariaLabel)}>
       {options.map((o) => (
         <button
           key={o.value}
@@ -26,7 +29,7 @@ export function SegmentedControl<T extends string>({
           aria-pressed={o.value === value}
           onClick={() => onChange(o.value)}
         >
-          {o.label}
+          {uiText(o.label)}
         </button>
       ))}
     </div>

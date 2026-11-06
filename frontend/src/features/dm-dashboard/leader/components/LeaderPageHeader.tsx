@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 
 import "./leaderPageHeader.css";
 
@@ -15,17 +17,15 @@ export function LeaderPageHeader({
   workshopName,
   supervisorName,
 }: Props) {
+  const { text: uiText } = useUiText();
   return (
     <header className="dml-lh">
-      <h1 className="dml-lh__title">
-        Dashboard Leader
-      </h1>
+      <h1 className="dml-lh__title">{uiText("Dashboard Leader")}</h1>
       <p className="dml-lh__meta">
         <span>
           {lineName} ({lineCode}) · {workshopName}
         </span>
-        <span>
-          SPV: <strong>{supervisorName}</strong>
+        <span>{uiText("SPV: ")}<strong>{supervisorName}</strong>
         </span>
       </p>
     </header>

@@ -74,6 +74,58 @@
   line-height: 1.4;
 }
 
+/* Rate (% of all problems) on the right of a KPI card, after a short vertical divider.
+   Card = 2-column grid: text on the left, rate block on the right (vertically centered). */
+.dml-pb-stat {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0;
+  row-gap: 5px;
+  align-items: start;
+}
+.dml-pb-stat > * {
+  grid-column: 1;
+}
+.dml-pb-stat > .dml-pb-stat__rate {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: center;
+}
+.dml-pb-stat__rate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-width: 64px;
+  height: 36px; /* keeps the divider short */
+  margin-left: 12px;
+  padding-left: 14px;
+  border-left: 1px solid #e3e7eb;
+  line-height: 1.1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.dml-pb-stat__rate b {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.dml-pb-stat__rate small {
+  color: #94a3b8;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.dml-pb-stat__rate--warn b {
+  color: #b54708;
+}
+.dml-pb-stat__rate--ok b {
+  color: #046a38;
+}
+.dml-pb-stat__rate--bad b {
+  color: #d92d20;
+}
+
 /* Table panel */
 .dml-pb-panel {
   min-width: 0;
@@ -98,7 +150,7 @@
   align-items: center;
   flex: 1;
   min-width: 0;
-  max-width: 360px;
+  max-width: none;
   height: 38px;
   padding: 0;
   border: 0;
@@ -144,7 +196,7 @@
 
 .dml-pb-filters select {
   height: 38px;
-  max-width: 180px;
+  max-width: 200px;
   padding: 0 28px 0 10px;
   border: 1px solid #dfe4e8;
   border-radius: 7px;
@@ -253,14 +305,22 @@
   border-bottom: 0 !important;
 }
 
-/* Column widths */
-.dml-pb-table th:nth-child(1) { width: 105px; }
-.dml-pb-table th:nth-child(2) { width: 175px; }
-.dml-pb-table th:nth-child(3) { width: 110px; }
-.dml-pb-table th:nth-child(4) { width: auto; }
-.dml-pb-table th:nth-child(5) { width: 145px; }
-.dml-pb-table th:nth-child(6) { width: 165px; }
-.dml-pb-table th:nth-child(7) { width: 125px; }
+/* Column widths (tracking table: Tanggal, Sesi, Line, Kategori, Masalah, Solusi, PIC, Due date, Status, [Aksi]) */
+.dml-pb-table--tracking {
+  min-width: 1265px;
+}
+.dml-pb-table--tracking:has(.dml-pb-act-col) {
+  min-width: 1415px;
+}
+.dml-pb-table--tracking th:nth-child(1) { width: 100px; }
+.dml-pb-table--tracking th:nth-child(2) { width: 80px; }
+.dml-pb-table--tracking th:nth-child(3) { width: 100px; }
+.dml-pb-table--tracking th:nth-child(4) { width: 170px; }
+.dml-pb-table--tracking th:nth-child(5) { width: auto; }
+.dml-pb-table--tracking th:nth-child(6) { width: 200px; }
+.dml-pb-table--tracking th:nth-child(7) { width: 150px; }
+.dml-pb-table--tracking th:nth-child(8) { width: 160px; }
+.dml-pb-table--tracking th:nth-child(9) { width: 105px; }
 
 /* Truncate long text without creating double-height rows */
 .dml-pb-truncate {
@@ -339,6 +399,21 @@
 
   .dml-pb-stat {
     padding: 12px;
+  }
+
+  .dml-pb-stat__rate {
+    min-width: 50px;
+    height: 32px;
+    margin-left: 8px;
+    padding-left: 9px;
+  }
+
+  .dml-pb-stat__rate b {
+    font-size: 16px;
+  }
+
+  .dml-pb-stat__rate small {
+    font-size: 10px;
   }
 
   .dml-pb-stat strong {

@@ -84,8 +84,8 @@ export function validateItem(i: SummaryItem): ItemErrors {
   return errors;
 }
 
-export const formatDue = (due: string) =>
-  new Date(due).toLocaleString("id-ID", {
+export const formatDue = (due: string, locale = "id-ID") =>
+  new Date(due).toLocaleString(locale, {
     day: "numeric",
     month: "short",
     hour: "2-digit",

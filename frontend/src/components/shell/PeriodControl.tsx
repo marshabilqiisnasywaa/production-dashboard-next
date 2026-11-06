@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 export type PeriodKey = "Today" | "Week" | "Month" | "Year";
 
@@ -132,8 +134,9 @@ type PeriodControlProps = {
 };
 
 export default function PeriodControl({ value, onChange, ariaLabel }: PeriodControlProps) {
+  const { text: uiText } = useUiText();
   return (
-    <div className="bg-white/60 backdrop-blur-md p-0.5 rounded-lg flex items-center gap-0.5 border border-white/60" role="group" aria-label={ariaLabel ?? "Time period"}>
+    <div className="bg-white/60 backdrop-blur-md p-0.5 rounded-lg flex items-center gap-0.5 border border-white/60" role="group" aria-label={ariaLabel ?? uiText("Time period")}>
       {periodOptions.map((option) => (
         <button
           key={option}
@@ -144,7 +147,7 @@ export default function PeriodControl({ value, onChange, ariaLabel }: PeriodCont
             ? "bg-white text-slate-900 shadow-2xs rounded-md px-1.5 py-0.5 text-[4px] font-medium transition-all"
             : "text-slate-400 hover:text-slate-600 px-1.5 py-0.5 rounded-md text-[4px] font-medium cursor-pointer transition-all"}
         >
-          {option}
+          {uiText(option)}
         </button>
       ))}
     </div>

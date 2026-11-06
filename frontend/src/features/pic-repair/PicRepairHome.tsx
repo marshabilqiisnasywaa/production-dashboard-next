@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useMemo, useState } from "react";
 import {
   InputDialog,
@@ -32,10 +34,11 @@ const baseCards: MeetingCard[] = [
 ];
 
 function Breakdown({ trendKey }: { trendKey: TrendKey }) {
+  const { text: uiText } = useUiText();
   if (trendKey === "wip-pre") {
     return (
       <article className="repair-panel wide">
-        <div className="repair-card-head"><div><h2>Breakdown WIP Pre-assembly</h2><p>Detail unit per proses dan model</p></div></div>
+        <div className="repair-card-head"><div><h2>{uiText("Breakdown WIP Pre-assembly")}</h2><p>{uiText("Detail unit per proses dan model")}</p></div></div>
         <WipTable />
       </article>
     );
@@ -43,10 +46,10 @@ function Breakdown({ trendKey }: { trendKey: TrendKey }) {
   if (trendKey === "wip-rework") {
     return (
       <article className="repair-panel wide">
-        <div className="repair-card-head"><div><h2>Breakdown WIP Rework</h2><p>Plan vs actual per tanggal dan model</p></div></div>
+        <div className="repair-card-head"><div><h2>{uiText("Breakdown WIP Rework")}</h2><p>{uiText("Plan vs actual per tanggal dan model")}</p></div></div>
         <div className="repair-table-scroll">
           <table className="repair-data-table pic-table">
-            <thead><tr><th>Tanggal</th><th>Model</th><th>Plan Qty</th><th>Actual Qty</th><th>Achievement</th><th>Status</th></tr></thead>
+            <thead><tr><th>{uiText("Tanggal")}</th><th>{uiText("Model")}</th><th>{uiText("Plan Qty")}</th><th>{uiText("Actual Qty")}</th><th>{uiText("Achievement")}</th><th>{uiText("Status")}</th></tr></thead>
             <tbody>
               {reworkPlanning.map((row) => (
                 <tr key={row.date}>
@@ -55,7 +58,7 @@ function Breakdown({ trendKey }: { trendKey: TrendKey }) {
                   <td>{row.plan}</td>
                   <td>{row.actual}</td>
                   <td><div className="achievement"><i style={{ width: `${Math.min((row.actual / row.plan) * 100, 100)}%` }} /><span>{((row.actual / row.plan) * 100).toFixed(1)}%</span></div></td>
-                  <td><span className={`repair-status ${row.actual >= row.plan ? "good" : "bad"}`}>{row.actual >= row.plan ? "Achieved" : "Behind"}</span></td>
+                  <td><span className={`repair-status ${row.actual >= row.plan ? "good" : "bad"}`}>{row.actual >= row.plan ? uiText("Achieved") : uiText("Behind")}</span></td>
                 </tr>
               ))}
             </tbody>
@@ -66,10 +69,10 @@ function Breakdown({ trendKey }: { trendKey: TrendKey }) {
   }
   return (
     <article className="repair-panel wide">
-      <div className="repair-card-head"><div><h2>Breakdown WIP Warranty</h2><p>Detail input market dan phone off harian</p></div></div>
+      <div className="repair-card-head"><div><h2>{uiText("Breakdown WIP Warranty")}</h2><p>{uiText("Detail input market dan phone off harian")}</p></div></div>
       <div className="repair-table-scroll">
         <table className="repair-data-table pic-table">
-          <thead><tr><th>Tanggal</th><th>Input Unit Market</th><th>Phone Off</th><th>Share</th></tr></thead>
+          <thead><tr><th>{uiText("Tanggal")}</th><th>{uiText("Input Unit Market")}</th><th>{uiText("Phone Off")}</th><th>{uiText("Share")}</th></tr></thead>
           <tbody>
             {warrantyDaily.map((row) => (
               <tr key={row.day}>
@@ -87,6 +90,7 @@ function Breakdown({ trendKey }: { trendKey: TrendKey }) {
 }
 
 export default function PicRepairHome() {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [selected, setSelected] = useState<TrendKey | null>(null);
   const [values, setValues] = useState<Record<string, number>>({});
   const [inputOpen, setInputOpen] = useState(false);
@@ -96,7 +100,7 @@ export default function PicRepairHome() {
   const cards = useMemo(() => baseCards.map((card) => {
     if (values[card.id] === undefined) return card;
     const value = values[card.id];
-    const display = card.unit === "pcs" ? value.toLocaleString("en-US") : String(value);
+    const display = card.unit === "pcs" ? value.toLocaleString(uiLocale) : String(value);
     return { ...card, value, display };
   }), [values]);
 
@@ -119,15 +123,15 @@ export default function PicRepairHome() {
     <div className="pic-page">
       <div className="repair-header">
         <div>
-          <div className="repair-eyebrow">MORNING MEETING • PIC AREA</div>
+          <div className="repair-eyebrow">{uiText("MORNING MEETING • PIC AREA")}</div>
           <div className="repair-title-row">
-            <h1>Beranda Meeting</h1>
+            <h1>{uiText("Beranda Meeting")}</h1>
           </div>
-          <p>Ringkasan metric inti morning review: WIP Pre-assembly, Rework, dan Warranty.</p>
+          <p>{uiText("Ringkasan metric inti morning review: WIP Pre-assembly, Rework, dan Warranty.")}</p>
         </div>
         <div className="repair-actions">
-          <button className="repair-outline" type="button">07 Oct 2026</button>
-          <button className="repair-primary text-white font-bold" type="button" onClick={() => setInputOpen(true)}>+ Input Data</button>
+          <button className="repair-outline" type="button">{uiText("07 Oct 2026")}</button>
+          <button className="repair-primary text-white font-bold" type="button" onClick={() => setInputOpen(true)}>{uiText("+ Input Data")}</button>
         </div>
       </div>
 
@@ -135,16 +139,16 @@ export default function PicRepairHome() {
         {cards.map((card) => {
           const good = isOnTarget(card.value, card.target, "lower");
           const active = selected === card.id;
-          const gap = Math.abs(card.value - card.target).toLocaleString("en-US");
+          const gap = Math.abs(card.value - card.target).toLocaleString(uiLocale);
           return (
             <article className="repair-kpi pic-kpi" key={card.id} style={active ? { borderColor: "var(--accent-1)" } : undefined}>
-              <div className="repair-kpi-top"><span>{card.name}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? "On Target" : "Off Target"}</span></div>
-              <strong>{card.display} <small>{card.unit}</small></strong>
-              <p>Target: {card.targetLabel} <b className={good ? "good-text" : "bad-text"}>{good ? "↓" : "↑"} {gap}</b></p>
+              <div className="repair-kpi-top"><span>{card.name}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? uiText("On Target") : uiText("Off Target")}</span></div>
+              <strong>{card.display} <small>{uiText(card.unit)}</small></strong>
+              <p>{uiText("Target: ")}{uiText(card.targetLabel)} <b className={good ? "good-text" : "bad-text"}>{good ? "↓" : "↑"} {gap}</b></p>
               <Sparkline success={good} />
               <div className="pic-kpi-actions">
-                <button type="button" className="repair-outline pic-mini" onClick={() => toggle(card.id)}>{active ? "Tutup Tren" : "Lihat Tren"}</button>
-                {!good && <button type="button" className="pic-ai-btn" onClick={() => setAiCard(card)}>Tanya AI</button>}
+                <button type="button" className="repair-outline pic-mini" onClick={() => toggle(card.id)}>{active ? uiText("Tutup Tren") : uiText("Lihat Tren")}</button>
+                {!good && <button type="button" className="pic-ai-btn" onClick={() => setAiCard(card)}>{uiText("Tanya AI")}</button>}
               </div>
             </article>
           );
@@ -154,12 +158,12 @@ export default function PicRepairHome() {
       {selected === null ? (
         <div className="repair-charts">
           {(Object.keys(trendConfig) as TrendKey[]).map((key) => (
-            <MetricChart key={key} id={`pic-${key}`} title={trendConfig[key].title} values={trendConfig[key].values} target={trendConfig[key].target} direction={trendConfig[key].direction} full />
+            <MetricChart key={key} id={`pic-${key}`} title={uiText(trendConfig[key].title)} values={trendConfig[key].values} target={trendConfig[key].target} direction={trendConfig[key].direction} full />
           ))}
         </div>
       ) : (
         <div className="repair-charts">
-          <MetricChart id={`pic-${selected}`} title={trendConfig[selected].title} values={trendConfig[selected].values} target={trendConfig[selected].target} direction={trendConfig[selected].direction} full />
+          <MetricChart id={`pic-${selected}`} title={uiText(trendConfig[selected].title)} values={trendConfig[selected].values} target={trendConfig[selected].target} direction={trendConfig[selected].direction} full />
           <Breakdown trendKey={selected} />
         </div>
       )}
@@ -169,13 +173,13 @@ export default function PicRepairHome() {
           metricName={aiCard.name}
           actualLabel={`${aiCard.display} ${aiCard.unit}`}
           targetLabel={aiCard.targetLabel}
-          gapLabel={Math.abs(aiCard.value - aiCard.target).toLocaleString("en-US")}
+          gapLabel={Math.abs(aiCard.value - aiCard.target).toLocaleString(uiLocale)}
           direction="lower"
           onClose={() => setAiCard(null)}
         />
       )}
       {inputOpen && <InputDialog onClose={() => setInputOpen(false)} onSave={saveInput} />}
-      {toast && <div className="repair-toast"><span>✓</span>Data berhasil disimpan</div>}
+      {toast && <div className="repair-toast"><span>✓</span>{uiText("Data berhasil disimpan")}</div>}
     </div>
   );
 }

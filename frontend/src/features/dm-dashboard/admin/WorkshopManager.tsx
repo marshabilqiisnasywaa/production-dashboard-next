@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { adminApi, workshopMeetingApi } from "../api";
@@ -26,6 +28,7 @@ export default function WorkshopManager({
   onDelete,
   onAddDm,
 }: WorkshopManagerProps) {
+  const { text: uiText } = useUiText();
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -241,14 +244,10 @@ export default function WorkshopManager({
       <div className="dm-panel-head">
         <div>
           <div className="dm-panel-titlebar">
-            <h3 id="ws-manager-title" className="dm-panel-title">
-              Workshop
-            </h3>
+            <h3 id="ws-manager-title" className="dm-panel-title">{uiText("Workshop")}</h3>
             {/* <span className="dm-pill">{workshops.length} Terdaftar</span> */}
           </div>
-          <p className="dm-panel-sub">
-            Buat workshop, tambahkan DM, lalu buat lini dan atur timnya.
-          </p>
+          <p className="dm-panel-sub">{uiText("Buat workshop, tambahkan DM, lalu buat lini dan atur timnya.")}</p>
         </div>
         {!adding ? (
           <button
@@ -256,9 +255,7 @@ export default function WorkshopManager({
             className="dm-admin-btn is-primary dm-btn-add"
             onClick={openAdd}
           >
-            <PlusIcon size={14} />
-            Tambah Workshop
-          </button>
+            <PlusIcon size={14} />{uiText("Tambah Workshop")}</button>
         ) : null}
       </div>
 
@@ -273,9 +270,7 @@ export default function WorkshopManager({
                 <label
                   className="dm-ws-edit-label"
                   htmlFor={`ws-edit-${workshop.id}`}
-                >
-                  Nama workshop
-                </label>
+                >{uiText("Nama workshop")}</label>
 
                 <input
                   id={`ws-edit-${workshop.id}`}
@@ -291,24 +286,19 @@ export default function WorkshopManager({
                     className="dm-admin-btn is-primary"
                     onClick={() => onAddDm(workshop)}
                   >
-                    <PlusIcon size={14} /> Tambah DM
-                  </button>
+                    <PlusIcon size={14} />{uiText(" Tambah DM")}</button>
 
                   <button
                     type="submit"
                     className="dm-admin-btn is-primary"
                     disabled={busy}
-                  >
-                    Simpan
-                  </button>
+                  >{uiText("Simpan")}</button>
 
                   <button
                     type="button"
                     className="dm-admin-btn is-tonal"
                     onClick={() => setEditingId(null)}
-                  >
-                    Batal
-                  </button>
+                  >{uiText("Batal")}</button>
                 </div>
               </form>
             ) : (
@@ -324,18 +314,17 @@ export default function WorkshopManager({
                     {workshop.lineCount > 0 ? (
                       <span className="dm-pill is-ok">
                         <span className="dm-pill-dot" aria-hidden="true" />
-                        {workshop.lineCount} Line
-                      </span>
+                        {workshop.lineCount}{uiText(" Line")}</span>
                     ) : (
-                      <span className="dm-pill">Belum ada line</span>
+                      <span className="dm-pill">{uiText("Belum ada line")}</span>
                     )}
                   </div>
 
                   <details className="dm-ws-menu">
                     <summary
                       className="dm-ws-menu-trigger"
-                      aria-label={`Aksi untuk ${workshop.name}`}
-                      title="Aksi workshop"
+                      aria-label={uiText("Aksi untuk {{v0}}", { v0: workshop.name })}
+                      title={uiText("Aksi workshop")}
                     >
                       <MoreHorizontal size={20} />
                     </summary>
@@ -354,24 +343,18 @@ export default function WorkshopManager({
                             ?.removeAttribute("open");
                         }}
                       >
-                        <Pencil size={15} />
-                        Ubah Nama
-                      </button>
+                        <Pencil size={15} />{uiText("Ubah Nama")}</button>
 
                       <button
                         type="button"
                         className="dm-ws-menu-item is-danger"
                         disabled={busy || workshop.lineCount > 0}
                         title={
-                          workshop.lineCount > 0
-                            ? "Masih punya line. Hapus atau pindahkan linenya dulu."
-                            : undefined
+                          workshop.lineCount > 0 ? uiText("Masih punya line. Hapus atau pindahkan linenya dulu.") : undefined
                         }
                         onClick={() => run(() => onDelete(workshop))}
                       >
-                        <Trash2 size={15} />
-                        Hapus
-                      </button>
+                        <Trash2 size={15} />{uiText("Hapus")}</button>
                     </div>
                   </details>
                 </div>
@@ -385,9 +368,7 @@ export default function WorkshopManager({
                     setDialogTab("hod");
                     setSupervisorWorkshopId(workshop.id);
                   }}
-                >
-                  Kelola Supervisor
-                  {!supervisorsLoading &&
+                >{uiText("Kelola Supervisor")}{!supervisorsLoading &&
                     !supervisorsError &&
                     ` (${(assigned[workshop.id] ?? []).length})`}
                 </button>
@@ -419,9 +400,7 @@ export default function WorkshopManager({
                   >
                     <div className="dm-ws-sup-dialog-head">
                       <div>
-                        <h3 id={`ws-supervisors-title-${workshop.id}`}>
-                          Kelola Workshop
-                        </h3>
+                        <h3 id={`ws-supervisors-title-${workshop.id}`}>{uiText("Kelola Workshop")}</h3>
                         <p>{workshop.name}</p>
                       </div>
 
@@ -430,15 +409,13 @@ export default function WorkshopManager({
                         className="dm-admin-btn is-tonal"
                         disabled={busy}
                         onClick={() => setSupervisorWorkshopId(null)}
-                      >
-                        Tutup
-                      </button>
+                      >{uiText("Tutup")}</button>
                     </div>
 
                     <div
                       className="dm-subtabs dm-ws-dialog-tabs"
                       role="tablist"
-                      aria-label="Pengaturan workshop"
+                      aria-label={uiText("Pengaturan workshop")}
                     >
                       <button
                         type="button"
@@ -450,9 +427,7 @@ export default function WorkshopManager({
                           dialogTab === "hod" ? " is-active" : ""
                         }`}
                         onClick={() => setDialogTab("hod")}
-                      >
-                        HOD
-                      </button>
+                      >{uiText("HOD")}</button>
                       <button
                         type="button"
                         role="tab"
@@ -463,9 +438,7 @@ export default function WorkshopManager({
                           dialogTab === "supervisor" ? " is-active" : ""
                         }`}
                         onClick={() => setDialogTab("supervisor")}
-                      >
-                        Supervisor
-                        {!supervisorsLoading &&
+                      >{uiText("Supervisor")}{!supervisorsLoading &&
                           !supervisorsError &&
                           ` (${(assigned[workshop.id] ?? []).length})`}
                       </button>
@@ -488,7 +461,7 @@ export default function WorkshopManager({
                     >
                     <div className="dm-ws-supervisors">
                       {supervisorsLoading ? (
-                        <span role="status">Memuat supervisor...</span>
+                        <span role="status">{uiText("Memuat supervisor...")}</span>
                       ) : supervisorsError ? (
                         <div role="alert">
                           <p>{supervisorsError}</p>
@@ -498,14 +471,12 @@ export default function WorkshopManager({
                             onClick={() =>
                               setSupervisorsRetry((value) => value + 1)
                             }
-                          >
-                            Coba lagi
-                          </button>
+                          >{uiText("Coba lagi")}</button>
                         </div>
                       ) : (
                         <>
                           {(assigned[workshop.id] ?? []).length === 0 && (
-                            <span>Belum ada supervisor ditambahkan.</span>
+                            <span>{uiText("Belum ada supervisor ditambahkan.")}</span>
                           )}
 
                           <ul className="dm-ws-sup-list">
@@ -522,15 +493,15 @@ export default function WorkshopManager({
                                     <span>
                                       {person
                                         ? person.name
-                                        : `Supervisor #${id}`}
+                                        : uiText("Supervisor #{{v0}}", { v0: id })}
                                     </span>
                                     <small>
                                       {person?.employeeId ?? "-"} ·{" "}
                                       {person?.position?.trim() ||
-                                        "Posisi belum diisi"}
+                                        uiText("Posisi belum diisi")}
                                     </small>
                                     <p className="dm-ws-sup-task">
-                                      {task || "Tugas belum diisi."}
+                                      {task || uiText("Tugas belum diisi.")}
                                     </p>
                                   </div>
 
@@ -538,9 +509,7 @@ export default function WorkshopManager({
                                     <button
                                       type="button"
                                       className="dm-admin-btn is-tonal"
-                                      aria-label={`Edit tugas ${
-                                        person?.name ?? id
-                                      }`}
+                                      aria-label={uiText("Edit tugas {{v0}}", { v0: person?.name ?? id })}
                                       disabled={
                                         busy ||
                                         !person ||
@@ -549,15 +518,11 @@ export default function WorkshopManager({
                                       onClick={() =>
                                         openSupervisorForm(workshop.id, id)
                                       }
-                                    >
-                                      Edit
-                                    </button>
+                                    >{uiText("Edit")}</button>
                                     <button
                                       type="button"
                                       className="dm-admin-btn is-danger-soft"
-                                      aria-label={`Lepas ${
-                                        person?.name ?? id
-                                      } dari ${workshop.name}`}
+                                      aria-label={uiText("Lepas {{v0}} dari {{v1}}", { v0: person?.name ?? id, v1: workshop.name })}
                                       disabled={
                                         busy ||
                                         addingSupervisorFor === workshop.id
@@ -570,9 +535,7 @@ export default function WorkshopManager({
                                           )
                                         )
                                       }
-                                    >
-                                      Hapus
-                                    </button>
+                                    >{uiText("Hapus")}</button>
                                   </div>
                                 </li>
                               );
@@ -589,9 +552,7 @@ export default function WorkshopManager({
                               <label
                                 className="dm-ws-edit-label"
                                 htmlFor={`ws-supervisor-${workshop.id}`}
-                              >
-                                Supervisor
-                              </label>
+                              >{uiText("Supervisor")}</label>
                               <select
                                 id={`ws-supervisor-${workshop.id}`}
                                 autoFocus={editingSupervisorId === null}
@@ -604,7 +565,7 @@ export default function WorkshopManager({
                                   setError(null);
                                 }}
                               >
-                                <option value="">Pilih supervisor</option>
+                                <option value="">{uiText("Pilih supervisor")}</option>
 
                                 {supervisors
                                   .filter(
@@ -624,9 +585,7 @@ export default function WorkshopManager({
                               <label
                                 className="dm-ws-edit-label"
                                 htmlFor={`ws-position-${workshop.id}`}
-                              >
-                                Posisi dari data karyawan
-                              </label>
+                              >{uiText("Posisi dari data karyawan")}</label>
                               <input
                                 id={`ws-position-${workshop.id}`}
                                 className="dm-admin-input"
@@ -636,16 +595,14 @@ export default function WorkshopManager({
                                       "Posisi belum diisi"
                                     : ""
                                 }
-                                placeholder="Pilih supervisor terlebih dahulu"
+                                placeholder={uiText("Pilih supervisor terlebih dahulu")}
                                 readOnly
                               />
 
                               <label
                                 className="dm-ws-edit-label"
                                 htmlFor={`ws-responsibility-${workshop.id}`}
-                              >
-                                Tugas / tanggung jawab
-                              </label>
+                              >{uiText("Tugas / tanggung jawab")}</label>
                               <textarea
                                 id={`ws-responsibility-${workshop.id}`}
                                 className="dm-admin-input dm-ws-sup-textarea"
@@ -653,7 +610,7 @@ export default function WorkshopManager({
                                 onChange={(event) =>
                                   setResponsibility(event.target.value)
                                 }
-                                placeholder="Tuliskan tanggung jawab supervisor di workshop ini"
+                                placeholder={uiText("Tuliskan tanggung jawab supervisor di workshop ini")}
                                 rows={4}
                                 required
                                 disabled={busy}
@@ -670,16 +627,14 @@ export default function WorkshopManager({
                                     !responsibility.trim()
                                   }
                                 >
-                                  {busy ? "Menyimpan..." : "Simpan"}
+                                  {busy ? uiText("Menyimpan...") : uiText("Simpan")}
                                 </button>
                                 <button
                                   type="button"
                                   className="dm-admin-btn is-tonal"
                                   disabled={busy}
                                   onClick={closeSupervisorForm}
-                                >
-                                  Batal
-                                </button>
+                                >{uiText("Batal")}</button>
                               </div>
                             </form>
                           ) : (
@@ -697,12 +652,11 @@ export default function WorkshopManager({
                               }
                               onClick={() => openSupervisorForm(workshop.id)}
                             >
-                              <PlusIcon size={14} /> Tambah supervisor
-                            </button>
+                              <PlusIcon size={14} />{uiText(" Tambah supervisor")}</button>
                           )}
 
                           {supervisors.length === 0 && (
-                            <span>Belum ada akun supervisor aktif.</span>
+                            <span>{uiText("Belum ada akun supervisor aktif.")}</span>
                           )}
                         </>
                       )}
@@ -710,14 +664,14 @@ export default function WorkshopManager({
 
                     {error && (
                       <p className="dm-admin-inline-error" role="alert">
-                        {error}
+                        {uiText(error)}
                       </p>
                     )}
 
                     <p className="dm-ws-sup-note" role="status">
                       {busy
-                        ? "Menyimpan perubahan..."
-                        : "Klik Simpan untuk menyimpan tugas. Hapus langsung melepas supervisor dari workshop."}
+                        ? uiText("Menyimpan perubahan...")
+                        : uiText("Klik Simpan untuk menyimpan tugas. Hapus langsung melepas supervisor dari workshop.")}
                     </p>
                     </div>
                   </dialog>
@@ -730,13 +684,11 @@ export default function WorkshopManager({
         <li className="dm-ws-slot">
           {adding ? (
             <form className="dm-ws-tile is-form" onSubmit={submitNew}>
-              <label className="dm-ws-edit-label" htmlFor="ws-new-name">
-                Nama workshop baru
-              </label>
+              <label className="dm-ws-edit-label" htmlFor="ws-new-name">{uiText("Nama workshop baru")}</label>
               <input
                 id="ws-new-name"
                 className="dm-admin-input dm-ws-input"
-                placeholder="Contoh: Workshop 7"
+                placeholder={uiText("Contoh: Workshop 7")}
                 value={newName}
                 onChange={(event) => setNewName(event.target.value)}
                 autoFocus
@@ -746,16 +698,12 @@ export default function WorkshopManager({
                   type="submit"
                   className="dm-admin-btn is-primary"
                   disabled={busy}
-                >
-                  Simpan
-                </button>
+                >{uiText("Simpan")}</button>
                 <button
                   type="button"
                   className="dm-admin-btn is-tonal"
                   onClick={closeAdd}
-                >
-                  Batal
-                </button>
+                >{uiText("Batal")}</button>
               </div>
             </form>
           ) : (
@@ -763,11 +711,11 @@ export default function WorkshopManager({
               <span className="dm-ws-tile-plus">
                 <PlusIcon size={16} />
               </span>
-              <span className="dm-ws-tile-title">Tambah Workshop</span>
+              <span className="dm-ws-tile-title">{uiText("Tambah Workshop")}</span>
               <span className="dm-ws-tile-caption">
                 {workshops.length === 0
-                  ? "Belum ada workshop. Buat yang pertama di sini."
-                  : "Buat workshop baru untuk line produksi"}
+                  ? uiText("Belum ada workshop. Buat yang pertama di sini.")
+                  : uiText("Buat workshop baru untuk line produksi")}
               </span>
             </button>
           )}
@@ -775,7 +723,7 @@ export default function WorkshopManager({
       </ul>
       {error && supervisorWorkshopId === null ? (
         <p className="dm-admin-inline-error" role="alert">
-          {error}
+          {uiText(error)}
         </p>
       ) : null}
     </section>

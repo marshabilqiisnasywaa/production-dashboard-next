@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { labelWithDepartment } from "../../departments";
 import { IconCheckCircle } from "@/components/ui/icons";
 
@@ -20,6 +22,7 @@ export function MemberHeroBanner({
   workshopName,
   supervisorName,
 }: MemberHeroBannerProps) {
+  const { text: uiText } = useUiText();
   return (
     <section className="member-hero">
       <div>
@@ -54,13 +57,11 @@ export function MemberHeroBanner({
               borderRadius: "6px",
               border: "1px solid #e0e7ff",
             }}
-          >
-            Supervisor: <strong>{supervisorName}</strong>
+          >{uiText("Supervisor: ")}<strong>{supervisorName}</strong>
           </span>
         </div>
 
-        <h1 className="member-hero__title" style={{ fontSize: "18px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
-          Hallo, {name}
+        <h1 className="member-hero__title" style={{ fontSize: "18px", fontWeight: 700, color: "#0f172a", margin: 0 }}>{uiText("Hallo, ")}{name}
         </h1>
       </div>
 

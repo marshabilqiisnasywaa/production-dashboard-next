@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import type { ReactNode } from "react";
 
 interface FieldProps {
@@ -9,14 +11,15 @@ interface FieldProps {
 
 /** Label + control wrapper. For read-only values wrap the text in <div className="ui-field__value">. */
 export function Field({ label, htmlFor, children }: FieldProps) {
+  const { text: uiText } = useUiText();
   return (
     <div className="ui-field">
       {htmlFor ? (
         <label className="ui-field__label" htmlFor={htmlFor}>
-          {label}
+          {uiText(label)}
         </label>
       ) : (
-        <span className="ui-field__label">{label}</span>
+        <span className="ui-field__label">{uiText(label)}</span>
       )}
       {children}
     </div>

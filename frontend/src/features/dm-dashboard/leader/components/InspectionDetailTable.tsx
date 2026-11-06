@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useMemo, useState } from "react";
 import { IconDownload } from "@/components/ui/icons";
@@ -29,6 +31,7 @@ interface Props {
 }
 
 export function InspectionDetailTable({ rows }: Props) {
+  const { text: uiText } = useUiText();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [page, setPage] = useState(1);
@@ -50,12 +53,12 @@ export function InspectionDetailTable({ rows }: Props) {
   return (
     <div className="dml-detail">
       <div className="dml-detail__toolbar">
-        <h3>Detail Inspection</h3>
+        <h3>{uiText("Detail Inspection")}</h3>
         <div className="dml-detail__filters">
           <input
             className="ui-input"
             type="search"
-            placeholder="Cari tanggal, line, atau tipe"
+            placeholder={uiText("Cari tanggal, line, atau tipe")}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -65,15 +68,15 @@ export function InspectionDetailTable({ rows }: Props) {
           <select
             className="ui-select"
             value={status}
-            aria-label="Filter status"
+            aria-label={uiText("Filter status")}
             onChange={(e) => {
               setStatus(e.target.value as StatusFilter);
               setPage(1);
             }}
           >
-            <option value="all">Semua</option>
-            <option value="complete">Lengkap</option>
-            <option value="incomplete">Belum lengkap</option>
+            <option value="all">{uiText("Semua")}</option>
+            <option value="complete">{uiText("Lengkap")}</option>
+            <option value="incomplete">{uiText("Belum lengkap")}</option>
           </select>
           <button
             type="button"
@@ -81,8 +84,7 @@ export function InspectionDetailTable({ rows }: Props) {
             disabled={filtered.length === 0}
             onClick={() => downloadCsv("inspection-rate.csv", toCsv(filtered))}
           >
-            <IconDownload size={16} /> Export
-          </button>
+            <IconDownload size={16} />{uiText(" Export")}</button>
         </div>
       </div>
 
@@ -90,23 +92,21 @@ export function InspectionDetailTable({ rows }: Props) {
         <table className="dml-table">
           <thead>
             <tr>
-              <th>Tanggal</th>
-              <th>Line</th>
-              <th>Tipe</th>
+              <th>{uiText("Tanggal")}</th>
+              <th>{uiText("Line")}</th>
+              <th>{uiText("Tipe")}</th>
               {ROLE_COLUMNS.map((c) => (
-                <th key={c.key}>{c.label}</th>
+                <th key={c.key}>{uiText(c.label)}</th>
               ))}
-              <th className="is-num">Total</th>
-              <th className="is-num">Papercard</th>
-              <th>Inspection Rate</th>
+              <th className="is-num">{uiText("Total")}</th>
+              <th className="is-num">{uiText("Papercard")}</th>
+              <th>{uiText("Inspection Rate")}</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 && (
               <tr>
-                <td colSpan={10} className="dml-empty">
-                  Tidak ada data yang cocok dengan filter
-                </td>
+                <td colSpan={10} className="dml-empty">{uiText("Tidak ada data yang cocok dengan filter")}</td>
               </tr>
             )}
             {visible.map((r) => {
@@ -121,7 +121,7 @@ export function InspectionDetailTable({ rows }: Props) {
                     const s = STATUS_VIEW[r.statuses[c.key]];
                     return (
                       <td key={c.key}>
-                        <StatusChip tone={s.tone}>{s.label}</StatusChip>
+                        <StatusChip tone={s.tone}>{uiText(s.label)}</StatusChip>
                       </td>
                     );
                   })}

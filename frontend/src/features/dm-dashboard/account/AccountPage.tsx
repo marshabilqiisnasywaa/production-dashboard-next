@@ -1,4 +1,7 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -48,10 +51,11 @@ function PasswordField({
   autoComplete: string;
   invalid?: boolean;
 }) {
+  const { text: uiText } = useUiText();
   const [show, setShow] = useState(false);
   return (
     <div className="dml-acc__field">
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id}>{uiText(label)}</label>
       <div className="dml-acc__pw">
         <input
           id={id}
@@ -62,7 +66,7 @@ function PasswordField({
           aria-invalid={invalid ? true : undefined}
         />
         <button type="button" className="dml-acc__pwtoggle" aria-pressed={show} onClick={() => setShow((v) => !v)}>
-          {show ? "Sembunyikan" : "Lihat"}
+          {show ? uiText("Sembunyikan") : uiText("Lihat")}
         </button>
       </div>
     </div>
@@ -70,6 +74,7 @@ function PasswordField({
 }
 
 export default function AccountPage() {
+  const { text: uiText } = useUiText();
   const router = useRouter();
   const [state, setState] = useState<State>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -151,7 +156,7 @@ export default function AccountPage() {
       <main className="dml-acc" aria-busy="true">
         <div className="dml-acc__card dml-acc__state">
           <span className="dml-acc__spinner" aria-hidden="true" />
-          <p role="status">Memuat akun…</p>
+          <p role="status">{uiText("Memuat akun…")}</p>
         </div>
       </main>
     );
@@ -161,13 +166,11 @@ export default function AccountPage() {
     return (
       <main className="dml-acc">
         <div className="dml-acc__card dml-acc__state">
-          <h1 className="dml-acc__state-title">Akun belum bisa dimuat</h1>
+          <h1 className="dml-acc__state-title">{uiText("Akun belum bisa dimuat")}</h1>
           <p className="dml-acc__error" role="alert">
-            {state.message}
+            {uiText(state.message)}
           </p>
-          <button type="button" className="dml-acc__submit" onClick={() => setAttempt((n) => n + 1)}>
-            Coba lagi
-          </button>
+          <button type="button" className="dml-acc__submit" onClick={() => setAttempt((n) => n + 1)}>{uiText("Coba lagi")}</button>
         </div>
       </main>
     );
@@ -182,6 +185,7 @@ export default function AccountPage() {
   return (
     <main className="dml-acc">
       <div className="dml-acc__card">
+        <LanguageSwitcher />
         {/* ---------- Profile ---------- */}
         <header className="dml-acc__profile">
           <span className="dml-acc__avatar" aria-hidden="true">
@@ -189,38 +193,35 @@ export default function AccountPage() {
           </span>
           <div className="dml-acc__who">
             <h1>{displayName}</h1>
-            <p>NIK {me.username}</p>
+            <p>{uiText("NIK ")}{me.username}</p>
             <ul className="dml-acc__chips">
-              <li className="dml-acc__chip dml-acc__chip--role">{roleLabel}</li>
+              <li className="dml-acc__chip dml-acc__chip--role">{uiText(roleLabel)}</li>
               {me.kind === "admin" ? null : me.line ? (
-                <li className="dml-acc__chip">
-                  Lini {me.line.code} · {me.line.workshopName}
+                <li className="dml-acc__chip">{uiText("Lini ")}{me.line.code} · {me.line.workshopName}
                 </li>
               ) : (
-                <li className="dml-acc__chip dml-acc__chip--warn">Belum ditempatkan di lini</li>
+                <li className="dml-acc__chip dml-acc__chip--warn">{uiText("Belum ditempatkan di lini")}</li>
               )}
             </ul>
           </div>
         </header>
 
         {me.mustChangePassword ? (
-          <p className="dml-acc__notice" role="status">
-            Kamu masih memakai password awal. Ganti dulu sebelum memakai fitur lain.
-          </p>
+          <p className="dml-acc__notice" role="status">{uiText("Kamu masih memakai password awal. Ganti dulu sebelum memakai fitur lain.")}</p>
         ) : null}
         {notice ? (
           <p className="dml-acc__notice" role="status">
-            {notice}
+            {uiText(notice)}
           </p>
         ) : null}
 
         {/* ---------- Change password ---------- */}
         <form onSubmit={submit} noValidate>
-          <h2 className="dml-acc__title">Ganti password</h2>
+          <h2 className="dml-acc__title">{uiText("Ganti password")}</h2>
 
           <PasswordField
             id="pw-current"
-            label="Password saat ini"
+            label={uiText("Password saat ini")}
             value={current}
             onChange={setCurrent}
             autoComplete="current-password"
@@ -228,7 +229,7 @@ export default function AccountPage() {
           />
           <PasswordField
             id="pw-new"
-            label="Password baru"
+            label={uiText("Password baru")}
             value={next}
             onChange={setNext}
             autoComplete="new-password"
@@ -236,43 +237,37 @@ export default function AccountPage() {
           />
           <PasswordField
             id="pw-confirm"
-            label="Ulangi password baru"
+            label={uiText("Ulangi password baru")}
             value={confirm}
             onChange={setConfirm}
             autoComplete="new-password"
             invalid={!!error && !!next && next !== confirm}
           />
 
-          <ul className="dml-acc__hints" aria-label="Syarat password">
+          <ul className="dml-acc__hints" aria-label={uiText("Syarat password")}>
             <li className={lengthOk ? "is-ok" : ""}>
-              <CheckIcon /> Minimal 8 karakter
-            </li>
+              <CheckIcon />{uiText(" Minimal 8 karakter")}</li>
             <li className={matchOk ? "is-ok" : ""}>
-              <CheckIcon /> Konfirmasi sama dengan password baru
-            </li>
+              <CheckIcon />{uiText(" Konfirmasi sama dengan password baru")}</li>
           </ul>
 
           {error ? (
             <p className="dml-acc__error" role="alert">
-              {error}
+              {uiText(error)}
             </p>
           ) : null}
 
           <button type="submit" className="dml-acc__submit" disabled={busy}>
-            {busy ? "Menyimpan…" : "Ganti password"}
+            {busy ? uiText("Menyimpan…") : uiText("Ganti password")}
           </button>
         </form>
 
         {/* ---------- Actions ---------- */}
         <div className="dml-acc__actions">
           {me.mustChangePassword ? null : (
-            <Link href={homeFor(me)} className="dml-acc__btn">
-              Buka dashboard
-            </Link>
+            <Link href={homeFor(me)} className="dml-acc__btn">{uiText("Buka dashboard")}</Link>
           )}
-          <button type="button" className="dml-acc__btn dml-acc__btn--danger" onClick={signOut}>
-            Keluar
-          </button>
+          <button type="button" className="dml-acc__btn dml-acc__btn--danger" onClick={signOut}>{uiText("Keluar")}</button>
         </div>
       </div>
     </main>

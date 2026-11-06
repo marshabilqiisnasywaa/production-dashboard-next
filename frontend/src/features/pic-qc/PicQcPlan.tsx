@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useMemo } from "react";
 import { picAreaOptions, useRole } from "@/components/providers/RoleProvider";
 import { QC_PIC_NAME } from "@/features/pic-qc/QcPicContext";
@@ -7,6 +9,7 @@ import PicQcPlanSection from "@/features/pic-qc/PicQcPlanSection";
 import { CalendarDays, ClipboardList } from "lucide-react";
 
 export default function PicQcPlan() {
+  const { text: uiText } = useUiText();
   const plans = useQcPlans();
   const { role, picArea } = useRole();
   const canAdd = role === "PIC Area";
@@ -24,5 +27,5 @@ export default function PicQcPlan() {
     today: "text-emerald-700 font-bold!",
     total: "text-slate-800 font-bold!",
   };
-  return <div className="abnormality-page pic-page"><header className="qc-page-header"><div><div className="qc-kicker">REPORTS</div><h1 className="text-2xl font-bold tracking-tight text-slate-900">Daily Work Plans</h1><p>Daily work plan schedules for QC area.</p></div></header><div className="space-y-6"><section className="qc-kpi-grid abnormality-kpis pic-kpis">{summary.map((item) => <article key={item.label} className={`sq-kpi ${metricCardClass[item.tone]}`}><div className="sq-kpi-head flex justify-between items-start"><span>{item.label}</span><div className={`p-2.5 rounded-xl ${item.iconBox}`}><item.icon className="w-5 h-5" /></div></div><strong className={metricValueClass[item.tone]}>{item.value}</strong><p>{item.helper}</p></article>)}</section><PicQcPlanSection plans={plans} title="Daily Work Plans" editable={canAdd} blokDefault={blokDefault} picName={QC_PIC_NAME} showToolbar /></div></div>;
+  return <div className="abnormality-page pic-page"><header className="qc-page-header"><div><div className="qc-kicker">{uiText("REPORTS")}</div><h1 className="text-2xl font-bold tracking-tight text-slate-900">{uiText("Daily Work Plans")}</h1><p>{uiText("Daily work plan schedules for QC area.")}</p></div></header><div className="space-y-6"><section className="qc-kpi-grid abnormality-kpis pic-kpis">{summary.map((item) => <article key={item.label} className={`sq-kpi ${metricCardClass[item.tone]}`}><div className="sq-kpi-head flex justify-between items-start"><span>{uiText(item.label)}</span><div className={`p-2.5 rounded-xl ${item.iconBox}`}><item.icon className="w-5 h-5" /></div></div><strong className={metricValueClass[item.tone]}>{item.value}</strong><p>{item.helper}</p></article>)}</section><PicQcPlanSection plans={plans} title={uiText("Daily Work Plans")} editable={canAdd} blokDefault={blokDefault} picName={QC_PIC_NAME} showToolbar /></div></div>;
 }

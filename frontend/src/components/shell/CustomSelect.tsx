@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/shell/Icon";
 
@@ -20,6 +22,7 @@ function normalize(options: readonly (string | CustomSelectOption)[]): CustomSel
 }
 
 export default function CustomSelect({ value, defaultValue = "", options, onChange, ariaLabel }: CustomSelectProps) {
+  const { text: uiText } = useUiText();
   const normalized = normalize(options);
   const [internal, setInternal] = useState(defaultValue);
   const [open, setOpen] = useState(false);
@@ -54,7 +57,7 @@ export default function CustomSelect({ value, defaultValue = "", options, onChan
     <div ref={rootRef} style={{ position: "relative", display: "inline-block", minWidth: 120, maxWidth: "100%" }}>
       <button
         type="button"
-        aria-label={ariaLabel}
+        aria-label={uiText(ariaLabel)}
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => { setHighlight(Math.max(normalized.findIndex((item) => item.value === current), 0)); setOpen((state) => !state); }}
@@ -69,11 +72,11 @@ export default function CustomSelect({ value, defaultValue = "", options, onChan
         }}
         style={{ width: "100%", minHeight: 34, padding: "0 8px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, border: "1px solid var(--border)", borderRadius: 9, background: "var(--card)", color: "var(--text)", fontSize: 11, cursor: "pointer" }}
       >
-        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selected.label}</span>
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{uiText(selected.label)}</span>
         <Icon name="chevron" size={13} />
       </button>
       {open && (
-        <div role="listbox" aria-label={ariaLabel} style={{ position: "absolute", zIndex: 80, top: "calc(100% + 5px)", left: 0, minWidth: "100%", maxWidth: 260, maxHeight: 240, overflowY: "auto", padding: 5, border: "1px solid var(--border)", borderRadius: 10, background: "var(--card)", boxShadow: "var(--shadow)" }}>
+        <div role="listbox" aria-label={uiText(ariaLabel)} style={{ position: "absolute", zIndex: 80, top: "calc(100% + 5px)", left: 0, minWidth: "100%", maxWidth: 260, maxHeight: 240, overflowY: "auto", padding: 5, border: "1px solid var(--border)", borderRadius: 10, background: "var(--card)", boxShadow: "var(--shadow)" }}>
           {normalized.map((item, index) => (
             <button
               key={`${item.value}-${index}`}
@@ -84,7 +87,7 @@ export default function CustomSelect({ value, defaultValue = "", options, onChan
               onClick={() => pick(item.value)}
               style={{ width: "100%", minHeight: 31, padding: "0 8px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, border: 0, borderRadius: 7, background: index === highlight ? "rgba(var(--accent-rgb),.07)" : "transparent", color: item.value === current ? "var(--accent-2)" : "var(--text)", fontSize: 11, textAlign: "left", cursor: "pointer" }}
             >
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</span>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{uiText(item.label)}</span>
               {item.value === current && <b>✓</b>}
             </button>
           ))}

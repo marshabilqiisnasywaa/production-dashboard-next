@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useEffect, useMemo, useState } from "react";
 import {
   CartesianGrid,
@@ -44,9 +46,10 @@ function Sparkline({ success }: { success: boolean }) {
 type ServiceChartPoint = ServiceChartItem & { higherIsBetter: boolean };
 
 function ServiceTooltip({ active, payload, label, unit }: { active?: boolean; payload?: readonly { payload?: ServiceChartPoint }[]; label?: string; unit: string }) {
+  const { text: uiText } = useUiText();
   if (!active || !payload?.[0]?.payload) return null;
   const point = payload[0].payload;
-  return <div className="repair-tooltip"><strong>{label}</strong><div><span>Target</span><b>{point.target.toFixed(2)}{unit}</b></div><div><span>Actual</span><b>{point.actual.toFixed(2)}{unit}</b></div><div><span>Gap</span><b>{(point.actual - point.target).toFixed(2)}{unit}</b></div></div>;
+  return <div className="repair-tooltip"><strong>{uiText(label)}</strong><div><span>{uiText("Target")}</span><b>{point.target.toFixed(2)}{uiText(unit)}</b></div><div><span>{uiText("Actual")}</span><b>{point.actual.toFixed(2)}{uiText(unit)}</b></div><div><span>{uiText("Gap")}</span><b>{(point.actual - point.target).toFixed(2)}{uiText(unit)}</b></div></div>;
 }
 
 function ServiceStatusDot(props: { cx?: number; cy?: number; payload?: ServiceChartPoint }) {
@@ -68,6 +71,7 @@ function ServiceKpiCard({
   higherIsBetter?: boolean;
   onAsk?: (kpi: { label: string; value: number; target: number; higherIsBetter: boolean }) => void;
 }) {
+  const { text: uiText } = useUiText();
   const status = getStatus(item.value, item.target, item.target >= 90 || item.label.toLowerCase().includes("pass") || item.label.toLowerCase().includes("rate"));
   const good = status === "ok";
 
@@ -77,12 +81,12 @@ function ServiceKpiCard({
       onClick={() => onSelect(item.id)}
       style={{ textAlign: "left", cursor: "pointer" }}
     >
-      <div className="repair-kpi-top"><span>{item.label}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? "On Target" : "Off Target"}</span></div>
+      <div className="repair-kpi-top"><span>{uiText(item.label)}</span><span className={`repair-status ${good ? "good" : "bad"}`}>{good ? uiText("On Target") : uiText("Off Target")}</span></div>
       <strong className="text-2xl! font-bold!">{item.value.toFixed(1)}%</strong>
-      <p>Target: {item.target.toFixed(1)}%</p>
+      <p>{uiText("Target: ")}{item.target.toFixed(1)}%</p>
       {!good && onAsk && (
         <div className="pic-kpi-actions">
-          <button type="button" className="pic-ai-btn" onClick={(event) => { event.stopPropagation(); onAsk({ label: item.label, value: item.value, target: item.target, higherIsBetter: higherIsBetter ?? true }); }}>Ask AI</button>
+          <button type="button" className="pic-ai-btn" onClick={(event) => { event.stopPropagation(); onAsk({ label: item.label, value: item.value, target: item.target, higherIsBetter: higherIsBetter ?? true }); }}>{uiText("Ask AI")}</button>
         </div>
       )}
       <Sparkline success={good} />
@@ -113,6 +117,7 @@ function ServiceLineChart({
   unit?: string;
   selected: boolean;
 }) {
+  const { text: uiText } = useUiText();
   const [labels, setLabels] = useState(false);
   const [period, setPeriod] = useState<PeriodKey>("Week");
   const view = periodView(data.map((point) => point.label), data.map((point) => point.actual), period);
@@ -123,10 +128,10 @@ function ServiceLineChart({
     <article id={id} className={`repair-panel metric-chart ${selected ? "service-chart-card-active" : ""}`}>
       <div className="repair-card-head">
         <div>
-          <h2>{title}</h2>
-          <p>Actual performance vs target • 2025</p>
+          <h2>{uiText(title)}</h2>
+          <p>{uiText("Actual performance vs target • 2025")}</p>
         </div>
-        <div className="flex items-center justify-end gap-4"><label className="label-toggle flex items-center gap-2 text-xs text-slate-500 font-medium"><input type="checkbox" checked={labels} onChange={(event) => setLabels(event.target.checked)} /><span />Show labels</label><PeriodControl value={period} onChange={setPeriod} /></div>
+        <div className="flex items-center justify-end gap-4"><label className="label-toggle flex items-center gap-2 text-xs text-slate-500 font-medium"><input type="checkbox" checked={labels} onChange={(event) => setLabels(event.target.checked)} /><span />{uiText("Show labels")}</label><PeriodControl value={period} onChange={setPeriod} /></div>
       </div>
 
       <div className="line-chart-wrap service-chart-shell">
@@ -157,7 +162,7 @@ function ServiceLineChart({
             <Line
               type="monotone"
               dataKey="target"
-              name={targetLabel}
+              name={uiText(targetLabel)}
               stroke="var(--success)"
               strokeWidth={2}
               strokeDasharray="4 4"
@@ -167,7 +172,7 @@ function ServiceLineChart({
             <Line
               type="monotone"
               dataKey="actual"
-              name={actualLabel}
+              name={uiText(actualLabel)}
               stroke="var(--chart-1)"
               strokeWidth={2}
               dot={(props) => <ServiceStatusDot {...props} />}
@@ -178,32 +183,33 @@ function ServiceLineChart({
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <div className="metric-chart-footer"><strong>Target and actual for the selected period</strong><span>Actual values compared against defined standards</span></div>
+      <div className="metric-chart-footer"><strong>{uiText("Target and actual for the selected period")}</strong><span>{uiText("Actual values compared against defined standards")}</span></div>
     </article>
   );
 }
 
 function ServiceOverview() {
-  const [updatedAt, setUpdatedAt] = useState(() => new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+  const { text: uiText, locale: uiLocale } = useUiText();
+  const [updatedAt, setUpdatedAt] = useState(() => new Date().toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" }));
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const refresh = () => {
-    setUpdatedAt(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+    setUpdatedAt(new Date().toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" }));
   };
 
   return (
     <div className="qc-page-shell">
       <header className="qc-page-header">
         <div>
-          <div className="qc-kicker">Service</div>
-          <h1>Service Overview</h1>
+          <div className="qc-kicker">{uiText("Service")}</div>
+          <h1>{uiText("Service Overview")}</h1>
         </div>
         <div className="qc-toolbar">
           <div className="qc-live">
             <span className="live-dot" />
-            <span>Last updated: {updatedAt}</span>
+            <span>{uiText("Last updated: ")}{updatedAt}</span>
           </div>
-          <button className="qc-primary-button" onClick={refresh}>Reload</button>
+          <button className="qc-primary-button" onClick={refresh}>{uiText("Reload")}</button>
         </div>
       </header>
 
@@ -212,8 +218,8 @@ function ServiceOverview() {
           <article key={group.id} className="qc-card service-overview-card">
             <div className="qc-card-header compact">
               <div>
-                <h3>{group.title}</h3>
-                <p>{group.subtitle}</p>
+                <h3>{uiText(group.title)}</h3>
+                <p>{uiText(group.subtitle)}</p>
               </div>
             </div>
             <div className="service-group-kpis">
@@ -238,7 +244,8 @@ function ServiceOverview() {
 }
 
 function ServicePage({ pageKey }: { pageKey: ServicePageKey }) {
-  const [updatedAt, setUpdatedAt] = useState(() => new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+  const { text: uiText, locale: uiLocale } = useUiText();
+  const [updatedAt, setUpdatedAt] = useState(() => new Date().toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" }));
   const [selectedChart, setSelectedChart] = useState<string | null>(null);
   const [aiKpi, setAiKpi] = useState<{ label: string; value: number; target: number; higherIsBetter: boolean } | null>(null);
   const page = servicePages[pageKey];
@@ -301,16 +308,16 @@ function ServicePage({ pageKey }: { pageKey: ServicePageKey }) {
     <div className="pic-page">
       <div className="repair-header">
         <div>
-          <div className="repair-eyebrow">MONITORING • DEEP DIVE</div>
-          <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900">{page.title}</h1></div>
-          <p>{page.subtitle}</p>
+          <div className="repair-eyebrow">{uiText("MONITORING • DEEP DIVE")}</div>
+          <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900">{uiText(page.title)}</h1></div>
+          <p>{uiText(page.subtitle)}</p>
         </div>
         <div className="repair-actions">
           <div className="qc-live">
             <span className="live-dot" />
-            <span>Last updated: {updatedAt}</span>
+            <span>{uiText("Last updated: ")}{updatedAt}</span>
           </div>
-          <button className="qc-primary-button" onClick={() => setUpdatedAt(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }))}>Reload</button>
+          <button className="qc-primary-button" onClick={() => setUpdatedAt(new Date().toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" }))}>{uiText("Reload")}</button>
         </div>
       </div>
 
@@ -332,7 +339,7 @@ function ServicePage({ pageKey }: { pageKey: ServicePageKey }) {
           <div key={chart.id} className={`service-chart-slot ${index % 2 === 1 ? "service-chart-second" : ""}`}>
             <ServiceLineChart
               id={chart.id}
-              title={chart.title}
+              title={uiText(chart.title)}
               data={chart.data}
               targetValue={chart.target}
               targetLabel={chart.targetLabel}

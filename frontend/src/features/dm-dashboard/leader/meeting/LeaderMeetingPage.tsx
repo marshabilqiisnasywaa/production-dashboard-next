@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { departmentLabel } from "../../departments";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -45,6 +47,7 @@ interface SessionMeta {
 }
 
 export default function LeaderMeetingPage() {
+  const { text: uiText } = useUiText();
   const [currentUser, setCurrentUser] = useState<DmMe | null>(null);
   const [selectedLineId, setSelectedLineId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<number | null>(null);
@@ -411,16 +414,13 @@ export default function LeaderMeetingPage() {
           <Link
             href={LEADER_ROUTES.dashboard}
             style={{ color: "#0f766e", textDecoration: "none", fontWeight: 700 }}
-          >
-            ← Kembali ke Dashboard Leader
-          </Link>
+          >{uiText("← Kembali ke Dashboard Leader")}</Link>
           <span style={{ color: "#94a3b8" }}>/</span>
-          <span style={{ color: "#475569", fontWeight: 600 }}>DM Meeting Lini (During-Management)</span>
+          <span style={{ color: "#475569", fontWeight: 600 }}>{uiText("DM Meeting Lini (During-Management)")}</span>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span className="dms-pill dms-pill--supervisor" style={{ fontSize: "12px" }}>
-            Dilaporkan ke Supervisor: <strong>{currentUser?.supervisor || "Belum diatur admin"}</strong>
+          <span className="dms-pill dms-pill--supervisor" style={{ fontSize: "12px" }}>{uiText("Dilaporkan ke Supervisor: ")}<strong>{currentUser?.supervisor || uiText("Belum diatur admin")}</strong>
           </span>
           {currentUser?.lines && currentUser.lines.length > 1 ? (
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -446,8 +446,7 @@ export default function LeaderMeetingPage() {
               >
                 {currentUser.lines.map((l) => (
                   <option key={l.id} value={l.id}>
-                    📍 {l.name} ({l.code}) · Shift 1
-                  </option>
+                    📍 {l.name} ({l.code}{uiText(") · Shift 1")}</option>
                 ))}
               </select>
             </div>
@@ -463,8 +462,7 @@ export default function LeaderMeetingPage() {
                 fontWeight: 700,
               }}
             >
-              📍 {activeLineObj?.name || "Lini belum diatur"} ({activeLineObj?.code || "-"}) · Shift 1
-            </span>
+              📍 {activeLineObj?.name || uiText("Lini belum diatur")} ({activeLineObj?.code || "-"}{uiText(") · Shift 1")}</span>
           )}
         </div>
       </div>
@@ -496,19 +494,12 @@ export default function LeaderMeetingPage() {
                 padding: "2px 8px",
                 borderRadius: "6px",
               }}
-            >
-              AKUN LEADER
-            </span>
-            <span style={{ fontSize: "12.5px", color: "#64748b" }}>
-              Pemimpin Sesi: <strong>{currentUser?.name || "Leader"}</strong>
+            >{uiText("AKUN LEADER")}</span>
+            <span style={{ fontSize: "12.5px", color: "#64748b" }}>{uiText("Pemimpin Sesi: ")}<strong>{currentUser?.name || uiText("Leader")}</strong>
             </span>
           </div>
-          <h1 style={{ fontSize: "22px", fontWeight: 800, margin: 0, color: "#0f172a" }}>
-            Daily Management (DM) Meeting &amp; Evaluasi Lini
-          </h1>
-          <p style={{ margin: "4px 0 0", fontSize: "13.5px", color: "#64748b" }}>
-            Pelaksanaan sesi pertemuan harian sesuai jadwal lini ({sortedSessions.map((x) => x.scheduledTime).join(", ") || "belum diatur"}), presensi tim Face ID, stopwatch durasi meeting, serta modal action item &amp; notulensi kendala lini.
-          </p>
+          <h1 style={{ fontSize: "22px", fontWeight: 800, margin: 0, color: "#0f172a" }}>{uiText("Daily Management (DM) Meeting & Evaluasi Lini")}</h1>
+          <p style={{ margin: "4px 0 0", fontSize: "13.5px", color: "#64748b" }}>{uiText("Pelaksanaan sesi pertemuan harian sesuai jadwal lini (")}{sortedSessions.map((x) => x.scheduledTime).join(", ") || uiText("belum diatur")}{uiText("), presensi tim Face ID, stopwatch durasi meeting, serta modal action item & notulensi kendala lini.")}</p>
         </div>
 
         {/* Papercard Pre-Met Shortcut */}
@@ -529,7 +520,7 @@ export default function LeaderMeetingPage() {
           }}
         >
           <IconClipboardCheck size={16} />
-          <span>Buka Papercard 5M (Pre-Met)</span>
+          <span>{uiText("Buka Papercard 5M (Pre-Met)")}</span>
         </Link>
       </div>
 
@@ -551,7 +542,7 @@ export default function LeaderMeetingPage() {
           }}
         >
           <IconCheckCircle size={18} />
-          <span>{notice}</span>
+          <span>{uiText(notice)}</span>
         </div>
       )}
 
@@ -570,9 +561,7 @@ export default function LeaderMeetingPage() {
         }}
       >
         {sortedSessions.length === 0 && !loading && (
-          <span style={{ padding: "8px 14px", fontSize: "13px", color: "#64748b" }}>
-            Belum ada jadwal meeting untuk lini ini hari ini. Admin bisa mengaturnya di Papercard &amp; Meeting &gt; Jadwal Meeting.
-          </span>
+          <span style={{ padding: "8px 14px", fontSize: "13px", color: "#64748b" }}>{uiText("Belum ada jadwal meeting untuk lini ini hari ini. Admin bisa mengaturnya di Papercard & Meeting > Jadwal Meeting.")}</span>
         )}
         {sortedSessions.map((sDb) => {
           const isSelected = activeNumber === sDb.sessionNumber;
@@ -603,7 +592,7 @@ export default function LeaderMeetingPage() {
             >
               <IconClock size={15} />
               <span>
-                {label} ({sDb.scheduledTime})
+                {uiText(label)} ({sDb.scheduledTime})
               </span>
               {isDone ? (
                 <span
@@ -615,9 +604,7 @@ export default function LeaderMeetingPage() {
                     borderRadius: "4px",
                     fontWeight: 700,
                   }}
-                >
-                  ✓ Selesai
-                </span>
+                >{uiText("✓ Selesai")}</span>
               ) : isRunning ? (
                 <span
                   style={{
@@ -628,9 +615,7 @@ export default function LeaderMeetingPage() {
                     borderRadius: "4px",
                     fontWeight: 700,
                   }}
-                >
-                  ● Live
-                </span>
+                >{uiText("● Live")}</span>
               ) : (
                 <span
                   style={{
@@ -640,9 +625,7 @@ export default function LeaderMeetingPage() {
                     padding: "1px 6px",
                     borderRadius: "4px",
                   }}
-                >
-                  Standby
-                </span>
+                >{uiText("Standby")}</span>
               )}
             </button>
           );
@@ -678,15 +661,12 @@ export default function LeaderMeetingPage() {
                   padding: "2px 8px",
                   borderRadius: "6px",
                 }}
-              >
-                SESI {activeSessionMeta.number} HARI INI
-              </span>
-              <span style={{ fontSize: "13px", color: "#64748b" }}>
-                Jadwal: <strong>{activeSessionMeta.time} WIB</strong> · {activeSessionMeta.desc}
+              >{uiText("SESI ")}{activeSessionMeta.number}{uiText(" HARI INI")}</span>
+              <span style={{ fontSize: "13px", color: "#64748b" }}>{uiText("Jadwal: ")}<strong>{activeSessionMeta.time}{uiText(" WIB")}</strong> · {activeSessionMeta.desc}
               </span>
             </div>
             <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
-              {activeSessionMeta.label}
+              {uiText(activeSessionMeta.label)}
             </h2>
           </div>
 
@@ -728,7 +708,7 @@ export default function LeaderMeetingPage() {
                     }}
                   />
                 )}
-                {isTimerRunning ? "Meeting Berjalan" : "Durasi Meeting"}
+                {isTimerRunning ? uiText("Meeting Berjalan") : uiText("Durasi Meeting")}
               </div>
               <div
                 style={{
@@ -766,7 +746,7 @@ export default function LeaderMeetingPage() {
                 }}
               >
                 <span>⏹</span>
-                <span>End Meeting &amp; Input Summary</span>
+                <span>{uiText("End Meeting & Input Summary")}</span>
               </button>
             ) : activeSessionDb.status === "completed" ? (
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -783,9 +763,7 @@ export default function LeaderMeetingPage() {
                     fontSize: "13px",
                     fontWeight: 700,
                   }}
-                >
-                  ✓ Sesi Telah Selesai
-                </span>
+                >{uiText("✓ Sesi Telah Selesai")}</span>
                 <button
                   type="button"
                   onClick={() => setIsSummaryModalOpen(true)}
@@ -799,9 +777,7 @@ export default function LeaderMeetingPage() {
                     fontWeight: 600,
                     cursor: "pointer",
                   }}
-                >
-                  Lihat / Edit Summary
-                </button>
+                >{uiText("Lihat / Edit Summary")}</button>
                 <Link
                   href={LEADER_ROUTES.fiveWhy}
                   style={{
@@ -816,9 +792,7 @@ export default function LeaderMeetingPage() {
                     fontWeight: 700,
                     textDecoration: "none",
                   }}
-                >
-                  Buka 5Why &amp; PDCA
-                </Link>
+                >{uiText("Buka 5Why & PDCA")}</Link>
               </div>
             ) : (
               <button
@@ -837,7 +811,7 @@ export default function LeaderMeetingPage() {
                 }}
               >
                 <span>▶</span>
-                <span>Start Meeting Sesi Ini</span>
+                <span>{uiText("Start Meeting Sesi Ini")}</span>
               </button>
             )}
           </div>
@@ -854,9 +828,8 @@ export default function LeaderMeetingPage() {
                 <IconUsers size={20} />
               </div>
               <div>
-                <h2 className="dms-card-title">Presensi Anggota Tim Lini (Face ID)</h2>
-                <p className="dms-card-subtitle">
-                  Tingkat Kehadiran: <strong>{hadirCount} dari {teamMembers.length} Anggota ({teamMembers.length ? Math.round((hadirCount / teamMembers.length) * 100) : 0}%)</strong>
+                <h2 className="dms-card-title">{uiText("Presensi Anggota Tim Lini (Face ID)")}</h2>
+                <p className="dms-card-subtitle">{uiText("Tingkat Kehadiran: ")}<strong>{hadirCount}{uiText(" dari ")}{teamMembers.length}{uiText(" Anggota (")}{teamMembers.length ? Math.round((hadirCount / teamMembers.length) * 100) : 0}%)</strong>
                 </p>
               </div>
             </div>
@@ -877,18 +850,16 @@ export default function LeaderMeetingPage() {
                 alignItems: "center",
                 gap: "6px",
               }}
-              title="Verifikasi cepat semua anggota menggunakan Face ID"
+              title={uiText("Verifikasi cepat semua anggota menggunakan Face ID")}
             >
               <span>⚡</span>
-              <span>Scan Face ID Semua</span>
+              <span>{uiText("Scan Face ID Semua")}</span>
             </button>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {!loading && teamMembers.length === 0 && (
-              <div style={{ fontSize: "12.5px", color: "#94a3b8", fontStyle: "italic", textAlign: "center", padding: "24px 0" }}>
-                Belum ada member di lini ini. Minta admin menambahkan member lini terlebih dahulu.
-              </div>
+              <div style={{ fontSize: "12.5px", color: "#94a3b8", fontStyle: "italic", textAlign: "center", padding: "24px 0" }}>{uiText("Belum ada member di lini ini. Minta admin menambahkan member lini terlebih dahulu.")}</div>
             )}
             {teamMembers.map((member) => (
               <div
@@ -929,13 +900,10 @@ export default function LeaderMeetingPage() {
                             borderRadius: "4px",
                             fontWeight: 700,
                           }}
-                        >
-                          LEADER
-                        </span>
+                        >{uiText("LEADER")}</span>
                       )}
                     </div>
-                    <span style={{ fontSize: "12px", color: "#64748b" }}>
-                      NIK: {member.employeeId} · {member.deptLabel} · {member.position}
+                    <span style={{ fontSize: "12px", color: "#64748b" }}>{uiText("NIK: ")}{member.employeeId} · {uiText(member.deptLabel)} · {member.position}
                     </span>
                   </div>
                 </div>
@@ -960,7 +928,7 @@ export default function LeaderMeetingPage() {
                     }}
                   >
                     <span>📷</span>
-                    <span>{member.attendanceToday === "Hadir" ? "Face ID ✓" : "Scan Wajah"}</span>
+                    <span>{member.attendanceToday === "Hadir" ? uiText("Face ID ✓") : uiText("Scan Wajah")}</span>
                   </button>
 
                   {/* Manual Status Buttons */}
@@ -1028,20 +996,14 @@ export default function LeaderMeetingPage() {
                   <IconAlert size={18} />
                 </div>
                 <div>
-                  <h3 className="dms-card-title" style={{ fontSize: "15px" }}>
-                    Temuan Abnormal Papercard Pagi
-                  </h3>
-                  <p className="dms-card-subtitle" style={{ fontSize: "12px" }}>
-                    Wajib dibahas bersama anggota lini di sesi ini
-                  </p>
+                  <h3 className="dms-card-title" style={{ fontSize: "15px" }}>{uiText("Temuan Abnormal Papercard Pagi")}</h3>
+                  <p className="dms-card-subtitle" style={{ fontSize: "12px" }}>{uiText("Wajib dibahas bersama anggota lini di sesi ini")}</p>
                 </div>
               </div>
             </div>
 
             {ngSubmissions.length === 0 ? (
-              <div style={{ fontSize: "12.5px", color: "#94a3b8", fontStyle: "italic", textAlign: "center", padding: "16px 0" }}>
-                Tidak ada temuan abnormal pada papercard hari ini.
-              </div>
+              <div style={{ fontSize: "12.5px", color: "#94a3b8", fontStyle: "italic", textAlign: "center", padding: "16px 0" }}>{uiText("Tidak ada temuan abnormal pada papercard hari ini.")}</div>
             ) : (
               ngSubmissions.map((sub) => (
                 <div
@@ -1058,12 +1020,10 @@ export default function LeaderMeetingPage() {
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                    <strong>{departmentLabel(sub.department)} ({sub.employeeName || "Tanpa nama"}):</strong>
-                    <span style={{ fontSize: "10.5px", fontWeight: 700, background: "#fecdd3", padding: "1px 6px", borderRadius: "4px" }}>
-                      STATUS NG
-                    </span>
+                    <strong>{uiText(departmentLabel(sub.department))} ({sub.employeeName || uiText("Tanpa nama")}):</strong>
+                    <span style={{ fontSize: "10.5px", fontWeight: 700, background: "#fecdd3", padding: "1px 6px", borderRadius: "4px" }}>{uiText("STATUS NG")}</span>
                   </div>
-                  <p style={{ margin: "2px 0 0" }}>{sub.abnormalNotes || "Tidak ada catatan temuan."}</p>
+                  <p style={{ margin: "2px 0 0" }}>{sub.abnormalNotes || uiText("Tidak ada catatan temuan.")}</p>
                 </div>
               ))
             )}
@@ -1073,12 +1033,8 @@ export default function LeaderMeetingPage() {
           <div className="dms-card" style={{ padding: "18px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
               <div>
-                <h3 className="dms-card-title" style={{ fontSize: "15px" }}>
-                  Summary Masalah &amp; Action Item Sesi Ini
-                </h3>
-                <p className="dms-card-subtitle" style={{ fontSize: "12px" }}>
-                  Diisi oleh Leader saat End Meeting
-                </p>
+                <h3 className="dms-card-title" style={{ fontSize: "15px" }}>{uiText("Summary Masalah & Action Item Sesi Ini")}</h3>
+                <p className="dms-card-subtitle" style={{ fontSize: "12px" }}>{uiText("Diisi oleh Leader saat End Meeting")}</p>
               </div>
 
               <button
@@ -1094,15 +1050,11 @@ export default function LeaderMeetingPage() {
                   borderRadius: "6px",
                   cursor: "pointer",
                 }}
-              >
-                + Edit Summary
-              </button>
+              >{uiText("+ Edit Summary")}</button>
             </div>
 
             {summaryItems.length === 0 ? (
-              <div style={{ fontSize: "12.5px", color: "#94a3b8", fontStyle: "italic", textAlign: "center", padding: "16px 0" }}>
-                Belum ada notulensi. Klik &ldquo;End Meeting&rdquo; untuk menginput masalah, PIC, dan target waktu.
-              </div>
+              <div style={{ fontSize: "12.5px", color: "#94a3b8", fontStyle: "italic", textAlign: "center", padding: "16px 0" }}>{uiText("Belum ada notulensi. Klik “End Meeting” untuk menginput masalah, PIC, dan target waktu.")}</div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {summaryItems.map((item, idx) => (
@@ -1120,12 +1072,10 @@ export default function LeaderMeetingPage() {
                       ⚠️ {item.problem}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "11.5px", color: "#64748b" }}>
-                      <span>
-                        PIC: <strong style={{ color: "#0f766e" }}>{item.picName}</strong>
+                      <span>{uiText("PIC: ")}<strong style={{ color: "#0f766e" }}>{item.picName}</strong>
                       </span>
                       <span>•</span>
-                      <span>
-                        Due Date: <strong style={{ color: "#b45309" }}>{item.dueDate}</strong>
+                      <span>{uiText("Due Date: ")}<strong style={{ color: "#b45309" }}>{item.dueDate}</strong>
                       </span>
                     </div>
                   </div>
@@ -1174,12 +1124,9 @@ export default function LeaderMeetingPage() {
               }}
             >
               <div>
-                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
-                  Input Summary &amp; Action Item {activeSessionMeta?.label}
+                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>{uiText("Input Summary & Action Item ")}{uiText(activeSessionMeta?.label)}
                 </h3>
-                <span style={{ fontSize: "12px", color: "#64748b" }}>
-                  Durasi Meeting: <strong>{formatTimer(timerSeconds)}</strong> · Hanya diisi oleh Leader
-                </span>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>{uiText("Durasi Meeting: ")}<strong>{formatTimer(timerSeconds)}</strong>{uiText(" · Hanya diisi oleh Leader")}</span>
               </div>
               <button
                 type="button"
@@ -1198,9 +1145,7 @@ export default function LeaderMeetingPage() {
 
             {/* Modal Body: Problems, PIC, Due Date */}
             <div style={{ padding: "20px", maxHeight: "65vh", overflowY: "auto" }}>
-              <div style={{ marginBottom: "14px", fontSize: "13px", color: "#475569" }}>
-                Catat poin kendala, penanggung jawab (PIC), dan batas waktu tindak lanjut dari sesi meeting ini:
-              </div>
+              <div style={{ marginBottom: "14px", fontSize: "13px", color: "#475569" }}>{uiText("Catat poin kendala, penanggung jawab (PIC), dan batas waktu tindak lanjut dari sesi meeting ini:")}</div>
 
               {summaryItems.map((item, idx) => (
                 <div
@@ -1214,8 +1159,7 @@ export default function LeaderMeetingPage() {
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f766e" }}>
-                      Poin Masalah #{idx + 1}
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f766e" }}>{uiText("Poin Masalah #")}{idx + 1}
                     </span>
                     {summaryItems.length > 1 && (
                       <button
@@ -1229,16 +1173,12 @@ export default function LeaderMeetingPage() {
                           cursor: "pointer",
                           fontWeight: 600,
                         }}
-                      >
-                        Hapus
-                      </button>
+                      >{uiText("Hapus")}</button>
                     )}
                   </div>
 
                   <div style={{ marginBottom: "8px" }}>
-                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "3px" }}>
-                      Masalah / Kendala:
-                    </label>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "3px" }}>{uiText("Masalah / Kendala:")}</label>
                     <input
                       type="text"
                       value={item.problem}
@@ -1248,7 +1188,7 @@ export default function LeaderMeetingPage() {
                           prev.map((it, i) => (i === idx ? { ...it, problem: val } : it))
                         );
                       }}
-                      placeholder="Contoh: Suhu solder station #4 berfluktuasi..."
+                      placeholder={uiText("Contoh: Suhu solder station #4 berfluktuasi...")}
                       style={{
                         width: "100%",
                         padding: "8px 12px",
@@ -1262,9 +1202,7 @@ export default function LeaderMeetingPage() {
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                     <div>
-                      <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "3px" }}>
-                        PIC (Penanggung Jawab):
-                      </label>
+                      <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "3px" }}>{uiText("PIC (Penanggung Jawab):")}</label>
                       <select
                         value={item.picEmployeeNo}
                         onChange={(e) => {
@@ -1287,10 +1225,10 @@ export default function LeaderMeetingPage() {
                           background: "#ffffff",
                         }}
                       >
-                        <option value="">Pilih PIC</option>
+                        <option value="">{uiText("Pilih PIC")}</option>
                         {teamMembers.map((m) => (
                           <option key={m.id} value={m.employeeId}>
-                            {m.name} ({m.deptLabel})
+                            {m.name} ({uiText(m.deptLabel)})
                           </option>
                         ))}
                       </select>
@@ -1299,9 +1237,7 @@ export default function LeaderMeetingPage() {
 
 
                     <div>
-                      <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "3px" }}>
-                        Due Date / Target Waktu:
-                      </label>
+                      <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "3px" }}>{uiText("Due Date / Target Waktu:")}</label>
                       <input
                         type="text"
                         value={item.dueDate}
@@ -1311,7 +1247,7 @@ export default function LeaderMeetingPage() {
                             prev.map((it, i) => (i === idx ? { ...it, dueDate: val } : it))
                           );
                         }}
-                        placeholder="Contoh: 12:00 WIB"
+                        placeholder={uiText("Contoh: 12:00 WIB")}
                         style={{
                           width: "100%",
                           padding: "8px 12px",
@@ -1347,9 +1283,7 @@ export default function LeaderMeetingPage() {
                   fontWeight: 600,
                   cursor: "pointer",
                 }}
-              >
-                + Tambah Poin Masalah Lain
-              </button>
+              >{uiText("+ Tambah Poin Masalah Lain")}</button>
             </div>
 
             {/* Modal Footer */}
@@ -1377,9 +1311,7 @@ export default function LeaderMeetingPage() {
                   cursor: "pointer",
                   fontWeight: 600,
                 }}
-              >
-                Batal
-              </button>
+              >{uiText("Batal")}</button>
               <button
                 type="button"
                 onClick={handleSaveSummary}
@@ -1390,9 +1322,7 @@ export default function LeaderMeetingPage() {
                   borderRadius: "8px",
                   fontWeight: 700,
                 }}
-              >
-                Simpan Notulensi &amp; Selesaikan Sesi
-              </button>
+              >{uiText("Simpan Notulensi & Selesaikan Sesi")}</button>
             </div>
           </div>
         </div>
@@ -1431,12 +1361,8 @@ export default function LeaderMeetingPage() {
           >
             {/* Viewfinder Header */}
             <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
-              <div style={{ fontSize: "11px", fontWeight: 700, color: "#14b8a6", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                AI Biometric Scanner
-              </div>
-              <h3 style={{ fontSize: "16px", fontWeight: 700, margin: "2px 0 0" }}>
-                Verifikasi Face ID Anggota
-              </h3>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "#14b8a6", letterSpacing: "0.08em", textTransform: "uppercase" }}>{uiText("AI Biometric Scanner")}</div>
+              <h3 style={{ fontSize: "16px", fontWeight: 700, margin: "2px 0 0" }}>{uiText("Verifikasi Face ID Anggota")}</h3>
             </div>
 
             {/* Viewfinder Camera Box */}
@@ -1506,23 +1432,16 @@ export default function LeaderMeetingPage() {
                 <div style={{ fontSize: "16px", fontWeight: 700, color: "#f8fafc" }}>
                   {faceIdTarget.name}
                 </div>
-                <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>
-                  NIK: {faceIdTarget.employeeId} · {faceIdTarget.deptLabel}
+                <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>{uiText("NIK: ")}{faceIdTarget.employeeId} · {uiText(faceIdTarget.deptLabel)}
                 </div>
 
                 <div style={{ marginTop: "10px" }}>
                   {faceIdStatus === "scanning" ? (
-                    <span style={{ fontSize: "12px", color: "#38bdf8", fontWeight: 600 }}>
-                      Memindai kontur wajah anggota...
-                    </span>
+                    <span style={{ fontSize: "12px", color: "#38bdf8", fontWeight: 600 }}>{uiText("Memindai kontur wajah anggota...")}</span>
                   ) : faceIdStatus === "matched" ? (
-                    <span style={{ fontSize: "12px", color: "#fde047", fontWeight: 700 }}>
-                      Wajah Cocok! Memvalidasi database...
-                    </span>
+                    <span style={{ fontSize: "12px", color: "#fde047", fontWeight: 700 }}>{uiText("Wajah Cocok! Memvalidasi database...")}</span>
                   ) : (
-                    <span style={{ fontSize: "12.5px", color: "#34d399", fontWeight: 700 }}>
-                      ✓ Face ID Terverifikasi ({faceIdConfidence}%)! Presensi Hadir.
-                    </span>
+                    <span style={{ fontSize: "12.5px", color: "#34d399", fontWeight: 700 }}>{uiText("✓ Face ID Terverifikasi (")}{faceIdConfidence}{uiText("%)! Presensi Hadir.")}</span>
                   )}
                 </div>
               </div>
@@ -1545,7 +1464,7 @@ export default function LeaderMeetingPage() {
                   cursor: "pointer",
                 }}
               >
-                {faceIdStatus === "verified" ? "Selesai & Tutup" : "Batal"}
+                {faceIdStatus === "verified" ? uiText("Selesai & Tutup") : uiText("Batal")}
               </button>
             </div>
           </div>

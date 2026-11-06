@@ -27,13 +27,15 @@ export function countByStatus(rows: ProblemRow[]): Record<ProblemFilter, number>
   };
 }
 
-export function formatOverdue(ms: number): string {
+export function formatOverdue(ms: number, locale = "id-ID"): string {
   const min = Math.max(1, Math.round(ms / 60_000));
-  if (min < 60) return `${min} menit`;
+  const number = (value: number, unit: "minute" | "hour" | "day") =>
+    new Intl.NumberFormat(locale, { style: "unit", unit, unitDisplay: "long" }).format(value);
+  if (min < 60) return number(min, "minute");
   const hours = Math.round(min / 60);
-  if (hours < 24) return `${hours} jam`;
-  return `${Math.round(hours / 24)} hari`;
+  if (hours < 24) return number(hours, "hour");
+  return number(Math.round(hours / 24), "day");
 }
 
-export const formatMeetingDate = (date: string) =>
-  new Date(`${date}T00:00:00`).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+export const formatMeetingDate = (date: string, locale = "id-ID") =>
+  new Date(`${date}T00:00:00`).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });

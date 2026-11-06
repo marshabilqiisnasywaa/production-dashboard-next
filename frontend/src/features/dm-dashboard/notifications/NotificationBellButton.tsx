@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -27,6 +29,7 @@ export function NotificationBellButton({
   lines,
   extraNotifications,
 }: NotificationBellButtonProps) {
+  const { text: uiText } = useUiText();
   const [isOpen, setIsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -80,8 +83,8 @@ export function NotificationBellButton({
             markAllAsRead();
           }
         }}
-        aria-label="Notifikasi Pengingat"
-        title="Notifikasi Pengingat Papercard & Meeting"
+        aria-label={uiText("Notifikasi Pengingat")}
+        title={uiText("Notifikasi Pengingat Papercard & Meeting")}
       >
         <IconBell size={18} />
         {notifications.length > 0 && (
@@ -97,9 +100,9 @@ export function NotificationBellButton({
           {/* Popover Header */}
           <div className="dm-notif-head">
             <div className="dm-notif-head-title">
-              <span>Pengingat & Notifikasi</span>
+              <span>{uiText("Pengingat & Notifikasi")}</span>
               {notifications.length > 0 && (
-                <span className="dm-notif-head-pill">{notifications.length} Aktif</span>
+                <span className="dm-notif-head-pill">{notifications.length}{uiText(" Aktif")}</span>
               )}
             </div>
             <div className="dm-notif-head-actions">
@@ -111,7 +114,7 @@ export function NotificationBellButton({
                     setIsOpen(false);
                     setIsSettingsOpen(true);
                   }}
-                  title="Pengaturan waktu pengingat (Admin)"
+                  title={uiText("Pengaturan waktu pengingat (Admin)")}
                 >
                   <Settings size={14} strokeWidth={1.8} />
                 </button>
@@ -123,10 +126,8 @@ export function NotificationBellButton({
           <div className="dm-notif-list">
             {notifications.length === 0 ? (
               <div className="dm-notif-empty">
-                <div className="dm-notif-empty-title">Tidak Ada Notifikasi</div>
-                <div className="dm-notif-empty-desc">
-                  Notifikasi baru akan muncul di sini.
-                </div>
+                <div className="dm-notif-empty-title">{uiText("Tidak Ada Notifikasi")}</div>
+                <div className="dm-notif-empty-desc">{uiText("Notifikasi baru akan muncul di sini.")}</div>
               </div>
             ) : (
               notifications.map((item) => {
@@ -143,7 +144,7 @@ export function NotificationBellButton({
                     <div className="dm-notif-item-top">
                       <div className="dm-notif-item-tags">
                         <span className="dm-notif-status-badge">
-                          {isLate ? "TELAT" : isReminder ? "PENGINGAT" : "INFO"}
+                          {isLate ? uiText("TELAT") : isReminder ? uiText("PENGINGAT") : uiText("INFO")}
                         </span>
                         <span
                           className="dm-notif-type-label"
@@ -152,37 +153,37 @@ export function NotificationBellButton({
                           {item.type === "meeting" ? (
                             <>
                               <Users size={12} strokeWidth={1.8} />
-                              <span>Meeting</span>
+                              <span>{uiText("Meeting")}</span>
                             </>
                           ) : item.type === "escalation" ? (
                             <>
                               <TriangleAlert size={12} strokeWidth={1.8} />
-                              <span>Eskalasi</span>
+                              <span>{uiText("Eskalasi")}</span>
                             </>
                           ) : (
                             <>
                               <ClipboardCheck size={12} strokeWidth={1.8} />
-                              <span>Papercard</span>
+                              <span>{uiText("Papercard")}</span>
                             </>
                           )}
                         </span>
                       </div>
                       <div className="dm-notif-item-meta">
-                        {item.timeLabel && <span className="dm-notif-time">{item.timeLabel}</span>}
+                        {item.timeLabel && <span className="dm-notif-time">{uiText(item.timeLabel)}</span>}
                         <button
                           type="button"
                           className="dm-notif-dismiss"
                           onClick={() => dismissNotification(item.id)}
-                          title="Tutup pengingat ini"
-                          aria-label="Tutup pengingat"
+                          title={uiText("Tutup pengingat ini")}
+                          aria-label={uiText("Tutup pengingat")}
                         >
                           &times;
                         </button>
                       </div>
                     </div>
 
-                    <h4 className="dm-notif-title">{item.title}</h4>
-                    <p className="dm-notif-msg">{item.message}</p>
+                    <h4 className="dm-notif-title">{uiText(item.title)}</h4>
+                    <p className="dm-notif-msg">{uiText(item.message)}</p>
 
                     {item.actionLabel && item.actionUrl && (
                       <div className="dm-notif-action-row">
@@ -191,7 +192,7 @@ export function NotificationBellButton({
                           className="dm-notif-action-btn"
                           onClick={() => setIsOpen(false)}
                         >
-                          <span>{item.actionLabel}</span>
+                          <span>{uiText(item.actionLabel)}</span>
                           <span>&rarr;</span>
                         </Link>
                       </div>
@@ -214,7 +215,7 @@ export function NotificationBellButton({
                 }}
               >
                 <Settings size={14} strokeWidth={1.8} />
-                <span>Atur Pengingat</span>
+                <span>{uiText("Atur Pengingat")}</span>
               </button>
             </div>
           )}

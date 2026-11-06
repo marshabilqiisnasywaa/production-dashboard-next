@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 interface PaginationProps {
   page: number; // 1-based
   pageSize: number;
@@ -21,14 +23,14 @@ export function Pagination({
   onPageChange,
   onPageSizeChange,
 }: PaginationProps) {
+  const { text: uiText } = useUiText();
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
 
   return (
     <div className="ui-pagination">
-      <span className="ui-pagination__info">
-        Menampilkan {from}–{to} dari {total}
+      <span className="ui-pagination__info">{uiText("Menampilkan ")}{from}–{to}{uiText(" dari ")}{total}
       </span>
       <div className="ui-pagination__controls">
         {pageWindow(page, pageCount).map((p) => (
@@ -45,13 +47,12 @@ export function Pagination({
         <select
           className="ui-select"
           value={pageSize}
-          aria-label="Jumlah baris per halaman"
+          aria-label={uiText("Jumlah baris per halaman")}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
         >
           {pageSizeOptions.map((s) => (
             <option key={s} value={s}>
-              {s}/page
-            </option>
+              {uiText(s)}{uiText("/page")}</option>
           ))}
         </select>
       </div>

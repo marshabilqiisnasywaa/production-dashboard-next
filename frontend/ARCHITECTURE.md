@@ -19,24 +19,49 @@ environment, so invoke pnpm through `corepack pnpm@10.34.3` explicitly.
 
 ## Rendering model
 
-`src/app/layout.tsx` renders `<ClientAppShell />` next to the page children. Every route page
-except the redirect stubs returns `null`, so the shell is the whole UI.
+`src/app/layout.tsx` wraps page children in the shared `LanguageProvider`. Shell routes
+render `ClientAppShell`; DM pages render their own interfaces outside that shell.
 
 ```
 src/app/layout.tsx
-  └── ClientAppShell          "use client"
-        ├── ThemeProvider     dark mode, defaults to light on every reload
-        ├── LanguageProvider  ID / EN, defaults to ID on every reload
-        └── AppShell          reads usePathname(), derives the active nav key
-              ├── SidebarNav
-              ├── ShellTopbar
-              ├── ShellContent
-              └── CommandPalette
+  └── LanguageProvider       ID / EN, defaults to ID, restores the saved choice
+        └── page children
+              └── ClientAppShell (shell routes)
+                    ├── ThemeProvider
+                    ├── DisplayModeProvider
+                    ├── RoleProvider
+                    └── AppShell
+                          ├── SidebarNav
+                          ├── ShellTopbar
+                          ├── ShellContent
+                          └── CommandPalette
 ```
 
 `ClientAppShell` computes `activeForPath(pathname)` from the pathname and passes it to
 `AppShell` as `initialActive`. From then on the shell keeps `active` in state, so navigation
 inside a dashboard can switch views without touching the URL.
+
+## Interface languages
+
+`src/locales/i18n.ts` registers bundled Indonesian and English dictionaries. `common.json`
+holds shared labels; `auth.json` holds login text. Each `LanguageProvider` creates its own
+i18next instance, so server renders do not share mutable language state. Existing
+`useLanguage()` callers and `react-i18next` consumers use the same provider.
+
+The first render uses Indonesian. After hydration, the provider restores a supported
+choice from the `production-dashboard.language` localStorage key and updates the HTML
+language. Language changes work in memory when browser storage is unavailable.
+
+The first translated screen is `/dm-dashboard/masuk`, including validation, common login
+errors, the session-expiry notice, and the browser title. Other screens still use their
+existing text. No translation API is called at runtime.
+
+To add Simplified Chinese, add matching `zh-CN/common.json` and `zh-CN/auth.json` files,
+then register the locale in both `appLanguages` and the resources in `src/locales/i18n.ts`.
+Add it to any language menus that still list options directly, such as `ShellTopbar`.
+Keep product names and identifiers such as OPPO, DM Digital, NIK, Papercard, and Abnormal
+unchanged unless the product owner supplies a translated term. New UI text needs a key
+and a translation in each supported dictionary.
 
 ## Navigation
 

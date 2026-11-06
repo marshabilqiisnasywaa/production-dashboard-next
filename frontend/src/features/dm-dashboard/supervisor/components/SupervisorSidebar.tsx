@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import {
   IconAlert,
@@ -23,6 +25,7 @@ export function SupervisorSidebar({
   escalationCount,
   canHostWorkshopMeeting,
 }: SupervisorSidebarProps) {
+  const { text: uiText } = useUiText();
   const sections: SidebarSection[] = [
     {
       items: [
@@ -104,7 +107,7 @@ export function SupervisorSidebar({
           <span className="dml-logo">
             <IconGauge size={22} />
           </span>
-          <strong>DM Digital</strong>
+          <strong>{uiText("DM Digital")}</strong>
         </>
       }
       sections={sections}

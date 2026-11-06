@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { parentForKey } from "@/config/navigation";
 import Icon from "@/components/shell/Icon";
 import type { ShellPage } from "@/components/shell/shellPage";
@@ -31,17 +33,18 @@ export default function SidebarNav({
   onSelect,
   onToggleMenu,
 }: SidebarNavProps) {
+  const { text: uiText } = useUiText();
   const { active } = page;
 
   return (
     <>
-      {mobileOpen && <button className="sheet-overlay" aria-label="Close navigation" onClick={onCloseMobile} />}
+      {mobileOpen && <button className="sheet-overlay" aria-label={uiText("Close navigation")} onClick={onCloseMobile} />}
       <aside className={`sidebar ${mobileOpen ? "sheet-open" : ""}`}>
-        <button className="logo" onClick={onExpand} data-tooltip="OPPO workspace">
+        <button className="logo" onClick={onExpand} data-tooltip={uiText("OPPO workspace")}>
           <img
             className="brand-image sidebar-copy"
             src={brandLogo}
-            alt="OPPO"
+            alt={uiText("OPPO")}
             onError={(event) => {
               if (event.currentTarget.src !== oppoLogoDark) {
                 event.currentTarget.src = oppoLogoDark;
@@ -53,7 +56,7 @@ export default function SidebarNav({
           <img
             className="ollie-image"
             src={ollieImage}
-            alt="Ollie"
+            alt={uiText("Ollie")}
             onError={(event) => {
               event.currentTarget.style.display = "none";
             }}
@@ -63,7 +66,7 @@ export default function SidebarNav({
 
         <nav>
           {groups.map((group) => <div className={`nav-group ${group.title === "MANAGEMENT" ? "management" : ""}`} key={group.title}>
-            <p>{group.title}</p>
+            <p>{uiText(group.title)}</p>
             {group.items.map((item) => {
               const parent = parentForKey(active);
               const isActiveParent = parent
@@ -75,20 +78,20 @@ export default function SidebarNav({
 
               return (
                 <div className="nav-entry" key={item.label}>
-                  <button data-tooltip={item.label} className={btnClass} onClick={() => {
+                  <button data-tooltip={uiText(item.label)} className={btnClass} onClick={() => {
                     onSelect(item.key);
                     if (item.children) {
                       onToggleMenu(item.label);
                     }
                   }}>
-                    <Icon name={item.icon} /><span className="sidebar-copy">{item.label}</span>
+                    <Icon name={item.icon} /><span className="sidebar-copy">{uiText(item.label)}</span>
                     {item.badge && <b>{item.badge}</b>}
                     {item.children && <Icon name="chevron" size={13} />}
                   </button>
                   {item.children && isOpen && expanded && (
                     <div className="submenu">
                       {item.children.map((child) => (
-                        <button key={child.label} className={child.currentWhenActive !== false && child.key === active ? "current" : ""} onClick={() => onSelect(child.key)}>{child.label}</button>
+                        <button key={child.label} className={child.currentWhenActive !== false && child.key === active ? "current" : ""} onClick={() => onSelect(child.key)}>{uiText(child.label)}</button>
                       ))}
                     </div>
                   )}
@@ -99,8 +102,8 @@ export default function SidebarNav({
         </nav>
 
         <div className="sidebar-foot">
-          <button className="support-item" data-tooltip="Help & Support"><Icon name="help" /><span className="sidebar-copy">Help & Support</span></button>
-          <div className="version sidebar-copy">MANUFLOW <span>v2.4.0</span></div>
+          <button className="support-item" data-tooltip={uiText("Help & Support")}><Icon name="help" /><span className="sidebar-copy">{uiText("Help & Support")}</span></button>
+          <div className="version sidebar-copy">{uiText("MANUFLOW ")}<span>{uiText("v2.4.0")}</span></div>
         </div>
       </aside>
     </>

@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import CustomSelect from "@/components/shell/CustomSelect";
 import { useMemo, useState } from "react";
 import {
@@ -67,20 +69,21 @@ function PageHeader({
   categoryFilter: string;
   onCategoryFilterChange: (value: string) => void;
 }) {
+  const { text: uiText } = useUiText();
   return (
     <header className="qc-page-header packing-page-header">
       <div>
-        <div className="qc-kicker">{eyebrow}</div>
-        <h1>{title}</h1>
-        <p>{description}</p>
+        <div className="qc-kicker">{uiText(eyebrow)}</div>
+        <h1>{uiText(title)}</h1>
+        <p>{uiText(description)}</p>
       </div>
       <div className="packing-toolbar">
         <label className="packing-filter-field">
-          <span>Time</span>
+          <span>{uiText("Time")}</span>
           <CustomSelect value={timeFilter} options={packingTimeOptions} onChange={(next) => onTimeFilterChange(next)} />
         </label>
         <label className="packing-filter-field">
-          <span>Category</span>
+          <span>{uiText("Category")}</span>
           <CustomSelect value={categoryFilter} options={packingCategoryOptions} onChange={(next) => onCategoryFilterChange(next)} />
         </label>
       </div>
@@ -103,12 +106,13 @@ function KpiCard({
   accent?: "green" | "neutral";
   onClick?: () => void;
 }) {
+  const { text: uiText } = useUiText();
   const toneClass = accent === "green" ? "repair-status good" : "repair-status";
   return (
     <button type="button" className="qc-kpi-card packing-kpi-card" onClick={onClick}>
       <div className="packing-kpi-head">
-        <span className="kpi-label">{label}</span>
-        {status ? <span className={toneClass}>{status}</span> : null}
+        <span className="kpi-label">{uiText(label)}</span>
+        {status ? <span className={toneClass}>{uiText(status)}</span> : null}
       </div>
       <strong>{value}</strong>
       <div className="kpi-unit">{detail}</div>
@@ -125,12 +129,13 @@ function ChartCard({
   subtitle: string;
   children: React.ReactNode;
 }) {
+  const { text: uiText } = useUiText();
   return (
     <article className="qc-card packing-chart-card">
       <div className="qc-card-header compact">
         <div>
-          <h3>{title}</h3>
-          <p>{subtitle}</p>
+          <h3>{uiText(title)}</h3>
+          <p>{uiText(subtitle)}</p>
         </div>
       </div>
       {children}
@@ -151,6 +156,7 @@ function formatMetric(value: number) {
 }
 
 export default function PackingDashboard() {
+  const { text: uiText } = useUiText();
   const [timeFilter, setTimeFilter] = useState("Yesterday");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [selectedModel, setSelectedModel] = useState<(typeof packingModelTabs)[number]>("ALL");
@@ -251,9 +257,9 @@ export default function PackingDashboard() {
   return (
     <div className="packing-page">
       <PageHeader
-        title="Packing Area Monitoring"
+        title={uiText("Packing Area Monitoring")}
         eyebrow="PACKING"
-        description="Track output, NG rate, and defect concentration across packing lines."
+        description={uiText("Track output, NG rate, and defect concentration across packing lines.")}
         timeFilter={timeFilter}
         onTimeFilterChange={setTimeFilter}
         categoryFilter={categoryFilter}
@@ -261,14 +267,14 @@ export default function PackingDashboard() {
       />
 
       <div className="packing-kpi-grid">
-        <KpiCard label="NG Rate" value={summary.ngRate} detail="Overall NG %" status={Number(summary.ngRate.replace("%", "")) > 5 ? "Off Target" : "On Target"} accent={Number(summary.ngRate.replace("%", "")) > 5 ? "neutral" : "green"} />
-        <KpiCard label="NG Total" value={formatMetric(summary.ngTotal)} detail="Total NG cases" />
-        <KpiCard label="Output Total" value={formatMetric(summary.outputTotal)} detail="Packed output" />
-        <KpiCard label="Warehouse Kemarin (210100)" value={formatMetric(summary.warehouseKemarin)} detail="Expected inbound volume 3,388" />
-        <KpiCard label="K5450" value={formatMetric(summary.k5450)} detail="Model output" />
+        <KpiCard label={uiText("NG Rate")} value={summary.ngRate} detail="Overall NG %" status={Number(summary.ngRate.replace("%", "")) > 5 ? "Off Target" : "On Target"} accent={Number(summary.ngRate.replace("%", "")) > 5 ? "neutral" : "green"} />
+        <KpiCard label={uiText("NG Total")} value={formatMetric(summary.ngTotal)} detail="Total NG cases" />
+        <KpiCard label={uiText("Output Total")} value={formatMetric(summary.outputTotal)} detail="Packed output" />
+        <KpiCard label={uiText("Warehouse Kemarin (210100)")} value={formatMetric(summary.warehouseKemarin)} detail="Expected inbound volume 3,388" />
+        <KpiCard label={uiText("K5450")} value={formatMetric(summary.k5450)} detail="Model output" />
       </div>
 
-      <div className="packing-model-tabs" aria-label="Model filter tabs">
+      <div className="packing-model-tabs" aria-label={uiText("Model filter tabs")}>
         {packingModelTabs.map((model) => (
           <button
             key={model}
@@ -285,7 +291,7 @@ export default function PackingDashboard() {
       </div>
 
       <div className="packing-main-grid">
-        <ChartCard title="Actual Production by Line" subtitle="Model comparison by line">
+        <ChartCard title={uiText("Actual Production by Line")} subtitle={uiText("Model comparison by line")}>
           <div className="packing-vertical-chart-wrap">
             <ResponsiveContainer width="100%" height={470}>
               <BarChart
@@ -323,11 +329,11 @@ export default function PackingDashboard() {
                     fontSize: 12,
                   }}
                 />
-                <ReferenceLine x={420} stroke="var(--danger)" strokeDasharray="6 6" label={{ value: "Target: 420", position: "insideTopRight", fill: "var(--danger)", fontSize: 12, fontWeight: 600 }} />
+                <ReferenceLine x={420} stroke="var(--danger)" strokeDasharray="6 6" label={uiText({ value: "Target: 420", position: "insideTopRight", fill: "var(--danger)", fontSize: 12, fontWeight: 600 })} />
                 {selectedModel === "ALL" ? (
                   <>
                     {productionByLine[0] && Object.keys(productionByLine[0]).filter((key) => key !== "line").map((key, index) => (
-                      <Bar key={key} dataKey={key} name={key} radius={[0, 8, 8, 0]} fill={index % 2 === 0 ? "var(--chart-1)" : "var(--chart-2)"} isAnimationActive={false}>
+                      <Bar key={key} dataKey={key} name={uiText(key)} radius={[0, 8, 8, 0]} fill={index % 2 === 0 ? "var(--chart-1)" : "var(--chart-2)"} isAnimationActive={false}>
                         {productionChartData.map((entry, barIndex) => {
                           const value = Number(entry[key as keyof typeof entry] ?? 0);
                           return <Cell key={`${key}-${barIndex}`} fill={value >= 420 ? "var(--primary)" : "var(--danger)"} />;
@@ -337,7 +343,7 @@ export default function PackingDashboard() {
                     ))}
                   </>
                 ) : (
-                  <Bar dataKey={selectedModel} name={selectedModel} radius={[0, 8, 8, 0]} fill="var(--primary)" isAnimationActive={false}>
+                  <Bar dataKey={selectedModel} name={uiText(selectedModel)} radius={[0, 8, 8, 0]} fill="var(--primary)" isAnimationActive={false}>
                     {productionChartData.map((entry, index) => {
                       const value = Number(entry[selectedModel as keyof typeof entry] ?? 0);
                       return <Cell key={`${selectedModel}-${index}`} fill={value >= 420 ? "var(--primary)" : "var(--danger)"} />;
@@ -363,12 +369,12 @@ export default function PackingDashboard() {
                 >
                   <span>{item.name}</span>
                   <strong style={{ color: item.exceedsStandard ? "var(--danger)" : "var(--text)" }}>{item.value.toFixed(2)}%</strong>
-                  <small>Standard: {item.standard.toFixed(2)}%</small>
+                  <small>{uiText("Standard: ")}{item.standard.toFixed(2)}%</small>
                 </button>
               ))}
             </div>
 
-            <ChartCard title="NG Category Quantity" subtitle="Quantity by category">
+            <ChartCard title={uiText("NG Category Quantity")} subtitle={uiText("Quantity by category")}>
               <div className="packing-donut-chart-wrap">
                 <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
@@ -393,7 +399,7 @@ export default function PackingDashboard() {
                 </ResponsiveContainer>
                 <div className="packing-donut-center">
                   <strong>{formatMetric(donutData.reduce((sum, item) => sum + item.value, 0))}</strong>
-                  <span>Total NG</span>
+                  <span>{uiText("Total NG")}</span>
                 </div>
               </div>
               <div className="packing-chart-legend">
@@ -407,7 +413,7 @@ export default function PackingDashboard() {
             </ChartCard>
           </div>
 
-          <ChartCard title="NG Detail by Category (Kemarin)" subtitle="Top defect groups by quantity">
+          <ChartCard title={uiText("NG Detail by Category (Kemarin)")} subtitle={uiText("Top defect groups by quantity")}>
             <div className="packing-detail-chart-wrap">
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={detailBarData} margin={{ top: 16, right: 16, left: 6, bottom: 50 }}>
@@ -427,7 +433,7 @@ export default function PackingDashboard() {
                     axisLine={false}
                     tickLine={false}
                     ticks={[0, 10, 20, 30, 40, 50, 60, 70, 80]}
-                    label={{ value: "[Sum] Quantity", angle: -90, position: "insideLeft", fill: "var(--muted)", style: { fontSize: 11, fontFamily: "Montserrat" } }}
+                    label={uiText({ value: "[Sum] Quantity", angle: -90, position: "insideLeft", fill: "var(--muted)", style: { fontSize: 11, fontFamily: "Montserrat" } })}
                   />
                   <Tooltip
                     formatter={(value: number) => [formatMetric(Number(value)), "Quantity"]}
@@ -457,15 +463,15 @@ export default function PackingDashboard() {
       <article className="qc-card packing-table-card">
         <div className="packing-table-header">
           <div>
-            <h3>Table Detail</h3>
-            <p>Filter by model, time, and category.</p>
+            <h3>{uiText("Table Detail")}</h3>
+            <p>{uiText("Filter by model, time, and category.")}</p>
           </div>
           <div className="packing-table-actions">
             <div className="packing-search-box">
-              <span>Search</span>
-              <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search defect..." />
+              <span>{uiText("Search")}</span>
+              <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder={uiText("Search defect...")} />
             </div>
-            <button type="button" className="qc-primary-button">Export</button>
+            <button type="button" className="qc-primary-button">{uiText("Export")}</button>
           </div>
         </div>
 
@@ -483,7 +489,7 @@ export default function PackingDashboard() {
                   ["quantity", "Quantity"],
                 ].map(([key, label]) => (
                   <th key={label}>
-                    <button type="button" onClick={() => sortBy(key as keyof PackingRow)}>{label}</button>
+                    <button type="button" onClick={() => sortBy(key as keyof PackingRow)}>{uiText(label)}</button>
                   </th>
                 ))}
               </tr>
@@ -503,13 +509,13 @@ export default function PackingDashboard() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="packing-empty-state">No abnormals match the selected filters.</td>
+                  <td colSpan={7} className="packing-empty-state">{uiText("No abnormals match the selected filters.")}</td>
                 </tr>
               )}
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={6}>Total Quantity</td>
+                <td colSpan={6}>{uiText("Total Quantity")}</td>
                 <td>{totalQuantity}</td>
               </tr>
             </tfoot>
@@ -517,11 +523,11 @@ export default function PackingDashboard() {
         </div>
 
         <div className="packing-table-pagination">
-          <span>{activeFilterRangeLabel}</span>
+          <span>{uiText(activeFilterRangeLabel)}</span>
           <div>
-            <button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={page === 1}>Previous</button>
+            <button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={page === 1}>{uiText("Previous")}</button>
             <strong>{page}</strong>
-            <button type="button" onClick={() => setPage((value) => Math.min(totalPages, value + 1))} disabled={page >= totalPages}>Next</button>
+            <button type="button" onClick={() => setPage((value) => Math.min(totalPages, value + 1))} disabled={page >= totalPages}>{uiText("Next")}</button>
           </div>
         </div>
       </article>

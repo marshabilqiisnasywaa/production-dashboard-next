@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { departmentLabel } from "../../departments";
 import { useMemo } from "react";
@@ -23,6 +25,7 @@ export function SupervisorReviewModal({
   onClose,
   onApprove,
 }: SupervisorReviewModalProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const groupedCategories = useMemo(() => {
     if (!reviewTarget?.submission?.answers) return [];
 
@@ -86,7 +89,7 @@ export function SupervisorReviewModal({
       <span
         className={`spv-status-badge ${isNG ? "spv-status-badge--ng" : isText ? "spv-status-badge--info" : "spv-status-badge--approved"}`}
       >
-        {isNG ? "NG" : isText ? `Nilai: ${answer.textValue}` : "OK"}
+        {isNG ? uiText("NG") : isText ? uiText("Nilai: {{v0}}", { v0: answer.textValue }) : uiText("OK")}
       </span>
     );
   };
@@ -95,11 +98,11 @@ export function SupervisorReviewModal({
     answer.status === "NG" && (
       <div className="spv-modal-ng-box">
         <div>
-          <strong>Penyebab:</strong> {answer.cause || "Tidak ada keterangan penyebab."}
+          <strong>{uiText("Penyebab:")}</strong> {answer.cause || uiText("Tidak ada keterangan penyebab.")}
         </div>
         {answer.solution && (
           <div>
-            <strong>Tindakan Perbaikan:</strong> {answer.solution}
+            <strong>{uiText("Tindakan Perbaikan:")}</strong> {answer.solution}
           </div>
         )}
       </div>
@@ -111,7 +114,7 @@ export function SupervisorReviewModal({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Tinjauan Papercard"
+      aria-label={uiText("Tinjauan Papercard")}
     >
       <div
         className="spv-modal-card"
@@ -122,7 +125,7 @@ export function SupervisorReviewModal({
           <div className="spv-modal-header-top">
             <div className="spv-modal-chips-row">
               <span className={`spv-chip spv-chip--dept-${reviewTarget.dept.toLowerCase()}`}>
-                {departmentLabel(reviewTarget.dept)}
+                {uiText(departmentLabel(reviewTarget.dept))}
               </span>
                 {/* <span className="spv-chip spv-chip--neutral">
                   {reviewTarget.role === "leader" ? "Leader" : "Operator"}
@@ -139,7 +142,7 @@ export function SupervisorReviewModal({
               type="button"
               onClick={onClose}
               className="spv-modal-close"
-              title="Tutup dialog"
+              title={uiText("Tutup dialog")}
             >
               <IconClose size={16} />
             </button>
@@ -147,32 +150,31 @@ export function SupervisorReviewModal({
 
           <div className="spv-modal-header-main">
             <h3 className="spv-modal-title">
-              {reviewTarget.name} <span className="spv-modal-nik">· NIK: {reviewTarget.employeeNo}</span>
+              {reviewTarget.name} <span className="spv-modal-nik">{uiText("· NIK: ")}{reviewTarget.employeeNo}</span>
             </h3>
             <div className="spv-modal-meta-line">
               <span>{reviewTarget.position}</span>
               {reviewTarget.substitutedBy && (
                 <>
                   <span className="spv-dot-sep">•</span>
-                  <span>Diwakilkan oleh {reviewTarget.substitutedBy.name} ({reviewTarget.substitutedBy.employeeNo})</span>
+                  <span>{uiText("Diwakilkan oleh ")}{reviewTarget.substitutedBy.name} ({reviewTarget.substitutedBy.employeeNo})</span>
                 </>
               )}
               <span className="spv-dot-sep">•</span>
-              <span>
-                Submit:{" "}
+              <span>{uiText("Submit:")}{" "}
                 {reviewTarget.submission?.submittedAt
-                  ? `${new Date(reviewTarget.submission.submittedAt).toLocaleTimeString("id-ID", {
+                  ? uiText("{{v0}} WIB", { v0: new Date(reviewTarget.submission.submittedAt).toLocaleTimeString(uiLocale, {
                       hour: "2-digit",
                       minute: "2-digit",
-                    })} WIB`
-                  : "Belum submit"}
+                    }) })
+                  : uiText("Belum submit")}
               </span>
               <span className="spv-dot-sep">•</span>
-              <span className="spv-mini-badge spv-mini-badge--ok">{okAnswers.length} OK</span>
+              <span className="spv-mini-badge spv-mini-badge--ok">{okAnswers.length}{uiText(" OK")}</span>
               {ngAnswers.length > 0 ? (
-                <span className="spv-mini-badge spv-mini-badge--ng">{ngAnswers.length} NG</span>
+                <span className="spv-mini-badge spv-mini-badge--ng">{ngAnswers.length}{uiText(" NG")}</span>
               ) : (
-                <span className="spv-mini-badge spv-mini-badge--clean">Nol Temuan</span>
+                <span className="spv-mini-badge spv-mini-badge--clean">{uiText("Nol Temuan")}</span>
               )}
             </div>
           </div>
@@ -185,7 +187,7 @@ export function SupervisorReviewModal({
             <div className="spv-modal-section">
 
               <div className="spv-modal-categories-wrap">
-                {groupedCategories.map((group) => (
+                {uiText(groupedCategories.map((group) => (
                   <div key={group.categoryName} className="spv-modal-cat-group">
                     <div className="spv-modal-cat-header">
                       <div className="spv-modal-cat-left">
@@ -196,13 +198,13 @@ export function SupervisorReviewModal({
                           group.hasNg ? "spv-modal-cat-badge--ng" : "spv-modal-cat-badge--ok"
                         }`}
                       >
-                        {group.hasNg ? "Ada Temuan (NG)" : `${group.okCount}/${group.total} OK`}
+                        {group.hasNg ? uiText("Ada Temuan (NG)") : `${group.okCount}/${group.total} OK`}
                       </span>
                     </div>
 
                     {group.subjects.map((subject, si) => (
                       <div key={`${subject.title}-${si}`} className="spv-modal-subject">
-                        {subject.title && <div className="spv-modal-subject-title">{subject.title}</div>}
+                        {subject.title && <div className="spv-modal-subject-title">{uiText(subject.title)}</div>}
 
                         {subject.positions.map((pos) => {
                           const perRule = pos.entries.some((e) => e.answer.ruleText);
@@ -213,7 +215,7 @@ export function SupervisorReviewModal({
                               <div key={pos.key} className={`spv-modal-pos${isNG ? " is-ng" : ""}`}>
                                 <div className="spv-modal-pos-head">
                                   <span className="spv-modal-pos-title">
-                                    {pos.number != null && <span className="spv-modal-answer-num">{pos.number}.</span>} {pos.title}
+                                    {pos.number != null && <span className="spv-modal-answer-num">{pos.number}.</span>} {uiText(pos.title)}
                                   </span>
                                   {renderStatus(answer)}
                                 </div>
@@ -236,7 +238,7 @@ export function SupervisorReviewModal({
                             <div key={pos.key} className={`spv-modal-pos${ngInPos ? " is-ng" : ""}`}>
                               <div className="spv-modal-pos-head">
                                 <span className="spv-modal-pos-title">
-                                  {pos.number != null && <span className="spv-modal-answer-num">{pos.number}.</span>} {pos.title}
+                                  {pos.number != null && <span className="spv-modal-answer-num">{pos.number}.</span>} {uiText(pos.title)}
                                 </span>
                                 <span className="spv-modal-pos-count">
                                   {ngInPos ? `${ngInPos} NG dari ${pos.entries.length}` : `${pos.entries.length} aturan OK`}
@@ -249,7 +251,7 @@ export function SupervisorReviewModal({
                                     className={`spv-modal-rule${answer.status === "NG" ? " is-ng" : ""}`}
                                   >
                                     <div className="spv-modal-rule-main">
-                                      <span className="spv-modal-rule-text">{answer.ruleText}</span>
+                                      <span className="spv-modal-rule-text">{uiText(answer.ruleText)}</span>
                                       {renderStatus(answer)}
                                     </div>
                                     {renderNg(answer)}
@@ -262,19 +264,17 @@ export function SupervisorReviewModal({
                       </div>
                     ))}
                   </div>
-                ))}
+                )))}
               </div>
             </div>
           ) : (
-            <div className="spv-empty-box">
-              Karyawan ini belum mengirimkan papercard checklist untuk hari ini.
-            </div>
+            <div className="spv-empty-box">{uiText("Karyawan ini belum mengirimkan papercard checklist untuk hari ini.")}</div>
           )}
 
           {/* Abnormal Notes if any */}
           {reviewTarget.submission?.abnormalNotes && (
             <div className="spv-modal-alert-box">
-              <strong>Catatan Eskalasi Lapangan:</strong> {reviewTarget.submission.abnormalNotes}
+              <strong>{uiText("Catatan Eskalasi Lapangan:")}</strong> {reviewTarget.submission.abnormalNotes}
             </div>
           )}
 
@@ -282,9 +282,7 @@ export function SupervisorReviewModal({
           {isApproved && (
             <div className="spv-modal-approved-banner">
               <IconCheckCircle size={16} />
-              <span>
-                Papercard ini telah disetujui
-                {reviewTarget.submission?.approvedByName ? ` oleh ${reviewTarget.submission.approvedByName}` : ""}.
+              <span>{uiText("Papercard ini telah disetujui")}{reviewTarget.submission?.approvedByName ? uiText(" oleh {{v0}}", { v0: reviewTarget.submission.approvedByName }) : ""}.
               </span>
             </div>
           )}
@@ -292,13 +290,11 @@ export function SupervisorReviewModal({
           {/* Supervisor Notes Input */}
           {reviewTarget.submission && (
             <div className="spv-modal-feedback-field">
-              <label htmlFor="supervisor-feedback-input" className="spv-modal-feedback-label">
-                Instruksi / Catatan Supervisor:
-              </label>
+              <label htmlFor="supervisor-feedback-input" className="spv-modal-feedback-label">{uiText("Instruksi / Catatan Supervisor:")}</label>
               <textarea
                 id="supervisor-feedback-input"
                 rows={2}
-                placeholder="Tuliskan arahan perbaikan jika meminta revisi, atau catatan persetujuan..."
+                placeholder={uiText("Tuliskan arahan perbaikan jika meminta revisi, atau catatan persetujuan...")}
                 value={feedbackNote}
                 onChange={(e) => setFeedbackNote(e.target.value)}
                 className="spv-modal-textarea"
@@ -313,9 +309,7 @@ export function SupervisorReviewModal({
             type="button"
             onClick={onClose}
             className="spv-btn spv-btn--secondary"
-          >
-            Tutup
-          </button>
+          >{uiText("Tutup")}</button>
 
           {reviewTarget.submission && (
             <>
@@ -324,9 +318,7 @@ export function SupervisorReviewModal({
                 disabled={isSubmittingApproval}
                 onClick={() => onApprove(reviewTarget, "rejected")}
                 className="spv-btn spv-btn--danger"
-              >
-                ✕ Minta Revisi
-              </button>
+              >{uiText("✕ Minta Revisi")}</button>
 
               <button
                 type="button"
@@ -335,7 +327,7 @@ export function SupervisorReviewModal({
                 className="spv-btn spv-btn--primary"
               >
                 <IconCheck size={14} />
-                <span>Setujui Papercard</span>
+                <span>{uiText("Setujui Papercard")}</span>
               </button>
             </>
           )}

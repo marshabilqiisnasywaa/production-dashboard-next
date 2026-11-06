@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { IconAlert, IconClipboardCheck, IconDashboard, IconGauge, IconPulse } from "@/components/ui/icons";
 import { Sidebar, type SidebarSection } from "@/components/ui/Sidebar";
@@ -7,6 +9,7 @@ import { useMember } from "../MemberProvider";
 import { useRevisionCount } from "../../notifications/useRevisionCount";
 
 export function MemberSidebar({ basePath = MEMBER_BASE }: { basePath?: string }) {
+  const { text: uiText } = useUiText();
   const { me, activeLine, profile } = useMember();
   const revisionCount = useRevisionCount({
     lineId: activeLine?.id ?? me?.line?.id,
@@ -44,7 +47,7 @@ export function MemberSidebar({ basePath = MEMBER_BASE }: { basePath?: string })
           <span className="dml-logo">
             <IconGauge size={22} />
           </span>
-          <strong>DM Digital</strong>
+          <strong>{uiText("DM Digital")}</strong>
         </>
       }
       sections={sections}

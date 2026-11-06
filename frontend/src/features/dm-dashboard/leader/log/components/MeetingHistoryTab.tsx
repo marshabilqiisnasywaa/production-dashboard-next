@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useMemo, useState } from "react";
 import { Pagination } from "@/components/ui/Pagination";
@@ -15,6 +17,7 @@ interface Props {
 }
 
 export function MeetingHistoryTab({ records, now }: Props) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [query, setQuery] = useState("");
   const [range, setRange] = useState({ from: "", to: "" });
   const [session, setSession] = useState("all");
@@ -37,7 +40,7 @@ export function MeetingHistoryTab({ records, now }: Props) {
       if (range.to && r.date > range.to) return false;
       if (session !== "all" && r.sessionId !== session) return false;
       if (status !== "all" && r.status !== status) return false;
-      return !q || `${r.sessionName} ${r.leaderName} ${formatDate(r.date)} ${r.date}`.toLowerCase().includes(q);
+      return !q || `${r.sessionName} ${r.leaderName} ${formatDate(r.date, uiLocale)} ${r.date}`.toLowerCase().includes(q);
     });
   }, [records, query, range, session, status]);
 
@@ -68,10 +71,10 @@ export function MeetingHistoryTab({ records, now }: Props) {
   return (
     <>
       <div className="dml-lg-stats">
-        <Stat tone="ok" icon={<IconCheck size={20} />} label="Selesai" value={String(stats.done)} hint={`${pct(stats.done)}% dari ${stats.total} sesi`} />
-        <Stat tone="bad" icon={<IconClose size={20} />} label="Tidak Dilaksanakan" value={String(stats.missed)} hint={`${pct(stats.missed)}% dari total`} />
-        <Stat tone="neutral" icon={<IconClock size={20} />} label="Rata-rata Durasi" value={stats.avgDuration ? `${stats.avgDuration} menit` : "-"} hint="dari meeting yang selesai" />
-        <Stat tone="ok" icon={<IconUsers size={20} />} label="Rata-rata Kehadiran" value={stats.done ? `${stats.avgAttendance}%` : "-"} hint="dari meeting yang selesai" />
+        <Stat tone="ok" icon={<IconCheck size={20} />} label={uiText("Selesai")} value={String(stats.done)} hint={`${pct(stats.done)}% dari ${stats.total} sesi`} />
+        <Stat tone="bad" icon={<IconClose size={20} />} label={uiText("Tidak Dilaksanakan")} value={String(stats.missed)} hint={`${pct(stats.missed)}% dari total`} />
+        <Stat tone="neutral" icon={<IconClock size={20} />} label={uiText("Rata-rata Durasi")} value={stats.avgDuration ? `${stats.avgDuration} menit` : "-"} hint="dari meeting yang selesai" />
+        <Stat tone="ok" icon={<IconUsers size={20} />} label={uiText("Rata-rata Kehadiran")} value={stats.done ? `${stats.avgAttendance}%` : "-"} hint="dari meeting yang selesai" />
       </div>
 
       <section className="ui-card">
@@ -79,7 +82,7 @@ export function MeetingHistoryTab({ records, now }: Props) {
           <input
             type="search"
             className="ui-input dml-lg-search"
-            placeholder="Cari sesi, pemimpin, atau tanggal…"
+            placeholder={uiText("Cari sesi, pemimpin, atau tanggal…")}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -96,33 +99,33 @@ export function MeetingHistoryTab({ records, now }: Props) {
           />
           <select
             className="ui-select"
-            aria-label="Filter sesi"
+            aria-label={uiText("Filter sesi")}
             value={session}
             onChange={(e) => {
               setSession(e.target.value);
               resetPage();
             }}
           >
-            <option value="all">Semua sesi</option>
+            <option value="all">{uiText("Semua sesi")}</option>
             {sessionOptions.map(([id, name]) => (
               <option key={id} value={id}>
-                {name}
+                {uiText(name)}
               </option>
             ))}
           </select>
           <select
             className="ui-select"
-            aria-label="Filter status"
+            aria-label={uiText("Filter status")}
             value={status}
             onChange={(e) => {
               setStatus(e.target.value as "all" | MeetingStatus);
               resetPage();
             }}
           >
-            <option value="all">Semua status</option>
-            <option value="done">Selesai</option>
-            <option value="running">Berlangsung</option>
-            <option value="missed">Tidak Dilaksanakan</option>
+            <option value="all">{uiText("Semua status")}</option>
+            <option value="done">{uiText("Selesai")}</option>
+            <option value="running">{uiText("Berlangsung")}</option>
+            <option value="missed">{uiText("Tidak Dilaksanakan")}</option>
           </select>
         </div>
 
@@ -130,34 +133,32 @@ export function MeetingHistoryTab({ records, now }: Props) {
           <table className="dml-table dml-lg-table">
             <thead>
               <tr>
-                <th>Tanggal</th>
-                <th>Sesi</th>
-                <th>Waktu</th>
-                <th>Kehadiran</th>
-                <th>Dipimpin oleh</th>
-                <th>Status</th>
+                <th>{uiText("Tanggal")}</th>
+                <th>{uiText("Sesi")}</th>
+                <th>{uiText("Waktu")}</th>
+                <th>{uiText("Kehadiran")}</th>
+                <th>{uiText("Dipimpin oleh")}</th>
+                <th>{uiText("Status")}</th>
                 <th />
               </tr>
             </thead>
             <tbody>
               {visible.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="dml-empty">
-                    Tidak ada meeting yang cocok dengan filter.
-                  </td>
+                  <td colSpan={7} className="dml-empty">{uiText("Tidak ada meeting yang cocok dengan filter.")}</td>
                 </tr>
               )}
-              {visible.map((r) => {
+              {uiText(visible.map((r) => {
                 const v = STATUS_VIEW[r.status];
                 const present = r.attendance.filter((a) => a.present).length;
                 const held = r.status !== "missed";
                 const represented = attendanceCounts(r.attendance).represented;
                 return (
                   <tr key={r.id} className={r.id === openId ? "is-selected" : undefined} onClick={() => setOpenId(r.id)}>
-                    <td className="is-strong">{formatDate(r.date)}</td>
+                    <td className="is-strong">{formatDate(r.date, uiLocale)}</td>
                     <td>
                       {r.sessionName}
-                      {r.sample && <span className="dml-lg-sample"> (contoh)</span>}
+                      {r.sample && <span className="dml-lg-sample">{uiText(" (contoh)")}</span>}
                     </td>
                     <td>
                       {held && r.startedAt ? (
@@ -166,28 +167,28 @@ export function MeetingHistoryTab({ records, now }: Props) {
                             {formatHm(r.startedAt)}–{r.endedAt ? formatHm(r.endedAt) : "…"}
                           </div>
                           <div className="dml-lg-sub">
-                            {r.durationMin ? `${r.durationMin} mnt · ` : ""}jadwal {r.scheduledStart}
-                            {r.lateMin > 0 && <span className="dml-lg-late"> · telat {r.lateMin} mnt</span>}
+                            {r.durationMin ? `${r.durationMin} mnt · ` : ""}{uiText("jadwal ")}{r.scheduledStart}
+                            {r.lateMin > 0 && <span className="dml-lg-late">{uiText(" · telat ")}{r.lateMin}{uiText(" mnt")}</span>}
                           </div>
                         </>
                       ) : (
-                        <div className="dml-lg-sub">jadwal {r.scheduledStart}</div>
+                        <div className="dml-lg-sub">{uiText("jadwal ")}{r.scheduledStart}</div>
                       )}
                     </td>
                     <td>
                       {held ? present + "/" + r.attendance.length : "—"}
-                      {held && represented > 0 && <div className="dml-lg-sub">{represented} diwakilkan</div>}
+                      {held && represented > 0 && <div className="dml-lg-sub">{represented}{uiText(" diwakilkan")}</div>}
                     </td>
 
                     <td>{held ? r.leaderName : "—"}</td>
                     <td>
-                      <StatusChip tone={v.tone}>{v.label}</StatusChip>
+                      <StatusChip tone={v.tone}>{uiText(v.label)}</StatusChip>
                     </td>
                     <td>
                       <button
                         type="button"
                         className="dml-lg-iconbtn"
-                        aria-label={`Lihat detail ${r.sessionName} ${formatDate(r.date)}`}
+                        aria-label={`Lihat detail ${r.sessionName} ${formatDate(r.date, uiLocale)}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           setOpenId(r.id);
@@ -198,7 +199,7 @@ export function MeetingHistoryTab({ records, now }: Props) {
                     </td>
                   </tr>
                 );
-              })}
+              }))}
             </tbody>
           </table>
         </div>
@@ -222,13 +223,14 @@ export function MeetingHistoryTab({ records, now }: Props) {
 }
 
 function Stat({ icon, label, value, hint, tone }: { icon: React.ReactNode; label: string; value: string; hint: string; tone: "ok" | "bad" | "neutral" }) {
+  const { text: uiText } = useUiText();
   return (
     <article className="dml-lg-stat">
       <span className={`dml-lg-stat__icon dml-lg-stat__icon--${tone}`}>{icon}</span>
       <div>
-        <p>{label}</p>
+        <p>{uiText(label)}</p>
         <strong>{value}</strong>
-        <span>{hint}</span>
+        <span>{uiText(hint)}</span>
       </div>
     </article>
   );

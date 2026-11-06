@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useState } from "react";
 import { workshopMeetingApi } from "../api";
@@ -18,6 +20,7 @@ const toInput = (s: DmWorkshopSchedule): DmWorkshopScheduleInput => ({
 });
 
 export default function WorkshopScheduleCard() {
+  const { text: uiText } = useUiText();
   const [schedules, setSchedules] = useState<DmWorkshopSchedule[] | null>(null);
   const [drafts, setDrafts] = useState<Record<number, DmWorkshopScheduleInput>>(
     {}
@@ -111,18 +114,16 @@ export default function WorkshopScheduleCard() {
 
   if (schedules && schedules.length === 0) {
     return (
-      <p className="msm-empty">
-        Belum ada workshop. Buat workshop dulu di tab Lini, Workshop & Tim.
-      </p>
+      <p className="msm-empty">{uiText("Belum ada workshop. Buat workshop dulu di tab Lini, Workshop & Tim.")}</p>
     );
   }
 
   return (
-    <section className="wsc" aria-label="Jadwal workshop meeting">
+    <section className="wsc" aria-label={uiText("Jadwal workshop meeting")}>
       {notice && (
         <div className={`msm-notice is-${notice.type}`}>{notice.text}</div>
       )}
-      {!schedules && !notice && <p className="msm-empty">Memuat...</p>}
+      {!schedules && !notice && <p className="msm-empty">{uiText("Memuat...")}</p>}
       <ul className="wsc-list">
         {schedules?.map((item) => {
           const draft = drafts[item.workshopId];
@@ -137,10 +138,10 @@ export default function WorkshopScheduleCard() {
                 <span className="wsc-name">
                   {item.workshopName}
                   {item.isDefault && (
-                    <span className="wsc-default"> (bawaan)</span>
+                    <span className="wsc-default">{uiText(" (bawaan)")}</span>
                   )}
                 </span>
-                {dirty && <span className="msm-dirty">Belum disimpan</span>}
+                {dirty && <span className="msm-dirty">{uiText("Belum disimpan")}</span>}
                 <label className="msm-switch">
                   <input
                     type="checkbox"
@@ -148,18 +149,18 @@ export default function WorkshopScheduleCard() {
                     onChange={(e) =>
                       patch(item.workshopId, { isActive: e.target.checked })
                     }
-                    aria-label={`Aktifkan workshop meeting ${item.workshopName}`}
+                    aria-label={uiText("Aktifkan workshop meeting {{v0}}", { v0: item.workshopName })}
                   />
                   <span />
                 </label>
               </div>
               <div className="wsc-fields">
                 <label className="wsc-field">
-                  <span>Jam</span>
+                  <span>{uiText("Jam")}</span>
                   <input
                     className="msm-input msm-input--time"
                     type="time"
-                    aria-label={`Jam ${item.workshopName}`}
+                    aria-label={uiText("Jam {{v0}}", { v0: item.workshopName })}
                     value={draft.time}
                     onChange={(e) =>
                       patch(item.workshopId, { time: e.target.value })
@@ -167,11 +168,11 @@ export default function WorkshopScheduleCard() {
                   />
                 </label>
                 <div className="wsc-field">
-                  <span>Hari berlaku</span>
+                  <span>{uiText("Hari berlaku")}</span>
                   <div
                     className="msm-days"
                     role="group"
-                    aria-label={`Hari berlaku ${item.workshopName}`}
+                    aria-label={uiText("Hari berlaku {{v0}}", { v0: item.workshopName })}
                   >
                     {DAY_LABELS.map((label, i) => {
                       const day = i + 1;
@@ -184,14 +185,14 @@ export default function WorkshopScheduleCard() {
                           aria-pressed={on}
                           onClick={() => toggleDay(item.workshopId, day)}
                         >
-                          {label}
+                          {uiText(label)}
                         </button>
                       );
                     })}
                   </div>
                 </div>
                 <div className="wsc-field">
-                  <span>Pengingat</span>
+                  <span>{uiText("Pengingat")}</span>
                   <div className="wsc-reminder">
                     <label className="msm-check">
                       <input
@@ -203,7 +204,7 @@ export default function WorkshopScheduleCard() {
                           })
                         }
                       />
-                      <span>Aktif</span>
+                      <span>{uiText("Aktif")}</span>
                     </label>
                     <input
                       className="msm-input wsc-minutes"
@@ -211,7 +212,7 @@ export default function WorkshopScheduleCard() {
                       min={1}
                       max={180}
                       disabled={!draft.reminderEnabled}
-                      aria-label={`Menit sebelum meeting ${item.workshopName}`}
+                      aria-label={uiText("Menit sebelum meeting {{v0}}", { v0: item.workshopName })}
                       value={draft.reminderMinutes}
                       onChange={(e) =>
                         patch(item.workshopId, {
@@ -219,7 +220,7 @@ export default function WorkshopScheduleCard() {
                         })
                       }
                     />
-                    <span className="wsc-unit">menit sebelumnya</span>
+                    <span className="wsc-unit">{uiText("menit sebelumnya")}</span>
                   </div>
                 </div>
                 <button
@@ -228,7 +229,7 @@ export default function WorkshopScheduleCard() {
                   onClick={() => handleSave(item)}
                   disabled={savingId !== null || (!dirty && !item.isDefault)}
                 >
-                  {savingId === item.workshopId ? "Menyimpan..." : "Simpan"}
+                  {savingId === item.workshopId ? uiText("Menyimpan...") : uiText("Simpan")}
                 </button>
               </div>
             </li>

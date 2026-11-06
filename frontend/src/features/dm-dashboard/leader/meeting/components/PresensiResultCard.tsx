@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { Button } from "@/components/ui/Button";
 import { IconCheckCircle } from "@/components/ui/icons";
 import type { AbsenceNote, AttendanceRecord, GuestRecord, MeetingMember } from "../types";
@@ -32,6 +34,7 @@ const timeOf = (iso: string | null) => (iso ? new Date(iso).getTime() : 0);
 
 /** Step 3: presensi is closed, everyone who came (team and guests) is listed, absent members are recorded, the Leader starts the meeting. */
 export function PresensiResultCard({ members, attendance, guests, photoFor, absences, onAbsenceChange, onRedo, onStart }: Props) {
+  const { text: uiText } = useUiText();
   const absent = members.filter((m) => attendance[m.id]?.status === "absent");
   const teamRows: PresentRow[] = members
     .filter((m) => attendance[m.id]?.status === "present")
@@ -63,24 +66,23 @@ export function PresensiResultCard({ members, attendance, guests, photoFor, abse
       <span className="dml-mt-ready__icon">
         <IconCheckCircle size={32} />
       </span>
-      <h2>Presensi selesai</h2>
+      <h2>{uiText("Presensi selesai")}</h2>
       <p>
-        <strong>{teamRows.length}</strong> dari {members.length} member hadir
-        {guestRows.length > 0 && <> · {guestRows.length} tamu</>}
-        {absent.length > 0 && <> · {absent.length} tercatat tidak hadir</>}
-        {representedCount > 0 && <> · {representedCount} diwakilkan</>}
+        <strong>{teamRows.length}</strong>{uiText(" dari ")}{members.length}{uiText(" member hadir")}{guestRows.length > 0 && <> · {guestRows.length}{uiText(" tamu")}</>}
+        {absent.length > 0 && <> · {absent.length}{uiText(" tercatat tidak hadir")}</>}
+        {representedCount > 0 && <> · {representedCount}{uiText(" diwakilkan")}</>}
       </p>
 
       <div className="dml-mt-ready__section">
-        <h3>Hadir ({present.length})</h3>
-        <ul className="dml-mt-ready__present" aria-label="Yang hadir">
+        <h3>{uiText("Hadir (")}{present.length})</h3>
+        <ul className="dml-mt-ready__present" aria-label={uiText("Yang hadir")}>
           {present.map((row) => (
             <li key={row.key}>
               <MeetingAvatar className="dml-mt-avatar" name={row.name} photo={row.photo} />
               <div className="dml-mt-roster__who">
                 <strong>
                   {row.name}
-                  {row.guest && <span className="dml-mt-tag">Tamu</span>}
+                  {row.guest && <span className="dml-mt-tag">{uiText("Tamu")}</span>}
                 </strong>
                 <span>{[row.nik, row.detail].filter(Boolean).join(" · ")}</span>
               </div>
@@ -95,8 +97,8 @@ export function PresensiResultCard({ members, attendance, guests, photoFor, abse
 
       {absent.length > 0 && (
         <div className="dml-mt-ready__section">
-          <h3>Tidak hadir ({absent.length})</h3>
-          <ul className="dml-mt-absence" aria-label="Member tidak hadir">
+          <h3>{uiText("Tidak hadir (")}{absent.length})</h3>
+          <ul className="dml-mt-absence" aria-label={uiText("Member tidak hadir")}>
             {absent.map((m) => {
               const entry: AbsenceNote = absences[m.id] ?? { reason: "none", note: "" };
               return (
@@ -119,12 +121,9 @@ export function PresensiResultCard({ members, attendance, guests, photoFor, abse
       )}
 
       <div className="dml-mt-ready__actions">
-        <Button variant="outline" size="lg" onClick={onRedo}>
-          Ulangi presensi
-        </Button>
+        <Button variant="outline" size="lg" onClick={onRedo}>{uiText("Ulangi presensi")}</Button>
         <Button variant="primary" size="lg" onClick={onStart}>
-          <IconPlay size={18} /> Mulai Meeting
-        </Button>
+          <IconPlay size={18} />{uiText(" Mulai Meeting")}</Button>
       </div>
     </section>
   );

@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { uploadPhoto } from "../api";
@@ -35,6 +37,7 @@ export default function MemberEditor({
   onRelease,
   releaseLabel = "Lepas dari Tim",
 }: MemberEditorProps) {
+  const { text: uiText } = useUiText();
   const [name, setName] = useState(member?.name ?? "");
   const [employeeId, setEmployeeId] = useState(member?.employeeId ?? "");
   const [dept, setDept] = useState(member?.dept ?? "");
@@ -103,7 +106,7 @@ export default function MemberEditor({
   const field = (id: string, label: string, value: string, set: (v: string) => void, placeholder: string, required = false) => (
     <div className="dm-admin-field">
       <label htmlFor={`${idPrefix}-${id}`}>
-        {label}
+        {uiText(label)}
         {required ? <span className="dm-required-mark"> *</span> : null}
       </label>
       <input
@@ -112,7 +115,7 @@ export default function MemberEditor({
         className="dm-admin-input"
         value={value}
         onChange={(event) => set(event.target.value)}
-        placeholder={placeholder}
+        placeholder={uiText(placeholder)}
       />
     </div>
   );
@@ -120,10 +123,10 @@ export default function MemberEditor({
   return (
     <form className="dm-admin-member-card" onSubmit={submit} noValidate>
       <div className="dm-admin-member-head">
-        <span className="dm-admin-member-role">{title}</span>
+        <span className="dm-admin-member-role">{uiText(title)}</span>
         {showSortOrder ? (
           <span className="dm-admin-member-idx">
-            <label htmlFor={`${idPrefix}-sort`}>Urutan </label>
+            <label htmlFor={`${idPrefix}-sort`}>{uiText("Urutan ")}</label>
             <input
               id={`${idPrefix}-sort`}
               type="number"
@@ -142,18 +145,16 @@ export default function MemberEditor({
         {field("sup", "Supervisor", supervisor, setSupervisor, "Nama atasan")}
         {field("phone", "Work Phone", workPhone, setWorkPhone, "Nomor kontak kerja")}
         <div className="dm-admin-field">
-          <label>Foto Profil</label>
+          <label>{uiText("Foto Profil")}</label>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "4px" }}>
             {photoUrl ? (
-              <img src={photoUrl} alt={name ? `Foto ${name}` : "Pratinjau foto"} className="dm-admin-avatar-img" />
+              <img src={photoUrl} alt={name ? uiText("Foto {{v0}}", { v0: name }) : uiText("Pratinjau foto")} className="dm-admin-avatar-img" />
             ) : (
-              <div style={{ width: "48px", height: "48px", borderRadius: "8px", background: "#f1f5f9", display: "grid", placeItems: "center", color: "#64748b", fontWeight: 700, fontSize: "14px", border: "1px dashed #cbd5e1" }}>
-                Foto
-              </div>
+              <div style={{ width: "48px", height: "48px", borderRadius: "8px", background: "#f1f5f9", display: "grid", placeItems: "center", color: "#64748b", fontWeight: 700, fontSize: "14px", border: "1px dashed #cbd5e1" }}>{uiText("Foto")}</div>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
               <label className="dm-admin-btn is-secondary" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", width: "fit-content", padding: "5px 12px", fontSize: "12px" }}>
-                {photoUrl ? "Ganti Foto" : "Pilih Foto"}
+                {photoUrl ? uiText("Ganti Foto") : uiText("Pilih Foto")}
                 <input type="file" accept="image/*" style={{ display: "none" }} onChange={pickPhoto} />
               </label>
               {photoUrl ? (
@@ -161,23 +162,21 @@ export default function MemberEditor({
                   type="button"
                   style={{ background: "none", border: "none", color: "#dc2626", fontSize: "11px", cursor: "pointer", textAlign: "left", padding: 0 }}
                   onClick={() => setPhotoUrl("")}
-                >
-                  Hapus Foto
-                </button>
+                >{uiText("Hapus Foto")}</button>
               ) : (
-                <span style={{ fontSize: "11px", color: "#94a3b8" }}>Maks. 2 MB</span>
+                <span style={{ fontSize: "11px", color: "#94a3b8" }}>{uiText("Maks. 2 MB")}</span>
               )}
             </div>
           </div>
         </div>
-        {error ? <p className="dm-admin-inline-error" role="alert">{error}</p> : null}
+        {error ? <p className="dm-admin-inline-error" role="alert">{uiText(error)}</p> : null}
         <div className="dm-admin-member-actions">
           <button type="submit" className="dm-admin-btn is-primary" disabled={busy}>
-            {busy ? "Menyimpan..." : saveLabel}
+            {busy ? uiText("Menyimpan...") : saveLabel}
           </button>
           {onRelease ? (
             <button type="button" className="dm-admin-btn is-danger-outline" disabled={busy} onClick={release}>
-              {releaseLabel}
+              {uiText(releaseLabel)}
             </button>
           ) : null}
         </div>

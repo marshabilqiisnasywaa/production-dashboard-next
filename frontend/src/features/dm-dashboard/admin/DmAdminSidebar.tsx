@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import Link from "next/link";
 import { IconLogout } from "@/components/ui/icons";
 import { setToken } from "../api";
@@ -172,6 +174,7 @@ export default function DmAdminSidebar({
   onSelectTab,
   onLogout,
 }: DmAdminSidebarProps) {
+  const { text: uiText } = useUiText();
   return (
     <aside className="dm-admin-sidebar">
       {/* Brand / Logo */}
@@ -179,13 +182,13 @@ export default function DmAdminSidebar({
         <span className="dml-logo">
           <IconGauge size={22} />
         </span>
-        <strong>DM Digital</strong>
+        <strong>{uiText("DM Digital")}</strong>
       </div>
 
       {/* Menu Navigasi */}
-      <nav className="dm-admin-sidebar-nav" aria-label="Menu Admin">
+      <nav className="dm-admin-sidebar-nav" aria-label={uiText("Menu Admin")}>
         <div className="dm-admin-nav-heading">
-          {isAdmin ? "PENGATURAN LINI" : "MENU"}
+          {isAdmin ? uiText("PENGATURAN LINI") : uiText("MENU")}
         </div>
 
         {/* <button
@@ -209,7 +212,7 @@ export default function DmAdminSidebar({
               <span className="dm-admin-nav-icon">
                 <FactoryIcon />
               </span>
-              <span>Lini, Workshop &amp; Tim</span>
+              <span>{uiText("Lini, Workshop & Tim")}</span>
             </button>
 
             <button
@@ -222,7 +225,7 @@ export default function DmAdminSidebar({
               <span className="dm-admin-nav-icon">
                 <UsersGroupIcon />
               </span>
-              <span>User</span>
+              <span>{uiText("User")}</span>
             </button>
 
             <button
@@ -235,7 +238,7 @@ export default function DmAdminSidebar({
               <span className="dm-admin-nav-icon">
                 <ClipboardCheckIcon />
               </span>
-              <span>Papercard & Meeting</span>
+              <span>{uiText("Papercard & Meeting")}</span>
             </button>
 
             <button
@@ -248,7 +251,7 @@ export default function DmAdminSidebar({
               <span className="dm-admin-nav-icon">
                 <TrophyIcon />
               </span>
-              <span>MVP of The Month</span>
+              <span>{uiText("MVP of The Month")}</span>
             </button>
 
             <button
@@ -261,7 +264,7 @@ export default function DmAdminSidebar({
               <span className="dm-admin-nav-icon">
                 <ClipboardCheckIcon />
               </span>
-              <span>Rekap Presensi</span>
+              <span>{uiText("Rekap Presensi")}</span>
               {/* <span className="dm-admin-nav-badge-pill" style={{ background: "#eaf3f9", color: "#1e5a7d" }}>3 Sesi</span> */}
             </button>
 
@@ -275,7 +278,7 @@ export default function DmAdminSidebar({
               <span className="dm-admin-nav-icon">
                 <ClipboardCheckIcon />
               </span>
-              <span>Tracking Masalah</span>
+              <span>{uiText("Tracking Masalah")}</span>
             </button>
           </>
         ) : (
@@ -283,13 +286,13 @@ export default function DmAdminSidebar({
             <span className="dm-admin-nav-icon">
               <UsersGroupIcon />
             </span>
-            <span>Akun saya</span>
+            <span>{uiText("Akun saya")}</span>
           </Link>
         )}
 
         {isAdmin && (
           <>
-            <div className="dm-admin-nav-heading">SQDIP MONITORING</div>
+            <div className="dm-admin-nav-heading">{uiText("SQDIP MONITORING")}</div>
             <button
               type="button"
               className={`dm-admin-nav-btn ${
@@ -300,7 +303,7 @@ export default function DmAdminSidebar({
               <span className="dm-admin-nav-icon">
                 <ChartIcon />
               </span>
-              <span>SQDIP</span>
+              <span>{uiText("SQDIP")}</span>
             </button>
           </>
         )}

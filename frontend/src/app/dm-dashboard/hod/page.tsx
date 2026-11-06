@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Clock3, Eye, Tag, UserRound, X } from "lucide-react";
@@ -29,11 +31,11 @@ const STATUS_VIEW: Record<
   solved: { label: "Selesai", className: "is-solved" },
 };
 
-function formatDue(value: string): string {
+function formatDue(value: string, locale = "id-ID"): string {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString("id-ID", {
+  return date.toLocaleString(locale, {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -200,6 +202,7 @@ const HOD_STYLES = `
 `;
 
 export default function HodTrackingProblemsPage() {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const { rows, counts, ready, loading, error, refresh } = useProblems();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProblemFilter>("all");
@@ -285,34 +288,31 @@ export default function HodTrackingProblemsPage() {
 
       <header className="dml-page-head">
         <div>
-          <h1>Tracking Masalah</h1>
-          <p>
-            Pantau penanggung jawab, tenggat waktu, dan status tindak lanjut
-            dari DM meeting.
-          </p>
+          <h1>{uiText("Tracking Masalah")}</h1>
+          <p>{uiText("Pantau penanggung jawab, tenggat waktu, dan status tindak lanjut dari DM meeting.")}</p>
         </div>
       </header>
 
       <div className="dml-pb-summary">
         <div className="dml-pb-stat">
-          <span className="dml-pb-stat__label">Total Masalah</span>
+          <span className="dml-pb-stat__label">{uiText("Total Masalah")}</span>
           <strong>{counts.all}</strong>
-          <span className="dml-pb-stat__note">Semua masalah tercatat</span>
+          <span className="dml-pb-stat__note">{uiText("Semua masalah tercatat")}</span>
         </div>
         <div className="dml-pb-stat">
-          <span className="dml-pb-stat__label">Belum Selesai</span>
+          <span className="dml-pb-stat__label">{uiText("Belum Selesai")}</span>
           <strong>{counts.unsolved}</strong>
-          <span className="dml-pb-stat__note">Perlu ditindaklanjuti</span>
+          <span className="dml-pb-stat__note">{uiText("Perlu ditindaklanjuti")}</span>
         </div>
         <div className="dml-pb-stat">
-          <span className="dml-pb-stat__label">Selesai</span>
+          <span className="dml-pb-stat__label">{uiText("Selesai")}</span>
           <strong>{counts.solved}</strong>
-          <span className="dml-pb-stat__note">Tindak lanjut selesai</span>
+          <span className="dml-pb-stat__note">{uiText("Tindak lanjut selesai")}</span>
         </div>
         <div className="dml-pb-stat">
-          <span className="dml-pb-stat__label">Eskalasi SPV</span>
+          <span className="dml-pb-stat__label">{uiText("Eskalasi SPV")}</span>
           <strong>{counts.escalated}</strong>
-          <span className="dml-pb-stat__note">Perlu perhatian supervisor</span>
+          <span className="dml-pb-stat__note">{uiText("Perlu perhatian supervisor")}</span>
         </div>
       </div>
 
@@ -321,8 +321,8 @@ export default function HodTrackingProblemsPage() {
           <div className="dml-pb-search">
             <input
               type="search"
-              aria-label="Cari masalah"
-              placeholder="Cari masalah, PIC, line, atau sesi..."
+              aria-label={uiText("Cari masalah")}
+              placeholder={uiText("Cari masalah, PIC, line, atau sesi...")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -330,52 +330,52 @@ export default function HodTrackingProblemsPage() {
 
           <div className="dml-pb-filters">
             <select
-              aria-label="Filter status"
+              aria-label={uiText("Filter status")}
               value={statusFilter}
               onChange={(event) =>
                 setStatusFilter(event.target.value as ProblemFilter)
               }
             >
-              <option value="all">Semua status ({counts.all})</option>
-              <option value="unsolved">Belum selesai ({counts.unsolved})</option>
-              <option value="escalated">Eskalasi SPV ({counts.escalated})</option>
-              <option value="solved">Selesai ({counts.solved})</option>
+              <option value="all">{uiText("Semua status (")}{counts.all})</option>
+              <option value="unsolved">{uiText("Belum selesai (")}{counts.unsolved})</option>
+              <option value="escalated">{uiText("Eskalasi SPV (")}{counts.escalated})</option>
+              <option value="solved">{uiText("Selesai (")}{counts.solved})</option>
             </select>
 
             <select
-              aria-label="Filter line"
+              aria-label={uiText("Filter line")}
               value={lineFilter}
               onChange={(event) => setLineFilter(event.target.value)}
             >
-              <option value="all">Semua line</option>
+              <option value="all">{uiText("Semua line")}</option>
               {lines.map((line) => (
                 <option key={line} value={line}>
-                  {line}
+                  {uiText(line)}
                 </option>
               ))}
             </select>
 
             <select
-              aria-label="Filter departemen"
+              aria-label={uiText("Filter departemen")}
               value={deptFilter}
               onChange={(event) => setDeptFilter(event.target.value)}
             >
-              <option value="all">Semua departemen</option>
-              {departments.map((department) => (
+              <option value="all">{uiText("Semua departemen")}</option>
+              {uiText(departments.map((department) => (
                 <option key={department} value={department}>
-                  {departmentLabel(department)}
+                  {uiText(departmentLabel(department))}
                 </option>
-              ))}
+              )))}
             </select>
 
             <select
-              aria-label="Filter tenggat"
+              aria-label={uiText("Filter tenggat")}
               value={dueFilter}
               onChange={(event) => setDueFilter(event.target.value)}
             >
-              <option value="all">Semua tenggat</option>
-              <option value="overdue">Terlambat</option>
-              <option value="not-overdue">Belum terlambat</option>
+              <option value="all">{uiText("Semua tenggat")}</option>
+              <option value="overdue">{uiText("Terlambat")}</option>
+              <option value="not-overdue">{uiText("Belum terlambat")}</option>
             </select>
 
             {(search || statusFilter !== "all" || lineFilter !== "all" || deptFilter !== "all" || dueFilter !== "all") && (
@@ -383,24 +383,18 @@ export default function HodTrackingProblemsPage() {
                 type="button"
                 className="dml-pb-reset"
                 onClick={resetFilters}
-              >
-                Reset
-              </button>
+              >{uiText("Reset")}</button>
             )}
           </div>
         </div>
 
-        <div className="dml-pb-result-count">
-          Menampilkan <strong>{visibleRows.length}</strong> dari{" "}
-          <strong>{rows.length}</strong> masalah
-        </div>
+        <div className="dml-pb-result-count">{uiText("Menampilkan ")}<strong>{visibleRows.length}</strong>{uiText(" dari")}{" "}
+          <strong>{rows.length}</strong>{uiText(" masalah")}</div>
 
         {error ? (
           <ProblemLoadError error={error} onRetry={refresh} />
         ) : !ready || loading ? (
-          <div className="dml-empty" role="status">
-            Memuat masalah…
-          </div>
+          <div className="dml-empty" role="status">{uiText("Memuat masalah…")}</div>
         ) : (
           <div className="dml-table-wrap dml-pb-table-wrap">
             <table className="dml-table dml-pb-table">
@@ -417,23 +411,21 @@ export default function HodTrackingProblemsPage() {
               </colgroup>
               <thead>
                 <tr>
-                  <th>Tanggal</th>
-                  <th>Sesi</th>
-                  <th>Line</th>
-                  <th>Kategori</th>
-                  <th>Masalah</th>
-                  <th>PIC</th>
-                  <th>Due date</th>
-                  <th>Status</th>
-                  <th className="hod-problem-action">Detail</th>
+                  <th>{uiText("Tanggal")}</th>
+                  <th>{uiText("Sesi")}</th>
+                  <th>{uiText("Line")}</th>
+                  <th>{uiText("Kategori")}</th>
+                  <th>{uiText("Masalah")}</th>
+                  <th>{uiText("PIC")}</th>
+                  <th>{uiText("Due date")}</th>
+                  <th>{uiText("Status")}</th>
+                  <th className="hod-problem-action">{uiText("Detail")}</th>
                 </tr>
               </thead>
               <tbody>
                 {visibleRows.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="dml-empty">
-                      Tidak ada masalah yang sesuai dengan filter.
-                    </td>
+                    <td colSpan={9} className="dml-empty">{uiText("Tidak ada masalah yang sesuai dengan filter.")}</td>
                   </tr>
                 ) : (
                   visibleRows.map((problem) => {
@@ -448,7 +440,7 @@ export default function HodTrackingProblemsPage() {
                             : "")
                         }
                         tabIndex={0}
-                        aria-label={`Lihat detail masalah: ${problem.problem}`}
+                        aria-label={uiText("Lihat detail masalah: {{v0}}", { v0: problem.problem })}
                         onClick={() => openProblem(problem)}
                         onKeyDown={(event) => {
                           if (event.key === "Enter" || event.key === " ") {
@@ -457,15 +449,15 @@ export default function HodTrackingProblemsPage() {
                           }
                         }}
                       >
-                        <td title={problem.date}>
-                          {formatMeetingDate(problem.date)}
+                        <td title={uiText(problem.date)}>
+                          {formatMeetingDate(problem.date, uiLocale)}
                         </td>
-                        <td title={problem.sessionLabel}>
+                        <td title={uiText(problem.sessionLabel)}>
                           <span className="dml-pb-truncate">
-                            {problem.sessionLabel}
+                            {uiText(problem.sessionLabel)}
                           </span>
                         </td>
-                        <td title={problem.line}>{problem.line || "-"}</td>
+                        <td title={uiText(problem.line)}>{problem.line || "-"}</td>
                         <td>{problem.problemCategories?.join(", ") || "-"}</td>
                         <td className="dml-pb-problem" title={problem.problem}>
                           <span className="dml-pb-truncate">
@@ -479,13 +471,12 @@ export default function HodTrackingProblemsPage() {
                           {problem.due ? (
                             <div className="hod-due-cell">
                               <span className="hod-due-date">
-                                {formatDue(problem.due)}
+                                {uiText(formatDue(problem.due, uiLocale))}
                               </span>
                               {problem.status === "escalated" &&
                                 problem.overdueMs > 0 && (
-                                  <span className="dml-pb-overdue">
-                                    Terlambat{" "}
-                                    {formatOverdue(problem.overdueMs)}
+                                  <span className="dml-pb-overdue">{uiText("Terlambat")}{" "}
+                                    {uiText(formatOverdue(problem.overdueMs, uiLocale))}
                                   </span>
                                 )}
                             </div>
@@ -497,15 +488,15 @@ export default function HodTrackingProblemsPage() {
                           <span
                             className={`hod-status ${status.className}`}
                           >
-                            {status.label}
+                            {uiText(status.label)}
                           </span>
                         </td>
                         <td className="hod-problem-action">
                           <button
                             type="button"
                             className="hod-eye-button"
-                            aria-label={`Lihat detail: ${problem.problem}`}
-                            title="Lihat detail"
+                            aria-label={uiText("Lihat detail: {{v0}}", { v0: problem.problem })}
+                            title={uiText("Lihat detail")}
                             onClick={(event) => {
                               event.stopPropagation();
                               openProblem(problem);
@@ -541,15 +532,15 @@ export default function HodTrackingProblemsPage() {
           >
             <header className="hod-drawer-header">
               <div className="hod-drawer-heading">
-                <h2 id="hod-drawer-title">Detail Masalah</h2>
+                <h2 id="hod-drawer-title">{uiText("Detail Masalah")}</h2>
                 <span className={`hod-status ${selectedStatus.className}`}>
-                  {selectedStatus.label}
+                  {uiText(selectedStatus.label)}
                 </span>
               </div>
               <button
                 type="button"
                 className="hod-close-button"
-                aria-label="Tutup detail masalah"
+                aria-label={uiText("Tutup detail masalah")}
                 onClick={() => setSelectedProblem(null)}
               >
                 <X size={18} aria-hidden="true" />
@@ -558,48 +549,40 @@ export default function HodTrackingProblemsPage() {
 
             <div className="hod-drawer-content">
               <section className="hod-detail-section">
-                <h3>Masalah</h3>
+                <h3>{uiText("Masalah")}</h3>
                 <p className="hod-problem-title">
                   {selectedProblem.problem || "-"}
                 </p>
               </section>
 
               <section className="hod-detail-section">
-                <h3>Informasi Umum</h3>
+                <h3>{uiText("Informasi Umum")}</h3>
                 <div className="hod-info-grid">
                   <div className="hod-info-item">
                     <span className="hod-info-label">
-                      <CalendarDays size={14} aria-hidden="true" />
-                      Tanggal
-                    </span>
+                      <CalendarDays size={14} aria-hidden="true" />{uiText("Tanggal")}</span>
                     <div className="hod-info-value">
                       {selectedProblem.date
-                        ? formatMeetingDate(selectedProblem.date)
+                        ? formatMeetingDate(selectedProblem.date, uiLocale)
                         : "-"}
                     </div>
                   </div>
                   <div className="hod-info-item">
                     <span className="hod-info-label">
-                      <Clock3 size={14} aria-hidden="true" />
-                      Sesi
-                    </span>
+                      <Clock3 size={14} aria-hidden="true" />{uiText("Sesi")}</span>
                     <div className="hod-info-value">
                       {selectedProblem.sessionLabel || "-"}
                     </div>
                   </div>
                   <div className="hod-info-item">
-                    <span className="hod-info-label">
-                      Line
-                    </span>
+                    <span className="hod-info-label">{uiText("Line")}</span>
                     <div className="hod-info-value">
                       {selectedProblem.line || "-"}
                     </div>
                   </div>
                   <div className="hod-info-item">
                     <span className="hod-info-label">
-                      <Tag size={14} aria-hidden="true" />
-                      Kategori
-                    </span>
+                      <Tag size={14} aria-hidden="true" />{uiText("Kategori")}</span>
                     <div className="hod-info-value">
                       {selectedProblem.problemCategories?.join(", ") || "-"}
                     </div>
@@ -608,26 +591,26 @@ export default function HodTrackingProblemsPage() {
               </section>
 
               <section className="hod-detail-section">
-                <h3>Deskripsi Masalah</h3>
+                <h3>{uiText("Deskripsi Masalah")}</h3>
                 <p className="hod-detail-copy">
-                  {selectedProblem.problem || "Tidak ada deskripsi tercatat."}
+                  {selectedProblem.problem || uiText("Tidak ada deskripsi tercatat.")}
                 </p>
               </section>
 
               <section className="hod-detail-section">
-                <h3>Tindak Lanjut / Solusi</h3>
+                <h3>{uiText("Tindak Lanjut / Solusi")}</h3>
                 <p
                   className={
                     "hod-detail-copy" +
                     (selectedProblem.solution ? "" : " hod-detail-muted")
                   }
                 >
-                  {selectedProblem.solution || "Belum ada solusi tercatat."}
+                  {selectedProblem.solution || uiText("Belum ada solusi tercatat.")}
                 </p>
               </section>
 
               <section className="hod-detail-section">
-                <h3>Penanggung Jawab (PIC)</h3>
+                <h3>{uiText("Penanggung Jawab (PIC)")}</h3>
                 <div className="hod-pic">
                   <span className="hod-pic-avatar" aria-hidden="true">
                     {initials(selectedProblem.picName) || (
@@ -639,7 +622,7 @@ export default function HodTrackingProblemsPage() {
                     {selectedProblem.picDept ? (
                       <span className="hod-detail-muted">
                         {" "}
-                        · {departmentLabel(selectedProblem.picDept)}
+                        · {uiText(departmentLabel(selectedProblem.picDept))}
                       </span>
                     ) : null}
                   </span>
@@ -647,17 +630,16 @@ export default function HodTrackingProblemsPage() {
               </section>
 
               <section className="hod-detail-section">
-                <h3>Tenggat Waktu</h3>
+                <h3>{uiText("Tenggat Waktu")}</h3>
                 <div className="hod-info-item">
                   <div className="hod-info-value">
                     {selectedProblem.due
-                      ? formatDue(selectedProblem.due)
-                      : "Tidak ada tenggat tercatat."}
+                      ? uiText(formatDue(selectedProblem.due, uiLocale))
+                      : uiText("Tidak ada tenggat tercatat.")}
                   </div>
                   {selectedProblem.status === "escalated" &&
                     selectedProblem.overdueMs > 0 && (
-                      <div className="hod-due-note">
-                        Terlambat {formatOverdue(selectedProblem.overdueMs)}
+                      <div className="hod-due-note">{uiText("Terlambat ")}{uiText(formatOverdue(selectedProblem.overdueMs, uiLocale))}
                       </div>
                     )}
                 </div>

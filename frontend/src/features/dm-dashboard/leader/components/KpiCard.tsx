@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import type { ReactNode } from "react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { TARGET, TONE_LABEL, toneFor, type Tone } from "../utils";
@@ -24,30 +26,29 @@ export function KpiCard({
   tone: toneProp,
   showTarget = true,
 }: KpiCardProps) {
+  const { text: uiText } = useUiText();
   const tone = toneProp ?? toneFor(value, target);
 
   return (
     <article className="dml-kpi">
       <div className="dml-kpi__top">
-        <h3>{title}</h3>
+        <h3>{uiText(title)}</h3>
         <span className={`dml-kpi__icon dml-kpi__icon--${tone}`}>{icon}</span>
       </div>
 
       <p className="dml-kpi__value">
-        {value}
-        {unit}
+        {uiText(value)}
+        {uiText(unit)}
       </p>
 
       {delta !== undefined && delta !== null && (
         <p className={`dml-kpi__delta ${delta > 0 ? "is-up" : delta < 0 ? "is-down" : ""}`}>
-          {delta > 0 ? "▲" : delta < 0 ? "▼" : "•"} {Math.abs(delta)}% vs periode sebelumnya
-        </p>
+          {delta > 0 ? "▲" : delta < 0 ? "▼" : "•"} {Math.abs(delta)}{uiText("% vs periode sebelumnya")}</p>
       )}
 
       {showTarget && (
         <>
-          <p className="dml-kpi__hint">
-            Target {target}% · {TONE_LABEL[tone]}
+          <p className="dml-kpi__hint">{uiText("Target ")}{target}% · {uiText(TONE_LABEL[tone])}
           </p>
           <ProgressBar value={value} target={target} tone={tone} />
         </>

@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
@@ -17,40 +19,39 @@ const MAX = 4;
 
 /** The member's open follow-ups from DM meetings (most urgent first). Full list is on "Masalah Saya". */
 export function MyProblemsCard({ rows, ready, error, onRetry }: { rows: ProblemRow[]; ready: boolean; error: string | null; onRetry: () => void }) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const shown = rows.slice(0, MAX);
 
   return (
     <Card
       flush
-      title="Masalah untuk saya"
-      subtitle="Tindak lanjut dari DM meeting yang menjadi tanggung jawab Anda."
+      title={uiText("Masalah untuk saya")}
+      subtitle={uiText("Tindak lanjut dari DM meeting yang menjadi tanggung jawab Anda.")}
       actions={
-        <Link href={MEMBER_ROUTES.problems} className="dmm-link">
-          Lihat semua →
-        </Link>
+        <Link href={MEMBER_ROUTES.problems} className="dmm-link">{uiText("Lihat semua →")}</Link>
       }
     >
       {error ? <ProblemLoadError error={error} onRetry={onRetry} /> : !ready ? (
-        <div className="dml-empty">Memuat…</div>
+        <div className="dml-empty">{uiText("Memuat…")}</div>
       ) : shown.length === 0 ? (
-        <div className="dml-empty">Tidak ada masalah yang ditugaskan kepada Anda.</div>
+        <div className="dml-empty">{uiText("Tidak ada masalah yang ditugaskan kepada Anda.")}</div>
       ) : (
         <ul className="dmm-list">
-          {shown.map((r) => {
+          {uiText(shown.map((r) => {
             const s = STATUS[r.status];
             return (
               <li key={r.id}>
                 <div className="dmm-list__main">
                   <p className="dmm-list__title">{r.problem}</p>
                   <p className="dmm-list__meta">
-                    {r.line} · due {formatDue(r.due)}
-                    {r.status === "escalated" && <span className="dmm-list__late"> · terlambat {formatOverdue(r.overdueMs)}</span>}
+                    {r.line}{uiText(" · due ")}{formatDue(r.due, uiLocale)}
+                    {r.status === "escalated" && <span className="dmm-list__late">{uiText(" · terlambat ")}{formatOverdue(r.overdueMs, uiLocale)}</span>}
                   </p>
                 </div>
-                <StatusChip tone={s.tone}>{s.label}</StatusChip>
+                <StatusChip tone={s.tone}>{uiText(s.label)}</StatusChip>
               </li>
             );
-          })}
+          }))}
         </ul>
       )}
     </Card>

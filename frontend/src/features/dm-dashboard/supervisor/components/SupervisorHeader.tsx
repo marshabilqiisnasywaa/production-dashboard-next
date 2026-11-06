@@ -1,8 +1,11 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { departmentLabel } from "../../departments";
 import { useEffect, useMemo, useState } from "react";
 import { IconLogout } from "@/components/ui/icons";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import { setToken } from "../../api";
 import { formatOverdue } from "../../leader/problems/utils";
 import { NotificationBellButton } from "../../notifications/NotificationBellButton";
@@ -18,6 +21,7 @@ function parseTime(value: string): Date | null {
 }
 
 export function SupervisorHeader() {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [now, setNow] = useState<Date | null>(null);
   const { currentSupervisor, escalatedRows, allListItems } = useSupervisor();
 
@@ -27,8 +31,8 @@ export function SupervisorHeader() {
       type: "escalation",
       severity: "urgent",
       title: "Masalah melewati due date",
-      message: `${row.problem} · ${row.line} · PIC ${row.picName} · terlambat ${formatOverdue(row.overdueMs)}`,
-      timeLabel: `Terlambat ${formatOverdue(row.overdueMs)}`,
+      message: `${row.problem} · ${row.line} · PIC ${row.picName} · terlambat ${formatOverdue(row.overdueMs, uiLocale)}`,
+      timeLabel: `Terlambat ${formatOverdue(row.overdueMs, uiLocale)}`,
       actionLabel: "Lihat Eskalasi",
       actionUrl: SUPERVISOR_ROUTES.escalations,
       createdAt: new Date(row.due).getTime(),
@@ -85,7 +89,7 @@ export function SupervisorHeader() {
 
   const time = now ? `${pad(now.getHours())}:${pad(now.getMinutes())}` : "--:--";
   const date = now
-    ? now.toLocaleDateString("id-ID", {
+    ? now.toLocaleDateString(uiLocale, {
         weekday: "long",
         day: "numeric",
         month: "long",
@@ -111,6 +115,7 @@ export function SupervisorHeader() {
       </div>
 
       <div className="dml-header__right">
+        <LanguageSwitcher />
         <NotificationBellButton
           role="supervisor"
           dept={currentSupervisor.dept}
@@ -122,13 +127,13 @@ export function SupervisorHeader() {
           <span className="dml-avatar">{initials}</span>
           <div className="dml-user__text">
             <strong>{displayName}</strong>
-            <span className="dml-user__role">Supervisor</span>
+            <span className="dml-user__role">{uiText("Supervisor")}</span>
           </div>
         </div>
         <button
           type="button"
           onClick={handleLogout}
-          title="Keluar dari akun Supervisor"
+          title={uiText("Keluar dari akun Supervisor")}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -146,7 +151,7 @@ export function SupervisorHeader() {
           }}
         >
           <IconLogout size={14} />
-          <span>Keluar</span>
+          <span>{uiText("Keluar")}</span>
         </button>
       </div>
     </header>

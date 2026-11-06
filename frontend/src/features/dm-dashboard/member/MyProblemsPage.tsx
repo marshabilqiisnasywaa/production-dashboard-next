@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useState } from "react";
 import "../leader/problems/problems.css"; // table styles shared with the Leader's Tracking Masalah
@@ -9,6 +11,7 @@ import { useMyProblems } from "./hooks/useMyProblems";
 
 /** "Masalah Saya": the Leader's Tracking Masalah table, but only the rows where this member is the PIC. */
 export default function MyProblemsPage() {
+  const { text: uiText } = useUiText();
   const { mine, open, escalated, solved, ready, toggleSolved, saveSolution, error, refresh } =
     useMyProblems();
   const [toast, setToast] = useState<string | null>(null);
@@ -42,21 +45,18 @@ export default function MyProblemsPage() {
     <div className="dml-pb">
       <div className="dml-page-head">
         <div>
-          <h1>Masalah Saya</h1>
-          <p>
-            Tindak lanjut dari DM dan workshop meeting yang menjadi tanggung jawab Anda. Yang
-            melewati due date otomatis dieskalasi ke Supervisor.
-          </p>
+          <h1>{uiText("Masalah Saya")}</h1>
+          <p>{uiText("Tindak lanjut dari DM dan workshop meeting yang menjadi tanggung jawab Anda. Yang melewati due date otomatis dieskalasi ke Supervisor.")}</p>
         </div>
       </div>
 
       <Card
         flush
-        title="Daftar masalah"
-        subtitle={`${open.length} terbuka · ${escalated} eskalasi SPV · ${solved} selesai`}
+        title={uiText("Daftar masalah")}
+        subtitle={uiText("{{v0}} terbuka · {{v1}} eskalasi SPV · {{v2}} selesai", { v0: open.length, v1: escalated, v2: solved })}
       >
         {actionError && <p role="alert">{actionError}</p>}
-        {updatingStatus && <p role="status">Menyimpan status masalah...</p>}
+        {updatingStatus && <p role="status">{uiText("Menyimpan status masalah...")}</p>}
         {error ? <ProblemLoadError error={error} onRetry={refresh} /> : ready ? (
           <ProblemTable
             rows={mine}
@@ -64,7 +64,7 @@ export default function MyProblemsPage() {
             onSaveSolution={saveSolution}
           />
         ) : (
-          <div className="dml-empty">Memuat masalah…</div>
+          <div className="dml-empty">{uiText("Memuat masalah…")}</div>
         )}
       </Card>
 

@@ -1,0 +1,48 @@
+.ui-language-switcher {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+
+.ui-language-switcher button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 1px solid var(--text-secondary, #64748b);
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  color: var(--text-primary, #1e293b);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ui-language-switcher button[aria-pressed="true"] {
+  border-color: #046a38;
+  background: #046a38;
+  color: #fff;
+}
+
+.ui-language-switcher button:focus-visible {
+  outline: 2px solid #046a38;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .dml-header:has(.ui-language-switcher),
+  .dm-admin-topbar-nav:has(.ui-language-switcher) {
+    height: auto;
+    min-height: 50px;
+    flex-wrap: wrap;
+    row-gap: 6px;
+    padding-block: 6px;
+  }
+
+  .dml-header__right:has(.ui-language-switcher),
+  .dm-admin-topbar-actions:has(.ui-language-switcher) {
+    flex-wrap: wrap;
+    min-width: 0;
+    justify-content: flex-end;
+  }
+}

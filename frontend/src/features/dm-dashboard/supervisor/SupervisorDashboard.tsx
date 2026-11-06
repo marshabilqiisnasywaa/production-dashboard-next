@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { departmentLabel } from "../departments";
 import Link from "next/link";
@@ -19,6 +21,7 @@ function percent(value: number, total: number) {
 }
 
 export default function SupervisorDashboard() {
+  const { text: uiText } = useUiText();
   const {
     currentSupervisor,
     dbLines,
@@ -44,7 +47,7 @@ export default function SupervisorDashboard() {
     <div className="dms-container">
       <div className="dml-page-head">
         <SupervisorPageHeader
-          title="Dashboard Supervisor"
+          title={uiText("Dashboard Supervisor")}
           userName={currentSupervisor.name}
           meta={meta}
         />
@@ -55,25 +58,25 @@ export default function SupervisorDashboard() {
           }}
           disabled={isLoading}
           className="spv-btn spv-btn--secondary spv-btn--sm"
-          title="Muat ulang data terbaru dari database"
+          title={uiText("Muat ulang data terbaru dari database")}
         >
-          {isLoading ? "Memuat..." : "↻ Segarkan"}
+          {isLoading ? uiText("Memuat...") : uiText("↻ Segarkan")}
         </button>
       </div>
 
       <div className="dml-kpis">
         <KpiCard
-          title="Papercard terkirim"
+          title={uiText("Papercard terkirim")}
           value={submittedRate}
           icon={<IconClipboardCheck size={20} />}
         />
         <KpiCard
-          title="Disetujui"
+          title={uiText("Disetujui")}
           value={approvedRate}
           icon={<IconCheckCircle size={20} />}
         />
         <KpiCard
-          title="Menunggu persetujuan"
+          title={uiText("Menunggu persetujuan")}
           value={pendingApprovalsCount}
           icon={<IconClock size={20} />}
           unit={""}
@@ -81,7 +84,7 @@ export default function SupervisorDashboard() {
           showTarget={false}
         />
         <KpiCard
-          title="Temuan NG"
+          title={uiText("Temuan NG")}
           value={abnormalCount}
           icon={<IconAlert size={20} />}
           unit={""}
@@ -98,23 +101,21 @@ export default function SupervisorDashboard() {
                 <IconClock size={16} />
               </span>
               <div>
-                <h2 className="dms-card-title">Menunggu persetujuan</h2>
-                <p className="dms-card-subtitle">Papercard yang perlu ditinjau hari ini</p>
+                <h2 className="dms-card-title">{uiText("Menunggu persetujuan")}</h2>
+                <p className="dms-card-subtitle">{uiText("Papercard yang perlu ditinjau hari ini")}</p>
               </div>
             </div>
             <Link
               href={SUPERVISOR_ROUTES.approvals}
               className="dms-btn-compact dms-btn-compact--secondary"
-            >
-              Lihat semua
-            </Link>
+            >{uiText("Lihat semua")}</Link>
           </div>
 
           {pendingMembers.length === 0 ? (
-            <div className="spv-dash-empty">Tidak ada papercard yang menunggu persetujuan.</div>
+            <div className="spv-dash-empty">{uiText("Tidak ada papercard yang menunggu persetujuan.")}</div>
           ) : (
             <div className="spv-dash-list">
-              {pendingMembers.map((member) => (
+              {uiText(pendingMembers.map((member) => (
                 <div className="spv-dash-row" key={member.id}>
                   <div className="spv-dash-row__main">
                     <strong className="spv-dash-row__name">{member.name}</strong>
@@ -122,18 +123,16 @@ export default function SupervisorDashboard() {
                       <span className={`spv-chip spv-chip--dept-${member.dept.toLowerCase()}`}>
                         {departmentLabel(member.dept)}
                       </span>{" "}
-                      · {member.lineName || "Lini Lain"}
+                      · {member.lineName || uiText("Lini Lain")}
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => openReview(member)}
                     className="spv-btn spv-btn--secondary spv-btn--sm"
-                  >
-                    Tinjau
-                  </button>
+                  >{uiText("Tinjau")}</button>
                 </div>
-              ))}
+              )))}
             </div>
           )}
         </section>
@@ -146,14 +145,14 @@ export default function SupervisorDashboard() {
                   <IconPulse size={16} />
                 </span>
                 <div>
-                  <h2 className="dms-card-title">Ringkasan per lini</h2>
-                  <p className="dms-card-subtitle">Progres papercard hari ini</p>
+                  <h2 className="dms-card-title">{uiText("Ringkasan per lini")}</h2>
+                  <p className="dms-card-subtitle">{uiText("Progres papercard hari ini")}</p>
                 </div>
               </div>
             </div>
 
             {dbLines.length === 0 ? (
-              <div className="spv-dash-empty">Belum ada data lini di database.</div>
+              <div className="spv-dash-empty">{uiText("Belum ada data lini di database.")}</div>
             ) : (
               <div className="spv-dash-lines">
                 {dbLines.map((line) => {
@@ -167,8 +166,7 @@ export default function SupervisorDashboard() {
                       <div>
                         <strong className="spv-dash-line__name">{line.lineName}</strong>
                         <span className="spv-dash-line__meta">
-                          {submitted}/{line.members.length} terkirim · {approved} disetujui
-                        </span>
+                          {submitted}/{line.members.length}{uiText(" terkirim · ")}{approved}{uiText(" disetujui")}</span>
                       </div>
                       <span className="spv-dash-line__badge">
                         {percent(approved, line.members.length)}%

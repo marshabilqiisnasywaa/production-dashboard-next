@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { MoreHorizontal, Search, X } from "lucide-react";
@@ -40,15 +42,15 @@ const STATUS_FILTERS: readonly { value: StatusFilter; label: string }[] = [
   { value: "done", label: FIVE_WHY_ANALYSIS_LABELS.done },
 ];
 
-function formatUpdated(value: string) {
+function formatUpdated(value: string, locale = "id-ID") {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  const day = date.toLocaleDateString("id-ID", {
+  const day = date.toLocaleDateString(locale, {
     day: "2-digit",
     month: "long",
     year: "numeric",
   });
-  const time = date.toLocaleTimeString("id-ID", {
+  const time = date.toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -88,6 +90,7 @@ export default function HistoryDrawer({
   onDuplicate,
   onDelete,
 }: HistoryDrawerProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortMode, setSortMode] = useState<SortMode>("recent");
@@ -177,15 +180,13 @@ export default function HistoryDrawer({
         onClick={(event) => event.stopPropagation()}
       >
         <header className="dm-5w-history-head">
-          <h2 className="dm-5w-history-title" id="dm-5w-history-title">
-            Riwayat analisis
-            <span className="dm-5w-history-count">{records.length}</span>
+          <h2 className="dm-5w-history-title" id="dm-5w-history-title">{uiText("Riwayat analisis")}<span className="dm-5w-history-count">{records.length}</span>
           </h2>
           <button
             type="button"
             className="dm-5w-history-close"
             onClick={onClose}
-            aria-label="Tutup riwayat"
+            aria-label={uiText("Tutup riwayat")}
           >
             <X size={18} />
           </button>
@@ -198,16 +199,16 @@ export default function HistoryDrawer({
               ref={searchRef}
               className="dm-5w-input"
               value={query}
-              placeholder="Cari nomor, judul, pengusul, atau Root Cause"
+              placeholder={uiText("Cari nomor, judul, pengusul, atau Root Cause")}
               onChange={(event) => setQuery(event.target.value)}
-              aria-label="Cari riwayat analisis"
+              aria-label={uiText("Cari riwayat analisis")}
             />
           </div>
 
           <div
             className="dm-5w-history-filters"
             role="group"
-            aria-label="Filter status"
+            aria-label={uiText("Filter status")}
           >
             {STATUS_FILTERS.map((filter) => (
               <button
@@ -219,24 +220,24 @@ export default function HistoryDrawer({
                 aria-pressed={statusFilter === filter.value}
                 onClick={() => setStatusFilter(filter.value)}
               >
-                {filter.label}
+                {uiText(filter.label)}
               </button>
             ))}
           </div>
 
           <label className="dm-5w-history-sort">
-            <span className="dm-5w-label">Urutkan</span>
+            <span className="dm-5w-label">{uiText("Urutkan")}</span>
             <select
               className="dm-5w-select"
               value={sortMode}
               onChange={(event) =>
                 setSortMode(event.target.value as SortMode)
               }
-              aria-label="Urutkan riwayat"
+              aria-label={uiText("Urutkan riwayat")}
             >
-              <option value="recent">Terbaru diubah</option>
-              <option value="oldest">Terlama</option>
-              <option value="title">Judul A–Z</option>
+              <option value="recent">{uiText("Terbaru diubah")}</option>
+              <option value="oldest">{uiText("Terlama")}</option>
+              <option value="title">{uiText("Judul A–Z")}</option>
             </select>
           </label>
         </div>
@@ -247,11 +248,11 @@ export default function HistoryDrawer({
               <span className="dm-5w-empty-icon" aria-hidden="true">
                 <IconClock size={20} />
               </span>
-              <p>Belum ada riwayat analisis</p>
+              <p>{uiText("Belum ada riwayat analisis")}</p>
             </div>
           ) : sorted.length === 0 ? (
             <div className="dm-5w-history-empty">
-              <p>Tidak ada analisis yang cocok</p>
+              <p>{uiText("Tidak ada analisis yang cocok")}</p>
             </div>
           ) : (
             sorted.map((record) => {
@@ -267,7 +268,7 @@ export default function HistoryDrawer({
                   }`}
                   role="button"
                   tabIndex={0}
-                  aria-label={`Buka analisis ${record.nomor}`}
+                  aria-label={uiText("Buka analisis {{v0}}", { v0: record.nomor })}
                   onClick={() => onSelect(record)}
                   onKeyDown={(event) => {
                     if (event.target !== event.currentTarget) return;
@@ -289,16 +290,14 @@ export default function HistoryDrawer({
                         {FIVE_WHY_ANALYSIS_LABELS[record.analysisStatus]}
                       </span>
                       {isActive ? (
-                        <span className="dm-5w-history-active-label">
-                          Sedang dibuka
-                        </span>
+                        <span className="dm-5w-history-active-label">{uiText("Sedang dibuka")}</span>
                       ) : null}
                     </div>
                     <div className="dm-5w-menu" data-history-menu>
                       <button
                         type="button"
                         className="dm-5w-menu-trigger"
-                        aria-label={`Aksi untuk ${record.nomor}`}
+                        aria-label={uiText("Aksi untuk {{v0}}", { v0: record.nomor })}
                         aria-haspopup="menu"
                         aria-expanded={menuOpen}
                         onClick={(event) => {
@@ -323,9 +322,7 @@ export default function HistoryDrawer({
                               setMenuId(null);
                               onSelect(record);
                             }}
-                          >
-                            Buka
-                          </button>
+                          >{uiText("Buka")}</button>
                           <button
                             type="button"
                             role="menuitem"
@@ -334,9 +331,7 @@ export default function HistoryDrawer({
                               setMenuId(null);
                               onDuplicate(record);
                             }}
-                          >
-                            Duplikat
-                          </button>
+                          >{uiText("Duplikat")}</button>
                           <button
                             type="button"
                             role="menuitem"
@@ -345,36 +340,30 @@ export default function HistoryDrawer({
                               setMenuId(null);
                               onDelete(record);
                             }}
-                          >
-                            Hapus
-                          </button>
+                          >{uiText("Hapus")}</button>
                         </div>
                       ) : null}
                     </div>
                   </header>
 
                   <h3 className="dm-5w-history-card-title">
-                    {record.abnormal.label.trim() || "Tanpa judul"}
+                    {record.abnormal.label.trim() || uiText("Tanpa judul")}
                   </h3>
-                  <p className="dm-5w-history-meta">
-                    Line {record.abnormal.line.trim() || "-"} · Pengusul{" "}
+                  <p className="dm-5w-history-meta">{uiText("Line ")}{record.abnormal.line.trim() || "-"}{uiText(" · Pengusul")}{" "}
                     {record.abnormal.pengusul.trim() || "-"}
                   </p>
 
                   <div className="dm-5w-history-foot">
                     <span className="dm-5w-history-root">
                       {rootCause?.statement.trim()
-                        ? `Root Cause: ${rootCause.statement.trim()}`
-                        : "Belum ada Root Cause"}
+                        ? uiText("Root Cause: {{v0}}", { v0: rootCause.statement.trim() })
+                        : uiText("Belum ada Root Cause")}
                     </span>
                     <span className="dm-5w-history-foot-right">
                       {isMajorProblem(record) ? (
-                        <span className="dm-5w-history-major">
-                          Major problem
-                        </span>
+                        <span className="dm-5w-history-major">{uiText("Major problem")}</span>
                       ) : null}
-                      <span className="dm-5w-history-updated">
-                        Diubah {formatUpdated(record.updatedAt)}
+                      <span className="dm-5w-history-updated">{uiText("Diubah ")}{formatUpdated(record.updatedAt, uiLocale)}
                       </span>
                     </span>
                   </div>

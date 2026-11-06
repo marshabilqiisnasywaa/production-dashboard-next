@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useState } from "react";
 import type { DragEvent } from "react";
 import { IconClose } from "@/components/ui/icons";
@@ -56,11 +58,11 @@ function stageClass(stage: PdcaStage) {
   return `is-${stage.toLowerCase()}`;
 }
 
-function formatDeadline(value: string) {
+function formatDeadline(value: string, locale = "id-ID") {
   if (!value) return "Tanpa deadline";
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("id-ID", {
+  return date.toLocaleDateString(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -77,6 +79,7 @@ function PhotoField({
   onPreview,
   onNotify,
 }: PhotoFieldProps) {
+  const { text: uiText } = useUiText();
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     try {
@@ -91,7 +94,7 @@ function PhotoField({
 
   return (
     <div className="dm-5w-photo-field">
-      <span className="dm-5w-photo-field-label">{label}</span>
+      <span className="dm-5w-photo-field-label">{uiText(label)}</span>
       <div className="dm-5w-evidence-photos">
         {photos.map((photo, index) => (
           <div className="dm-5w-evidence-thumb" key={`${label}-photo-${index}`}>
@@ -99,7 +102,7 @@ function PhotoField({
               type="button"
               className="dm-5w-evidence-thumb-open"
               onClick={() => onPreview(photo)}
-              aria-label={`Lihat foto ${label} lebih besar`}
+              aria-label={uiText("Lihat foto {{v0}} lebih besar", { v0: label })}
             >
               <img src={photo} alt="" />
             </button>
@@ -108,7 +111,7 @@ function PhotoField({
               className="dm-5w-evidence-thumb-remove"
               onClick={() => onRemove(index)}
               disabled={!canEdit}
-              aria-label={`Hapus foto ${label}`}
+              aria-label={uiText("Hapus foto {{v0}}", { v0: label })}
             >
               <IconClose size={9} />
             </button>
@@ -121,14 +124,14 @@ function PhotoField({
             accept="image/*"
             className="dm-5w-sr-only"
             disabled={!canEdit}
-            aria-label={`Unggah foto ${label} ${ariaLabel}`}
+            aria-label={uiText("Unggah foto {{v0}} {{v1}}", { v0: label, v1: ariaLabel })}
             onChange={(event) => {
               const files = event.target.files;
               event.target.value = "";
               void handleFiles(files);
             }}
           />
-          <span>Unggah foto</span>
+          <span>{uiText("Unggah foto")}</span>
         </label>
       </div>
     </div>
@@ -145,6 +148,7 @@ export default function ActionPlan({
   onGoToWhy,
   onShowRootCause,
 }: ActionPlanProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [view, setView] = useState<"list" | "board">("list");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<PdcaStage | null>(null);
@@ -169,7 +173,7 @@ export default function ActionPlan({
     );
     if (
       filled &&
-      !window.confirm("Hapus solusi ini? Isian solusi akan dibuang.")
+      !window.confirm(uiText("Hapus solusi ini? Isian solusi akan dibuang."))
     ) {
       return;
     }
@@ -226,33 +230,26 @@ export default function ActionPlan({
       {rootCause ? (
         <section className="dm-5w-card dm-5w-root-cause-card">
           <header className="dm-5w-root-cause-head">
-            <h2 className="dm-5w-card-title">Root Cause</h2>
-            <span className="dm-5w-why-badge">Why {rootCause.level}</span>
+            <h2 className="dm-5w-card-title">{uiText("Root Cause")}</h2>
+            <span className="dm-5w-why-badge">{uiText("Why ")}{rootCause.level}</span>
           </header>
           <p className="dm-5w-root-cause-text">
-            {rootCause.statement.trim() || "Pernyataan Why belum diisi."}
+            {rootCause.statement.trim() || uiText("Pernyataan Why belum diisi.")}
           </p>
           <button
             type="button"
             className="dm-5w-add-field"
             onClick={onShowRootCause}
-          >
-            Lihat di Analisis 5Why
-          </button>
+          >{uiText("Lihat di Analisis 5Why")}</button>
         </section>
       ) : (
         <section className="dm-5w-card dm-5w-root-cause-empty">
-          <p>
-            Belum ada Root Cause. Tandai satu Why sebagai Root Cause di tab
-            Analisis 5Why
-          </p>
+          <p>{uiText("Belum ada Root Cause. Tandai satu Why sebagai Root Cause di tab Analisis 5Why")}</p>
           <button
             type="button"
             className="dm-5w-btn dm-5w-btn-secondary dm-5w-btn-sm"
             onClick={onGoToWhy}
-          >
-            Ke Analisis 5Why
-          </button>
+          >{uiText("Ke Analisis 5Why")}</button>
         </section>
       )}
 
@@ -260,17 +257,13 @@ export default function ActionPlan({
         <section className="dm-5w-card">
           <div className="dm-5w-action-head">
             <div>
-              <h2 className="dm-5w-card-title">
-                Solusi &amp; Pencegahan Terulang
-              </h2>
-              <p className="dm-5w-card-sub">
-                Susun rencana perbaikan dan pantau penerapannya.
-              </p>
+              <h2 className="dm-5w-card-title">{uiText("Solusi & Pencegahan Terulang")}</h2>
+              <p className="dm-5w-card-sub">{uiText("Susun rencana perbaikan dan pantau penerapannya.")}</p>
             </div>
             <div
               className="dm-5w-view-toggle"
               role="group"
-              aria-label="Pilih tampilan solusi"
+              aria-label={uiText("Pilih tampilan solusi")}
             >
               <button
                 type="button"
@@ -279,9 +272,7 @@ export default function ActionPlan({
                 }`}
                 aria-pressed={view === "list"}
                 onClick={() => setView("list")}
-              >
-                Daftar
-              </button>
+              >{uiText("Daftar")}</button>
               <button
                 type="button"
                 className={`dm-5w-view-btn ${
@@ -289,9 +280,7 @@ export default function ActionPlan({
                 }`}
                 aria-pressed={view === "board"}
                 onClick={() => setView("board")}
-              >
-                Board
-              </button>
+              >{uiText("Board")}</button>
             </div>
           </div>
 
@@ -307,8 +296,7 @@ export default function ActionPlan({
                   <article className="dm-5w-solution-card" key={solution.id}>
                     <header className="dm-5w-solution-head">
                       <div className="dm-5w-solution-head-left">
-                        <h3 className="dm-5w-solution-title">
-                          Solusi {index + 1}
+                        <h3 className="dm-5w-solution-title">{uiText("Solusi ")}{index + 1}
                         </h3>
                         <span
                           className={`dm-5w-pdca-badge ${stageClass(stage)}`}
@@ -321,42 +309,38 @@ export default function ActionPlan({
                         className="dm-5w-icon-btn"
                         onClick={() => removeSolution(solution)}
                         disabled={!canEdit}
-                        aria-label={`Hapus solusi ${index + 1}`}
+                        aria-label={uiText("Hapus solusi {{v0}}", { v0: index + 1 })}
                       >
                         <IconClose size={13} />
                       </button>
                     </header>
 
                     <div className="dm-5w-pdca-section">
-                      <span className="dm-5w-pdca-tag" aria-hidden="true">
-                        P
-                      </span>
+                      <span className="dm-5w-pdca-tag" aria-hidden="true">{uiText("P")}</span>
                       <div className="dm-5w-pdca-body">
                         <label className="dm-5w-field">
-                          <span className="dm-5w-label">Solusi</span>
+                          <span className="dm-5w-label">{uiText("Solusi")}</span>
                           <textarea
                             className="dm-5w-textarea"
                             rows={2}
                             value={solution.text}
-                            placeholder="Tulis solusi yang akan dijalankan"
+                            placeholder={uiText("Tulis solusi yang akan dijalankan")}
                             onChange={(event) =>
                               updateSolution(solution.id, {
                                 text: event.target.value,
                               })
                             }
                             disabled={!canEdit}
-                            aria-label={`Solusi ${index + 1}`}
+                            aria-label={uiText("Solusi {{v0}}", { v0: index + 1 })}
                           />
                           {textMissing ? (
-                            <span className="dm-5w-field-error">
-                              Wajib diisi
-                            </span>
+                            <span className="dm-5w-field-error">{uiText("Wajib diisi")}</span>
                           ) : null}
                         </label>
 
                         <div className="dm-5w-solution-grid">
                           <label className="dm-5w-field">
-                            <span className="dm-5w-label">Tipe Aksi</span>
+                            <span className="dm-5w-label">{uiText("Tipe Aksi")}</span>
                             <select
                               className="dm-5w-select"
                               value={solution.type}
@@ -366,7 +350,7 @@ export default function ActionPlan({
                                 })
                               }
                               disabled={!canEdit}
-                              aria-label={`Tipe aksi solusi ${index + 1}`}
+                              aria-label={uiText("Tipe aksi solusi {{v0}}", { v0: index + 1 })}
                             >
                               {SOLUTION_TYPE_OPTIONS.map((option) => (
                                 <option key={option} value={option}>
@@ -377,49 +361,45 @@ export default function ActionPlan({
                           </label>
 
                           <label className="dm-5w-field">
-                            <span className="dm-5w-label">PIC</span>
+                            <span className="dm-5w-label">{uiText("PIC")}</span>
                             <input
                               className="dm-5w-input"
                               value={solution.pic}
-                              placeholder="Nama penanggung jawab"
+                              placeholder={uiText("Nama penanggung jawab")}
                               onChange={(event) =>
                                 updateSolution(solution.id, {
                                   pic: event.target.value,
                                 })
                               }
                               disabled={!canEdit}
-                              aria-label={`PIC solusi ${index + 1}`}
+                              aria-label={uiText("PIC solusi {{v0}}", { v0: index + 1 })}
                             />
                             {picMissing ? (
-                              <span className="dm-5w-field-error">
-                                Wajib diisi
-                              </span>
+                              <span className="dm-5w-field-error">{uiText("Wajib diisi")}</span>
                             ) : null}
                           </label>
 
                           <label className="dm-5w-field">
-                            <span className="dm-5w-label">Departemen</span>
+                            <span className="dm-5w-label">{uiText("Departemen")}</span>
                             <input
                               className="dm-5w-input"
                               value={solution.dept}
-                              placeholder="Departemen terkait"
+                              placeholder={uiText("Departemen terkait")}
                               onChange={(event) =>
                                 updateSolution(solution.id, {
                                   dept: event.target.value,
                                 })
                               }
                               disabled={!canEdit}
-                              aria-label={`Departemen solusi ${index + 1}`}
+                              aria-label={uiText("Departemen solusi {{v0}}", { v0: index + 1 })}
                             />
                             {deptMissing ? (
-                              <span className="dm-5w-field-error">
-                                Wajib diisi
-                              </span>
+                              <span className="dm-5w-field-error">{uiText("Wajib diisi")}</span>
                             ) : null}
                           </label>
 
                           <label className="dm-5w-field">
-                            <span className="dm-5w-label">Deadline</span>
+                            <span className="dm-5w-label">{uiText("Deadline")}</span>
                             <input
                               type="date"
                               className="dm-5w-input"
@@ -430,12 +410,10 @@ export default function ActionPlan({
                                 })
                               }
                               disabled={!canEdit}
-                              aria-label={`Deadline solusi ${index + 1}`}
+                              aria-label={uiText("Deadline solusi {{v0}}", { v0: index + 1 })}
                             />
                             {deadlineMissing ? (
-                              <span className="dm-5w-field-error">
-                                Wajib diisi
-                              </span>
+                              <span className="dm-5w-field-error">{uiText("Wajib diisi")}</span>
                             ) : null}
                           </label>
                         </div>
@@ -444,12 +422,10 @@ export default function ActionPlan({
 
                     <div className="dm-5w-dc-grid">
                       <div className="dm-5w-pdca-section">
-                        <span className="dm-5w-pdca-tag" aria-hidden="true">
-                          D
-                        </span>
+                        <span className="dm-5w-pdca-tag" aria-hidden="true">{uiText("D")}</span>
                         <div className="dm-5w-pdca-body">
                           <label className="dm-5w-field">
-                            <span className="dm-5w-label">Status</span>
+                            <span className="dm-5w-label">{uiText("Status")}</span>
                             <select
                               className="dm-5w-select"
                               value={solution.status}
@@ -459,7 +435,7 @@ export default function ActionPlan({
                                 })
                               }
                               disabled={!canEdit}
-                              aria-label={`Status solusi ${index + 1}`}
+                              aria-label={uiText("Status solusi {{v0}}", { v0: index + 1 })}
                             >
                               {SOLUTION_STATUS_OPTIONS.map((option) => (
                                 <option key={option} value={option}>
@@ -472,14 +448,10 @@ export default function ActionPlan({
                       </div>
 
                       <div className="dm-5w-pdca-section">
-                        <span className="dm-5w-pdca-tag" aria-hidden="true">
-                          C
-                        </span>
+                        <span className="dm-5w-pdca-tag" aria-hidden="true">{uiText("C")}</span>
                         <div className="dm-5w-pdca-body">
                           <label className="dm-5w-field">
-                            <span className="dm-5w-label">
-                              Apakah masalah terulang kembali?
-                            </span>
+                            <span className="dm-5w-label">{uiText("Apakah masalah terulang kembali?")}</span>
                             <select
                               className="dm-5w-select"
                               value={solution.recurred}
@@ -490,9 +462,7 @@ export default function ActionPlan({
                                 })
                               }
                               disabled={!canEdit}
-                              aria-label={`Apakah masalah terulang untuk solusi ${
-                                index + 1
-                              }`}
+                              aria-label={uiText("Apakah masalah terulang untuk solusi {{v0}}", { v0: index + 1 })}
                             >
                               {RECURRENCE_OPTIONS.map((option) => (
                                 <option key={option} value={option}>
@@ -506,33 +476,27 @@ export default function ActionPlan({
                     </div>
 
                     <div className="dm-5w-pdca-section">
-                      <span className="dm-5w-pdca-tag" aria-hidden="true">
-                        A
-                      </span>
+                      <span className="dm-5w-pdca-tag" aria-hidden="true">{uiText("A")}</span>
                       <div className="dm-5w-pdca-body">
                         <label className="dm-5w-field">
-                          <span className="dm-5w-label">
-                            Monitoring &amp; Remark
-                          </span>
+                          <span className="dm-5w-label">{uiText("Monitoring & Remark")}</span>
                           <textarea
                             className="dm-5w-textarea"
                             rows={2}
                             value={solution.remark}
-                            placeholder="Catatan monitoring dan tindak lanjut"
+                            placeholder={uiText("Catatan monitoring dan tindak lanjut")}
                             onChange={(event) =>
                               updateSolution(solution.id, {
                                 remark: event.target.value,
                               })
                             }
                             disabled={!canEdit}
-                            aria-label={`Monitoring dan remark solusi ${
-                              index + 1
-                            }`}
+                            aria-label={uiText("Monitoring dan remark solusi {{v0}}", { v0: index + 1 })}
                           />
                         </label>
                         <div className="dm-5w-photo-row">
                           <PhotoField
-                            label="Before"
+                            label={uiText("Before")}
                             photos={solution.photosBefore}
                             canEdit={canEdit}
                             ariaLabel={`solusi ${index + 1}`}
@@ -555,7 +519,7 @@ export default function ActionPlan({
                             onNotify={onNotify}
                           />
                           <PhotoField
-                            label="After"
+                            label={uiText("After")}
                             photos={solution.photosAfter}
                             canEdit={canEdit}
                             ariaLabel={`solusi ${index + 1}`}
@@ -584,10 +548,7 @@ export default function ActionPlan({
                 );
               })}
               {solutions.length === 0 ? (
-                <p className="dm-5w-hint">
-                  Belum ada solusi. Tambahkan solusi untuk menindaklanjuti Root
-                  Cause.
-                </p>
+                <p className="dm-5w-hint">{uiText("Belum ada solusi. Tambahkan solusi untuk menindaklanjuti Root Cause.")}</p>
               ) : null}
             </div>
           ) : (
@@ -602,7 +563,7 @@ export default function ActionPlan({
                     className={`dm-5w-board-col ${
                       dragOverStage === stage ? "is-dragover" : ""
                     }`}
-                    aria-label={`Tahap ${stage}`}
+                    aria-label={uiText("Tahap {{v0}}", { v0: stage })}
                     onDragOver={(event) => {
                       event.preventDefault();
                       event.dataTransfer.dropEffect = "move";
@@ -636,16 +597,14 @@ export default function ActionPlan({
                           }
                           onDragEnd={handleDragEnd}
                           tabIndex={0}
-                          aria-label={`${solution.text || "Solusi"} untuk ${
-                            solution.pic || "PIC belum diisi"
-                          }`}
+                          aria-label={uiText("{{v0}} untuk {{v1}}", { v0: solution.text || "Solusi", v1: solution.pic || "PIC belum diisi" })}
                         >
                           <p className="dm-5w-board-solution">
-                            {solution.text || "Solusi belum diisi"}
+                            {solution.text || uiText("Solusi belum diisi")}
                           </p>
                           <div className="dm-5w-board-meta">
-                            <span>{solution.pic || "PIC belum diisi"}</span>
-                            <span>{formatDeadline(solution.deadline)}</span>
+                            <span>{solution.pic || uiText("PIC belum diisi")}</span>
+                            <span>{formatDeadline(solution.deadline, uiLocale)}</span>
                           </div>
                           <div className="dm-5w-board-foot">
                             <span className="dm-5w-board-type">
@@ -663,13 +622,11 @@ export default function ActionPlan({
                                       ],
                                   })
                                 }
-                                aria-label={`Pindahkan ${
-                                  solution.text || "solusi"
-                                } ke tahap`}
+                                aria-label={uiText("Pindahkan {{v0}} ke tahap", { v0: solution.text || "solusi" })}
                               >
                                 {PDCA_STAGES.map((option) => (
                                   <option key={option} value={option}>
-                                    {option}
+                                    {uiText(option)}
                                   </option>
                                 ))}
                               </select>
@@ -678,7 +635,7 @@ export default function ActionPlan({
                         </article>
                       ))}
                       {items.length === 0 ? (
-                        <p className="dm-5w-board-empty">Belum ada solusi</p>
+                        <p className="dm-5w-board-empty">{uiText("Belum ada solusi")}</p>
                       ) : null}
                     </div>
                   </section>
@@ -689,26 +646,21 @@ export default function ActionPlan({
 
           <div className="dm-5w-actions-footer">
             <span className="dm-5w-actions-footer-note">
-              {solutions.length} solusi
-            </span>
+              {solutions.length}{uiText(" solusi")}</span>
             <div className="dm-5w-actions-footer-actions">
               {canEdit ? (
                 <button
                   type="button"
                   className="dm-5w-btn dm-5w-btn-secondary dm-5w-btn-sm"
                   onClick={addSolution}
-                >
-                  + Tambah solusi
-                </button>
+                >{uiText("+ Tambah solusi")}</button>
               ) : null}
               {canEdit ? (
                 <button
                   type="button"
                   className="dm-5w-btn dm-5w-btn-primary"
                   onClick={handleSave}
-                >
-                  Simpan PDCA
-                </button>
+                >{uiText("Simpan PDCA")}</button>
               ) : null}
             </div>
           </div>
@@ -720,20 +672,20 @@ export default function ActionPlan({
           className="dm-5w-lightbox"
           role="dialog"
           aria-modal="true"
-          aria-label="Foto solusi"
+          aria-label={uiText("Foto solusi")}
           onClick={() => setPreviewUrl(null)}
         >
           <button
             type="button"
             className="dm-5w-lightbox-close"
             onClick={() => setPreviewUrl(null)}
-            aria-label="Tutup foto"
+            aria-label={uiText("Tutup foto")}
           >
             <IconClose size={16} />
           </button>
           <img
             src={previewUrl}
-            alt="Foto solusi diperbesar"
+            alt={uiText("Foto solusi diperbesar")}
             onClick={(event) => event.stopPropagation()}
           />
         </div>

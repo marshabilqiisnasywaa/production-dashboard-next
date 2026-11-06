@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import Link from "next/link";
 import { IconClipboardCheck } from "@/components/ui/icons";
@@ -19,11 +21,12 @@ const WINDOW = LEADER_TEMPLATE.window;
 
 /** The one thing a member must do every morning: send their papercard before the window closes. */
 export function PapercardTodayCard({ roleLabel, submitted, loading }: Props) {
+  const { text: uiText } = useUiText();
   const win = useInspectionWindow({ start: WINDOW.start, end: WINDOW.end });
   const range = `${WINDOW.start}–${WINDOW.end}`;
 
-  let chip = <StatusChip tone="muted">Memuat…</StatusChip>;
-  if (!loading) chip = submitted ? <StatusChip tone="ok">Terkirim</StatusChip> : <StatusChip tone="wait">Belum diisi</StatusChip>;
+  let chip = <StatusChip tone="muted">{uiText("Memuat…")}</StatusChip>;
+  if (!loading) chip = submitted ? <StatusChip tone="ok">{uiText("Terkirim")}</StatusChip> : <StatusChip tone="wait">{uiText("Belum diisi")}</StatusChip>;
 
   let big: string | null = null;
   let text = "";
@@ -41,7 +44,7 @@ export function PapercardTodayCard({ roleLabel, submitted, loading }: Props) {
   return (
     <article className="dmm-pc">
       <div className="dmm-pc__top">
-        <h3>Papercard {roleLabel} hari ini</h3>
+        <h3>{uiText("Papercard ")}{uiText(roleLabel)}{uiText(" hari ini")}</h3>
         <span className="dml-kpi__icon dml-kpi__icon--ok">
           <IconClipboardCheck size={20} />
         </span>
@@ -55,7 +58,7 @@ export function PapercardTodayCard({ roleLabel, submitted, loading }: Props) {
 
       {!loading && (
         <Link href={MEMBER_ROUTES.papercard} className={submitted ? "ui-btn ui-btn--outline" : "ui-btn ui-btn--primary"}>
-          {submitted ? "Lihat papercard" : "Isi Papercard Sekarang"}
+          {submitted ? uiText("Lihat papercard") : uiText("Isi Papercard Sekarang")}
         </Link>
       )}
     </article>

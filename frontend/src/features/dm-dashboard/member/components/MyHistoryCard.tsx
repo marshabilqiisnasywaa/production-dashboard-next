@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { Card } from "@/components/ui/Card";
 import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import type { PapercardStatus } from "../../leader/types";
@@ -15,15 +17,16 @@ const shortDate = (iso: string) => `${Number(iso.slice(8, 10))} ${MONTHS[Number(
 
 /** Last 7 days of the member's own papercard, one tile per day. */
 export function MyHistoryCard({ days }: { days: MyDay[] }) {
+  const { text: uiText } = useUiText();
   return (
-    <Card title="Riwayat papercard 7 hari" subtitle="Status papercard Anda per hari.">
+    <Card title={uiText("Riwayat papercard 7 hari")} subtitle={uiText("Status papercard Anda per hari.")}>
       <ul className="dmm-days">
         {days.map((d, i) => {
           const v = VIEW[d.status];
           return (
             <li key={d.date} className={i === days.length - 1 ? "dmm-day is-last" : "dmm-day"}>
               <span>{shortDate(d.date)}</span>
-              <StatusChip tone={v.tone}>{v.label}</StatusChip>
+              <StatusChip tone={v.tone}>{uiText(v.label)}</StatusChip>
             </li>
           );
         })}

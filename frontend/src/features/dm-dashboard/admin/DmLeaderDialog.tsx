@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { X } from "lucide-react";
@@ -15,6 +17,7 @@ type Props = {
 };
 
 export default function DmLeaderDialog({ group, call, onClose, onSaved }: Props) {
+  const { text: uiText } = useUiText();
   const dialog = useRef<HTMLDialogElement>(null);
   const [candidates, setCandidates] = useState<DmLeaderCandidate[]>([]);
   const [employeeId, setEmployeeId] = useState("");
@@ -74,26 +77,26 @@ export default function DmLeaderDialog({ group, call, onClose, onSaved }: Props)
       onClick={(event) => { if (event.target === event.currentTarget && !busy) onClose(); }}>
       <div className="dm-dialog-card">
         <header className="dm-dialog-head">
-          <h2 id="dm-leader-title" className="dm-dialog-title">Leader DM — {group.name}</h2>
-          <button type="button" className="dm-dialog-close" aria-label="Tutup" disabled={busy} onClick={onClose}><X size={18} /></button>
+          <h2 id="dm-leader-title" className="dm-dialog-title">{uiText("Leader DM — ")}{group.name}</h2>
+          <button type="button" className="dm-dialog-close" aria-label={uiText("Tutup")} disabled={busy} onClick={onClose}><X size={18} /></button>
         </header>
         <form className="dm-dialog-form" onSubmit={save}>
-          {loading ? <p role="status">Memuat leader...</p> : ready ? <>
-            <p className="dm-leader-note">Leader saat ini: <strong>{currentName ?? "Belum ditentukan"}</strong></p>
+          {loading ? <p role="status">{uiText("Memuat leader...")}</p> : ready ? <>
+            <p className="dm-leader-note">{uiText("Leader saat ini: ")}<strong>{currentName ?? uiText("Belum ditentukan")}</strong></p>
             <div className="dm-dialog-field">
-              <label htmlFor="dm-leader-employee" className="dm-dialog-label">Nama leader DM</label>
+              <label htmlFor="dm-leader-employee" className="dm-dialog-label">{uiText("Nama leader DM")}</label>
               <select id="dm-leader-employee" className="dm-dialog-input" value={employeeId} disabled={busy} onChange={(event) => setEmployeeId(event.target.value)} required>
-                <option value="">Pilih leader DM</option>
+                <option value="">{uiText("Pilih leader DM")}</option>
                 {candidates.map((item) => <option key={item.employee_id} value={item.employee_id}>{item.name} — {item.lines.length ? item.lines.map((line) => line.line_code).join(", ") : item.employee_no}</option>)}
               </select>
             </div>
-            {candidates.length === 0 ? <p className="dm-leader-note">Belum ada leader yang dapat dipilih. Tambahkan User ber-role Leader; jika line sudah memiliki anggota, masukkan leader ke tim line dalam DM ini.</p> : null}
+            {candidates.length === 0 ? <p className="dm-leader-note">{uiText("Belum ada leader yang dapat dipilih. Tambahkan User ber-role Leader; jika line sudah memiliki anggota, masukkan leader ke tim line dalam DM ini.")}</p> : null}
           </> : null}
-          {error ? <p className="dm-dialog-error" role="alert">{error}</p> : null}
-          {!loading && !ready ? <button type="button" className="dm-dialog-btn is-outline" onClick={() => setRetry((value) => value + 1)}>Muat ulang</button> : null}
+          {error ? <p className="dm-dialog-error" role="alert">{uiText(error)}</p> : null}
+          {!loading && !ready ? <button type="button" className="dm-dialog-btn is-outline" onClick={() => setRetry((value) => value + 1)}>{uiText("Muat ulang")}</button> : null}
           <footer className="dm-dialog-foot">
-            <button type="button" className="dm-dialog-btn is-outline" disabled={busy} onClick={onClose}>Batal</button>
-            <button type="submit" className="dm-dialog-btn is-primary" disabled={!ready || busy || !employeeId || Number(employeeId) === currentId}>{busy ? "Menyimpan..." : "Simpan"}</button>
+            <button type="button" className="dm-dialog-btn is-outline" disabled={busy} onClick={onClose}>{uiText("Batal")}</button>
+            <button type="submit" className="dm-dialog-btn is-primary" disabled={!ready || busy || !employeeId || Number(employeeId) === currentId}>{busy ? uiText("Menyimpan...") : uiText("Simpan")}</button>
           </footer>
         </form>
       </div>

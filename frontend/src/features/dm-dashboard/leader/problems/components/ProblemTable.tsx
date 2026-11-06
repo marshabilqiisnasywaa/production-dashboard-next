@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useRef, useState } from "react";
 import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
@@ -22,17 +24,17 @@ interface Props {
 
 type ConfirmState = { id: string; action: "complete" | "reopen" } | null;
 
-function formatSolvedAt(value: string | null): string {
+function formatSolvedAt(value: string | null, locale = "id-ID"): string {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
 
-  const day = date.toLocaleDateString("id-ID", {
+  const day = date.toLocaleDateString(locale, {
     day: "numeric",
     month: "short",
   });
   const time = date
-    .toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+    .toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
     .replace(/\./g, ":");
 
   return `${day}, ${time}`;
@@ -62,6 +64,7 @@ export function ProblemTable({
   onSaveSolution,
   onSaveDueDate,
 }: Props) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [confirming, setConfirming] = useState<ConfirmState>(null);
   const confirmRef = useRef<HTMLDivElement | null>(null);
 
@@ -94,32 +97,26 @@ export function ProblemTable({
     return (
       <div ref={confirmRef} className="dml-pb-act-confirm">
         <span className="dml-pb-act-question">
-          {reopen ? "Yakin buka kembali?" : "Yakin sudah selesai?"}
+          {reopen ? uiText("Yakin buka kembali?") : uiText("Yakin sudah selesai?")}
         </span>
         <span className="dml-pb-act-row">
           <button
             type="button"
             className="dml-pb-act-yes"
-            aria-label={`${
+            aria-label={uiText(`${
               reopen ? "Ya, buka kembali" : "Ya, tandai selesai"
-            }: ${row.problem || "-"}`}
+            }: ${row.problem || "-"}`)}
             onClick={() => {
               onToggleSolved?.(row.id, reopen);
               setConfirming(null);
             }}
-          >
-            Ya
-          </button>
+          >{uiText("Ya")}</button>
           <button
             type="button"
             className="dml-pb-act-cancel"
-            aria-label={`Batal ${reopen ? "buka kembali" : "tandai selesai"}: ${
-              row.problem || "-"
-            }`}
+            aria-label={uiText("Batal {{v0}}: {{v1}}", { v0: reopen ? "buka kembali" : "tandai selesai", v1: row.problem || "-" })}
             onClick={() => setConfirming(null)}
-          >
-            Batal
-          </button>
+          >{uiText("Batal")}</button>
         </span>
       </div>
     );
@@ -205,19 +202,19 @@ async function handleSaveDueDate() {
 
   return (
     <div className="dml-table-wrap dml-pb-table-wrap">
-      <table className="dml-table dml-pb-table">
+      <table className="dml-table dml-pb-table dml-pb-table--tracking">
         <thead>
           <tr>
-            <th>Tanggal</th>
-            <th>Sesi</th>
-            <th>Line</th>
-            <th>Kategori</th>
-            <th>Masalah</th>
-            <th>Solusi</th>
-            <th>PIC</th>
-            <th>Due date</th>
-            <th>Status</th>
-            {onToggleSolved && <th className="dml-pb-act-col">Aksi</th>}
+            <th>{uiText("Tanggal")}</th>
+            <th>{uiText("Sesi")}</th>
+            <th>{uiText("Line")}</th>
+            <th>{uiText("Kategori")}</th>
+            <th>{uiText("Masalah")}</th>
+            <th>{uiText("Solusi")}</th>
+            <th>{uiText("PIC")}</th>
+            <th>{uiText("Due date")}</th>
+            <th>{uiText("Status")}</th>
+            {onToggleSolved && <th className="dml-pb-act-col">{uiText("Aksi")}</th>}
           </tr>
         </thead>
 
@@ -225,7 +222,7 @@ async function handleSaveDueDate() {
           {rows.length === 0 ? (
             <tr>
               <td colSpan={onToggleSolved ? 10 : 9} className="dml-empty">
-                {emptyMessage}
+                {uiText(emptyMessage)}
               </td>
             </tr>
           ) : (
@@ -241,13 +238,13 @@ async function handleSaveDueDate() {
                     r.status === "escalated" ? "is-escalated" : undefined
                   }
                 >
-                  <td title={r.date}>{formatMeetingDate(r.date)}</td>
+                  <td title={uiText(r.date)}>{formatMeetingDate(r.date, uiLocale)}</td>
 
-                  <td title={r.sessionLabel}>
-                    <span className="dml-pb-truncate">{r.sessionLabel}</span>
+                  <td title={uiText(r.sessionLabel)}>
+                    <span className="dml-pb-truncate">{uiText(r.sessionLabel)}</span>
                   </td>
 
-                  <td title={r.line}>{r.line || "-"}</td>
+                  <td title={uiText(r.line)}>{r.line || "-"}</td>
 
                   <td style={{ whiteSpace: "normal" }}>
                     {r.problemCategories?.length
@@ -259,7 +256,7 @@ async function handleSaveDueDate() {
                     <span className="dml-pb-truncate">
                       {r.problem || "-"}
                       {r.sample && (
-                        <span className="dml-pb-sample"> (contoh)</span>
+                        <span className="dml-pb-sample">{uiText(" (contoh)")}</span>
                       )}
                     </span>
                   </td>
@@ -271,8 +268,8 @@ async function handleSaveDueDate() {
                           autoFocus
                           className="ui-textarea"
                           rows={3}
-                          aria-label={`Solusi untuk ${r.problem}`}
-                          placeholder="Tulis solusi atau tindakan perbaikan"
+                          aria-label={uiText("Solusi untuk {{v0}}", { v0: r.problem })}
+                          placeholder={uiText("Tulis solusi atau tindakan perbaikan")}
                           value={solutionDraft}
                           disabled={savingSolution}
                           onChange={(event) => {
@@ -295,7 +292,9 @@ async function handleSaveDueDate() {
                     )}
                   </td>
 
-                  <td title={r.picName}>{r.picName || "-"}</td>
+                  <td title={uiText(r.picName)}>
+                    <span className="dml-pb-truncate">{r.picName || "-"}</span>
+                  </td>
 
 <td>
   {editingDueId === r.id ? (
@@ -304,7 +303,7 @@ async function handleSaveDueDate() {
         autoFocus
         type="date"
         className="dml-pb-due-input"
-        aria-label={`Due date untuk ${r.problem}`}
+        aria-label={uiText("Due date untuk {{v0}}", { v0: r.problem })}
         value={dueDateDraft}
         disabled={savingDueDate}
         onChange={(event) => {
@@ -320,9 +319,7 @@ async function handleSaveDueDate() {
       )}
 
       {!onSaveDueDate && (
-        <p className="dml-pb-due-hint">
-          Penyimpanan belum tersedia melalui API saat ini.
-        </p>
+        <p className="dml-pb-due-hint">{uiText("Penyimpanan belum tersedia melalui API saat ini.")}</p>
       )}
 
       <div className="dml-pb-due-actions">
@@ -337,7 +334,7 @@ async function handleSaveDueDate() {
           }
           onClick={handleSaveDueDate}
         >
-          {savingDueDate ? "Menyimpan..." : "Simpan"}
+          {savingDueDate ? uiText("Menyimpan...") : uiText("Simpan")}
         </button>
 
         <button
@@ -345,29 +342,27 @@ async function handleSaveDueDate() {
           className="dml-pb-due-cancel"
           disabled={savingDueDate}
           onClick={cancelDueDateEdit}
-        >
-          Batal
-        </button>
+        >{uiText("Batal")}</button>
       </div>
     </div>
   ) : (
 <div className="dml-pb-due">
-  <span>{formatDue(r.due)}</span>
+  <span>{uiText(formatDue(r.due, uiLocale))}</span>
 
   {r.status === "escalated" && (
     <span
       className="dml-pb-overdue"
-      title={`Terlambat ${formatOverdue(r.overdueMs)}`}
+      title={uiText("Terlambat {{v0}}", { v0: formatOverdue(r.overdueMs, uiLocale) })}
     >
-      {formatOverdue(r.overdueMs)}
+      {formatOverdue(r.overdueMs, uiLocale)}
     </span>
   )}
 
   <button
     type="button"
     className="dml-pb-due-edit"
-    aria-label={`Edit due date untuk ${r.problem}`}
-    title="Edit due date"
+    aria-label={uiText("Edit due date untuk {{v0}}", { v0: r.problem })}
+    title={uiText("Edit due date")}
     disabled={editingDueId !== null}
     onClick={() => startDueDateEdit(r)}
   >
@@ -392,7 +387,7 @@ async function handleSaveDueDate() {
 </td>
 
                   <td>
-                    <StatusChip tone={view.tone}>{view.label}</StatusChip>
+                    <StatusChip tone={view.tone}>{uiText(view.label)}</StatusChip>
                   </td>
 
                   {onToggleSolved && (
@@ -419,8 +414,8 @@ async function handleSaveDueDate() {
                                 onClick={handleSaveSolution}
                               >
                                 {savingSolution
-                                  ? "Menyimpan..."
-                                  : "Simpan solusi"}
+                                  ? uiText("Menyimpan...")
+                                  : uiText("Simpan solusi")}
                               </button>
 
                               <button
@@ -428,9 +423,7 @@ async function handleSaveDueDate() {
                                 className="dml-pb-act-cancel"
                                 disabled={savingSolution}
                                 onClick={cancelSolutionEdit}
-                              >
-                                Batal
-                              </button>
+                              >{uiText("Batal")}</button>
                             </>
                           ) : (
                             <button
@@ -440,18 +433,18 @@ async function handleSaveDueDate() {
                               onClick={() => startSolutionEdit(r)}
                             >
                               {r.solution?.trim()
-                                ? "Edit solusi"
-                                : "Tambah solusi"}
+                                ? uiText("Edit solusi")
+                                : uiText("Tambah solusi")}
                             </button>
                           )}
                         </div>
                       )}
                       {isSolved ? (
                         <div className="dml-pb-act">
-                          <span className="dml-pb-act-done">✓ Selesai</span>
-                          {formatSolvedAt(r.solvedAt) && (
+                          <span className="dml-pb-act-done">{uiText("✓ Selesai")}</span>
+                          {formatSolvedAt(r.solvedAt, uiLocale) && (
                             <span className="dml-pb-act-time">
-                              {formatSolvedAt(r.solvedAt)}
+                              {formatSolvedAt(r.solvedAt, uiLocale)}
                             </span>
                           )}
                           {isConfirming && confirming.action === "reopen" ? (
@@ -460,13 +453,11 @@ async function handleSaveDueDate() {
                             <button
                               type="button"
                               className="dml-pb-act-reopen"
-                              aria-label={`Buka kembali: ${r.problem || "-"}`}
+                              aria-label={uiText("Buka kembali: {{v0}}", { v0: r.problem || "-" })}
                               onClick={() =>
                                 setConfirming({ id: r.id, action: "reopen" })
                               }
-                            >
-                              Buka kembali
-                            </button>
+                            >{uiText("Buka kembali")}</button>
                           )}
                         </div>
                       ) : isConfirming && confirming.action === "complete" ? (
@@ -475,13 +466,11 @@ async function handleSaveDueDate() {
                         <button
                           type="button"
                           className="dml-pb-act-btn"
-                          aria-label={`Tandai selesai: ${r.problem || "-"}`}
+                          aria-label={uiText("Tandai selesai: {{v0}}", { v0: r.problem || "-" })}
                           onClick={() =>
                             setConfirming({ id: r.id, action: "complete" })
                           }
-                        >
-                          Tandai selesai
-                        </button>
+                        >{uiText("Tandai selesai")}</button>
                       )}
                     </td>
                   )}

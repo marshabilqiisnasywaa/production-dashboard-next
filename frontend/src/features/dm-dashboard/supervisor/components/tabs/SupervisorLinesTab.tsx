@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { ArrowRight } from "lucide-react";
 import { IconAlert, IconCheckCircle } from "@/components/ui/icons";
@@ -24,26 +26,21 @@ function getLeaderLabel(line: DmSupervisorLine) {
 }
 
 export function SupervisorLinesTab({ dbLines, onViewInApprovals }: SupervisorLinesTabProps) {
+  const { text: uiText } = useUiText();
   return (
     <div className="spv-monitoring">
       <div className="spv-readiness-card">
         <div className="spv-readiness-head">
           <div>
-            <h2 className="spv-readiness-title">
-              Status Kesiapan &amp; Verifikasi Lini Produksi
-            </h2>
-            <span className="spv-readiness-subtitle">
-              Monitoring kesiapan checklist dan kehadiran seluruh lini perakitan
-            </span>
+            <h2 className="spv-readiness-title">{uiText("Status Kesiapan & Verifikasi Lini Produksi")}</h2>
+            <span className="spv-readiness-subtitle">{uiText("Monitoring kesiapan checklist dan kehadiran seluruh lini perakitan")}</span>
           </div>
-          <span className="spv-readiness-count">{dbLines.length} Lini Terdaftar</span>
+          <span className="spv-readiness-count">{dbLines.length}{uiText(" Lini Terdaftar")}</span>
         </div>
 
         <div className="spv-readiness-list">
           {dbLines.length === 0 ? (
-            <div className="spv-empty-box">
-              Belum ada lini terdaftar.
-            </div>
+            <div className="spv-empty-box">{uiText("Belum ada lini terdaftar.")}</div>
           ) : (
             dbLines.map((line) => {
               const subs = line.members.map((m) => m.submission).filter(Boolean);
@@ -57,37 +54,30 @@ export function SupervisorLinesTab({ dbLines, onViewInApprovals }: SupervisorLin
                   <div className="spv-line-row__main">
                     <div className="spv-line-row__title">
                       <strong className="spv-line-row__name">
-                        {getLineLabel(line)}
+                        {uiText(getLineLabel(line))}
                       </strong>
                       <span className="spv-line-row__shift">{line.shift}</span>
                     </div>
                     <span className="spv-line-row__meta">
-                      {getLeaderLabel(line)} · {line.workshopName} · {line.members.length} Anggota
-                    </span>
+                      {uiText(getLeaderLabel(line))} · {line.workshopName} · {line.members.length}{uiText(" Anggota")}</span>
                   </div>
 
                   <div className="spv-line-row__actions">
                     {allApproved ? (
                       <span className="spv-status-badge spv-status-badge--approved">
-                        <IconCheckCircle size={12} /> Lengkap Disetujui
-                      </span>
+                        <IconCheckCircle size={12} />{uiText(" Lengkap Disetujui")}</span>
                     ) : hasAbnormal ? (
                       <span className="spv-status-badge spv-status-badge--ng">
-                        <IconAlert size={12} /> Ada Temuan NG
-                      </span>
+                        <IconAlert size={12} />{uiText(" Ada Temuan NG")}</span>
                     ) : (
-                      <span className="spv-status-badge spv-status-badge--waiting">
-                        Menunggu Lengkap
-                      </span>
+                      <span className="spv-status-badge spv-status-badge--waiting">{uiText("Menunggu Lengkap")}</span>
                     )}
 
                     <button
                       type="button"
                       onClick={onViewInApprovals}
                       className="spv-btn spv-btn--secondary spv-btn--sm"
-                    >
-                      Buka di Persetujuan
-                      <ArrowRight size={14} />
+                    >{uiText("Buka di Persetujuan")}<ArrowRight size={14} />
                     </button>
                   </div>
                 </div>

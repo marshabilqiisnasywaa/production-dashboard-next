@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { departmentLabel } from "../../departments";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -87,6 +89,7 @@ function ApprovalsDeepLinkHandler() {
 }
 
 export default function SupervisorApprovalsPage() {
+  const { text: uiText } = useUiText();
   const {
     currentSupervisor,
     dbLines,
@@ -181,7 +184,7 @@ export default function SupervisorApprovalsPage() {
       </Suspense>
       <div className="dml-page-head">
         <SupervisorPageHeader
-          title="Persetujuan Checklist"
+          title={uiText("Persetujuan Checklist")}
           userName={currentSupervisor.name}
           meta={meta}
         />
@@ -190,27 +193,23 @@ export default function SupervisorApprovalsPage() {
             {pendingApprovalsCount > 0 ? (
               <span
                 className="spv-stat-pill spv-stat-pill--warning"
-                title="Papercard menunggu verifikasi"
+                title={uiText("Papercard menunggu verifikasi")}
               >
-                ⚡ <strong>{pendingApprovalsCount}</strong> Menunggu
-              </span>
+                ⚡ <strong>{pendingApprovalsCount}</strong>{uiText(" Menunggu")}</span>
             ) : (
-              <span className="spv-stat-pill spv-stat-pill--success">✓ Semua Tuntas</span>
+              <span className="spv-stat-pill spv-stat-pill--success">{uiText("✓ Semua Tuntas")}</span>
             )}
 
             {abnormalCount > 0 && (
-              <span className="spv-stat-pill spv-stat-pill--danger" title="Ada temuan abnormal (NG)">
-                ⚠️ <strong>{abnormalCount}</strong> NG
-              </span>
+              <span className="spv-stat-pill spv-stat-pill--danger" title={uiText("Ada temuan abnormal (NG)")}>
+                ⚠️ <strong>{abnormalCount}</strong>{uiText(" NG")}</span>
             )}
 
-            <span className="spv-stat-pill spv-stat-pill--info" title="Jumlah disetujui">
-              ✓ <strong>{approvedCount}</strong> Disetujui
-            </span>
+            <span className="spv-stat-pill spv-stat-pill--info" title={uiText("Jumlah disetujui")}>
+              ✓ <strong>{approvedCount}</strong>{uiText(" Disetujui")}</span>
 
-            <span className="spv-stat-pill spv-stat-pill--neutral" title="Total tim terdaftar">
-              <strong>{totalCount}</strong> Anggota Tim
-            </span>
+            <span className="spv-stat-pill spv-stat-pill--neutral" title={uiText("Total tim terdaftar")}>
+              <strong>{totalCount}</strong>{uiText(" Anggota Tim")}</span>
           </div>
           <button
             type="button"
@@ -219,9 +218,9 @@ export default function SupervisorApprovalsPage() {
             }}
             disabled={isLoading}
             className="spv-btn spv-btn--secondary spv-btn--sm"
-            title="Muat ulang data terbaru dari database"
+            title={uiText("Muat ulang data terbaru dari database")}
           >
-            {isLoading ? "Memuat..." : "↻ Segarkan"}
+            {isLoading ? uiText("Memuat...") : uiText("↻ Segarkan")}
           </button>
         </div>
       </div>

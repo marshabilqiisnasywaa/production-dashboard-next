@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { IconAlert, IconCheckCircle, IconClipboardCheck, IconClock } from "@/components/ui/icons";
 import type { MemberPapercardApproval } from "./MemberPapercardStatusCard";
 
@@ -20,6 +22,7 @@ export function MemberInspectionWindowCard({
   windowTime,
   approvedByName,
 }: MemberInspectionWindowCardProps) {
+  const { text: uiText } = useUiText();
   return (
     <div
       className="member-card"
@@ -59,28 +62,19 @@ export function MemberInspectionWindowCard({
               >
                 <IconCheckCircle size={16} />
               </div>
-              <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#14532d" }}>
-                Persetujuan Supervisor
-              </span>
+              <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#14532d" }}>{uiText("Persetujuan Supervisor")}</span>
             </div>
 
-            <span style={{ fontSize: "11px", background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "2px 8px", borderRadius: "999px", fontWeight: 600 }}>
-              ✓ Disetujui SPV
-            </span>
+            <span style={{ fontSize: "11px", background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "2px 8px", borderRadius: "999px", fontWeight: 600 }}>{uiText("✓ Disetujui SPV")}</span>
           </div>
 
           <div>
-            <div style={{ fontSize: "14px", fontWeight: 700, color: "#14532d", marginBottom: "2px" }}>
-              Disetujui oleh {approvedByName || supervisorName}
+            <div style={{ fontSize: "14px", fontWeight: 700, color: "#14532d", marginBottom: "2px" }}>{uiText("Disetujui oleh ")}{approvedByName || supervisorName}
             </div>
-            <div style={{ fontSize: "12px", color: "#166534" }}>
-              Pukul {approvalTime || "08:00"} WIB · Seluruh butir checklist terverifikasi. Formulir terkunci dan tidak dapat diubah lagi hari ini.
-            </div>
+            <div style={{ fontSize: "12px", color: "#166534" }}>{uiText("Pukul ")}{approvalTime || "08:00"}{uiText(" WIB · Seluruh butir checklist terverifikasi. Formulir terkunci dan tidak dapat diubah lagi hari ini.")}</div>
           </div>
 
-          <div style={{ fontSize: "11.5px", color: "#15803d", fontWeight: 600 }}>
-            Status: Terverifikasi Lengkap
-          </div>
+          <div style={{ fontSize: "11.5px", color: "#15803d", fontWeight: 600 }}>{uiText("Status: Terverifikasi Lengkap")}</div>
         </>
       ) : status === "PENDING_APPROVAL" ? (
         <>
@@ -99,28 +93,18 @@ export function MemberInspectionWindowCard({
               >
                 <IconClipboardCheck size={16} />
               </div>
-              <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#78350f" }}>
-                Status Pengajuan SPV
-              </span>
+              <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#78350f" }}>{uiText("Status Pengajuan SPV")}</span>
             </div>
 
-            <span style={{ fontSize: "11px", background: "#fef3c7", color: "#b45309", border: "1px solid #fcd34d", padding: "2px 8px", borderRadius: "999px", fontWeight: 600 }}>
-              Menunggu Review SPV
-            </span>
+            <span style={{ fontSize: "11px", background: "#fef3c7", color: "#b45309", border: "1px solid #fcd34d", padding: "2px 8px", borderRadius: "999px", fontWeight: 600 }}>{uiText("Menunggu Review SPV")}</span>
           </div>
 
           <div>
-            <div style={{ fontSize: "14px", fontWeight: 700, color: "#78350f", marginBottom: "2px" }}>
-              Terkirim Pukul {submitTime} WIB
-            </div>
-            <div style={{ fontSize: "12px", color: "#92400e" }}>
-              Diajukan ke Supervisor {supervisorName}. Jawaban berstatus terkunci sementara menunggu hasil peninjauan.
-            </div>
+            <div style={{ fontSize: "14px", fontWeight: 700, color: "#78350f", marginBottom: "2px" }}>{uiText("Terkirim Pukul ")}{submitTime}{uiText(" WIB")}</div>
+            <div style={{ fontSize: "12px", color: "#92400e" }}>{uiText("Diajukan ke Supervisor ")}{supervisorName}{uiText(". Jawaban berstatus terkunci sementara menunggu hasil peninjauan.")}</div>
           </div>
 
-          <div style={{ fontSize: "11.5px", color: "#b45309", fontWeight: 600 }}>
-            Status: Menunggu Persetujuan Supervisor
-          </div>
+          <div style={{ fontSize: "11.5px", color: "#b45309", fontWeight: 600 }}>{uiText("Status: Menunggu Persetujuan Supervisor")}</div>
         </>
       ) : status === "REVISION" ? (
         <>
@@ -139,28 +123,19 @@ export function MemberInspectionWindowCard({
               >
                 <IconAlert size={16} />
               </div>
-              <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#7f1d1d" }}>
-                Permintaan Revisi SPV
-              </span>
+              <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#7f1d1d" }}>{uiText("Permintaan Revisi SPV")}</span>
             </div>
 
-            <span style={{ fontSize: "11px", background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5", padding: "2px 8px", borderRadius: "999px", fontWeight: 700 }}>
-              Perlu Revisi (Dapat Diedit)
-            </span>
+            <span style={{ fontSize: "11px", background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5", padding: "2px 8px", borderRadius: "999px", fontWeight: 700 }}>{uiText("Perlu Revisi (Dapat Diedit)")}</span>
           </div>
 
           <div>
-            <div style={{ fontSize: "13px", fontWeight: 700, color: "#7f1d1d", marginBottom: "3px" }}>
-              Catatan: "{supervisorNotes || "Periksa kembali butir checklist"}"
+            <div style={{ fontSize: "13px", fontWeight: 700, color: "#7f1d1d", marginBottom: "3px" }}>{uiText("Catatan: \"")}{supervisorNotes || uiText("Periksa kembali butir checklist")}"
             </div>
-            <div style={{ fontSize: "12px", color: "#991b1b" }}>
-              Formulir dibuka kembali untuk perbaikan. Silakan buka checklist untuk memperbaiki poin yang diminta.
-            </div>
+            <div style={{ fontSize: "12px", color: "#991b1b" }}>{uiText("Formulir dibuka kembali untuk perbaikan. Silakan buka checklist untuk memperbaiki poin yang diminta.")}</div>
           </div>
 
-          <div style={{ fontSize: "11.5px", color: "#b91c1c", fontWeight: 700 }}>
-            Status: Perlu Tindakan / Kirim Ulang Revisi
-          </div>
+          <div style={{ fontSize: "11.5px", color: "#b91c1c", fontWeight: 700 }}>{uiText("Status: Perlu Tindakan / Kirim Ulang Revisi")}</div>
         </>
       ) : (
         <>
@@ -179,28 +154,20 @@ export function MemberInspectionWindowCard({
               >
                 <IconClock size={16} />
               </div>
-              <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#0f172a" }}>
-                Jendela Waktu Inspeksi
-              </span>
+              <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#0f172a" }}>{uiText("Jendela Waktu Inspeksi")}</span>
             </div>
 
             <span style={{ fontSize: "11px", background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0", padding: "2px 8px", borderRadius: "999px", fontWeight: 600 }}>
-              {windowTime.start} - {windowTime.end} WIB
-            </span>
+              {windowTime.start} - {windowTime.end}{uiText(" WIB")}</span>
           </div>
 
           <div>
-            <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a", marginBottom: "2px" }}>
-              Batas Waktu Pengisian Shift 1
-            </div>
-            <div style={{ fontSize: "12px", color: "#64748b" }}>
-              Pengiriman setelah pukul {windowTime.end} WIB otomatis tercatat sebagai <strong>NG</strong>
+            <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a", marginBottom: "2px" }}>{uiText("Batas Waktu Pengisian Shift 1")}</div>
+            <div style={{ fontSize: "12px", color: "#64748b" }}>{uiText("Pengiriman setelah pukul ")}{windowTime.end}{uiText(" WIB otomatis tercatat sebagai ")}<strong>{uiText("NG")}</strong>
             </div>
           </div>
 
-          <div style={{ fontSize: "11.5px", color: "#0f766e", fontWeight: 600 }}>
-            Status: Menunggu Pengisian Checklist
-          </div>
+          <div style={{ fontSize: "11.5px", color: "#0f766e", fontWeight: 600 }}>{uiText("Status: Menunggu Pengisian Checklist")}</div>
         </>
       )}
     </div>

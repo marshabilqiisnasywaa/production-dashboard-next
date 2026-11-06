@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { IconCheck } from "@/components/ui/icons";
@@ -18,10 +20,11 @@ interface Props {
 }
 
 export function SessionTimeline({ model }: Props) {
+  const { text: uiText } = useUiText();
   if (!model) {
     return (
-      <Card title="Timeline hari ini" subtitle="Progres sesi Daily Management">
-        <div className="dml-tl-loading">Memuat sesi hari ini…</div>
+      <Card title={uiText("Timeline hari ini")} subtitle={uiText("Progres sesi Daily Management")}>
+        <div className="dml-tl-loading">{uiText("Memuat sesi hari ini…")}</div>
       </Card>
     );
   }
@@ -30,12 +33,11 @@ export function SessionTimeline({ model }: Props) {
 
   return (
     <Card
-      title="Timeline hari ini"
-      subtitle={model.nextHint ?? "Progres sesi Daily Management"}
+      title={uiText("Timeline hari ini")}
+      subtitle={model.nextHint ?? uiText("Progres sesi Daily Management")}
       actions={
         <span className="dml-tl-count">
-          {model.doneCount}/{total} selesai
-        </span>
+          {model.doneCount}/{total}{uiText(" selesai")}</span>
       }
     >
       <div className="dml-tl-segs" aria-hidden="true">
@@ -54,6 +56,7 @@ export function SessionTimeline({ model }: Props) {
 }
 
 function SessionRow({ session, focused }: { session: TimelineSession; focused: boolean }) {
+  const { text: uiText } = useUiText();
   const { papercard, attendance, cta } = session;
   const showCta = cta && (focused || session.status === "overdue");
 
@@ -67,7 +70,7 @@ function SessionRow({ session, focused }: { session: TimelineSession; focused: b
           <strong>{session.name}</strong>
           <span className="dml-tl__time">{session.time}</span>
         </div>
-        <StatusChip tone={TONE[session.status]}>{session.statusLabel}</StatusChip>
+        <StatusChip tone={TONE[session.status]}>{uiText(session.statusLabel)}</StatusChip>
       </div>
 
       {session.summary && <p className="dml-tl__summary">{session.summary}</p>}
@@ -76,34 +79,30 @@ function SessionRow({ session, focused }: { session: TimelineSession; focused: b
         <div className="dml-tl__detail">
           {papercard && (
             <>
-              <div className="dml-tl__roles" role="list" aria-label="Status papercard per role">
+              <div className="dml-tl__roles" role="list" aria-label={uiText("Status papercard per role")}>
                 {papercard.roles.map((r) => (
                   <span key={r.key} role="listitem" className={r.submitted ? "dml-role is-sent" : "dml-role"}>
                     {r.submitted && <IconCheck size={12} />}
-                    {r.label}
+                    {uiText(r.label)}
                   </span>
                 ))}
               </div>
               <p className="dml-tl__caption">
-                {papercard.submittedCount} dari {papercard.roles.length} role sudah kirim papercard
-              </p>
+                {papercard.submittedCount}{uiText(" dari ")}{papercard.roles.length}{uiText(" role sudah kirim papercard")}</p>
             </>
           )}
           {attendance && (
-            <p className="dml-tl__caption">
-              Presensi tim:{" "}
+            <p className="dml-tl__caption">{uiText("Presensi tim:")}{" "}
               <strong>
                 {attendance.present}/{attendance.total}
-              </strong>{" "}
-              hadir
-            </p>
+              </strong>{" "}{uiText("hadir")}</p>
           )}
         </div>
       )}
 
       {showCta && cta && (
         <Link href={cta.href} className={focused ? "dml-tl__cta" : "dml-tl__link"}>
-          {cta.label} →
+          {uiText(cta.label)} →
         </Link>
       )}
     </li>

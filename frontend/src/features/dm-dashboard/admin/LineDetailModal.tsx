@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { adminApi, uploadPhoto } from "../api";
@@ -116,6 +118,7 @@ export default function LineDetailModal({
   onDelete,
   onClose,
 }: LineDetailModalProps) {
+  const { text: uiText } = useUiText();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const { groups } = useDmGroups();
@@ -210,7 +213,7 @@ export default function LineDetailModal({
 
   function requestClose() {
     if (busy) return;
-    if (dirty && !window.confirm("Ada perubahan yang belum disimpan. Tutup tanpa menyimpan?")) return;
+    if (dirty && !window.confirm(uiText("Ada perubahan yang belum disimpan. Tutup tanpa menyimpan?"))) return;
     onClose();
   }
 
@@ -325,7 +328,7 @@ export default function LineDetailModal({
 
   async function remove() {
     if (!savedLine) return;
-    if (!window.confirm(`Hapus lini ${savedLine.code} beserta dashboard-nya? Link dashboard ini akan berhenti bekerja.`)) return;
+    if (!window.confirm(uiText("Hapus lini {{v0}} beserta dashboard-nya? Link dashboard ini akan berhenti bekerja.", { v0: savedLine.code }))) return;
     setBusy(true);
     setError(null);
     try {
@@ -362,11 +365,11 @@ export default function LineDetailModal({
           <div className="lw-head-text">
             <p className="lw-kicker">
               {kicker}
-              {savedLine ? <span className="lw-chip">{published ? "Terbit" : "Draft"}</span> : null}
+              {savedLine ? <span className="lw-chip">{published ? uiText("Terbit") : uiText("Draft")}</span> : null}
             </p>
             <h2 id="line-modal-heading" className="lw-title" tabIndex={-1} autoFocus>{headingName}</h2>
           </div>
-          <button type="button" className="lw-close" onClick={requestClose} aria-label="Tutup">
+          <button type="button" className="lw-close" onClick={requestClose} aria-label={uiText("Tutup")}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
@@ -377,26 +380,26 @@ export default function LineDetailModal({
         <WizardStepper steps={STEPS} current={step} reached={reached} onSelect={goTo} />
 
         <div className="lw-body" ref={bodyRef}>
-          {error ? <p className="lw-error" role="alert">{error}</p> : null}
+          {error ? <p className="lw-error" role="alert">{uiText(error)}</p> : null}
 
           {step === 1 && (
             <div className="lw-grid">
               <div className="lw-field">
-                <label htmlFor="line-workshop" className="lw-label">Workshop <span className="lw-req">*</span></label>
+                <label htmlFor="line-workshop" className="lw-label">{uiText("Workshop ")}<span className="lw-req">*</span></label>
                 <select
                   id="line-workshop"
                   className="lw-input"
                   value={form.workshopId ?? ""}
                   onChange={(event) => changeWorkshop(event.target.value)}
                 >
-                  <option value="">Pilih workshop</option>
+                  <option value="">{uiText("Pilih workshop")}</option>
                   {workshops.map((workshop) => (
                     <option key={workshop.id} value={workshop.id}>{workshop.name}</option>
                   ))}
                 </select>
               </div>
               <div className="lw-field">
-                <span className="lw-label">DM Meeting <span className="lw-req">*</span></span>
+                <span className="lw-label">{uiText("DM Meeting ")}<span className="lw-req">*</span></span>
                 <div className="lw-dm-select">
                   <CustomSelect
                     value={form.dmGroupId === null ? "none" : String(form.dmGroupId)}
@@ -405,43 +408,43 @@ export default function LineDetailModal({
                     ariaLabel="DM Meeting"
                   />
                 </div>
-                {availableGroups.length === 0 ? <span className="lw-hint">Tambahkan DM dari workshop terlebih dahulu.</span> : null}
+                {availableGroups.length === 0 ? <span className="lw-hint">{uiText("Tambahkan DM dari workshop terlebih dahulu.")}</span> : null}
               </div>
               <div className="lw-field">
-                <label htmlFor="line-code" className="lw-label">Kode lini <span className="lw-req">*</span></label>
+                <label htmlFor="line-code" className="lw-label">{uiText("Kode lini ")}<span className="lw-req">*</span></label>
                 <input
                   id="line-code"
                   type="text"
                   className="lw-input is-mono"
                   value={form.code}
                   onChange={(event) => change("code", event.target.value)}
-                  placeholder="TAC20601"
+                  placeholder={uiText("TAC20601")}
                 />
               </div>
               <div className="lw-field">
-                <label htmlFor="line-name" className="lw-label">Nama tim <span className="lw-req">*</span></label>
+                <label htmlFor="line-name" className="lw-label">{uiText("Nama tim ")}<span className="lw-req">*</span></label>
                 <input
                   id="line-name"
                   type="text"
                   className="lw-input"
                   value={form.name}
                   onChange={(event) => change("name", event.target.value)}
-                  placeholder="EXCELLENCE"
+                  placeholder={uiText("EXCELLENCE")}
                 />
               </div>
               <div className="lw-field">
-                <label htmlFor="line-model" className="lw-label">Model ponsel</label>
+                <label htmlFor="line-model" className="lw-label">{uiText("Model ponsel")}</label>
                 <input
                   id="line-model"
                   type="text"
                   className="lw-input"
                   value={form.model}
                   onChange={(event) => change("model", event.target.value)}
-                  placeholder="LATTE-M"
+                  placeholder={uiText("LATTE-M")}
                 />
               </div>
               <div className="lw-field">
-                <label htmlFor="line-status" className="lw-label">Status</label>
+                <label htmlFor="line-status" className="lw-label">{uiText("Status")}</label>
                 <select
                   id="line-status"
                   className="lw-input"
@@ -449,21 +452,21 @@ export default function LineDetailModal({
                   onChange={(event) => change("status", event.target.value as DmLineStatus)}
                 >
                   {statusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
+                    <option key={option.value} value={option.value}>{uiText(option.label)}</option>
                   ))}
                 </select>
               </div>
               <div className="lw-field">
-                <label htmlFor="line-slug" className="lw-label">Alamat link</label>
+                <label htmlFor="line-slug" className="lw-label">{uiText("Alamat link")}</label>
                 <input
                   id="line-slug"
                   type="text"
                   className="lw-input is-mono"
                   value={form.slug}
                   onChange={(event) => change("slug", event.target.value)}
-                  placeholder="Otomatis"
+                  placeholder={uiText("Otomatis")}
                 />
-                {savedLine ? <span className="lw-hint">Mengubahnya mematikan link lama di layar yang terpasang.</span> : null}
+                {savedLine ? <span className="lw-hint">{uiText("Mengubahnya mematikan link lama di layar yang terpasang.")}</span> : null}
               </div>
             </div>
           )}
@@ -471,71 +474,71 @@ export default function LineDetailModal({
           {step === 2 && (
             <div className="lw-grid">
               <div className="lw-field">
-                <label htmlFor="line-label" className="lw-label">Label Inggris</label>
+                <label htmlFor="line-label" className="lw-label">{uiText("Label Inggris")}</label>
                 <input
                   id="line-label"
                   type="text"
                   className="lw-input"
                   value={form.lineLabel}
                   onChange={(event) => change("lineLabel", event.target.value)}
-                  placeholder="DM TRIANGLE LINE"
+                  placeholder={uiText("DM TRIANGLE LINE")}
                 />
               </div>
               <div className="lw-field">
-                <label htmlFor="line-label-zh" className="lw-label">Label Mandarin</label>
+                <label htmlFor="line-label-zh" className="lw-label">{uiText("Label Mandarin")}</label>
                 <input
                   id="line-label-zh"
                   type="text"
                   className="lw-input"
                   value={form.lineLabelZh}
                   onChange={(event) => change("lineLabelZh", event.target.value)}
-                  placeholder="DM 三角线"
+                  placeholder={uiText("DM 三角线")}
                 />
               </div>
               <div className="lw-field is-wide">
-                <label htmlFor="line-slogan" className="lw-label">Slogan tim</label>
+                <label htmlFor="line-slogan" className="lw-label">{uiText("Slogan tim")}</label>
                 <input
                   id="line-slogan"
                   type="text"
                   className="lw-input"
                   value={form.slogan}
                   onChange={(event) => change("slogan", event.target.value)}
-                  placeholder="SATU TIM SATU TUJUAN"
+                  placeholder={uiText("SATU TIM SATU TUJUAN")}
                 />
               </div>
               <div className="lw-field is-wide">
-                <label htmlFor="line-values" className="lw-label">Nilai inti <span className="lw-hint">pisahkan dengan koma</span></label>
+                <label htmlFor="line-values" className="lw-label">{uiText("Nilai inti ")}<span className="lw-hint">{uiText("pisahkan dengan koma")}</span></label>
                 <input
                   id="line-values"
                   type="text"
                   className="lw-input"
                   value={form.values}
                   onChange={(event) => change("values", event.target.value)}
-                  placeholder="Benfen, Orientasi Pengguna, Mengejar Keunggulan"
+                  placeholder={uiText("Benfen, Orientasi Pengguna, Mengejar Keunggulan")}
                 />
                 {values.length > 0 ? (
-                  <ul className="lw-tags" aria-label="Pratinjau nilai inti">
+                  <ul className="lw-tags" aria-label={uiText("Pratinjau nilai inti")}>
                     {values.map((value) => (
-                      <li key={value} className="lw-tag">{value}</li>
+                      <li key={value} className="lw-tag">{uiText(value)}</li>
                     ))}
                   </ul>
                 ) : null}
               </div>
               <div className="lw-field is-wide">
-                <label className="lw-label">Foto tim <span className="lw-hint">landscape, maks. 2 MB</span></label>
+                <label className="lw-label">{uiText("Foto tim ")}<span className="lw-hint">{uiText("landscape, maks. 2 MB")}</span></label>
                 <div className="lw-photo" style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                   {form.teamPhotoUrl ? (
-                    <img src={form.teamPhotoUrl} alt="Pratinjau foto tim" className="lw-thumb" />
+                    <img src={form.teamPhotoUrl} alt={uiText("Pratinjau foto tim")} className="lw-thumb" />
                   ) : (
-                    <span className="lw-thumb is-empty" aria-hidden="true">Foto</span>
+                    <span className="lw-thumb is-empty" aria-hidden="true">{uiText("Foto")}</span>
                   )}
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <label className="lw-btn is-soft lw-file-btn" style={{ cursor: "pointer", display: "inline-flex", width: "fit-content" }}>
-                      {form.teamPhotoUrl ? "Ganti foto tim" : "Pilih foto tim"}
+                      {form.teamPhotoUrl ? uiText("Ganti foto tim") : uiText("Pilih foto tim")}
                       <input type="file" accept="image/*" className="lw-file-input" onChange={pickPhoto} />
                     </label>
                     {form.teamPhotoUrl ? (
-                      <button type="button" className="lw-link is-danger" onClick={() => change("teamPhotoUrl", "")}>Hapus foto</button>
+                      <button type="button" className="lw-link is-danger" onClick={() => change("teamPhotoUrl", "")}>{uiText("Hapus foto")}</button>
                     ) : null}
                   </div>
                 </div>
@@ -549,50 +552,50 @@ export default function LineDetailModal({
             <div className="lw-review">
               <p className="lw-lead">
                 {published
-                  ? "Dashboard ini sudah terbit. Menyimpan memperbarui tampilan di layar dalam semenit."
-                  : "Lini masih draft. Dashboard muncul di daftar dashboard setelah diterbitkan."}
+                  ? uiText("Dashboard ini sudah terbit. Menyimpan memperbarui tampilan di layar dalam semenit.")
+                  : uiText("Lini masih draft. Dashboard muncul di daftar dashboard setelah diterbitkan.")}
               </p>
               <div className="lw-sum">
-                <section className="lw-sum-part" aria-label="Info lini">
+                <section className="lw-sum-part" aria-label={uiText("Info lini")}>
                   <div className="lw-sum-head">
-                    <h3>Info lini</h3>
-                    <button type="button" className="lw-link" onClick={() => goTo(1)}>Ubah</button>
+                    <h3>{uiText("Info lini")}</h3>
+                    <button type="button" className="lw-link" onClick={() => goTo(1)}>{uiText("Ubah")}</button>
                   </div>
                   <dl className="lw-facts">
-                    <div><dt>Workshop</dt><dd>{workshopName ?? "Belum dipilih"}</dd></div>
-                    <div><dt>DM Meeting</dt><dd>{selectedDm?.name ?? "-"}</dd></div>
-                    <div><dt>Kode</dt><dd className="is-mono">{form.code}</dd></div>
-                    <div><dt>Nama</dt><dd>{form.name}</dd></div>
-                    <div><dt>Model</dt><dd>{form.model || "-"}</dd></div>
-                    <div><dt>Status</dt><dd>{form.status.toUpperCase()}</dd></div>
-                    <div className="is-wide"><dt>Link</dt><dd className="is-mono">{link}</dd></div>
+                    <div><dt>{uiText("Workshop")}</dt><dd>{workshopName ?? uiText("Belum dipilih")}</dd></div>
+                    <div><dt>{uiText("DM Meeting")}</dt><dd>{selectedDm?.name ?? "-"}</dd></div>
+                    <div><dt>{uiText("Kode")}</dt><dd className="is-mono">{form.code}</dd></div>
+                    <div><dt>{uiText("Nama")}</dt><dd>{form.name}</dd></div>
+                    <div><dt>{uiText("Model")}</dt><dd>{form.model || "-"}</dd></div>
+                    <div><dt>{uiText("Status")}</dt><dd>{form.status.toUpperCase()}</dd></div>
+                    <div className="is-wide"><dt>{uiText("Link")}</dt><dd className="is-mono">{link}</dd></div>
                   </dl>
                 </section>
 
-                <section className="lw-sum-part" aria-label="Tampilan">
+                <section className="lw-sum-part" aria-label={uiText("Tampilan")}>
                   <div className="lw-sum-head">
-                    <h3>Tampilan</h3>
-                    <button type="button" className="lw-link" onClick={() => goTo(2)}>Ubah</button>
+                    <h3>{uiText("Tampilan")}</h3>
+                    <button type="button" className="lw-link" onClick={() => goTo(2)}>{uiText("Ubah")}</button>
                   </div>
                   <dl className="lw-facts">
-                    <div><dt>Label</dt><dd>{[form.lineLabel, form.lineLabelZh].filter(Boolean).join(" / ") || "-"}</dd></div>
-                    <div><dt>Foto tim</dt><dd>{form.teamPhotoUrl ? "Sudah ada" : "Belum ada"}</dd></div>
-                    <div className="is-wide"><dt>Slogan</dt><dd>{form.slogan || "-"}</dd></div>
-                    <div className="is-wide"><dt>Nilai inti</dt><dd>{values.length > 0 ? values.join(", ") : "-"}</dd></div>
+                    <div><dt>{uiText("Label")}</dt><dd>{[form.lineLabel, form.lineLabelZh].filter(Boolean).join(" / ") || "-"}</dd></div>
+                    <div><dt>{uiText("Foto tim")}</dt><dd>{form.teamPhotoUrl ? uiText("Sudah ada") : uiText("Belum ada")}</dd></div>
+                    <div className="is-wide"><dt>{uiText("Slogan")}</dt><dd>{form.slogan || "-"}</dd></div>
+                    <div className="is-wide"><dt>{uiText("Nilai inti")}</dt><dd>{values.length > 0 ? values.join(", ") : "-"}</dd></div>
                   </dl>
                 </section>
 
-                <section className="lw-sum-part" aria-label="Anggota tim">
+                <section className="lw-sum-part" aria-label={uiText("Anggota tim")}>
                   <div className="lw-sum-head">
-                    <h3>Anggota{members ? ` (${members.length})` : ""}</h3>
-                    <button type="button" className="lw-link" onClick={() => goTo(TEAM_STEP)}>Ubah</button>
+                    <h3>{uiText("Anggota")}{members ? ` (${members.length})` : ""}</h3>
+                    <button type="button" className="lw-link" onClick={() => goTo(TEAM_STEP)}>{uiText("Ubah")}</button>
                   </div>
                   {membersError ? (
                     <p className="lw-warn" role="alert">{membersError}</p>
                   ) : members === null ? (
-                    <p className="lw-muted" role="status">Memuat anggota...</p>
+                    <p className="lw-muted" role="status">{uiText("Memuat anggota...")}</p>
                   ) : members.length === 0 ? (
-                    <p className="lw-warn">Belum ada anggota. Dashboard tetap bisa terbit, tapi bagian tim kosong.</p>
+                    <p className="lw-warn">{uiText("Belum ada anggota. Dashboard tetap bisa terbit, tapi bagian tim kosong.")}</p>
                   ) : (
                     <ul className="lw-tags">
                       {members.map((member) => (
@@ -609,24 +612,24 @@ export default function LineDetailModal({
         <footer className="lw-foot">
           <div className="lw-foot-side">
             {step === LAST_STEP ? (
-              <button type="button" className="lw-link is-danger" disabled={busy} onClick={remove}>Hapus lini</button>
+              <button type="button" className="lw-link is-danger" disabled={busy} onClick={remove}>{uiText("Hapus lini")}</button>
             ) : step === 2 && !savedLine ? (
-              <span className="lw-muted">Lanjut menyimpan sebagai draft.</span>
+              <span className="lw-muted">{uiText("Lanjut menyimpan sebagai draft.")}</span>
             ) : null}
           </div>
           <div className="lw-foot-actions">
             {step === 1 ? (
-              <button type="button" className="lw-btn is-ghost" disabled={busy} onClick={requestClose}>Batal</button>
+              <button type="button" className="lw-btn is-ghost" disabled={busy} onClick={requestClose}>{uiText("Batal")}</button>
             ) : (
-              <button type="button" className="lw-btn is-ghost" disabled={busy} onClick={() => goTo(step - 1)}>Kembali</button>
+              <button type="button" className="lw-btn is-ghost" disabled={busy} onClick={() => goTo(step - 1)}>{uiText("Kembali")}</button>
             )}
             {step < LAST_STEP ? (
               <button type="button" className="lw-btn is-primary" disabled={busy} onClick={next}>
-                {busy ? "Menyimpan..." : "Lanjut"}
+                {busy ? uiText("Menyimpan...") : uiText("Lanjut")}
               </button>
             ) : (
               <button type="button" className="lw-btn is-primary" disabled={busy} onClick={publish}>
-                {busy ? "Menerbitkan..." : "Simpan & Terbitkan"}
+                {busy ? uiText("Menerbitkan...") : uiText("Simpan & Terbitkan")}
               </button>
             )}
           </div>

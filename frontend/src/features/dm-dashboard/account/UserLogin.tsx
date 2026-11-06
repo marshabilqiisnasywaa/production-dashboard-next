@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { IconGauge } from "@/components/ui/icons";
-import { accountApi, getToken, setToken } from "../api";
+import { appLanguages } from "@/locales/i18n";
+import { ApiError, accountApi, getToken, setToken } from "../api";
 import { homeFor } from "./homeFor";
 import { OppoLogo } from "./OppoLogo";
 import "./login.css";
@@ -21,6 +24,14 @@ const DEMO_ACCOUNTS = [
   { role: "Supervisor", nik: "supervisor", password: "super123" },
   { role: "Admin", nik: "admin", password: "admin123" },
 ] as const;
+
+type LoginError = "requiredFields" | "invalidCredentials" | "tooManyAttempts" | "serverUnavailable" | "failed";
+
+const LOGIN_ERROR_BY_STATUS: Partial<Record<number, LoginError>> = {
+  0: "serverUnavailable",
+  401: "invalidCredentials",
+  429: "tooManyAttempts",
+};
 
 function ShieldCheckIcon() {
   return (
@@ -60,16 +71,22 @@ function ChevronRightIcon() {
 }
 
 export default function UserLogin() {
+  const { t } = useTranslation(["auth", "common"]);
+  const { language, setLanguage } = useLanguage();
   const [nik, setNik] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<LoginError | null>(null);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
+
+  useEffect(() => {
+    document.title = t("login.pageTitle");
+  }, [t]);
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("expired")) {
-      setNotice("Sesi berakhir, silakan login lagi.");
+      setSessionExpired(true);
       return;
     }
     if (!getToken()) return;
@@ -84,7 +101,7 @@ export default function UserLogin() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!nik.trim() || !password) {
-      setError("NIK atau username dan password wajib diisi.");
+      setError("requiredFields");
       return;
     }
     setBusy(true);
@@ -103,7 +120,7 @@ export default function UserLogin() {
       }
       window.location.href = destination;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login gagal.");
+      setError(err instanceof ApiError ? LOGIN_ERROR_BY_STATUS[err.status] ?? "failed" : "failed");
       setBusy(false);
     }
   }
@@ -148,11 +165,8 @@ export default function UserLogin() {
           <div className="dml-login__oppo">
             <OppoLogo variant="white" height={34} />
           </div>
-          <h2>Daily Management yang lebih cepat dan terukur.</h2>
-          <p>
-            Satu ruang kerja untuk Papercard, meeting, Abnormal, dan tindak
-            lanjut perbaikan setiap hari.
-          </p>
+          <h2>{t("brand.headline")}</h2>
+          <p>{t("brand.description")}</p>
         </div>
 
         <small className="dml-login__copy">OPPO Manufacturing</small>
@@ -161,37 +175,54 @@ export default function UserLogin() {
       {/* ---------- Right: form ---------- */}
       <section className="dml-login__panel">
         <form className="dml-login__form" onSubmit={submit} noValidate>
-          <OppoLogo
-            variant="green"
-            className="dml-login__formlogo"
-            height={36}
-          />
-          <h1>Selamat datang</h1>
+          <div className="dml-login__formtop">
+            <OppoLogo
+              variant="green"
+              className="dml-login__formlogo"
+              height={36}
+            />
+            <div className="dml-login__language" role="group" aria-label={t("common:language")}>
+              {appLanguages.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  lang={option.locale}
+                  aria-label={option.label}
+                  aria-pressed={language === option.value}
+                  title={option.label}
+                  onClick={() => setLanguage(option.value)}
+                >
+                  {option.value}
+                </button>
+              ))}
+            </div>
+          </div>
+          <h1>{t("login.title")}</h1>
           <p className="dml-login__lead">
-            Masuk untuk melanjutkan Daily Management hari ini.
+            {t("login.intro")}
           </p>
 
-          {notice && (
+          {sessionExpired && (
             <p className="dml-login__notice" role="status">
-              {notice}
+              {t("login.sessionExpired")}
             </p>
           )}
 
           <div className="dml-login__field">
-            <label htmlFor="user-nik">Username</label>
+            <label htmlFor="user-nik">{t("login.usernameLabel")}</label>
             <input
               id="user-nik"
               type="text"
               value={nik}
               onChange={(e) => setNik(e.target.value)}
               autoComplete="nik"
-              placeholder="NIK"
+              placeholder={t("login.usernamePlaceholder")}
               aria-invalid={error ? true : undefined}
             />
           </div>
 
           <div className="dml-login__field">
-            <label htmlFor="user-password">Password</label>
+            <label htmlFor="user-password">{t("login.passwordLabel")}</label>
             <div className="dml-login__pw">
               <input
                 id="user-password"
@@ -199,7 +230,7 @@ export default function UserLogin() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                placeholder="Masukkan password"
+                placeholder={t("login.passwordPlaceholder")}
                 aria-invalid={error ? true : undefined}
               />
               <button
@@ -208,23 +239,23 @@ export default function UserLogin() {
                 aria-pressed={showPassword}
                 onClick={() => setShowPassword((v) => !v)}
               >
-                {showPassword ? "Sembunyikan" : "Lihat"}
+                {showPassword ? t("login.hidePassword") : t("login.showPassword")}
               </button>
             </div>
           </div>
 
           {error && (
             <p className="dml-login__error" role="alert">
-              {error}
+              {t(`login.errors.${error}`)}
             </p>
           )}
 
           <button type="submit" className="dml-login__submit" disabled={busy}>
             {busy ? (
-              "Memeriksa…"
+              t("login.checking")
             ) : (
               <>
-                Masuk <ChevronRightIcon />
+                {t("login.signIn")} <ChevronRightIcon />
               </>
             )}
           </button>
@@ -233,16 +264,16 @@ export default function UserLogin() {
             <ShieldCheckIcon />
             {knownRole ? (
               <span>
-                Role Anda setelah masuk: <strong>{knownRole}</strong>
+                {t("login.rolePrefix")} <strong>{t(`common:roles.${knownRole}`)}</strong>
               </span>
             ) : (
-              <span>Role Anda ditentukan otomatis setelah masuk.</span>
+              <span>{t("login.roleAutomatic")}</span>
             )}
           </p>
 
           {SHOW_DEMO && (
             <div className="dml-login__demo">
-              <span className="dml-login__demotitle">Akses cepat demo</span>
+              <span className="dml-login__demotitle">{t("login.demoTitle")}</span>
               <div className="dml-login__chips">
                 {DEMO_ACCOUNTS.map((acc) => (
                   <button
@@ -255,7 +286,7 @@ export default function UserLogin() {
                       setError(null);
                     }}
                   >
-                    {acc.role} <span>{acc.nik}</span>
+                    {t(`common:roles.${acc.role}`)} <span>{acc.nik}</span>
                   </button>
                 ))}
               </div>
@@ -263,7 +294,7 @@ export default function UserLogin() {
           )}
 
           <Link href="/dm-dashboard" className="dml-login__back">
-            ← Kembali ke daftar dashboard
+            ← {t("login.backToDashboards")}
           </Link>
         </form>
       </section>

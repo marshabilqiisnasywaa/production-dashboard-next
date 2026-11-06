@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { createPortal } from "react-dom";
@@ -30,6 +32,7 @@ export default function DmGroupDialog({
   onClose,
   onSaved,
 }: DmGroupDialogProps) {
+  const { text: uiText } = useUiText();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -109,17 +112,17 @@ export default function DmGroupDialog({
     >
       <div className="dm-dialog-card">
         <header className="dm-dialog-head">
-          <h2 id="dm-group-dialog-title" className="dm-dialog-title">{title}</h2>
-          <button type="button" className="dm-dialog-close" onClick={onClose} aria-label="Tutup">
+          <h2 id="dm-group-dialog-title" className="dm-dialog-title">{uiText(title)}</h2>
+          <button type="button" className="dm-dialog-close" onClick={onClose} aria-label={uiText("Tutup")}>
             <X size={18} strokeWidth={1.8} />
           </button>
         </header>
 
         <form className="dm-dialog-form" onSubmit={save}>
           <div className="dm-dialog-field">
-            <span className="dm-dialog-label">Workshop</span>
+            <span className="dm-dialog-label">{uiText("Workshop")}</span>
             {workshopReadOnly ? (
-              <fieldset className="dm-dialog-locked-select" disabled aria-label="Workshop">
+              <fieldset className="dm-dialog-locked-select" disabled aria-label={uiText("Workshop")}>
                 <CustomSelect
                   value={workshopId === null ? "" : String(workshopId)}
                   options={workshops.map((workshop) => ({ value: String(workshop.id), label: workshop.name }))}
@@ -139,7 +142,7 @@ export default function DmGroupDialog({
           </div>
 
           <div className="dm-dialog-field">
-            <label htmlFor="dm-group-name" className="dm-dialog-label">Nama DM</label>
+            <label htmlFor="dm-group-name" className="dm-dialog-label">{uiText("Nama DM")}</label>
             <input
               ref={nameRef}
               id="dm-group-name"
@@ -147,16 +150,16 @@ export default function DmGroupDialog({
               className="dm-dialog-input"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Contoh: DM 5"
+              placeholder={uiText("Contoh: DM 5")}
             />
           </div>
 
-          {error ? <p className="dm-dialog-error" role="alert">{error}</p> : null}
+          {error ? <p className="dm-dialog-error" role="alert">{uiText(error)}</p> : null}
 
           <footer className="dm-dialog-foot">
-            <button type="button" className="dm-dialog-btn is-outline" onClick={onClose} disabled={saving}>Batal</button>
+            <button type="button" className="dm-dialog-btn is-outline" onClick={onClose} disabled={saving}>{uiText("Batal")}</button>
             <button type="submit" className="dm-dialog-btn is-primary" disabled={saving}>
-              {saving ? "Menyimpan..." : "Simpan"}
+              {saving ? uiText("Menyimpan...") : uiText("Simpan")}
             </button>
           </footer>
         </form>

@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { departmentLabel } from "../../departments";
 import { useRouter } from "next/navigation";
@@ -7,6 +9,7 @@ import { SUPERVISOR_ROUTES } from "../routes";
 import { useSupervisor } from "../SupervisorProvider";
 
 export default function SupervisorMonitoringPage() {
+  const { text: uiText } = useUiText();
   const router = useRouter();
   const { currentSupervisor, dbLines, totalCount } = useSupervisor();
   const meta = `Dept ${departmentLabel(currentSupervisor.dept)} · ${dbLines.length} lini · ${totalCount} anggota tim`;
@@ -15,7 +18,7 @@ export default function SupervisorMonitoringPage() {
     <div className="dms-container">
       <div className="dml-page-head">
         <SupervisorPageHeader
-          title="Monitoring Lini"
+          title={uiText("Monitoring Lini")}
           userName={currentSupervisor.name}
           meta={meta}
         />

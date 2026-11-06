@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
@@ -14,6 +16,7 @@ interface Props {
 
 /** Native <dialog>: focus trap, Esc to close and backdrop come for free. */
 export function EndMeetingDialog({ open, durationText, itemCount, absentCount, onCancel, onConfirm }: Props) {
+  const { text: uiText } = useUiText();
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -25,34 +28,27 @@ export function EndMeetingDialog({ open, durationText, itemCount, absentCount, o
 
   return (
     <dialog ref={ref} className="dml-mt-dialog" onCancel={(e) => { e.preventDefault(); onCancel(); }}>
-      <h2>Akhiri meeting?</h2>
+      <h2>{uiText("Akhiri meeting?")}</h2>
       <ul>
-        <li>
-          Durasi meeting: <strong>{durationText}</strong>
+        <li>{uiText("Durasi meeting: ")}<strong>{uiText(durationText)}</strong>
         </li>
         <li>
           {itemCount > 0 ? (
             <>
-              <strong>{itemCount}</strong> poin tindak lanjut akan disimpan
-            </>
+              <strong>{itemCount}</strong>{uiText(" poin tindak lanjut akan disimpan")}</>
           ) : (
             "Tidak ada poin masalah yang dicatat"
           )}
         </li>
         {absentCount > 0 && (
           <li>
-            <strong>{absentCount}</strong> member tercatat tidak hadir
-          </li>
+            <strong>{absentCount}</strong>{uiText(" member tercatat tidak hadir")}</li>
         )}
       </ul>
-      <p>Setelah diakhiri, meeting tidak bisa dibuka kembali.</p>
+      <p>{uiText("Setelah diakhiri, meeting tidak bisa dibuka kembali.")}</p>
       <div className="dml-mt-dialog__actions">
-        <Button variant="outline" size="lg" onClick={onCancel}>
-          Kembali
-        </Button>
-        <Button variant="primary" size="lg" className="dml-mt-danger" onClick={onConfirm}>
-          Akhiri Meeting
-        </Button>
+        <Button variant="outline" size="lg" onClick={onCancel}>{uiText("Kembali")}</Button>
+        <Button variant="primary" size="lg" className="dml-mt-danger" onClick={onConfirm}>{uiText("Akhiri Meeting")}</Button>
       </div>
     </dialog>
   );

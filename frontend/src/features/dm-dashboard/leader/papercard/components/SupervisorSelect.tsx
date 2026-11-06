@@ -1,3 +1,5 @@
+"use client";
+import { useUiText } from "@/locales/useUiText";
 import { useEffect, useId, useState } from "react";
 import { Field } from "@/components/ui/Field";
 import { papercardApi, type DmPapercardSubmission, type DmPapercardSupervisors } from "../../../api";
@@ -36,20 +38,21 @@ export function SupervisorSelect({ selection, disabled }: {
   selection: ReturnType<typeof usePapercardSupervisor>;
   disabled: boolean;
 }) {
+  const { text: uiText } = useUiText();
   const id = useId();
   const hintId = `${id}-hint`;
   const unavailable = selection.selectedId !== null && !selection.available;
   return (
-    <Field label="Supervisor penerima" htmlFor={id}>
+    <Field label={uiText("Supervisor penerima")} htmlFor={id}>
       <select id={id} className="ui-select ui-select--block"
         value={selection.selectedId ?? ""} disabled={disabled || selection.loading}
         aria-describedby={hintId} aria-invalid={Boolean(selection.error)}
         onChange={(event) => selection.onChange(event.target.value ? Number(event.target.value) : null)}>
-        <option value="" disabled>{selection.loading ? "Memuat supervisor..." : "Pilih supervisor"}</option>
-        {unavailable && <option value={selection.selectedId!} disabled>{selection.name} (tidak aktif)</option>}
+        <option value="" disabled>{selection.loading ? uiText("Memuat supervisor...") : uiText("Pilih supervisor")}</option>
+        {unavailable && <option value={selection.selectedId!} disabled>{selection.name}{uiText(" (tidak aktif)")}</option>}
         {selection.options.map((supervisor) => (
           <option key={supervisor.id} value={supervisor.id}>
-            {supervisor.name}{supervisor.dept ? ` — ${supervisor.dept}` : ""}{supervisor.id === selection.defaultId ? " (default)" : ""}
+            {supervisor.name}{supervisor.dept ? ` — ${supervisor.dept}` : ""}{supervisor.id === selection.defaultId ? uiText(" (default)") : ""}
           </option>
         ))}
       </select>

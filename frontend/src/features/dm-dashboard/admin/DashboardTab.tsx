@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useEffect, useState } from "react";
 import type { DmLine } from "../api";
 import { dmKpiSlots, dmMeetingSchedule, dmMeetingStateLabels, getLineSnapshot, meetingStates } from "../dashboardData";
@@ -13,11 +15,12 @@ interface DashboardTabProps {
 
 const CLOCK_REFRESH_MS = 30_000;
 
-function formatToday(now: Date) {
-  return now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+function formatToday(now: Date, locale = "id-ID") {
+  return now.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
 export default function DashboardTab({ lines, onGoToLines, canManage = true }: DashboardTabProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const [lineId, setLineId] = useState<number | null>(lines[0]?.id ?? null);
   const [now, setNow] = useState(() => new Date());
 
@@ -35,16 +38,14 @@ export default function DashboardTab({ lines, onGoToLines, canManage = true }: D
   if (line === null) {
     return (
       <div className="dm-admin-state-block">
-        <h3>Belum ada lini</h3>
+        <h3>{uiText("Belum ada lini")}</h3>
         {canManage ? (
           <>
-            <p>Dashboard ini menampilkan KPI, absensi, dan meeting per lini. Buat lini dulu di tab Lini, Workshop &amp; Tim.</p>
-            <button type="button" className="dm-admin-btn is-primary" onClick={onGoToLines}>
-              Ke daftar lini
-            </button>
+            <p>{uiText("Dashboard ini menampilkan KPI, absensi, dan meeting per lini. Buat lini dulu di tab Lini, Workshop & Tim.")}</p>
+            <button type="button" className="dm-admin-btn is-primary" onClick={onGoToLines}>{uiText("Ke daftar lini")}</button>
           </>
         ) : (
-          <p>Akunmu belum ditempatkan di sebuah lini, atau cakupan aksesnya belum diatur. Hubungi admin.</p>
+          <p>{uiText("Akunmu belum ditempatkan di sebuah lini, atau cakupan aksesnya belum diatur. Hubungi admin.")}</p>
         )}
       </div>
     );
@@ -59,11 +60,11 @@ export default function DashboardTab({ lines, onGoToLines, canManage = true }: D
       <section className="dm-panel" aria-labelledby="dash-line-title">
         <div className="dm-panel-head">
           <div>
-            <h3 id="dash-line-title" className="dm-panel-title">Dashboard Lini</h3>
-            <p className="dm-panel-sub">{formatToday(now)}</p>
+            <h3 id="dash-line-title" className="dm-panel-title">{uiText("Dashboard Lini")}</h3>
+            <p className="dm-panel-sub">{formatToday(now, uiLocale)}</p>
           </div>
           <div className="dm-dash-select">
-            <label htmlFor="dash-line">Lini</label>
+            <label htmlFor="dash-line">{uiText("Lini")}</label>
             <select
               id="dash-line"
               className="dm-table-filter-select"
@@ -88,8 +89,7 @@ export default function DashboardTab({ lines, onGoToLines, canManage = true }: D
           {line.memberCount > 0 ? (
             <span className="dm-chip">
               <UsersIcon size={13} />
-              {line.memberCount} anggota
-            </span>
+              {line.memberCount}{uiText(" anggota")}</span>
           ) : null}
         </div>
       </section>
@@ -97,8 +97,8 @@ export default function DashboardTab({ lines, onGoToLines, canManage = true }: D
       <section className="dm-panel" aria-labelledby="dash-kpi-title">
         <div className="dm-panel-head">
           <div>
-            <h3 id="dash-kpi-title" className="dm-panel-title">KPI</h3>
-            <p className="dm-panel-sub">Tiga indikator utama lini {line.code}</p>
+            <h3 id="dash-kpi-title" className="dm-panel-title">{uiText("KPI")}</h3>
+            <p className="dm-panel-sub">{uiText("Tiga indikator utama lini ")}{line.code}</p>
           </div>
         </div>
         <ul className="dm-kpi-grid">
@@ -106,16 +106,16 @@ export default function DashboardTab({ lines, onGoToLines, canManage = true }: D
             const reading = snapshot.kpis[slot.id] ?? null;
             return (
               <li key={slot.id} className="dm-kpi-card">
-                <span className="dm-kpi-label">{slot.label}</span>
+                <span className="dm-kpi-label">{uiText(slot.label)}</span>
                 {reading ? (
                   <>
                     <span className="dm-kpi-value">{reading.value}</span>
-                    {reading.target ? <span className="dm-kpi-note">Target {reading.target}</span> : null}
+                    {reading.target ? <span className="dm-kpi-note">{uiText("Target ")}{reading.target}</span> : null}
                   </>
                 ) : (
                   <>
-                    <span className="dm-kpi-value is-empty">Belum ada data</span>
-                    <span className="dm-kpi-note">Terisi setelah data KPI terhubung</span>
+                    <span className="dm-kpi-value is-empty">{uiText("Belum ada data")}</span>
+                    <span className="dm-kpi-note">{uiText("Terisi setelah data KPI terhubung")}</span>
                   </>
                 )}
               </li>
@@ -127,33 +127,31 @@ export default function DashboardTab({ lines, onGoToLines, canManage = true }: D
       <section className="dm-panel" aria-labelledby="dash-meet-title">
         <div className="dm-panel-head">
           <div>
-            <h3 id="dash-meet-title" className="dm-panel-title">Meeting dan Absensi Hari Ini</h3>
-            <p className="dm-panel-sub">
-              Jadwal tetap: {scheduleText}. Daftar hadir terisi setelah data absensi terhubung.
-            </p>
+            <h3 id="dash-meet-title" className="dm-panel-title">{uiText("Meeting dan Absensi Hari Ini")}</h3>
+            <p className="dm-panel-sub">{uiText("Jadwal tetap: ")}{uiText(scheduleText)}{uiText(". Daftar hadir terisi setelah data absensi terhubung.")}</p>
           </div>
         </div>
         <ul className="dm-meet-grid">
-          {dmMeetingSchedule.map((slot) => {
+          {uiText(dmMeetingSchedule.map((slot) => {
             const state = states[slot.number] ?? "later";
             const present = snapshot.attendance[slot.number] ?? [];
             return (
               <li key={slot.number} className="dm-meet-card">
                 <div className="dm-meet-top">
-                  <span className="dm-meet-name">{getMeetingLabel(slot.number)} Meeting</span>
+                  <span className="dm-meet-name">{uiText(getMeetingLabel(slot.number))}{uiText(" Meeting")}</span>
                   <span className="dm-meet-time">{slot.time}</span>
                 </div>
                 <span className={`dm-pill dm-meet-state${state === "next" ? " is-ok" : ""}`}>
-                  {dmMeetingStateLabels[state]}
+                  {uiText(dmMeetingStateLabels[state])}
                 </span>
                 <div className="dm-meet-count">
                   {line.memberCount > 0 ? (
                     <>
                       <strong>{present.length > 0 ? present.length : "-"}</strong>
-                      <span>{`hadir dari ${line.memberCount} anggota`}</span>
+                      <span>{uiText("hadir dari {{v0}} anggota", { v0: line.memberCount })}</span>
                     </>
                   ) : (
-                    <span>Lini ini belum punya anggota</span>
+                    <span>{uiText("Lini ini belum punya anggota")}</span>
                   )}
                 </div>
                 {present.length > 0 ? (
@@ -166,11 +164,11 @@ export default function DashboardTab({ lines, onGoToLines, canManage = true }: D
                     ))}
                   </ul>
                 ) : (
-                  <p className="dm-meet-empty">Belum ada data absensi.</p>
+                  <p className="dm-meet-empty">{uiText("Belum ada data absensi.")}</p>
                 )}
               </li>
             );
-          })}
+          }))}
         </ul>
       </section>
     </>

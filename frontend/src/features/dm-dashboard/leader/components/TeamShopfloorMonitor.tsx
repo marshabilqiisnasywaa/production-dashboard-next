@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { IconAlert, IconCheckCircle } from "@/components/ui/icons";
 import type { DmPapercardSubmission } from "../../api";
@@ -26,6 +28,7 @@ export function TeamShopfloorMonitor({
   lineName = "Lini belum diatur",
   loading = false,
 }: TeamShopfloorMonitorProps) {
+  const { text: uiText, locale: uiLocale } = useUiText();
   // Compute summary stats
   let okCount = 0;
   let ngCount = 0;
@@ -46,24 +49,19 @@ export function TeamShopfloorMonitor({
     <div>
       <div className="dms-section-head">
         <div>
-          <h2 className="dms-section-title">Status Papercard DM TRIANGLE TEAM ({lineName})</h2>
-          <p className="dms-section-desc">
-            Pantau status tim dan Papercard di sini.
-          </p>
+          <h2 className="dms-section-title">{uiText("Status Papercard DM TRIANGLE TEAM (")}{lineName})</h2>
+          <p className="dms-section-desc">{uiText("Pantau status tim dan Papercard di sini.")}</p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <span className="dms-pill dms-pill--line" style={{ fontSize: "11px", padding: "2px 7px" }}>
-            {okCount} OK
-          </span>
+            {okCount}{uiText(" OK")}</span>
           {ngCount > 0 && (
             <span className="dms-pill" style={{ fontSize: "11px", padding: "2px 7px", background: "#fff1f2", color: "#be123c", border: "1px solid #fecdd3" }}>
-              {ngCount} NG
-            </span>
+              {ngCount}{uiText(" NG")}</span>
           )}
           {pendingCount > 0 && (
             <span className="dms-pill dms-pill--shift" style={{ fontSize: "11px", padding: "2px 7px" }}>
-              {pendingCount} Belum Kirim
-            </span>
+              {pendingCount}{uiText(" Belum Kirim")}</span>
           )}
         </div>
       </div>
@@ -81,7 +79,7 @@ export function TeamShopfloorMonitor({
                     {d.key}
                   </span>
                 </div>
-                <p className="dms-section-desc">Belum ada anggota tim {d.label}.</p>
+                <p className="dms-section-desc">{uiText("Belum ada anggota tim ")}{uiText(d.label)}.</p>
               </div>
             );
           }
@@ -103,7 +101,7 @@ export function TeamShopfloorMonitor({
 
           const submitTime = sub?.submittedAt
             ? sub.submittedAt.includes("T")
-              ? new Date(sub.submittedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
+              ? new Date(sub.submittedAt).toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" }) + " WIB"
               : sub.submittedAt + " WIB"
             : null;
 
@@ -118,20 +116,14 @@ export function TeamShopfloorMonitor({
                   </span>
                   {isOK && (
                     <span className="dms-status-badge dms-status-badge--approved" style={{ fontSize: "10.5px", padding: "2px 6px" }}>
-                      <IconCheckCircle size={11} />
-                      OK
-                    </span>
+                      <IconCheckCircle size={11} />{uiText("OK")}</span>
                   )}
                   {isNG && (
                     <span className="dms-status-badge dms-status-badge--ng" style={{ fontSize: "10.5px", padding: "2px 6px" }}>
-                      <IconAlert size={11} />
-                      1 NG
-                    </span>
+                      <IconAlert size={11} />{uiText("1 NG")}</span>
                   )}
                   {isPending && (
-                    <span className="dms-status-badge dms-status-badge--pending" style={{ fontSize: "10.5px", padding: "2px 6px" }}>
-                      Belum Kirim
-                    </span>
+                    <span className="dms-status-badge dms-status-badge--pending" style={{ fontSize: "10.5px", padding: "2px 6px" }}>{uiText("Belum Kirim")}</span>
                   )}
                 </div>
 
@@ -147,7 +139,7 @@ export function TeamShopfloorMonitor({
                   <div className="dms-abnormal-box">
                     <div className="dms-abnormal-label">
                       <IconAlert size={11} />
-                      <span>Temuan:</span>
+                      <span>{uiText("Temuan:")}</span>
                     </div>
                     {abnormalNote}
                   </div>
@@ -156,10 +148,9 @@ export function TeamShopfloorMonitor({
 
               <div className="dms-member-footer">
                 <span>
-                  {submitTime ? `Submit: ${submitTime}` : "Belum diisi"}
+                  {submitTime ? uiText("Submit: {{v0}}", { v0: submitTime }) : uiText("Belum diisi")}
                 </span>
-                <span style={{ color: "#4338ca", fontWeight: 600 }}>
-                  SPV: {supervisorName.split(" ")[0]}
+                <span style={{ color: "#4338ca", fontWeight: 600 }}>{uiText("SPV: ")}{supervisorName.split(" ")[0]}
                 </span>
               </div>
             </div>

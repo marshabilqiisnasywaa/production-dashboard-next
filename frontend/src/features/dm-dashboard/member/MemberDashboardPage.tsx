@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 
 import { useMemo } from "react";
 import { IconClipboardCheck } from "@/components/ui/icons";
@@ -24,6 +26,7 @@ import { MEMBER_ROUTES } from "./routes";
  * my papercard, my rate, my follow-ups, today's sessions. No team-wide status.
  */
 export default function MemberDashboardPage() {
+  const { text: uiText, locale: uiLocale } = useUiText();
   const { profile } = useMember();
   const {
   mySubmission,
@@ -40,7 +43,7 @@ export default function MemberDashboardPage() {
 
   const timeline = useMemo(() => {
     if (!now || loading) return null;
-    const model = buildTimeline({ now, today, leaderSubmission: mySubmission, leaderTemplate: myTemplate, submissions: [], sessions });
+    const model = buildTimeline({ now, today, leaderSubmission: mySubmission, leaderTemplate: myTemplate, submissions: [], sessions }, uiLocale);
     return toMemberTimeline(model);
   }, [now, today, loading, mySubmission, myTemplate, sessions]);
 
@@ -59,7 +62,7 @@ export default function MemberDashboardPage() {
 
       <div className="dmm-kpis">
         <PapercardTodayCard roleLabel={profile.roleLabel} submitted={Boolean(mySubmission)} loading={loading} />
-        <KpiCard title="Inspection Rate saya" value={mine.rate} icon={<IconClipboardCheck size={20} />} />
+        <KpiCard title={uiText("Inspection Rate saya")} value={mine.rate} icon={<IconClipboardCheck size={20} />} />
         <OpenProblemsCard open={problems.open.length} escalated={problems.escalated} />
       </div>
 
@@ -71,7 +74,7 @@ export default function MemberDashboardPage() {
 
         <aside className="dml-aside">
           <SessionTimeline model={timeline} />
-          <p className="dmm-note">Presensi meeting dilakukan dengan kamera di lokasi meeting, bukan dari perangkat ini.</p>
+          <p className="dmm-note">{uiText("Presensi meeting dilakukan dengan kamera di lokasi meeting, bukan dari perangkat ini.")}</p>
         </aside>
       </div>
     </div>

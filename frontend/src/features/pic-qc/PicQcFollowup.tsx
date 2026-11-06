@@ -1,4 +1,6 @@
 "use client";
+import { useUiText } from "@/locales/useUiText";
+
 import { useEffect, useMemo, useState } from "react";
 import { useQcPic } from "@/features/pic-qc/QcPicContext";
 import { TODAY_ISO, getDueStatus, type DueTone, type PicRepairRecord, type PicRepairStatus } from "@/features/pic-repair/RepairPicContext";
@@ -23,6 +25,7 @@ function formatDueDate(iso: string) {
 }
 
 function UpdateStatusModal({ record, onClose }: { record: PicRepairRecord; onClose: () => void }) {
+  const { text: uiText } = useUiText();
   const { updateRecord } = useQcPic();
   const [status, setStatus] = useState<PicRepairStatus>(record.status);
   const [evidence, setEvidence] = useState(record.evidence);
@@ -37,17 +40,17 @@ function UpdateStatusModal({ record, onClose }: { record: PicRepairRecord; onClo
     <div className="repair-modal-backdrop" onMouseDown={onClose}>
       <form className="repair-dialog" onMouseDown={(event) => event.stopPropagation()} onSubmit={save}>
         <div className="repair-dialog-head">
-              <div><h2>Update Status</h2><p>{record.problem}</p></div>
-              <button type="button" aria-label="Close" onClick={onClose}>✕</button>
+              <div><h2>{uiText("Update Status")}</h2><p>{record.problem}</p></div>
+              <button type="button" aria-label={uiText("Close")} onClick={onClose}>✕</button>
         </div>
         <div className="repair-form">
-          <label>Handling Status<CustomSelect value={status} options={["Open", "In Progress", "Resolved"]} onChange={(next) => setStatus(next as PicRepairStatus)} /></label>
-          <p className="pic-form-hint">Issues marked Resolved automatically leave this task list.</p>
-          <label className="repair-dropzone"><strong>Upload Photo Evidence</strong><span>{evidence || "JPG/PNG up to 10 MB"}</span><input type="file" accept="image/*" onChange={(event) => setEvidence(event.target.files?.[0]?.name ?? evidence)} /></label>
+          <label>{uiText("Handling Status")}<CustomSelect value={status} options={["Open", "In Progress", "Resolved"]} onChange={(next) => setStatus(next as PicRepairStatus)} /></label>
+          <p className="pic-form-hint">{uiText("Issues marked Resolved automatically leave this task list.")}</p>
+          <label className="repair-dropzone"><strong>{uiText("Upload Photo Evidence")}</strong><span>{evidence || uiText("JPG/PNG up to 10 MB")}</span><input type="file" accept="image/*" onChange={(event) => setEvidence(event.target.files?.[0]?.name ?? evidence)} /></label>
         </div>
         <div className="repair-dialog-actions">
-              <button type="button" className="repair-outline" onClick={onClose}>Cancel</button>
-              <button type="submit" className="repair-primary">Save Update</button>
+              <button type="button" className="repair-outline" onClick={onClose}>{uiText("Cancel")}</button>
+              <button type="submit" className="repair-primary">{uiText("Save Update")}</button>
         </div>
       </form>
     </div>
@@ -55,6 +58,7 @@ function UpdateStatusModal({ record, onClose }: { record: PicRepairRecord; onClo
 }
 
 export default function PicQcFollowup() {
+  const { text: uiText } = useUiText();
   const { records } = useQcPic();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -114,15 +118,15 @@ export default function PicQcFollowup() {
     <div className="pic-page">
       <PageHeader
         eyebrow="MORNING MEETING"
-        title="Follow-up"
-        subtitle={`Follow-up tasks from QC Abnormality Log issues that are still Open or In Progress. Today ${formatDueDate(TODAY_ISO)}.`}
+        title={uiText("Follow-up")}
+        subtitle={uiText("Follow-up tasks from QC Abnormality Log issues that are still Open or In Progress. Today {{v0}}.", { v0: formatDueDate(TODAY_ISO) })}
         actions={<CustomSelect value={statusFilter} options={[{ value: "All", label: "All Active Statuses" }, ...activeOptions]} onChange={setStatusFilter} ariaLabel="Status filter" />}
       />
 
       <section className="qc-kpi-grid abnormality-kpis pic-kpis">
         {summary.map((item) => (
           <article key={item.label} className={`sq-kpi ${metricCardClass[item.tone]}`}>
-            <div className="sq-kpi-head flex justify-between items-start"><span>{item.label}</span><div className={`p-2.5 rounded-xl ${item.iconBox}`}><item.icon className="w-5 h-5" /></div></div>
+            <div className="sq-kpi-head flex justify-between items-start"><span>{uiText(item.label)}</span><div className={`p-2.5 rounded-xl ${item.iconBox}`}><item.icon className="w-5 h-5" /></div></div>
             <strong className={metricValueClass[item.tone]}>{item.value}</strong>
             <p>{item.helper}</p>
           </article>
@@ -132,20 +136,20 @@ export default function PicQcFollowup() {
       <section className="sq-panel">
         <div className="sq-panel-head">
           <div>
-            <h2>My Tasks</h2>
-            <p>Resolved issues automatically leave this list.</p>
+            <h2>{uiText("My Tasks")}</h2>
+            <p>{uiText("Resolved issues automatically leave this list.")}</p>
           </div>
         </div>
 
         <div className="abnormality-filter-row">
           <label className="abnormality-search">
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search problems, solutions..." />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={uiText("Search problems, solutions...")} />
           </label>
-          <button type="button" className="qc-secondary-button abnormality-reset" onClick={() => { setQuery(""); setStatusFilter("All"); setPage(1); }}>Reset</button>
+          <button type="button" className="qc-secondary-button abnormality-reset" onClick={() => { setQuery(""); setStatusFilter("All"); setPage(1); }}>{uiText("Reset")}</button>
         </div>
 
         {filtered.length === 0 ? (
-          <div className="abnormality-empty">All issues are resolved. No active tasks.</div>
+          <div className="abnormality-empty">{uiText("All issues are resolved. No active tasks.")}</div>
         ) : (
           <>
             <div className="repair-table-scroll">
@@ -160,16 +164,16 @@ export default function PicQcFollowup() {
                 </colgroup>
                 <thead>
                   <tr>
-                    <th>Problem Description</th>
-                    <th>Solution Plan</th>
-                    <th>Due Date</th>
-                    <th>Photo Evidence</th>
-                    <th>Status</th>
-                    <th>Action</th>
+                    <th>{uiText("Problem Description")}</th>
+                    <th>{uiText("Solution Plan")}</th>
+                    <th>{uiText("Due Date")}</th>
+                    <th>{uiText("Photo Evidence")}</th>
+                    <th>{uiText("Status")}</th>
+                    <th>{uiText("Action")}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {pageRows.map((item) => {
+                  {uiText(pageRows.map((item) => {
                     const due = getDueStatus(item.dueDate);
                     return (
                       <tr key={item.id}>
@@ -177,28 +181,28 @@ export default function PicQcFollowup() {
                         <td><p className="pic-clamp">{item.countermeasure}</p></td>
                         <td>
                           <div className="text-xs text-gray-500">{formatDueDate(item.dueDate)}</div>
-                          <span className={`mt-1 inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs ${dueBadgeClass[due.tone]}`}>{due.label}</span>
+                          <span className={`mt-1 inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs ${dueBadgeClass[due.tone]}`}>{uiText(due.label)}</span>
                         </td>
                         <td>
                           <button type="button" className="attachment-thumb" aria-label={`View evidence for ${item.problem}`} onClick={() => setPreview(item)}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="m5 18 5-5 3 3 3-3 3 3" /></svg>
                           </button>
                         </td>
-                        <td><span className={`status-chip ${item.status === "Open" ? "status-open" : "status-progress"}`}>{item.status}</span></td>
-                        <td><button type="button" className="repair-primary pic-update" onClick={() => setEditing(item)}>Update Status</button></td>
+                        <td><span className={`status-chip ${item.status === "Open" ? "status-open" : "status-progress"}`}>{uiText(item.status)}</span></td>
+                        <td><button type="button" className="repair-primary pic-update" onClick={() => setEditing(item)}>{uiText("Update Status")}</button></td>
                       </tr>
                     );
-                  })}
+                  }))}
                 </tbody>
               </table>
             </div>
             <div className="pic-pagination">
-              <span>Showing {startIndex + 1}-{Math.min(startIndex + pageSize, filtered.length)} of {filtered.length} data</span>
+              <span>{uiText("Showing ")}{startIndex + 1}-{Math.min(startIndex + pageSize, filtered.length)}{uiText(" of ")}{filtered.length}{uiText(" data")}</span>
               <div className="pic-pagination-controls">
                 <CustomSelect value={String(pageSize)} options={[{ value: "5", label: "5 / page" }, { value: "10", label: "10 / page" }]} onChange={(next) => setPageSize(Number(next))} ariaLabel="Rows per page" />
-                <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Previous</button>
+                <button type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>{uiText("Previous")}</button>
                 <b>{safePage} / {totalPages}</b>
-                <button type="button" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Next</button>
+                <button type="button" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>{uiText("Next")}</button>
               </div>
             </div>
           </>
@@ -207,7 +211,7 @@ export default function PicQcFollowup() {
 
       <PicAttachmentPreview record={preview} onClose={() => setPreview(null)} />
       {editing && <UpdateStatusModal record={editing} onClose={closeEditing} />}
-      {toast && <div className="repair-toast"><span>✓</span>Status updated</div>}
+      {toast && <div className="repair-toast"><span>✓</span>{uiText("Status updated")}</div>}
     </div>
   );
 }
