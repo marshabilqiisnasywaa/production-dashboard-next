@@ -115,23 +115,26 @@ export function useScorecardData(from: string, to: string) {
       if (inFlight || !alive) return;
       inFlight = true;
       try {
-        const leaders = await publicApi.scorecardLeaders();
         const today = jakartaToday();
         const end = to < today ? to : today;
         const earliest = addDays(end, -365);
         const start = from < earliest ? earliest : from;
+        const leaders = await publicApi.scorecardLeaders(start <= end ? { from: start, to: end } : undefined);
         const results = await Promise.all(leaders.map(async (info) => {
           const line: ScorecardLine = { info, papercard: [], standup: [], sqdip: [], before: 0, current: 0, after: 0 };
           if (start > end) return { line, failed: false };
           const params = { lineCode: info.lineCode, from: start, to: end };
+          const historical = Boolean(info.historical);
           const [papercard, standup, sqdip] = await Promise.allSettled([
-            publicApi.papercardKpi(params), publicApi.standupKpi(params), publicApi.sqdipKpi(params),
+            historical ? Promise.resolve(null) : publicApi.papercardKpi(params),
+            historical ? Promise.resolve(null) : publicApi.standupKpi(params),
+            publicApi.sqdipKpi(params),
           ]);
-          if (papercard.status === "fulfilled") {
+          if (papercard.status === "fulfilled" && papercard.value) {
             line.papercard = papercard.value.days;
             line.before = mean(line.papercard);
           }
-          if (standup.status === "fulfilled") {
+          if (standup.status === "fulfilled" && standup.value) {
             line.standup = standup.value.days;
             line.current = mean(line.standup);
           }

@@ -339,7 +339,7 @@ def attendance_recap(
     )
 
 
-def resolve_kpi_request(db: Session, line_id: int | None, line_code: str | None, from_date: date, to_date: date):
+def check_kpi_range(from_date: date, to_date: date) -> date:
     today = datetime.now(ZoneInfo("Asia/Jakarta")).date()
     if from_date > to_date:
         raise HTTPException(status_code=400, detail="Tanggal awal tidak boleh melewati tanggal akhir.")
@@ -347,6 +347,11 @@ def resolve_kpi_request(db: Session, line_id: int | None, line_code: str | None,
         raise HTTPException(status_code=400, detail="Tanggal akhir tidak boleh di masa depan.")
     if (to_date - from_date).days > 365:
         raise HTTPException(status_code=400, detail="Rentang maksimal 366 hari.")
+    return today
+
+
+def resolve_kpi_request(db: Session, line_id: int | None, line_code: str | None, from_date: date, to_date: date):
+    today = check_kpi_range(from_date, to_date)
     if line_id is None and not line_code:
         raise HTTPException(status_code=400, detail="Isi line_id atau line_code.")
     line = db.get(Line, line_id) if line_id is not None else db.scalar(select(Line).where(Line.code == line_code))
@@ -384,8 +389,14 @@ def sqdip_kpi_endpoint(
     to_date: date = Query(alias="to"),
     db: Session = Depends(get_db),
 ) -> SqdipKpiOut:
-    line, today = resolve_kpi_request(db, line_id, line_code, from_date, to_date)
-    days = sqdip_service.line_sqdip(db, line.code, from_date, to_date, today)
+    today = check_kpi_range(from_date, to_date)
+    if line_id is None and not line_code:
+        raise HTTPException(status_code=400, detail="Isi line_id atau line_code.")
+    line = db.get(Line, line_id) if line_id is not None else db.scalar(select(Line).where(Line.code == line_code))
+    if line is None and line_id is not None:
+        raise HTTPException(status_code=404, detail="Lini tidak ditemukan.")
+    code = line.code if line is not None else line_code.strip().upper()
+    days = sqdip_service.line_sqdip(db, code, from_date, to_date, today)
     return SqdipKpiOut(
         max_per_dimension=sqdip_service.POINTS_PER_DIMENSION,
         max_total=sqdip_service.MAX_TOTAL,
@@ -416,7 +427,11 @@ def papercard_kpi(
 
 
 @router.get("/scorecard/leaders", response_model=list[ScorecardLeaderOut])
-def scorecard_leaders(db: Session = Depends(get_db)) -> list[ScorecardLeaderOut]:
+def scorecard_leaders(
+    from_date: date | None = Query(default=None, alias="from"),
+    to_date: date | None = Query(default=None, alias="to"),
+    db: Session = Depends(get_db),
+) -> list[ScorecardLeaderOut]:
     rows = db.execute(
         select(Line, Workshop, Employee, DmGroup)
         .join(LeaderAssignment, LeaderAssignment.line_id == Line.id)
@@ -430,7 +445,7 @@ def scorecard_leaders(db: Session = Depends(get_db)) -> list[ScorecardLeaderOut]
         )
         .order_by(Workshop.name, DmGroup.name, Line.code)
     ).all()
-    return [
+    leaders = [
         ScorecardLeaderOut(
             line_id=line.id,
             line_code=line.code,
@@ -446,3 +461,20 @@ def scorecard_leaders(db: Session = Depends(get_db)) -> list[ScorecardLeaderOut]
         )
         for line, workshop, employee, group in rows
     ]
+    known = {leader.line_code.strip().upper() for leader in leaders}
+    for index, (code, leader_name) in enumerate(sqdip_service.historical_lines(db, known, from_date, to_date)):
+        leaders.append(ScorecardLeaderOut(
+            line_id=-(index + 1),
+            line_code=code,
+            line_name=code,
+            model=None,
+            workshop_id=0,
+            workshop_name="Tanpa Workshop",
+            dm_group_id=None,
+            dm_name=None,
+            leader_id=0,
+            leader_name=leader_name,
+            leader_photo_url=None,
+            historical=True,
+        ))
+    return leaders
