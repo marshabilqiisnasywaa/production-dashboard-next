@@ -190,7 +190,7 @@ export default function DmScorecard({
 
   return (
     <FilterPortalContext.Provider value={portalEl}>
-      <div ref={setRoot} className="scorecard-tv bg-section">
+      <div ref={setRoot} className="scorecard-tv">
         <div className="scorecard-top scorecard-top-leader mb-5">
           <div className="scorecard-heading">
             <div className="whitespace-nowrap text-2xl font-bold tracking-tight text-text">{uiText("KPI Scorecard")}</div>
