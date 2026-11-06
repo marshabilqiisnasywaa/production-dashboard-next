@@ -10,6 +10,21 @@ import { ProblemLoadError } from "./components/ProblemLoadError";
 import { useProblems } from "./hooks/useProblems";
 import type { ProblemFilter } from "./types";
 
+/** Share of all problems: percent + "dari total" on the right of a KPI card, after a short divider. */
+function RateBadge({ tone, pct }: { tone: "warn" | "ok" | "bad"; pct: number }) {
+  const { text: uiText } = useUiText();
+
+  return (
+    <span
+      className={`dml-pb-stat__rate dml-pb-stat__rate--${tone}`}
+      title={uiText("Persentase dari total masalah")}
+    >
+      <b>{pct}%</b>
+      <small>{uiText("dari total")}</small>
+    </span>
+  );
+}
+
 export default function ProblemsPage({
   adminLayout = false,
 }: {
@@ -107,42 +122,24 @@ export default function ProblemsPage({
         </div>
 
         <div className="dml-pb-stat">
-          <span className="dml-pb-stat__label">{uiText("Belum Selesai")}</span>
-          <strong>{counts.unsolved}</strong>
-          <span className="dml-pb-stat__note">{uiText("Perlu ditindaklanjuti")}</span>
-          <span
-            className="dml-pb-stat__rate dml-pb-stat__rate--warn"
-            title={uiText("Persentase dari total masalah")}
-          >
-            <b>{rate(counts.unsolved)}%</b>
-            <small>{uiText("dari total")}</small>
-          </span>
-        </div>
-
-        <div className="dml-pb-stat">
           <span className="dml-pb-stat__label">{uiText("Selesai")}</span>
           <strong>{counts.solved}</strong>
           <span className="dml-pb-stat__note">{uiText("Tindak lanjut selesai")}</span>
-          <span
-            className="dml-pb-stat__rate dml-pb-stat__rate--ok"
-            title={uiText("Persentase dari total masalah")}
-          >
-            <b>{rate(counts.solved)}%</b>
-            <small>{uiText("dari total")}</small>
-          </span>
+          <RateBadge tone="ok" pct={rate(counts.solved)} />
+        </div>
+
+        <div className="dml-pb-stat">
+          <span className="dml-pb-stat__label">{uiText("Belum Selesai")}</span>
+          <strong>{counts.unsolved}</strong>
+          <span className="dml-pb-stat__note">{uiText("Perlu ditindaklanjuti")}</span>
+          <RateBadge tone="warn" pct={rate(counts.unsolved)} />
         </div>
 
         <div className="dml-pb-stat">
           <span className="dml-pb-stat__label">{uiText("Eskalasi SPV")}</span>
           <strong>{counts.escalated}</strong>
           <span className="dml-pb-stat__note">{uiText("Perlu perhatian supervisor")}</span>
-          <span
-            className="dml-pb-stat__rate dml-pb-stat__rate--bad"
-            title={uiText("Persentase dari total masalah")}
-          >
-            <b>{rate(counts.escalated)}%</b>
-            <small>{uiText("dari total")}</small>
-          </span>
+          <RateBadge tone="bad" pct={rate(counts.escalated)} />
         </div>
       </div>
 
