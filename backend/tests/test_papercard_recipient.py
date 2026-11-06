@@ -27,10 +27,11 @@ class PapercardRecipientTests(unittest.TestCase):
         self.db = Session(connection, expire_on_commit=False, join_transaction_mode="create_savepoint")
         self.addCleanup(self.db.close)
         self.default = Employee(employee_no="SPV1", name="Supervisor Default", role="supervisor", dept="PROD", must_change_password=False)
-        self.alternate = Employee(employee_no="SPV2", name="Supervisor Pengganti", role="supervisor", dept="PE", must_change_password=False)
+        self.alternate = Employee(employee_no="SPV2", name="Supervisor Pengganti", role="supervisor", dept="PROD", must_change_password=False)
+        self.other_dept = Employee(employee_no="SPV4", name="Supervisor PE", role="supervisor", dept="PE", must_change_password=False)
         self.inactive = Employee(employee_no="SPV3", name="Tidak Aktif", role="supervisor", is_active=False)
         self.member = Employee(employee_no="EMP", name="Pengisi", role="leader", dept="PROD", must_change_password=False)
-        self.db.add_all([self.default, self.alternate, self.inactive, self.member])
+        self.db.add_all([self.default, self.alternate, self.other_dept, self.inactive, self.member])
         self.db.flush()
         self.member.supervisor_id = self.default.id
         workshop = Workshop(name="Workshop")
@@ -79,7 +80,9 @@ class PapercardRecipientTests(unittest.TestCase):
         response = self.client.get("/api/papercards/supervisors", headers=self.headers(self.member))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["defaultSupervisorId"], self.default.id)
-        self.assertEqual({s["id"] for s in response.json()["supervisors"]}, {self.default.id, self.alternate.id})
+        listed = {s["id"] for s in response.json()["supervisors"]}
+        self.assertEqual(listed, {self.default.id, self.alternate.id})
+        self.assertNotIn(self.other_dept.id, listed)
         created = self.submit()
         self.assertEqual(created.status_code, 200, created.text)
         self.assertEqual(created.json()["recipientSupervisorId"], self.default.id)
@@ -107,6 +110,18 @@ class PapercardRecipientTests(unittest.TestCase):
             with self.subTest(recipient=recipient_id):
                 self.assertEqual(self.submit(recipientSupervisorId=recipient_id).status_code, 400)
         self.assertEqual(list(self.db.scalars(select(PapercardSubmission))), [])
+
+    def test_supervisor_from_other_dept_rejected(self):
+        self.assertEqual(self.submit(recipientSupervisorId=self.other_dept.id).status_code, 400)
+        self.assertEqual(list(self.db.scalars(select(PapercardSubmission))), [])
+
+    def test_default_from_other_dept_requires_selection(self):
+        self.member.supervisor_id = self.other_dept.id
+        self.db.commit()
+        listing = self.client.get("/api/papercards/supervisors", headers=self.headers(self.member)).json()
+        self.assertIsNone(listing["defaultSupervisorId"])
+        self.assertEqual(self.submit().status_code, 400)
+        self.assertEqual(self.submit(recipientSupervisorId=self.alternate.id).status_code, 200)
 
     def test_no_default_requires_explicit_selection(self):
         self.member.supervisor_id = None

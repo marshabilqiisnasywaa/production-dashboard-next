@@ -3,6 +3,7 @@ import { useUiText } from "@/locales/useUiText";
 import { useEffect, useId, useState } from "react";
 import { Field } from "@/components/ui/Field";
 import { papercardApi, type DmPapercardSubmission, type DmPapercardSupervisors } from "../../../api";
+import { departmentLabel } from "../../../departments";
 
 export function usePapercardSupervisor(scope: string, submission: DmPapercardSubmission | null) {
   const [state, setState] = useState<{ scope: string; data: DmPapercardSupervisors | null; error: string | null }>({ scope: "", data: null, error: null });
@@ -52,7 +53,7 @@ export function SupervisorSelect({ selection, disabled }: {
         {unavailable && <option value={selection.selectedId!} disabled>{selection.name}{uiText(" (tidak aktif)")}</option>}
         {selection.options.map((supervisor) => (
           <option key={supervisor.id} value={supervisor.id}>
-            {supervisor.name}{supervisor.dept ? ` — ${supervisor.dept}` : ""}{supervisor.id === selection.defaultId ? uiText(" (default)") : ""}
+            {supervisor.name}{supervisor.dept ? ` — ${uiText(departmentLabel(supervisor.dept))}` : ""}{supervisor.id === selection.defaultId ? uiText(" (default)") : ""}
           </option>
         ))}
       </select>

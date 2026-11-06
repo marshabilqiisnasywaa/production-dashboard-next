@@ -24,6 +24,8 @@ from app.services.papercard_kpi import to_jakarta
 
 router = APIRouter(prefix="/papercards", tags=["papercards"])
 
+def same_dept(a: Employee, b: Employee) -> bool:
+    return bool(a.dept) and a.dept.strip().lower() == (b.dept or "").strip().lower()
 
 def default_supervisor(db: Session, employee: Employee) -> Employee | None:
     if employee.supervisor_id is not None:
@@ -59,9 +61,10 @@ def list_recipient_supervisors(
     employee = principal.employee
     if employee is None:
         raise HTTPException(403, "Pengisian papercard memerlukan akun karyawan.")
-    supervisors = list(db.scalars(select(Employee).where(
+    candidates = db.scalars(select(Employee).where(
         Employee.role == "supervisor", Employee.is_active.is_(True), Employee.id != employee.id,
-    ).order_by(Employee.name, Employee.id)))
+    ).order_by(Employee.name, Employee.id))
+    supervisors = [s for s in candidates if same_dept(employee, s)]
     default = default_supervisor(db, employee)
     return {
         "defaultSupervisorId": default.id if default and any(s.id == default.id for s in supervisors) else None,
@@ -740,6 +743,8 @@ def submit_papercard(
     recipient = db.get(Employee, recipient_id) if recipient_id is not None else default_supervisor(db, principal.employee)
     if recipient is None or recipient.role != "supervisor" or not recipient.is_active or recipient.id == emp_id:
         raise HTTPException(400, "Pilih supervisor penerima yang aktif.")
+    if not same_dept(principal.employee, recipient):
+        raise HTTPException(400, "Supervisor penerima harus dari departemen yang sama.")
 
     if existing:
         if existing.approval_status == "approved":
