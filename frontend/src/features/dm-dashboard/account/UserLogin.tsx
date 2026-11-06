@@ -4,9 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { useLanguage } from "@/components/providers/LanguageProvider";
 import { IconGauge } from "@/components/ui/icons";
-import { appLanguages } from "@/locales/i18n";
+import LanguageMenu from "@/components/ui/LanguageMenu";
 import { ApiError, accountApi, getToken, setToken } from "../api";
 import { homeFor } from "./homeFor";
 import { OppoLogo } from "./OppoLogo";
@@ -72,7 +71,6 @@ function ChevronRightIcon() {
 
 export default function UserLogin() {
   const { t } = useTranslation(["auth", "common"]);
-  const { language, setLanguage } = useLanguage();
   const [nik, setNik] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -181,21 +179,7 @@ export default function UserLogin() {
               className="dml-login__formlogo"
               height={36}
             />
-            <div className="dml-login__language" role="group" aria-label={t("common:language")}>
-              {appLanguages.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  lang={option.locale}
-                  aria-label={option.label}
-                  aria-pressed={language === option.value}
-                  title={option.label}
-                  onClick={() => setLanguage(option.value)}
-                >
-                  {option.value}
-                </button>
-              ))}
-            </div>
+            <LanguageMenu />
           </div>
           <h1>{t("login.title")}</h1>
           <p className="dml-login__lead">

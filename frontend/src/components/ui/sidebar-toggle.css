@@ -1,0 +1,26 @@
+.ui-sidebar-toggle {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dm-text, #111827);
+  cursor: pointer;
+}
+.ui-sidebar-toggle:hover {
+  background: #f3f4f6;
+}
+.ui-sidebar-toggle:focus-visible {
+  outline: 2px solid var(--dm-green, #046a38);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-sidebar,
+  .dm-admin-sidebar {
+    transition: none !important;
+  }
+}

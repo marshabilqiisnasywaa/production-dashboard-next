@@ -509,36 +509,6 @@ function MeetingView(props: MeetingViewProps) {
         />
       </div>
 
-      {variant === "dm" && phase === "idle" && !serverSession?.rosterPrepared && !readOnly && (
-        <section className="ui-card dml-meeting-scope">
-          <strong>{uiText("Peserta meeting")}</strong>
-          <SegmentedControl
-            ariaLabel="Cakupan meeting"
-            value={scope}
-            options={[
-              { value: "line", label: "Lini Saya" },
-              ...(workspace.group
-                ? [
-                    {
-                      value: "dm" as const,
-                      label: `Gabungan ${workspace.group.name}`,
-                    },
-                  ]
-                : []),
-            ]}
-            onChange={(value) => {
-              if (!preparing) setScope(value);
-            }}
-          />
-          <p>
-            {scope === "dm"
-              ? uiText("Satu leader mengambil presensi seluruh DM. Hasilnya tetap masuk ke lini masing-masing. Jadwal mengikuti sesi lini yang dipilih.")
-              : workspace.group
-              ? uiText("Presensi hanya untuk tim lini yang dipilih.")
-              : uiText("Lini ini belum masuk DM. Meeting tersedia per lini.")}
-          </p>
-        </section>
-      )}
       {readOnly && (
         <div className="dml-empty" role="status">{uiText("Meeting ini dikelola oleh ")}{serverSession?.leaderName ?? uiText("leader lain")}
           {serverSession?.dmGroupName
@@ -551,7 +521,7 @@ function MeetingView(props: MeetingViewProps) {
       )}
 
       <MeetingHeaderCard
-        title={uiText(`${
+        title={
           effectiveScope === "dm"
             ? serverSession?.dmGroupName ??
               workspace.group?.name ??
@@ -559,7 +529,41 @@ function MeetingView(props: MeetingViewProps) {
             : variant === "workshop"
             ? workspace.workshop?.name ?? "Workshop"
             : workspace.line?.name ?? MEETING_AREA
-        } · ${session.label}`)}
+        }
+        sessionText={`${session.label} · ${session.start}`}
+        participants={
+          variant === "dm" && phase === "idle" && !serverSession?.rosterPrepared && !readOnly
+            ? {
+                title: uiText("Peserta meeting"),
+                description:
+                  scope === "dm"
+                    ? uiText("Satu leader mengambil presensi seluruh DM. Hasilnya tetap masuk ke lini masing-masing. Jadwal mengikuti sesi lini yang dipilih.")
+                    : workspace.group
+                    ? uiText("Presensi hanya untuk tim lini yang dipilih.")
+                    : uiText("Lini ini belum masuk DM. Meeting tersedia per lini."),
+                control: (
+                  <SegmentedControl
+                    ariaLabel="Cakupan meeting"
+                    value={scope}
+                    options={[
+                      { value: "line", label: "Lini Saya" },
+                      ...(workspace.group
+                        ? [
+                            {
+                              value: "dm" as const,
+                              label: `Gabungan ${workspace.group.name}`,
+                            },
+                          ]
+                        : []),
+                    ]}
+                    onChange={(value) => {
+                      if (!preparing) setScope(value);
+                    }}
+                  />
+                ),
+              }
+            : undefined
+        }
         phase={phase}
         lines={meetingLines}
         dateText={

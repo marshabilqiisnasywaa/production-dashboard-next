@@ -5,6 +5,7 @@ import "@/components/ui/ui.css";
 import "../leader/leader.css";
 import "../leader/dmSoft.css";
 import "./supervisor.css";
+import { SidebarBackdrop, SidebarProvider } from "@/components/ui/SidebarProvider";
 import { IconAlert, IconCheckCircle, IconClose } from "@/components/ui/icons";
 import { SupervisorProvider, useSupervisor } from "./SupervisorProvider";
 import { SupervisorReviewModal, SupervisorSidebar } from "./components";
@@ -26,12 +27,13 @@ function SupervisorFrame({ children }: { children: ReactNode }) {
   } = useSupervisor();
 
   return (
-    <div className="dm-theme dml-shell">
+    <div className="dm-theme dml-shell dml-shell--drawer">
       <SupervisorSidebar
         pendingApprovalsCount={pendingApprovalsCount}
         escalationCount={escalatedCount}
         canHostWorkshopMeeting={(me?.dept ?? "").trim().toUpperCase() === "PROD"}
       />
+      <SidebarBackdrop />
       <div className="dml-main">
         <SupervisorHeader />
         <main className="dml-content">
@@ -93,7 +95,9 @@ function SupervisorFrame({ children }: { children: ReactNode }) {
 export default function SupervisorShell({ children }: { children: ReactNode }) {
   return (
     <SupervisorProvider>
-      <SupervisorFrame>{children}</SupervisorFrame>
+      <SidebarProvider>
+        <SupervisorFrame>{children}</SupervisorFrame>
+      </SidebarProvider>
     </SupervisorProvider>
   );
 }

@@ -3,13 +3,14 @@ import { useUiText } from "@/locales/useUiText";
 
 
 import { departmentLabel } from "../../departments";
-import { useEffect, useMemo, useState } from "react";
-import { IconLogout } from "@/components/ui/icons";
-import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+import { useMemo } from "react";
+import LanguageMenu from "@/components/ui/LanguageMenu";
+import { SidebarToggle } from "@/components/ui/SidebarProvider";
 import { setToken } from "../../api";
 import { formatOverdue } from "../../leader/problems/utils";
 import { NotificationBellButton } from "../../notifications/NotificationBellButton";
 import type { DmAppNotification } from "../../notifications/types";
+import { UserMenu } from "../../shared/UserMenu";
 import { useSupervisor } from "../SupervisorProvider";
 import { SUPERVISOR_ROUTES } from "../routes";
 
@@ -22,7 +23,6 @@ function parseTime(value: string): Date | null {
 
 export function SupervisorHeader() {
   const { text: uiText, locale: uiLocale } = useUiText();
-  const [now, setNow] = useState<Date | null>(null);
   const { currentSupervisor, escalatedRows, allListItems } = useSupervisor();
 
   const headerNotifications = useMemo<DmAppNotification[]>(() => {
@@ -76,46 +76,18 @@ export function SupervisorHeader() {
     );
   }, [allListItems, escalatedRows]);
 
-  useEffect(() => {
-    setNow(new Date());
-    const id = setInterval(() => setNow(new Date()), 30_000);
-    return () => clearInterval(id);
-  }, []);
-
   const handleLogout = () => {
     setToken(null);
     window.location.href = "/dm-dashboard/masuk";
   };
 
-  const time = now ? `${pad(now.getHours())}:${pad(now.getMinutes())}` : "--:--";
-  const date = now
-    ? now.toLocaleDateString(uiLocale, {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
-    : "";
-
   const displayName = currentSupervisor.name || "Supervisor";
-  const initials = displayName
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
   return (
     <header className="dml-header">
-      <div className="dml-header__time">
-        <div>
-          <strong>{time}</strong>
-          <span>{date}</span>
-        </div>
-      </div>
-
+      <SidebarToggle />
       <div className="dml-header__right">
-        <LanguageSwitcher />
+        <LanguageMenu />
         <NotificationBellButton
           role="supervisor"
           dept={currentSupervisor.dept}
@@ -123,36 +95,7 @@ export function SupervisorHeader() {
           lineName="Semua Lini"
           extraNotifications={headerNotifications}
         />
-        <div className="dml-user dml-user--supervisor">
-          <span className="dml-avatar">{initials}</span>
-          <div className="dml-user__text">
-            <strong>{displayName}</strong>
-            <span className="dml-user__role">{uiText("Supervisor")}</span>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={handleLogout}
-          title={uiText("Keluar dari akun Supervisor")}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            padding: "6px 11px",
-            borderRadius: "7px",
-            border: "1px solid #fecdd3",
-            background: "#fff1f2",
-            color: "#e11d48",
-            fontSize: "12px",
-            fontWeight: 600,
-            cursor: "pointer",
-            marginLeft: "6px",
-            transition: "all 0.15s ease",
-          }}
-        >
-          <IconLogout size={14} />
-          <span>{uiText("Keluar")}</span>
-        </button>
+        <UserMenu name={displayName} role={uiText("Supervisor")} onLogout={handleLogout} />
       </div>
     </header>
   );

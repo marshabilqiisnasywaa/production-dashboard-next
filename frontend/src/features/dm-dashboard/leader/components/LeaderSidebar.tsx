@@ -17,12 +17,7 @@ import { LEADER_ROUTES } from "../routes";
 import { accountApi, type DmMe } from "../../api";
 import { useRevisionCount } from "../../notifications/useRevisionCount";
 
-interface Props {
-  open?: boolean;
-  onNavigate?: () => void;
-}
-
-export function LeaderSidebar({ open = false, onNavigate }: Props) {
+export function LeaderSidebar() {
   const { text: uiText } = useUiText();
   const [me, setMe] = useState<DmMe | null>(null);
 
@@ -115,8 +110,6 @@ export function LeaderSidebar({ open = false, onNavigate }: Props) {
         </>
       }
       sections={sections}
-      className={`ui-sidebar--drawer${open ? " is-open" : ""}`}
-      onNavigate={onNavigate}
     />
   );
 }

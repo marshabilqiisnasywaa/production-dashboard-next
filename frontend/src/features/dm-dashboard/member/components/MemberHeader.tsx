@@ -2,26 +2,17 @@
 import { useUiText } from "@/locales/useUiText";
 
 
-import { IconLogout } from "@/components/ui/icons";
-import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+import LanguageMenu from "@/components/ui/LanguageMenu";
+import { SidebarToggle } from "@/components/ui/SidebarProvider";
 import { setToken } from "../../api";
-import { useNow } from "../../leader/hooks/useNow";
 import { useMember } from "../MemberProvider";
 import { AFTER_LOGOUT } from "../routes";
 import { NotificationBellButton } from "../../notifications/NotificationBellButton";
+import { UserMenu } from "../../shared/UserMenu";
 
-const pad = (n: number) => String(n).padStart(2, "0");
-
-/** Same header as the Leader (time + date on the left, role + user on the right) plus the logout button. */
 export function MemberHeader() {
-  const { text: uiText, locale: uiLocale } = useUiText();
+  const { text: uiText } = useUiText();
   const { me, profile, activeLine, setActiveLine, availableLines } = useMember();
-  const now = useNow(30_000); // null on the first render so server and client markup match
-
-  const time = now ? `${pad(now.getHours())}:${pad(now.getMinutes())}` : "--:--";
-  const date = now
-    ? now.toLocaleDateString(uiLocale, { weekday: "long", day: "numeric", month: "long", year: "numeric" })
-    : "";
 
   function logout() {
     setToken(null);
@@ -32,15 +23,9 @@ export function MemberHeader() {
 
   return (
     <header className="dml-header">
-      <div className="dml-header__time">
-        <div>
-          <strong>{time}</strong>
-          <span>{date}</span>
-        </div>
-      </div>
-
+      <SidebarToggle />
       <div className="dml-header__right">
-        <LanguageSwitcher />
+        <LanguageMenu />
         {availableLines.length > 1 && (
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <span style={{ fontSize: "12px", color: "var(--text-secondary, #64748b)" }}>{uiText("Lini:")}</span>
@@ -77,14 +62,7 @@ export function MemberHeader() {
           lineName={activeLine?.name ?? me?.line?.name}
         />
 
-        <span className="dml-role-badge">{uiText("MEMBER • ")}{uiText(profile.roleLabel)}</span>
-
-        <div className="dml-user">
-          <span className="dml-avatar">{profile.name.charAt(0).toUpperCase()}</span>
-          <strong>{profile.name}</strong>
-        </div>
-        <button type="button" className="dmm-logout" onClick={logout}>
-          <IconLogout size={16} />{uiText(" Keluar")}</button>
+        <UserMenu name={profile.name} role={uiText(profile.roleLabel)} onLogout={logout} />
       </div>
     </header>
   );

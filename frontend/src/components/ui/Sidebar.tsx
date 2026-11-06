@@ -5,6 +5,7 @@ import { useUiText } from "@/locales/useUiText";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { SIDEBAR_ID, useSidebar } from "./SidebarProvider";
 
 export interface SidebarItem {
   label: string;
@@ -39,9 +40,15 @@ interface SidebarProps {
 export function Sidebar({ brand, sections, footer, className = "", onNavigate }: SidebarProps) {
   const { text: uiText } = useUiText();
   const pathname = usePathname();
+  const sidebar = useSidebar();
+  const state = `${sidebar?.open ? " is-open" : ""}${sidebar?.collapsed ? " is-collapsed" : ""}`;
+  const handleNavigate = () => {
+    sidebar?.close();
+    onNavigate?.();
+  };
 
   return (
-    <aside className={`ui-sidebar ${className}`.trim()}>
+    <aside id={SIDEBAR_ID} className={`ui-sidebar ${className}${state}`.trim()}>
       <div className="ui-sidebar__brand">{brand}</div>
       <nav className="ui-sidebar__nav" aria-label={uiText("Navigasi utama")}>
         {sections.map((section, i) => (
@@ -53,7 +60,7 @@ export function Sidebar({ brand, sections, footer, className = "", onNavigate }:
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={onNavigate}
+                  onClick={handleNavigate}
                   className={active ? "ui-sidebar__link is-active" : "ui-sidebar__link"}
                   aria-current={active ? "page" : undefined}
                 >

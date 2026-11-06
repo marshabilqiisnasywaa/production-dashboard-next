@@ -3,6 +3,7 @@ import { useUiText } from "@/locales/useUiText";
 
 import Link from "next/link";
 import { IconLogout } from "@/components/ui/icons";
+import { SIDEBAR_ID, useSidebar } from "@/components/ui/SidebarProvider";
 import { setToken } from "../api";
 import { Gauge as IconGauge } from "lucide-react";
 
@@ -175,8 +176,14 @@ export default function DmAdminSidebar({
   onLogout,
 }: DmAdminSidebarProps) {
   const { text: uiText } = useUiText();
+  const sidebar = useSidebar();
+  const state = `${sidebar?.open ? " is-open" : ""}${sidebar?.collapsed ? " is-collapsed" : ""}`;
+  const select = (tab: DmAdminTabKey) => {
+    onSelectTab(tab);
+    sidebar?.close();
+  };
   return (
-    <aside className="dm-admin-sidebar">
+    <aside id={SIDEBAR_ID} className={`dm-admin-sidebar${state}`}>
       {/* Brand / Logo */}
       <div className="dm-admin-sidebar-brand">
         <span className="dml-logo">
@@ -194,7 +201,7 @@ export default function DmAdminSidebar({
         {/* <button
           type="button"
           className={`dm-admin-nav-btn ${activeTab === "dashboard" ? "is-active" : ""}`}
-          onClick={() => onSelectTab("dashboard")}
+          onClick={() => select("dashboard")}
         >
           <span className="dm-admin-nav-icon"><ChartIcon /></span>
           <span>Dashboard</span>
@@ -207,7 +214,7 @@ export default function DmAdminSidebar({
               className={`dm-admin-nav-btn ${
                 activeTab === "workshop" ? "is-active" : ""
               }`}
-              onClick={() => onSelectTab("workshop")}
+              onClick={() => select("workshop")}
             >
               <span className="dm-admin-nav-icon">
                 <FactoryIcon />
@@ -220,7 +227,7 @@ export default function DmAdminSidebar({
               className={`dm-admin-nav-btn ${
                 activeTab === "users" ? "is-active" : ""
               }`}
-              onClick={() => onSelectTab("users")}
+              onClick={() => select("users")}
             >
               <span className="dm-admin-nav-icon">
                 <UsersGroupIcon />
@@ -233,7 +240,7 @@ export default function DmAdminSidebar({
               className={`dm-admin-nav-btn ${
                 activeTab === "papercard" ? "is-active" : ""
               }`}
-              onClick={() => onSelectTab("papercard")}
+              onClick={() => select("papercard")}
             >
               <span className="dm-admin-nav-icon">
                 <ClipboardCheckIcon />
@@ -246,7 +253,7 @@ export default function DmAdminSidebar({
               className={`dm-admin-nav-btn ${
                 activeTab === "mpv" ? "is-active" : ""
               }`}
-              onClick={() => onSelectTab("mpv")}
+              onClick={() => select("mpv")}
             >
               <span className="dm-admin-nav-icon">
                 <TrophyIcon />
@@ -259,7 +266,7 @@ export default function DmAdminSidebar({
               className={`dm-admin-nav-btn ${
                 activeTab === "attendance" ? "is-active" : ""
               }`}
-              onClick={() => onSelectTab("attendance")}
+              onClick={() => select("attendance")}
             >
               <span className="dm-admin-nav-icon">
                 <ClipboardCheckIcon />
@@ -273,7 +280,7 @@ export default function DmAdminSidebar({
               className={`dm-admin-nav-btn ${
                 activeTab === "problems" ? "is-active" : ""
               }`}
-              onClick={() => onSelectTab("problems")}
+              onClick={() => select("problems")}
             >
               <span className="dm-admin-nav-icon">
                 <ClipboardCheckIcon />
@@ -298,7 +305,7 @@ export default function DmAdminSidebar({
               className={`dm-admin-nav-btn ${
                 activeTab === "sqdip" ? "is-active" : ""
               }`}
-              onClick={() => onSelectTab("sqdip")}
+              onClick={() => select("sqdip")}
             >
               <span className="dm-admin-nav-icon">
                 <ChartIcon />
