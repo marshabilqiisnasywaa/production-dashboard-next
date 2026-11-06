@@ -265,7 +265,21 @@ export function toSqdipRows(lines: ScorecardLine[]): SqdipTableRow[] {
   return rows.sort((a, b) => b.date.localeCompare(a.date) || a.line.localeCompare(b.line) || a.leader.localeCompare(b.leader));
 }
 
-export function buildTrendSeries(lines: ScorecardLine[]): TrendSeries {
+export type TrendGranularity = "Harian" | "Mingguan" | "Bulanan";
+
+function bucketKey(date: string, g: TrendGranularity) {
+  if (g === "Harian") return date;
+  if (g === "Bulanan") return date.slice(0, 7);
+  const d = new Date(`${date}T00:00:00Z`);
+  const day = (d.getUTCDay() + 6) % 7; // Senin = 0
+  d.setUTCDate(d.getUTCDate() - day);
+  return d.toISOString().slice(0, 10);
+}
+
+export function buildTrendSeries(
+  lines: ScorecardLine[],
+  granularity: TrendGranularity = "Harian"
+): TrendSeries {
   const maps = lines.map((line) => ({
     papercard: new Map(line.papercard.map((day) => [day.date, day.total])),
     standup: new Map(line.standup.map((day) => [day.date, day.total])),
@@ -278,10 +292,18 @@ export function buildTrendSeries(lines: ScorecardLine[]): TrendSeries {
   }
   const mean = (values: number[]) =>
     values.length === 0 ? 0 : round2(values.reduce((sum, value) => sum + value, 0) / values.length);
-  const pick = (kind: "papercard" | "standup" | "sqdip", date: string) =>
-    maps.flatMap((map) => (map[kind].has(date) ? [map[kind].get(date) as number] : []));
 
-  const sorted = [...dates].sort();
+  // C. pick sekarang menerima bucket, bukan tanggal tunggal
+  const pick = (kind: "papercard" | "standup" | "sqdip", bucket: string) =>
+    maps.flatMap((map) =>
+      [...map[kind].entries()]
+        .filter(([date]) => bucketKey(date, granularity) === bucket)
+        .map(([, value]) => value)
+    );
+
+  // D. sorted berisi bucket unik
+  const sorted = [...new Set([...dates].map((d) => bucketKey(d, granularity)))].sort();
+
   const before = sorted.map((date) => mean(pick("papercard", date)));
   const current = sorted.map((date) => mean(pick("standup", date)));
   const after = sorted.map((date) => mean(pick("sqdip", date)));
@@ -293,3 +315,4 @@ export function buildTrendSeries(lines: ScorecardLine[]): TrendSeries {
     total: sorted.map((_, index) => round2(before[index] + current[index] + after[index])),
   };
 }
+
