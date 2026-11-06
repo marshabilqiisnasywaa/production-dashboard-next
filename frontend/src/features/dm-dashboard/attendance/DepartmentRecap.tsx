@@ -3,13 +3,16 @@ import { useUiText } from "@/locales/useUiText";
 
 
 import { departmentLabel } from "../departments";
+import { DateRangePicker, type DateRangeValue } from "../scorecard/ScorecardFilters";
+import { jakartaToday } from "../scorecard/useScorecardData";
 import type { DepartmentAttendance, DepartmentKey } from "./useDepartmentAttendance";
 
 type Props = {
   data: DepartmentAttendance[];
   selectedDepartment: DepartmentKey | null;
   onSelectDepartment: (department: DepartmentKey) => void;
-  periodLabel: string;
+  range: DateRangeValue;
+  onRangeChange: (range: DateRangeValue) => void;
   loading: boolean;
   error: string | null;
   mismatches: string[];
@@ -21,7 +24,8 @@ export default function DepartmentRecap({
   data,
   selectedDepartment,
   onSelectDepartment,
-  periodLabel,
+  range,
+  onRangeChange,
   loading,
   error,
   mismatches,
@@ -38,7 +42,7 @@ export default function DepartmentRecap({
           <h2>{uiText("Rekap per Departemen")}</h2>
           <p>{uiText("Departemen dengan tingkat tidak hadir tertinggi")}</p>
         </div>
-        <span className="att-chart-badge">{uiText(periodLabel)}</span>
+        <DateRangePicker value={range} onChange={onRangeChange} maxDate={jakartaToday()} />
       </div>
 
       {loading ? (

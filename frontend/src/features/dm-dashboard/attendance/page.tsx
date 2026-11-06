@@ -5,9 +5,11 @@ import { useUiText } from "@/locales/useUiText";
 // import Link from "next/link";
 import { departmentLabel } from "../departments";
 import { useMemo, useState } from "react";
+import { DateRangePicker, FilterSelect, type DateRangeValue } from "../scorecard/ScorecardFilters";
+import { defaultRange, jakartaToday } from "../scorecard/useScorecardData";
 
 import "./attendance.css";
-import { useAttendanceData, type SessionStat } from "./useAttendanceData";
+import { useAttendanceData, datesBetween, type SessionStat } from "./useAttendanceData";
 import DepartmentRecap from "./DepartmentRecap";
 import {
   useDepartmentAttendance,
@@ -422,9 +424,16 @@ function TrendChart({
   );
 }
 
+function todayRange() {
+  const today = jakartaToday();
+  return { from: today, to: today };
+} 
+
 export default function AttendanceDashboardPage() {
   const { text: uiText, locale: uiLocale } = useUiText();
-  const [period, setPeriod] = useState("7");
+  const [range, setRange] = useState(todayRange);
+  const [trendRange, setTrendRange] = useState(todayRange);
+  const [deptRange, setDeptRange] = useState(todayRange);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const [level, setLevel] = useState("Semua");
@@ -441,26 +450,68 @@ export default function AttendanceDashboardPage() {
 
   const pageSize = 8;
 
-  const { dates, records, sessions, loading, error, reload } =
-    useAttendanceData(Number(period));
+  const allDates = useMemo(
+    () =>
+      [
+        ...new Set([
+          ...datesBetween(range.from, range.to),
+          ...datesBetween(trendRange.from, trendRange.to),
+          ...datesBetween(deptRange.from, deptRange.to),
+        ]),
+      ].sort(),
+    [
+      range.from,
+      range.to,
+      trendRange.from,
+      trendRange.to,
+      deptRange.from,
+      deptRange.to,
+    ]
+  );
+  const {
+    records: allRecords,
+    sessions: allSessions,
+    loading,
+    error,
+    reload,
+  } = useAttendanceData(allDates);
+  const within = (date: string, r: DateRangeValue) =>
+    date >= r.from && date <= r.to;
+  const records = useMemo(
+    () => allRecords.filter((r) => within(r.date, range)),
+    [allRecords, range]
+  );
+  const sessions = useMemo(
+    () => allSessions.filter((s) => within(s.date, range)),
+    [allSessions, range]
+  );
+  const trendDates = useMemo(
+    () => datesBetween(trendRange.from, trendRange.to),
+    [trendRange.from, trendRange.to]
+  );
+  const trendSessions = useMemo(
+    () => allSessions.filter((s) => within(s.date, trendRange)),
+    [allSessions, trendRange]
+  );
+  const deptRecords = useMemo(
+    () => allRecords.filter((r) => within(r.date, deptRange)),
+    [allRecords, deptRange]
+  );
+  const deptSessions = useMemo(
+    () => allSessions.filter((s) => within(s.date, deptRange)),
+    [allSessions, deptRange]
+  );
   const [departmentRetry, setDepartmentRetry] = useState(0);
   const departmentRecap = useDepartmentAttendance({
-    sessions,
-    records,
+    sessions: deptSessions,
+    records: deptRecords,
     level,
     retry: departmentRetry,
   });
-  const periodLabel =
-    period === "1"
-      ? "Hari ini"
-      : period === "30"
-      ? "30 hari terakhir"
-      : "7 hari terakhir";
-
   const visibleTrend = useMemo<TrendDay[]>(
     () =>
-      dates.map((date) => {
-        const daySessions = sessions.filter((s) => s.date === date);
+      trendDates.map((date) => {
+        const daySessions = trendSessions.filter((s) => s.date === date);
         const total = daySessions.reduce((n, s) => n + s.total, 0);
         const pct = (n: number) => (total ? (n / total) * 100 : 0);
 
@@ -482,7 +533,7 @@ export default function AttendanceDashboardPage() {
         };
       }),
 
-    [dates, sessions]
+    [trendDates, trendSessions]
   );
 
   const filteredRows = useMemo(() => {
@@ -567,11 +618,11 @@ export default function AttendanceDashboardPage() {
     setPage(1);
   }
 
-  function changePeriod(value: string) {
-    setPeriod(value);
-    setSelectedDate(null);
-    resetPage();
-  }
+  function changeRange(value: { from: string; to: string }) {
+  setRange(value);
+  setSelectedDate(null);
+  resetPage();
+}
 
   function changeLevel(value: string) {
     setLevel(value);
@@ -612,59 +663,30 @@ export default function AttendanceDashboardPage() {
 
           <div className="att-filters">
             <label>
-              <span>{uiText("Periode")}</span>
+  <span>{uiText("Periode")}</span>
+  <DateRangePicker value={range} onChange={changeRange} maxDate={jakartaToday()} />
+</label>
 
-              <div className="att-segment">
-                {[
-                  { label: "Hari ini", value: "1" },
+<label>
+  <span>{uiText("Level")}</span>
+  <FilterSelect
+    value={level}
+    onChange={changeLevel}
+    options={["Semua", "DM Line", "DM Workshop"]}
+  />
+</label>
 
-                  { label: "7 hari", value: "7" },
-
-                  { label: "30 hari", value: "30" },
-                ].map((item) => (
-                  <button
-                    key={item.value}
-                    type="button"
-                    className={period === item.value ? "active" : ""}
-                    onClick={() => changePeriod(item.value)}
-                  >
-                    {uiText(item.label)}
-                  </button>
-                ))}
-              </div>
-            </label>
-
-            <label>
-              <span>{uiText("Level")}</span>
-
-              <select
-                value={level}
-                onChange={(e) => changeLevel(e.target.value)}
-              >
-                <option>{uiText("Semua")}</option>
-
-                <option>{uiText("DM Line")}</option>
-
-                <option>{uiText("DM Workshop")}</option>
-              </select>
-            </label>
-
-            <label>
-              <span>{uiText("Sesi")}</span>
-
-              <select
-                value={session}
-                onChange={(e) => {
-                  setSession(e.target.value);
-
-                  resetPage();
-                }}
-              >
-                {availableSessions.map((s) => (
-                  <option key={s}>{uiText(s)}</option>
-                ))}
-              </select>
-            </label>
+<label>
+  <span>{uiText("Sesi")}</span>
+  <FilterSelect
+    value={session}
+    onChange={(value) => {
+      setSession(value);
+      resetPage();
+    }}
+    options={availableSessions}
+  />
+</label>
           </div>
         </section>
 
@@ -750,7 +772,7 @@ export default function AttendanceDashboardPage() {
                   <p>{uiText("Proporsi tepat waktu, telat, dan tidak hadir per hari")}</p>
                 </div>
 
-                <span className="att-chart-badge">{uiText(periodLabel)}</span>
+                <DateRangePicker value={trendRange} onChange={setTrendRange} maxDate={jakartaToday()} />
               </div>
 
               <TrendChart
@@ -788,7 +810,8 @@ export default function AttendanceDashboardPage() {
                   );
                   resetPage();
                 }}
-                periodLabel={periodLabel}
+                range={deptRange}
+                onRangeChange={setDeptRange}
                 loading={departmentRecap.loading}
                 error={departmentRecap.error}
                 mismatches={departmentRecap.mismatches}

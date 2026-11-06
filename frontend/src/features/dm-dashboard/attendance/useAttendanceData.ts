@@ -48,6 +48,15 @@ function localISO(d: Date) {
   return `${y}-${m}-${day}`;
 }
 
+export function datesBetween(from: string, to: string): string[] {
+  const out: string[] = [];
+  const end = new Date(`${to}T00:00:00Z`);
+  for (let d = new Date(`${from}T00:00:00Z`); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    out.push(d.toISOString().slice(0, 10));
+  }
+  return out;
+}
+
 export function periodDates(days: number): string[] {
   const today = new Date();
   const out: string[] = [];
@@ -256,14 +265,13 @@ export function attendanceSessionsFromRecap(
   ]).sessions;
 }
 
-export function useAttendanceData(periodDays: number) {
+export function useAttendanceData(dates: string[]) {
   const cacheRef = useRef(new Map<string, DayAttendance>());
   const [loaded, setLoaded] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
 
-  const dates = useMemo(() => periodDates(periodDays), [periodDays]);
 
   useEffect(() => {
     const missing = dates.filter((date) => !cacheRef.current.has(date));
