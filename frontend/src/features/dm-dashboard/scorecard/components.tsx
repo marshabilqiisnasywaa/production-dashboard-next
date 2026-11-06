@@ -431,10 +431,12 @@ export function TrendChart({
   metric,
   custom,
   trend,
+  granularity = "Harian",
 }: {
   metric: ScoreTrend;
   custom?: SqdipTrend;
   trend?: TrendSeries;
+  granularity?: "Harian" | "Mingguan" | "Bulanan";
 }) {
   const { text: uiText, locale: uiLocale } = useUiText();
   const seriesByMetric = {
@@ -676,7 +678,7 @@ export function TrendChart({
         ))}
         {(custom
           ? custom.dates
-          : (trend?.dates ?? []).map(formatTrendDate)
+          : (trend?.dates ?? []).map((d) => formatTrendDate(d, granularity))
         ).map((date, index) => {
           const every = Math.max(1, Math.ceil(80 / step));
           if (index % every !== 0) return null;
@@ -717,7 +719,7 @@ export function TrendChart({
           {custom ? (
             <>
               <div className="font-semibold text-text">
-                {formatTrendDate(custom.dates[hovered.index])}
+                {formatTrendDate(trend?.dates[hovered.index] ?? "", granularity)}
               </div>
               <div className="mt-1.5 space-y-0.5">
                 <div className="flex items-center justify-between gap-3 font-bold text-text">
