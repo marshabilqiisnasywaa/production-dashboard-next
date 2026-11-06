@@ -65,6 +65,7 @@ export default function DmScorecard({
   const [selectedLeader, setSelectedLeader] = useState<string | null>(null);
   const [selectedDm, setSelectedDm] = useState("Semua");
   const [trend, setTrend] = useState<ScoreTrend>("Total");
+  const [granularity, setGranularity] = useState<"Harian" | "Mingguan" | "Bulanan">("Harian");
   const [sqdipDim, setSqdipDim] = useState<DimKey>("Safety");
   const [tab, setTab] = useState<ScoreTab>("Papercard");
   const [query, setQuery] = useState("");
@@ -119,7 +120,7 @@ export default function DmScorecard({
         (line) => line.info.leaderName === selectedLeaderScore.leader
       )
     : dmLines;
-  const trendSeries = buildTrendSeries(scopeLines);
+  const trendSeries = buildTrendSeries(scopeLines, granularity);
   const sqdipTiles =
     trend === "After"
       ? SQDIP_DIMS.map((key) => ({
@@ -189,7 +190,7 @@ export default function DmScorecard({
 
   return (
     <FilterPortalContext.Provider value={portalEl}>
-      <div ref={setRoot} className="scorecard-tv bg-section">
+      <div ref={setRoot} className="scorecard-tv">
         <div className="scorecard-top scorecard-top-leader mb-5">
           <div className="scorecard-heading">
             <div className="whitespace-nowrap text-2xl font-bold tracking-tight text-text">{uiText("KPI Scorecard")}</div>
@@ -316,23 +317,32 @@ export default function DmScorecard({
               />
               <Card className="scorecard-trend p-5">
                 <div className="scorecard-trend-head flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <div className="font-bold">{uiText("Tren nilai harian")}</div>
-                  </div>
-                  <Segmented<ScoreTrend>
-                    items={["Total", "Before", "Current", "After"]}
-                    labels={{
-                      Before: "Papercard",
-                      Current: "Standup Meeting",
-                      After: "SQDIP",
-                    }}
-                    value={trend}
-                    onChange={(next) => {
-                      setTrend(next);
-                      if (next === "After") setSqdipDim("Safety");
-                    }}
-                  />
-                </div>
+  <div>
+    <div className="font-bold">{uiText("Tren nilai harian")}</div>
+  </div>
+  <div className="flex items-center gap-2">
+    <FilterSelect
+      value={granularity}
+      onChange={(v) => setGranularity(v as "Harian" | "Mingguan" | "Bulanan")}
+      options={["Harian", "Mingguan", "Bulanan"]}
+      ariaLabel="Periode tren"
+      className="scorecard-trend-select"
+    />
+    <Segmented<ScoreTrend>
+      items={["Total", "Before", "Current", "After"]}
+      labels={{
+        Before: "Papercard",
+        Current: "Standup Meeting",
+        After: "SQDIP",
+      }}
+      value={trend}
+      onChange={(next) => {
+        setTrend(next);
+        if (next === "After") setSqdipDim("Safety");
+      }}
+    />
+  </div>
+</div>
                 {scoreConfig && trend === "After" && (
                   <SqdipDimTiles
                     tiles={sqdipTiles}
@@ -349,7 +359,7 @@ export default function DmScorecard({
                         <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">{uiText("Belum cukup data SQDIP pada periode ini")}</div>
                       )
                     ) : trendSeries.dates.length > 1 ? (
-                      <TrendChart metric={trend} trend={trendSeries} />
+                      <TrendChart metric={trend} trend={trendSeries} granularity={granularity} />
                     ) : (
                       <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">{uiText("Belum cukup data pada periode ini")}</div>
                     )}

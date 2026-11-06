@@ -261,6 +261,16 @@ export default function MemberPapercardPage({
     ? (form.progress.byCategory[active.id] ?? { done: 0, total: 0 })
     : { done: 0, total: 0 };
 
+  const activeIndex = dynamicTemplate.categories.findIndex((c) => c.id === active?.id);
+  const isFirstStep = activeIndex <= 0;
+  const isLastStep = activeIndex < 0 || activeIndex >= dynamicTemplate.categories.length - 1;
+  const goToStep = (index: number) => {
+    const target = dynamicTemplate.categories[index];
+    if (!target) return;
+    setActiveId(target.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const bannerProps = {
     state: win.state,
     start: dynamicTemplate.window?.start || "07:30",
@@ -451,6 +461,10 @@ export default function MemberPapercardPage({
             submitted={readOnly}
             isRevision={isRevisionMode}
             onSubmit={handleSubmit}
+            showNext={!isLastStep}
+            onNext={() => goToStep(activeIndex + 1)}
+            showPrev={!isFirstStep}
+            onPrev={() => goToStep(activeIndex - 1)}
           />
         </>
       )}

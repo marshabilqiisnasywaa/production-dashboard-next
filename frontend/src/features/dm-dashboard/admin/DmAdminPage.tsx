@@ -1,6 +1,6 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
-import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+import LanguageMenu from "@/components/ui/LanguageMenu";
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -26,7 +26,8 @@ import {
   PlusIcon,
   UsersIcon,
 } from "./AdminIcons";
-import { IconLogout } from "@/components/ui/icons";
+import { UserMenu } from "../shared/UserMenu";
+import { SidebarBackdrop, SidebarProvider, SidebarToggle } from "@/components/ui/SidebarProvider";
 import { Layers, Pencil, Trash2 } from "lucide-react";
 import WorkshopManager from "./WorkshopManager";
 import WorkshopScheduleCard from "./WorkshopScheduleCard";
@@ -146,18 +147,22 @@ export default function DmAdminPage() {
             type="button"
             className="dm-admin-btn is-primary"
             onClick={() => setAttempt((n) => n + 1)}
-          >{uiText("Coba lagi")}</button>
+          >
+            {uiText("Coba lagi")}
+          </button>
         </div>
       </main>
     );
   }
 
   return (
-    <AdminWorkspace
-      username={auth.username}
-      isAdmin={auth.isAdmin}
-      onLogout={logout}
-    />
+    <SidebarProvider>
+      <AdminWorkspace
+        username={auth.username}
+        isAdmin={auth.isAdmin}
+        onLogout={logout}
+      />
+    </SidebarProvider>
   );
 }
 
@@ -247,7 +252,7 @@ function AdminWorkspace({
   isAdmin: boolean;
   onLogout: (notice: string | null) => void;
 }) {
-  const { text: uiText, locale: uiLocale } = useUiText();
+  const { text: uiText } = useUiText();
   const [activeTab, setActiveTab] = useState<DmAdminTabKey>(
     isAdmin ? "workshop" : "dashboard"
   );
@@ -255,7 +260,9 @@ function AdminWorkspace({
   const [papercardSub, setPapercardSub] = useState<
     "template" | "workshop" | "meeting" | "holiday"
   >("template");
-  const [problemSub, setProblemSub] = useState<"meeting" | "papercard">("meeting");
+  const [problemSub, setProblemSub] = useState<"meeting" | "papercard">(
+    "meeting"
+  );
   const [workshops, setWorkshops] = useState<DmWorkshop[]>([]);
   const [lines, setLines] = useState<DmLine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -447,30 +454,6 @@ function AdminWorkspace({
     setWorkshopFilter("all");
   }
 
-  const [currentTime, setCurrentTime] = useState(new Date());
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formattedDate = currentTime.toLocaleDateString(uiLocale, {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
-  const formattedTime = currentTime
-    .toLocaleTimeString(uiLocale, {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    })
-    .replace(/\./g, ":"); // Ganti titik dengan titik dua
-
   function renderLineCards(items: DmLine[]) {
     return (
       <ul className="dm-line-grid">
@@ -504,7 +487,9 @@ function AdminWorkspace({
                   title={uiText("Klik untuk membuka manajemen tim line ini")}
                 >
                   <UsersIcon size={13} />
-                  {line.memberCount}{uiText(" anggota")}</button>
+                  {line.memberCount}
+                  {uiText(" anggota")}
+                </button>
               ) : (
                 <button
                   type="button"
@@ -513,7 +498,9 @@ function AdminWorkspace({
                   style={{ cursor: "pointer", border: "none" }}
                   title={uiText("Klik untuk menambahkan anggota tim")}
                 >
-                  <AlertIcon size={13} />{uiText("0 anggota")}</button>
+                  <AlertIcon size={13} />
+                  {uiText("0 anggota")}
+                </button>
               )}
             </div>
             <a
@@ -540,10 +527,15 @@ function AdminWorkspace({
                   gap: "6px",
                   boxShadow: "0 2px 6px rgba(0, 138, 79, 0.25)",
                 }}
-                title={uiText("Buka Manajemen Tim khusus untuk Line {{v0}}", { v0: line.code })}
+                title={uiText("Buka Manajemen Tim khusus untuk Line {{v0}}", {
+                  v0: line.code,
+                })}
               >
                 <UsersIcon size={14} />
-                <span>{uiText("Atur Tim (")}{line.memberCount}/4)</span>
+                <span>
+                  {uiText("Atur Tim (")}
+                  {line.memberCount}/4)
+                </span>
               </button>
               <button
                 type="button"
@@ -551,13 +543,17 @@ function AdminWorkspace({
                 onClick={() => setModal({ open: true, line, tab: "general" })}
                 title={uiText("Ubah informasi line, model, atau status")}
               >
-                <GearIcon size={14} />{uiText("Kelola line")}</button>
+                <GearIcon size={14} />
+                {uiText("Kelola line")}
+              </button>
               <button
                 type="button"
                 className="dm-admin-btn is-tonal"
                 onClick={() => copyLink(line)}
               >
-                <CopyIcon size={14} />{uiText("Salin Link")}</button>
+                <CopyIcon size={14} />
+                {uiText("Salin Link")}
+              </button>
             </div>
           </li>
         ))}
@@ -573,51 +569,30 @@ function AdminWorkspace({
         onSelectTab={setActiveTab}
         onLogout={() => onLogout(null)}
       />
+      <SidebarBackdrop />
 
       <div className="dm-admin-main-wrap">
         <header className="dm-admin-topbar-nav">
-          <div className="dm-admin-topbar-left">
-            <nav className="dm-admin-crumbs" aria-label={uiText("Hari dan Tanggal")}>
-              <span>{formattedDate}</span>
-            </nav>
-            <h2
-              className="dm-admin-topbar-title"
-              style={{
-                fontVariantNumeric: "tabular-nums",
-                letterSpacing: "0.5px",
-              }}
-            >
-              {formattedTime}{uiText(" WIB")}</h2>
-          </div>
+          <SidebarToggle />
           <div className="dm-admin-topbar-actions">
-            <LanguageSwitcher />
-            <span className="dm-admin-topbar-crumb">{username}</span>
+            {/* <button
+              type="button"
+              className="dm-admin-btn is-secondary"
+              onClick={reload}
+              disabled={loading}
+            >{uiText("Muat Ulang")}</button> */}
+            <LanguageMenu />
             <NotificationBellButton
               lineId={0}
               role="admin"
               lineName="Semua Line"
               lines={lines}
             />
-            <button
-              type="button"
-              className="dm-admin-btn is-secondary"
-              onClick={reload}
-              disabled={loading}
-            >{uiText("Muat Ulang")}</button>
-            <button
-              type="button"
-              className="dm-admin-btn is-danger-outline"
-              onClick={() => onLogout(null)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-              title={uiText("Keluar dari sesi Admin")}
-            >
-              <IconLogout size={14} />
-              <span>{uiText("Keluar")}</span>
-            </button>
+            <UserMenu
+              name={username}
+              role={uiText("Admin")}
+              onLogout={() => onLogout(null)}
+            />
           </div>
         </header>
 
@@ -625,8 +600,12 @@ function AdminWorkspace({
           {tabHeader && (
             <header className="dm-admin-page-head">
               <div className="dm-admin-page-head-main">
-                <h1 className="dm-admin-page-title">{uiText(tabHeader.title)}</h1>
-                <p className="dm-admin-page-desc">{uiText(tabHeader.description)}</p>
+                <h1 className="dm-admin-page-title">
+                  {uiText(tabHeader.title)}
+                </h1>
+                <p className="dm-admin-page-desc">
+                  {uiText(tabHeader.description)}
+                </p>
               </div>
             </header>
           )}
@@ -676,7 +655,9 @@ function AdminWorkspace({
                       type="button"
                       className="dm-admin-btn is-primary"
                       onClick={reload}
-                    >{uiText("Coba lagi")}</button>
+                    >
+                      {uiText("Coba lagi")}
+                    </button>
                   </div>
                 ) : (
                   <DashboardTab
@@ -700,7 +681,9 @@ function AdminWorkspace({
                       type="button"
                       className="dm-admin-btn is-primary"
                       onClick={reload}
-                    >{uiText("Coba lagi")}</button>
+                    >
+                      {uiText("Coba lagi")}
+                    </button>
                   </div>
                 ) : (
                   <>
@@ -718,8 +701,14 @@ function AdminWorkspace({
                     >
                       <div className="dm-panel-head dm-lines-panel-head">
                         <div>
-                          <h3 id="lines-title" className="dm-panel-title">{uiText("Daftar Line Produksi")}</h3>
-                          <p className="dm-panel-sub">{uiText("Setiap Line memiliki dashboard dan link sendiri untuk ditampilkan di layar Line.")}</p>
+                          <h3 id="lines-title" className="dm-panel-title">
+                            {uiText("Daftar Line Produksi")}
+                          </h3>
+                          <p className="dm-panel-sub">
+                            {uiText(
+                              "Setiap Line memiliki dashboard dan link sendiri untuk ditampilkan di layar Line."
+                            )}
+                          </p>
                         </div>
                         {/* <button
                           type="button"
@@ -749,7 +738,9 @@ function AdminWorkspace({
                               <label
                                 className="dm-admin-sr-only"
                                 htmlFor="line-search"
-                              >{uiText("Cari line")}</label>
+                              >
+                                {uiText("Cari line")}
+                              </label>
                               <svg
                                 width="15"
                                 height="15"
@@ -767,7 +758,9 @@ function AdminWorkspace({
                                 id="line-search"
                                 type="search"
                                 className="dm-table-search-input"
-                                placeholder={uiText("Cari kode line, nama tim, atau model")}
+                                placeholder={uiText(
+                                  "Cari kode line, nama tim, atau model"
+                                )}
                                 value={searchQuery}
                                 onChange={(event) =>
                                   setSearchQuery(event.target.value)
@@ -777,7 +770,9 @@ function AdminWorkspace({
                             <label
                               className="dm-admin-sr-only"
                               htmlFor="line-workshop-filter"
-                            >{uiText("Filter workshop")}</label>
+                            >
+                              {uiText("Filter workshop")}
+                            </label>
                             <select
                               id="line-workshop-filter"
                               className="dm-table-filter-select"
@@ -790,7 +785,9 @@ function AdminWorkspace({
                                 )
                               }
                             >
-                              <option value="all">{uiText("Semua workshop")}</option>
+                              <option value="all">
+                                {uiText("Semua workshop")}
+                              </option>
                               {workshops.map((workshop) => (
                                 <option key={workshop.id} value={workshop.id}>
                                   {workshop.name}
@@ -800,7 +797,9 @@ function AdminWorkspace({
                             <label
                               className="dm-admin-sr-only"
                               htmlFor="line-status-filter"
-                            >{uiText("Filter status")}</label>
+                            >
+                              {uiText("Filter status")}
+                            </label>
                             <select
                               id="line-status-filter"
                               className="dm-table-filter-select"
@@ -811,10 +810,16 @@ function AdminWorkspace({
                                 )
                               }
                             >
-                              <option value="all">{uiText("Semua status")}</option>
-                              <option value="running">{uiText("RUNNING")}</option>
+                              <option value="all">
+                                {uiText("Semua status")}
+                              </option>
+                              <option value="running">
+                                {uiText("RUNNING")}
+                              </option>
                               <option value="idle">{uiText("IDLE")}</option>
-                              <option value="stopped">{uiText("STOPPED")}</option>
+                              <option value="stopped">
+                                {uiText("STOPPED")}
+                              </option>
                             </select>
                             {/* <span
                               className="dm-pill dm-lines-count"
@@ -829,20 +834,30 @@ function AdminWorkspace({
                       {workshops.length === 0 ? (
                         <p className="dm-lines-empty">
                           {workshops.length === 0
-                            ? uiText("Belum ada line. Tambahkan workshop lebih dulu, lalu buat line di dalamnya.")
-                            : uiText("Belum ada line. Klik \"Tambah Line Baru\" untuk membuat line dan dashboard pertama.")}
+                            ? uiText(
+                                "Belum ada line. Tambahkan workshop lebih dulu, lalu buat line di dalamnya."
+                              )
+                            : uiText(
+                                'Belum ada line. Klik "Tambah Line Baru" untuk membuat line dan dashboard pertama.'
+                              )}
                         </p>
                       ) : (
                         <>
                           {filteredLines.length === 0 &&
                           (query !== "" || statusFilter !== "all") ? (
                             <div className="dm-lines-none">
-                              <p>{uiText("Tidak ada line yang cocok dengan pencarian atau filter ini.")}</p>
+                              <p>
+                                {uiText(
+                                  "Tidak ada line yang cocok dengan pencarian atau filter ini."
+                                )}
+                              </p>
                               <button
                                 type="button"
                                 className="dm-admin-btn is-tonal"
                                 onClick={resetFilters}
-                              >{uiText("Tampilkan semua line")}</button>
+                              >
+                                {uiText("Tampilkan semua line")}
+                              </button>
                             </div>
                           ) : (
                             groupedLines.map(([workshopId, workshop]) => {
@@ -862,7 +877,9 @@ function AdminWorkspace({
                                     <h4 className="dm-lines-group-title">
                                       {workshop.name}
                                       <span className="dm-pill">
-                                        {workshop.items.length}{uiText(" line")}</span>
+                                        {workshop.items.length}
+                                        {uiText(" line")}
+                                      </span>
                                     </h4>
                                     {/* <p className="dm-lines-empty">
                                       Belum ada DM. Tambahkan DM sebelum membuat
@@ -875,7 +892,9 @@ function AdminWorkspace({
                                         setDmCreateWorkshopId(workshopId)
                                       }
                                     >
-                                      <PlusIcon size={14} />{uiText(" Tambah DM")}</button>
+                                      <PlusIcon size={14} />
+                                      {uiText(" Tambah DM")}
+                                    </button>
                                     {renderLineCards(workshop.items)}
                                   </section>
                                 );
@@ -915,7 +934,9 @@ function AdminWorkspace({
                                   <h4 className="dm-lines-group-title">
                                     {workshop.name}
                                     <span className="dm-pill">
-                                      {workshop.items.length}{uiText(" line")}</span>
+                                      {workshop.items.length}
+                                      {uiText(" line")}
+                                    </span>
                                     <button
                                       type="button"
                                       className="dm-admin-btn is-tonal"
@@ -923,7 +944,9 @@ function AdminWorkspace({
                                         setDmCreateWorkshopId(workshopId)
                                       }
                                     >
-                                      <PlusIcon size={14} />{uiText(" Tambah DM")}</button>
+                                      <PlusIcon size={14} />
+                                      {uiText(" Tambah DM")}
+                                    </button>
                                   </h4>
                                   <div className="dm-dm-groups">
                                     {dmSections.map(
@@ -945,7 +968,9 @@ function AdminWorkspace({
                                                 {group.name}
                                               </span>
                                               <span className="dm-pill">
-                                                {visible.length}{uiText(" line")}</span>
+                                                {visible.length}
+                                                {uiText(" line")}
+                                              </span>
                                             </div>
                                             <div className="dm-dm-head-side">
                                               <button
@@ -955,12 +980,25 @@ function AdminWorkspace({
                                                   setDmLeaderGroup(group)
                                                 }
                                                 aria-label={
-                                                  group.leaderName ? uiText("Ganti leader {{v0}}, saat ini {{v1}}", { v0: group.name, v1: group.leaderName }) : uiText("Tambah leader {{v0}}", { v0: group.name })
+                                                  group.leaderName
+                                                    ? uiText(
+                                                        "Ganti leader {{v0}}, saat ini {{v1}}",
+                                                        {
+                                                          v0: group.name,
+                                                          v1: group.leaderName,
+                                                        }
+                                                      )
+                                                    : uiText(
+                                                        "Tambah leader {{v0}}",
+                                                        { v0: group.name }
+                                                      )
                                                 }
                                               >
                                                 <UsersIcon size={14} />{" "}
                                                 {group.leaderName
-                                                  ? uiText("Leader: {{v0}}", { v0: group.leaderName })
+                                                  ? uiText("Leader: {{v0}}", {
+                                                      v0: group.leaderName,
+                                                    })
                                                   : uiText("Tambah Leader DM")}
                                               </button>
                                               <button
@@ -978,14 +1016,18 @@ function AdminWorkspace({
                                                   });
                                                 }}
                                               >
-                                                <PlusIcon size={14} />{uiText(" Tambah Lini")}</button>
+                                                <PlusIcon size={14} />
+                                                {uiText(" Tambah Lini")}
+                                              </button>
                                               {/* {all.length > 0 ? (
                                                 <span className="dm-dm-range">
                                                   {lineCodeRange(all)}
                                                 </span>
                                               ) : null} */}
                                               <RowMenu
-                                                label={uiText("Aksi {{v0}}", { v0: group.name })}
+                                                label={uiText("Aksi {{v0}}", {
+                                                  v0: group.name,
+                                                })}
                                                 items={[
                                                   {
                                                     key: "edit",
@@ -1035,9 +1077,13 @@ function AdminWorkspace({
                                                 aria-hidden="true"
                                               />
                                             </span>
-                                            <span className="dm-dm-name">{uiText("Belum masuk DM")}</span>
+                                            <span className="dm-dm-name">
+                                              {uiText("Belum masuk DM")}
+                                            </span>
                                             <span className="dm-pill">
-                                              {otherVisible.length}{uiText(" line")}</span>
+                                              {otherVisible.length}
+                                              {uiText(" line")}
+                                            </span>
                                           </div>
                                         </div>
                                         {renderLineCards(otherVisible)}
@@ -1077,7 +1123,9 @@ function AdminWorkspace({
                       papercardSub === "template" ? " is-active" : ""
                     }`}
                     onClick={() => setPapercardSub("template")}
-                  >{uiText("Template Papercard")}</button>
+                  >
+                    {uiText("Template Papercard")}
+                  </button>
                   <button
                     type="button"
                     role="tab"
@@ -1086,7 +1134,9 @@ function AdminWorkspace({
                       papercardSub === "workshop" ? " is-active" : ""
                     }`}
                     onClick={() => setPapercardSub("workshop")}
-                  >{uiText("Workshop Meeting")}</button>
+                  >
+                    {uiText("Workshop Meeting")}
+                  </button>
                   <button
                     type="button"
                     role="tab"
@@ -1095,7 +1145,9 @@ function AdminWorkspace({
                       papercardSub === "meeting" ? " is-active" : ""
                     }`}
                     onClick={() => setPapercardSub("meeting")}
-                  >{uiText("DM Meeting")}</button>
+                  >
+                    {uiText("DM Meeting")}
+                  </button>
                   <button
                     type="button"
                     role="tab"
@@ -1104,7 +1156,9 @@ function AdminWorkspace({
                       papercardSub === "holiday" ? " is-active" : ""
                     }`}
                     onClick={() => setPapercardSub("holiday")}
-                  >{uiText("Hari Libur")}</button>
+                  >
+                    {uiText("Hari Libur")}
+                  </button>
                 </div>
                 {papercardSub === "template" ? (
                   <PapercardTemplateManager
@@ -1133,7 +1187,9 @@ function AdminWorkspace({
                       type="button"
                       className="dm-admin-btn is-primary"
                       onClick={reload}
-                    >{uiText("Coba lagi")}</button>
+                    >
+                      {uiText("Coba lagi")}
+                    </button>
                   </div>
                 ) : (
                   <MpvManager lines={lines} call={call} />
@@ -1148,11 +1204,37 @@ function AdminWorkspace({
             )}
             {activeTab === "problems" && (
               <div className="dm-admin-section">
-                <div className="dm-subtabs" role="group" aria-label={uiText("Sumber tracking masalah")}>
-                  <button type="button" className={`dm-subtab${problemSub === "meeting" ? " is-active" : ""}`} aria-pressed={problemSub === "meeting"} onClick={() => setProblemSub("meeting")}>{uiText("DM Meeting")}</button>
-                  <button type="button" className={`dm-subtab${problemSub === "papercard" ? " is-active" : ""}`} aria-pressed={problemSub === "papercard"} onClick={() => setProblemSub("papercard")}>{uiText("Papercard")}</button>
+                <div
+                  className="dm-subtabs"
+                  role="group"
+                  aria-label={uiText("Sumber tracking masalah")}
+                >
+                  <button
+                    type="button"
+                    className={`dm-subtab${
+                      problemSub === "meeting" ? " is-active" : ""
+                    }`}
+                    aria-pressed={problemSub === "meeting"}
+                    onClick={() => setProblemSub("meeting")}
+                  >
+                    {uiText("DM Meeting")}
+                  </button>
+                  <button
+                    type="button"
+                    className={`dm-subtab${
+                      problemSub === "papercard" ? " is-active" : ""
+                    }`}
+                    aria-pressed={problemSub === "papercard"}
+                    onClick={() => setProblemSub("papercard")}
+                  >
+                    {uiText("Papercard")}
+                  </button>
                 </div>
-                {problemSub === "meeting" ? <ProblemsPage adminLayout /> : <PapercardProblems lines={lines} call={call} />}
+                {problemSub === "meeting" ? (
+                  <ProblemsPage adminLayout />
+                ) : (
+                  <PapercardProblems lines={lines} call={call} />
+                )}
               </div>
             )}
 

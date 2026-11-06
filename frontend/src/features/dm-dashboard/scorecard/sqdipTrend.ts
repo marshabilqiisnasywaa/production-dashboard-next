@@ -14,9 +14,15 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "
 
 const round = (value: number) => Math.round(value * 100) / 100;
 
-export function formatTrendDate(date: string) {
-  const [, month, day] = date.split("-");
-  return `${Number(day)} ${MONTHS[Number(month) - 1] ?? ""}`;
+export function formatTrendDate(
+  date: string,
+  granularity: "Harian" | "Mingguan" | "Bulanan" = "Harian"
+) {
+  const [year, month, day] = date.split("-");
+  const monthName = MONTHS[Number(month) - 1] ?? "";
+  if (granularity === "Bulanan") return `${monthName} ${year}`;
+  if (granularity === "Mingguan") return `Mgg ${Number(day)} ${monthName}`;
+  return `${Number(day)} ${monthName}`;
 }
 
 export function buildSqdipTrend(dim: DimKey, lines: ScorecardLine[]): SqdipTrend {

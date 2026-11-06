@@ -435,6 +435,7 @@ export type DmScorecardLeader = {
   leaderId: number;
   leaderName: string;
   leaderPhotoUrl: string | null;
+  historical?: boolean;
 };
 
 export type DmSqdipAdminRow = {
@@ -482,8 +483,11 @@ export const sqdipApi = {
 
 export const publicApi = {
   workshops: () => request<{ id: number; name: string }[]>("/public/workshops"),
-  scorecardLeaders: () =>
-    request<DmScorecardLeader[]>("/public/scorecard/leaders"),
+  scorecardLeaders: (range?: { from: string; to: string }) =>
+    request<DmScorecardLeader[]>(
+      "/public/scorecard/leaders" +
+        (range ? `?from=${range.from}&to=${range.to}` : "")
+    ),
   papercardKpi: (params: KpiParams) =>
     request<DmPapercardKpi>(
       "/public/papercard-kpi?" + kpiQuery(params, true)

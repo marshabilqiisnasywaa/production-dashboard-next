@@ -191,6 +191,16 @@ export default function PapercardPage() {
   const active = dynamicTemplate.categories.find((c) => c.id === activeId) ?? dynamicTemplate.categories[0];
   const activeProgress = active ? (form.progress.byCategory[active.id] ?? { done: 0, total: 0 }) : { done: 0, total: 0 };
 
+  const activeIndex = dynamicTemplate.categories.findIndex((c) => c.id === active?.id);
+  const isFirstStep = activeIndex <= 0;
+  const isLastStep = activeIndex < 0 || activeIndex >= dynamicTemplate.categories.length - 1;
+  const goToStep = (index: number) => {
+    const target = dynamicTemplate.categories[index];
+    if (!target) return;
+    setActiveId(target.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleSubmit = async () => {
     if (!form.progress.complete || !supervisor.available || !win.now || readOnly) return;
     const now = win.now;
@@ -365,6 +375,10 @@ export default function PapercardPage() {
             submitted={readOnly}
             isRevision={isRevisionMode}
             onSubmit={handleSubmit}
+            showNext={!isLastStep}
+            onNext={() => goToStep(activeIndex + 1)}
+            showPrev={!isFirstStep}
+            onPrev={() => goToStep(activeIndex - 1)}
           />
         </>
       )}

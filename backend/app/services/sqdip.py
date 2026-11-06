@@ -98,6 +98,23 @@ def list_rows(db: Session, start: date | None = None, end: date | None = None) -
     return rows
 
 
+def historical_lines(
+    db: Session, known_codes: set[str], start: date | None = None, end: date | None = None
+) -> list[tuple[str, str]]:
+    stmt = select(SqdipEntry.line_code, SqdipEntry.leader_name).order_by(
+        SqdipEntry.date.desc(), SqdipEntry.updated_at.desc()
+    )
+    if start is not None:
+        stmt = stmt.where(SqdipEntry.date >= start)
+    if end is not None:
+        stmt = stmt.where(SqdipEntry.date <= end)
+    latest: dict[str, str] = {}
+    for code, leader in db.execute(stmt):
+        if code.strip().upper() not in known_codes:
+            latest.setdefault(code, leader)
+    return sorted(latest.items())
+
+
 def latest_import(db: Session) -> SqdipEntry | None:
     return db.scalar(select(SqdipEntry).order_by(SqdipEntry.updated_at.desc()).limit(1))
 

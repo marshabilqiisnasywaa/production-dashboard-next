@@ -185,7 +185,7 @@ export default function AccountPage() {
   return (
     <main className="dml-acc">
       <div className="dml-acc__card">
-        <LanguageSwitcher />
+        {me.mustChangePassword ? null : <LanguageSwitcher />}
         {/* ---------- Profile ---------- */}
         <header className="dml-acc__profile">
           <span className="dml-acc__avatar" aria-hidden="true">

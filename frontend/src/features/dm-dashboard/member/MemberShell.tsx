@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import "@/components/ui/ui.css";
 import "../leader/leader.css"; // same shell/header/KPI styles as the Leader, so both look identical
 import "./member.css";
+import { SidebarBackdrop, SidebarProvider } from "@/components/ui/SidebarProvider";
 import { MemberHeader } from "./components/MemberHeader";
 import { MemberSidebar } from "./components/MemberSidebar";
 import { MemberProvider } from "./MemberProvider";
@@ -10,13 +11,16 @@ import { MemberProvider } from "./MemberProvider";
 export default function MemberShell({ children }: { children: ReactNode }) {
   return (
     <MemberProvider>
-      <div className="dm-theme dml-shell">
-        <MemberSidebar />
-        <div className="dml-main">
-          <MemberHeader />
-          <main className="dml-content">{children}</main>
+      <SidebarProvider>
+        <div className="dm-theme dml-shell dml-shell--drawer">
+          <MemberSidebar />
+          <SidebarBackdrop />
+          <div className="dml-main">
+            <MemberHeader />
+            <main className="dml-content">{children}</main>
+          </div>
         </div>
-      </div>
+      </SidebarProvider>
     </MemberProvider>
   );
 }
