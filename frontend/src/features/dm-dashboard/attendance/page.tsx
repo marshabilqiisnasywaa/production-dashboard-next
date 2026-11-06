@@ -230,6 +230,7 @@ function TrendChart({
 
               const isHovered = hoveredIndex === i;
               const hasMeeting = isMeetingDay(d);
+              const dateText = formatDate(d.date, uiLocale);
 
               return (
                 <g
@@ -263,10 +264,10 @@ function TrendChart({
                   role={hasMeeting ? "button" : undefined}
                   aria-label={
                     hasMeeting
-                      ? `${formatDate(d.date, uiLocale)}: ${formatPercent(
+                      ? `${dateText}: ${formatPercent(
                           d.onTime + d.late
                         )} hadir`
-                      : `${formatDate(d.date, uiLocale)}: tidak ada meeting`
+                      : `${dateText}: tidak ada meeting`
                   }
                 >
                   <rect

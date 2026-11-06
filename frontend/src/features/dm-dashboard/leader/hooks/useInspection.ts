@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { accountApi, papercardApi, type DmInspectionRow } from "../../api";
-import type { DateRangeKey, InspectionRow, InspectionSummary } from "../types";
+import type {
+  InspectionDateRange,
+  InspectionRow,
+  InspectionSummary,
+} from "../types";
 import {
   addDays,
   daysBetween,
   filterByRange,
-  getRange,
   sumRate,
 } from "../utils";
 
@@ -19,25 +22,17 @@ interface Result {
   error: string | null;
 }
 
-function jakartaToday(): string {
-  return new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-}
-
-export function useInspection(range: DateRangeKey, shift = "Shift 1"): Result {
+export function useInspection(
+  range: InspectionDateRange,
+  shift = "Shift 1"
+): Result {
   const [allRows, setAllRows] = useState<DmInspectionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const today = jakartaToday();
-  const { from, to } = getRange(range, today);
-  const periodLength = daysBetween(from, to);
-  const previousFrom = addDays(from, -periodLength);
-  const previousTo = addDays(from, -1);
+  const periodLength = daysBetween(range.from, range.to);
+  const previousFrom = addDays(range.from, -periodLength);
+  const previousTo = addDays(range.from, -1);
 
   useEffect(() => {
     let alive = true;
@@ -63,7 +58,7 @@ export function useInspection(range: DateRangeKey, shift = "Shift 1"): Result {
         const data = await papercardApi.inspection({
           lineId: me.line.id,
           from: previousFrom,
-          to,
+          to: range.to,
           shift,
         });
 
@@ -90,11 +85,11 @@ export function useInspection(range: DateRangeKey, shift = "Shift 1"): Result {
     return () => {
       alive = false;
     };
-  }, [previousFrom, to, shift]);
+  }, [previousFrom, range.to, shift]);
 
   const result = useMemo(() => {
-    const rows = filterByRange(allRows, from, to).sort((a, b) =>
-      b.date.localeCompare(a.date),
+    const rows = filterByRange(allRows, range.from, range.to).sort((a, b) =>
+      b.date.localeCompare(a.date)
     );
 
     const previousRows = filterByRange(allRows, previousFrom, previousTo);
@@ -103,7 +98,7 @@ export function useInspection(range: DateRangeKey, shift = "Shift 1"): Result {
     const previous = sumRate(previousRows);
 
     const currentRows = allRows.filter(
-      (row) => row.date >= from && row.date <= to,
+      (row) => row.date >= range.from && row.date <= range.to
     );
 
     const totalRequired = currentRows.reduce((sum, row) => sum + row.total, 0);
@@ -122,7 +117,7 @@ export function useInspection(range: DateRangeKey, shift = "Shift 1"): Result {
           current !== null && previous !== null ? current - previous : null,
       },
     };
-  }, [allRows, from, to, previousFrom, previousTo]);
+  }, [allRows, range.from, range.to, previousFrom, previousTo]);
 
   return {
     ...result,

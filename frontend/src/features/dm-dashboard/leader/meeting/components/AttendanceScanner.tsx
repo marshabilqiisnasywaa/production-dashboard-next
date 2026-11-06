@@ -278,7 +278,7 @@ export function AttendanceScanner({
               <div className="dml-mt-cam__card is-fail">
                 <span className="dml-mt-cam__badge">
                   <IconAlert size={18} />{uiText(" Tidak berhasil")}</span>
-                <span className="dml-mt-cam__reason">{uiText(result.message)}</span>
+                <span className="dml-mt-cam__reason">{"message" in result ? uiText(result.message) : null}</span>
                 <span
                   className="dml-mt-cam__timer"
                   style={{ animationDuration: RESULT_MS + "ms" }}
@@ -307,7 +307,7 @@ export function AttendanceScanner({
           </span>
         )}
         {!scanning && result && !result.ok && (
-          <span className="is-fail">{uiText(result.message)}</span>
+          <span className="is-fail">{"message" in result ? uiText(result.message) : null}</span>
         )}
         {!scanning && !result && <span>{uiText("Menunggu member berikutnya…")}</span>}
       </div>

@@ -29,6 +29,14 @@ export function mondayOf(date: string): string {
 
 export const weekDays = (weekStart: string) => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
+export function dateRange(from: string, to: string): string[] {
+  const dates: string[] = [];
+  for (let date = from; date && date <= to; date = addDays(date, 1)) {
+    dates.push(date);
+  }
+  return dates;
+}
+
 export function dayHeader(date: string): { weekday: string; day: number } {
   const d = parseDate(date);
   return { weekday: WEEKDAY_SHORT[d.getDay()], day: d.getDate() };
@@ -103,6 +111,80 @@ export function countCells(rows: HeatRow[]): { ok: number; ng: number } {
     }
   }
   return { ok, ng };
+}
+
+export interface NgRoleSummary {
+  role: RoleKey;
+  label: string;
+  papercards: number;
+  aspects: number;
+}
+
+export interface HeatmapNgSummary {
+  papercards: number;
+  filledPapercards: number;
+  roles: NgRoleSummary[];
+  topRoles: RoleKey[];
+  topRoleCount: number;
+  topDay: { date: string; papercards: number } | null;
+}
+
+export function buildNgSummary(rows: HeatRow[]): HeatmapNgSummary {
+  const counts = countCells(rows);
+  const roleStats = ROLE_ORDER.map((role) => {
+    const row = rows.find((item) => item.role === role);
+    const ngCells = row?.cells.filter((cell) => cell.state === "ng") ?? [];
+    return {
+      role,
+      label: ROLE_LABEL[role],
+      papercards: ngCells.length,
+      aspects: ngCells.reduce(
+        (sum, cell) => sum + (cell.result?.ngCount ?? 0),
+        0,
+      ),
+    };
+  });
+  const roles = [...roleStats].sort(
+    (a, b) =>
+      b.papercards - a.papercards ||
+      b.aspects - a.aspects ||
+      ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role),
+  );
+  const topRoleCount = Math.max(0, ...roleStats.map((role) => role.papercards));
+  const topRoles =
+    topRoleCount === 0
+      ? []
+      : roleStats
+          .filter((role) => role.papercards === topRoleCount)
+          .map((role) => role.role);
+  const papercardsByDay = new Map<string, number>();
+
+  for (const row of rows) {
+    for (const cell of row.cells) {
+      if (cell.state === "ng") {
+        papercardsByDay.set(
+          cell.date,
+          (papercardsByDay.get(cell.date) ?? 0) + 1,
+        );
+      }
+    }
+  }
+
+  const topDayEntry = [...papercardsByDay.entries()].sort(
+    ([dateA, countA], [dateB, countB]) =>
+      countB - countA || dateB.localeCompare(dateA),
+  )[0];
+
+  return {
+    papercards: counts.ng,
+    filledPapercards: counts.ok + counts.ng,
+    roles,
+    topRoles,
+    topRoleCount,
+    topDay: topDayEntry
+      ? { date: topDayEntry[0], papercards: topDayEntry[1] }
+      : null,
+  };
 }
 
 /** How many papercards of this role had the same aspect as NG in the loaded week (for the "Berulang" tag). */

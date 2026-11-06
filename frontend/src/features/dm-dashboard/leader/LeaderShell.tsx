@@ -14,6 +14,7 @@ export default function LeaderShell({ children }: { children: ReactNode }) {
   const { text: uiText } = useUiText();
   const [navOpen, setNavOpen] = useState(false);
   const pathname = usePathname();
+  const isDashboard = pathname === "/dm-dashboard/leader";
 
   // close the drawer after navigating
   useEffect(() => setNavOpen(false), [pathname]);
@@ -27,7 +28,11 @@ export default function LeaderShell({ children }: { children: ReactNode }) {
   }, [navOpen]);
 
   return (
-    <div className="dm-theme dml-shell dml-shell--drawer">
+    <div
+      className={`dm-theme dml-shell dml-shell--drawer${
+        isDashboard ? " dml-shell--dashboard" : ""
+      }`}
+    >
       <LeaderSidebar open={navOpen} onNavigate={() => setNavOpen(false)} />
       {navOpen && (
         <button
@@ -37,7 +42,7 @@ export default function LeaderShell({ children }: { children: ReactNode }) {
           onClick={() => setNavOpen(false)}
         />
       )}
-      <div className="dml-main">
+      <div className={`dml-main${isDashboard ? " dml-main--dashboard" : ""}`}>
         <LeaderHeader onMenuClick={() => setNavOpen(true)} />
         <main className="dml-content">{children}</main>
       </div>

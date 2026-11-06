@@ -81,7 +81,7 @@ export default function UserLogin() {
   const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
-    document.title = t("login.pageTitle");
+    document.title = t("auth:login.pageTitle");
   }, [t]);
 
   useEffect(() => {
@@ -165,8 +165,8 @@ export default function UserLogin() {
           <div className="dml-login__oppo">
             <OppoLogo variant="white" height={34} />
           </div>
-          <h2>{t("brand.headline")}</h2>
-          <p>{t("brand.description")}</p>
+          <h2>{t("auth:brand.headline")}</h2>
+          <p>{t("auth:brand.description")}</p>
         </div>
 
         <small className="dml-login__copy">OPPO Manufacturing</small>
@@ -197,32 +197,32 @@ export default function UserLogin() {
               ))}
             </div>
           </div>
-          <h1>{t("login.title")}</h1>
+          <h1>{t("auth:login.title")}</h1>
           <p className="dml-login__lead">
-            {t("login.intro")}
+            {t("auth:login.intro")}
           </p>
 
           {sessionExpired && (
             <p className="dml-login__notice" role="status">
-              {t("login.sessionExpired")}
+              {t("auth:login.sessionExpired")}
             </p>
           )}
 
           <div className="dml-login__field">
-            <label htmlFor="user-nik">{t("login.usernameLabel")}</label>
+            <label htmlFor="user-nik">{t("auth:login.usernameLabel")}</label>
             <input
               id="user-nik"
               type="text"
               value={nik}
               onChange={(e) => setNik(e.target.value)}
               autoComplete="nik"
-              placeholder={t("login.usernamePlaceholder")}
+              placeholder={t("auth:login.usernamePlaceholder")}
               aria-invalid={error ? true : undefined}
             />
           </div>
 
           <div className="dml-login__field">
-            <label htmlFor="user-password">{t("login.passwordLabel")}</label>
+            <label htmlFor="user-password">{t("auth:login.passwordLabel")}</label>
             <div className="dml-login__pw">
               <input
                 id="user-password"
@@ -230,7 +230,7 @@ export default function UserLogin() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                placeholder={t("login.passwordPlaceholder")}
+                placeholder={t("auth:login.passwordPlaceholder")}
                 aria-invalid={error ? true : undefined}
               />
               <button
@@ -239,23 +239,23 @@ export default function UserLogin() {
                 aria-pressed={showPassword}
                 onClick={() => setShowPassword((v) => !v)}
               >
-                {showPassword ? t("login.hidePassword") : t("login.showPassword")}
+                {showPassword ? t("auth:login.hidePassword") : t("auth:login.showPassword")}
               </button>
             </div>
           </div>
 
           {error && (
             <p className="dml-login__error" role="alert">
-              {t(`login.errors.${error}`)}
+              {t(`auth:login.errors.${error}`)}
             </p>
           )}
 
           <button type="submit" className="dml-login__submit" disabled={busy}>
             {busy ? (
-              t("login.checking")
+              t("auth:login.checking")
             ) : (
               <>
-                {t("login.signIn")} <ChevronRightIcon />
+                {t("auth:login.signIn")} <ChevronRightIcon />
               </>
             )}
           </button>
@@ -264,16 +264,16 @@ export default function UserLogin() {
             <ShieldCheckIcon />
             {knownRole ? (
               <span>
-                {t("login.rolePrefix")} <strong>{t(`common:roles.${knownRole}`)}</strong>
+                {t("auth:login.rolePrefix")} <strong>{t(`common:roles.${knownRole}`)}</strong>
               </span>
             ) : (
-              <span>{t("login.roleAutomatic")}</span>
+              <span>{t("auth:login.roleAutomatic")}</span>
             )}
           </p>
 
           {SHOW_DEMO && (
             <div className="dml-login__demo">
-              <span className="dml-login__demotitle">{t("login.demoTitle")}</span>
+              <span className="dml-login__demotitle">{t("auth:login.demoTitle")}</span>
               <div className="dml-login__chips">
                 {DEMO_ACCOUNTS.map((acc) => (
                   <button
@@ -294,7 +294,7 @@ export default function UserLogin() {
           )}
 
           <Link href="/dm-dashboard" className="dml-login__back">
-            ← {t("login.backToDashboards")}
+            ← {t("auth:login.backToDashboards")}
           </Link>
         </form>
       </section>

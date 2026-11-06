@@ -1,14 +1,12 @@
 "use client";
-import { useUiText } from "@/locales/useUiText";
-
 
 import { useMemo, useState } from "react";
+import { useUiText } from "@/locales/useUiText";
 import { IconDownload } from "@/components/ui/icons";
 import { Pagination } from "@/components/ui/Pagination";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import type { InspectionRow, PapercardStatus, RoleKey } from "../types";
-import { TARGET, downloadCsv, rate, toCsv, toneFor } from "../utils";
+import { downloadCsv, toCsv } from "../utils";
 
 const ROLE_COLUMNS: { key: RoleKey; label: string }[] = [
   { key: "leader", label: "Leader Line" },
@@ -28,49 +26,48 @@ type StatusFilter = "all" | "complete" | "incomplete";
 
 interface Props {
   rows: InspectionRow[];
+  showDate?: boolean;
+  loading?: boolean;
+  error?: string | null;
 }
 
-export function InspectionDetailTable({ rows }: Props) {
+export function InspectionDetailTable({
+  rows,
+  showDate = false,
+  loading = false,
+  error = null,
+}: Props) {
   const { text: uiText } = useUiText();
-  const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return rows.filter((r) => {
-      if (status === "complete" && r.submitted !== r.total) return false;
-      if (status === "incomplete" && r.submitted === r.total) return false;
-      return !q || `${r.date} ${r.line} ${r.type}`.toLowerCase().includes(q);
-    });
-  }, [rows, query, status]);
+  const filtered = useMemo(
+    () =>
+      rows.filter((row) => {
+        if (status === "complete" && row.submitted !== row.total) return false;
+        if (status === "incomplete" && row.submitted === row.total) return false;
+        return true;
+      }),
+    [rows, status],
+  );
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, pageCount);
   const visible = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const columnCount = ROLE_COLUMNS.length + 1 + Number(showDate);
 
   return (
-    <div className="dml-detail">
+    <div className="dml-detail dml-inspection-detail">
       <div className="dml-detail__toolbar">
-        <h3>{uiText("Detail Inspection")}</h3>
+        <h2>{uiText("Detail OK / NG")}</h2>
         <div className="dml-detail__filters">
-          <input
-            className="ui-input"
-            type="search"
-            placeholder={uiText("Cari tanggal, line, atau tipe")}
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(1);
-            }}
-          />
           <select
             className="ui-select"
             value={status}
             aria-label={uiText("Filter status")}
-            onChange={(e) => {
-              setStatus(e.target.value as StatusFilter);
+            onChange={(event) => {
+              setStatus(event.target.value as StatusFilter);
               setPage(1);
             }}
           >
@@ -81,72 +78,90 @@ export function InspectionDetailTable({ rows }: Props) {
           <button
             type="button"
             className="ui-btn ui-btn--ghost"
-            disabled={filtered.length === 0}
-            onClick={() => downloadCsv("inspection-rate.csv", toCsv(filtered))}
+            disabled={filtered.length === 0 || loading || Boolean(error)}
+            onClick={() =>
+              downloadCsv("inspection-rate.csv", toCsv(filtered, showDate))
+            }
           >
-            <IconDownload size={16} />{uiText(" Export")}</button>
+            <IconDownload size={16} />
+            {uiText(" Export")}
+          </button>
         </div>
       </div>
 
-      <div className="dml-table-wrap">
-        <table className="dml-table">
+      <div className="dml-table-wrap dml-inspection-table-wrap">
+        <table
+          className={`dml-table dml-inspection-table${
+            showDate ? " dml-inspection-table--with-date" : ""
+          }`}
+        >
+          <colgroup>
+            {showDate && <col className="dml-inspection-table__date" />}
+            <col className="dml-inspection-table__leader" />
+            {ROLE_COLUMNS.slice(1).map((column) => (
+              <col key={column.key} className="dml-inspection-table__role" />
+            ))}
+            <col className="dml-inspection-table__total" />
+          </colgroup>
           <thead>
             <tr>
-              <th>{uiText("Tanggal")}</th>
-              <th>{uiText("Line")}</th>
-              <th>{uiText("Tipe")}</th>
-              {ROLE_COLUMNS.map((c) => (
-                <th key={c.key}>{uiText(c.label)}</th>
+              {showDate && <th>{uiText("Tanggal")}</th>}
+              {ROLE_COLUMNS.map((column) => (
+                <th key={column.key}>{uiText(column.label)}</th>
               ))}
               <th className="is-num">{uiText("Total")}</th>
-              <th className="is-num">{uiText("Papercard")}</th>
-              <th>{uiText("Inspection Rate")}</th>
             </tr>
           </thead>
           <tbody>
-            {visible.length === 0 && (
+            {(loading || error || visible.length === 0) && (
               <tr>
-                <td colSpan={10} className="dml-empty">{uiText("Tidak ada data yang cocok dengan filter")}</td>
+                <td colSpan={columnCount} className="dml-empty">
+                  {loading
+                    ? uiText("Memuat detail inspeksi…")
+                    : error
+                    ? error
+                    : uiText("Tidak ada data yang cocok dengan filter")}
+                </td>
               </tr>
             )}
-            {visible.map((r) => {
-              const value = rate(r.submitted, r.total);
-              const tone = toneFor(value, TARGET);
-              return (
-                <tr key={r.id}>
-                  <td className="is-strong">{r.date}</td>
-                  <td>{r.line}</td>
-                  <td className="is-muted">{r.type}</td>
-                  {ROLE_COLUMNS.map((c) => {
-                    const s = STATUS_VIEW[r.statuses[c.key]];
+            {!loading &&
+              !error &&
+              visible.map((row) => (
+                <tr key={row.id}>
+                  {showDate && <td className="is-strong">{row.date}</td>}
+                  {ROLE_COLUMNS.map((column) => {
+                    const statusView = STATUS_VIEW[row.statuses[column.key]];
                     return (
-                      <td key={c.key}>
-                        <StatusChip tone={s.tone}>{uiText(s.label)}</StatusChip>
+                      <td key={column.key}>
+                        <StatusChip tone={statusView.tone}>
+                          {uiText(statusView.label)}
+                        </StatusChip>
                       </td>
                     );
                   })}
-                  <td className="is-num">{r.total}</td>
-                  <td className="is-num">{r.submitted}</td>
-                  <td className={tone === "ok" ? "" : "is-low"}>
-                    <div className="dml-rate">
-                      <strong className={`dml-rate__value dml-rate__value--${tone}`}>{value}%</strong>
-                      <ProgressBar value={value} tone={tone} size="sm" />
-                    </div>
-                  </td>
+                  <td className="is-num">{row.total}</td>
                 </tr>
-              );
-            })}
+              ))}
           </tbody>
         </table>
       </div>
+      {!loading && !error && filtered.length === 1 && (
+        <p className="dml-inspection-detail__caption">
+          {uiText(
+            showDate
+              ? "Hanya 1 data pada periode ini. Ubah periode di atas untuk melihat periode lain."
+              : "Data untuk tanggal terpilih. Ubah periode di atas untuk melihat hari lain.",
+          )}
+        </p>
+      )}
 
       <Pagination
         page={safePage}
         pageSize={pageSize}
         total={filtered.length}
         onPageChange={setPage}
-        onPageSizeChange={(s) => {
-          setPageSize(s);
+        onPageSizeChange={(size) => {
+          setPageSize(size);
           setPage(1);
         }}
       />

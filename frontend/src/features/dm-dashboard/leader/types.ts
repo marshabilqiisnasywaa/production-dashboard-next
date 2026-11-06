@@ -16,6 +16,11 @@ export interface InspectionRow {
 export type TrendGranularity = "day" | "week" | "month";
 export type DateRangeKey = "today" | "7d" | "30d" | "month";
 
+export interface InspectionDateRange {
+  from: string;
+  to: string;
+}
+
 export interface TrendPoint {
   key: string; // period key (day / week start / month)
   label: string;
@@ -84,4 +89,3 @@ export interface LineOverviewData {
   members: TeamMember[];
   approvalStatus: "APPROVED" | "PENDING" | "HAS_ABNORMAL";
 }
-

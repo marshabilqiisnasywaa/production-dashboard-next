@@ -32,6 +32,15 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "
 const parseISO = (s: string) => new Date(`${s}T00:00:00Z`);
 const toISO = (d: Date) => d.toISOString().slice(0, 10);
 
+export function getJakartaToday(): string {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
 export function addDays(iso: string, n: number): string {
   const d = parseISO(iso);
   d.setUTCDate(d.getUTCDate() + n);
@@ -111,20 +120,23 @@ export function sumRate(rows: InspectionRow[]): number | null {
 
 /* ---------- CSV export ---------- */
 
-export function toCsv(rows: InspectionRow[]): string {
-  const head = ["Tanggal", "Line", "Tipe", "Leader Line", "ME", "PE", "IPQC", "Total", "Papercard", "Inspection Rate"];
+export function toCsv(rows: InspectionRow[], includeDate: boolean): string {
+  const head = [
+    ...(includeDate ? ["Tanggal"] : []),
+    "Leader Line",
+    "ME",
+    "PE",
+    "IPQC",
+    "Total",
+  ];
   const lines = rows.map((r) =>
     [
-      r.date,
-      r.line,
-      r.type,
+      ...(includeDate ? [r.date] : []),
       r.statuses.leader,
       r.statuses.me,
       r.statuses.pe,
       r.statuses.ipqc,
       r.total,
-      r.submitted,
-      `${rate(r.submitted, r.total)}%`,
     ]
       .map((c) => `"${String(c).replace(/"/g, '""')}"`)
       .join(","),

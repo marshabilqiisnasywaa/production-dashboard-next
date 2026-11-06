@@ -177,6 +177,7 @@ export function DateRangePicker({
   minDate,
   maxDate,
   className = "",
+  panelClassName = "",
 }: {
   value: DateRangeValue;
   onChange: (value: DateRangeValue) => void;
@@ -184,6 +185,7 @@ export function DateRangePicker({
   minDate?: string;
   maxDate?: string;
   className?: string;
+  panelClassName?: string;
 }) {
   const { text: uiText, locale: uiLocale } = useUiText();
   const calendarLocale = uiLocale === "en-GB" ? enGB : idLocale;
@@ -278,7 +280,12 @@ export function DateRangePicker({
       </Popover.Trigger>
 
       <Popover.Portal container={container}>
-        <Popover.Content align="end" sideOffset={8} collisionPadding={12} className="dmf-panel dmf-date-panel">
+        <Popover.Content
+          align="end"
+          sideOffset={8}
+          collisionPadding={12}
+          className={`dmf-panel dmf-date-panel ${panelClassName}`}
+        >
           <div className="dmf-date">
             <div className="dmf-date-main">
               <div className="dmf-cal-wrap">

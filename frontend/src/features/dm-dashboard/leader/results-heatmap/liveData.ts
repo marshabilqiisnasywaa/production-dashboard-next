@@ -3,7 +3,7 @@ reads the week's submissions from the papercard API
  */
 import { accountApi, papercardApi } from "../../api";
 import type { AspectResult, PapercardResult, RoleKey } from "./types";
-import { weekDays } from "./utils";
+import { dateRange } from "./utils";
 
 const DEPT_TO_ROLE: Record<string, RoleKey> = {
   PROD: "leader",
@@ -88,28 +88,30 @@ function toResult(
   };
 }
 
-export async function fetchWeekResults(
-  weekStart: string
+export async function fetchDateRangeResults(
+  from: string,
+  to: string
 ): Promise<PapercardResult[]> {
   const lineId = await getLineId();
-  const dates = weekDays(weekStart);
-
-  const submissionsByDate = await Promise.all(
-    dates.map(
-      async (date) =>
-        [date, await papercardApi.listSubmissions({ lineId, date })] as const
-    )
-  );
-
+  const dates = dateRange(from, to);
   const results: PapercardResult[] = [];
 
-  for (const [date, submissions] of submissionsByDate) {
-    for (const submission of (submissions ??
-      []) as unknown as RawSubmission[]) {
-      const role =
-        DEPT_TO_ROLE[String(submission.department ?? "").toUpperCase()];
-      if (!role) continue;
-      results.push(toResult(date, submission, role));
+  for (let offset = 0; offset < dates.length; offset += 7) {
+    const submissionsByDate = await Promise.all(
+      dates.slice(offset, offset + 7).map(async (date) => [
+        date,
+        await papercardApi.listSubmissions({ lineId, date }),
+      ] as const)
+    );
+
+    for (const [date, submissions] of submissionsByDate) {
+      for (const submission of (submissions ??
+        []) as unknown as RawSubmission[]) {
+        const role =
+          DEPT_TO_ROLE[String(submission.department ?? "").toUpperCase()];
+        if (!role) continue;
+        results.push(toResult(date, submission, role));
+      }
     }
   }
 

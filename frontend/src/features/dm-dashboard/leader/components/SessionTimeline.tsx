@@ -1,7 +1,6 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
 import Link from "next/link";
-import { Card } from "@/components/ui/Card";
 import { IconCheck } from "@/components/ui/icons";
 import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import type { TimelineModel, TimelineSession, TimelineStatus } from "../timelineTypes";
@@ -17,41 +16,44 @@ const TONE: Record<TimelineStatus, ChipTone> = {
 interface Props {
   /** null while data is loading */
   model: TimelineModel | null;
+  selectedSessionId?: string | null;
 }
 
-export function SessionTimeline({ model }: Props) {
+export function SessionTimeline({ model, selectedSessionId }: Props) {
   const { text: uiText } = useUiText();
   if (!model) {
     return (
-      <Card title={uiText("Timeline hari ini")} subtitle={uiText("Progres sesi Daily Management")}>
-        <div className="dml-tl-loading">{uiText("Memuat sesi hari ini…")}</div>
-      </Card>
+      <div className="dml-tl-loading" role="status">
+        {uiText("Memuat sesi hari ini…")}
+      </div>
     );
   }
 
-  const total = model.sessions.length;
+  const session =
+    model.sessions.find((item) => item.id === selectedSessionId) ??
+    model.sessions.find((item) => item.id === model.focusId) ??
+    model.sessions[0];
 
   return (
-    <Card
-      title={uiText("Timeline hari ini")}
-      subtitle={model.nextHint ?? uiText("Progres sesi Daily Management")}
-      actions={
-        <span className="dml-tl-count">
-          {model.doneCount}/{total}{uiText(" selesai")}</span>
-      }
-    >
-      <div className="dml-tl-segs" aria-hidden="true">
+    <div className="dml-tl-compact">
+      <div
+        className="dml-tl-segs"
+        role="img"
+        aria-label={`${model.doneCount} dari ${model.sessions.length} sesi selesai`}
+      >
         {model.sessions.map((s) => (
           <span key={s.id} className={`dml-tl-seg is-${s.status}`} />
         ))}
       </div>
 
-      <ol className="dml-tl">
-        {model.sessions.map((s) => (
-          <SessionRow key={s.id} session={s} focused={s.id === model.focusId} />
-        ))}
-      </ol>
-    </Card>
+      {session ? (
+        <ol className="dml-tl dml-tl--single">
+          <SessionRow session={session} focused />
+        </ol>
+      ) : (
+        <p className="dml-tl-loading">{uiText("Belum ada sesi hari ini")}</p>
+      )}
+    </div>
   );
 }
 

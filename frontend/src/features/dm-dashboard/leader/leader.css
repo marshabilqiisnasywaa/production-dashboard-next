@@ -10,6 +10,24 @@
   display: flex;
   flex-direction: column;
 }
+.dml-shell--dashboard {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.dml-shell--dashboard .dml-main {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.dml-shell--dashboard .dml-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 18px 24px;
+}
 .dml-content {
   width: 100%;
   max-width: 1440px;
@@ -603,6 +621,12 @@
     padding: 0 10px;
     gap: 8px;
   }
+
+  @media (max-width: 767px) {
+    .dml-shell--dashboard .dml-content {
+      padding: 10px 12px 12px;
+    }
+  }
   .dml-header__time strong {
     font-size: 13.5px;
     margin-right: 4px;
@@ -677,5 +701,439 @@
   }
   .dml-section__chart {
     padding: 0 12px 12px;
+  }
+}
+
+.dml-leader-dashboard .dml-dashboard-tabpanel--inspection {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.dml-inspection-grid {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.dml-inspection-panel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+  border: 1px solid var(--dm-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.dml-inspection-panel__header {
+  display: flex;
+  min-height: 32px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.dml-inspection-panel__header h2,
+.dml-inspection-detail .dml-detail__toolbar h2 {
+  min-width: 0;
+  margin: 0;
+  color: var(--dm-text);
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.dml-inspection-panel__header .ui-segmented {
+  flex: 0 0 auto;
+  padding: 3px;
+}
+
+.dml-inspection-panel__header .ui-segmented__btn {
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+.dml-inspection-panel__status-row {
+  display: flex;
+  min-height: 18px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.dml-inspection-panel__message,
+.dml-inspection-panel__summary {
+  min-width: 0;
+  margin: 0;
+  color: var(--dm-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dml-inspection-panel__chart {
+  width: 100%;
+  min-height: 220px;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.dml-inspection-panel__chart .dml-chart {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.dml-inspection-panel__chart .dml-chart svg {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.dml-inspection-panel__filter {
+  flex: 0 0 auto;
+}
+
+.dml-inspection-panel__status-row .dml-filter-pill {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.dml-inspection-chart-skeleton {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    #f4f6f5 25%,
+    #e9eeeb 37%,
+    #f4f6f5 63%
+  );
+  background-size: 400% 100%;
+  animation: dml-inspection-skeleton 1.4s ease infinite;
+}
+
+@keyframes dml-inspection-skeleton {
+  to {
+    background-position: -100% 0;
+  }
+}
+
+.dml-inspection-summary {
+  display: grid;
+  min-height: 68px;
+  flex: 0 0 68px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 12px;
+  margin: auto 0 0;
+  padding: 9px 0 0;
+  border-top: 1px solid var(--dm-border);
+}
+
+.dml-inspection-summary__item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dml-inspection-summary__item dt {
+  overflow: hidden;
+  color: var(--dm-muted);
+  font-size: 11px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dml-inspection-summary__item dd {
+  min-height: 21px;
+  margin: 0;
+  color: var(--dm-text);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dml-inspection-summary__skeleton {
+  display: block;
+  height: 16px;
+  border-radius: 4px;
+  background: #e9eeeb;
+  animation: dml-inspection-skeleton 1.4s ease infinite;
+}
+
+.dml-inspection-detail {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.dml-inspection-detail .dml-detail__toolbar {
+  min-height: 40px;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 0 0 10px;
+}
+
+.dml-inspection-detail .dml-detail__filters {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+.dml-inspection-detail .dml-detail__filters .ui-select {
+  width: 112px;
+  height: 32px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.dml-inspection-detail .dml-detail__filters .ui-btn {
+  height: 32px;
+  padding: 0 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.dml-inspection-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.dml-inspection-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+  font-size: 11px;
+}
+
+.dml-inspection-table th {
+  padding: 8px 4px;
+  font-size: 10px;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.dml-inspection-table td {
+  padding: 13px 4px;
+  text-align: center;
+  white-space: normal;
+}
+
+.dml-inspection-table th:first-child,
+.dml-inspection-table td:first-child {
+  text-align: left;
+}
+
+.dml-inspection-table__date {
+  width: 15%;
+}
+
+.dml-inspection-table__leader {
+  width: 25%;
+}
+
+.dml-inspection-table__role {
+  width: 14%;
+}
+
+.dml-inspection-table__total {
+  width: 18%;
+}
+
+.dml-inspection-table:not(.dml-inspection-table--with-date)
+  .dml-inspection-table__leader {
+  width: 30%;
+}
+
+.dml-inspection-table:not(.dml-inspection-table--with-date)
+  .dml-inspection-table__role {
+  width: 17%;
+}
+
+.dml-inspection-table:not(.dml-inspection-table--with-date)
+  .dml-inspection-table__total {
+  width: 19%;
+}
+
+.dml-inspection-table .ui-chip {
+  max-width: 100%;
+  min-height: 22px;
+  padding: 2px 5px;
+  font-size: 10px;
+  line-height: 1.15;
+  white-space: normal;
+}
+
+.dml-inspection-detail__caption {
+  flex: 0 0 auto;
+  margin: 8px 0 0;
+  color: var(--dm-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.dml-inspection-detail .ui-pagination {
+  flex: 0 0 auto;
+  gap: 8px;
+  padding: 10px 0 0;
+}
+
+.dml-inspection-detail .ui-pagination__info {
+  font-size: 11px;
+}
+
+.dml-inspection-detail .ui-pagination__controls {
+  gap: 4px;
+}
+
+.dml-inspection-detail .ui-pagination__page {
+  min-width: 27px;
+  height: 28px;
+  font-size: 11px;
+}
+
+.dml-inspection-detail .ui-pagination .ui-select {
+  width: auto;
+  height: 28px;
+  padding: 0 6px;
+  font-size: 11px;
+}
+
+@media (max-width: 767px) {
+  .dml-leader-dashboard .dml-dashboard-tabpanel--inspection {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .dml-inspection-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .dml-inspection-panel {
+    padding: 10px;
+  }
+
+  .dml-inspection-panel__chart {
+    min-height: 220px;
+  }
+
+  .dml-inspection-panel__header h2,
+  .dml-inspection-detail .dml-detail__toolbar h2 {
+    font-size: 13px;
+  }
+
+  .dml-inspection-detail .dml-detail__filters .ui-select {
+    width: 98px;
+  }
+
+  .dml-inspection-detail .ui-pagination {
+    flex-wrap: wrap;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 767px) {
+  .dml-leader-dashboard .dml-dashboard-toolbar {
+    align-items: flex-end;
+    flex-direction: row;
+  }
+
+  .dml-inspection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .dml-inspection-panel {
+    padding: 8px;
+  }
+
+  .dml-inspection-panel__header {
+    flex-wrap: wrap;
+  }
+
+  .dml-inspection-panel__chart {
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .dml-shell--dashboard {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .dml-shell--dashboard .dml-main {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .dml-shell--dashboard .dml-content {
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .dml-leader-dashboard {
+    flex: 0 0 auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .dml-dashboard-tabs {
+    flex: 0 0 auto;
+    min-height: auto;
+  }
+
+  .dml-dashboard-tabpanel--inspection {
+    flex: 0 0 auto;
+    grid-template-rows: auto;
+    overflow: visible;
+  }
+
+  .dml-inspection-grid {
+    height: auto;
+    min-height: 480px;
+    grid-template-rows: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .dml-inspection-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(2, 420px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dml-inspection-chart-skeleton,
+  .dml-inspection-summary__skeleton {
+    animation: none;
   }
 }

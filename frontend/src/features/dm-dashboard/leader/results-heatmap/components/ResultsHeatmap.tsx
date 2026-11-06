@@ -1,4 +1,6 @@
 "use client";
+
+import { useEffect, useRef } from "react";
 import { useUiText } from "@/locales/useUiText";
 import { IconCheck, IconClock } from "@/components/ui/icons";
 import type { HeatCell, HeatRow, ViewMode } from "../types";
@@ -22,9 +24,20 @@ function cellLabel(roleLabel: string, cell: HeatCell): string {
 
 export function ResultsHeatmap({ days, rows, today, mode, selectedId, onOpen }: Props) {
   const { text: uiText } = useUiText();
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (gridRef.current) {
+      gridRef.current.scrollLeft = gridRef.current.scrollWidth;
+    }
+  }, [days]);
+
   return (
-    <div className="dmr-gridwrap">
-      <table className="dmr-grid">
+    <div className="dmr-gridwrap dmr-matrix-viewport" ref={gridRef}>
+      <table
+        className="dmr-grid"
+        style={{ minWidth: `${Math.max(620, 132 + days.length * 52)}px` }}
+      >
         <thead>
           <tr>
             <th scope="col" className="dmr-grid__corner">{uiText("Role")}</th>

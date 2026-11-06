@@ -6,6 +6,100 @@
   color: var(--dm-green);
   white-space: nowrap;
 }
+
+.dml-header-timeline {
+  display: flex;
+  min-width: 290px;
+  max-width: 380px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 12px;
+  border: 1px solid var(--dm-border);
+  border-radius: 12px;
+  background: #fff;
+}
+.dml-header-timeline__content {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+.dml-header-timeline__label {
+  color: var(--dm-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.dml-header-timeline__session {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dml-header-timeline__session strong,
+.dml-header-timeline__content > strong {
+  overflow: hidden;
+  color: var(--dm-text);
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dml-header-timeline__session span {
+  flex: 0 0 auto;
+  color: var(--dm-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.dml-header-timeline__status {
+  width: fit-content;
+  font-size: 10px;
+  font-weight: 600;
+}
+.dml-header-timeline__status.is-done,
+.dml-header-timeline__status.is-live {
+  color: var(--dm-green);
+}
+.dml-header-timeline__status.is-upcoming {
+  color: var(--dm-muted);
+}
+.dml-header-timeline__status.is-overdue {
+  color: var(--dm-amber-text);
+}
+.dml-header-timeline__count {
+  flex: 0 0 auto;
+  color: var(--dm-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.dml-header-timeline > button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--dm-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--dm-green);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.dml-header-timeline > button:hover:not(:disabled) {
+  border-color: var(--dm-green);
+  background: var(--dm-green-50);
+}
+.dml-header-timeline > button:focus-visible {
+  outline: 2px solid var(--dm-green);
+  outline-offset: 2px;
+}
+.dml-header-timeline > button:disabled {
+  color: var(--dm-muted);
+  cursor: not-allowed;
+}
 .dml-tl-loading {
   padding: 24px 0;
   text-align: center;
@@ -41,6 +135,9 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+.dml-tl--single {
+  gap: 0;
 }
 .dml-tl__item {
   padding: 12px 14px;
@@ -173,4 +270,11 @@
 }
 .dml-tl__link:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 767px) {
+  .dml-header-timeline {
+    width: min(100%, 380px);
+    min-width: 0;
+  }
 }

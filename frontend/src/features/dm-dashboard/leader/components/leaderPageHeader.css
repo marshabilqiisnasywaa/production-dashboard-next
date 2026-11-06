@@ -1,7 +1,11 @@
 .dml-lh {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.dml-lh__copy {
+  min-width: 0;
 }
 .dml-lh__title {
   margin: 0;
@@ -37,6 +41,16 @@
 }
 
 @media (max-width: 767px) {
+  .dml-lh {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .dml-header-timeline {
+    align-self: flex-end;
+    max-width: 100%;
+  }
+
   .dml-header__menu {
     display: grid;
     place-items: center;

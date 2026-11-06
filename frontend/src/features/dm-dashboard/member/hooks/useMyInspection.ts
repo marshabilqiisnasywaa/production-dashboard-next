@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useInspection } from "../../leader/hooks/useInspection";
 import type { PapercardStatus, RoleKey } from "../../leader/types";
+import { getJakartaToday, getRange } from "../../leader/utils";
 
 export interface MyDay {
   date: string;
@@ -15,7 +16,7 @@ export interface MyDay {
  * TODO: uses the same mock rows as the Leader chart until the API exists.
  */
 export function useMyInspection(roleKey: RoleKey) {
-  const { rows } = useInspection("7d");
+  const { rows } = useInspection(getRange("7d", getJakartaToday()));
 
   return useMemo(() => {
     const days: MyDay[] = rows

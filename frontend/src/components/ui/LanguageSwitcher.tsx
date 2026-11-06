@@ -10,7 +10,7 @@ export default function LanguageSwitcher() {
   const { language, setLanguage } = useLanguage();
 
   return (
-    <div className="ui-language-switcher" role="group" aria-label={t("language")}>
+    <div className="ui-language-switcher" role="group" aria-label={t("common:language")}>
       {appLanguages.map((option) => (
         <button
           key={option.value}

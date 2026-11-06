@@ -6,13 +6,16 @@ import { TARGET, TONE_LABEL, toneFor, type Tone } from "../utils";
 
 interface KpiCardProps {
   title: string;
-  value: number;
+  value: number | null;
   icon: ReactNode;
   target?: number;
   /** Change in % points vs previous period. Omit to hide the line. */
   delta?: number | null;
   unit?: string;
-  tone?: Tone;
+  tone?: Tone | "missing";
+  targetLabel?: string;
+  progressSize?: "sm" | "md";
+  featured?: boolean;
   showTarget?: boolean;
 }
 
@@ -24,21 +27,29 @@ export function KpiCard({
   delta,
   unit = "%",
   tone: toneProp,
+  targetLabel,
+  progressSize = "md",
+  featured = false,
   showTarget = true,
 }: KpiCardProps) {
   const { text: uiText } = useUiText();
-  const tone = toneProp ?? toneFor(value, target);
+  const tone = toneProp ?? (value === null ? "missing" : toneFor(value, target));
+  const hint = targetLabel ?? (
+    tone === "missing" ? "data tidak tersedia" : TONE_LABEL[tone]
+  );
+  const progressTone = tone === "missing" ? "ok" : tone;
 
   return (
-    <article className="dml-kpi">
+    <article
+      className={`dml-kpi${featured ? " dml-kpi--focal" : ""}`}
+      aria-current={featured ? "true" : undefined}
+    >
       <div className="dml-kpi__top">
         <h3>{uiText(title)}</h3>
         <span className={`dml-kpi__icon dml-kpi__icon--${tone}`}>{icon}</span>
       </div>
-
       <p className="dml-kpi__value">
-        {uiText(value)}
-        {uiText(unit)}
+        {value === null ? "—" : `${uiText(value)}${uiText(unit)}`}
       </p>
 
       {delta !== undefined && delta !== null && (
@@ -48,9 +59,27 @@ export function KpiCard({
 
       {showTarget && (
         <>
-          <p className="dml-kpi__hint">{uiText("Target ")}{target}% · {uiText(TONE_LABEL[tone])}
+          <p className={`dml-kpi__hint is-${tone}`}>
+            <span className="dml-kpi__status-dot" aria-hidden="true" />
+            <span>
+              {uiText("Target ")}{target}% · {uiText(hint)}
+            </span>
           </p>
-          <ProgressBar value={value} target={target} tone={tone} />
+          {value === null ? (
+            <div
+              className={`ui-progress ui-progress--${progressSize} ui-progress--missing`}
+              aria-hidden="true"
+            >
+              <span className="ui-progress__tick" style={{ left: `${target}%` }} />
+            </div>
+          ) : (
+            <ProgressBar
+              value={value}
+              target={target}
+              tone={progressTone}
+              size={progressSize}
+            />
+          )}
         </>
       )}
     </article>

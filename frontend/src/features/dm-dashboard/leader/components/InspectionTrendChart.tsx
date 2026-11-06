@@ -2,8 +2,8 @@
 import { useUiText } from "@/locales/useUiText";
 
 
-import { useState } from "react";
-import type { TrendPoint } from "../types";
+import { useEffect, useRef, useState } from "react";
+import type { TrendGranularity, TrendPoint } from "../types";
 import { TARGET, toneFor } from "../utils";
 
 interface Props {
@@ -11,36 +11,92 @@ interface Props {
   selectedKey: string | null;
   onSelect: (key: string | null) => void;
   target?: number;
+  granularity?: TrendGranularity;
 }
 
 // Plain SVG chart (no chart library needed). Swap for recharts later if you prefer.
-const W = 800;
-const H = 300;
-const PAD = { top: 36, right: 28, bottom: 36, left: 52 };
-const IW = W - PAD.left - PAD.right;
-const IH = H - PAD.top - PAD.bottom;
 const TICKS = [0, 25, 50, 75, 100];
 
-export function InspectionTrendChart({ data, selectedKey, onSelect, target = TARGET }: Props) {
+export function InspectionTrendChart({
+  data,
+  selectedKey,
+  onSelect,
+  target = TARGET,
+  granularity = "day",
+}: Props) {
   const { text: uiText } = useUiText();
   const [hover, setHover] = useState<number | null>(null);
-
-  if (data.length === 0) {
-    return <div className="dml-empty">{uiText("Belum ada data inspeksi pada periode ini")}</div>;
-  }
-
-  const x = (i: number) => (data.length === 1 ? PAD.left + IW / 2 : PAD.left + (i * IW) / (data.length - 1));
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 800, height: 300 });
+  const W = size.width;
+  const H = size.height;
+  const PAD = { top: 28, right: 24, bottom: 32, left: 46 };
+  const IW = Math.max(1, W - PAD.left - PAD.right);
+  const IH = Math.max(1, H - PAD.top - PAD.bottom);
+  const x = (i: number) =>
+    data.length <= 1
+      ? PAD.left + IW / 2
+      : PAD.left + (i * IW) / (data.length - 1);
   const y = (v: number) => PAD.top + IH * (1 - v / 100);
 
-  const line = data.map((p, i) => `${x(i)},${y(p.value)}`).join(" ");
-  const area = `${x(0)},${y(0)} ${line} ${x(data.length - 1)},${y(0)}`;
+  useEffect(() => {
+    const element = chartRef.current;
+    if (!element) return;
 
-  const labelStep = Math.ceil(data.length / 8); // keeps the X axis readable
+    const observer = new ResizeObserver(([entry]) => {
+      const width = Math.round(entry.contentRect.width);
+      const height = Math.round(entry.contentRect.height);
+      if (width > 0 && height > 0) {
+        setSize((current) =>
+          current.width === width && current.height === height
+            ? current
+            : { width, height },
+        );
+      }
+    });
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  const segments: number[][] = [];
+  data.forEach((point, index) => {
+    if (point.total === 0) return;
+    const lastSegment = segments[segments.length - 1];
+    if (
+      lastSegment &&
+      data[lastSegment[lastSegment.length - 1] + 1]?.total > 0
+    ) {
+      lastSegment.push(index);
+    } else {
+      segments.push([index]);
+    }
+  });
+  const line = segments
+    .map((segment) =>
+      segment
+        .map((index, pointIndex) =>
+          `${pointIndex === 0 ? "M" : "L"}${x(index)},${y(data[index].value)}`,
+        )
+        .join(" "),
+    )
+    .join(" ");
+  const areas = segments
+    .filter((segment) => segment.length > 1)
+    .map((segment) => {
+      const first = segment[0];
+      const last = segment[segment.length - 1];
+      return `M${x(first)},${y(0)} L${segment
+        .map((index) => `${x(index)},${y(data[index].value)}`)
+        .join(" L")} L${x(last)},${y(0)} Z`;
+    });
+
   const showAllValues = data.length <= 10;
-  const hovered = hover != null ? data[hover] : null;
+  const hovered =
+    hover != null && data[hover]?.total > 0 ? data[hover] : null;
 
   return (
-    <div className="dml-chart">
+    <div className="dml-chart" ref={chartRef}>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={uiText("Grafik tren Inspection Rate")}>
         {TICKS.map((t) => (
           <g key={t}>
@@ -51,15 +107,18 @@ export function InspectionTrendChart({ data, selectedKey, onSelect, target = TAR
           </g>
         ))}
 
-        <polygon className="dml-chart__area" points={area} />
+        {areas.map((area, index) => (
+          <path key={index} className="dml-chart__area" d={area} />
+        ))}
 
         <line className="dml-chart__target" x1={PAD.left} x2={W - PAD.right} y1={y(target)} y2={y(target)} />
         <text className="dml-chart__target-label" x={W - PAD.right} y={y(target) + 16} textAnchor="end">{uiText("Target ")}{target}%
         </text>
 
-        <polyline className="dml-chart__line" points={line} />
+        <path className="dml-chart__line" d={line} />
 
         {data.map((p, i) => {
+          if (p.total === 0) return null;
           const tone = toneFor(p.value, target);
           const selected = p.key === selectedKey;
           const showValue = showAllValues || tone !== "ok" || selected || hover === i;
@@ -100,14 +159,23 @@ export function InspectionTrendChart({ data, selectedKey, onSelect, target = TAR
           );
         })}
 
-        {data.map(
-          (p, i) =>
-            i % labelStep === 0 && (
-              <text key={p.key} className="dml-chart__axis" x={x(i)} y={H - 10} textAnchor="middle">
-                {uiText(p.label)}
-              </text>
-            ),
-        )}
+        {data.map((p, i) => {
+          const label =
+            granularity === "day" && data.length > 14
+              ? String(Number(p.key.slice(-2)))
+              : p.label;
+          return (
+            <text
+              key={p.key}
+              className="dml-chart__axis"
+              x={x(i)}
+              y={H - 10}
+              textAnchor="middle"
+            >
+              {uiText(label)}
+            </text>
+          );
+        })}
       </svg>
 
       {hovered && hover != null && (

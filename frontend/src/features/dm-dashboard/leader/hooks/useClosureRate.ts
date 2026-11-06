@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { meetingApi, type DmClosureRate } from "../../api";
-import type { DateRangeKey } from "../types";
-import { getRange } from "../utils";
-import { useNow } from "./useNow";
+import type { InspectionDateRange } from "../types";
 
 type Result = {
   data: DmClosureRate | null;
@@ -18,22 +16,11 @@ type Snapshot = Result & {
 
 export function useClosureRate(
   lineId: number | null,
-  range: DateRangeKey,
+  range: InspectionDateRange,
   shift = "Shift 1"
 ): Result {
-  const now = useNow(30_000);
-  const today = now
-    ? new Intl.DateTimeFormat("sv-SE", {
-        timeZone: "Asia/Jakarta",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).format(now)
-    : null;
-
-  const period = today ? getRange(range, today) : null;
-  const from = period?.from ?? "";
-  const to = period?.to ?? "";
+  const from = range.from;
+  const to = range.to;
   const key = `${lineId}:${from}:${to}:${shift}`;
 
   const [snapshot, setSnapshot] = useState<Snapshot>({
