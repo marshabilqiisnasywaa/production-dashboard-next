@@ -1,6 +1,5 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
-import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -119,7 +118,6 @@ function LineBoards() {
   return (
     <>
       <header className="dmi-head">
-        <LanguageSwitcher />
         <h1>{uiText("Dashboard lini")}</h1>
         <p>
           {boards.length}{uiText(" lini · ")}{counts.running}{uiText(" berjalan · ")}{counts.idle}{uiText(" idle · ")}{counts.stopped}{uiText(" berhenti")}</p>

@@ -1,6 +1,5 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
-import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 
 
 import { useEffect, useState } from "react";
@@ -97,7 +96,7 @@ export default function WorkshopTeamTv({ workshopId }: { workshopId: number }) {
           <h1 className="dsv-ws-code">{team.workshopName}</h1>
           <p className="dsv-header-sub">{uiText("车间组织架构")}</p>
         </div>
-        <div className="dsv-header-brand"><strong>{uiText("DM WORKSHOP TEAM")}</strong><LanguageSwitcher /></div>
+        <div className="dsv-header-brand"><strong>{uiText("DM WORKSHOP TEAM")}</strong></div>
       </header>
 
       {error && <p className="wtv-notice" role="status">{uiText("Pembaruan gagal. Menampilkan data terakhir. ")}{uiText(error)}</p>}

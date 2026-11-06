@@ -1,6 +1,5 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
-import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 
 import { departmentLabel } from "./departments";
 import { useEffect, useMemo, useState } from "react";
@@ -284,7 +283,6 @@ export default function DmDashboard({ slug }: { slug: string }) {
           <section className="dm-col-right" aria-label={uiText("Tim dan Penghargaan")}>
             <header className="dm-team-header">
               <h2 className="dm-team-title">{uiText("DM TRIANGLE TEAM")}</h2>
-              <LanguageSwitcher />
             </header>
 
             <div className="dm-team-grid">

@@ -1,6 +1,5 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
-import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -285,7 +284,6 @@ function SupervisorBoardView({
 
         <div className="dsv-header-brand">
           <strong>{uiText("DM WORKSHOP TEAM")}</strong>
-          <LanguageSwitcher />
           {/* <span>VIEW-ONLY SIGNAGE MODE</span> */}
         </div>
       </header>
