@@ -42,6 +42,8 @@ import type { DmGroup } from "./dmGroupsStore";
 import "./AdminPanel.css";
 import ProblemsPage from "../leader/problems/ProblemsPage";
 import PapercardProblems from "./PapercardProblems";
+import PapercardHistory from "./PapercardHistory";
+import StandupHistory from "./StandupHistory";
 import SqdipMonitor from "./sqdip/SqdipMonitor";
 
 type Auth =
@@ -192,6 +194,10 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
     crumb: "Tracking Masalah",
     title: "Tracking Masalah DM Meeting dan Papercard",
   },
+  history: {
+    crumb: "Arsip",
+    title: "Arsip Papercard dan Standup Meeting",
+  },
   sqdip: {
     crumb: "SQDIP",
     title: "SQDIP Monitoring: Skor Harian per Leader dan Line",
@@ -231,6 +237,11 @@ const ADMIN_TAB_HEADERS: Record<
     description:
       "Pantau tindak lanjut masalah DM meeting dan temuan NG papercard harian.",
   },
+    history: {
+    title: "Riwayat Papercard & Standup Meeting",
+    description:
+      "Telusuri riwayat papercard dan standup meeting per tanggal, line, dan shift.",
+  },
   sqdip: {
     title: "Monitoring SQCDIP",
     description:
@@ -263,6 +274,7 @@ function AdminWorkspace({
   const [problemSub, setProblemSub] = useState<"meeting" | "papercard">(
     "meeting"
   );
+  const [historySub, setHistorySub] = useState<"papercard" | "standup">("papercard");
   const [workshops, setWorkshops] = useState<DmWorkshop[]>([]);
   const [lines, setLines] = useState<DmLine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1237,6 +1249,20 @@ function AdminWorkspace({
                 )}
               </div>
             )}
+
+            {activeTab === "history" && (
+  <div className="dm-admin-section">
+    <div className="dm-subtabs" role="group" aria-label={uiText("Sumber arsip")}>
+      <button type="button" className={`dm-subtab${historySub === "papercard" ? " is-active" : ""}`} aria-pressed={historySub === "papercard"} onClick={() => setHistorySub("papercard")}>{uiText("Papercard")}</button>
+      <button type="button" className={`dm-subtab${historySub === "standup" ? " is-active" : ""}`} aria-pressed={historySub === "standup"} onClick={() => setHistorySub("standup")}>{uiText("Standup Meeting")}</button>
+    </div>
+    {historySub === "papercard" ? (
+      <PapercardHistory lines={lines} call={call} />
+    ) : (
+      <StandupHistory lines={lines} call={call} />
+    )}
+  </div>
+)}
 
             {activeTab === "sqdip" && (
               <div className="dm-admin-section dm-tab-lines">

@@ -388,8 +388,7 @@ export default function HodTrackingProblemsPage() {
           </div>
         </div>
 
-        <div className="dml-pb-result-count">{uiText("Menampilkan ")}<strong>{visibleRows.length}</strong>{uiText(" dari")}{" "}
-          <strong>{rows.length}</strong>{uiText(" masalah")}</div>
+        
 
         {error ? (
           <ProblemLoadError error={error} onRetry={refresh} />

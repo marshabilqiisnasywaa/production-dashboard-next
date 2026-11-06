@@ -1,0 +1,194 @@
+/* Riwayat Papercard & Standup Meeting (admin).
+   Memakai ulang class dml-pb-* dari leader/problems/problems.css;
+   file ini hanya menambah yang belum ada. */
+
+.dm-history .dml-pb-toolbar {
+  flex-wrap: wrap;
+}
+
+/* Periode memakai DateRangePicker dari scorecard; ukurannya disamakan dengan toolbar */
+.dm-history-field .dmf-trigger,
+.dm-history-field .dmf-trigger.dmf-trigger--date {
+  width: 15rem;
+  height: 38px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.dm-history .dml-pb-table {
+  min-width: 1040px;
+}
+
+.dm-history-table td {
+  overflow-wrap: anywhere;
+}
+
+.dm-history-table td.is-strong {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.dm-history-table tbody tr {
+  cursor: default;
+}
+
+.dm-history-table tbody tr.is-selected {
+  background: #f6faf8;
+}
+
+.dm-history-sub {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.dm-history-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.dm-history-note {
+  white-space: pre-wrap;
+}
+
+.dm-history-toggle {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #dfe4e8;
+  border-radius: 7px;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dm-history-toggle:hover {
+  background: #f1f5f9;
+}
+
+.dm-history-detail-row > td {
+  background: #fafbfc;
+}
+
+.dm-history-detail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  padding: 4px 4px 8px;
+}
+
+.dm-history-detail h4 {
+  margin: 0 0 6px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dm-history-detail p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.dm-history-detail ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.dm-history-toggle:focus-visible,
+.dm-history .dml-pb-table-wrap:focus-visible {
+  outline: 2px solid #087443;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .dm-history .dml-pb-filters {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .dm-history-field,
+  .dm-history-field .dmf-trigger,
+  .dm-history-field .dmf-trigger.dmf-trigger--date {
+    width: 100%;
+  }
+}
+
+/* ---------- Chip status ---------- */
+.dm-history-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.dm-history-chip.is-ok {
+  background: #e3f4ea;
+  color: #0b6b3a;
+}
+
+.dm-history-chip.is-red {
+  background: #fde4e4;
+  color: #991b1b;
+}
+
+.dm-history-chip.is-wait {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.dm-history-chip.is-muted {
+  background: #eef1f4;
+  color: #475569;
+}
+
+/* ---------- Pager (sama dengan SQDIP Monitoring) ---------- */
+.dm-history-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+  padding: 0 4px 4px;
+  color: var(--dm-admin-text-muted);
+  font-size: 0.84rem;
+}
+
+.dm-history-pager-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dm-history-page-btn {
+  padding: 0 0.85rem;
+}
+
+.dm-history-page-label {
+  min-width: 72px;
+  text-align: center;
+  color: var(--dm-admin-text);
+  font-weight: 600;
+}
+
+/* Hitungan NG / OK: teks biasa, bukan chip */
+.dm-history-count {
+  color: #334155;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.dm-history-chip + .dm-history-count {
+  margin-top: 4px;
+}
