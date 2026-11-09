@@ -2,10 +2,11 @@
 import { useUiText } from "@/locales/useUiText";
 
 import Link from "next/link";
-import { IconLogout } from "@/components/ui/icons";
+import { IconLogout, IconHistory } from "@/components/ui/icons";
 import { SIDEBAR_ID, useSidebar } from "@/components/ui/SidebarProvider";
 import { setToken } from "../api";
 import { Gauge as IconGauge } from "lucide-react";
+
 
 export type DmAdminTabKey =
   | "dashboard"
@@ -15,6 +16,7 @@ export type DmAdminTabKey =
   | "mpv"
   | "attendance"
   | "problems"
+  | "history"
   | "sqdip";
 
 interface DmAdminSidebarProps {
@@ -299,6 +301,20 @@ export default function DmAdminSidebar({
 
         {isAdmin && (
           <>
+            <div className="dm-admin-nav-heading">{uiText("HISTORY")}</div>
+            <button
+              type="button"
+              className={`dm-admin-nav-btn ${
+                activeTab === "history" ? "is-active" : ""
+              }`}
+              onClick={() => select("history")}
+            >
+              <span className="dm-admin-nav-icon">
+                <IconHistory size={18} />
+              </span>
+              <span>{uiText("Arsip")}</span>
+            </button>
+
             <div className="dm-admin-nav-heading">{uiText("SQDIP MONITORING")}</div>
             <button
               type="button"
