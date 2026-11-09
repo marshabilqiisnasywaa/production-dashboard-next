@@ -1,5 +1,6 @@
 import type {
   DateRangeKey,
+  InspectionDateRange,
   InspectionRow,
   TrendGranularity,
   TrendPoint,
@@ -70,6 +71,25 @@ export function daysBetween(from: string, to: string): number {
 }
 
 /* ---------- trend aggregation ---------- */
+
+export function trendGranularityForRange(range: InspectionDateRange): TrendGranularity {
+  const start = parseISO(range.from);
+  const endExclusive = addDays(range.to, 1);
+  const boundary = (months: number) => {
+    const lastDay = new Date(Date.UTC(
+      start.getUTCFullYear(), start.getUTCMonth() + months + 1, 0,
+    )).getUTCDate();
+    return toISO(new Date(Date.UTC(
+      start.getUTCFullYear(),
+      start.getUTCMonth() + months,
+      Math.min(start.getUTCDate(), lastDay),
+    )));
+  };
+
+  if (endExclusive >= boundary(12)) return "month";
+  if (endExclusive >= boundary(2)) return "week";
+  return "day";
+}
 
 export function periodKey(date: string, g: TrendGranularity): string {
   if (g === "day") return date;

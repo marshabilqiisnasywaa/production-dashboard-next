@@ -68,7 +68,7 @@ export function NgSummary({ data, loading, error }: Props) {
                       <span style={{ width }} />
                     </span>
                     <span className="dmr-ng-summary__role-count">
-                      {role.papercards} {uiText("papercard NG")}
+                      {role.papercards} {uiText("NG")}
                     </span>
                   </li>
                 );
@@ -80,7 +80,10 @@ export function NgSummary({ data, loading, error }: Props) {
             <dl>
               <div>
                 <dt>{uiText("Total NG")}</dt>
-                <dd>{data.papercards} {uiText("dari")} {data.filledPapercards}</dd>
+                <dd>
+                  <span className="dmr-ng-summary__total">{data.papercards}</span>
+                  <small>{uiText("dari")} {data.filledPapercards}</small>
+                </dd>
               </div>
               <div>
                 <dt>{uiText("Role terbanyak NG")}</dt>

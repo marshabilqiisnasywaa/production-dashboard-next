@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useUiText } from "@/locales/useUiText";
-import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
   TARGET,
   addDays,
@@ -10,37 +9,38 @@ import {
   daysBetween,
   periodKey,
   periodLabel,
+  trendGranularityForRange,
 } from "../utils";
 import type { InspectionDateRange, InspectionRow, TrendGranularity } from "../types";
 import { InspectionDetailTable } from "./InspectionDetailTable";
 import { InspectionSummaryStrip } from "./InspectionSummaryStrip";
 import { InspectionTrendChart } from "./InspectionTrendChart";
+import { InspectionTrendFilters } from "./InspectionTrendFilters";
 
 type Props = {
   rows: InspectionRow[];
   rate: number;
   total: number;
   range: InspectionDateRange;
+  maxDate: string;
+  onRangeChange: (range: InspectionDateRange) => void;
   loading: boolean;
   error: string | null;
 };
-
-const GRANULARITY_OPTIONS: { value: TrendGranularity; label: string }[] = [
-  { value: "day", label: "Hari" },
-  { value: "week", label: "Minggu" },
-  { value: "month", label: "Bulan" },
-];
 
 export function InspectionRateFocalCard({
   rows,
   rate,
   total,
   range,
+  maxDate,
+  onRangeChange,
   loading,
   error,
 }: Props) {
-  const { text: uiText } = useUiText();
-  const [granularity, setGranularity] = useState<TrendGranularity>("day");
+  const { text: uiText, locale } = useUiText();
+  const [navigationUnit, setNavigationUnit] = useState<TrendGranularity>("day");
+  const granularity = trendGranularityForRange(range);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const visibleRows = loading || error ? [] : rows;
   const trend = useMemo(() => {
@@ -81,30 +81,49 @@ export function InspectionRateFocalCard({
   );
   const hasData = total > 0;
   const chartHasData = trend.some((point) => point.total > 0);
-  const recordedPeriods = trend.filter((point) => point.total > 0);
-  const aboveTargetPeriods = recordedPeriods.filter(
-    (point) => point.value >= TARGET,
-  ).length;
-  const averageRate =
-    recordedPeriods.length > 0
-      ? Math.round(
-          recordedPeriods.reduce((sum, point) => sum + point.value, 0) /
-            recordedPeriods.length,
-        )
-      : null;
+  const submitted = visibleRows.reduce((sum, row) => sum + row.submitted, 0);
+  const roleCount = new Set(
+    visibleRows.flatMap((row) =>
+      Object.entries(row.statuses)
+        .filter(([, status]) => status !== "LIBUR")
+        .map(([role]) => role),
+    ),
+  ).size;
+  const dateFormatter = new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+  const periodDescription = dateFormatter.formatRange(
+    new Date(`${range.from}T00:00:00Z`),
+    new Date(`${range.to}T00:00:00Z`),
+  );
+  const groupingLabel = granularity === "day"
+    ? "Ditampilkan per hari"
+    : granularity === "week"
+      ? "Ditampilkan per minggu"
+      : "Ditampilkan per bulan";
 
   return (
     <div className="dml-inspection-grid">
       <section className="dml-inspection-panel dml-inspection-panel--trend">
         <div className="dml-inspection-panel__header">
-          <h2>{uiText("Tren Inspection Rate")}</h2>
-          <SegmentedControl
-            ariaLabel={uiText("Satuan waktu grafik")}
-            options={GRANULARITY_OPTIONS}
-            value={granularity}
-            onChange={(value) => {
-              setGranularity(value);
+          <div className="dml-inspection-panel__heading">
+            <h2>{uiText("Tren Inspection Rate")}</h2>
+            <p className="dml-inspection-panel__period" aria-live="polite">
+              <span>{periodDescription}</span>
+              <span>{uiText(groupingLabel)}</span>
+            </p>
+          </div>
+          <InspectionTrendFilters
+            range={range}
+            maxDate={maxDate}
+            navigationUnit={navigationUnit}
+            onNavigationUnitChange={setNavigationUnit}
+            onRangeChange={(nextRange) => {
               setSelectedKey(null);
+              onRangeChange(nextRange);
             }}
           />
         </div>
@@ -123,9 +142,7 @@ export function InspectionRateFocalCard({
             </p>
           ) : (
             <p className="dml-inspection-panel__summary">
-              {uiText("Target ")}
-              {TARGET}% ·{" "}
-              {uiText(rate >= TARGET ? "memenuhi target" : "di bawah target")}
+              {uiText("Klik titik grafik untuk melihat detail periode.")}
             </p>
           )}
           {activeKey && (
@@ -154,11 +171,11 @@ export function InspectionRateFocalCard({
           )}
         </div>
         <InspectionSummaryStrip
-          recorded={recordedPeriods.length}
-          periodCount={trend.length}
-          aboveTarget={aboveTargetPeriods}
-          averageRate={averageRate}
-          granularity={granularity}
+          submitted={submitted}
+          total={total}
+          rate={rate}
+          dayCount={daysBetween(range.from, range.to)}
+          roleCount={roleCount}
           loading={loading}
           error={error}
         />

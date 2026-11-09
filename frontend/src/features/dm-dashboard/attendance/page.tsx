@@ -1,15 +1,22 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
 
-
 // import Link from "next/link";
 import { departmentLabel } from "../departments";
 import { useMemo, useState } from "react";
-import { DateRangePicker, FilterSelect, type DateRangeValue } from "../scorecard/ScorecardFilters";
+import {
+  DateRangePicker,
+  FilterSelect,
+  type DateRangeValue,
+} from "../scorecard/ScorecardFilters";
 import { defaultRange, jakartaToday } from "../scorecard/useScorecardData";
 
 import "./attendance.css";
-import { useAttendanceData, datesBetween, type SessionStat } from "./useAttendanceData";
+import {
+  useAttendanceData,
+  datesBetween,
+  type SessionStat,
+} from "./useAttendanceData";
 import DepartmentRecap from "./DepartmentRecap";
 import {
   useDepartmentAttendance,
@@ -128,7 +135,9 @@ function TrendChart({
   return (
     <div className="att-analytics">
       {!hasMeetingData ? (
-        <div className="att-chart-empty">{uiText("Belum ada data kehadiran pada periode ini.")}</div>
+        <div className="att-chart-empty">
+          {uiText("Belum ada data kehadiran pada periode ini.")}
+        </div>
       ) : (
         <div className="att-chart-scroll">
           <svg
@@ -214,127 +223,128 @@ function TrendChart({
               );
             })}
 
-            {uiText(data.map((d, i) => {
-              const centerX = left + slot * i + slot / 2;
+            {uiText(
+              data.map((d, i) => {
+                const centerX = left + slot * i + slot / 2;
 
-              const x = centerX - barWidth / 2;
+                const x = centerX - barWidth / 2;
 
-              const baseY = top + plotHeight;
+                const baseY = top + plotHeight;
 
-              const onTimeHeight =
-                d.onTime === null ? 0 : plotHeight * (d.onTime / 100);
+                const onTimeHeight =
+                  d.onTime === null ? 0 : plotHeight * (d.onTime / 100);
 
-              const lateHeight =
-                d.late === null ? 0 : plotHeight * (d.late / 100);
+                const lateHeight =
+                  d.late === null ? 0 : plotHeight * (d.late / 100);
 
-              const absentHeight =
-                d.absent === null ? 0 : plotHeight * (d.absent / 100);
+                const absentHeight =
+                  d.absent === null ? 0 : plotHeight * (d.absent / 100);
 
-              const isHovered = hoveredIndex === i;
-              const hasMeeting = isMeetingDay(d);
-              const dateText = formatDate(d.date, uiLocale);
+                const isHovered = hoveredIndex === i;
+                const hasMeeting = isMeetingDay(d);
+                const dateText = formatDate(d.date, uiLocale);
 
-              return (
-                <g
-                  key={d.date}
-                  className={`att-chart-column${
-                    isHovered ? " is-hovered" : ""
-                  }${hasMeeting ? "" : " att-chart-column--nomeeting"}${
-                    hasMeeting && selectedDate === d.date
-                      ? " is-selected"
-                      : ""
-                  }`}
-                  onClick={
-                    hasMeeting ? () => onSelectDate(d.date) : undefined
-                  }
-                  onKeyDown={
-                    hasMeeting
-                      ? (event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            onSelectDate(d.date);
+                return (
+                  <g
+                    key={d.date}
+                    className={`att-chart-column${
+                      isHovered ? " is-hovered" : ""
+                    }${hasMeeting ? "" : " att-chart-column--nomeeting"}${
+                      hasMeeting && selectedDate === d.date
+                        ? " is-selected"
+                        : ""
+                    }`}
+                    onClick={
+                      hasMeeting ? () => onSelectDate(d.date) : undefined
+                    }
+                    onKeyDown={
+                      hasMeeting
+                        ? (event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              onSelectDate(d.date);
+                            }
                           }
-                        }
-                      : undefined
-                  }
-                  onMouseEnter={() => setHoveredIndex(i)}
-                  onFocus={
-                    hasMeeting ? () => setHoveredIndex(i) : undefined
-                  }
-                  onBlur={() => setHoveredIndex(null)}
-                  tabIndex={hasMeeting ? 0 : undefined}
-                  role={hasMeeting ? "button" : undefined}
-                  aria-label={
-                    hasMeeting
-                      ? `${dateText}: ${formatPercent(
-                          d.onTime + d.late
-                        )} hadir`
-                      : `${dateText}: tidak ada meeting`
-                  }
-                >
-                  <rect
-                    x={centerX - slot * 0.42}
-                    y={top - 8}
-                    width={slot * 0.84}
-                    height={plotHeight + 20}
-                    rx="7"
-                    className="att-chart-hover-band"
-                  />
+                        : undefined
+                    }
+                    onMouseEnter={() => setHoveredIndex(i)}
+                    onFocus={hasMeeting ? () => setHoveredIndex(i) : undefined}
+                    onBlur={() => setHoveredIndex(null)}
+                    tabIndex={hasMeeting ? 0 : undefined}
+                    role={hasMeeting ? "button" : undefined}
+                    aria-label={
+                      hasMeeting
+                        ? `${dateText}: ${formatPercent(
+                            d.onTime + d.late
+                          )} hadir`
+                        : `${dateText}: tidak ada meeting`
+                    }
+                  >
+                    <rect
+                      x={centerX - slot * 0.42}
+                      y={top - 8}
+                      width={slot * 0.84}
+                      height={plotHeight + 20}
+                      rx="7"
+                      className="att-chart-hover-band"
+                    />
 
-                  {hasMeeting ? (
-                    <>
-                      <rect
-                        x={x}
-                        y={baseY - onTimeHeight}
-                        width={barWidth}
-                        height={onTimeHeight}
-                        rx="4"
-                        fill="url(#attendance-bar-ontime)"
-                      />
+                    {hasMeeting ? (
+                      <>
+                        <rect
+                          x={x}
+                          y={baseY - onTimeHeight}
+                          width={barWidth}
+                          height={onTimeHeight}
+                          rx="4"
+                          fill="url(#attendance-bar-ontime)"
+                        />
 
-                      <rect
-                        x={x}
-                        y={baseY - onTimeHeight - lateHeight}
-                        width={barWidth}
-                        height={lateHeight}
-                        fill="url(#attendance-bar-late)"
-                      />
+                        <rect
+                          x={x}
+                          y={baseY - onTimeHeight - lateHeight}
+                          width={barWidth}
+                          height={lateHeight}
+                          fill="url(#attendance-bar-late)"
+                        />
 
-                      <rect
-                        x={x}
-                        y={baseY - onTimeHeight - lateHeight - absentHeight}
-                        width={barWidth}
-                        height={absentHeight}
-                        rx="4"
-                        fill="url(#attendance-bar-absent)"
-                      />
-                    </>
-                  ) : null}
+                        <rect
+                          x={x}
+                          y={baseY - onTimeHeight - lateHeight - absentHeight}
+                          width={barWidth}
+                          height={absentHeight}
+                          rx="4"
+                          fill="url(#attendance-bar-absent)"
+                        />
+                      </>
+                    ) : null}
 
-                  {i % labelStep === 0 ? (
-                    <text
-                      x={centerX}
-                      y={height - 27}
-                      textAnchor="middle"
-                      className="att-chart-date"
-                    >
-                      {uiText(d.label)} {new Date(`${d.date}T12:00:00`).getDate()}
-                    </text>
-                  ) : null}
+                    {i % labelStep === 0 ? (
+                      <text
+                        x={centerX}
+                        y={height - 27}
+                        textAnchor="middle"
+                        className="att-chart-date"
+                      >
+                        {uiText(d.label)}{" "}
+                        {new Date(`${d.date}T12:00:00`).getDate()}
+                      </text>
+                    ) : null}
 
-                  {hasMeeting && i % labelStep === 0 ? (
-                    <text
-                      x={centerX}
-                      y={height - 10}
-                      textAnchor="middle"
-                      className="att-chart-day-rate"
-                    >
-                      {formatPercent(d.onTime + d.late)}
-                    </text>
-                  ) : null}
-                </g>
-              );
-            }))}
+                    {hasMeeting && i % labelStep === 0 ? (
+                      <text
+                        x={centerX}
+                        y={height - 10}
+                        textAnchor="middle"
+                        className="att-chart-day-rate"
+                      >
+                        {formatPercent(d.onTime + d.late)}
+                      </text>
+                    ) : null}
+                  </g>
+                );
+              })
+            )}
 
             <path
               d={linePath}
@@ -383,9 +393,11 @@ function TrendChart({
 
                 <span>
                   {hoveredMeetingDay
-                    ? uiText("{{v0}} hadir", { v0: formatPercent(
-                        hoveredMeetingDay.onTime + hoveredMeetingDay.late
-                      ) })
+                    ? uiText("{{v0}} hadir", {
+                        v0: formatPercent(
+                          hoveredMeetingDay.onTime + hoveredMeetingDay.late
+                        ),
+                      })
                     : uiText("Tidak ada meeting")}
                 </span>
               </div>
@@ -425,16 +437,13 @@ function TrendChart({
   );
 }
 
-function todayRange() {
-  const today = jakartaToday();
-  return { from: today, to: today };
-} 
-
 export default function AttendanceDashboardPage() {
   const { text: uiText, locale: uiLocale } = useUiText();
-  const [range, setRange] = useState(todayRange);
-  const [trendRange, setTrendRange] = useState(todayRange);
-  const [deptRange, setDeptRange] = useState(todayRange);
+  const [range, setRange] = useState(defaultRange);
+  const [trendRangeOverride, setTrendRangeOverride] = useState<DateRangeValue | null>(null);
+  const [deptRangeOverride, setDeptRangeOverride] = useState<DateRangeValue | null>(null);
+  const trendRange = trendRangeOverride ?? range;
+  const deptRange = deptRangeOverride ?? range;
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const [level, setLevel] = useState("Semua");
@@ -452,22 +461,12 @@ export default function AttendanceDashboardPage() {
   const pageSize = 8;
 
   const allDates = useMemo(
-    () =>
-      [
-        ...new Set([
-          ...datesBetween(range.from, range.to),
-          ...datesBetween(trendRange.from, trendRange.to),
-          ...datesBetween(deptRange.from, deptRange.to),
-        ]),
-      ].sort(),
-    [
-      range.from,
-      range.to,
-      trendRange.from,
-      trendRange.to,
-      deptRange.from,
-      deptRange.to,
-    ]
+    () => [...new Set([
+      ...datesBetween(range.from, range.to),
+      ...datesBetween(trendRange.from, trendRange.to),
+      ...datesBetween(deptRange.from, deptRange.to),
+    ])].sort(),
+    [range.from, range.to, trendRange.from, trendRange.to, deptRange.from, deptRange.to]
   );
   const {
     records: allRecords,
@@ -479,34 +478,61 @@ export default function AttendanceDashboardPage() {
   const within = (date: string, r: DateRangeValue) =>
     date >= r.from && date <= r.to;
   const records = useMemo(
-    () => allRecords.filter((r) => within(r.date, range)),
-    [allRecords, range]
+    () =>
+      allRecords.filter(
+        (record) =>
+          within(record.date, range) &&
+          (level === "Semua" || record.level === level) &&
+          (session === "Semua sesi" || record.session === session)
+      ),
+    [allRecords, range, level, session]
   );
+
   const sessions = useMemo(
-    () => allSessions.filter((s) => within(s.date, range)),
-    [allSessions, range]
+    () =>
+      allSessions.filter(
+        (item) =>
+          within(item.date, range) &&
+          (level === "Semua" || item.level === level) &&
+          (session === "Semua sesi" || item.session === session)
+      ),
+    [allSessions, range, level, session]
   );
+
   const trendDates = useMemo(
     () => datesBetween(trendRange.from, trendRange.to),
     [trendRange.from, trendRange.to]
   );
   const trendSessions = useMemo(
-    () => allSessions.filter((s) => within(s.date, trendRange)),
-    [allSessions, trendRange]
+    () => allSessions.filter((item) =>
+      within(item.date, trendRange) &&
+      (level === "Semua" || item.level === level) &&
+      (session === "Semua sesi" || item.session === session)
+    ),
+    [allSessions, trendRange, level, session]
   );
   const deptRecords = useMemo(
-    () => allRecords.filter((r) => within(r.date, deptRange)),
-    [allRecords, deptRange]
+    () => allRecords.filter((item) =>
+      (within(item.date, range) || within(item.date, deptRange)) &&
+      (level === "Semua" || item.level === level) &&
+      (session === "Semua sesi" || item.session === session)
+    ),
+    [allRecords, range, deptRange, level, session]
   );
   const deptSessions = useMemo(
-    () => allSessions.filter((s) => within(s.date, deptRange)),
-    [allSessions, deptRange]
+    () => allSessions.filter((item) =>
+      (within(item.date, range) || within(item.date, deptRange)) &&
+      (level === "Semua" || item.level === level) &&
+      (session === "Semua sesi" || item.session === session)
+    ),
+    [allSessions, range, deptRange, level, session]
   );
   const [departmentRetry, setDepartmentRetry] = useState(0);
   const departmentRecap = useDepartmentAttendance({
     sessions: deptSessions,
     records: deptRecords,
     level,
+    range: deptRange,
     retry: departmentRetry,
   });
   const visibleTrend = useMemo<TrendDay[]>(
@@ -524,9 +550,7 @@ export default function AttendanceDashboardPage() {
           onTime: total
             ? pct(daySessions.reduce((n, s) => n + s.onTime, 0))
             : null,
-          late: total
-            ? pct(daySessions.reduce((n, s) => n + s.late, 0))
-            : null,
+          late: total ? pct(daySessions.reduce((n, s) => n + s.late, 0)) : null,
           absent: total
             ? pct(daySessions.reduce((n, s) => n + s.absent, 0))
             : null,
@@ -534,7 +558,7 @@ export default function AttendanceDashboardPage() {
         };
       }),
 
-    [trendDates, trendSessions]
+    [trendDates, trendSessions, uiLocale]
   );
 
   const filteredRows = useMemo(() => {
@@ -619,17 +643,21 @@ export default function AttendanceDashboardPage() {
     setPage(1);
   }
 
-  function changeRange(value: { from: string; to: string }) {
-  setRange(value);
-  setSelectedDate(null);
-  resetPage();
-}
+  function changeRange(value: DateRangeValue) {
+    setRange(value);
+    setTrendRangeOverride(null);
+    setDeptRangeOverride(null);
+    setSession("Semua sesi");
+    setSelectedDate(null);
+    setDepartment(null);
+    resetPage();
+  }
 
   function changeLevel(value: string) {
     setLevel(value);
-
     setSession("Semua sesi");
-
+    setSelectedDate(null);
+    setDepartment(null);
     resetPage();
   }
 
@@ -637,13 +665,16 @@ export default function AttendanceDashboardPage() {
     () =>
       [
         ...new Set(
-          sessions
-            .filter((s) => level === "Semua" || s.level === level)
-            .map((s: SessionStat) => s.session)
+          allSessions
+            .filter(
+              (item) =>
+                within(item.date, range) &&
+                (level === "Semua" || item.level === level)
+            )
+            .map((item: SessionStat) => item.session)
         ),
       ].sort(),
-
-    [sessions, level]
+    [allSessions, range, level]
   );
 
   const availableSessions = ["Semua sesi", ...sessionsForLevel];
@@ -659,35 +690,45 @@ export default function AttendanceDashboardPage() {
 
             <h1>{uiText("Rekapitulasi Presensi")}</h1>
 
-            <p className="att-muted">{uiText("Pantau tingkat kehadiran meeting DM Line dan DM Workshop.")}</p>
+            <p className="att-muted">
+              {uiText(
+                "Pantau tingkat kehadiran meeting DM Line dan DM Workshop."
+              )}
+            </p>
           </div>
 
           <div className="att-filters">
             <label>
-  <span>{uiText("Periode")}</span>
-  <DateRangePicker value={range} onChange={changeRange} maxDate={jakartaToday()} />
-</label>
+              <span>{uiText("Periode")}</span>
+              <DateRangePicker
+                value={range}
+                onChange={changeRange}
+                maxDate={jakartaToday()}
+              />
+            </label>
 
-<label>
-  <span>{uiText("Level")}</span>
-  <FilterSelect
-    value={level}
-    onChange={changeLevel}
-    options={["Semua", "DM Line", "DM Workshop"]}
-  />
-</label>
+            <label>
+              <span>{uiText("Level")}</span>
+              <FilterSelect
+                value={level}
+                onChange={changeLevel}
+                options={["Semua", "DM Line", "DM Workshop"]}
+              />
+            </label>
 
-<label>
-  <span>{uiText("Sesi")}</span>
-  <FilterSelect
-    value={session}
-    onChange={(value) => {
-      setSession(value);
-      resetPage();
-    }}
-    options={availableSessions}
-  />
-</label>
+            <label>
+              <span>{uiText("Sesi")}</span>
+              <FilterSelect
+                value={session}
+                onChange={(value) => {
+                  setSession(value);
+                  setSelectedDate(null);
+                  setDepartment(null);
+                  resetPage();
+                }}
+                options={availableSessions}
+              />
+            </label>
           </div>
         </section>
 
@@ -698,13 +739,20 @@ export default function AttendanceDashboardPage() {
               type="button"
               className="att-date-filter-clear"
               onClick={reload}
-            >{uiText("Coba lagi")}</button>
+            >
+              {uiText("Coba lagi")}
+            </button>
           </div>
         ) : loading && !hasData ? (
-          <div className="att-chart-empty">{uiText("Memuat data presensi…")}</div>
+          <div className="att-chart-empty">
+            {uiText("Memuat data presensi…")}
+          </div>
         ) : (
           <>
-            <section className="att-kpis" aria-label={uiText("Ringkasan kehadiran")}>
+            <section
+              className="att-kpis"
+              aria-label={uiText("Ringkasan kehadiran")}
+            >
               <article className="att-kpi">
                 <div className="att-kpi-top">
                   <span>{uiText("Tepat waktu")}</span>
@@ -714,7 +762,10 @@ export default function AttendanceDashboardPage() {
 
                 <strong>{stats.onTime}</strong>
 
-                <p>{formatPercent(stats.onTimeRate)}{uiText(" dari total presensi")}</p>
+                <p>
+                  {formatPercent(stats.onTimeRate)}
+                  {uiText(" dari total presensi")}
+                </p>
               </article>
 
               <article className="att-kpi">
@@ -729,7 +780,9 @@ export default function AttendanceDashboardPage() {
                 <p>
                   {formatPercent(
                     stats.total ? (stats.late / stats.total) * 100 : 0
-                  )}{" "}{uiText("dari total presensi")}</p>
+                  )}{" "}
+                  {uiText("dari total presensi")}
+                </p>
               </article>
 
               <article className="att-kpi">
@@ -744,7 +797,9 @@ export default function AttendanceDashboardPage() {
                 <p>
                   {formatPercent(
                     stats.total ? (stats.absent / stats.total) * 100 : 0
-                  )}{" "}{uiText("dari total presensi")}</p>
+                  )}{" "}
+                  {uiText("dari total presensi")}
+                </p>
               </article>
 
               <article className="att-kpi att-kpi-rate">
@@ -766,40 +821,56 @@ export default function AttendanceDashboardPage() {
 
             <div className="att-middle-grid">
               <section className="att-panel att-trend-panel">
-              <div className="att-panel-heading">
-                <div>
-                  <h2>{uiText("Tren Kehadiran")}</h2>
+                <div className="att-panel-heading">
+                  <div>
+                    <h2>{uiText("Tren Kehadiran")}</h2>
 
-                  <p>{uiText("Proporsi tepat waktu, telat, dan tidak hadir per hari")}</p>
+                    <p>
+                      {uiText(
+                        "Proporsi tepat waktu, telat, dan tidak hadir per hari"
+                      )}
+                    </p>
+                  </div>
+
+                  <DateRangePicker
+                    value={trendRange}
+                    onChange={setTrendRangeOverride}
+                    maxDate={jakartaToday()}
+                  />
                 </div>
 
-                <DateRangePicker value={trendRange} onChange={setTrendRange} maxDate={jakartaToday()} />
-              </div>
+                <TrendChart
+                  data={visibleTrend}
+                  selectedDate={selectedDate}
+                  onSelectDate={(date) => {
+                    setSelectedDate((current) =>
+                      current === date ? null : date
+                    );
+                    setPage(1);
+                  }}
+                />
 
-              <TrendChart
-                data={visibleTrend}
-                selectedDate={selectedDate}
-                onSelectDate={(date) => {
-                  setSelectedDate((current) =>
-                    current === date ? null : date
-                  );
-                  setPage(1);
-                }}
-              />
+                <div className="att-legend">
+                  <span>
+                    <i className="legend-dot ontime" />
+                    {uiText(" Tepat waktu")}
+                  </span>
 
-              <div className="att-legend">
-                <span>
-                  <i className="legend-dot ontime" />{uiText(" Tepat waktu")}</span>
+                  <span>
+                    <i className="legend-dot late" />
+                    {uiText(" Telat")}
+                  </span>
 
-                <span>
-                  <i className="legend-dot late" />{uiText(" Telat")}</span>
+                  <span>
+                    <i className="legend-dot absent" />
+                    {uiText(" Tidak hadir")}
+                  </span>
 
-                <span>
-                  <i className="legend-dot absent" />{uiText(" Tidak hadir")}</span>
-
-                <span>
-                  <i className="legend-line" />{uiText(" Tepat waktu (%)")}</span>
-              </div>
+                  <span>
+                    <i className="legend-line" />
+                    {uiText(" Tepat waktu (%)")}
+                  </span>
+                </div>
               </section>
 
               <DepartmentRecap
@@ -812,7 +883,7 @@ export default function AttendanceDashboardPage() {
                   resetPage();
                 }}
                 range={deptRange}
-                onRangeChange={setDeptRange}
+                onRangeChange={setDeptRangeOverride}
                 loading={departmentRecap.loading}
                 error={departmentRecap.error}
                 mismatches={departmentRecap.mismatches}
@@ -828,7 +899,11 @@ export default function AttendanceDashboardPage() {
                 <div>
                   <h2>{uiText("Detail Presensi")}</h2>
 
-                  <p>{uiText("Rincian kehadiran berdasarkan tanggal, sesi, dan peserta")}</p>
+                  <p>
+                    {uiText(
+                      "Rincian kehadiran berdasarkan tanggal, sesi, dan peserta"
+                    )}
+                  </p>
                   {selectedDate && (
                     <button
                       type="button"
@@ -837,7 +912,9 @@ export default function AttendanceDashboardPage() {
                         setSelectedDate(null);
                         setPage(1);
                       }}
-                    >{uiText("Filter tanggal: ")}{uiText(formatDate(selectedDate, uiLocale))} ×
+                    >
+                      {uiText("Filter tanggal: ")}
+                      {uiText(formatDate(selectedDate, uiLocale))} ×
                     </button>
                   )}
                   {department && (
@@ -848,7 +925,9 @@ export default function AttendanceDashboardPage() {
                         setDepartment(null);
                         resetPage();
                       }}
-                    >{uiText("Departemen: ")}{uiText(departmentLabel(department))} ×
+                    >
+                      {uiText("Departemen: ")}
+                      {uiText(departmentLabel(department))} ×
                     </button>
                   )}
                 </div>
@@ -872,7 +951,9 @@ export default function AttendanceDashboardPage() {
                   </label>
 
                   <label className="att-search">
-                    <span className="sr-only">{uiText("Cari nama atau peran")}</span>
+                    <span className="sr-only">
+                      {uiText("Cari nama atau peran")}
+                    </span>
 
                     <input
                       value={search}
@@ -910,57 +991,61 @@ export default function AttendanceDashboardPage() {
                   </thead>
 
                   <tbody>
-                    {uiText(paginatedRows.map((r) => (
-                      <tr key={r.id}>
-                        <td>{formatDate(r.date, uiLocale)}</td>
+                    {uiText(
+                      paginatedRows.map((r) => (
+                        <tr key={r.id}>
+                          <td>{formatDate(r.date, uiLocale)}</td>
 
-                        <td>{r.session.replace("Sesi ", "")}</td>
+                          <td>{r.session.replace("Sesi ", "")}</td>
 
-                        <td className="att-person">{r.name}</td>
+                          <td className="att-person">{r.name}</td>
 
-                        <td>{r.role}</td>
+                          <td>{r.role}</td>
 
-                        <td>
-                          <span className="att-level-pill">{r.level}</span>
-                        </td>
+                          <td>
+                            <span className="att-level-pill">{r.level}</span>
+                          </td>
 
-                        <td>{r.attendanceTime ?? "—"}</td>
+                          <td>{r.attendanceTime ?? "—"}</td>
 
-                        <td
-                          className={
-                            r.difference === null
-                              ? ""
-                              : r.difference > 0
-                              ? "att-difference-late"
-                              : "att-difference-early"
-                          }
-                        >
-                          {r.difference === null
-                            ? "—"
-                            : r.difference > 0
-                            ? `+${r.difference} mnt`
-                            : `${r.difference} mnt`}
-                        </td>
-
-                        <td>
-                          <span
-                            className={`att-status-pill ${
-                              r.status === "Tepat waktu"
-                                ? "ontime"
-                                : r.status === "Telat"
-                                ? "late"
-                                : "absent"
-                            }`}
+                          <td
+                            className={
+                              r.difference === null
+                                ? ""
+                                : r.difference > 0
+                                ? "att-difference-late"
+                                : "att-difference-early"
+                            }
                           >
-                            {uiText(r.status)}
-                          </span>
-                        </td>
-                      </tr>
-                    )))}
+                            {r.difference === null
+                              ? "—"
+                              : r.difference > 0
+                              ? `+${r.difference} mnt`
+                              : `${r.difference} mnt`}
+                          </td>
+
+                          <td>
+                            <span
+                              className={`att-status-pill ${
+                                r.status === "Tepat waktu"
+                                  ? "ontime"
+                                  : r.status === "Telat"
+                                  ? "late"
+                                  : "absent"
+                              }`}
+                            >
+                              {uiText(r.status)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
 
                     {!paginatedRows.length && (
                       <tr>
-                        <td colSpan={8} className="att-empty-row">{uiText("Tidak ada data yang cocok dengan filter.")}</td>
+                        <td colSpan={8} className="att-empty-row">
+                          {uiText("Tidak ada data yang cocok dengan filter.")}
+                        </td>
                       </tr>
                     )}
                   </tbody>
@@ -968,26 +1053,37 @@ export default function AttendanceDashboardPage() {
               </div>
 
               <div className="att-table-footer">
-                <span>{uiText("Menampilkan")}{" "}
+                <span>
+                  {uiText("Menampilkan")}{" "}
                   {filteredRows.length ? (page - 1) * pageSize + 1 : 0}–
-                  {Math.min(page * pageSize, filteredRows.length)}{uiText(" dari")}{" "}
-                  {filteredRows.length}{uiText(" data")}</span>
+                  {Math.min(page * pageSize, filteredRows.length)}
+                  {uiText(" dari")} {filteredRows.length}
+                  {uiText(" data")}
+                </span>
 
                 <div className="att-pagination">
                   <button
                     type="button"
                     disabled={page <= 1}
                     onClick={() => setPage((p) => p - 1)}
-                  >{uiText("Sebelumnya")}</button>
+                  >
+                    {uiText("Sebelumnya")}
+                  </button>
 
-                  <span>{uiText("Halaman ")}{page}{uiText(" dari ")}{totalPages}
+                  <span>
+                    {uiText("Halaman ")}
+                    {page}
+                    {uiText(" dari ")}
+                    {totalPages}
                   </span>
 
                   <button
                     type="button"
                     disabled={page >= totalPages}
                     onClick={() => setPage((p) => p + 1)}
-                  >{uiText("Berikutnya")}</button>
+                  >
+                    {uiText("Berikutnya")}
+                  </button>
                 </div>
               </div>
             </section>
