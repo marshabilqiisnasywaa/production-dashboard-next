@@ -586,6 +586,7 @@
 .dml-focal-card.dml-papercard-focal {
   gap: 0;
   padding: 16px 16px;
+  border-color: var(--dm-border);
 }
 
 .dmr-panel--embedded {

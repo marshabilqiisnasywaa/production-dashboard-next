@@ -1567,13 +1567,28 @@
 }
 
 .dml-leader-dashboard .dml-kpi--focal {
-  border: 1.5px solid color-mix(in srgb, var(--dm-green) 30%, #fff);
+  border: 1.5px solid var(--dm-green);
   background: #f5faf7;
   box-shadow: 0 5px 16px rgb(16 75 45 / 8%);
 }
 
+.dml-leader-dashboard .dml-kpi--focal .dml-kpi__top h3,
 .dml-leader-dashboard .dml-kpi--focal .dml-kpi__value {
-  color: var(--dm-text);
+  color: #000;
+}
+
+.dml-leader-dashboard .dml-kpi--focal .dml-kpi__hint,
+.dml-leader-dashboard .dml-kpi--focal .dml-kpi__delta,
+.dml-leader-dashboard .dml-kpi--focal .dml-kpi__delta.is-up,
+.dml-leader-dashboard .dml-kpi--focal .dml-kpi__delta.is-down {
+  color: #000;
+}
+
+.dml-leader-dashboard .dml-kpi--focal .dml-kpi__icon {
+  color: var(--dm-green);
+}
+
+.dml-leader-dashboard .dml-kpi--focal .dml-kpi__value {
   font-weight: 600;
 }
 
