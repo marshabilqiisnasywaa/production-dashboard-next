@@ -1,0 +1,22 @@
+.att-history-panel { margin-top: 16px; min-width: 0; }
+.att-history-panel .att-panel-heading { gap: 12px; flex-wrap: wrap; }
+.att-history-panel .att-panel-heading p { max-width: 650px; line-height: 1.6; }
+.att-history-counts { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 12px 0 8px; color: #63736a; font-size: 12px; }
+.att-history-counts strong { color: #344c3d; margin-left: 5px; font-variant-numeric: tabular-nums; }
+.att-history-note { color: #65756b; font-size: 11px; margin: 0 0 12px; line-height: 1.6; }
+.att-history-scroll { max-width: 100%; overflow: auto; border: 1px solid #e5ebe7; border-radius: 9px; }
+.att-history-scroll table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.att-history-scroll th { background: #f5f8f6; color: #5f7366; font-weight: 500; text-align: left; white-space: nowrap; padding: 10px; }
+.att-history-scroll td { padding: 10px; border-top: 1px solid #edf1ee; line-height: 1.6; }
+.att-history-scroll td:first-child { white-space: nowrap; }
+.att-history-scroll small { color: #65756b; }
+.att-history-status { display: inline-flex; white-space: nowrap; padding: 3px 7px; border-radius: 6px; background: #f0f3f1; color: #63736a; font-size: 11px; }
+.att-history-status.is-ok { background: #edf6ef; color: #386e46; }
+.att-history-status.is-ng { background: #fbefef; color: #a3444d; }
+.att-history-status.is-izin { background: #faf3e6; color: #876320; }
+.att-history-error { color: #a3444d; font-size: 12px; }
+.att-history-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px; font-size: 12px; color: #65756b; }
+.att-history-pagination button { border: 1px solid #dfe8e2; border-radius: 7px; padding: 7px 12px; background: #fff; color: #435d4d; cursor: pointer; }
+.att-history-pagination button:disabled { opacity: .5; cursor: default; }
+.att-history-pagination button:focus-visible { outline: 2px solid #046a38; outline-offset: 2px; }
+@media (pointer: coarse) { .att-history-pagination button { min-height: 44px; } }

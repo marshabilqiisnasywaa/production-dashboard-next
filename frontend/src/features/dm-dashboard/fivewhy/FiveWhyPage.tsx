@@ -3,6 +3,7 @@ import { useUiText } from "@/locales/useUiText";
 
 import { departmentLabel } from "../departments";
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { ClipboardList, MoreHorizontal } from "lucide-react";
 import { IconCheck, IconClock } from "@/components/ui/icons";
 import { accountApi } from "../api";
@@ -84,7 +85,7 @@ type WhyFocus = {
   token: number;
 };
 
-export default function FiveWhyPage() {
+export default function FiveWhyPage({ headerActions, notice }: { headerActions?: ReactNode; notice?: string } = {}) {
   const { text: uiText } = useUiText();
   const [store, setStore] = useState<FiveWhyStore>({
     selectedAbnormalId: "",
@@ -378,8 +379,11 @@ export default function FiveWhyPage() {
               }
               onClick={() => notify("Pengajuan perubahan checklist dikirim.")}
             >{uiText("Ajukan perubahan checklist")}</button>
+            {headerActions}
           </div>
         </header>
+
+        {notice ? <p className="dm-5w-document-note">{notice}</p> : null}
 
         {!hydrated ? (
           <div className="dm-5w-empty dm-5w-card">{uiText("Memuat analisis...")}</div>

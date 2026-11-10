@@ -1,5 +1,166 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
+.dm-5w-page-head-actions .dm-5w-workspace-nav {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+}
+
+.dm-5w-workspace-nav .dm-5w-btn {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 0;
+  min-height: 28px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: normal;
+}
+
+.dm-5w-library-filters {
+  margin-top: 16px;
+}
+
+.dm-5w-document-library-head,
+.dm-5w-upload-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+dialog.dm-5w-upload-modal {
+  position: fixed;
+  inset: 0;
+  width: min(640px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 20px;
+  overflow-y: auto;
+  background: var(--dm-5w-card);
+  border: 1px solid var(--dm-5w-border);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgb(0 0 0 / 18%);
+}
+
+dialog.dm-5w-upload-modal:not([open]) {
+  display: none;
+}
+
+.dm-5w-upload-modal::backdrop {
+  background: rgb(0 0 0 / 40%);
+}
+
+.dm-5w-upload-modal .dm-5w-document-form fieldset {
+  margin-top: 16px;
+  padding-top: 0;
+  border: 0;
+}
+
+.dm-5w-upload-modal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.dm-5w-upload-modal .dm-5w-btn {
+  min-height: 36px;
+}
+
+.dm-5w-documents {
+  padding: 18px;
+}
+
+.dm-5w-document-form p,
+.dm-5w-document-note {
+  margin: 6px 0 12px;
+  color: var(--dm-5w-muted);
+}
+
+.dm-5w-document-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+
+.dm-5w-document-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid var(--dm-5w-border);
+}
+
+.dm-5w-document-info {
+  display: grid;
+  flex: 1 1 240px;
+  gap: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dm-5w-document-info span {
+  color: var(--dm-5w-muted);
+}
+
+.dm-5w-document-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dm-5w-document-form fieldset {
+  min-width: 0;
+  margin: 16px 0 0;
+  padding: 16px 0 0;
+  border: 0;
+  border-top: 1px solid var(--dm-5w-border);
+}
+
+.dm-5w-document-form legend {
+  padding: 0 8px 0 0;
+  font-weight: 600;
+}
+
+.dm-5w-document-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 14px;
+}
+
+.dm-5w-document-fields .dm-5w-field {
+  min-width: 0;
+}
+
+.dm-5w-document-fields input[type="file"] {
+  width: 100%;
+  min-height: 44px;
+  color: var(--dm-5w-text);
+}
+
+.dm-5w-documents .dm-5w-btn {
+  min-height: 44px;
+}
+
+.dm-5w-document-error {
+  padding: 14px;
+  margin: 12px 0;
+  border: 1px solid var(--dm-5w-danger-text);
+  border-radius: 8px;
+  background: var(--dm-5w-danger-bg);
+  color: var(--dm-5w-danger-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .dm-5w-root {
   --dm-5w-bg: #f7faf8;
   --dm-5w-card: #ffffff;

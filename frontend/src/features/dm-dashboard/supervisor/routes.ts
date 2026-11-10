@@ -5,6 +5,7 @@ export const SUPERVISOR_ROUTES = {
   approvals: `${SUPERVISOR_BASE}/persetujuan`,
   lines: `${SUPERVISOR_BASE}/monitoring`,
   escalations: `${SUPERVISOR_BASE}/eskalasi`,
+  fiveWhy: `${SUPERVISOR_BASE}/5why`,
   myProblems: `${SUPERVISOR_BASE}/masalah-saya`,
   workshopMeeting: `${SUPERVISOR_BASE}/workshop-meeting`,
   history: `${SUPERVISOR_BASE}/riwayat`,

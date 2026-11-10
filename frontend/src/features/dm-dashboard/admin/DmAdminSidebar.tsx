@@ -17,7 +17,8 @@ export type DmAdminTabKey =
   | "attendance"
   | "problems"
   | "history"
-  | "sqdip";
+  | "sqdip"
+  | "history-import";
 
 interface DmAdminSidebarProps {
   isAdmin: boolean;
@@ -315,6 +316,14 @@ export default function DmAdminSidebar({
               <span>{uiText("Arsip")}</span>
             </button>
 
+            <button
+              type="button"
+              className={`dm-admin-nav-btn ${activeTab === "history-import" ? "is-active" : ""}`}
+              onClick={() => select("history-import")}
+            >
+              <span className="dm-admin-nav-icon"><IconHistory size={18} /></span>
+              <span>{uiText("Impor Histori Excel")}</span>
+            </button>
             <div className="dm-admin-nav-heading">{uiText("SQDIP MONITORING")}</div>
             <button
               type="button"

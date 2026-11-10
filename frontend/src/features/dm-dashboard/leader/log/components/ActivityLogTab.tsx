@@ -1,7 +1,6 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
 
-
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/ui/Pagination";
@@ -34,13 +33,23 @@ export function ActivityLogTab({ entries }: { entries: ActivityEntry[] }) {
       if (range.from && day < range.from) return false;
       if (range.to && day > range.to) return false;
       if (group !== "all" && e.group !== group) return false;
-      return !q || `${e.user} ${e.role} ${e.action} ${e.object} ${e.attendanceLateness ?? ""}`.toLowerCase().includes(q);
+      return (
+        !q ||
+        `${e.user} ${e.role} ${e.action} ${e.object} ${
+          e.attendanceLateness ?? ""
+        }`
+          .toLowerCase()
+          .includes(q)
+      );
     });
   }, [entries, query, range, group]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, pageCount);
-  const visible = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const visible = filtered.slice(
+    (safePage - 1) * pageSize,
+    safePage * pageSize
+  );
 
   return (
     <section className="ui-card">
@@ -78,8 +87,8 @@ export function ActivityLogTab({ entries }: { entries: ActivityEntry[] }) {
             </option>
           ))}
         </select>
-        <Button disabled={filtered.length === 0} onClick={() => downloadCsv("activity-log.csv", activityToCsv(filtered, uiLocale))}>
-          <IconDownload size={16} />{uiText(" Export")}</Button>
+        {/* <Button disabled={filtered.length === 0} onClick={() => downloadCsv("activity-log.csv", activityToCsv(filtered, uiLocale))}>
+          <IconDownload size={16} />{uiText(" Export")}</Button> */}
       </div>
 
       <div className="dml-table-wrap">
@@ -97,32 +106,44 @@ export function ActivityLogTab({ entries }: { entries: ActivityEntry[] }) {
           <tbody>
             {visible.length === 0 && (
               <tr>
-                <td colSpan={6} className="dml-empty">{uiText("Belum ada aktivitas yang cocok dengan filter.")}</td>
+                <td colSpan={6} className="dml-empty">
+                  {uiText("Belum ada aktivitas yang cocok dengan filter.")}
+                </td>
               </tr>
             )}
-            {uiText(visible.map((e) => (
-              <tr key={e.id}>
-                <td className="is-strong">
-                  {formatDateTime(e.at, uiLocale)}
-                  {e.attendanceLateness && <div><span className="dml-lg-late">{e.attendanceLateness}</span></div>}
-                </td>
-                <td>{e.user}</td>
-                <td className="is-muted">{e.role}</td>
-                <td>{e.action}</td>
-                <td className="dml-lg-object">{e.object}</td>
-                <td>
-                  {e.before || e.after ? (
-                    <>
-                      {e.before && <span className="dml-lg-sub">{e.before}</span>}
-                      {e.before && e.after && " → "}
-                      {e.after && <strong>{e.after}</strong>}
-                    </>
-                  ) : (
-                    "-"
-                  )}
-                </td>
-              </tr>
-            )))}
+            {uiText(
+              visible.map((e) => (
+                <tr key={e.id}>
+                  <td className="is-strong">
+                    {formatDateTime(e.at, uiLocale)}
+                    {e.attendanceLateness && (
+                      <div>
+                        <span className="dml-lg-late">
+                          {e.attendanceLateness}
+                        </span>
+                      </div>
+                    )}
+                  </td>
+                  <td>{e.user}</td>
+                  <td className="is-muted">{e.role}</td>
+                  <td>{e.action}</td>
+                  <td className="dml-lg-object">{e.object}</td>
+                  <td>
+                    {e.before || e.after ? (
+                      <>
+                        {e.before && (
+                          <span className="dml-lg-sub">{e.before}</span>
+                        )}
+                        {e.before && e.after && " → "}
+                        {e.after && <strong>{e.after}</strong>}
+                      </>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

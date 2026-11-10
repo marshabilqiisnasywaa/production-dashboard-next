@@ -6,6 +6,7 @@ import {
   type DmScorecardLeader,
   type DmSqdipKpiDay,
   type DmStandupKpiDay,
+  type DmHistoryStatus,
 } from "../api";
 import type { LeaderScore } from "./data";
 import { PAPERCARD_CHANGED_EVENT } from "../notifications/revisions";
@@ -22,15 +23,16 @@ export type ScorecardLine = {
   after: number;
 };
 
-export type PapercardStatus = "OK" | "OK terlambat" | "Belum diisi" | "-";
+export type PapercardStatus = "OK" | "OK terlambat" | "Belum diisi" | "NG" | "-";
 
 export type PapercardRow = {
+  source?: "live" | "excel";
   final: boolean;
   date: string;
   line: string;
   leader: string;
   statuses: PapercardStatus[];
-  rate: number;
+  rate: number | null;
   onTime: number;
   registered: number;
   closed: number;
@@ -46,15 +48,19 @@ export type StandupMeetingCell = {
 };
 
 export type StandupRow = {
+  source?: "live" | "excel";
+  historicalStatuses?: DmHistoryStatus[];
+  scoreNote?: string | null;
+  sourceScores?: number[];
   final: boolean;
   date: string;
   line: string;
   leader: string;
   meetings: StandupMeetingCell[];
-  attendance: number;
-  content: number;
-  closeLoop: number;
-  total: number;
+  attendance: number | null;
+  content: number | null;
+  closeLoop: number | null;
+  total: number | null;
 };
 
 export type SqdipTableRow = {
@@ -109,8 +115,10 @@ export function useScorecardData(from: string, to: string) {
   useEffect(() => {
     let alive = true;
     let inFlight = false;
-    const mean = (days: { total: number }[]) => days.length
-      ? round2(days.reduce((sum, day) => sum + day.total, 0) / days.length) : 0;
+    const mean = (days: { total: number | null }[]) => {
+      const values = days.flatMap((day) => day.total === null ? [] : [day.total]);
+      return values.length ? round2(values.reduce((sum, value) => sum + value, 0) / values.length) : 0;
+    };
     const refresh = async () => {
       if (inFlight || !alive) return;
       inFlight = true;
@@ -170,12 +178,14 @@ export function useScorecardData(from: string, to: string) {
     window.addEventListener("focus", refreshVisible);
     document.addEventListener("visibilitychange", refreshVisible);
     window.addEventListener(PAPERCARD_CHANGED_EVENT, refreshVisible);
+    window.addEventListener("dm-history-imported", refreshVisible);
     return () => {
       alive = false;
       window.clearInterval(timer);
       window.removeEventListener("focus", refreshVisible);
       document.removeEventListener("visibilitychange", refreshVisible);
       window.removeEventListener(PAPERCARD_CHANGED_EVENT, refreshVisible);
+      window.removeEventListener("dm-history-imported", refreshVisible);
     };
   }, [from, to]);
 
@@ -205,6 +215,11 @@ export function toPapercardRows(lines: ScorecardLine[]): PapercardRow[] {
   for (const line of lines) {
     for (const day of line.papercard) {
       const statuses = DEPARTMENT_ORDER.map((department): PapercardStatus => {
+        if (day.source === "excel") {
+          const role = department === "PROD" ? "Leader" : department === "QC" ? "IPQC" : department;
+          const status = day.historicalStatuses?.find((item) => item.role === role)?.status;
+          return status === "OK" || status === "NG" ? status : "-";
+        }
         const check = day.checks.find((item) => item.department === department);
         if (!check) return "-";
         if (!check.submitted) return "Belum diisi";
@@ -213,12 +228,17 @@ export function toPapercardRows(lines: ScorecardLine[]): PapercardRow[] {
       const required = day.checks.length;
       const onTimeCount = day.checks.filter((check) => check.onTime).length;
       rows.push({
+        source: day.source,
         final: day.final,
         date: day.date,
         line: line.info.lineCode,
-        leader: line.info.leaderName,
+        leader: day.leaderName ?? line.info.leaderName,
         statuses,
-        rate: required === 0 ? 0 : Math.round((onTimeCount / required) * 100),
+        rate: day.source === "excel"
+          ? statuses.every((status) => status !== "-")
+            ? Math.round(statuses.filter((status) => status === "OK").length / statuses.filter((status) => status !== "-").length * 100)
+            : null
+          : required === 0 ? 0 : Math.round((onTimeCount / required) * 100),
         onTime: day.onTime,
         registered: day.registered,
         closed: day.closed,
@@ -234,10 +254,14 @@ export function toStandupRows(lines: ScorecardLine[]): StandupRow[] {
   for (const line of lines) {
     for (const day of line.standup) {
       rows.push({
+        source: day.source,
+        historicalStatuses: day.historicalStatuses,
+        scoreNote: day.scoreNote,
+        sourceScores: day.sourceScores,
         final: day.final,
         date: day.date,
         line: line.info.lineCode,
-        leader: line.info.leaderName,
+        leader: day.leaderName ?? line.info.leaderName,
         meetings: day.meetings,
         attendance: day.attendance,
         content: day.content,
@@ -285,7 +309,7 @@ export function buildTrendSeries(
 ): TrendSeries {
   const maps = lines.map((line) => ({
     papercard: new Map(line.papercard.map((day) => [day.date, day.total])),
-    standup: new Map(line.standup.map((day) => [day.date, day.total])),
+    standup: new Map(line.standup.filter((day) => day.total !== null).map((day) => [day.date, day.total])),
     sqdip: new Map(line.sqdip.filter((day) => day.final).map((day) => [day.date, day.total])),
   }));
   const dates = new Set<string>();
@@ -302,6 +326,7 @@ export function buildTrendSeries(
       [...map[kind].entries()]
         .filter(([date]) => bucketKey(date, granularity) === bucket)
         .map(([, value]) => value)
+        .filter((value): value is number => value !== null)
     );
 
   // D. sorted berisi bucket unik

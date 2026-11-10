@@ -86,6 +86,11 @@ export function SupervisorSidebar({
           icon: <IconAlert />,
           badge: escalationCount,
         },
+        {
+          label: "5Why & PDCA",
+          href: SUPERVISOR_ROUTES.fiveWhy,
+          icon: <IconPulse />,
+        },
       ],
     },
     {

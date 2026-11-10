@@ -736,11 +736,14 @@ class PapercardKpiCheckOut(CamelModel):
 class PapercardKpiDayOut(CamelModel):
     date: date
     final: bool
-    on_time: int
-    registered: int
-    closed: int
-    total: int
+    on_time: float
+    registered: float
+    closed: float
+    total: float
     checks: list[PapercardKpiCheckOut]
+    source: Literal["live", "excel"] = "live"
+    leader_name: str | None = None
+    historical_statuses: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class PapercardKpiAverageOut(CamelModel):
@@ -787,13 +790,18 @@ class StandupKpiMeetingOut(CamelModel):
 class StandupKpiDayOut(CamelModel):
     date: date
     final: bool
-    attendance: int
-    content: int
-    close_loop: int
-    total: int
-    problems: int
-    problems_closed: int
+    attendance: float | None
+    content: float | None
+    close_loop: float | None
+    total: float | None
+    problems: int | None
+    problems_closed: int | None
     meetings: list[StandupKpiMeetingOut]
+    source: Literal["live", "excel"] = "live"
+    leader_name: str | None = None
+    historical_statuses: list[dict[str, Any]] = Field(default_factory=list)
+    score_note: str | None = None
+    source_scores: list[float] = Field(default_factory=list)
 
 
 class StandupKpiAverageOut(CamelModel):

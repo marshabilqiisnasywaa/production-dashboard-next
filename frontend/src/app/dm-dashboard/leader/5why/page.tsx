@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import FiveWhyPage from "@/features/dm-dashboard/fivewhy/FiveWhyPage";
+import FiveWhyWorkspace from "@/features/dm-dashboard/fivewhy/FiveWhyWorkspace";
 
 export const metadata: Metadata = {
   title: "5Why & PDCA",
 };
 
 export default function Page() {
-  return <FiveWhyPage />;
+  return <FiveWhyWorkspace />;
 }

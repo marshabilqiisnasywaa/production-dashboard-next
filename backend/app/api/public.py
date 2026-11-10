@@ -20,6 +20,7 @@ from app.models import (
     Workshop,
     WorkshopMeetingSession,
     SupervisorWorkshop,
+    HistoricalEntry,
 )
 from app.schemas import (
     PublicAttendanceRecapOut,
@@ -40,6 +41,7 @@ from app.schemas import (
 )
 from app.services import sqdip as sqdip_service
 from app.services import standup_kpi
+from app.services import history_import
 from app.services.boards import public_board
 from app.services.papercard_kpi import MAX_CLOSED, MAX_ON_TIME, MAX_REGISTERED, MAX_TOTAL, average_scores, line_kpi
 
@@ -371,13 +373,14 @@ def standup_kpi_endpoint(
 ) -> StandupKpiOut:
     line, today = resolve_kpi_request(db, line_id, line_code, from_date, to_date)
     days = standup_kpi.line_standup(db, line.id, from_date, to_date, shift, today)
+    days, average = history_import.merge_kpi(db, line.id, from_date, to_date, shift, "standup_kpi", days, today)
     return StandupKpiOut(
         max_attendance=standup_kpi.MAX_ATTENDANCE,
         max_content=standup_kpi.MAX_CONTENT,
         max_close_loop=standup_kpi.MAX_CLOSE_LOOP,
         max_total=standup_kpi.MAX_TOTAL,
         days=days,
-        average=standup_kpi.average_scores(days),
+        average=average,
     )
 
 
@@ -416,13 +419,14 @@ def papercard_kpi(
 ) -> PapercardKpiOut:
     line, today = resolve_kpi_request(db, line_id, line_code, from_date, to_date)
     days = line_kpi(db, line.id, from_date, to_date, shift, today)
+    days, average = history_import.merge_kpi(db, line.id, from_date, to_date, shift, "papercard_kpi", days, today)
     return PapercardKpiOut(
         max_on_time=MAX_ON_TIME,
         max_registered=MAX_REGISTERED,
         max_closed=MAX_CLOSED,
         max_total=MAX_TOTAL,
         days=days,
-        average=average_scores(days),
+        average=average,
     )
 
 
@@ -461,6 +465,45 @@ def scorecard_leaders(
         )
         for line, workshop, employee, group in rows
     ]
+    history_query = select(HistoricalEntry, Line, Workshop, DmGroup).join(
+        Line, Line.id == HistoricalEntry.line_id,
+    ).join(Workshop, Workshop.id == Line.workshop_id).outerjoin(DmGroup, DmGroup.id == Line.dm_group_id).where(
+        HistoricalEntry.kind.in_(("papercard_kpi", "standup_kpi")),
+    )
+    if from_date is not None:
+        history_query = history_query.where(HistoricalEntry.date >= from_date)
+    if to_date is not None:
+        history_query = history_query.where(HistoricalEntry.date <= to_date)
+    history_by_line = {}
+    for entry, line, workshop, group in db.execute(history_query.order_by(HistoricalEntry.date)):
+        item = history_by_line.setdefault(line.id, {"line": line, "workshop": workshop, "group": group, "names": set(), "dms": set(), "review": False})
+        if "dm" in entry.data.get("mappingReviewFields", []) or (entry.data.get("mappingReview") and "mappingReviewFields" not in entry.data):
+            item["review"] = True
+        item["names"].add(entry.leader_name)
+        if entry.source_dm:
+            item["dms"].add(entry.source_dm)
+    indexed = {leader.line_id: leader for leader in leaders}
+    for line_id, item in history_by_line.items():
+        line, workshop, group = item["line"], item["workshop"], item["group"]
+        current = indexed.get(line_id)
+        names = set(item["names"])
+        if current and to_date is not None and to_date >= datetime.now(ZoneInfo("Asia/Jakarta")).date():
+            names.add(current.leader_name)
+        historical_name = " / ".join(sorted(names))
+        dm_name = "Perlu verifikasi DM" if item["review"] else " / ".join(sorted(item["dms"])) or (group.name if group else None)
+        if current:
+            if current.leader_name != historical_name:
+                current.leader_id = 0
+                current.leader_photo_url = None
+            current.leader_name = historical_name
+            current.dm_name = dm_name
+        else:
+            leaders.append(ScorecardLeaderOut(
+                line_id=line.id, line_code=line.code, line_name=line.name, model=line.model,
+                workshop_id=workshop.id, workshop_name=workshop.name,
+                dm_group_id=group.id if group else None, dm_name=dm_name,
+                leader_id=0, leader_name=historical_name, leader_photo_url=None,
+            ))
     known = {leader.line_code.strip().upper() for leader in leaders}
     for index, (code, leader_name) in enumerate(sqdip_service.historical_lines(db, known, from_date, to_date)):
         leaders.append(ScorecardLeaderOut(
@@ -478,3 +521,20 @@ def scorecard_leaders(
             historical=True,
         ))
     return leaders
+
+
+@router.get("/historical-attendance")
+def historical_attendance(
+    from_date: date = Query(alias="from"), to_date: date = Query(alias="to"),
+    db: Session = Depends(get_db),
+):
+    check_kpi_range(from_date, to_date)
+    rows = db.execute(select(HistoricalEntry, Line.code).join(Line, Line.id == HistoricalEntry.line_id).where(
+        HistoricalEntry.kind == "attendance", HistoricalEntry.date >= from_date,
+        HistoricalEntry.date <= to_date,
+    ).order_by(HistoricalEntry.date.desc(), Line.code, HistoricalEntry.shift))
+    return [{
+        "id": entry.id, "kind": entry.kind, "date": entry.date, "line": code,
+        "leader": entry.leader_name, "dm": entry.source_dm, "shift": entry.shift,
+        "sourceSheet": entry.source_sheet, "sourceRow": entry.source_row, "data": entry.data,
+    } for entry, code in rows]

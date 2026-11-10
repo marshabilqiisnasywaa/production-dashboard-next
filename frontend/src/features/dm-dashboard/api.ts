@@ -303,6 +303,54 @@ const json = (method: string, data: unknown): RequestInit => ({
   body: JSON.stringify(data),
 });
 
+export type FiveWhyDocument = {
+  picId: number | null;
+  picName: string | null;
+  lineId: number;
+  lineCode: string;
+  id: string;
+  title: string;
+  category: "analysis" | "evidence" | "standard" | "other";
+  source: "file" | "simo";
+  url: string | null;
+  fileName: string | null;
+  size: number | null;
+  createdAt: string;
+};
+
+export type FiveWhyDocumentLine = {
+  id: number;
+  code: string;
+  leaders: string[];
+  pics: { id: number; name: string; employeeNo: string; supervisorName: string | null }[];
+};
+
+export const fiveWhyDocumentsApi = {
+  options: () => request<FiveWhyDocumentLine[]>("/fivewhy/documents/options", {}, true),
+  list: () => request<FiveWhyDocument[]>("/fivewhy/documents", {}, true),
+  addLink: (input: { lineId: number; picId: number; title: string; category: FiveWhyDocument["category"]; url: string }) =>
+    request<FiveWhyDocument>("/fivewhy/documents/simo", json("POST", input), true),
+  upload: (lineId: number, picId: number, title: string, category: FiveWhyDocument["category"], file: File) => {
+    const form = new FormData();
+    form.append("line_id", String(lineId));
+    form.append("pic_id", String(picId));
+    form.append("title", title);
+    form.append("category", category);
+    form.append("file", file);
+    return request<FiveWhyDocument>("/fivewhy/documents/file", { method: "POST", body: form }, true);
+  },
+  remove: (documentId: string) => request<void>(
+    `/fivewhy/documents/${encodeURIComponent(documentId)}`, { method: "DELETE" }, true,
+  ),
+  download: async (documentId: string): Promise<Blob> => {
+    const response = await fetch(`${apiBase()}/api/fivewhy/documents/${encodeURIComponent(documentId)}/download`, {
+      headers: { Authorization: `Bearer ${getToken() ?? ""}` }, cache: "no-store",
+    });
+    if (!response.ok) throw new ApiError(response.status, errorMessage(await response.json().catch(() => null), response.status));
+    return response.blob();
+  },
+};
+
 export type DmPublicWorkshopSupervisor = {
   employeeId: number;
   name: string;
@@ -336,6 +384,9 @@ export type DmPapercardKpiCheck = {
 };
 
 export type DmPapercardKpiDay = {
+  source?: "live" | "excel";
+  leaderName?: string | null;
+  historicalStatuses?: DmHistoryStatus[];
   date: string;
   final: boolean;
   onTime: number;
@@ -369,14 +420,19 @@ export type DmStandupKpiMeeting = {
 };
 
 export type DmStandupKpiDay = {
+  source?: "live" | "excel";
+  leaderName?: string | null;
+  historicalStatuses?: DmHistoryStatus[];
+  scoreNote?: string | null;
+  sourceScores?: number[];
   date: string;
   final: boolean;
-  attendance: number;
-  content: number;
-  closeLoop: number;
-  total: number;
-  problems: number;
-  problemsClosed: number;
+  attendance: number | null;
+  content: number | null;
+  closeLoop: number | null;
+  total: number | null;
+  problems: number | null;
+  problemsClosed: number | null;
   meetings: DmStandupKpiMeeting[];
 };
 
@@ -481,7 +537,60 @@ export const sqdipApi = {
     ),
 };
 
+export type DmHistoryKind = "papercard_kpi" | "standup_kpi" | "papercard_status" | "attendance";
+export type DmHistoryStatus = {
+  role: "Leader" | "ME" | "PE" | "IPQC" | "PE Structure" | "PE Electric" | "QA";
+  session: 1 | 2 | null;
+  status: "OK" | "NG" | "IZIN" | null;
+};
+export type DmHistoryRow = {
+  kind: DmHistoryKind;
+  date: string;
+  line: string;
+  leader: string;
+  dm: string | null;
+  sourceSheet: string;
+  sourceRow: number;
+  scores: number[];
+  statuses: DmHistoryStatus[];
+};
+export type DmHistoryImportInput = {
+  fileName: string;
+  shift: "Shift 1" | "Shift 2" | "Shift 3";
+  mode: "skip" | "replace";
+  identityPolicy: "strict" | "preserve";
+  fromDate: string;
+  toDate: string;
+  mappings: Record<string, number>;
+  rows: DmHistoryRow[];
+};
+export type DmHistoryPreview = {
+  valid: number; added: number; existing: number; duplicates: number;
+  errors: string[]; warnings: string[];
+};
+export type DmHistoryBatch = {
+  id: number; fileName: string; importedBy: string; createdAt: string;
+  added: number; updated: number; skipped: number;
+};
+export type DmHistoryStoredRow = {
+  id: number; kind: DmHistoryKind; date: string; line: string; leader: string;
+  dm: string | null; shift: string; sourceSheet: string; sourceRow: number;
+  data: { scores: number[]; statuses: DmHistoryStatus[]; mappingReview?: string[]; scoreReview?: string[] };
+};
+export const historyImportApi = {
+  preview: (data: DmHistoryImportInput) => request<DmHistoryPreview>("/history-import/preview", json("POST", data), true),
+  commit: (data: DmHistoryImportInput) => request<{ batchId: number; added: number; updated: number; skipped: number }>("/history-import/commit", json("POST", data), true),
+  batches: () => request<DmHistoryBatch[]>("/history-import/batches", {}, true),
+  entries: (params: { from: string; to: string; page: number; kind?: DmHistoryKind }) =>
+    request<{ total: number; rows: DmHistoryStoredRow[] }>("/history-import/entries?" + new URLSearchParams({
+      from: params.from, to: params.to, page: String(params.page), ...(params.kind ? { kind: params.kind } : {}),
+    }), {}, true),
+};
+
 export const publicApi = {
+  historicalAttendance: (range: { from: string; to: string }) => request<DmHistoryStoredRow[]>(
+    "/public/historical-attendance?" + new URLSearchParams(range),
+  ),
   workshops: () => request<{ id: number; name: string }[]>("/public/workshops"),
   scorecardLeaders: (range?: { from: string; to: string }) =>
     request<DmScorecardLeader[]>(

@@ -732,6 +732,7 @@ export default function AttendanceDashboardPage() {
           </div>
         </section>
 
+
         {error && !hasData ? (
           <div className="att-chart-empty" role="alert">
             {uiText(error)}{" "}

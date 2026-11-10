@@ -884,9 +884,16 @@ export function papercardCount(rows: PapercardRow[]) {
 }
 
 export function standupCount(rows: StandupRow[]) {
-  return countStatuses(rows.flatMap((row) => row.meetings
-    .filter((meeting) => meeting.held)
-    .map((meeting) => meeting.complete ? "OK" : "NG")));
+  return countStatuses(rows.flatMap((row) => {
+    if (row.source === "excel") {
+      return [1, 2].flatMap((number) => {
+        const statuses = row.historicalStatuses?.filter((item) => item.session === number) ?? [];
+        if (!statuses.length || statuses.some((item) => item.status === null)) return [];
+        return [statuses.every((item) => item.status === "OK") ? "OK" : "NG"];
+      });
+    }
+    return row.meetings.filter((meeting) => meeting.held).map((meeting) => meeting.complete ? "OK" : "NG");
+  }));
 }
 
 export function PapercardDetail({
@@ -900,6 +907,7 @@ export function PapercardDetail({
   return (
     <>
       <DetailHeader canExport={canExport} caption="" />
+      {visibleRows.some((row) => row.source === "excel") && <p className="mb-3 text-xs text-text-secondary">{uiText("Histori Excel mempertahankan poin sumber. NG pada status pengisian berarti terlambat atau tidak mengisi; bukan temuan checklist. Bobot historis dapat berbeda dari bobot saat ini.")}</p>}
       {visibleRows.length === 0 ? (
         <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">{uiText("Belum ada data")}</div>
       ) : (
@@ -988,7 +996,7 @@ export function PapercardDetail({
                     </td>
                   ))}
                   <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">
-                    {row.rate}%
+                    {row.rate === null ? "—" : `${row.rate}%`}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">
                     {formatScore(row.onTime)}
@@ -1014,10 +1022,23 @@ export function PapercardDetail({
 
 function MeetingCell({
   meeting,
+  historical,
+  statuses = [],
+  number,
 }: {
   meeting: StandupRow["meetings"][number] | undefined;
+  historical?: boolean;
+  statuses?: StandupRow["historicalStatuses"];
+  number: number;
 }) {
   const { text: uiText } = useUiText();
+  if (!meeting && historical) {
+    const session = statuses.filter((item) => item.session === number);
+    if (!session.length) return <Badge tone="neutral">{uiText("Attendance Excel tidak tersedia")}</Badge>;
+    const ok = session.filter((item) => item.status === "OK").length;
+    const unknown = session.filter((item) => item.status === null).length;
+    return <details className="text-xs"><summary className="cursor-pointer"><Badge tone={unknown ? "neutral" : ok === session.length ? "success" : "danger"}>{unknown === session.length ? uiText("Status belum diketahui") : uiText("{{v0}}/{{v1}} role OK", { v0: ok, v1: session.length })}</Badge></summary><div className="mt-2 space-y-1 text-left text-text-secondary">{session.map((item) => <div key={item.role}>{item.role}: {uiText(item.status ?? "Tidak diketahui")}</div>)}</div></details>;
+  }
   if (!meeting || !meeting.held) return <Badge tone="neutral">{uiText("Tidak ada")}</Badge>;
   return (
     <Badge tone={meeting.complete ? "success" : "danger"}>
@@ -1031,6 +1052,7 @@ export function StandupDetail({ canExport, rows }: { canExport: boolean; rows: S
   return (
     <>
       <DetailHeader canExport={canExport} caption="" />
+      {rows.some((row) => row.source === "excel") && <p className="mb-3 text-xs text-text-secondary">{uiText("Status Meeting 1/2 berasal dari attendance Excel per role. Klik status untuk melihat rincian. Poin berasal dari sheet rekap Standup Meeting; tanda — berarti rekap tidak tersedia atau poin perlu diverifikasi, bukan nilai nol.")}</p>}
       <div className="scorecard-tab-table overflow-x-auto rounded-xl border border-border">
         <table className="w-full table-auto text-left text-sm">
           <thead className="bg-section text-xs text-text-secondary">
@@ -1106,6 +1128,9 @@ export function StandupDetail({ canExport, rows }: { canExport: boolean; rows: S
                       className="whitespace-nowrap px-4 py-3 text-center"
                     >
                       <MeetingCell
+                        historical={row.source === "excel"}
+                        statuses={row.historicalStatuses}
+                        number={number}
                         meeting={row.meetings.find(
                           (meeting) => meeting.number === number
                         )}
@@ -1113,16 +1138,17 @@ export function StandupDetail({ canExport, rows }: { canExport: boolean; rows: S
                     </td>
                   ))}
                   <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">
-                    {formatScore(row.attendance)}
+                    {row.attendance === null ? "—" : formatScore(row.attendance)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">
-                    {formatScore(row.content)}
+                    {row.content === null ? "—" : formatScore(row.content)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">
-                    {formatScore(row.closeLoop)}
+                    {row.closeLoop === null ? "—" : formatScore(row.closeLoop)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">
-                    {formatScore(row.total)}
+                    {row.total === null ? "—" : formatScore(row.total)}
+                    {row.scoreNote && <details className="mt-1 max-w-64 text-left text-xs font-normal text-text-secondary"><summary className="cursor-pointer">{uiText(row.sourceScores?.length ? "Poin perlu verifikasi" : "Rekap poin tidak tersedia")}</summary><p className="mt-2 whitespace-normal">{uiText(row.scoreNote)}</p>{Boolean(row.sourceScores?.length) && <p>{uiText("Nilai sumber Excel")}: {row.sourceScores?.join(" + ")}</p>}</details>}
                   </td>
                 </tr>
               );

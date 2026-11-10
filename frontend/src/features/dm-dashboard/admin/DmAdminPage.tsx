@@ -45,6 +45,7 @@ import PapercardProblems from "./PapercardProblems";
 import PapercardHistory from "./PapercardHistory";
 import StandupHistory from "./StandupHistory";
 import SqdipMonitor from "./sqdip/SqdipMonitor";
+import HistoryImportPage from "./history-import/HistoryImportPage";
 
 type Auth =
   | { kind: "checking" }
@@ -169,6 +170,7 @@ export default function DmAdminPage() {
 }
 
 const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
+  "history-import": { crumb: "Impor Histori", title: "Impor Histori Papercard & Standup Meeting" },
   dashboard: {
     crumb: "Dashboard",
     title: "Dashboard Lini: KPI, Absensi, dan Meeting",
@@ -207,6 +209,10 @@ const ADMIN_TAB_HEADERS: Record<
   DmAdminTabKey,
   { title: string; description: string } | null
 > = {
+  "history-import": {
+    title: "Impor Histori Papercard & Standup Meeting",
+    description: "Upload workbook asesmen, cocokkan line, dan periksa histori sebelum disimpan.",
+  },
   workshop: {
     title: "Line, Workshop & Tim",
     description:
@@ -1268,6 +1274,9 @@ function AdminWorkspace({
               <div className="dm-admin-section dm-tab-lines">
                 <SqdipMonitor />
               </div>
+            )}
+            {activeTab === "history-import" && isAdmin && (
+              <div className="dm-admin-section"><HistoryImportPage lines={lines} /></div>
             )}
           </div>
         </main>
