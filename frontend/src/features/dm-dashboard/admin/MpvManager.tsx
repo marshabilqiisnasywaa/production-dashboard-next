@@ -588,7 +588,7 @@ export default function MpvManager({
                             ) : item.period > previousPeriod() ? (
                               <span className="mpv-status-chip is-upcoming">{uiText("Mendatang")}</span>
                             ) : (
-                              <span className="mpv-status-chip is-past">{uiText("Arsip")}</span>
+                              <span className="mpv-status-chip is-past">{uiText("Riwayat")}</span>
                             )}
                           </td>
                           <td style={{ textAlign: "right" }}>

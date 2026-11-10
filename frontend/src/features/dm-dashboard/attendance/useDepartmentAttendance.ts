@@ -36,6 +36,7 @@ type Props = {
   sessions: SessionStat[];
   records: AttendanceRecord[];
   level: string;
+  range?: { from: string; to: string };
   retry: number;
 };
 
@@ -180,6 +181,7 @@ export function useDepartmentAttendance({
   sessions,
   records,
   level,
+  range,
   retry,
 }: Props) {
   const [rosters, setRosters] = useState<Map<string, SessionRoster> | null>(
@@ -272,6 +274,7 @@ export function useDepartmentAttendance({
       }
 
       if (level !== "Semua" && session.level !== level) continue;
+      if (range && (session.date < range.from || session.date > range.to)) continue;
 
       for (const participant of roster.participants) {
         const department = normalizeDepartment(participant.dept);
@@ -335,7 +338,7 @@ export function useDepartmentAttendance({
       departmentByRecordId,
       mismatches,
     };
-  }, [sessions, records, level, rosters]);
+  }, [sessions, records, level, range, rosters]);
 
   return {
     ...result,

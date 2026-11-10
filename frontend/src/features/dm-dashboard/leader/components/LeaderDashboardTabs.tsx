@@ -241,6 +241,8 @@ export function LeaderDashboardTabs({
             rate={rate}
             total={total}
             range={range}
+            maxDate={maxDate}
+            onRangeChange={onRangeChange}
             loading={inspectionLoading}
             error={inspectionError}
           />
