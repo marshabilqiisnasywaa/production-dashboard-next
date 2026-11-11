@@ -304,6 +304,7 @@ const json = (method: string, data: unknown): RequestInit => ({
 });
 
 export type FiveWhyDocument = {
+  senderName: string | null;
   picId: number | null;
   picName: string | null;
   lineId: number;
@@ -338,6 +339,29 @@ export const fiveWhyDocumentsApi = {
     form.append("category", category);
     form.append("file", file);
     return request<FiveWhyDocument>("/fivewhy/documents/file", { method: "POST", body: form }, true);
+  },
+  update: (documentId: string, input: {
+    lineId: number;
+    picId: number;
+    title: string;
+    category: FiveWhyDocument["category"];
+    source: FiveWhyDocument["source"];
+    url?: string;
+    file?: File;
+  }) => {
+    const form = new FormData();
+    form.append("line_id", String(input.lineId));
+    form.append("pic_id", String(input.picId));
+    form.append("title", input.title);
+    form.append("category", input.category);
+    form.append("source", input.source);
+    if (input.url !== undefined) form.append("url", input.url);
+    if (input.file) form.append("file", input.file);
+    return request<FiveWhyDocument>(
+      `/fivewhy/documents/${encodeURIComponent(documentId)}`,
+      { method: "PUT", body: form },
+      true,
+    );
   },
   remove: (documentId: string) => request<void>(
     `/fivewhy/documents/${encodeURIComponent(documentId)}`, { method: "DELETE" }, true,

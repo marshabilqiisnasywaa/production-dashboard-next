@@ -236,7 +236,7 @@ export function toPapercardRows(lines: ScorecardLine[]): PapercardRow[] {
         statuses,
         rate: day.source === "excel"
           ? statuses.every((status) => status !== "-")
-            ? Math.round(statuses.filter((status) => status === "OK").length / statuses.filter((status) => status !== "-").length * 100)
+            ? Math.round((statuses.filter((status) => status === "OK").length / statuses.length) * 100)
             : null
           : required === 0 ? 0 : Math.round((onTimeCount / required) * 100),
         onTime: day.onTime,
