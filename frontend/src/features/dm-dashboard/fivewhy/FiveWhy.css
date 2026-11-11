@@ -115,7 +115,9 @@ dialog.dm-5w-upload-modal:not([open]) {
 
 .dm-5w-document-actions {
   display: flex;
-  flex-wrap: wrap;
+  width: fit-content;
+  margin-left: auto;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 6px;
 }
@@ -155,11 +157,41 @@ dialog.dm-5w-upload-modal:not([open]) {
   white-space: nowrap;
 }
 
-.dm-5w-document-table .dm-5w-document-actions .dm-5w-document-icon-button {
-  width: 32px;
+.dm-5w-document-actions .dm-5w-document-primary-action {
   height: 32px;
   min-height: 32px;
-  padding: 0;
+  padding: 0 9px;
+  font-size: 12px;
+}
+
+.dm-5w-document-menu > summary {
+  list-style: none;
+}
+
+.dm-5w-document-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.dm-5w-document-menu .dm-5w-menu-trigger {
+  width: 32px;
+  height: 32px;
+  border-color: var(--dm-5w-border);
+  background: var(--dm-5w-card);
+}
+
+.dm-5w-document-menu .dm-5w-menu-trigger:focus-visible {
+  outline: 2px solid var(--dm-5w-primary);
+  outline-offset: 2px;
+}
+
+.dm-5w-document-menu .dm-5w-menu-item {
+  gap: 8px;
+  font-size: var(--fw-fs-body);
+}
+
+.dm-5w-document-menu .dm-5w-menu-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .dm-5w-document-form fieldset {
@@ -355,9 +387,9 @@ dialog.dm-5w-upload-modal:not([open]) {
   cursor: pointer;
 }
 
-.dm-5w-documents .dm-5w-btn {
+/* .dm-5w-documents .dm-5w-btn {
   min-height: 44px;
-}
+} */
 
 .dm-5w-document-error {
   padding: 14px;

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
-import { Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { Download, ExternalLink, MoreHorizontal, Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { accountApi, fiveWhyDocumentsApi } from "../api";
 import type { DmMe, FiveWhyDocument, FiveWhyDocumentLine } from "../api";
 import { useUiText } from "@/locales/useUiText";
@@ -265,7 +265,7 @@ export default function DocumentLibrary({ onBusyChange, onDraftChange, headerAct
               <td>{document.lineCode || "—"}</td>
               <td><time dateTime={document.createdAt}>{new Date(document.createdAt).toLocaleDateString(locale)}</time></td>
               <td><span className={`dm-5w-document-type is-${document.source}`}>{uiText(document.source === "simo" ? "Link SIMO" : "Excel")}</span></td>
-              <td><div className="dm-5w-document-actions">{document.source === "simo" ? document.url ? <a className="dm-5w-btn dm-5w-btn-secondary" href={document.url} target="_blank" rel="noopener noreferrer">{uiText("Buka di SIMO")}</a> : <span>—</span> : <button type="button" className="dm-5w-btn dm-5w-btn-secondary" disabled={busy} onClick={() => void download(document)}>{uiText("Unduh Excel")}</button>}{canEdit ? <><button type="button" className="dm-5w-btn dm-5w-btn-secondary dm-5w-document-icon-button" disabled={busy} onClick={() => startEdit(document)} aria-label={`${uiText("Edit")}: ${document.title}`} title={uiText("Edit")}><Pencil size={16} aria-hidden="true" /></button><button type="button" className="dm-5w-btn dm-5w-btn-secondary dm-5w-document-icon-button" disabled={busy} onClick={() => void remove(document)} aria-label={`${uiText("Hapus dokumen")}: ${document.title}`} title={uiText("Hapus")}><Trash2 size={16} aria-hidden="true" /></button></> : null}</div></td>
+              <td><div className="dm-5w-document-actions">{document.source === "simo" ? document.url ? <a className="dm-5w-btn dm-5w-btn-secondary dm-5w-document-primary-action" href={document.url} target="_blank" rel="noopener noreferrer"><ExternalLink size={14} aria-hidden="true" />{uiText("Buka di SIMO")}</a> : <span>—</span> : <button type="button" className="dm-5w-btn dm-5w-btn-secondary dm-5w-document-primary-action" disabled={busy} onClick={() => void download(document)}><Download size={14} aria-hidden="true" />{uiText("Unduh Excel")}</button>}{canEdit ? <details className="dm-5w-menu dm-5w-document-menu"><summary className="dm-5w-menu-trigger" aria-label={`${uiText("Aksi dokumen")}: ${document.title}`} aria-haspopup="menu" title={uiText("Aksi dokumen")}><MoreHorizontal size={18} aria-hidden="true" /></summary><div className="dm-5w-menu-panel" role="menu" aria-label={`${uiText("Aksi dokumen")}: ${document.title}`}><button type="button" role="menuitem" className="dm-5w-menu-item" disabled={busy} onClick={(event) => { event.currentTarget.closest("details")?.removeAttribute("open"); startEdit(document); }}><Pencil size={15} aria-hidden="true" />{uiText("Edit")}</button><button type="button" role="menuitem" className="dm-5w-menu-item is-danger" disabled={busy} onClick={(event) => { event.currentTarget.closest("details")?.removeAttribute("open"); void remove(document); }}><Trash2 size={15} aria-hidden="true" />{uiText("Hapus")}</button></div></details> : null}</div></td>
             </tr>)}</tbody>
           </table></div>}
         </section>
