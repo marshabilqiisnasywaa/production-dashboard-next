@@ -29,17 +29,18 @@ def can_write(principal: Principal) -> None:
 
 def document_out(row: FiveWhyDocument, db: Session) -> dict:
     line = db.get(Line, row.line_id)
+    sender = db.get(Employee, row.created_by)
     pic = db.get(Employee, row.pic_id) if row.pic_id is not None else None
     return {
         "id": row.id, "title": row.title, "category": row.category,
         "source": row.source, "url": row.url, "fileName": row.file_name,
         "size": row.size, "createdAt": row.created_at,
+        "senderName": sender.name if sender else None,
         "lineId": row.line_id,
         "lineCode": line.code if line else "",
         "picId": row.pic_id,
         "picName": pic.name if pic else None,
     }
-
 
 def file_path(document_id: str) -> Path:
     return Path(settings.upload_dir) / "fivewhy" / f"{document_id}.xlsx"

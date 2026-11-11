@@ -137,7 +137,7 @@ dialog.dm-5w-upload-modal:not([open]) {
   min-width: 130px;
 }
 
-.dm-5w-document-table td:nth-child(4) {
+.dm-5w-document-table td:nth-child(5) {
   white-space: nowrap;
 }
 
@@ -426,7 +426,8 @@ dialog.dm-5w-upload-modal:not([open]) {
   min-height: 0;
   background: transparent;
   color: var(--dm-5w-text);
-  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont,
+    sans-serif;
   font-size: var(--fw-fs-body);
   line-height: 1.5;
 }
