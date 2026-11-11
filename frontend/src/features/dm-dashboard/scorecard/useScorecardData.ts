@@ -28,7 +28,12 @@ export type ScorecardLine = {
   archiveRank?: number | null;
 };
 
-export type PapercardStatus = "OK" | "OK terlambat" | "Belum diisi" | "NG" | "-";
+export type PapercardStatus =
+  | "OK"
+  | "OK terlambat"
+  | "Belum diisi"
+  | "NG"
+  | "-";
 
 export type PapercardRow = {
   source?: "live" | "excel";
@@ -94,7 +99,9 @@ export function dmNameOf(line: ScorecardLine) {
 }
 
 export function jakartaToday() {
-  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Jakarta" }).format(new Date());
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Jakarta" }).format(
+    new Date()
+  );
 }
 
 function addDays(iso: string, days: number) {
@@ -109,12 +116,28 @@ export function defaultRange() {
 }
 
 function errorText(error: unknown) {
-  return error instanceof ApiError ? error.message : "Data scorecard tidak bisa dimuat.";
+  return error instanceof ApiError
+    ? error.message
+    : "Data scorecard tidak bisa dimuat.";
 }
 
 export function useScorecardData(from: string, to: string) {
-  const [state, setState] = useState<{ lines: ScorecardLine[]; detailLines: ScorecardLine[]; archivedDmScores: DmArchivedDmScore[]; archiveMonth: string | null; archiveFile: string | null; loading: boolean; error: string | null }>({
-    lines: [], detailLines: [], archivedDmScores: [], archiveMonth: null, archiveFile: null, loading: true, error: null,
+  const [state, setState] = useState<{
+    lines: ScorecardLine[];
+    detailLines: ScorecardLine[];
+    archivedDmScores: DmArchivedDmScore[];
+    archiveMonth: string | null;
+    archiveFile: string | null;
+    loading: boolean;
+    error: string | null;
+  }>({
+    lines: [],
+    detailLines: [],
+    archivedDmScores: [],
+    archiveMonth: null,
+    archiveFile: null,
+    loading: true,
+    error: null,
   });
 
   useEffect(() => {
@@ -128,11 +151,33 @@ export function useScorecardData(from: string, to: string) {
         const end = to < today ? to : today;
         const earliest = addDays(end, -365);
         const start = from < earliest ? earliest : from;
-        const report = start <= end ? await publicApi.scorecardReport({ from: start, to: end }) : { entries: [], details: [], archivedDmScores: [], archiveMonth: null, archiveFile: null };
+        const report =
+          start <= end
+            ? await publicApi.scorecardReport({ from: start, to: end })
+            : {
+                entries: [],
+                details: [],
+                archivedDmScores: [],
+                archiveMonth: null,
+                archiveFile: null,
+              };
         if (!alive) return;
-        setState({ lines: report.entries, detailLines: report.details, archivedDmScores: report.archivedDmScores, archiveMonth: report.archiveMonth, archiveFile: report.archiveFile, loading: false, error: null });
+        setState({
+          lines: report.entries,
+          detailLines: report.details,
+          archivedDmScores: report.archivedDmScores,
+          archiveMonth: report.archiveMonth,
+          archiveFile: report.archiveFile,
+          loading: false,
+          error: null,
+        });
       } catch (error) {
-        if (alive) setState((previous) => ({ ...previous, loading: false, error: errorText(error) }));
+        if (alive)
+          setState((previous) => ({
+            ...previous,
+            loading: false,
+            error: errorText(error),
+          }));
       } finally {
         inFlight = false;
       }
@@ -140,7 +185,16 @@ export function useScorecardData(from: string, to: string) {
     const refreshVisible = () => {
       if (document.visibilityState !== "hidden") void refresh();
     };
-    setState((previous) => ({ ...previous, lines: [], detailLines: [], archivedDmScores: [], archiveMonth: null, archiveFile: null, loading: true, error: null }));
+    setState((previous) => ({
+      ...previous,
+      lines: [],
+      detailLines: [],
+      archivedDmScores: [],
+      archiveMonth: null,
+      archiveFile: null,
+      loading: true,
+      error: null,
+    }));
     void refresh();
     const timer = window.setInterval(() => {
       const today = jakartaToday();
@@ -169,9 +223,15 @@ export function toLeaderScores(lines: ScorecardLine[]): LeaderScore[] {
       key: line.key,
       archiveRank: line.archiveRank,
       samples: {
-        before: line.papercard.flatMap((d) => d.total === null ? [] : [{ date: d.date, value: d.total }]),
-        current: line.standup.flatMap((d) => d.total === null ? [] : [{ date: d.date, value: d.total }]),
-        after: line.sqdip.filter((d) => d.final).map((d) => ({ date: d.date, value: d.total })),
+        before: line.papercard.flatMap((d) =>
+          d.total === null ? [] : [{ date: d.date, value: d.total }]
+        ),
+        current: line.standup.flatMap((d) =>
+          d.total === null ? [] : [{ date: d.date, value: d.total }]
+        ),
+        after: line.sqdip
+          .filter((d) => d.final)
+          .map((d) => ({ date: d.date, value: d.total })),
       },
       area: line.info.workshopName.replace(/^Workshop\s*/i, ""),
       dm: dmNameOf(line),
@@ -184,7 +244,11 @@ export function toLeaderScores(lines: ScorecardLine[]): LeaderScore[] {
       total: line.total ?? round2(line.before + line.current + line.after),
       photoUrl: line.info.leaderPhotoUrl,
     }))
-    .sort((a, b) => a.archiveRank && b.archiveRank ? a.archiveRank - b.archiveRank : b.total - a.total)
+    .sort((a, b) =>
+      a.archiveRank && b.archiveRank
+        ? a.archiveRank - b.archiveRank
+        : b.total - a.total
+    )
     .map((item, index) => ({ ...item, rank: item.archiveRank ?? index + 1 }));
 }
 
@@ -194,8 +258,15 @@ export function toPapercardRows(lines: ScorecardLine[]): PapercardRow[] {
     for (const day of line.papercard) {
       const statuses = DEPARTMENT_ORDER.map((department): PapercardStatus => {
         if (day.source === "excel") {
-          const role = department === "PROD" ? "Leader" : department === "QC" ? "IPQC" : department;
-          const status = day.historicalStatuses?.find((item) => item.role === role)?.status;
+          const role =
+            department === "PROD"
+              ? "Leader"
+              : department === "QC"
+              ? "IPQC"
+              : department;
+          const status = day.historicalStatuses?.find(
+            (item) => item.role === role
+          )?.status;
           return status === "OK" || status === "NG" ? status : "-";
         }
         const check = day.checks.find((item) => item.department === department);
@@ -212,11 +283,18 @@ export function toPapercardRows(lines: ScorecardLine[]): PapercardRow[] {
         line: line.info.lineCode,
         leader: day.leaderName ?? line.info.leaderName,
         statuses,
-        rate: day.source === "excel"
-          ? statuses.every((status) => status !== "-")
-            ? Math.round(statuses.filter((status) => status === "OK").length / statuses.length * 100)
-            : null
-          : required === 0 ? 0 : Math.round((onTimeCount / required) * 100),
+        rate:
+          day.source === "excel"
+            ? statuses.every((status) => status !== "-")
+              ? Math.round(
+                  (statuses.filter((status) => status === "OK").length /
+                    statuses.length) *
+                    100
+                )
+              : null
+            : required === 0
+            ? 0
+            : Math.round((onTimeCount / required) * 100),
         onTime: day.onTime,
         registered: day.registered,
         closed: day.closed,
@@ -224,7 +302,9 @@ export function toPapercardRows(lines: ScorecardLine[]): PapercardRow[] {
       });
     }
   }
-  return rows.sort((a, b) => b.date.localeCompare(a.date) || a.line.localeCompare(b.line));
+  return rows.sort(
+    (a, b) => b.date.localeCompare(a.date) || a.line.localeCompare(b.line)
+  );
 }
 
 export function toStandupRows(lines: ScorecardLine[]): StandupRow[] {
@@ -248,7 +328,9 @@ export function toStandupRows(lines: ScorecardLine[]): StandupRow[] {
       });
     }
   }
-  return rows.sort((a, b) => b.date.localeCompare(a.date) || a.line.localeCompare(b.line));
+  return rows.sort(
+    (a, b) => b.date.localeCompare(a.date) || a.line.localeCompare(b.line)
+  );
 }
 
 export function toSqdipRows(lines: ScorecardLine[]): SqdipTableRow[] {
@@ -256,18 +338,32 @@ export function toSqdipRows(lines: ScorecardLine[]): SqdipTableRow[] {
   for (const line of lines) {
     for (const day of line.sqdip) {
       if (!day.final) continue;
-      const points = [day.safety, day.quality, day.delivery, day.inventory, day.productivity];
+      const points = [
+        day.safety,
+        day.quality,
+        day.delivery,
+        day.inventory,
+        day.productivity,
+      ];
       rows.push({
         date: day.date,
         line: line.info.lineCode,
         leader: day.leader,
         dm: dmNameOf(line),
-        cells: points.map((value, index) => ({ actual: day.actuals[index] ?? null, points: value })),
+        cells: points.map((value, index) => ({
+          actual: day.actuals[index] ?? null,
+          points: value,
+        })),
         sum: day.total,
       });
     }
   }
-  return rows.sort((a, b) => b.date.localeCompare(a.date) || a.line.localeCompare(b.line) || a.leader.localeCompare(b.leader));
+  return rows.sort(
+    (a, b) =>
+      b.date.localeCompare(a.date) ||
+      a.line.localeCompare(b.line) ||
+      a.leader.localeCompare(b.leader)
+  );
 }
 
 export type TrendGranularity = "Harian" | "Mingguan" | "Bulanan";
@@ -287,8 +383,14 @@ export function buildTrendSeries(
 ): TrendSeries {
   const maps = lines.map((line) => ({
     papercard: new Map(line.papercard.map((day) => [day.date, day.total])),
-    standup: new Map(line.standup.filter((day) => day.total !== null).map((day) => [day.date, day.total])),
-    sqdip: new Map(line.sqdip.filter((day) => day.final).map((day) => [day.date, day.total])),
+    standup: new Map(
+      line.standup
+        .filter((day) => day.total !== null)
+        .map((day) => [day.date, day.total])
+    ),
+    sqdip: new Map(
+      line.sqdip.filter((day) => day.final).map((day) => [day.date, day.total])
+    ),
   }));
   const dates = new Set<string>();
   for (const map of maps) {
@@ -296,7 +398,9 @@ export function buildTrendSeries(
     map.standup.forEach((_, date) => dates.add(date));
   }
   const mean = (values: number[]) =>
-    values.length === 0 ? 0 : round2(values.reduce((sum, value) => sum + value, 0) / values.length);
+    values.length === 0
+      ? 0
+      : round2(values.reduce((sum, value) => sum + value, 0) / values.length);
 
   // C. pick sekarang menerima bucket, bukan tanggal tunggal
   const pick = (kind: "papercard" | "standup" | "sqdip", bucket: string) =>
@@ -308,7 +412,9 @@ export function buildTrendSeries(
     );
 
   // D. sorted berisi bucket unik
-  const sorted = [...new Set([...dates].map((d) => bucketKey(d, granularity)))].sort();
+  const sorted = [
+    ...new Set([...dates].map((d) => bucketKey(d, granularity))),
+  ].sort();
 
   const before = sorted.map((date) => mean(pick("papercard", date)));
   const current = sorted.map((date) => mean(pick("standup", date)));
@@ -318,7 +424,8 @@ export function buildTrendSeries(
     before,
     current,
     after,
-    total: sorted.map((_, index) => round2(before[index] + current[index] + after[index])),
+    total: sorted.map((_, index) =>
+      round2(before[index] + current[index] + after[index])
+    ),
   };
 }
-

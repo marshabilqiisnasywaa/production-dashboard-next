@@ -5,6 +5,7 @@ import { useUiText } from "@/locales/useUiText";
 import DocumentLibrary from "./DocumentLibrary";
 import FiveWhyPage from "./FiveWhyPage";
 import "./FiveWhy.css";
+import "../admin/UserTable.css";
 
 export default function FiveWhyWorkspace() {
   const { text: uiText } = useUiText();
@@ -20,10 +21,26 @@ export default function FiveWhyWorkspace() {
   }
 
   const sectionControls = (
-      <nav className="dm-5w-workspace-nav" aria-label={uiText("Bagian 5Why & PDCA")}>
-        <button type="button" className={`dm-5w-btn ${section === "documents" ? "dm-5w-btn-primary" : "dm-5w-btn-secondary"}`} disabled={busy} aria-pressed={section === "documents"} onClick={() => openSection("documents")}>{uiText("Dokumen Excel / SIMO")}</button>
-        <button type="button" className={`dm-5w-btn ${section === "form" ? "dm-5w-btn-primary" : "dm-5w-btn-secondary"}`} disabled={busy} aria-pressed={section === "form"} onClick={() => openSection("form")}>{uiText("Form 5Why (belum siap)")}</button>
-      </nav>
+    <nav className="dm-5w-workspace-nav" aria-label={uiText("Bagian 5Why & PDCA")}>
+      <button
+        type="button"
+        className={`dm-5w-workspace-tab ${section === "documents" ? "is-active" : ""}`}
+        disabled={busy}
+        aria-pressed={section === "documents"}
+        onClick={() => openSection("documents")}
+      >
+        {uiText("Dokumen Excel / SIMO")}
+      </button>
+      <button
+        type="button"
+        className={`dm-5w-workspace-tab ${section === "form" ? "is-active" : ""}`}
+        disabled={busy}
+        aria-pressed={section === "form"}
+        onClick={() => openSection("form")}
+      >
+        {uiText("Form 5Why (belum siap)")}
+      </button>
+    </nav>
   );
 
   return (

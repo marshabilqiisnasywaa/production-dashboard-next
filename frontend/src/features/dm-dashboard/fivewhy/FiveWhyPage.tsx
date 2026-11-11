@@ -355,9 +355,12 @@ export default function FiveWhyPage({ headerActions, notice }: { headerActions?:
     <div className="dm-5w-root">
       <div className="dm-5w-page">
         <header className="dm-5w-page-head">
-          <div>
-            <h1 className="dm-5w-page-title">{uiText("5Why + PDCA")}</h1>
-            <p className="dm-5w-page-sub">{uiText("Analisis akar masalah dan rencana tindak lanjutnya.")}</p>
+          <div className="dm-5w-page-head-main">
+            <div>
+              <h1 className="dm-5w-page-title">{uiText("5Why + PDCA")}</h1>
+              <p className="dm-5w-page-sub">{uiText("Analisis akar masalah dan rencana tindak lanjutnya.")}</p>
+            </div>
+            {headerActions}
           </div>
           <div className="dm-5w-page-head-actions">
             <button
@@ -379,7 +382,6 @@ export default function FiveWhyPage({ headerActions, notice }: { headerActions?:
               }
               onClick={() => notify("Pengajuan perubahan checklist dikirim.")}
             >{uiText("Ajukan perubahan checklist")}</button>
-            {headerActions}
           </div>
         </header>
 
