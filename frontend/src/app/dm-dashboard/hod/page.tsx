@@ -4,12 +4,17 @@ import { useUiText } from "@/locales/useUiText";
 
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Clock3, Eye, Tag, UserRound, X } from "lucide-react";
-import { dmDepartments } from "@/features/dm-dashboard/api";
+import PapercardProblems from "@/features/dm-dashboard/admin/PapercardProblems";
+import { accountApi, dmDepartments, type DmLine } from "@/features/dm-dashboard/api";
 import {
   departmentLabel,
   normalizeDepartment,
 } from "@/features/dm-dashboard/departments";
 import { ProblemLoadError } from "@/features/dm-dashboard/leader/problems/components/ProblemLoadError";
+import {
+  ProblemSourceTabs,
+  type ProblemSource,
+} from "@/features/dm-dashboard/leader/problems/components/ProblemSourceTabs";
 import { useProblems } from "@/features/dm-dashboard/leader/problems/hooks/useProblems";
 import type {
   ProblemFilter,
@@ -59,6 +64,8 @@ const HOD_STYLES = `
   .hod-problems { display: flex; flex-direction: column; gap: 16px; }
   .hod-problems .dml-page-head { margin-bottom: 0; }
   .hod-problems .dml-pb-summary { margin-bottom: 0; }
+  .hod-problems .dml-pb-sources { margin-bottom: 0; }
+  .hod-problems .dm-papercard-problems-table td:nth-child(8) { overflow-wrap: anywhere; }
   .hod-problems .dml-pb-panel { overflow: hidden; }
   .hod-problems .dml-pb-table { width: 100%; min-width: 1360px; table-layout: fixed; }
   .hod-problems .dml-pb-table th,
@@ -95,6 +102,8 @@ const HOD_STYLES = `
     line-height: 1.35;
   }
   .hod-problems .hod-pic-cell { line-height: 1.45; }
+  .hod-problems .dml-pb-table td.hod-pic-cell,
+  .hod-problems .dml-pb-table td:nth-child(4) { white-space: normal; }
   .hod-problems .hod-status-cell { white-space: nowrap; }
   .hod-problems .dml-pb-table tbody tr.hod-problem-row { cursor: pointer; }
   .hod-problems .dml-pb-table tbody tr.hod-problem-row:hover,
@@ -212,6 +221,21 @@ export default function HodTrackingProblemsPage() {
   const [selectedProblem, setSelectedProblem] = useState<ProblemRow | null>(
     null
   );
+  const [source, setSource] = useState<ProblemSource>("meeting");
+  const [papercardLines, setPapercardLines] = useState<DmLine[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    accountApi
+      .lines()
+      .then((data) => {
+        if (!cancelled) setPapercardLines(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const lines = useMemo(
     () =>
@@ -289,10 +313,16 @@ export default function HodTrackingProblemsPage() {
       <header className="dml-page-head">
         <div>
           <h1>{uiText("Tracking Masalah")}</h1>
-          <p>{uiText("Pantau penanggung jawab, tenggat waktu, dan status tindak lanjut dari DM meeting.")}</p>
+          <p>{uiText("Pantau tindak lanjut masalah DM meeting dan temuan NG papercard harian.")}</p>
         </div>
       </header>
 
+      <ProblemSourceTabs value={source} onChange={setSource} />
+
+      {source === "papercard" ? (
+        <PapercardProblems lines={papercardLines} adminLayout={false} />
+      ) : (
+      <>
       <div className="dml-pb-summary">
         <div className="dml-pb-stat">
           <span className="dml-pb-stat__label">{uiText("Total Masalah")}</span>
@@ -513,6 +543,8 @@ export default function HodTrackingProblemsPage() {
           </div>
         )}
       </section>
+      </>
+      )}
 
       {selectedProblem && selectedStatus && (
         <div

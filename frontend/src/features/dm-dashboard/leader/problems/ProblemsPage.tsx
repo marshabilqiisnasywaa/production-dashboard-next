@@ -27,8 +27,10 @@ function RateBadge({ tone, pct }: { tone: "warn" | "ok" | "bad"; pct: number }) 
 
 export default function ProblemsPage({
   adminLayout = false,
+  hideHeading = adminLayout,
 }: {
   adminLayout?: boolean;
+  hideHeading?: boolean;
 }) {
   const { text: uiText } = useUiText();
   const { rows, counts, ready, error, refresh } = useProblems();
@@ -105,7 +107,7 @@ export default function ProblemsPage({
 
   return (
     <div className={"dml-pb" + (adminLayout ? " is-admin" : "")}>
-      {!adminLayout && (
+      {!hideHeading && (
         <div className="dml-page-head dml-pb-heading">
           <div>
             <h1>{uiText("Tracking Masalah")}</h1>

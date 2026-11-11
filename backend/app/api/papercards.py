@@ -7,7 +7,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
-from app.api.deps import Principal, authorize_line, get_principal
+from app.api.deps import Principal, authorize_line, get_principal, require
 from app.db.session import get_db
 from app.models import Board, BoardMember, Employee, Line, PapercardSubmission, PapercardTemplate, Workshop
 from app.schemas import (
@@ -580,7 +580,7 @@ def list_submissions(
     date_val: date | None = Query(default=None, alias="date"),
     shift: str | None = None,
     db: Session = Depends(get_db),
-    principal: Principal = Depends(get_principal),
+    principal: Principal = Depends(require("papercard.read", active=False)),
 ) -> list[PapercardSubmissionOut]:
     # Restrict member and leader strictly to their assigned lines
     if principal.role in ("member", "leader") and principal.employee:
@@ -696,6 +696,8 @@ def submit_papercard(
             detail="Tanggal papercard tidak boleh di masa depan"
         )
 
+    from app.services.scorecard_archives import ensure_live_period
+    ensure_live_period(db, payload.date)
     deadline = datetime.combine(
         payload.date,
         time.fromisoformat(tmpl.window_end),

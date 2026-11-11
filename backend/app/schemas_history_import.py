@@ -1,4 +1,5 @@
 from datetime import date
+import math
 from typing import Literal
 
 from pydantic import Field, model_validator
@@ -47,6 +48,33 @@ class HistoryRowIn(CamelModel):
         return self
 
 
+class ArchiveScoreIn(CamelModel):
+    month: date
+    scope: Literal["leader", "dm"]
+    line: str = Field(default="", max_length=32)
+    leader: str = Field(min_length=1, max_length=120)
+    dm: str = Field(min_length=1, max_length=64)
+    area: str = Field(default="", max_length=120)
+    model: str | None = Field(default=None, max_length=120)
+    before: float
+    current: float
+    after: float
+    total: float
+    rank: int | None = Field(default=None, gt=0)
+    source_sheet: str = Field(min_length=1, max_length=120)
+    source_row: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def validate_archive(self):
+        if self.month.day != 1 or not self.leader.strip() or not self.dm.strip():
+            raise ValueError("Arsip wajib memiliki bulan, leader, dan DM yang valid.")
+        if self.scope == "leader" and not self.line.strip():
+            raise ValueError("Line leader pada rekap final wajib diisi.")
+        if any(not math.isfinite(v) or not 0 <= v <= 1000 for v in (self.before, self.current, self.after, self.total)):
+            raise ValueError("Nilai final harus berupa angka terbatas antara 0 dan 1000.")
+        return self
+
+
 class HistoryImportIn(CamelModel):
     file_name: str = Field(min_length=1, max_length=255)
     shift: Literal["Shift 1", "Shift 2", "Shift 3"] = "Shift 1"
@@ -55,4 +83,6 @@ class HistoryImportIn(CamelModel):
     from_date: date
     to_date: date
     mappings: dict[str, int] = Field(default_factory=dict, max_length=500)
-    rows: list[HistoryRowIn] = Field(min_length=1, max_length=20000)
+    rows: list[HistoryRowIn] = Field(default_factory=list, max_length=20000)
+    archives: list[ArchiveScoreIn] = Field(default_factory=list, max_length=2000)
+    archive_details: list[HistoryRowIn] = Field(default_factory=list, max_length=20000)

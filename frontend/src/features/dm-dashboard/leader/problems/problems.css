@@ -34,6 +34,41 @@
   line-height: 1.5;
 }
 
+.dml-pb-sources {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #e3e7eb;
+}
+
+.dml-pb-source {
+  min-height: 44px;
+  margin-bottom: -1px;
+  padding: 8px 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dml-pb-source:hover {
+  color: #172b24;
+}
+
+.dml-pb-source.is-active {
+  border-bottom-color: #046a38;
+  color: #046a38;
+}
+
+.dml-pb-source:focus-visible {
+  outline: 2px solid #046a38;
+  outline-offset: -2px;
+}
+
 /* KPI summary cards */
 .dml-pb-summary {
   display: grid;

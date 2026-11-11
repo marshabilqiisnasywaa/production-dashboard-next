@@ -7,6 +7,7 @@ import {
   type DmSqdipKpiDay,
   type DmStandupKpiDay,
   type DmHistoryStatus,
+  type DmArchivedDmScore,
 } from "../api";
 import type { LeaderScore } from "./data";
 import { PAPERCARD_CHANGED_EVENT } from "../notifications/revisions";
@@ -14,6 +15,7 @@ import { PAPERCARD_CHANGED_EVENT } from "../notifications/revisions";
 export const NO_DM = "Tanpa DM";
 
 export type ScorecardLine = {
+  key: string;
   info: DmScorecardLeader;
   papercard: DmPapercardKpiDay[];
   standup: DmStandupKpiDay[];
@@ -21,6 +23,9 @@ export type ScorecardLine = {
   before: number;
   current: number;
   after: number;
+  total?: number | null;
+  archiveKey?: string | null;
+  archiveRank?: number | null;
 };
 
 export type PapercardStatus = "OK" | "OK terlambat" | "Belum diisi" | "NG" | "-";
@@ -108,17 +113,13 @@ function errorText(error: unknown) {
 }
 
 export function useScorecardData(from: string, to: string) {
-  const [state, setState] = useState<{ lines: ScorecardLine[]; loading: boolean; error: string | null }>({
-    lines: [], loading: true, error: null,
+  const [state, setState] = useState<{ lines: ScorecardLine[]; detailLines: ScorecardLine[]; archivedDmScores: DmArchivedDmScore[]; archiveMonth: string | null; archiveFile: string | null; loading: boolean; error: string | null }>({
+    lines: [], detailLines: [], archivedDmScores: [], archiveMonth: null, archiveFile: null, loading: true, error: null,
   });
 
   useEffect(() => {
     let alive = true;
     let inFlight = false;
-    const mean = (days: { total: number | null }[]) => {
-      const values = days.flatMap((day) => day.total === null ? [] : [day.total]);
-      return values.length ? round2(values.reduce((sum, value) => sum + value, 0) / values.length) : 0;
-    };
     const refresh = async () => {
       if (inFlight || !alive) return;
       inFlight = true;
@@ -127,39 +128,9 @@ export function useScorecardData(from: string, to: string) {
         const end = to < today ? to : today;
         const earliest = addDays(end, -365);
         const start = from < earliest ? earliest : from;
-        const leaders = await publicApi.scorecardLeaders(start <= end ? { from: start, to: end } : undefined);
-        const results = await Promise.all(leaders.map(async (info) => {
-          const line: ScorecardLine = { info, papercard: [], standup: [], sqdip: [], before: 0, current: 0, after: 0 };
-          if (start > end) return { line, failed: false };
-          const params = { lineCode: info.lineCode, from: start, to: end };
-          const historical = Boolean(info.historical);
-          const [papercard, standup, sqdip] = await Promise.allSettled([
-            historical ? Promise.resolve(null) : publicApi.papercardKpi(params),
-            historical ? Promise.resolve(null) : publicApi.standupKpi(params),
-            publicApi.sqdipKpi(params),
-          ]);
-          if (papercard.status === "fulfilled" && papercard.value) {
-            line.papercard = papercard.value.days;
-            line.before = mean(line.papercard);
-          }
-          if (standup.status === "fulfilled" && standup.value) {
-            line.standup = standup.value.days;
-            line.current = mean(line.standup);
-          }
-          if (sqdip.status === "fulfilled") {
-            line.sqdip = sqdip.value.days;
-            line.after = sqdip.value.average?.total ?? 0;
-          }
-          return { line, failed: [papercard, standup, sqdip].some((result) => result.status === "rejected") };
-        }));
+        const report = start <= end ? await publicApi.scorecardReport({ from: start, to: end }) : { entries: [], details: [], archivedDmScores: [], archiveMonth: null, archiveFile: null };
         if (!alive) return;
-        const failed = results.filter((item) => item.failed).map((item) => item.line.info.lineCode);
-        setState((previous) => ({
-          lines: results.map(({ line, failed }) => failed
-            ? previous.lines.find((item) => item.info.lineId === line.info.lineId) ?? line : line),
-          loading: false,
-          error: failed.length ? `Sebagian data gagal dimuat untuk line ${failed.join(", ")}.` : null,
-        }));
+        setState({ lines: report.entries, detailLines: report.details, archivedDmScores: report.archivedDmScores, archiveMonth: report.archiveMonth, archiveFile: report.archiveFile, loading: false, error: null });
       } catch (error) {
         if (alive) setState((previous) => ({ ...previous, loading: false, error: errorText(error) }));
       } finally {
@@ -169,7 +140,7 @@ export function useScorecardData(from: string, to: string) {
     const refreshVisible = () => {
       if (document.visibilityState !== "hidden") void refresh();
     };
-    setState((previous) => ({ ...previous, lines: [], loading: true, error: null }));
+    setState((previous) => ({ ...previous, lines: [], detailLines: [], archivedDmScores: [], archiveMonth: null, archiveFile: null, loading: true, error: null }));
     void refresh();
     const timer = window.setInterval(() => {
       const today = jakartaToday();
@@ -195,6 +166,13 @@ export function useScorecardData(from: string, to: string) {
 export function toLeaderScores(lines: ScorecardLine[]): LeaderScore[] {
   return lines
     .map((line) => ({
+      key: line.key,
+      archiveRank: line.archiveRank,
+      samples: {
+        before: line.papercard.flatMap((d) => d.total === null ? [] : [{ date: d.date, value: d.total }]),
+        current: line.standup.flatMap((d) => d.total === null ? [] : [{ date: d.date, value: d.total }]),
+        after: line.sqdip.filter((d) => d.final).map((d) => ({ date: d.date, value: d.total })),
+      },
       area: line.info.workshopName.replace(/^Workshop\s*/i, ""),
       dm: dmNameOf(line),
       line: line.info.lineCode,
@@ -203,11 +181,11 @@ export function toLeaderScores(lines: ScorecardLine[]): LeaderScore[] {
       before: line.before,
       current: line.current,
       after: line.after,
-      total: round2(line.before + line.current + line.after),
+      total: line.total ?? round2(line.before + line.current + line.after),
       photoUrl: line.info.leaderPhotoUrl,
     }))
-    .sort((a, b) => b.total - a.total)
-    .map((item, index) => ({ ...item, rank: index + 1 }));
+    .sort((a, b) => a.archiveRank && b.archiveRank ? a.archiveRank - b.archiveRank : b.total - a.total)
+    .map((item, index) => ({ ...item, rank: item.archiveRank ?? index + 1 }));
 }
 
 export function toPapercardRows(lines: ScorecardLine[]): PapercardRow[] {
@@ -236,7 +214,7 @@ export function toPapercardRows(lines: ScorecardLine[]): PapercardRow[] {
         statuses,
         rate: day.source === "excel"
           ? statuses.every((status) => status !== "-")
-            ? Math.round(statuses.filter((status) => status === "OK").length / statuses.filter((status) => status !== "-").length * 100)
+            ? Math.round(statuses.filter((status) => status === "OK").length / statuses.length * 100)
             : null
           : required === 0 ? 0 : Math.round((onTimeCount / required) * 100),
         onTime: day.onTime,

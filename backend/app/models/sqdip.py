@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import CheckConstraint, Date, DateTime, Float, Index, Integer, String, func
+from sqlalchemy import CheckConstraint, Date, DateTime, Float, ForeignKey, Index, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -17,6 +17,7 @@ class SqdipEntry(Base):
     date: Mapped[date] = mapped_column(Date)
     line_code: Mapped[str] = mapped_column(String(32), index=True)
     leader_name: Mapped[str] = mapped_column(String(120))
+    leader_employee_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id", ondelete="RESTRICT"), nullable=True)
     dimension: Mapped[str] = mapped_column(String(16))  # "Safety", "Quality", "Delivery", "Inventory", "Productivity"
     actual: Mapped[float | None] = mapped_column(Float)
     points: Mapped[int] = mapped_column(Integer)  # 0 atau 6

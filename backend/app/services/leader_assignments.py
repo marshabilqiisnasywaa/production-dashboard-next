@@ -177,11 +177,9 @@ def sync_member_leader_history(
 ) -> None:
     board = db.get(Board, member.board_id)
     line = db.get(Line, board.line_id) if board is not None else None
-    if line is None or line.dm_group_id is None:
+    if line is None:
         return
-    group = db.scalar(select(DmGroup).where(DmGroup.id == line.dm_group_id).with_for_update())
-    if group is None:
-        return
+    group = db.scalar(select(DmGroup).where(DmGroup.id == line.dm_group_id).with_for_update()) if line.dm_group_id else None
     current = db.scalar(select(LeaderAssignment).where(
         LeaderAssignment.employee_id == employee.id,
         LeaderAssignment.line_id == line.id,
@@ -200,8 +198,8 @@ def sync_member_leader_history(
         if occupied is not None:
             raise HTTPException(409, "Line masih memiliki leader aktif. Lepas leader lama terlebih dahulu.")
         db.add(LeaderAssignment(
-            employee_id=employee.id, kind="line_leader", dm_group_id=group.id,
-            line_id=line.id, dm_name_snapshot=group.name, line_code_snapshot=line.code,
+            employee_id=employee.id, leader_name_snapshot=employee.name, kind="line_leader", dm_group_id=group.id if group else None,
+            line_id=line.id, dm_name_snapshot=group.name if group else "Tanpa DM", line_code_snapshot=line.code,
             started_at=changed_at, **creator_fields(admin),
         ))
     elif current is not None:
@@ -212,12 +210,34 @@ def sync_member_leader_history(
             member_start = member_start.replace(tzinfo=timezone.utc)
         if member_start < changed_at:
             db.add(LeaderAssignment(
-                employee_id=employee.id, kind="line_leader", dm_group_id=group.id,
-                line_id=line.id, dm_name_snapshot=group.name, line_code_snapshot=line.code,
+                employee_id=employee.id, leader_name_snapshot=employee.name, kind="line_leader", dm_group_id=group.id if group else None,
+                line_id=line.id, dm_name_snapshot=group.name if group else "Tanpa DM", line_code_snapshot=line.code,
                 started_at=member_start, ended_at=changed_at,
                 reason="Periode awal mengikuti catatan keanggotaan line.",
                 **creator_fields(admin),
             ))
+
+
+def change_line_dm(db: Session, line: Line, group: DmGroup | None, admin: Employee | User) -> None:
+    db.refresh(line, with_for_update=True)
+    if line.dm_group_id == (group.id if group else None):
+        return
+    changed_at = datetime.now(timezone.utc)
+    current = db.scalar(select(LeaderAssignment).where(
+        LeaderAssignment.line_id == line.id, LeaderAssignment.kind == "line_leader",
+        LeaderAssignment.ended_at.is_(None),
+    ).with_for_update())
+    if current is not None:
+        current.ended_at = changed_at
+        db.flush()
+        db.add(LeaderAssignment(
+            employee_id=current.employee_id, kind="line_leader", line_id=line.id,
+            leader_name_snapshot=current.leader_name_snapshot or db.get(Employee, current.employee_id).name,
+            line_code_snapshot=line.code, dm_group_id=group.id if group else None,
+            dm_name_snapshot=group.name if group else "Tanpa DM", started_at=changed_at,
+            reason="Perubahan DM line.", **creator_fields(admin),
+        ))
+    line.dm_group_id = group.id if group else None
 
 
 def change_assignment(
@@ -380,6 +400,7 @@ def change_assignment(
 
         assignment = LeaderAssignment(
             employee_id=employee.id,
+            leader_name_snapshot=employee.name,
             kind=payload.kind,
             dm_group_id=group.id,
             line_id=line.id if line is not None else None,

@@ -149,3 +149,11 @@ Saat presensi dibuka, daftar peserta dan asal lini disimpan sebagai snapshot. Pe
 Jalankan `alembic upgrade head` sebelum menggunakan perubahan ini (migrasi `0017`). Di PC lain, jalankan migrasi setelah menarik kode terbaru, lalu restart backend.
 
 Tes integrasi PostgreSQL: `.venv/bin/python -m unittest discover -s tests -v`. Tes memerlukan izin membuat schema sementara; semua data tes di-rollback dan tidak memakai tabel operasional.
+
+## Arsip scorecard sebelum sistem berjalan
+
+Migrasi `0042` menyimpan nilai final bulanan Excel dalam `scorecard_archives`, terpisah dari aktivitas papercard, meeting, dan SQDIP. Impor membaca sheet KPI dengan periode yang tercantum di workbook. Nilai leader, DM, line, total, penyesuaian, dan ranking sumber dipertahankan. Detail pendukung disimpan dalam arsip tanpa membuat master line, akun, anggota, atau penugasan.
+
+`GET /api/public/scorecard/report` mengembalikan ringkasan final dan detail secara terpisah. Untuk bulan arsip, ringkasan selalu mencakup satu bulan penuh; filter tanggal membatasi detail. Rentang yang mencampur bulan arsip dengan bulan lain ditolak agar rekap bulanan tidak diprorata atau digabung dengan nilai operasional. File yang diunggah ulang memakai mode lewati atau perbarui secara eksplisit.
+
+Impor histori ditolak untuk periode dengan papercard atau meeting operasional. Pengisian papercard dan pembukaan meeting ditolak pada bulan yang sudah menjadi arsip. Kunci transaksi per bulan mencegah impor dan aktivitas operasional bersamaan. Pada bulan operasional, papercard dan standup tetap dihitung dari aktivitas sistem serta masa tugas leader; SQDIP tetap melalui impor tersendiri. Perubahan akun, penugasan, dan impor SQDIP berikutnya tidak menghitung ulang nilai final arsip.

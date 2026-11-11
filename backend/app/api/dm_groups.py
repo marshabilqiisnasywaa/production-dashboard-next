@@ -6,6 +6,7 @@ from app.api.deps import Principal, get_current_admin, get_principal
 from app.db.session import get_db
 from app.models import DmGroup, Employee, LeaderAssignment, Line, Workshop
 from app.schemas import DmGroupIn, DmGroupLineAssignIn, DmGroupOut, DmGroupUpdateIn
+from app.services.leader_assignments import change_line_dm
 
 router = APIRouter(prefix="/dm-groups", tags=["dm-groups"])
 
@@ -182,9 +183,9 @@ def assign_line_to_group(
             raise HTTPException(status_code=404, detail="DM tidak ditemukan.")
         if group.workshop_id != line.workshop_id:
             raise HTTPException(400, "DM harus berada di workshop yang sama dengan lini.")
-        line.dm_group_id = group.id
+        change_line_dm(db, line, group, _admin)
     else:
-        line.dm_group_id = None
+        change_line_dm(db, line, None, _admin)
 
     db.commit()
     return {"success": True, "line_id": line_id, "dm_group_id": line.dm_group_id}

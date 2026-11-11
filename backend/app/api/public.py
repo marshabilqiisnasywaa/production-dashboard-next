@@ -35,6 +35,8 @@ from app.schemas import (
     MeetingSessionOut,
     PapercardKpiOut,
     ScorecardLeaderOut,
+    ScorecardEntryOut,
+    ScorecardReportOut,
     SqdipKpiOut,
     StandupKpiOut,
     WorkshopHod,
@@ -42,10 +44,31 @@ from app.schemas import (
 from app.services import sqdip as sqdip_service
 from app.services import standup_kpi
 from app.services import history_import
+from app.services.scorecard import scorecard_entries
 from app.services.boards import public_board
 from app.services.papercard_kpi import MAX_CLOSED, MAX_ON_TIME, MAX_REGISTERED, MAX_TOTAL, average_scores, line_kpi
 
 router = APIRouter(prefix="/public", tags=["public"])
+
+
+@router.get("/scorecard/report", response_model=ScorecardReportOut)
+def scorecard_report_endpoint(
+    from_date: date = Query(alias="from"), to_date: date = Query(alias="to"),
+    db: Session = Depends(get_db),
+) -> ScorecardReportOut:
+    from app.services.scorecard_report import scorecard_report
+    today = check_kpi_range(from_date, to_date)
+    return scorecard_report(db, from_date, to_date, today)
+
+
+@router.get("/scorecard/entries", response_model=list[ScorecardEntryOut])
+def scorecard_entries_endpoint(
+    from_date: date = Query(alias="from"), to_date: date = Query(alias="to"),
+    db: Session = Depends(get_db),
+) -> list[ScorecardEntryOut]:
+    today = check_kpi_range(from_date, to_date)
+    from app.services.scorecard_report import scorecard_report
+    return scorecard_report(db, from_date, min(to_date, today), today).entries
 
 class PublicWorkshopSupervisorOut(CamelModel):
     employee_id: int

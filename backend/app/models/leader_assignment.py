@@ -67,9 +67,10 @@ class LeaderAssignment(Base):
 
     kind: Mapped[str] = mapped_column(String(20))
 
-    dm_group_id: Mapped[int] = mapped_column(
+    dm_group_id: Mapped[int | None] = mapped_column(
         ForeignKey("dm_groups.id", ondelete="RESTRICT"),
         index=True,
+        nullable=True,
     )
 
     line_id: Mapped[int | None] = mapped_column(
@@ -79,6 +80,7 @@ class LeaderAssignment(Base):
     )
 
     dm_name_snapshot: Mapped[str] = mapped_column(String(120))
+    leader_name_snapshot: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
     line_code_snapshot: Mapped[str | None] = mapped_column(
         String(32),

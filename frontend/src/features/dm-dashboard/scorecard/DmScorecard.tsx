@@ -84,7 +84,7 @@ export default function DmScorecard({
     setPortalEl(node);
   }, []);
   const target = Number(month.slice(5)) <= 6 ? 80 : 90;
-  const { lines, loading, error } = useScorecardData(startDate, endDate);
+  const { lines, detailLines, archivedDmScores, archiveMonth, archiveFile, loading, error } = useScorecardData(startDate, endDate);
   const workshopNames = [
     ...new Set(lines.map((line) => line.info.workshopName)),
   ].sort();
@@ -92,7 +92,7 @@ export default function DmScorecard({
     (line) => workshop === "Semua" || line.info.workshopName === workshop
   );
   const leaderScores = toLeaderScores(workshopLines);
-  const dmScores = computeDmScores(leaderScores, target);
+  const dmScores = computeDmScores(leaderScores, target, archivedDmScores.filter((row) => workshop === "Semua" || row.workshopName === workshop));
   const activeDm =
     selectedDm === "Semua" || dmScores[selectedDm] ? selectedDm : "Semua";
   const selectedDmScore =
@@ -100,7 +100,7 @@ export default function DmScorecard({
       ? Object.values(dmScores).find((d) => d.rank === 1)
       : dmScores[activeDm];
   const selectedLeaderScore = selectedLeader
-    ? leaderScores.find((l) => l.leader === selectedLeader)
+    ? leaderScores.find((l) => l.key === selectedLeader)
     : undefined;
   const scoreConfig =
     selectedLeaderScore ??
@@ -112,12 +112,13 @@ export default function DmScorecard({
   const boardLeaders = leaderScores.filter(
     (row) => activeDm === "Semua" || row.dm === activeDm
   );
-  const dmLines = workshopLines.filter(
-    (line) => activeDm === "Semua" || dmNameOf(line) === activeDm
+  const workshopDetails = detailLines.filter((line) => workshop === "Semua" || line.info.workshopName === workshop || Boolean(line.archiveKey && workshopLines.some((entry) => entry.key === line.archiveKey)));
+  const dmLines = workshopDetails.filter(
+    (line) => activeDm === "Semua" || (line.archiveKey ? lines.find((entry) => entry.key === line.archiveKey)?.info.dmName === activeDm : dmNameOf(line) === activeDm)
   );
   const scopeLines = selectedLeaderScore
-    ? workshopLines.filter(
-        (line) => line.info.leaderName === selectedLeaderScore.leader
+    ? workshopDetails.filter(
+        (line) => (line.archiveKey ?? line.key) === selectedLeaderScore.key
       )
     : dmLines;
   const trendSeries = buildTrendSeries(scopeLines, granularity);
@@ -254,6 +255,7 @@ export default function DmScorecard({
           </div>
         )}
 
+        {archiveMonth && <p className="mb-4 text-sm text-text-secondary" role="status">{uiText("Arsip final bulanan")}: {archiveMonth.slice(0, 7)} · {archiveFile}. {uiText("Nilai dan peringkat memakai rekap final Excel satu bulan penuh. Tabel dan tren menampilkan detail pada rentang tanggal pilihan.")}</p>}
         {error && (
           <div
             role="status"

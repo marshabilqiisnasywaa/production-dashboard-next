@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import Principal, authorize_line, get_active_principal
+from app.api.deps import Principal, authorize_line, get_active_principal, require
 from app.db.session import get_db
 from app.models import Board, Line, Workshop
 from app.schemas import LineOut, PublicBoardOut
@@ -32,10 +32,10 @@ def line_board(
 
 @router.get("", response_model=list[LineOut])
 def list_my_lines(
-    principal: Principal = Depends(get_active_principal),
+    principal: Principal = Depends(require("lines.read")),
     db: Session = Depends(get_db),
 ) -> list[LineOut]:
-    if principal.is_admin or (principal.employee and principal.employee.role == "supervisor"):
+    if principal.is_admin or (principal.employee and principal.employee.role in ("supervisor", "hod")):
         rows = db.execute(
             select(Board, Line, Workshop)
             .join(Line, Line.id == Board.line_id)

@@ -4,7 +4,8 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import SqdipEntry
+from app.models import Line, SqdipEntry
+from app.services.scorecard_identity import ImportLeaderResolver
 
 DIMENSIONS = ("Safety", "Quality", "Delivery", "Inventory", "Productivity")
 POINTS_PER_DIMENSION = 6
@@ -52,9 +53,12 @@ def upsert_rows(db: Session, rows, file_name: str | None) -> tuple[int, int]:
         for e in db.scalars(select(SqdipEntry).where(SqdipEntry.date >= first, SqdipEntry.date <= last))
     }
     added = updated = 0
+    resolver = ImportLeaderResolver(db)
+    line_ids = dict(db.execute(select(Line.code, Line.id)).all())
     for row in rows:
         line = row.line.strip().upper()
         leader = row.leader.strip()
+        leader_id = resolver.resolve(leader, line_ids.get(line), row.date)
         replaced = False
         for dimension, cell in zip(DIMENSIONS, row.cells):
             key = (row.date, line, leader, dimension)
@@ -71,6 +75,8 @@ def upsert_rows(db: Session, rows, file_name: str | None) -> tuple[int, int]:
                 entry.actual = cell.actual
                 entry.points = cell.points
                 entry.source_file = file_name
+            if entry.leader_employee_id is None or leader_id is not None:
+                entry.leader_employee_id = leader_id
         if replaced:
             updated += 1
         else:

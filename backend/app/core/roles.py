@@ -18,7 +18,7 @@ ROLES: dict[str, Role] = {
     "member": Role(label="Member", scope="own", home="/dm-dashboard/member"),
     "leader": Role(label="Leader", scope="own", home="/dm-dashboard/leader"),
     "supervisor": Role(label="Supervisor", scope="none", home="/dm-dashboard/supervisor"),
-    "hod": Role(label="HOD", scope="all", home="/dm-dashboard/hod", capabilities=frozenset({"account.self", "problems.read"}),
+    "hod": Role(label="HOD", scope="all", home="/dm-dashboard/hod", capabilities=frozenset({"account.self", "problems.read", "papercard.read", "lines.read"}),
     ),
     "admin": Role(label="Admin", scope="all", home="/dm-dashboard/admin"),
     "superadmin": Role(label="Superadmin", scope="all", home="/dm-dashboard/admin"),

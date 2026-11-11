@@ -1,7 +1,7 @@
-import ProblemsPage from "@/features/dm-dashboard/leader/problems/ProblemsPage";
+import ProblemTracking from "@/features/dm-dashboard/leader/problems/ProblemTracking";
 
 export const metadata = { title: "Tracking Masalah · DM Digital" };
 
 export default function Page() {
-  return <ProblemsPage />;
+  return <ProblemTracking />;
 }

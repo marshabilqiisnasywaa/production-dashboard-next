@@ -103,7 +103,7 @@ export type LeaderAssignment = {
   id: number;
   employee_id: number;
   kind: "line_leader" | "dm_leader";
-  dm_group_id: number;
+  dm_group_id: number | null;
   line_id: number | null;
   dm_name_snapshot: string;
   line_code_snapshot: string | null;
@@ -135,8 +135,8 @@ export type DmLeaderCandidate = {
 
 export type LeaderAssignmentInput = Pick<
   LeaderAssignment,
-  "employee_id" | "kind" | "dm_group_id" | "line_id" | "started_at"
-> & { reason: string; close_assignment_ids: number[] };
+  "employee_id" | "kind" | "line_id" | "started_at"
+> & { dm_group_id: number; reason: string; close_assignment_ids: number[] };
 
 export const leaderAssignmentApi = {
   active: (dmId: number) => request<LeaderAssignment[]>(
@@ -563,9 +563,11 @@ export type DmHistoryImportInput = {
   toDate: string;
   mappings: Record<string, number>;
   rows: DmHistoryRow[];
+  archives?: import("./admin/history-import/parseFinalScorecard").ArchiveScore[];
+  archiveDetails?: DmHistoryRow[];
 };
 export type DmHistoryPreview = {
-  valid: number; added: number; existing: number; duplicates: number;
+  valid: number; added: number; existing: number; duplicates: number; archiveRows?: number;
   errors: string[]; warnings: string[];
 };
 export type DmHistoryBatch = {
@@ -587,7 +589,30 @@ export const historyImportApi = {
     }), {}, true),
 };
 
+export type DmScorecardEntry = {
+  key: string; info: DmScorecardLeader; papercard: DmPapercardKpiDay[]; standup: DmStandupKpiDay[];
+  sqdip: DmSqdipKpiDay[]; before: number; current: number; after: number; total?: number | null; archiveKey?: string | null; archiveRank?: number | null;
+};
+export type DmArchivedDmScore = {
+  dm: string; workshopName: string; leader: string; before: number; current: number; after: number; total: number; rank: number | null;
+};
+
 export const publicApi = {
+  scorecardReport: (range: { from: string; to: string }) => request<{
+    entries: DmScorecardEntry[]; details: DmScorecardEntry[]; archivedDmScores: DmArchivedDmScore[];
+    archiveMonth: string | null; archiveFile: string | null;
+  }>("/public/scorecard/report?" + new URLSearchParams(range)),
+  scorecardEntries: (range: { from: string; to: string }) =>
+    request<{
+      key: string;
+      info: DmScorecardLeader;
+      papercard: DmPapercardKpiDay[];
+      standup: DmStandupKpiDay[];
+      sqdip: DmSqdipKpiDay[];
+      before: number;
+      current: number;
+      after: number;
+    }[]>("/public/scorecard/entries?" + new URLSearchParams(range)),
   historicalAttendance: (range: { from: string; to: string }) => request<DmHistoryStoredRow[]>(
     "/public/historical-attendance?" + new URLSearchParams(range),
   ),

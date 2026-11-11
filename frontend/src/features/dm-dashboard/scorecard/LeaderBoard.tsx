@@ -179,7 +179,7 @@ export default function LeaderBoard({
       : [];
   const shownDm = showAllDm ? dmRows : dmRows.slice(0, TOP_COUNT);
 
-  const rankedLeaders = [...leaders].sort((a, b) => b.total - a.total);
+  const rankedLeaders = [...leaders].sort((a, b) => a.archiveRank && b.archiveRank ? a.archiveRank - b.archiveRank : b.total - a.total);
   const shownLeaders = showAllLeaders
     ? rankedLeaders
     : rankedLeaders.slice(0, TOP_COUNT);
@@ -293,13 +293,13 @@ export default function LeaderBoard({
           <div className="scorecard-leaderboard-empty">{uiText("Belum ada Leader DM")}</div>
         ) : (
           shownLeaders.map((row, index) => {
-            const rank = index + 1;
-            const open = current === row.leader;
+            const rank = row.archiveRank ?? index + 1;
+            const open = current === row.key;
             const onTarget = row.total >= target;
 
             return (
               <div
-                key={row.leader}
+                key={row.key}
                 className={`scorecard-leaderboard-item${
                   rank === 1 ? " is-top" : ""
                 }${open ? " is-expanded" : ""}`}
@@ -309,7 +309,7 @@ export default function LeaderBoard({
                   className="scorecard-leaderboard-trigger"
                   aria-expanded={open}
                   onClick={() => {
-                    const next = open ? null : row.leader;
+                    const next = open ? null : row.key;
                     if (onSelectLeader) onSelectLeader(next);
                     else setExpanded(next);
                   }}

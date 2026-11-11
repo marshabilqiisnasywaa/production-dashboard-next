@@ -44,7 +44,7 @@ class LeaderAssignmentOut(BaseModel):
     id: int
     employee_id: int
     kind: Literal["line_leader", "dm_leader"]
-    dm_group_id: int
+    dm_group_id: int | None
     line_id: int | None
     dm_name_snapshot: str
     line_code_snapshot: str | None

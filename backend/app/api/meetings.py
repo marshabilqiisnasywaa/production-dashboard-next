@@ -418,6 +418,8 @@ def start_session(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_principal),
 ) -> MeetingSessionOut:
+    from app.services.scorecard_archives import ensure_live_period
+    ensure_live_period(db, payload.date)
     if principal.role == "member":
         raise HTTPException(status_code=403, detail="Hanya Leader yang berwenang memulai sesi DM Meeting.")
 

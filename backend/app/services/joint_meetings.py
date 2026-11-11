@@ -53,6 +53,8 @@ def participants(db: Session, session: DmMeetingSession) -> list[dict]:
 
 
 def prepare(db: Session, principal, session: DmMeetingSession, scope: str) -> DmMeetingSession:
+    from app.services.scorecard_archives import ensure_live_period
+    ensure_live_period(db, session.date)
     authorize_host(db, principal, session)
     line = db.get(Line, session.line_id)
     if scope == "dm":

@@ -18,12 +18,18 @@ function today() {
   )}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+function runDirect<T>(fn: () => Promise<T>) {
+  return fn();
+}
+
 export default function PapercardProblems({
   lines,
-  call,
+  call = runDirect,
+  adminLayout = true,
 }: {
   lines: DmLine[];
-  call: <T>(fn: () => Promise<T>) => Promise<T>;
+  call?: <T>(fn: () => Promise<T>) => Promise<T>;
+  adminLayout?: boolean;
 }) {
   const { text: uiText } = useUiText();
   const [date, setDate] = useState(today);
@@ -85,7 +91,7 @@ export default function PapercardProblems({
   });
 
   return (
-    <div className="dml-pb is-admin dm-papercard-problems">
+    <div className={"dml-pb dm-papercard-problems" + (adminLayout ? " is-admin" : "")}>
       <section
         className="dml-pb-panel"
         aria-label={uiText("Log masalah papercard")}

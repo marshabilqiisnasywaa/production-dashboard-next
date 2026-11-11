@@ -889,3 +889,36 @@ class SqdipKpiOut(CamelModel):
     max_total: int
     days: list[SqdipKpiDayOut]
     average: SqdipKpiAverageOut | None
+
+
+class ScorecardEntryOut(CamelModel):
+    key: str
+    info: ScorecardLeaderOut
+    papercard: list[PapercardKpiDayOut]
+    standup: list[StandupKpiDayOut]
+    sqdip: list[SqdipKpiDayOut]
+    before: float
+    current: float
+    after: float
+    total: float | None = None
+    archive_key: str | None = None
+    archive_rank: int | None = None
+
+
+class ArchivedDmScoreOut(CamelModel):
+    dm: str
+    workshop_name: str
+    leader: str
+    before: float
+    current: float
+    after: float
+    total: float
+    rank: int | None = None
+
+
+class ScorecardReportOut(CamelModel):
+    entries: list[ScorecardEntryOut]
+    details: list[ScorecardEntryOut]
+    archived_dm_scores: list[ArchivedDmScoreOut] = Field(default_factory=list)
+    archive_month: date | None = None
+    archive_file: str | None = None

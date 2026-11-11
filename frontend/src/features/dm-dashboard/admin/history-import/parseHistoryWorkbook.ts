@@ -1,7 +1,8 @@
 import type { DmHistoryKind, DmHistoryRow, DmHistoryStatus } from "../../api";
+import { parseFinalScorecard, type ArchiveScore } from "./parseFinalScorecard";
 
 export type HistoryDraft = DmHistoryRow & { errors: string[] };
-export type HistoryWorkbook = { fileName: string; rows: HistoryDraft[]; sheets: string[]; missingSheets: string[]; notes: string[] };
+export type HistoryWorkbook = { fileName: string; rows: HistoryDraft[]; archives: ArchiveScore[]; sheets: string[]; missingSheets: string[]; notes: string[] };
 
 export const HISTORY_LABELS: Record<DmHistoryKind, string> = {
   papercard_kpi: "KPI Papercard", standup_kpi: "KPI Standup Meeting",
@@ -139,6 +140,21 @@ export async function parseHistoryWorkbook(file: File): Promise<HistoryWorkbook>
     ["Detail Papercard system", "papercard_status"], ["Attendance Standup Meeting", "attendance"],
   ];
   const rows: HistoryDraft[] = [], sheets: string[] = [], missingSheets: string[] = [], notes: string[] = [];
+  const archives: ArchiveScore[] = [];
+  const archivedMonths = new Set<string>();
+  for (const sheet of ["KPI (3)", "KPI (2)", "KPI"]) {
+    try {
+      const final = parseFinalScorecard(await readSheet(file, sheet), sheet);
+      const month = final[0]?.month;
+      if (month && !archivedMonths.has(month)) {
+        archivedMonths.add(month);
+        archives.push(...final);
+        sheets.push(sheet);
+      }
+    } catch (error) {
+      if (!(error instanceof SheetNotFoundError)) throw error;
+    }
+  }
   for (const [sheet, kind] of sources) {
     let table: unknown[][];
     try { table = await readSheet(file, sheet); }
@@ -149,7 +165,7 @@ export async function parseHistoryWorkbook(file: File): Promise<HistoryWorkbook>
     sheets.push(sheet);
     rows.push(...(kind === "papercard_kpi" || kind === "standup_kpi" ? parseSummary(table, sheet, kind, notes) : parseDetail(table, sheet, kind)));
   }
-  if (!rows.length) throw new Error("Tidak ada data pada empat sheet sumber yang didukung.");
+  if (!rows.length && !archives.length) throw new Error("Tidak ada rekap final atau detail histori pada workbook.");
   if (rows.length > 20000) throw new Error("Workbook melebihi 20.000 baris histori. Pisahkan file per periode.");
-  return { fileName: file.name, rows, sheets, missingSheets, notes };
+  return { fileName: file.name, rows, archives, sheets, missingSheets, notes };
 }

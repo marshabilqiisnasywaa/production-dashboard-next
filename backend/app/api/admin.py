@@ -4,13 +4,13 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_admin
-from app.services.leader_assignments import sync_member_leader_history
+from app.services.leader_assignments import change_line_dm, sync_member_leader_history
 from app.services.team_slots import team_department, validate_team_slot
 from app.models.leader_assignment import LeaderAssignment
 from app.api.meetings import _absence_fields
 from app.core.roles import ADMIN_ROLES, ROLES
 from app.db.session import get_db
-from app.models import DmGroup, Board, BoardMember, DmMeetingAttendance, DmMeetingSession, Employee, Line, MpvAward, User, Workshop
+from app.models import DmGroup, Board, BoardMember, DmMeetingAttendance, DmMeetingSession, Employee, HistoricalEntry, Line, MpvAward, SqdipEntry, User, Workshop
 from app.schemas import (
     EmployeeIn,
     EmployeeOut,
@@ -194,7 +194,7 @@ def create_line(body: LineIn, db: Session = Depends(get_db)) -> LineOut:
 
 
 @router.patch("/lines/{line_id}", response_model=LineOut)
-def update_line(line_id: int, body: LineUpdate, db: Session = Depends(get_db)) -> LineOut:
+def update_line(line_id: int, body: LineUpdate, db: Session = Depends(get_db), admin=Depends(get_current_admin)) -> LineOut:
     board, line, workshop = line_row(db, line_id)
     sent = body.model_fields_set
     target_workshop_id = body.workshop_id if body.workshop_id is not None else line.workshop_id
@@ -203,7 +203,7 @@ def update_line(line_id: int, body: LineUpdate, db: Session = Depends(get_db)) -
     if group_id is not None and (group is None or group.workshop_id != target_workshop_id):
         raise HTTPException(400, "DM harus berada di workshop yang sama dengan lini.")
     if "dm_group_id" in sent:
-        line.dm_group_id = group_id
+        change_line_dm(db, line, group, admin)
     if "workshop_id" in sent and body.workshop_id is not None:
         new_workshop = db.get(Workshop, body.workshop_id)
         if new_workshop is None:
@@ -677,6 +677,10 @@ def delete_employee(
         LeaderAssignment.employee_id == employee.id,
     ).limit(1)):
         raise conflict("Karyawan memiliki riwayat leader. Nonaktifkan setelah penugasan berakhir.")
+    if db.scalar(select(SqdipEntry.id).where(SqdipEntry.leader_employee_id == employee.id).limit(1)):
+        raise conflict("Karyawan memiliki riwayat SQDIP. Nonaktifkan agar riwayat nilainya tetap tersimpan.")
+    if db.scalar(select(HistoricalEntry.id).where(HistoricalEntry.data["leaderEmployeeId"].as_integer() == employee.id).limit(1)):
+        raise conflict("Karyawan memiliki riwayat scorecard. Nonaktifkan agar riwayat nilainya tetap tersimpan.")
     count = subordinate_count(db, employee.id)
     if count:
         raise conflict(f"{employee.name} masih jadi supervisor {count} orang. Pindahkan mereka dulu.")

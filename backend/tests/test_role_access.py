@@ -12,6 +12,10 @@ EXPECTED_ROUTES = {
         ("GET", "/api/auth/me"),
         ("POST", "/api/auth/change-password"),
         ("GET", "/api/meetings/problems"),
+        ("GET", "/api/fivewhy/documents"),
+        ("GET", "/api/fivewhy/documents/{document_id}/download"),
+        ("GET", "/api/papercards/submissions"),
+        ("GET", "/api/lines"),
     },
 }
 

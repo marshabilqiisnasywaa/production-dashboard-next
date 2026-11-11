@@ -46,11 +46,17 @@ export default function HistoryImportPage({ lines }: { lines: DmLine[] }) {
   ) ?? [], [workbook, kinds, from, to]);
   const invalid = selected.filter((row) => row.errors.length > 0);
   const valid = selected.filter((row) => row.errors.length === 0);
+  const archives = workbook?.archives.filter((row) => {
+    const monthEnd = new Date(Date.UTC(Number(row.month.slice(0, 4)), Number(row.month.slice(5, 7)), 0)).toISOString().slice(0, 10);
+    return row.month >= from && monthEnd <= to;
+  }) ?? [];
   const codes = [...new Set(valid.map((row) => row.line))].sort();
-  const canPreview = valid.length > 0 && from <= to && to < jakartaToday() && (!invalid.length || skipErrors);
+  const canPreview = archives.length > 0 && from <= to && to < jakartaToday() && (!invalid.length || skipErrors);
   const payload: DmHistoryImportInput = {
     fileName: workbook?.fileName ?? "", shift, mode, identityPolicy, fromDate: from, toDate: to, mappings,
-    rows: valid.map(({ errors: _errors, ...row }) => row),
+    rows: [],
+    archiveDetails: valid.filter((row) => archives.some((archive) => row.date.slice(0, 7) === archive.month.slice(0, 7))).map(({ errors: _errors, ...row }) => row),
+    archives,
   };
 
   function invalidate() {
@@ -67,10 +73,11 @@ export default function HistoryImportPage({ lines }: { lines: DmLine[] }) {
     try {
       const data = await parseHistoryWorkbook(file);
       const dates = data.rows.map((row) => row.date).filter(Boolean).sort();
-      if (!dates.length) throw new Error("Tidak ada tanggal valid dalam workbook.");
-      const end = dates[dates.length - 1];
+      if (!dates.length && !data.archives.length) throw new Error("Tidak ada tanggal valid dalam workbook.");
+      const finalMonth = data.archives.map((row) => row.month).sort().at(-1);
+      const end = finalMonth ? new Date(Date.UTC(Number(finalMonth.slice(0, 4)), Number(finalMonth.slice(5, 7)), 0)).toISOString().slice(0, 10) : dates[dates.length - 1];
       const [year, month] = end.split("-").map(Number);
-      setFrom(new Date(Date.UTC(year, month - 3, 1)).toISOString().slice(0, 10));
+      setFrom(finalMonth ?? new Date(Date.UTC(year, month - 1, 1)).toISOString().slice(0, 10));
       setTo(end);
       setMappings({});
       setSkipErrors(false);
@@ -105,7 +112,7 @@ export default function HistoryImportPage({ lines }: { lines: DmLine[] }) {
   return (
     <section className="hi-page" aria-labelledby="history-import-title">
       <div className="hi-intro">
-        <div><h2 id="history-import-title">{uiText("Impor histori Excel")}</h2><p>{uiText("Masukkan rekap KPI Papercard, Standup Meeting, dan detail attendance dari workbook asesmen.")}</p></div>
+        <div><h2 id="history-import-title">{uiText("Impor histori Excel")}</h2><p>{uiText("Arsipkan rekap final bulanan leader dan DM beserta detail pendukung dari workbook asesmen.")}</p></div>
         <label className="dm-admin-btn is-primary hi-upload">
           {uiText(busy ? "Memproses…" : "Pilih file Excel")}
           <input type="file" accept=".xlsx" disabled={busy} onChange={(event) => {
@@ -114,32 +121,34 @@ export default function HistoryImportPage({ lines }: { lines: DmLine[] }) {
           }} />
         </label>
       </div>
-      <p className="hi-help">{uiText("Nilai KPI mengikuti rekap Excel. Status NG ketepatan waktu berarti terlambat atau tidak mengisi. Attendance disimpan per role; jam hadir dan identitas peserta tidak dibuat otomatis.")}</p>
+      <p className="hi-help">{uiText("Arsip bulanan memakai nilai final leader dan DM dari sheet KPI, termasuk penyesuaian di Excel. Detail harian disimpan untuk penelusuran. Periode yang sudah memiliki aktivitas sistem tidak dapat ditimpa impor histori. Saat operasional, hanya SQDIP yang perlu diimpor.")}</p>
       {error && <p className="hi-message is-error" role="alert">{error}</p>}
       {notice && <p className="hi-message is-success" role="status">{notice}</p>}
       {workbook ? (
         <>
           <div className="hi-file"><strong>{workbook.fileName}</strong><span>{workbook.sheets.join(" · ")}</span></div>
+          {!archives.length && <p className="hi-message is-error" role="alert">{uiText("Belum ada rekap final bulanan pada pilihan ini. Pilih satu bulan penuh yang tercantum pada sheet KPI. Nilai formula Excel harus sudah tersimpan.")}</p>}
           {workbook.missingSheets.length > 0 && <p className="hi-message">{uiText("Sheet tidak ditemukan")}: {workbook.missingSheets.join(", ")}</p>}
           {workbook.notes.length > 0 && <details className="hi-message"><summary>{uiText("Blok template tanpa line tidak diimpor")} ({workbook.notes.length})</summary><ul>{workbook.notes.map((note, index) => <li key={index}>{note}</li>)}</ul></details>}
           <fieldset className="hi-settings" disabled={busy}>
-            <legend>{uiText("1. Pilih data dan periode")}</legend>
+            <legend>{uiText("1. Pilih periode dan detail pendukung")}</legend>
             <div className="hi-filter-grid">
               <label>{uiText("Tanggal awal")}<input type="date" value={from} max={to || jakartaToday()} onChange={(event) => { setFrom(event.target.value); invalidate(); }} /></label>
               <label>{uiText("Tanggal akhir")}<input type="date" value={to} min={from} max={jakartaToday()} onChange={(event) => { setTo(event.target.value); invalidate(); }} /></label>
               <label>{uiText("Shift sumber Excel")}<select value={shift} onChange={(event) => { setShift(event.target.value as DmHistoryImportInput["shift"]); invalidate(); }}>{["Shift 1", "Shift 2", "Shift 3"].map((item) => <option key={item}>{item}</option>)}</select></label>
               <label>{uiText("Jika data sudah ada")}<select value={mode} onChange={(event) => { setMode(event.target.value as DmHistoryImportInput["mode"]); invalidate(); }}><option value="skip">{uiText("Lewati data tersimpan")}</option><option value="replace">{uiText("Perbarui histori Excel")}</option></select></label>
             </div>
+            <p className="hi-help">{uiText("Pilihan berikut mengatur detail pendukung. Nilai final papercard, standup, SQDIP, dan total pada rekap bulanan tetap diarsipkan seluruhnya.")}</p>
             <div className="hi-checkboxes">{KINDS.map((kind) => <label key={kind}><input type="checkbox" checked={kinds.includes(kind)} onChange={(event) => { setKinds((current) => event.target.checked ? [...current, kind] : current.filter((item) => item !== kind)); invalidate(); }} />{uiText(HISTORY_LABELS[kind])}</label>)}</div>
-            <label className="hi-identity-policy">{uiText("Jika leader / DM berbeda antar-sheet")}<select value={identityPolicy} onChange={(event) => { setIdentityPolicy(event.target.value as DmHistoryImportInput["identityPolicy"]); invalidate(); }}><option value="strict">{uiText("Tahan sampai identitas disamakan")}</option><option value="preserve">{uiText("Simpan identitas asli per sheet, tandai perlu verifikasi")}</option></select></label>
-            {identityPolicy === "preserve" && <p className="hi-help">{uiText("Perbedaan disimpan bersama sumbernya. DM master dan riwayat penugasan tidak diubah. Data yang bertentangan ditandai perlu verifikasi, bukan dianggap sebagai bukti perpindahan.")}</p>}
+            {!archives.length && <label className="hi-identity-policy">{uiText("Jika leader / DM berbeda antar-sheet")}<select value={identityPolicy} onChange={(event) => { setIdentityPolicy(event.target.value as DmHistoryImportInput["identityPolicy"]); invalidate(); }}><option value="strict">{uiText("Tahan sampai identitas disamakan")}</option><option value="preserve">{uiText("Simpan identitas asli per sheet, tandai perlu verifikasi")}</option></select></label>}
+            {archives.length > 0 ? <p className="hi-help">{uiText("Nama, line, dan DM rekap final dipertahankan dari Excel. Perbedaan pada detail pendukung tidak mengubah angka final arsip atau penugasan saat ini.")}</p> : identityPolicy === "preserve" && <p className="hi-help">{uiText("Perbedaan disimpan bersama sumbernya. DM master dan riwayat penugasan tidak diubah. Data yang bertentangan ditandai perlu verifikasi, bukan dianggap sebagai bukti perpindahan.")}</p>}
             <dl className="hi-coverage">{kinds.map((kind) => {
               const dates = valid.filter((row) => row.kind === kind).map((row) => row.date).sort();
               return <div key={kind}><dt>{uiText(HISTORY_LABELS[kind])}</dt><dd>{dates.length ? `${dates[0]} — ${dates[dates.length - 1]} · ${dates.length}` : uiText("Tidak ada data pada pilihan ini.")}</dd></div>;
             })}</dl>
             <p className="hi-help">{uiText("Pilih periode sebelum hari ini, maksimal satu tahun per impor. Shift harus sesuai sumber; sesi pagi/sore attendance tetap disimpan terpisah. Formula memakai nilai terakhir yang tersimpan di Excel, bukan dihitung ulang saat upload.")}</p>
           </fieldset>
-          <fieldset className="hi-settings" disabled={busy}>
+          {!archives.length && <fieldset className="hi-settings" disabled={busy}>
             <legend>{uiText("2. Cocokkan master line")}</legend>
             <p className="hi-help">{uiText("Leader dan DM dari Excel dipertahankan sebagai histori. Pilih master line yang benar; master dan akun tidak dibuat otomatis.")}</p>
             {!lines.length && <p className="hi-message is-error">{uiText("Master line belum tersedia. Tambahkan line melalui menu Lini, Workshop & Tim terlebih dahulu.")}</p>}
@@ -149,8 +158,9 @@ export default function HistoryImportPage({ lines }: { lines: DmLine[] }) {
               const leaders = [...new Set(valid.filter((row) => row.line === code).map((row) => row.leader))];
               return <label key={code}><strong>{code}</strong><select aria-label={`${uiText("Master line untuk")} ${code}`} value={mappings[code] ?? automatic?.id ?? ""} onChange={(event) => { setMappings((current) => ({ ...current, [code]: Number(event.target.value) })); invalidate(); }}><option value="" disabled>{uiText("Pilih master line")}</option>{lines.map((line) => <option key={line.id} value={line.id}>{line.code} · {line.workshopName}</option>)}</select><small>{leaders.join(", ")}{target ? ` · ${target.name}` : ""}</small></label>;
             })}</div>
-          </fieldset>
+          </fieldset>}
           <div className="hi-preview-head"><h3>{uiText("3. Periksa sebelum menyimpan")}</h3><span>{uiText("{{v0}} valid · {{v1}} bermasalah", { v0: valid.length, v1: invalid.length })}</span></div>
+          {archives.length > 0 && <div className="hi-table-wrap"><table><caption>{uiText("Rekap final bulanan yang akan diarsipkan")}</caption><thead><tr>{["Bulan", "Jenis", "DM", "Line / Leader", "Papercard", "Standup", "SQDIP", "Total"].map((label) => <th key={label}>{uiText(label)}</th>)}</tr></thead><tbody>{archives.map((row, index) => <tr key={index}><td>{row.month.slice(0, 7)}</td><td>{uiText(row.scope === "dm" ? "DM" : "Leader")}</td><td>{row.dm}</td><td>{row.line}<br />{row.leader}</td><td>{row.before.toFixed(2)}</td><td>{row.current.toFixed(2)}</td><td>{row.after.toFixed(2)}</td><td>{row.total.toFixed(2)}</td></tr>)}</tbody></table></div>}
           {invalid.length > 0 && <div className="hi-message is-error"><ul>{invalid.slice(0, 15).map((row, index) => <li key={index}>{row.sourceSheet} · {row.sourceRow} · {row.date || "—"}: {row.errors.join(" ")}</li>)}</ul>{invalid.length > 15 && <p>{uiText("{{v0}} baris bermasalah lainnya.", { v0: invalid.length - 15 })}</p>}<label className="hi-check"><input type="checkbox" disabled={busy} checked={skipErrors} onChange={(event) => { setSkipErrors(event.target.checked); invalidate(); }} />{uiText("Lewati baris bermasalah dan impor hanya baris valid")}</label></div>}
           <div className="hi-table-wrap"><table><caption className="dm-admin-sr-only">{uiText("Preview histori dari Excel")}</caption><thead><tr>{["Tanggal", "Jenis", "Line", "DM / Leader", "Nilai / Status", "Sumber"].map((label) => <th key={label}>{uiText(label)}</th>)}</tr></thead><tbody>{selected.slice((previewPage - 1) * 30, previewPage * 30).map((row, index) => <tr key={index} className={row.errors.length ? "hi-invalid" : ""}><td>{row.date || "—"}</td><td>{uiText(HISTORY_LABELS[row.kind])}</td><td>{row.line}</td><td>{row.dm ?? "—"}<br />{row.leader}</td><td className="hi-detail-cell">{row.errors.length ? row.errors.join(" ") : describe(row, uiText)}</td><td>{row.sourceSheet}<br />{uiText("Baris")} {row.sourceRow}</td></tr>)}{!selected.length && <tr><td colSpan={6}>{uiText("Tidak ada data pada pilihan ini.")}</td></tr>}</tbody></table></div>
           <div className="hi-pagination"><button className="dm-admin-btn" disabled={busy || previewPage <= 1} onClick={() => setPreviewPage((page) => page - 1)}>{uiText("Sebelumnya")}</button><span>{previewPage} / {Math.max(1, Math.ceil(selected.length / 30))}</span><button className="dm-admin-btn" disabled={busy || previewPage * 30 >= selected.length} onClick={() => setPreviewPage((page) => page + 1)}>{uiText("Berikutnya")}</button></div>

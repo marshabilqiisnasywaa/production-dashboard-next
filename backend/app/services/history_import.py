@@ -6,9 +6,11 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import DmGroup, Employee, HistoricalEntry, HistoryImportBatch, Line
+from app.models import DmGroup, Employee, HistoricalEntry, HistoryImportBatch, Line, ScorecardArchive
 from app.schemas_history_import import HistoryImportIn
 from app.schemas import PapercardKpiDayOut, StandupKpiDayOut
+from app.services.scorecard_identity import ImportLeaderResolver
+from app.services.scorecard_archives import ensure_historical_period, prepare_archives
 
 
 def normalize_identity(value: str | None, dm: bool = False) -> str:
@@ -23,6 +25,8 @@ def prepare_import(db: Session, payload: HistoryImportIn):
         raise HTTPException(400, "Pilih periode historis yang berakhir sebelum hari ini.")
     if (payload.to_date - payload.from_date).days > 365:
         raise HTTPException(400, "Maksimal rentang impor satu tahun per proses.")
+    if payload.rows:
+        ensure_historical_period(db, payload.from_date, payload.to_date)
     lines = {line.id: line for line in db.scalars(select(Line))}
     by_code = {line.code.strip().upper(): line for line in lines.values()}
     groups = {group.id: group.name for group in db.scalars(select(DmGroup))}
@@ -116,20 +120,27 @@ def prepare_import(db: Session, payload: HistoryImportIn):
 
 def preview_import(db: Session, payload: HistoryImportIn) -> dict:
     prepared, errors, warnings, duplicates = prepare_import(db, payload)
+    archives, archive_errors, archive_warnings = prepare_archives(db, payload, datetime.now(ZoneInfo("Asia/Jakarta")).date())
+    errors += archive_errors
+    warnings += archive_warnings
     existing = sum(entry is not None for _, _, _, entry in prepared)
+    existing_archives = sum(entry is not None for _, entry in archives)
     return {
-        "valid": len(prepared), "added": len(prepared) - existing,
-        "existing": existing, "duplicates": duplicates,
+        "valid": len(prepared) + len(archives), "added": len(prepared) - existing + len(archives) - existing_archives,
+        "existing": existing + existing_archives, "duplicates": duplicates, "archiveRows": len(archives),
         "errors": errors, "warnings": warnings,
     }
 
 
 def commit_import(db: Session, payload: HistoryImportIn, username: str) -> dict:
     prepared, errors, _, duplicates = prepare_import(db, payload)
+    archives, archive_errors, _ = prepare_archives(db, payload, datetime.now(ZoneInfo("Asia/Jakarta")).date())
+    errors += archive_errors
     if errors:
         raise HTTPException(400, errors[0])
-    if not prepared:
+    if not prepared and not archives:
         raise HTTPException(400, "Tidak ada data valid untuk disimpan.")
+    resolver = ImportLeaderResolver(db)
     batch = HistoryImportBatch(file_name=payload.file_name, imported_by=username, added=0, updated=0, skipped=duplicates)
     db.add(batch)
     db.flush()
@@ -137,6 +148,8 @@ def commit_import(db: Session, payload: HistoryImportIn, username: str) -> dict:
         if entry is not None and payload.mode == "skip":
             batch.skipped += 1
             continue
+        previous_leader_id = entry.data.get("leaderEmployeeId") if entry is not None and entry.leader_name == row.leader.strip() else None
+        leader_id = resolver.resolve(row.leader, line.id, row.date)
         if entry is None:
             entry = HistoricalEntry(kind=row.kind, line_id=line.id, date=row.date, shift=payload.shift)
             db.add(entry)
@@ -149,7 +162,42 @@ def commit_import(db: Session, payload: HistoryImportIn, username: str) -> dict:
         entry.source_dm = row.dm
         entry.source_sheet = row.source_sheet
         entry.source_row = row.source_row
+        if leader_id is not None:
+            data["leaderEmployeeId"] = leader_id
+        elif previous_leader_id is not None:
+            data["leaderEmployeeId"] = previous_leader_id
         entry.data = data
+    detail_months = set()
+    for row, existing_archive in archives:
+        if existing_archive is not None and payload.mode == "skip":
+            batch.skipped += 1
+            continue
+        line = db.scalar(select(Line).where(Line.code == row.line.strip().upper())) if row.line else None
+        leader_id = resolver.resolve(row.leader, line.id if line else None, row.month)
+        archive = existing_archive
+        if archive is None:
+            archive = ScorecardArchive(month=row.month, scope=row.scope, line_code=row.line.strip().upper(),
+                                       leader_name=row.leader.strip(), dm_name=row.dm.strip())
+            db.add(archive)
+            batch.added += 1
+        else:
+            batch.updated += 1
+        archive.batch_id = batch.id
+        archive.before, archive.current, archive.after, archive.total = row.before, row.current, row.after, row.total
+        archive.source_rank = row.rank
+        archive.data = {"area": row.area, "model": row.model, "sourceSheet": row.source_sheet,
+                        "sourceRow": row.source_row, "fileName": payload.file_name, "leaderEmployeeId": leader_id}
+        if row.scope == "leader" and row.month not in detail_months and payload.archive_details:
+            archive.data["details"] = [detail.model_dump(mode="json") for detail in payload.archive_details if detail.date.replace(day=1) == row.month]
+            detail_months.add(row.month)
+    if payload.mode == "replace" and archives:
+        db.flush()
+        retained = {(row.month, row.scope, row.line.strip().casefold(), row.leader.strip().casefold(), row.dm.strip().casefold()) for row, _ in archives}
+        scopes = {(row.month, row.scope) for row, _ in archives}
+        for archive in db.scalars(select(ScorecardArchive).where(ScorecardArchive.month.in_({row.month for row, _ in archives}))):
+            identity = (archive.month, archive.scope, archive.line_code.casefold(), archive.leader_name.casefold(), archive.dm_name.casefold())
+            if (archive.month, archive.scope) in scopes and identity not in retained:
+                db.delete(archive)
     db.commit()
     return {"batchId": batch.id, "added": batch.added, "updated": batch.updated, "skipped": batch.skipped}
 
