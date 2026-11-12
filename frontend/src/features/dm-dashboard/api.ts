@@ -338,7 +338,7 @@ export type FiveWhyDocument = {
   lineCode: string;
   id: string;
   title: string;
-  category: "analysis" | "evidence" | "standard" | "other";
+  category: string;
   source: "file" | "simo";
   url: string | null;
   fileName: string | null;
@@ -356,9 +356,10 @@ export type FiveWhyDocumentLine = {
 export const fiveWhyDocumentsApi = {
   options: () => request<FiveWhyDocumentLine[]>("/fivewhy/documents/options", {}, true),
   list: () => request<FiveWhyDocument[]>("/fivewhy/documents", {}, true),
-  addLink: (input: { lineId: number; picId: number; title: string; category: FiveWhyDocument["category"]; url: string }) =>
+  categories: () => request<string[]>("/fivewhy/documents/categories", {}, true),
+  addLink: (input: { lineId: number; picId: number; title: string; category: string; url: string }) =>
     request<FiveWhyDocument>("/fivewhy/documents/simo", json("POST", input), true),
-  upload: (lineId: number, picId: number, title: string, category: FiveWhyDocument["category"], file: File) => {
+  upload: (lineId: number, picId: number, title: string, category: string, file: File) => {
     const form = new FormData();
     form.append("line_id", String(lineId));
     form.append("pic_id", String(picId));
@@ -371,7 +372,7 @@ export const fiveWhyDocumentsApi = {
     lineId: number;
     picId: number;
     title: string;
-    category: FiveWhyDocument["category"];
+    category: string;
     source: FiveWhyDocument["source"];
     url?: string;
     file?: File;

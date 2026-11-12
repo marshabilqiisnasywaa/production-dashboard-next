@@ -178,6 +178,8 @@ export function DateRangePicker({
   maxDate,
   className = "",
   panelClassName = "",
+  emptyLabel,
+  clearable = false,
 }: {
   value: DateRangeValue;
   onChange: (value: DateRangeValue) => void;
@@ -186,6 +188,8 @@ export function DateRangePicker({
   maxDate?: string;
   className?: string;
   panelClassName?: string;
+  emptyLabel?: string;
+  clearable?: boolean;
 }) {
   const { text: uiText, locale: uiLocale } = useUiText();
   const calendarLocale = uiLocale === "en-GB" ? enGB : idLocale;
@@ -194,13 +198,16 @@ export function DateRangePicker({
   const narrow = useIsNarrow();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DateRange | undefined>();
-  const [month, setMonth] = useState<Date>(() => toDate(value.from));
+  const [month, setMonth] = useState<Date>(() => {
+    const initial = value.from ? toDate(value.from) : new Date();
+    return isValid(initial) ? initial : new Date();
+  });
   const [fromText, setFromText] = useState("");
   const [toText, setToText] = useState("");
 
-  const from = toDate(value.from);
-  const to = toDate(value.to);
-  const valid = isValid(from) && isValid(to);
+  const from = value.from ? toDate(value.from) : undefined;
+  const to = value.to ? toDate(value.to) : undefined;
+  const valid = Boolean(from && to && isValid(from) && isValid(to));
   const today = startOfDay(new Date());
 
   const minD = minDate ? toDate(minDate) : undefined;
@@ -218,9 +225,14 @@ export function DateRangePicker({
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
-    if (next && valid) {
-      setRange({ from, to });
-      setMonth(from);
+    if (next) {
+      if (valid && from && to) {
+        setRange({ from, to });
+        setMonth(from);
+      } else {
+        setRange(undefined);
+        setMonth(today);
+      }
     }
   };
 
@@ -268,7 +280,18 @@ export function DateRangePicker({
     setOpen(false);
   };
 
-  const label = !valid ? uiText("Pilih periode") : isSameDay(from, to) ? show(from, calendarLocale) : `${show(from, calendarLocale)} – ${show(to, calendarLocale)}`;
+  const clear = () => {
+    onChange({ from: "", to: "" });
+    setRange(undefined);
+    setOpen(false);
+  };
+
+  const label =
+    valid && from && to
+      ? isSameDay(from, to)
+        ? show(from, calendarLocale)
+        : `${show(from, calendarLocale)} – ${show(to, calendarLocale)}`
+      : uiText(emptyLabel ?? "Pilih periode");
 
   return (
     <Popover.Root open={open} onOpenChange={handleOpenChange}>
@@ -329,6 +352,16 @@ selected={draft}
                   aria-label={uiText("Tanggal akhir")}
                 />
                 <div className="dmf-footer-actions">
+                  {clearable ? (
+                    <button
+                      type="button"
+                      className="dmf-btn"
+                      onClick={clear}
+                      disabled={!draft?.from}
+                    >
+                      {uiText("Hapus rentang")}
+                    </button>
+                  ) : null}
                   <button type="button" className="dmf-btn" onClick={() => setOpen(false)}>{uiText("Batal")}</button>
                   <button type="button" className="dmf-btn dmf-btn--primary" onClick={apply} disabled={!draft?.from}>{uiText("Terapkan")}</button>
                 </div>

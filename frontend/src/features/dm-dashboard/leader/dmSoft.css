@@ -65,37 +65,6 @@
   cursor: pointer;
 }
 
-.dml-dashboard-date-picker,
-.dmf-panel.dml-dashboard-date-panel {
-  --color-primary: var(--dm-green, #046a38);
-  --color-primary-dark: #03552d;
-  --color-primary-soft: var(--dm-green-50, #e6f0eb);
-  --color-primary-border: color-mix(
-    in srgb,
-    var(--dm-green, #046a38) 18%,
-    #fff
-  );
-  --color-section: #f7f8f9;
-  --color-text: var(--dm-text, #1a1d1f);
-  --color-text-secondary: var(--dm-muted, #6b7280);
-  --color-border: var(--dm-border, #e5e7eb);
-  --color-border-strong: #9ca3af;
-  --shadow-popover: 0 12px 28px rgb(16 24 40 / 12%);
-}
-
-.dml-dashboard-date-picker,
-.dml-dashboard-date-panel,
-.dml-dashboard-date-panel * {
-  font-family: var(
-    --font-inter,
-    "Inter",
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    sans-serif
-  );
-}
-
 .dml-dashboard-toolbar .dmf-trigger--date.dml-dashboard-date-picker {
   width: min(320px, 36vw);
   min-width: 260px;

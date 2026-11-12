@@ -13,13 +13,61 @@ import {
 } from "lucide-react";
 import { accountApi, fiveWhyDocumentsApi } from "../api";
 import type { DmMe, FiveWhyDocument, FiveWhyDocumentLine } from "../api";
+import { DateRangePicker } from "../scorecard/ScorecardFilters";
+import { jakartaToday } from "../scorecard/useScorecardData";
+import CategoryCombobox, {
+  findCategoryMatch,
+  normalizeCategoryMatch,
+  type CategoryOption,
+} from "./CategoryCombobox";
 import { useUiText } from "@/locales/useUiText";
-const CATEGORIES: Record<FiveWhyDocument["category"], string> = {
+const CATEGORIES: Record<string, string> = {
   analysis: "Analisis 5Why & PDCA",
   evidence: "Bukti pendukung",
   standard: "SOP / WI",
   other: "Lainnya",
 };
+const BUILT_IN_CATEGORIES = Object.keys(CATEGORIES);
+
+function getCategoryOptions(
+  savedCategories: string[],
+  pendingCategories: string[],
+  selectedCategory: string,
+  text: (value: string) => string
+): CategoryOption[] {
+  const builtIn = Object.entries(CATEGORIES).map(([value, label]) => ({
+    value,
+    label: text(label),
+    matchValues: [value, label, text(label)],
+  }));
+  const options = builtIn.filter((option) => option.value !== "other");
+
+  for (const value of [
+    ...[...savedCategories].sort((a, b) => a.localeCompare(b)),
+    ...pendingCategories,
+    selectedCategory,
+  ]) {
+    const key = normalizeCategoryMatch(value);
+    if (!key) continue;
+    const duplicate = [...builtIn, ...options].some((option) =>
+      [option.value, option.label, ...(option.matchValues ?? [])].some(
+        (alias) => normalizeCategoryMatch(alias) === key
+      )
+    );
+    if (!duplicate) options.push({ value, label: value, matchValues: [value] });
+  }
+
+  return [...options, builtIn.find((option) => option.value === "other")!];
+}
+
+function localDateKey(value: string) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 type Props = {
   headerActions?: ReactNode;
@@ -41,17 +89,24 @@ export default function DocumentLibrary({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [reload, setReload] = useState(0);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [pendingCategories, setPendingCategories] = useState<string[]>([]);
+  const [categoryCatalogLoaded, setCategoryCatalogLoaded] = useState(false);
+  const [categoryLoadError, setCategoryLoadError] = useState("");
+  const [categorySelectionValid, setCategorySelectionValid] = useState(true);
   const [lineId, setLineId] = useState(0);
   const [picId, setPicId] = useState(0);
   const [lines, setLines] = useState<FiveWhyDocumentLine[]>([]);
   const [title, setTitle] = useState("");
-  const [category, setCategory] =
-    useState<FiveWhyDocument["category"]>("analysis");
+  const [category, setCategory] = useState("analysis");
   const [source, setSource] = useState<"file" | "simo">("file");
   const [url, setUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [lineFilter, setLineFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const modal = useRef<HTMLDialogElement>(null);
   const [editingDocument, setEditingDocument] =
@@ -63,9 +118,16 @@ export default function DocumentLibrary({
   const selectedLine = lines.find((line) => line.id === lineId);
   const selectedPic = selectedLine?.pics.find((pic) => pic.id === picId);
   const canEdit = user?.role === "leader" || user?.role === "member";
+  const categoryOptions = getCategoryOptions(
+    customCategories,
+    pendingCategories,
+    category,
+    uiText
+  );
+  const selectedCategory = category;
   const dirty = editingDocument
     ? title.trim() !== editingDocument.title ||
-      category !== editingDocument.category ||
+      selectedCategory !== editingDocument.category ||
       lineId !== editingDocument.lineId ||
       picId !== (editingDocument.picId ?? 0) ||
       (editingDocument.source === "simo"
@@ -149,10 +211,85 @@ export default function DocumentLibrary({
     };
   }, [reload]);
 
+  useEffect(() => {
+    let active = true;
+    setCategoryCatalogLoaded(false);
+    setCategoryLoadError("");
+    setCustomCategories([]);
+    fiveWhyDocumentsApi
+      .categories()
+      .then((categories) => {
+        if (
+          !Array.isArray(categories) ||
+          categories.some((value) => typeof value !== "string")
+        ) {
+          throw new Error("Respons kategori tidak valid.");
+        }
+        if (active) {
+          setCustomCategories(categories);
+          setCategoryCatalogLoaded(true);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setCategoryLoadError("Kategori gagal dimuat.");
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [reload]);
+
+  async function refreshCategoryCatalog() {
+    try {
+      const categories = await fiveWhyDocumentsApi.categories();
+      if (
+        !Array.isArray(categories) ||
+        categories.some((value) => typeof value !== "string")
+      ) {
+        throw new Error("Respons kategori tidak valid.");
+      }
+      setCustomCategories(categories);
+      setCategoryCatalogLoaded(true);
+      setCategoryLoadError("");
+    } catch {
+      setCategoryCatalogLoaded(false);
+      setCategoryLoadError("Kategori gagal dimuat.");
+    }
+  }
+
   function setWorking(value: boolean) {
     working.current = value;
     setBusy(value);
     onBusyChange?.(value);
+  }
+
+  function closeModal() {
+    if (
+      pendingCategories.some(
+        (value) =>
+          normalizeCategoryMatch(value) === normalizeCategoryMatch(category)
+      )
+    ) {
+      setCategory("analysis");
+    }
+    setPendingCategories([]);
+    setCategorySelectionValid(true);
+    setModalOpen(false);
+  }
+
+  function createCategory(value: string) {
+    setPendingCategories((current) =>
+      current.some(
+        (categoryValue) =>
+          normalizeCategoryMatch(categoryValue) ===
+          normalizeCategoryMatch(value)
+      )
+        ? current
+        : [...current, value]
+    );
+    setCategory(value);
+    setCategorySelectionValid(true);
   }
 
   function startAdd() {
@@ -163,6 +300,8 @@ export default function DocumentLibrary({
     setNotice("");
     setTitle("");
     setCategory("analysis");
+    setPendingCategories([]);
+    setCategorySelectionValid(true);
     setSource("file");
     setUrl("");
     setFile(null);
@@ -173,13 +312,23 @@ export default function DocumentLibrary({
   }
 
   function startEdit(document: FiveWhyDocument) {
+    const options = getCategoryOptions(
+      customCategories,
+      pendingCategories,
+      document.category,
+      uiText
+    );
     setEditingDocument(document);
     setError("");
     setNotice("");
     setLineId(document.lineId);
     setPicId(document.picId ?? 0);
     setTitle(document.title);
-    setCategory(document.category);
+    setCategory(
+      findCategoryMatch(options, document.category)?.value ?? document.category
+    );
+    setPendingCategories([]);
+    setCategorySelectionValid(true);
     setSource(document.source);
     setUrl(document.url ?? "");
     setFile(null);
@@ -193,6 +342,10 @@ export default function DocumentLibrary({
       return;
     setError("");
     setNotice("");
+    if (!selectedCategory || !categorySelectionValid) {
+      setError("Pilih atau tambahkan kategori.");
+      return;
+    }
     const invalidFile =
       file &&
       (!file.name.toLowerCase().endsWith(".xlsx") ||
@@ -208,7 +361,7 @@ export default function DocumentLibrary({
             lineId,
             picId,
             title: title.trim(),
-            category,
+            category: selectedCategory,
             source,
             url: source === "simo" ? url.trim() : undefined,
             file: file ?? undefined,
@@ -218,14 +371,14 @@ export default function DocumentLibrary({
             lineId,
             picId,
             title: title.trim(),
-            category,
+            category: selectedCategory,
             url: url.trim(),
           })
         : await fiveWhyDocumentsApi.upload(
             lineId,
             picId,
             title.trim(),
-            category,
+            selectedCategory,
             file!
           );
       setDocuments((items) =>
@@ -233,6 +386,19 @@ export default function DocumentLibrary({
           ? items.map((item) => (item.id === saved.id ? saved : item))
           : [saved, ...items]
       );
+      setCustomCategories((items) =>
+        items.some(
+          (value) =>
+            normalizeCategoryMatch(value) ===
+            normalizeCategoryMatch(saved.category)
+        )
+          ? items
+          : [...items, saved.category]
+      );
+      setCategory(saved.category);
+      setPendingCategories([]);
+      setCategorySelectionValid(true);
+      void refreshCategoryCatalog();
       setTitle("");
       setUrl("");
       setFile(null);
@@ -262,6 +428,7 @@ export default function DocumentLibrary({
     try {
       await fiveWhyDocumentsApi.remove(document.id);
       setDocuments((items) => items.filter((item) => item.id !== document.id));
+      void refreshCategoryCatalog();
       setNotice("Dokumen dihapus.");
     } catch (reason) {
       setError(
@@ -296,9 +463,33 @@ export default function DocumentLibrary({
   }
 
   const query = search.trim().toLowerCase();
+  const documentLines = Array.from(
+    new Map(
+      documents.map((document) => [
+        document.lineId,
+        document.lineCode || String(document.lineId),
+      ] as const)
+    ),
+    ([id, code]) => ({ id, code })
+  ).sort((a, b) => a.code.localeCompare(b.code, locale));
+  const documentCategories = Array.from(
+    new Set(documents.map((document) => document.category))
+  ).sort((a, b) => {
+    const aBuiltIn = BUILT_IN_CATEGORIES.indexOf(a);
+    const bBuiltIn = BUILT_IN_CATEGORIES.indexOf(b);
+    if (aBuiltIn !== -1 || bBuiltIn !== -1) {
+      if (aBuiltIn === -1) return 1;
+      if (bBuiltIn === -1) return -1;
+      return aBuiltIn - bBuiltIn;
+    }
+    return a.localeCompare(b, locale);
+  });
   const visible = documents.filter(
     (document) =>
       (filter === "all" || document.category === filter) &&
+      (lineFilter === "all" || document.lineId === Number(lineFilter)) &&
+      (!dateFrom || localDateKey(document.createdAt) >= dateFrom) &&
+      (!dateTo || localDateKey(document.createdAt) <= dateTo) &&
       `${document.title} ${document.senderName ?? ""} ${document.lineCode} ${
         document.picName ?? ""
       } ${document.fileName ?? ""}`
@@ -307,7 +498,7 @@ export default function DocumentLibrary({
   );
 
   return (
-    <div className="dm-5w-page">
+    <div className="dm-5w-page dm-5w-document-page">
       <header className="dm-5w-page-head">
         <div className="dm-5w-page-head-main">
           <div>
@@ -356,7 +547,7 @@ export default function DocumentLibrary({
               aria-describedby="dm-5w-upload-description"
               onCancel={(event) => {
                 event.preventDefault();
-                if (!working.current) setModalOpen(false);
+                if (!working.current) closeModal();
               }}
             >
               <div className="dm-5w-upload-modal-head">
@@ -367,7 +558,7 @@ export default function DocumentLibrary({
                   type="button"
                   className="dm-5w-btn dm-5w-btn-secondary"
                   disabled={busy}
-                  onClick={() => setModalOpen(false)}
+                  onClick={closeModal}
                   aria-label={uiText("Tutup")}
                 >
                   <span aria-hidden="true">×</span>
@@ -402,26 +593,24 @@ export default function DocumentLibrary({
                         onChange={(event) => setTitle(event.target.value)}
                       />
                     </label>
-                    <label className="dm-5w-field">
-                      <span className="dm-5w-label">
+                    <div className="dm-5w-category-field">
+                      <span className="dm-5w-label" id="dm-5w-category-label">
                         {uiText("Kategori dokumen")}
                       </span>
-                      <select
-                        className="dm-5w-select"
+                      <CategoryCombobox
                         value={category}
-                        onChange={(event) =>
-                          setCategory(
-                            event.target.value as FiveWhyDocument["category"]
-                          )
-                        }
-                      >
-                        {Object.entries(CATEGORIES).map(([value, label]) => (
-                          <option key={value} value={value}>
-                            {uiText(label)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                        options={categoryOptions}
+                        createEnabled={categoryCatalogLoaded}
+                        onChange={setCategory}
+                        onCreate={createCategory}
+                        onValidityChange={setCategorySelectionValid}
+                      />
+                      {categoryLoadError ? (
+                        <p className="dm-5w-category-error" role="alert">
+                          {uiText("Kategori gagal dimuat.")}
+                        </p>
+                      ) : null}
+                    </div>
                     <label className="dm-5w-field">
                       <span className="dm-5w-label">{uiText("Line")}</span>
                       <select
@@ -591,7 +780,7 @@ export default function DocumentLibrary({
                     <button
                       type="button"
                       className="dm-5w-btn dm-5w-btn-secondary"
-                      onClick={() => setModalOpen(false)}
+                      onClick={closeModal}
                     >
                       {uiText("Batal")}
                     </button>
@@ -662,13 +851,43 @@ export default function DocumentLibrary({
                   onChange={(event) => setFilter(event.target.value)}
                 >
                   <option value="all">{uiText("Semua")}</option>
-                  {Object.entries(CATEGORIES).map(([value, label]) => (
+                  {documentCategories.map((value) => (
                     <option key={value} value={value}>
-                      {uiText(label)}
+                      {uiText(CATEGORIES[value] ?? value)}
                     </option>
                   ))}
                 </select>
               </label>
+              <label className="dm-5w-field">
+                <span className="dm-5w-label">{uiText("Line")}</span>
+                <select
+                  className="dm-5w-select"
+                  value={lineFilter}
+                  onChange={(event) => setLineFilter(event.target.value)}
+                >
+                  <option value="all">{uiText("Semua")}</option>
+                  {documentLines.map((line) => (
+                    <option key={line.id} value={line.id}>
+                      {line.code}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="dm-5w-field">
+                <span className="dm-5w-label">{uiText("Rentang tanggal")}</span>
+                <DateRangePicker
+                  value={{ from: dateFrom, to: dateTo }}
+                  onChange={(range) => {
+                    setDateFrom(range.from);
+                    setDateTo(range.to);
+                  }}
+                  maxDate={jakartaToday()}
+                  emptyLabel="Semua tanggal"
+                  clearable
+                  className="dml-dashboard-date-picker dm-5w-document-date-range"
+                  panelClassName="dml-dashboard-date-panel"
+                />
+              </div>
             </div>
             {!visible.length ? (
               <p>
