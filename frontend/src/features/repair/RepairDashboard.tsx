@@ -3,6 +3,7 @@ import CustomSelect from "@/components/shell/CustomSelect";
 import ChartTooltip from "@/components/shell/ChartTooltip";
 import PeriodControl, { periodView, type PeriodKey } from "@/components/shell/PeriodControl";
 import ChartTimeTabs from "@/components/shell/ChartTimeTabs";
+import PageHeader from "@/components/ui/PageHeader";
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -318,24 +319,25 @@ function formatDateTime(date: Date) {
 
 export function AbnormalPageHeader() {
   return (
-    <header className="qc-page-header">
-      <div>
-        <div className="qc-kicker">ABNORMALITY</div>
-        <h1>Abnormality</h1>
-        <p>Track unresolved nonconformities and quality exceptions across production lines.</p>
-      </div>
-      <div className="qc-toolbar">
-        <div className="qc-live">
-          <span className="live-dot" />
-          <span>PIC: Yusriyadi</span>
-        </div>
-        <button className="qc-secondary-button" type="button">30 Sep 2026</button>
-        <button className="qc-primary-button" type="button">
-          <Download size={14} />
-          Export
-        </button>
-      </div>
-    </header>
+    <PageHeader
+      eyebrow="ABNORMALITY"
+      title="Abnormality"
+      subtitle="Track unresolved nonconformities and quality exceptions across production lines."
+      className="mb-0!"
+      actions={(
+        <>
+          <div className="qc-live">
+            <span className="live-dot" />
+            <span>PIC: Yusriyadi</span>
+          </div>
+          <button className="qc-secondary-button" type="button">30 Sep 2026</button>
+          <button className="qc-primary-button" type="button">
+            <Download size={14} />
+            Export
+          </button>
+        </>
+      )}
+    />
   );
 }
 

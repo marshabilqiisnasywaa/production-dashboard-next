@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { TODAY_ISO, getDueStatus, useRepairPic, type DueTone, type PicRecordPatch, type PicRepairRecord, type PicRepairStatus } from "@/features/pic-repair/RepairPicContext";
 import PicAttachmentPreview from "@/features/pic-repair/PicAttachmentPreview";
 import CustomSelect from "@/components/shell/CustomSelect";
-import PageHeader from "@/components/shell/PageHeader";
+import PageHeader from "@/components/ui/PageHeader";
+import KpiCard, { type KpiCardProps } from "@/components/ui/KpiCard";
+import StatusBadge from "@/components/ui/StatusBadge";
 import { AlertCircle, CheckCheck, ListTodo, Timer } from "lucide-react";
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -69,26 +71,12 @@ export function FollowupBoard({ records, updateRecord, sourceLabel = "Abnormalit
 
   const activeRecords = useMemo(() => records.filter((item) => item.status !== "Resolved"), [records]);
 
-  const summary = useMemo(() => ([
-    { label: "Active Issues", value: String(activeRecords.length), helper: "Require follow-up", tone: "active", icon: ListTodo, iconBox: "text-blue-700 bg-blue-100/60 border border-blue-200/50 backdrop-blur-sm" },
-    { label: "Open", value: String(activeRecords.filter((item) => item.status === "Open").length), helper: "Not yet handled", tone: "open", icon: AlertCircle, iconBox: "text-red-600 bg-red-100/60 border border-red-200/50 backdrop-blur-sm" },
-    { label: "In Progress", value: String(activeRecords.filter((item) => item.status === "In Progress").length), helper: "Being handled", tone: "progress", icon: Timer, iconBox: "text-amber-600 bg-amber-100/60 border border-amber-200/50 backdrop-blur-sm" },
-    { label: "Resolved", value: String(records.filter((item) => item.status === "Resolved").length), helper: "Closed", tone: "resolved", icon: CheckCheck, iconBox: "text-emerald-600 bg-emerald-100/60 border border-emerald-200/50 backdrop-blur-sm" },
+  const summary = useMemo<KpiCardProps[]>(() => ([
+    { label: "Active Issues", value: String(activeRecords.length), helper: "Require follow-up", tone: "neutral", icon: ListTodo },
+    { label: "Open", value: String(activeRecords.filter((item) => item.status === "Open").length), helper: "Not yet handled", tone: "danger", icon: AlertCircle },
+    { label: "In Progress", value: String(activeRecords.filter((item) => item.status === "In Progress").length), helper: "Being handled", tone: "warning", icon: Timer },
+    { label: "Resolved", value: String(records.filter((item) => item.status === "Resolved").length), helper: "Closed", tone: "success", icon: CheckCheck },
   ]), [activeRecords, records]);
-
-  const metricCardClass: Record<string, string> = {
-    active: "bg-gradient-to-br! from-blue-50/80 via-indigo-50/30 to-white border border-blue-200/60! rounded-xl! shadow-sm",
-    open: "bg-gradient-to-br! from-red-50/80 via-red-50/20 to-white border border-red-200/60! rounded-xl! shadow-sm",
-    progress: "bg-gradient-to-br! from-amber-50/80 via-amber-50/20 to-white border border-amber-200/60! rounded-xl! shadow-sm",
-    resolved: "bg-gradient-to-br! from-emerald-50/80 via-emerald-50/20 to-white border border-emerald-200/60! rounded-xl! shadow-sm",
-  };
-
-  const metricValueClass: Record<string, string> = {
-    active: "text-blue-700 font-bold!",
-    open: "text-red-600 font-bold!",
-    progress: "text-amber-600 font-bold!",
-    resolved: "text-emerald-600 font-bold!",
-  };
 
   const filtered = useMemo(() => activeRecords.filter((item) => {
     const searchTerm = query.trim().toLowerCase();
@@ -120,15 +108,12 @@ export function FollowupBoard({ records, updateRecord, sourceLabel = "Abnormalit
         title="Follow-up"
         subtitle={`Follow-up tasks from ${sourceLabel} issues that are still Open or In Progress. Today ${formatDueDate(TODAY_ISO)}.`}
         actions={<CustomSelect value={statusFilter} options={[{ value: "All", label: "All Active Statuses" }, ...activeOptions]} onChange={setStatusFilter} ariaLabel="Status filter" />}
+        className="mb-0!"
       />
 
       <section className="qc-kpi-grid abnormality-kpis pic-kpis">
         {summary.map((item) => (
-          <article key={item.label} className={`sq-kpi ${metricCardClass[item.tone]}`}>
-            <div className="sq-kpi-head flex justify-between items-start"><span>{item.label}</span><div className={`p-2.5 rounded-xl ${item.iconBox}`}><item.icon className="w-5 h-5" /></div></div>
-            <strong className={metricValueClass[item.tone]}>{item.value}</strong>
-            <p>{item.helper}</p>
-          </article>
+          <KpiCard key={item.label} {...item} />
         ))}
       </section>
 
@@ -187,7 +172,7 @@ export function FollowupBoard({ records, updateRecord, sourceLabel = "Abnormalit
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="m5 18 5-5 3 3 3-3 3 3" /></svg>
                           </button>
                         </td>
-                        <td><span className={`status-chip ${item.status === "Open" ? "status-open" : "status-progress"}`}>{item.status}</span></td>
+                        <td><StatusBadge status={item.status} variant="chip" /></td>
                         <td><button type="button" className="repair-primary pic-update" onClick={() => setEditing(item)}>Update Status</button></td>
                       </tr>
                     );

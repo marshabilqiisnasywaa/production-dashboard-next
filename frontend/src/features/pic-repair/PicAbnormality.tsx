@@ -5,6 +5,8 @@ import AbnormalityTable from "@/features/pic-repair/AbnormalityTable";
 import CustomSelect from "@/components/shell/CustomSelect";
 import PicAttachmentPreview from "@/features/pic-repair/PicAttachmentPreview";
 import PicPlanUpload, { type PlanUploadValue } from "@/features/pic-repair/PicPlanUpload";
+import KpiCard, { type KpiCardProps } from "@/components/ui/KpiCard";
+import PageHeader from "@/components/ui/PageHeader";
 import { AlertCircle, CheckCircle2, Clock, FileText } from "lucide-react";
 
 export type AbnormalityBoardProps = {
@@ -53,26 +55,12 @@ export function AbnormalityBoard({ records, addRecord, picName, areaOptions, def
   const [attachment, setAttachment] = useState<PlanUploadValue | null>(null);
   const [preview, setPreview] = useState<PicRepairRecord | null>(null);
 
-  const summary = useMemo(() => ([
-    { label: "Total Abnormality", value: String(records.length), helper: "Total recorded cases", tone: "total", icon: FileText, iconBox: "text-slate-900 dark:text-slate-100 bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200/50 backdrop-blur-sm" },
-    { label: "Open", value: String(records.filter((item) => item.status === "Open").length), helper: "Requires attention", tone: "open", icon: AlertCircle, iconBox: "text-red-600 bg-red-100/60 border border-red-200/50 backdrop-blur-sm" },
-    { label: "In Progress", value: String(records.filter((item) => item.status === "In Progress").length), helper: "Under action", tone: "progress", icon: Clock, iconBox: "text-amber-600 bg-amber-100/60 border border-amber-200/50 backdrop-blur-sm" },
-    { label: "Resolved", value: String(records.filter((item) => item.status === "Resolved").length), helper: "Completed", tone: "resolved", icon: CheckCircle2, iconBox: "text-emerald-600 bg-emerald-100/60 border border-emerald-200/50 backdrop-blur-sm" },
+  const summary = useMemo<KpiCardProps[]>(() => ([
+    { label: "Total Abnormality", value: String(records.length), helper: "Total recorded cases", tone: "neutral", icon: FileText },
+    { label: "Open", value: String(records.filter((item) => item.status === "Open").length), helper: "Requires attention", tone: "danger", icon: AlertCircle },
+    { label: "In Progress", value: String(records.filter((item) => item.status === "In Progress").length), helper: "Under action", tone: "warning", icon: Clock },
+    { label: "Resolved", value: String(records.filter((item) => item.status === "Resolved").length), helper: "Completed", tone: "success", icon: CheckCircle2 },
   ]), [records]);
-
-  const metricCardClass: Record<string, string> = {
-    total: "bg-gradient-to-br! from-slate-50 via-white to-slate-50/50 border border-slate-200/70! rounded-xl! shadow-sm",
-    open: "bg-gradient-to-br! from-red-50/80 via-red-50/20 to-white border border-red-200/60! rounded-xl! shadow-sm",
-    progress: "bg-gradient-to-br! from-amber-50/80 via-amber-50/20 to-white border border-amber-200/60! rounded-xl! shadow-sm",
-    resolved: "bg-gradient-to-br! from-emerald-50/80 via-emerald-50/20 to-white border border-emerald-200/60! rounded-xl! shadow-sm",
-  };
-
-  const metricValueClass: Record<string, string> = {
-    total: "text-slate-900 dark:text-slate-100 font-bold!",
-    open: "text-red-600 font-bold!",
-    progress: "text-amber-600 font-bold!",
-    resolved: "text-emerald-600 font-bold!",
-  };
 
   const filteredRows = useMemo(() => records.filter((row) => {
     const searchTerm = query.trim().toLowerCase();
@@ -141,24 +129,17 @@ export function AbnormalityBoard({ records, addRecord, picName, areaOptions, def
 
   return (
     <div className="abnormality-page pic-page">
-      <header className="qc-page-header">
-        <div>
-          <div className="qc-kicker">{kicker}</div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Abnormality Log</h1>
-          <p>{description}</p>
-        </div>
-        <div className="qc-toolbar">
-          <button className="qc-secondary-button" type="button">07 Oct 2026</button>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow={kicker}
+        title="Abnormality Log"
+        subtitle={description}
+        actions={<button className="qc-secondary-button" type="button">07 Oct 2026</button>}
+        className="mb-0!"
+      />
 
       <section className="qc-kpi-grid abnormality-kpis pic-kpis">
         {summary.map((item) => (
-          <article key={item.label} className={`sq-kpi ${metricCardClass[item.tone]}`}>
-            <div className="sq-kpi-head flex justify-between items-start"><span>{item.label}</span><div className={`p-2.5 rounded-xl ${item.iconBox}`}><item.icon className="w-5 h-5" /></div></div>
-            <strong className={metricValueClass[item.tone]}>{item.value}</strong>
-            <p>{item.helper}</p>
-          </article>
+          <KpiCard key={item.label} {...item} />
         ))}
       </section>
 

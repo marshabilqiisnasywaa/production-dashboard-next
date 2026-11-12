@@ -6,6 +6,7 @@ import { getSeries, lossCategories, lossRecords, SLC_COST_BASE, type CostNav, ty
 import { formatMoney, formatPct } from "./format";
 import { HBarList, Panel, PeriodTabs, StatCard } from "./shared";
 import ChartTooltip from "@/components/shell/ChartTooltip";
+import PageHeader from "@/components/ui/PageHeader";
 
 function Header({ onNavigate }: { onNavigate: NavigateCost }) {
   const [updatedAt, setUpdatedAt] = useState("--:--");
@@ -16,20 +17,22 @@ function Header({ onNavigate }: { onNavigate: NavigateCost }) {
 
   return (
     <div className="qc-page-shell">
-      <header className="qc-page-header">
-        <div>
-          <div className="qc-kicker">MORNING MEETING • COST AREA</div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight">Cost Meeting Dashboard</h1>
-        </div>
-        <div className="qc-toolbar">
-          <div className="qc-live">
-            <span className="live-dot" />
-            <span>Last updated: {updatedAt}</span>
-          </div>
-          <button className="qc-secondary-button" type="button"><Download size={14} />Export</button>
-          <button className="qc-primary-button" type="button" onClick={() => onNavigate("Losses Cost")}><ArrowRight size={14} />Losses Cost</button>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="MORNING MEETING • COST AREA"
+        title="Cost Meeting Dashboard"
+        subtitle=""
+        className="mb-0!"
+        actions={(
+          <>
+            <div className="qc-live">
+              <span className="live-dot" />
+              <span>Last updated: {updatedAt}</span>
+            </div>
+            <button className="qc-secondary-button" type="button"><Download size={14} />Export</button>
+            <button className="qc-primary-button" type="button" onClick={() => onNavigate("Losses Cost")}><ArrowRight size={14} />Losses Cost</button>
+          </>
+        )}
+      />
     </div>
   );
 }

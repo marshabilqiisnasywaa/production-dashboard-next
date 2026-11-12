@@ -1,6 +1,7 @@
 "use client";
 import CustomSelect from "@/components/shell/CustomSelect";
 import ChartTooltip from "@/components/shell/ChartTooltip";
+import SharedPageHeader from "@/components/ui/PageHeader";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -63,19 +64,18 @@ function PageHeader({
   showActions?: boolean;
 }) {
   return (
-    <header className="qc-page-header">
-      <div>
-        <div className="qc-kicker">{eyebrow}</div>
-        <h1>{title}</h1>
-        <p>{subtitle}</p>
-      </div>
-      {showActions && (
-        <div className="qc-toolbar">
+    <SharedPageHeader
+      eyebrow={eyebrow}
+      title={title}
+      subtitle={subtitle}
+      className="mb-0!"
+      actions={showActions ? (
+        <>
           <button className="qc-secondary-button" type="button">30 Sep 2026</button>
           <button className="qc-primary-button" type="button">Export</button>
-        </div>
-      )}
-    </header>
+        </>
+      ) : undefined}
+    />
   );
 }
 

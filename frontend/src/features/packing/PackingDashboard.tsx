@@ -1,5 +1,6 @@
 "use client";
 import CustomSelect from "@/components/shell/CustomSelect";
+import SharedPageHeader from "@/components/ui/PageHeader";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -68,23 +69,24 @@ function PageHeader({
   onCategoryFilterChange: (value: string) => void;
 }) {
   return (
-    <header className="qc-page-header packing-page-header">
-      <div>
-        <div className="qc-kicker">{eyebrow}</div>
-        <h1>{title}</h1>
-        <p>{description}</p>
-      </div>
-      <div className="packing-toolbar">
-        <label className="packing-filter-field">
-          <span>Time</span>
-          <CustomSelect value={timeFilter} options={packingTimeOptions} onChange={(next) => onTimeFilterChange(next)} />
-        </label>
-        <label className="packing-filter-field">
-          <span>Category</span>
-          <CustomSelect value={categoryFilter} options={packingCategoryOptions} onChange={(next) => onCategoryFilterChange(next)} />
-        </label>
-      </div>
-    </header>
+    <SharedPageHeader
+      eyebrow={eyebrow}
+      title={title}
+      subtitle={description}
+      className="packing-page-header mb-0!"
+      actions={(
+        <div className="packing-toolbar">
+          <label className="packing-filter-field">
+            <span>Time</span>
+            <CustomSelect value={timeFilter} options={packingTimeOptions} onChange={(next) => onTimeFilterChange(next)} />
+          </label>
+          <label className="packing-filter-field">
+            <span>Category</span>
+            <CustomSelect value={categoryFilter} options={packingCategoryOptions} onChange={(next) => onCategoryFilterChange(next)} />
+          </label>
+        </div>
+      )}
+    />
   );
 }
 

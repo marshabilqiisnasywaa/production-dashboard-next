@@ -25,7 +25,7 @@ const sectionMeta: Record<SafetySection, { title: string; subtitle: string; eyeb
   overview: { title: "Beranda Meeting", subtitle: "Ringkasan metric inti Safety, ISC, GA: Safety Battery, Safety Incident, Safety Information, dan Safety Material.", eyebrow: "MORNING MEETING • PIC AREA • SAFETY, ISC, GA" },
   safety: { title: "Safety", subtitle: "Metric operasional Safety: Safety Material, Safety Incident / Accident, dan Safety Information.", eyebrow: "MONITORING • SAFETY, ISC, GA • SAFETY" },
   isc: { title: "ISC", subtitle: "Metric operasional ISC: ISC Abnormal Target vs Actual.", eyebrow: "MONITORING • SAFETY, ISC, GA • ISC" },
-  "ga-admin": { title: "GA Admin", subtitle: "Metric operasional GA Admin.", eyebrow: "MONITORING • SAFETY, ISC, GA • GA ADMIN" },
+  "ga-admin": { title: "GA Admin", subtitle: "Akan terhubung dengan Manpower Monitoring.", eyebrow: "MONITORING • SAFETY, ISC, GA • GA ADMIN" },
   "data-source": { title: "Data Source", subtitle: "Sumber data metric Safety, ISC, GA dan waktu pembaruan terakhir tiap sumber.", eyebrow: "DATA • SAFETY, ISC, GA • DATA SOURCE" },
 };
 
@@ -50,6 +50,7 @@ export default function SafetyDashboard({ section = "overview", onNavigate }: { 
   const meta = sectionMeta[section];
   const [selected, setSelected] = useState<SafetyTrendKey | null>(null);
   const [aiCard, setAiCard] = useState<PicMetricCardData | null>(null);
+  const allCards = useMemo(() => [...safetyHomeCards, ...iscCards, ...safetyMonitoringCards], []);
   const toggle = (id: string) => setSelected((c) => (c === id ? null : (id as SafetyTrendKey)));
 
   if (section === "ga-admin") {
@@ -63,8 +64,8 @@ export default function SafetyDashboard({ section = "overview", onNavigate }: { 
         </div>
         <article className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60">
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <h2 className="text-slate-900 dark:text-slate-100 font-semibold text-lg">No Data Available</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">Coming Soon — halaman GA Admin sedang disiapkan.</p>
+            <h2 className="text-slate-900 dark:text-slate-100 font-semibold text-lg">Coming Soon</h2>
+<p className="text-slate-500 dark:text-slate-400 text-sm">Halaman GA Admin akan terhubung dengan aplikasi Manpower Monitoring yang sedang disiapkan.</p>
           </div>
         </article>
       </div>
@@ -97,7 +98,6 @@ export default function SafetyDashboard({ section = "overview", onNavigate }: { 
     : section === "safety" ? ["safety-material", "safety-incident", "safety-information"]
     : section === "isc" ? ["isc-abnormal"] : [];
   const activeCharts = selected ? [selected] : chartKeys;
-  const allCards = useMemo(() => [...safetyHomeCards, ...iscCards, ...safetyMonitoringCards], []);
 
   return (
     <div className="pic-page">

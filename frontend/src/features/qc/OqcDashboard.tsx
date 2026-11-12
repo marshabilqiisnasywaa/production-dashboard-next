@@ -2,6 +2,7 @@
 import CustomSelect from "@/components/shell/CustomSelect";
 import ChartTimeTabs, { type ChartTimeTab } from "@/components/shell/ChartTimeTabs";
 import ChartTooltip from "@/components/shell/ChartTooltip";
+import PageHeader from "@/components/ui/PageHeader";
 import { useEffect, useMemo, useState } from "react";
 import {
   Area,
@@ -282,13 +283,7 @@ function HBarCard({
 function QcAchievement() {
   return (
     <div className="qc-page-shell">
-      <header className="qc-page-header">
-        <div>
-          <div className="qc-kicker">QC</div>
-          <h1>QC Summary</h1>
-          <p>Ringkasan FQC dan OQC produksi</p>
-        </div>
-      </header>
+      <PageHeader eyebrow="QC" title="QC Summary" subtitle="Ringkasan FQC dan OQC produksi" className="mb-0!" />
 
       <div className="qc-achievement-grid">
         {qcAchievementData.map((item) => {
@@ -348,19 +343,21 @@ function FqcPage() {
 
   return (
     <div className="qc-page-shell">
-      <header className="qc-page-header">
-        <div>
-          <div className="qc-kicker">Kualitas / FQC</div>
-          <h1>FQC — Final Quality Control</h1>
-        </div>
-        <div className="qc-toolbar">
-          <div className="qc-live">
-            <span className="live-dot" />
-            <span>Terakhir diperbarui: {updatedAt}</span>
-          </div>
-          <button className="qc-primary-button" onClick={refreshData}>Muat Ulang</button>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Kualitas / FQC"
+        title="FQC — Final Quality Control"
+        subtitle=""
+        className="mb-0!"
+        actions={(
+          <>
+            <div className="qc-live">
+              <span className="live-dot" />
+              <span>Terakhir diperbarui: {updatedAt}</span>
+            </div>
+            <button className="qc-primary-button" onClick={refreshData}>Muat Ulang</button>
+          </>
+        )}
+      />
 
       {toast && <div className="qc-toast">{toast}</div>}
 
@@ -415,19 +412,21 @@ function OqcPage() {
 
   return (
     <div className="qc-page-shell">
-      <header className="qc-page-header">
-        <div>
-          <div className="qc-kicker">Kualitas / OQC</div>
-          <h1>OQC — Outgoing Quality Control</h1>
-        </div>
-        <div className="qc-toolbar">
-          <div className="qc-live">
-            <span className="live-dot" />
-            <span>Terakhir diperbarui: {updatedAt}</span>
-          </div>
-          <button className="qc-primary-button" onClick={refreshData}>Muat Ulang</button>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Kualitas / OQC"
+        title="OQC — Outgoing Quality Control"
+        subtitle=""
+        className="mb-0!"
+        actions={(
+          <>
+            <div className="qc-live">
+              <span className="live-dot" />
+              <span>Terakhir diperbarui: {updatedAt}</span>
+            </div>
+            <button className="qc-primary-button" onClick={refreshData}>Muat Ulang</button>
+          </>
+        )}
+      />
 
       {toast && <div className="qc-toast">{toast}</div>}
 
@@ -508,12 +507,7 @@ function SolusiImprovementPage() {
 
   return (
     <div className="qc-page-shell">
-      <header className="qc-page-header">
-        <div>
-          <div className="qc-kicker">Improvement</div>
-          <h1>🛠 Solusi Improvement</h1>
-        </div>
-      </header>
+      <PageHeader eyebrow="Improvement" title="🛠 Solusi Improvement" subtitle="" className="mb-0!" />
 
       <article className="qc-card form-card">
         <div className="qc-card-header compact">

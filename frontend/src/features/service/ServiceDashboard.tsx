@@ -15,6 +15,7 @@ import { serviceOverviewGroups, servicePages, type ServiceKpiDefinition, type Se
 import ChartTooltip from "@/components/shell/ChartTooltip";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
 import PeriodControl, { periodView, type PeriodKey } from "@/components/shell/PeriodControl";
+import PageHeader from "@/components/ui/PageHeader";
 
 type ServiceChartItem = {
   label: string;
@@ -188,19 +189,21 @@ function ServiceOverview() {
 
   return (
     <div className="qc-page-shell">
-      <header className="qc-page-header">
-        <div>
-          <div className="qc-kicker">Service</div>
-          <h1>Service Overview</h1>
-        </div>
-        <div className="qc-toolbar">
-          <div className="qc-live">
-            <span className="live-dot" />
-            <span>Last updated: {updatedAt}</span>
-          </div>
-          <button className="qc-primary-button" onClick={refresh}>Reload</button>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Service"
+        title="Service Overview"
+        subtitle=""
+        className="mb-0!"
+        actions={(
+          <>
+            <div className="qc-live">
+              <span className="live-dot" />
+              <span>Last updated: {updatedAt}</span>
+            </div>
+            <button className="qc-primary-button" onClick={refresh}>Reload</button>
+          </>
+        )}
+      />
 
       <div className="service-overview-grid">
         {serviceOverviewGroups.map((group) => (
