@@ -568,6 +568,7 @@ export type DmHistoryStatus = {
   status: "OK" | "NG" | "IZIN" | null;
 };
 export type DmHistoryRow = {
+  scope?: "leader" | "dm";
   kind: DmHistoryKind;
   date: string;
   line: string;
@@ -599,11 +600,16 @@ export type DmHistoryBatch = {
   added: number; updated: number; skipped: number;
 };
 export type DmHistoryStoredRow = {
-  id: number; kind: DmHistoryKind; date: string; line: string; leader: string;
-  dm: string | null; shift: string; sourceSheet: string; sourceRow: number;
+  id: number | string; kind: DmHistoryKind; date: string; line: string; leader: string;
+  scope?: "leader" | "dm"; sourceFile?: string;
+  dm: string | null; shift: string | null; sourceSheet: string; sourceRow: number;
   data: { scores: number[]; statuses: DmHistoryStatus[]; mappingReview?: string[]; scoreReview?: string[] };
 };
 export const historyImportApi = {
+  statuses: (params: { from: string; to: string; kind: "papercard_status" | "attendance"; line?: string }) =>
+    request<DmHistoryStoredRow[]>("/history-import/statuses?" + new URLSearchParams({
+      from: params.from, to: params.to, kind: params.kind, ...(params.line ? { line: params.line } : {}),
+    }), {}, true),
   preview: (data: DmHistoryImportInput) => request<DmHistoryPreview>("/history-import/preview", json("POST", data), true),
   commit: (data: DmHistoryImportInput) => request<{ batchId: number; added: number; updated: number; skipped: number }>("/history-import/commit", json("POST", data), true),
   batches: () => request<DmHistoryBatch[]>("/history-import/batches", {}, true),
@@ -614,6 +620,7 @@ export const historyImportApi = {
 };
 
 export type DmScorecardEntry = {
+  scope?: "leader" | "dm";
   key: string; info: DmScorecardLeader; papercard: DmPapercardKpiDay[]; standup: DmStandupKpiDay[];
   sqdip: DmSqdipKpiDay[]; before: number; current: number; after: number; total?: number | null; archiveKey?: string | null; archiveRank?: number | null;
 };
@@ -624,7 +631,7 @@ export type DmArchivedDmScore = {
 export const publicApi = {
   scorecardReport: (range: { from: string; to: string }) => request<{
     entries: DmScorecardEntry[]; details: DmScorecardEntry[]; archivedDmScores: DmArchivedDmScore[];
-    archiveMonth: string | null; archiveFile: string | null;
+    archiveMonth: string | null; archiveFile: string | null; averagedMonths?: string[];
   }>("/public/scorecard/report?" + new URLSearchParams(range)),
   scorecardEntries: (range: { from: string; to: string }) =>
     request<{

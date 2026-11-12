@@ -9,6 +9,7 @@ import { ProblemLoadError } from "../leader/problems/components/ProblemLoadError
 import { addDays, formatDate, formatHm, localDate } from "../leader/log/utils";
 import { DateRangePicker } from "../scorecard/ScorecardFilters";
 import { papercardProblemRows } from "./papercardProblemRows";
+import ImportedStatusHistory from "./ImportedStatusHistory";
 import {
   HistoryChip,
   HistoryPager,
@@ -359,6 +360,10 @@ export default function PapercardHistory({
           </>
         )}
       </section>
+      <ImportedStatusHistory
+        from={from} to={to} line={lineId ? lineNames.get(Number(lineId)) : undefined}
+        kind="papercard_status" search={search} refresh={attempt} call={call}
+      />
     </div>
   );
 }

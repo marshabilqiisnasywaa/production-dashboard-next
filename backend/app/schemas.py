@@ -892,6 +892,7 @@ class SqdipKpiOut(CamelModel):
 
 
 class ScorecardEntryOut(CamelModel):
+    scope: Literal["leader", "dm"] = "leader"
     key: str
     info: ScorecardLeaderOut
     papercard: list[PapercardKpiDayOut]
@@ -922,3 +923,4 @@ class ScorecardReportOut(CamelModel):
     archived_dm_scores: list[ArchivedDmScoreOut] = Field(default_factory=list)
     archive_month: date | None = None
     archive_file: str | None = None
+    averaged_months: list[date] = Field(default_factory=list)

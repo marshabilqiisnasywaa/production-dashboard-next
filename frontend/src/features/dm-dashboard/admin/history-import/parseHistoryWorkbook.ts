@@ -46,15 +46,28 @@ function parseSummary(table: unknown[][], sheet: string, kind: "papercard_kpi" |
   const lineColumn = names.indexOf("line"), leaderColumn = names.indexOf("leader");
   const metricColumn = names.indexOf("rincian"), dmColumn = names.indexOf("dm");
   if (lineColumn < 0 || leaderColumn < 0) throw new Error(`${sheet}: kolom Line atau Leader tidak ditemukan.`);
-  const dates = (table[head + 1] ?? []).flatMap((cell, column) => {
+  let dates = (table[head + 1] ?? []).flatMap((cell, column) => {
     const date = dateKey(cell);
     return date ? [{ column, date }] : [];
   });
   if (!dates.length) throw new Error(`${sheet}: baris tanggal tidak ditemukan.`);
   const drafts = new Map<string, { row: HistoryDraft; scores: (number | null)[]; seen: Set<number> }>();
+  let scope: "leader" | "dm" = "leader";
   let line = "", leader = "", dm: string | null = null;
   for (let index = head + 2; index < table.length; index++) {
     const raw = table[index];
+    if (value(raw[metricColumn]).toLowerCase() === "rincian" && value(raw[dmColumn]).toLowerCase() === "dm") {
+      scope = "dm";
+      line = "";
+      leader = "";
+      dm = null;
+      dates = (table[index + 1] ?? []).flatMap((cell, column) => {
+        const date = dateKey(cell);
+        return date ? [{ column, date }] : [];
+      });
+      if (!dates.length) throw new Error(`${sheet} baris ${index + 2}: baris tanggal penilaian leader DM tidak ditemukan.`);
+      continue;
+    }
     if (value(raw[lineColumn])) {
       line = value(raw[lineColumn]).toUpperCase();
       leader = value(raw[leaderColumn]);
@@ -73,11 +86,11 @@ function parseSummary(table: unknown[][], sheet: string, kind: "papercard_kpi" |
     }
     if (component < 0 || !line) continue;
     for (const { column, date } of dates) {
-      const key = `${line}|${leader}|${date}`;
+      const key = JSON.stringify([scope, scope === "dm" ? dm : line, leader, date]);
       let draft = drafts.get(key);
       if (!draft) {
         draft = {
-          row: { kind, date, line, leader, dm, sourceSheet: sheet, sourceRow: index + 1, scores: [], statuses: [], errors: [] },
+          row: { scope, kind, date, line, leader, dm, sourceSheet: sheet, sourceRow: index + 1, scores: [], statuses: [], errors: [] },
           scores: [null, null, null], seen: new Set(),
         };
         drafts.set(key, draft);

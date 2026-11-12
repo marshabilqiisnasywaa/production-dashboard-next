@@ -15,6 +15,7 @@ import { PAPERCARD_CHANGED_EVENT } from "../notifications/revisions";
 export const NO_DM = "Tanpa DM";
 
 export type ScorecardLine = {
+  scope?: "leader" | "dm";
   key: string;
   info: DmScorecardLeader;
   papercard: DmPapercardKpiDay[];
@@ -36,6 +37,7 @@ export type PapercardStatus =
   | "-";
 
 export type PapercardRow = {
+  key: string;
   source?: "live" | "excel";
   final: boolean;
   date: string;
@@ -58,6 +60,7 @@ export type StandupMeetingCell = {
 };
 
 export type StandupRow = {
+  key: string;
   source?: "live" | "excel";
   historicalStatuses?: DmHistoryStatus[];
   scoreNote?: string | null;
@@ -128,6 +131,7 @@ export function useScorecardData(from: string, to: string) {
     archivedDmScores: DmArchivedDmScore[];
     archiveMonth: string | null;
     archiveFile: string | null;
+    averagedMonths: string[];
     loading: boolean;
     error: string | null;
   }>({
@@ -136,6 +140,7 @@ export function useScorecardData(from: string, to: string) {
     archivedDmScores: [],
     archiveMonth: null,
     archiveFile: null,
+    averagedMonths: [],
     loading: true,
     error: null,
   });
@@ -160,6 +165,7 @@ export function useScorecardData(from: string, to: string) {
                 archivedDmScores: [],
                 archiveMonth: null,
                 archiveFile: null,
+                averagedMonths: [],
               };
         if (!alive) return;
         setState({
@@ -168,6 +174,7 @@ export function useScorecardData(from: string, to: string) {
           archivedDmScores: report.archivedDmScores,
           archiveMonth: report.archiveMonth,
           archiveFile: report.archiveFile,
+          averagedMonths: report.averagedMonths ?? [],
           loading: false,
           error: null,
         });
@@ -192,6 +199,7 @@ export function useScorecardData(from: string, to: string) {
       archivedDmScores: [],
       archiveMonth: null,
       archiveFile: null,
+      averagedMonths: [],
       loading: true,
       error: null,
     }));
@@ -277,10 +285,11 @@ export function toPapercardRows(lines: ScorecardLine[]): PapercardRow[] {
       const required = day.checks.length;
       const onTimeCount = day.checks.filter((check) => check.onTime).length;
       rows.push({
+        key: JSON.stringify([line.key, day.date]),
         source: day.source,
         final: day.final,
         date: day.date,
-        line: line.info.lineCode,
+        line: line.scope === "dm" ? dmNameOf(line) : line.info.lineCode,
         leader: day.leaderName ?? line.info.leaderName,
         statuses,
         rate:
@@ -312,13 +321,14 @@ export function toStandupRows(lines: ScorecardLine[]): StandupRow[] {
   for (const line of lines) {
     for (const day of line.standup) {
       rows.push({
+        key: JSON.stringify([line.key, day.date]),
         source: day.source,
         historicalStatuses: day.historicalStatuses,
         scoreNote: day.scoreNote,
         sourceScores: day.sourceScores,
         final: day.final,
         date: day.date,
-        line: line.info.lineCode,
+        line: line.scope === "dm" ? dmNameOf(line) : line.info.lineCode,
         leader: day.leaderName ?? line.info.leaderName,
         meetings: day.meetings,
         attendance: day.attendance,

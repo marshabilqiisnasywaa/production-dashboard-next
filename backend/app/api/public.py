@@ -552,12 +552,5 @@ def historical_attendance(
     db: Session = Depends(get_db),
 ):
     check_kpi_range(from_date, to_date)
-    rows = db.execute(select(HistoricalEntry, Line.code).join(Line, Line.id == HistoricalEntry.line_id).where(
-        HistoricalEntry.kind == "attendance", HistoricalEntry.date >= from_date,
-        HistoricalEntry.date <= to_date,
-    ).order_by(HistoricalEntry.date.desc(), Line.code, HistoricalEntry.shift))
-    return [{
-        "id": entry.id, "kind": entry.kind, "date": entry.date, "line": code,
-        "leader": entry.leader_name, "dm": entry.source_dm, "shift": entry.shift,
-        "sourceSheet": entry.source_sheet, "sourceRow": entry.source_row, "data": entry.data,
-    } for entry, code in rows]
+    from app.services.imported_statuses import list_imported_statuses
+    return list_imported_statuses(db, from_date, to_date, "attendance")

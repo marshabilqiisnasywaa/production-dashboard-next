@@ -184,7 +184,11 @@ export function ScoreGauge({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 font-bold text-text">
           {dm}
-          <span title={uiText("Nilai DM dihitung dari data level DM milik Leader DM, sehingga bisa berbeda dari nilai line yang dipimpinnya di tabel ranking.")}>
+          <span
+            title={uiText(
+              "Nilai DM dihitung dari data level DM milik Leader DM, sehingga bisa berbeda dari nilai line yang dipimpinnya di tabel ranking."
+            )}
+          >
             <Info size={14} className="text-text-secondary" />
           </span>
         </div>
@@ -237,7 +241,9 @@ export function ScoreGauge({
               y="108"
               textAnchor="middle"
               className="fill-text-secondary text-xs"
-            >{uiText("Target 90")}</text>
+            >
+              {uiText("Target 90")}
+            </text>
           </svg>
         </div>
         {leader ? (
@@ -251,13 +257,21 @@ export function ScoreGauge({
               <strong className="text-right">{leader}</strong>
             </div>
             <div className="flex justify-between">
-              <span className="text-text-secondary">{uiText("Peringkat DM")}</span>
+              <span className="text-text-secondary">
+                {uiText("Peringkat DM")}
+              </span>
               <strong>{rank}</strong>
             </div>
-            <div className="text-warning-dark">{uiText("Kurang ")}{formatScore(gap ?? 0)}{uiText(" poin dari target")}</div>
+            <div className="text-warning-dark">
+              {uiText("Kurang ")}
+              {formatScore(gap ?? 0)}
+              {uiText(" poin dari target")}
+            </div>
           </div>
         ) : (
-          <div className="score-gauge-info mt-2 flex items-start justify-center border-t border-border pt-4 text-center text-sm text-text-secondary">{uiText("Belum ada Leader DM")}</div>
+          <div className="score-gauge-info mt-2 flex items-start justify-center border-t border-border pt-4 text-center text-sm text-text-secondary">
+            {uiText("Belum ada Leader DM")}
+          </div>
         )}
       </div>
     </Card>
@@ -407,7 +421,9 @@ export function SqdipDimTiles({
               {actual === null ? "—" : formatSqdipValue(actual, trend.kind)}
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-xs font-medium text-text-secondary">{uiText("Target : ")}{trend.dir === "max" ? "≤ " : ""}
+              <span className="truncate text-xs font-medium text-text-secondary">
+                {uiText("Target : ")}
+                {trend.dir === "max" ? "≤ " : ""}
                 {formatSqdipValue(trend.target, trend.kind)}
               </span>
               {ok !== null && (
@@ -634,7 +650,9 @@ export function TrendChart({
           x={width - padding.right + 8}
           y={y(scale.target) + 4}
           className="fill-warning-dark text-xs font-semibold"
-        >{uiText("Target ")}{fmt(scale.target)}
+        >
+          {uiText("Target ")}
+          {fmt(scale.target)}
         </text>
         <polygon
           points={`${x(0)},${height - padding.bottom} ${points} ${x(
@@ -719,7 +737,10 @@ export function TrendChart({
           {custom ? (
             <>
               <div className="font-semibold text-text">
-                {formatTrendDate(trend?.dates[hovered.index] ?? "", granularity)}
+                {formatTrendDate(
+                  trend?.dates[hovered.index] ?? "",
+                  granularity
+                )}
               </div>
               <div className="mt-1.5 space-y-0.5">
                 <div className="flex items-center justify-between gap-3 font-bold text-text">
@@ -740,7 +761,10 @@ export function TrendChart({
               >
                 {meetsTarget(series[hovered.index])
                   ? uiText("Memenuhi target")
-                  : uiText("{{v0}} {{v1}} target", { v0: fmt(Math.abs(gap)), v1: gap > 0 ? "di atas" : "di bawah" })}
+                  : uiText("{{v0}} {{v1}} target", {
+                      v0: fmt(Math.abs(gap)),
+                      v1: gap > 0 ? "di atas" : "di bawah",
+                    })}
               </div>
             </>
           ) : (
@@ -774,7 +798,9 @@ export function TrendChart({
               >
                 {gap >= 0
                   ? uiText("+{{v0}} di atas target", { v0: formatScore(gap) })
-                  : uiText("-{{v0}} di bawah target", { v0: formatScore(Math.abs(gap)) })}
+                  : uiText("-{{v0}} di bawah target", {
+                      v0: formatScore(Math.abs(gap)),
+                    })}
               </div>
             </>
           )}
@@ -864,7 +890,9 @@ export function DetailHeader({
       </div>
       {canExport && (
         <Button variant="ghost" size="sm">
-          <Download size={15} />{uiText(" Export")}</Button>
+          <Download size={15} />
+          {uiText(" Export")}
+        </Button>
       )}
     </div>
   );
@@ -880,20 +908,29 @@ function countStatuses(statuses: string[]): StatusCount {
 }
 
 export function papercardCount(rows: PapercardRow[]) {
-  return countStatuses(rows.flatMap((row) => row.statuses.filter((status) => status !== "-")));
+  return countStatuses(
+    rows.flatMap((row) => row.statuses.filter((status) => status !== "-"))
+  );
 }
 
 export function standupCount(rows: StandupRow[]) {
-  return countStatuses(rows.flatMap((row) => {
-    if (row.source === "excel") {
-      return [1, 2].flatMap((number) => {
-        const statuses = row.historicalStatuses?.filter((item) => item.session === number) ?? [];
-        if (!statuses.length || statuses.some((item) => item.status === null)) return [];
-        return [statuses.every((item) => item.status === "OK") ? "OK" : "NG"];
-      });
-    }
-    return row.meetings.filter((meeting) => meeting.held).map((meeting) => meeting.complete ? "OK" : "NG");
-  }));
+  return countStatuses(
+    rows.flatMap((row) => {
+      if (row.source === "excel") {
+        return [1, 2].flatMap((number) => {
+          const statuses =
+            row.historicalStatuses?.filter((item) => item.session === number) ??
+            [];
+          if (!statuses.length || statuses.some((item) => item.status === null))
+            return [];
+          return [statuses.every((item) => item.status === "OK") ? "OK" : "NG"];
+        });
+      }
+      return row.meetings
+        .filter((meeting) => meeting.held)
+        .map((meeting) => (meeting.complete ? "OK" : "NG"));
+    })
+  );
 }
 
 export function PapercardDetail({
@@ -907,9 +944,15 @@ export function PapercardDetail({
   return (
     <>
       <DetailHeader canExport={canExport} caption="" />
-      {visibleRows.some((row) => row.source === "excel") && <p className="mb-3 text-xs text-text-secondary">{uiText("Histori Excel mempertahankan poin sumber. NG pada status pengisian berarti terlambat atau tidak mengisi; bukan temuan checklist. Bobot historis dapat berbeda dari bobot saat ini.")}</p>}
+      {visibleRows.some((row) => row.source === "excel") && (
+        <p className="mb-3 text-xs text-text-secondary">
+          {uiText("Histori Excel")}
+        </p>
+      )}
       {visibleRows.length === 0 ? (
-        <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">{uiText("Belum ada data")}</div>
+        <div className="flex min-h-empty items-center justify-center rounded-xl border border-border text-sm text-text-secondary">
+          {uiText("Belum ada data")}
+        </div>
       ) : (
         <div className="scorecard-tab-table overflow-x-auto rounded-xl border border-border">
           <table className="w-full table-auto text-left text-sm">
@@ -918,39 +961,57 @@ export function PapercardDetail({
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap px-4 py-3 text-left font-semibold"
-                >{uiText("Tanggal")}</th>
+                >
+                  {uiText("Tanggal")}
+                </th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap px-4 py-3 text-left font-semibold"
-                >{uiText("Line")}</th>
+                >
+                  {uiText("Line")}
+                </th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap px-4 py-3 text-left font-semibold"
-                >{uiText("Nama Leader")}</th>
+                >
+                  {uiText("Nama Leader")}
+                </th>
                 <th
                   colSpan={4}
                   className="whitespace-nowrap border-x border-b border-border px-4 py-2 text-center font-semibold"
-                >{uiText("Status pengisian")}</th>
+                >
+                  {uiText("Status pengisian")}
+                </th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap px-4 py-3 text-center font-semibold"
-                >{uiText("Rate")}</th>
+                >
+                  {uiText("Rate")}
+                </th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-                >{uiText("Tepat waktu")}</th>
+                >
+                  {uiText("Tepat waktu")}
+                </th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-                >{uiText("Terdaftar")}</th>
+                >
+                  {uiText("Terdaftar")}
+                </th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-                >{uiText("Close loop")}</th>
+                >
+                  {uiText("Close loop")}
+                </th>
                 <th
                   rowSpan={2}
                   className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-                >{uiText("Total harian")}</th>
+                >
+                  {uiText("Total harian")}
+                </th>
               </tr>
               <tr>
                 {["Leader", "ME", "PE", "IPQC"].map((role, index) => (
@@ -967,10 +1028,7 @@ export function PapercardDetail({
             </thead>
             <tbody className="divide-y divide-border">
               {visibleRows.map((row) => (
-                <tr
-                  key={`${row.date}-${row.line}`}
-                  className="hover:bg-section/60"
-                >
+                <tr key={row.key} className="hover:bg-section/60">
                   <td className="whitespace-nowrap px-4 py-3 text-left">
                     {row.date}
                   </td>
@@ -987,7 +1045,9 @@ export function PapercardDetail({
                     >
                       {status === "OK terlambat" ? (
                         <Badge tone="warning">
-                          <Clock3 size={11} />{uiText(" OK terlambat")}</Badge>
+                          <Clock3 size={11} />
+                          {uiText(" OK terlambat")}
+                        </Badge>
                       ) : status === "Belum diisi" || status === "-" ? (
                         <Badge tone="neutral">{uiText(status)}</Badge>
                       ) : (
@@ -1034,25 +1094,65 @@ function MeetingCell({
   const { text: uiText } = useUiText();
   if (!meeting && historical) {
     const session = statuses.filter((item) => item.session === number);
-    if (!session.length) return <Badge tone="neutral">{uiText("Attendance Excel tidak tersedia")}</Badge>;
+    if (!session.length)
+      return (
+        <Badge tone="neutral">
+          {uiText("Attendance Excel tidak tersedia")}
+        </Badge>
+      );
     const ok = session.filter((item) => item.status === "OK").length;
     const unknown = session.filter((item) => item.status === null).length;
-    return <details className="text-xs"><summary className="cursor-pointer"><Badge tone={unknown ? "neutral" : ok === session.length ? "success" : "danger"}>{unknown === session.length ? uiText("Status belum diketahui") : uiText("{{v0}}/{{v1}} role OK", { v0: ok, v1: session.length })}</Badge></summary><div className="mt-2 space-y-1 text-left text-text-secondary">{session.map((item) => <div key={item.role}>{item.role}: {uiText(item.status ?? "Tidak diketahui")}</div>)}</div></details>;
+    return (
+      <details className="text-xs">
+        <summary className="cursor-pointer">
+          <Badge
+            tone={
+              unknown ? "neutral" : ok === session.length ? "success" : "danger"
+            }
+          >
+            {unknown === session.length
+              ? uiText("Status belum diketahui")
+              : uiText("{{v0}}/{{v1}} role OK", { v0: ok, v1: session.length })}
+          </Badge>
+        </summary>
+        <div className="mt-2 space-y-1 text-left text-text-secondary">
+          {session.map((item) => (
+            <div key={item.role}>
+              {item.role}: {uiText(item.status ?? "Tidak diketahui")}
+            </div>
+          ))}
+        </div>
+      </details>
+    );
   }
-  if (!meeting || !meeting.held) return <Badge tone="neutral">{uiText("Tidak ada")}</Badge>;
+  if (!meeting || !meeting.held)
+    return <Badge tone="neutral">{uiText("Tidak ada")}</Badge>;
   return (
     <Badge tone={meeting.complete ? "success" : "danger"}>
-      {meeting.complete ? uiText("OK") : uiText("NG")} {meeting.present}/{meeting.required}
+      {meeting.complete ? uiText("OK") : uiText("NG")} {meeting.present}/
+      {meeting.required}
     </Badge>
   );
 }
 
-export function StandupDetail({ canExport, rows }: { canExport: boolean; rows: StandupRow[] }) {
+export function StandupDetail({
+  canExport,
+  rows,
+}: {
+  canExport: boolean;
+  rows: StandupRow[];
+}) {
   const { text: uiText } = useUiText();
   return (
     <>
       <DetailHeader canExport={canExport} caption="" />
-      {rows.some((row) => row.source === "excel") && <p className="mb-3 text-xs text-text-secondary">{uiText("Status Meeting 1/2 berasal dari attendance Excel per role. Klik status untuk melihat rincian. Poin berasal dari sheet rekap Standup Meeting; tanda — berarti rekap tidak tersedia atau poin perlu diverifikasi, bukan nilai nol.")}</p>}
+      {rows.some((row) => row.source === "excel") && (
+        <p className="mb-3 text-xs text-text-secondary">
+          {uiText(
+            "Status Meeting 1/2 berasal dari attendance Excel per role. Klik status untuk melihat rincian. Poin berasal dari sheet rekap Standup Meeting; tanda — berarti rekap tidak tersedia atau poin perlu diverifikasi, bukan nilai nol."
+          )}
+        </p>
+      )}
       <div className="scorecard-tab-table overflow-x-auto rounded-xl border border-border">
         <table className="w-full table-auto text-left text-sm">
           <thead className="bg-section text-xs text-text-secondary">
@@ -1060,35 +1160,51 @@ export function StandupDetail({ canExport, rows }: { canExport: boolean; rows: S
               <th
                 rowSpan={2}
                 className="whitespace-nowrap px-4 py-3 text-left font-semibold"
-              >{uiText("Tanggal")}</th>
+              >
+                {uiText("Tanggal")}
+              </th>
               <th
                 rowSpan={2}
                 className="whitespace-nowrap px-4 py-3 text-left font-semibold"
-              >{uiText("Line")}</th>
+              >
+                {uiText("Line")}
+              </th>
               <th
                 rowSpan={2}
                 className="whitespace-nowrap px-4 py-3 text-left font-semibold"
-              >{uiText("Nama Leader")}</th>
+              >
+                {uiText("Nama Leader")}
+              </th>
               <th
                 colSpan={2}
                 className="whitespace-nowrap border-x border-b border-border px-4 py-2 text-center font-semibold"
-              >{uiText("Status kehadiran")}</th>
+              >
+                {uiText("Status kehadiran")}
+              </th>
               <th
                 rowSpan={2}
                 className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-              >{uiText("Presensi")}</th>
+              >
+                {uiText("Presensi")}
+              </th>
               <th
                 rowSpan={2}
                 className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-              >{uiText("Isi rapat")}</th>
+              >
+                {uiText("Isi rapat")}
+              </th>
               <th
                 rowSpan={2}
                 className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-              >{uiText("Close loop")}</th>
+              >
+                {uiText("Close loop")}
+              </th>
               <th
                 rowSpan={2}
                 className="whitespace-nowrap border-l border-border px-4 py-3 text-center font-semibold"
-              >{uiText("Total harian")}</th>
+              >
+                {uiText("Total harian")}
+              </th>
             </tr>
             <tr>
               {["Meeting 1", "Meeting 2"].map((role, index) => (
@@ -1105,14 +1221,18 @@ export function StandupDetail({ canExport, rows }: { canExport: boolean; rows: S
           </thead>
           <tbody className="divide-y divide-border">
             {rows.length === 0 && (
-              <tr><td colSpan={9} className="px-4 py-3 text-center text-text-secondary">{uiText("Belum ada data")}</td></tr>
+              <tr>
+                <td
+                  colSpan={9}
+                  className="px-4 py-3 text-center text-text-secondary"
+                >
+                  {uiText("Belum ada data")}
+                </td>
+              </tr>
             )}
             {rows.map((row) => {
               return (
-                <tr
-                  key={`${row.date}-${row.line}`}
-                  className="hover:bg-section/60"
-                >
+                <tr key={row.key} className="hover:bg-section/60">
                   <td className="whitespace-nowrap px-4 py-3 text-left">
                     {row.date}
                   </td>
@@ -1138,7 +1258,9 @@ export function StandupDetail({ canExport, rows }: { canExport: boolean; rows: S
                     </td>
                   ))}
                   <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">
-                    {row.attendance === null ? "—" : formatScore(row.attendance)}
+                    {row.attendance === null
+                      ? "—"
+                      : formatScore(row.attendance)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">
                     {row.content === null ? "—" : formatScore(row.content)}
@@ -1148,7 +1270,26 @@ export function StandupDetail({ canExport, rows }: { canExport: boolean; rows: S
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">
                     {row.total === null ? "—" : formatScore(row.total)}
-                    {row.scoreNote && <details className="mt-1 max-w-64 text-left text-xs font-normal text-text-secondary"><summary className="cursor-pointer">{uiText(row.sourceScores?.length ? "Poin perlu verifikasi" : "Rekap poin tidak tersedia")}</summary><p className="mt-2 whitespace-normal">{uiText(row.scoreNote)}</p>{Boolean(row.sourceScores?.length) && <p>{uiText("Nilai sumber Excel")}: {row.sourceScores?.join(" + ")}</p>}</details>}
+                    {row.scoreNote && (
+                      <details className="mt-1 max-w-64 text-left text-xs font-normal text-text-secondary">
+                        <summary className="cursor-pointer">
+                          {uiText(
+                            row.sourceScores?.length
+                              ? "Poin perlu verifikasi"
+                              : "Rekap poin tidak tersedia"
+                          )}
+                        </summary>
+                        <p className="mt-2 whitespace-normal">
+                          {uiText(row.scoreNote)}
+                        </p>
+                        {Boolean(row.sourceScores?.length) && (
+                          <p>
+                            {uiText("Nilai sumber Excel")}:{" "}
+                            {row.sourceScores?.join(" + ")}
+                          </p>
+                        )}
+                      </details>
+                    )}
                   </td>
                 </tr>
               );
@@ -1173,7 +1314,9 @@ export function SqdipDetail({ canExport }: { canExport: boolean }) {
     <>
       <DetailHeader
         canExport={canExport}
-        caption={uiText("Lima dimensi, masing-masing 6 poin jika target tercapai")}
+        caption={uiText(
+          "Lima dimensi, masing-masing 6 poin jika target tercapai"
+        )}
       />
       <div className="scorecard-tab-subhead flex flex-wrap gap-3">
         <Input
@@ -1224,14 +1367,20 @@ export function SqdipDetail({ canExport }: { canExport: boolean }) {
           </tbody>
           <tfoot className="border-t border-border bg-section">
             <tr>
-              <td colSpan={4} className="px-4 py-4 font-bold">{uiText("Total")}</td>
-              <td className="px-4 py-4 font-bold text-danger">{uiText("18 dari 30")}</td>
+              <td colSpan={4} className="px-4 py-4 font-bold">
+                {uiText("Total")}
+              </td>
+              <td className="px-4 py-4 font-bold text-danger">
+                {uiText("18 dari 30")}
+              </td>
             </tr>
           </tfoot>
         </table>
       </div>
       <div className="mt-5">
-        <div className="mb-3 text-sm font-bold">{uiText("Kalender skor September")}</div>
+        <div className="mb-3 text-sm font-bold">
+          {uiText("Kalender skor September")}
+        </div>
         <div className="grid grid-cols-7 gap-2">
           {Array.from({ length: 30 }, (_, index) => {
             const score = [18, 24, 30, 24, 18, 30][index % 6];
@@ -1269,7 +1418,9 @@ export function RewardDetail({ canExport }: { canExport: boolean }) {
     <>
       <DetailHeader
         canExport={canExport}
-        caption={uiText("Rekap reward dan punishment bulanan berdasarkan aturan assessment.")}
+        caption={uiText(
+          "Rekap reward dan punishment bulanan berdasarkan aturan assessment."
+        )}
       />
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <Card className="p-5">
@@ -1285,7 +1436,9 @@ export function RewardDetail({ canExport }: { canExport: boolean }) {
               </div>
             ))}
           </div>
-          <div className="mt-4 rounded-lg border border-danger-border bg-danger-soft p-3 text-xs text-danger">{uiText("Salah satu dari 4 poin NG: punishment −5 poin per hari")}</div>
+          <div className="mt-4 rounded-lg border border-danger-border bg-danger-soft p-3 text-xs text-danger">
+            {uiText("Salah satu dari 4 poin NG: punishment −5 poin per hari")}
+          </div>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-rate text-left text-xs">
               <thead>
@@ -1306,7 +1459,9 @@ export function RewardDetail({ canExport }: { canExport: boolean }) {
               </thead>
               <tbody>
                 <tr className="border-t border-border">
-                  <td className="px-2 py-3 font-semibold">{uiText("Ahmad Riswanto")}</td>
+                  <td className="px-2 py-3 font-semibold">
+                    {uiText("Ahmad Riswanto")}
+                  </td>
                   <td className="px-2 py-3">0</td>
                   <td className="px-2 py-3">0</td>
                   <td className="px-2 py-3">0</td>
@@ -1314,7 +1469,9 @@ export function RewardDetail({ canExport }: { canExport: boolean }) {
                   <td className="px-2 py-3 font-bold">0</td>
                 </tr>
                 <tr className="border-t border-border">
-                  <td className="px-2 py-3 font-semibold">{uiText("Rudiyansyah")}</td>
+                  <td className="px-2 py-3 font-semibold">
+                    {uiText("Rudiyansyah")}
+                  </td>
                   <td className="px-2 py-3">1</td>
                   <td className="px-2 py-3">0</td>
                   <td className="px-2 py-3">2</td>
@@ -1327,16 +1484,27 @@ export function RewardDetail({ canExport }: { canExport: boolean }) {
         </Card>
         <Card className="p-5">
           <div className="font-bold text-primary">{uiText("Reward")}</div>
-          <div className="mt-3 rounded-lg border border-primary-border bg-primary-soft p-4 text-sm font-semibold text-primary">{uiText("Juara 1 (nilai tertinggi): Leader +20 poin, Member +10 poin")}</div>
+          <div className="mt-3 rounded-lg border border-primary-border bg-primary-soft p-4 text-sm font-semibold text-primary">
+            {uiText(
+              "Juara 1 (nilai tertinggi): Leader +20 poin, Member +10 poin"
+            )}
+          </div>
           <div className="mt-4 space-y-2 text-sm text-text-secondary">
-            <div>{uiText("Nilai DM di bawah 80 tidak mendapat reward bulanan")}</div>
-            <div>{uiText("Jika juara 1 punya poin punishment, reward dipotong sesuai poin")}</div>
+            <div>
+              {uiText("Nilai DM di bawah 80 tidak mendapat reward bulanan")}
+            </div>
+            <div>
+              {uiText(
+                "Jika juara 1 punya poin punishment, reward dipotong sesuai poin"
+              )}
+            </div>
           </div>
           <div className="mt-6 rounded-xl border border-primary-border p-5 text-center">
             <Trophy size={28} className="mx-auto text-primary" />
             <div className="mt-3 font-bold">{uiText("Ahmad Riswanto")}</div>
             <div className="mt-1 text-2xl font-bold text-primary">90,9</div>
-            <div className="mt-4 text-sm">{uiText("Reward 20 − punishment 0 =")}{" "}
+            <div className="mt-4 text-sm">
+              {uiText("Reward 20 − punishment 0 =")}{" "}
               <strong className="text-primary">20</strong>
             </div>
           </div>
@@ -1354,7 +1522,9 @@ export function AnnualDetail({ canExport }: { canExport: boolean }) {
     <>
       <DetailHeader
         canExport={canExport}
-        caption={uiText("Rekap target, perolehan nilai, dan evaluasi tahunan per DM.")}
+        caption={uiText(
+          "Rekap target, perolehan nilai, dan evaluasi tahunan per DM."
+        )}
       />
       <Card className="mb-5 p-4">
         <div className="mb-3 font-bold">{uiText("Tren nilai tahunan")}</div>
@@ -1407,7 +1577,9 @@ export function AnnualDetail({ canExport }: { canExport: boolean }) {
                     {typeIndex === 0 && (
                       <td rowSpan={3} className="px-3 py-3 text-left">
                         <strong>{dm}</strong>
-                        <div className="mt-1 text-text-secondary">{uiText("Ikhwan")}</div>
+                        <div className="mt-1 text-text-secondary">
+                          {uiText("Ikhwan")}
+                        </div>
                       </td>
                     )}
                     <td className="whitespace-nowrap px-3 py-3 text-left font-semibold">

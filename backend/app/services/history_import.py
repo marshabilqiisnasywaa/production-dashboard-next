@@ -47,6 +47,9 @@ def prepare_import(db: Session, payload: HistoryImportIn):
     duplicates = 0
     for row in payload.rows:
         label = f"{row.source_sheet} baris {row.source_row}, {row.date}"
+        if row.scope == "dm":
+            errors.append(f"{label}: penilaian leader DM harus disimpan sebagai detail arsip final, terpisah dari histori line.")
+            continue
         if not payload.from_date <= row.date <= payload.to_date:
             errors.append(f"{label}: tanggal di luar periode pilihan.")
             continue
@@ -186,7 +189,8 @@ def commit_import(db: Session, payload: HistoryImportIn, username: str) -> dict:
         archive.before, archive.current, archive.after, archive.total = row.before, row.current, row.after, row.total
         archive.source_rank = row.rank
         archive.data = {"area": row.area, "model": row.model, "sourceSheet": row.source_sheet,
-                        "sourceRow": row.source_row, "fileName": payload.file_name, "leaderEmployeeId": leader_id}
+                        "sourceRow": row.source_row, "fileName": payload.file_name, "leaderEmployeeId": leader_id,
+                        "shift": payload.shift}
         if row.scope == "leader" and row.month not in detail_months and payload.archive_details:
             archive.data["details"] = [detail.model_dump(mode="json") for detail in payload.archive_details if detail.date.replace(day=1) == row.month]
             detail_months.add(row.month)

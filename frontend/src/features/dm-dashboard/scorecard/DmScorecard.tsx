@@ -34,6 +34,7 @@ import {
 import LeaderBoard from "./LeaderBoard";
 import SqdipSummary from "./SqdipSummary";
 import { buildSqdipTrend } from "./sqdipTrend";
+import { dmDetailLines } from "./detailScope";
 import {
   buildTrendSeries,
   defaultRange,
@@ -84,7 +85,7 @@ export default function DmScorecard({
     setPortalEl(node);
   }, []);
   const target = Number(month.slice(5)) <= 6 ? 80 : 90;
-  const { lines, detailLines, archivedDmScores, archiveMonth, archiveFile, loading, error } = useScorecardData(startDate, endDate);
+  const { lines, detailLines, archivedDmScores, archiveMonth, archiveFile, averagedMonths, loading, error } = useScorecardData(startDate, endDate);
   const workshopNames = [
     ...new Set(lines.map((line) => line.info.workshopName)),
   ].sort();
@@ -118,9 +119,9 @@ export default function DmScorecard({
   );
   const scopeLines = selectedLeaderScore
     ? workshopDetails.filter(
-        (line) => (line.archiveKey ?? line.key) === selectedLeaderScore.key
+        (line) => line.scope !== "dm" && (line.archiveKey ?? line.key) === selectedLeaderScore.key
       )
-    : dmLines;
+    : dmDetailLines(dmLines, lines);
   const trendSeries = buildTrendSeries(scopeLines, granularity);
   const sqdipTiles =
     trend === "After"
@@ -255,7 +256,7 @@ export default function DmScorecard({
           </div>
         )}
 
-        {archiveMonth && <p className="mb-4 text-sm text-text-secondary" role="status">{uiText("Arsip final bulanan")}: {archiveMonth.slice(0, 7)} · {archiveFile}. {uiText("Nilai dan peringkat memakai rekap final Excel satu bulan penuh. Tabel dan tren menampilkan detail pada rentang tanggal pilihan.")}</p>}
+        {archiveMonth && <p className="mb-4 text-sm text-text-secondary" role="status">{uiText(averagedMonths.length ? "Rata-rata bulanan" : "Arsip final bulanan")}: {averagedMonths.length ? averagedMonths.map((month) => month.slice(0, 7)).join(", ") : archiveMonth.slice(0, 7)} · {archiveFile}. {uiText(averagedMonths.length ? "Nilai memakai rata-rata bulan yang memiliki data; bulan kosong tidak dihitung sebagai nol. Peringkat dihitung ulang dari hasil rata-rata. Arsip Excel memakai nilai final satu bulan penuh; detail dan data sistem mengikuti rentang tanggal pilihan." : "Nilai dan peringkat memakai rekap final Excel satu bulan penuh. Tabel dan tren menampilkan detail pada rentang tanggal pilihan.")}</p>}
         {error && (
           <div
             role="status"

@@ -6,6 +6,7 @@ import { meetingApi, type DmLine, type DmMeetingSession } from "../api";
 import { ProblemLoadError } from "../leader/problems/components/ProblemLoadError";
 import { addDays, formatDate, formatHm, localDate } from "../leader/log/utils";
 import { HistoryChip, HistoryPager, type HistoryChipTone } from "./HistoryParts";
+import ImportedStatusHistory from "./ImportedStatusHistory";
 import "../leader/problems/problems.css";
 import "./History.css";
 
@@ -403,6 +404,10 @@ export default function StandupHistory({
           </>
         )}
       </section>
+      <ImportedStatusHistory
+        from={from} to={to} line={lines.find((item) => String(item.id) === lineId)?.code}
+        kind="attendance" search={search} shift={shift} refresh={attempt} call={call}
+      />
     </div>
   );
 }

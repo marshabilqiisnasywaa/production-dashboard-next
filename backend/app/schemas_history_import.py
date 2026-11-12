@@ -16,6 +16,7 @@ class HistoryStatus(CamelModel):
 
 
 class HistoryRowIn(CamelModel):
+    scope: Literal["leader", "dm"] = "leader"
     kind: HistoryKind
     date: date
     line: str = Field(min_length=1, max_length=32)

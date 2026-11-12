@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
@@ -12,6 +13,18 @@ from app.schemas_history_import import HistoryImportIn, HistoryKind
 from app.services import history_import
 
 router = APIRouter(prefix="/history-import", tags=["history-import"])
+
+
+@router.get("/statuses")
+def statuses(
+    from_date: date = Query(alias="from"), to_date: date = Query(alias="to"),
+    kind: Literal["papercard_status", "attendance"] = "papercard_status", line: str | None = None,
+    db: Session = Depends(get_db), _admin=Depends(get_current_admin),
+):
+    if to_date < from_date or (to_date - from_date).days > 365:
+        raise HTTPException(400, "Rentang tanggal tidak valid (maksimal satu tahun).")
+    from app.services.imported_statuses import list_imported_statuses
+    return list_imported_statuses(db, from_date, to_date, kind, line)
 
 
 @router.post("/preview")
