@@ -1,5 +1,5 @@
 import { DIMS, type DimKey, type DimKind } from "../admin/sqdip/sqdipModel";
-import type { ScorecardLine } from "./useScorecardData";
+import { bucketKey, type ScorecardLine, type TrendGranularity } from "./useScorecardData";
 
 export type SqdipTrend = {
   name: DimKey;
@@ -14,18 +14,28 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "
 
 const round = (value: number) => Math.round(value * 100) / 100;
 
-export function formatTrendDate(
-  date: string,
-  granularity: "Harian" | "Mingguan" | "Bulanan" = "Harian"
-) {
+function isoWeekLabel(monday: string) {
+  const thursday = new Date(`${monday}T00:00:00Z`);
+  thursday.setUTCDate(thursday.getUTCDate() + 3);
+  const year = thursday.getUTCFullYear();
+  const week = Math.floor((thursday.getTime() - Date.UTC(year, 0, 1)) / 86400000 / 7) + 1;
+  return `${year}W${week}`;
+}
+
+export function formatTrendDate(date: string, granularity: TrendGranularity = "Harian") {
+  if (granularity === "Mingguan") return isoWeekLabel(bucketKey(date, "Mingguan"));
+  if (granularity === "Tahunan") return date.slice(0, 4);
   const [year, month, day] = date.split("-");
   const monthName = MONTHS[Number(month) - 1] ?? "";
   if (granularity === "Bulanan") return `${monthName} ${year}`;
-  if (granularity === "Mingguan") return `Mgg ${Number(day)} ${monthName}`;
   return `${Number(day)} ${monthName}`;
 }
 
-export function buildSqdipTrend(dim: DimKey, lines: ScorecardLine[]): SqdipTrend {
+export function buildSqdipTrend(
+  dim: DimKey,
+  lines: ScorecardLine[],
+  granularity: TrendGranularity = "Harian"
+): SqdipTrend {
   const config = DIMS.find((item) => item.key === dim) ?? DIMS[0];
   const index = DIMS.indexOf(config);
   const factor = config.kind === "pct" ? 100 : 1;
@@ -36,10 +46,11 @@ export function buildSqdipTrend(dim: DimKey, lines: ScorecardLine[]): SqdipTrend
       if (!day.final) continue;
       const actual = day.actuals[index];
       if (actual === null || actual === undefined) continue;
-      const entry = byDate.get(day.date) ?? { sum: 0, count: 0 };
+      const key = bucketKey(day.date, granularity);
+      const entry = byDate.get(key) ?? { sum: 0, count: 0 };
       entry.sum += actual;
       entry.count += 1;
-      byDate.set(day.date, entry);
+      byDate.set(key, entry);
     }
   }
 

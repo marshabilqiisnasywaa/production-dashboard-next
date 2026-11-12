@@ -38,6 +38,9 @@ import { dmDetailLines } from "./detailScope";
 import {
   buildTrendSeries,
   defaultRange,
+  trendYearRange,
+  YEARLY_MAX_DAYS,
+  type TrendGranularity,
   dmNameOf,
   jakartaToday,
   toLeaderScores,
@@ -66,7 +69,7 @@ export default function DmScorecard({
   const [selectedLeader, setSelectedLeader] = useState<string | null>(null);
   const [selectedDm, setSelectedDm] = useState("Semua");
   const [trend, setTrend] = useState<ScoreTrend>("Total");
-  const [granularity, setGranularity] = useState<"Harian" | "Mingguan" | "Bulanan">("Harian");
+  const [granularity, setGranularity] = useState<TrendGranularity>("Harian");
   const [sqdipDim, setSqdipDim] = useState<DimKey>("Safety");
   const [tab, setTab] = useState<ScoreTab>("Papercard");
   const [query, setQuery] = useState("");
@@ -86,6 +89,8 @@ export default function DmScorecard({
   }, []);
   const target = Number(month.slice(5)) <= 6 ? 80 : 90;
   const { lines, detailLines, archivedDmScores, archiveMonth, archiveFile, averagedMonths, loading, error } = useScorecardData(startDate, endDate);
+    const trendRange = trendYearRange(granularity);
+  const trendData = useScorecardData(trendRange.from, trendRange.to, granularity !== "Harian", false, granularity === "Tahunan" ? YEARLY_MAX_DAYS : 365);
   const workshopNames = [
     ...new Set(lines.map((line) => line.info.workshopName)),
   ].sort();
@@ -122,16 +127,43 @@ export default function DmScorecard({
         (line) => line.scope !== "dm" && (line.archiveKey ?? line.key) === selectedLeaderScore.key
       )
     : dmDetailLines(dmLines, lines);
-  const trendSeries = buildTrendSeries(scopeLines, granularity);
+  // Scope yang sama, tapi dari data setahun (untuk tren Mingguan/Bulanan)
+  const trendWorkshopLines = trendData.lines.filter(
+    (line) => workshop === "Semua" || line.info.workshopName === workshop
+  );
+  const trendWorkshopDetails = trendData.detailLines.filter(
+    (line) =>
+      workshop === "Semua" ||
+      line.info.workshopName === workshop ||
+      Boolean(line.archiveKey && trendWorkshopLines.some((entry) => entry.key === line.archiveKey))
+  );
+  const trendDmLines = trendWorkshopDetails.filter(
+    (line) =>
+      activeDm === "Semua" ||
+      (line.archiveKey
+        ? trendData.lines.find((entry) => entry.key === line.archiveKey)?.info.dmName === activeDm
+        : dmNameOf(line) === activeDm)
+  );
+  const trendScopeLines =
+    granularity === "Harian"
+      ? scopeLines // trendData dinonaktifkan saat Harian
+      : selectedLeaderScore
+      ? trendWorkshopDetails.filter(
+          (line) => line.scope !== "dm" && (line.archiveKey ?? line.key) === selectedLeaderScore.key
+        )
+      : dmDetailLines(trendDmLines, trendData.lines);
+  const trendSeries = buildTrendSeries(trendScopeLines, granularity);
   const sqdipTiles =
     trend === "After"
       ? SQDIP_DIMS.map((key) => ({
           key,
-          trend: buildSqdipTrend(key, scopeLines),
+          trend: buildSqdipTrend(key, trendScopeLines, granularity),
         }))
       : [];
   const sqdipTrend =
-    sqdipTiles.find((tile) => tile.key === sqdipDim)?.trend ?? null;
+    trend === "After"
+      ? buildSqdipTrend(sqdipDim, trendScopeLines, granularity)
+      : null;
   const papercardRows = toPapercardRows(scopeLines);
   const standupRows = toStandupRows(scopeLines);
   const sqdipRows = toSqdipRows(scopeLines);
@@ -326,8 +358,8 @@ export default function DmScorecard({
   <div className="flex items-center gap-2">
     <FilterSelect
       value={granularity}
-      onChange={(v) => setGranularity(v as "Harian" | "Mingguan" | "Bulanan")}
-      options={["Harian", "Mingguan", "Bulanan"]}
+      onChange={(v) => setGranularity(v as TrendGranularity)}
+      options={["Harian", "Mingguan", "Bulanan", "Tahunan"]}
       ariaLabel="Periode tren"
       className="scorecard-trend-select"
     />
@@ -357,7 +389,7 @@ export default function DmScorecard({
                   <div className="scorecard-trend-chart mt-4">
                     {trend === "After" ? (
                       sqdipTrend && sqdipTrend.series.length > 1 ? (
-                        <TrendChart metric={trend} custom={sqdipTrend} />
+                        <TrendChart metric={trend} custom={sqdipTrend} granularity={granularity} />
                       ) : (
                         <div className="flex min-h-empty items-center justify-center text-sm text-text-secondary">{uiText("Belum cukup data SQDIP pada periode ini")}</div>
                       )

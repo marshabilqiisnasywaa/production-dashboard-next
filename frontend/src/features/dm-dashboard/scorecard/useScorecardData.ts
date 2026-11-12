@@ -118,13 +118,24 @@ export function defaultRange() {
   return { from: addDays(to, -6), to };
 }
 
+export const YEARLY_MAX_DAYS = 365 * 3;
+
+export function trendYearRange(granularity: TrendGranularity) {
+  const to = jakartaToday();
+  const year = to.slice(0, 4);
+  if (granularity === "Tahunan") return { from: `${Number(year) - 2}-01-01`, to };
+  if (granularity === "Bulanan") return { from: `${year}-01-01`, to };
+  const offset = (new Date(`${year}-01-04T00:00:00Z`).getUTCDay() + 6) % 7;
+  return { from: addDays(`${year}-01-04`, -offset), to };
+}
+
 function errorText(error: unknown) {
   return error instanceof ApiError
     ? error.message
     : "Data scorecard tidak bisa dimuat.";
 }
 
-export function useScorecardData(from: string, to: string) {
+export function useScorecardData(from: string, to: string, enabled = true, live = true, maxDays = 365) {
   const [state, setState] = useState<{
     lines: ScorecardLine[];
     detailLines: ScorecardLine[];
@@ -148,13 +159,14 @@ export function useScorecardData(from: string, to: string) {
   useEffect(() => {
     let alive = true;
     let inFlight = false;
+    if (!enabled) return;
     const refresh = async () => {
       if (inFlight || !alive) return;
       inFlight = true;
       try {
         const today = jakartaToday();
         const end = to < today ? to : today;
-        const earliest = addDays(end, -365);
+        const earliest = addDays(end, -maxDays);
         const start = from < earliest ? earliest : from;
         const report =
           start <= end
@@ -206,7 +218,7 @@ export function useScorecardData(from: string, to: string) {
     void refresh();
     const timer = window.setInterval(() => {
       const today = jakartaToday();
-      if (from <= today && to >= today) refreshVisible();
+      if (live && from <= today && to >= today) refreshVisible();
     }, 5000);
     window.addEventListener("focus", refreshVisible);
     document.addEventListener("visibilitychange", refreshVisible);
@@ -220,7 +232,7 @@ export function useScorecardData(from: string, to: string) {
       window.removeEventListener(PAPERCARD_CHANGED_EVENT, refreshVisible);
       window.removeEventListener("dm-history-imported", refreshVisible);
     };
-  }, [from, to]);
+  }, [from, to, enabled, live, maxDays]);
 
   return state;
 }
@@ -376,11 +388,12 @@ export function toSqdipRows(lines: ScorecardLine[]): SqdipTableRow[] {
   );
 }
 
-export type TrendGranularity = "Harian" | "Mingguan" | "Bulanan";
+export type TrendGranularity = "Harian" | "Mingguan" | "Bulanan" | "Tahunan";
 
-function bucketKey(date: string, g: TrendGranularity) {
+export function bucketKey(date: string, g: TrendGranularity) {
   if (g === "Harian") return date;
   if (g === "Bulanan") return date.slice(0, 7);
+  if (g === "Tahunan") return date.slice(0, 4);
   const d = new Date(`${date}T00:00:00Z`);
   const day = (d.getUTCDay() + 6) % 7; // Senin = 0
   d.setUTCDate(d.getUTCDate() - day);
