@@ -244,156 +244,93 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
           }}
         >{uiText("Tidak ada bawahan langsung yang terikat dengan akun Anda pada tanggal ini.")}</div>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: "10px",
-          }}
-        >
-          {uiText(subordinates.map((member) => {
-            const sub = member.submission;
-            const isSubmitted = Boolean(sub);
-            const isApproved = sub?.approvalStatus === "approved";
-            const hasNg = Boolean(sub?.hasNg);
+        <div style={{ overflowX: "auto", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "860px" }}>
+            <thead>
+              <tr style={{ background: "#f8fafc", textAlign: "left", color: "#475569" }}>
+                {["Lini", "PIC", "Status Isi", "Jam Submit", "Persetujuan", "Temuan", ""].map((label, index) => (
+                  <th key={`${index}-${label}`} scope="col" style={{ padding: "8px 12px", fontSize: "11px", fontWeight: 700, borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap" }}>
+                    {label ? uiText(label) : ""}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {subordinates.map((member, index) => {
+                const sub = member.submission;
+                const isSubmitted = Boolean(sub);
+                const isApproved = sub?.approvalStatus === "approved";
+                const hasNg = Boolean(sub?.hasNg);
+                const cell = { padding: "8px 12px", borderBottom: "1px solid #f1f5f9", verticalAlign: "top" } as const;
 
-            return (
-              <div
-                key={member.id}
-                style={{
-                  background: "#ffffff",
-                  border: `1px solid ${hasNg ? "#fecdd3" : isApproved ? "#bbf7d0" : "#e2e8f0"}`,
-                  borderRadius: "8px",
-                  padding: "11px 13px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "7px",
-                  boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
-                  transition: "all 0.15s ease",
-                }}
-              >
-                {/* Header Lini & Badge */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span
-                      style={{
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        background: hasNg ? "#e11d48" : isApproved ? "#10b981" : isSubmitted ? "#f59e0b" : "#cbd5e1",
-                      }}
-                    />
-                    <strong style={{ fontSize: "13px", color: "#0f172a" }}>
-                      {member.lineName || uiText("Lini Lain")}
-                    </strong>
-                  </div>
-
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      fontWeight: 700,
-                      padding: "2px 7px",
-                      borderRadius: "10px",
-                      background: !isSubmitted ? "#f1f5f9" : hasNg ? "#fee2e2" : "#dcfce7",
-                      color: !isSubmitted ? "#64748b" : hasNg ? "#b91c1c" : "#15803d",
-                      border: `1px solid ${!isSubmitted ? "#e2e8f0" : hasNg ? "#fecdd3" : "#bbf7d0"}`,
-                    }}
-                  >
-                    {!isSubmitted ? uiText("Belum Diisi") : hasNg ? uiText("Ada Abnormal (NG)") : uiText("Semua OK")}
-                  </span>
-                </div>
-
-                {/* PIC Karyawan Info */}
-                <div style={{ fontSize: "11.5px", color: "#475569" }}>
-                  <div>{uiText("PIC: ")}<strong>{member.name}</strong> · <span style={{ color: "#64748b" }}>{member.employeeNo}</span>
-                  </div>
-                  <div style={{ color: "#64748b", fontSize: "11px", marginTop: "1px" }}>
-                    {member.position} · {departmentLabel(member.dept)}
-                  </div>
-                  {member.substitutedBy && (
-                    <div style={{ color: "#64748b", fontSize: "11px", marginTop: "1px" }}>{uiText("Diwakilkan oleh ")}<strong>{member.substitutedBy.name}</strong> ({member.substitutedBy.employeeNo})
-                    </div>
-                  )}
-                </div>
-
-                {/* Submission Meta & Approval */}
-                <div
-                  style={{
-                    fontSize: "11px",
-                    color: "#64748b",
-                    padding: "6px 8px",
-                    background: "#f8fafc",
-                    borderRadius: "6px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <span>{uiText("Jam Submit:")}{" "}
-                    <strong>
+                return (
+                  <tr key={`${member.id}-${member.lineId ?? "x"}-${index}`}>
+                    <td style={cell}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ width: "8px", height: "8px", borderRadius: "50%", flexShrink: 0, background: hasNg ? "#e11d48" : isApproved ? "#10b981" : isSubmitted ? "#f59e0b" : "#cbd5e1" }} />
+                        <strong style={{ color: "#0f172a" }}>{member.lineName || uiText("Lini Lain")}</strong>
+                      </div>
+                    </td>
+                    <td style={cell}>
+                      <div><strong>{member.name}</strong> · <span style={{ color: "#64748b" }}>{member.employeeNo}</span></div>
+                      <div style={{ color: "#64748b", fontSize: "11px" }}>{member.position} · {departmentLabel(member.dept)}</div>
+                      {member.substitutedBy && (
+                        <div style={{ color: "#64748b", fontSize: "11px" }}>{uiText("Diwakilkan oleh ")}<strong>{member.substitutedBy.name}</strong> ({member.substitutedBy.employeeNo})</div>
+                      )}
+                    </td>
+                    <td style={cell}>
+                      <span
+                        style={{
+                          fontSize: "10.5px",
+                          fontWeight: 700,
+                          padding: "2px 8px",
+                          borderRadius: "10px",
+                          whiteSpace: "nowrap",
+                          background: !isSubmitted ? "#f1f5f9" : hasNg ? "#fee2e2" : "#dcfce7",
+                          color: !isSubmitted ? "#64748b" : hasNg ? "#b91c1c" : "#15803d",
+                          border: `1px solid ${!isSubmitted ? "#e2e8f0" : hasNg ? "#fecdd3" : "#bbf7d0"}`,
+                        }}
+                      >
+                        {!isSubmitted ? uiText("Belum Diisi") : hasNg ? uiText("Ada Abnormal (NG)") : uiText("Semua OK")}
+                      </span>
+                    </td>
+                    <td style={{ ...cell, whiteSpace: "nowrap" }}>
                       {sub?.submittedAt
-                        ? `${new Date(sub.submittedAt).toLocaleTimeString(uiLocale, {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })} WIB`
+                        ? `${new Date(sub.submittedAt).toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" })} WIB`
                         : "-"}
-                    </strong>
-                  </span>
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      color: isApproved ? "#047857" : isSubmitted ? "#b45309" : "#94a3b8",
-                    }}
-                  >
-                    {isApproved
-                      ? uiText("✓ Disetujui")
-                      : isSubmitted
-                      ? uiText("Menunggu SPV")
-                      : uiText("Belum Ada Data")}
-                  </span>
-                </div>
-
-                {/* If NG abnormal notes snippet */}
-                {sub?.abnormalNotes && (
-                  <div
-                    style={{
-                      fontSize: "10.5px",
-                      color: "#9f1239",
-                      background: "#fff1f2",
-                      border: "1px solid #fecdd3",
-                      borderRadius: "5px",
-                      padding: "4px 7px",
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    <strong>{uiText("Temuan:")}</strong> {sub.abnormalNotes}
-                  </div>
-                )}
-
-                {/* Button Action */}
-                <button
-                  type="button"
-                  onClick={() => onSelectReview(member)}
-                  disabled={!isSubmitted}
-                  style={{
-                    marginTop: "2px",
-                    padding: "5px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid",
-                    borderColor: isSubmitted ? "#0f766e" : "#e2e8f0",
-                    background: isSubmitted ? "#f0fdfa" : "#f8fafc",
-                    fontSize: "11.5px",
-                    fontWeight: 600,
-                    color: isSubmitted ? "#0f766e" : "#94a3b8",
-                    cursor: isSubmitted ? "pointer" : "not-allowed",
-                    textAlign: "center",
-                  }}
-                >
-                  {isSubmitted ? uiText("Tinjau Detail Checklist →") : uiText("Belum Ada Pengisian")}
-                </button>
-              </div>
-            );
-          }))}
+                    </td>
+                    <td style={{ ...cell, whiteSpace: "nowrap", fontWeight: 600, color: isApproved ? "#047857" : isSubmitted ? "#b45309" : "#94a3b8" }}>
+                      {isApproved ? uiText("✓ Disetujui") : isSubmitted ? uiText("Menunggu SPV") : uiText("Belum Ada Data")}
+                    </td>
+                    <td style={{ ...cell, maxWidth: "280px", color: sub?.abnormalNotes ? "#9f1239" : "#94a3b8", lineHeight: 1.35 }}>
+                      {sub?.abnormalNotes || "-"}
+                    </td>
+                    <td style={{ ...cell, textAlign: "right" }}>
+                      <button
+                        type="button"
+                        onClick={() => onSelectReview(member)}
+                        disabled={!isSubmitted}
+                        style={{
+                          padding: "5px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid",
+                          borderColor: isSubmitted ? "#0f766e" : "#e2e8f0",
+                          background: isSubmitted ? "#f0fdfa" : "#f8fafc",
+                          fontSize: "11.5px",
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                          color: isSubmitted ? "#0f766e" : "#94a3b8",
+                          cursor: isSubmitted ? "pointer" : "not-allowed",
+                        }}
+                      >
+                        {isSubmitted ? uiText("Tinjau Detail →") : uiText("Belum Ada Pengisian")}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
