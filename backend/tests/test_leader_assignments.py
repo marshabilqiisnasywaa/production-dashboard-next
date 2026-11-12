@@ -255,6 +255,22 @@ class LeaderAssignmentTests(unittest.TestCase):
         self.assertEqual(history[0].line_code_snapshot, "L1")
         self.assertEqual(self.db.scalars(select(LeaderAssignment)).all(), [])
 
+    def test_timeline_includes_account_leader_and_line_membership(self):
+        from app.api.leader_assignments import get_employee_timeline
+
+        self.assign()
+        self.db.add(BoardMember(board_id=1, employee_id=2, sort_order=3, position="PE", started_at=self.started))
+        self.db.commit()
+        full = get_employee_timeline(1, db=self.db)
+        self.assertEqual([event.category for event in full.events].count("account"), 1)
+        self.assertEqual([event.category for event in full.events].count("leader"), 1)
+        self.assertEqual(full.name, "Budi")
+        member = get_employee_timeline(2, db=self.db)
+        line = [event for event in member.events if event.category == "line"]
+        self.assertEqual(len(line), 1)
+        self.assertEqual(line[0].title, "Anggota line L1")
+        self.assertIn("PE", line[0].detail)
+
     def test_history_does_not_duplicate_recorded_line_assignment(self):
         from app.api.leader_assignments import get_employee_history
 

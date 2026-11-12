@@ -13,6 +13,8 @@ from app.leader_assignment_schemas import (
     LeaderAssignmentOut,
     LeaderCurrentOut,
     LeaderHistoryOut,
+    UserTimelineEventOut,
+    UserTimelineOut,
 )
 from app.models import Board, BoardMember, DmGroup, Employee, LeaderAssignment, Line, User
 from app.services.leader_assignments import change_assignment, dm_leader_candidates, set_dm_leader
@@ -197,3 +199,81 @@ def get_employee_history(
 
     history = build_history(db, employee)
     return history[offset:offset + limit]
+
+
+def _utc(value):
+    return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+
+
+@router.get(
+    "/employees/{employee_id}/timeline",
+    response_model=UserTimelineOut,
+)
+def get_employee_timeline(employee_id: int, db: Session = Depends(get_db)):
+    employee = db.get(Employee, employee_id)
+    if employee is None:
+        raise HTTPException(404, "Karyawan tidak ditemukan.")
+
+    creators = {
+        row.id: row.name
+        for row in db.scalars(select(Employee).where(Employee.id.in_(
+            select(LeaderAssignment.created_by_employee_id).where(
+                LeaderAssignment.employee_id == employee.id,
+                LeaderAssignment.created_by_employee_id.is_not(None),
+            )
+        )))
+    }
+    admins = {
+        row.id: row.username
+        for row in db.scalars(select(User).where(User.id.in_(
+            select(LeaderAssignment.created_by_user_id).where(
+                LeaderAssignment.employee_id == employee.id,
+                LeaderAssignment.created_by_user_id.is_not(None),
+            )
+        )))
+    }
+    creator_of = {
+        item.id: creators.get(item.created_by_employee_id) or admins.get(item.created_by_user_id)
+        for item in db.scalars(select(LeaderAssignment).where(LeaderAssignment.employee_id == employee.id))
+    }
+
+    events = [UserTimelineEventOut(
+        key="account", category="account", title="Akun dibuat",
+        detail=f"NIK {employee.employee_no}", started_at=employee.created_at,
+    )]
+    for item in build_history(db, employee):
+        title = "Leader DM" if item.kind == "dm_leader" else f"Leader Line {item.line_code_snapshot}"
+        events.append(UserTimelineEventOut(
+            key=f"leader:{item.id}", category="leader", title=title, detail=item.dm_name_snapshot,
+            started_at=item.started_at, ended_at=item.ended_at, reason=item.reason,
+            by=creator_of.get(item.id),
+        ))
+
+    covered_by_history = employee.role == "leader"
+    rows = db.execute(
+        select(BoardMember, Line, DmGroup)
+        .select_from(BoardMember)
+        .join(Board, Board.id == BoardMember.board_id)
+        .join(Line, Line.id == Board.line_id)
+        .outerjoin(DmGroup, DmGroup.id == Line.dm_group_id)
+        .where(BoardMember.employee_id == employee.id)
+    ).all()
+    for member, line, group in rows:
+        if covered_by_history and member.sort_order == 1:
+            continue
+        role = member.position or "Anggota"
+        if member.is_substitute:
+            role += " (pengganti)"
+        events.append(UserTimelineEventOut(
+            key=f"line:{member.id}", category="line", title=f"Anggota line {line.code}",
+            detail=" · ".join(part for part in (role, group.name if group else None) if part),
+            started_at=member.started_at, ended_at=member.ended_at,
+        ))
+
+    events.sort(key=lambda event: (_utc(event.started_at), event.key), reverse=True)
+    return UserTimelineOut(
+        employee_id=employee.id, employee_no=employee.employee_no, name=employee.name,
+        role=employee.role, dept=employee.dept, position=employee.position,
+        supervisor_name=employee.supervisor_name, is_active=employee.is_active,
+        created_at=employee.created_at, events=events,
+    )

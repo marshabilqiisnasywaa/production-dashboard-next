@@ -82,3 +82,27 @@ class LeaderCurrentOut(BaseModel):
     employee_id: int
     position: LeaderHistoryOut
     previous: LeaderHistoryOut | None = None
+
+
+class UserTimelineEventOut(BaseModel):
+    key: str
+    category: Literal["account", "leader", "line"]
+    title: str
+    detail: str | None = None
+    started_at: datetime
+    ended_at: datetime | None = None
+    reason: str | None = None
+    by: str | None = None
+
+
+class UserTimelineOut(BaseModel):
+    employee_id: int
+    employee_no: str
+    name: str
+    role: str
+    dept: str | None = None
+    position: str | None = None
+    supervisor_name: str | None = None
+    is_active: bool
+    created_at: datetime
+    events: list[UserTimelineEventOut]

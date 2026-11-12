@@ -120,6 +120,30 @@ export type LeaderHistoryEntry = Omit<LeaderAssignment, "created_by_employee_id"
   source: "assignment" | "line_membership";
 };
 
+export type UserTimelineEvent = {
+  key: string;
+  category: "account" | "leader" | "line";
+  title: string;
+  detail: string | null;
+  started_at: string;
+  ended_at: string | null;
+  reason: string | null;
+  by: string | null;
+};
+
+export type UserTimeline = {
+  employee_id: number;
+  employee_no: string;
+  name: string;
+  role: string;
+  dept: string | null;
+  position: string | null;
+  supervisor_name: string | null;
+  is_active: boolean;
+  created_at: string;
+  events: UserTimelineEvent[];
+};
+
 export type LeaderCurrent = {
   employee_id: number;
   position: LeaderHistoryEntry;
@@ -153,6 +177,9 @@ export const leaderAssignmentApi = {
   ),
   current: () => request<LeaderCurrent[]>(
     "/admin/leader-assignments/current", {}, true
+  ),
+  timeline: (employeeId: number) => request<UserTimeline>(
+    `/admin/leader-assignments/employees/${employeeId}/timeline`, {}, true
   ),
   history: (employeeId: number, offset = 0) => request<LeaderHistoryEntry[]>(
     `/admin/leader-assignments/employees/${employeeId}/history?limit=50&offset=${offset}`, {}, true

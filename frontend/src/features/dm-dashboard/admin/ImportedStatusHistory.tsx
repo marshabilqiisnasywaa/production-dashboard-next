@@ -62,7 +62,7 @@ export default function ImportedStatusHistory({ from, to, line, kind, search, sh
       : <>
         <div className="dml-pb-table-wrap" tabIndex={0} role="region" aria-label={uiText(title)}>
           <table className="dml-pb-table dm-history-table">
-            <thead><tr>{["Tanggal", "Line / DM", "Leader", "Sesi / Shift", ...roles].map((label) => <th key={label} scope="col">{uiText(label)}</th>)}</tr></thead>
+            <thead><tr>{["Tanggal", "Line / DM", "Leader", "Sesi / Shift", ...roles].map((label, index) => <th key={`${index}-${label}`} scope="col">{uiText(label)}</th>)}</tr></thead>
             <tbody>{visible.length === 0 ? <tr><td colSpan={4 + roles.length} className="dml-empty">{uiText("Tidak ada status Excel pada filter yang dipilih.")}</td></tr>
               : visible.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE).map((row) => <tr key={row.key}>
                 <td className="is-strong">{formatDate(row.date, locale)}</td>

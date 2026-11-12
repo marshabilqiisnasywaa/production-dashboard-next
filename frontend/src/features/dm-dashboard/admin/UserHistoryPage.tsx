@@ -4,7 +4,8 @@ import { useUiText } from "@/locales/useUiText";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { leaderAssignmentApi } from "../api";
-import type { DmEmployee, LeaderCurrent, LeaderHistoryEntry } from "../api";
+import { dmEmployeeRoles } from "../api";
+import type { DmEmployee, LeaderCurrent, LeaderHistoryEntry, UserTimeline } from "../api";
 import "./DmLeaderDialog.css";
 import "./UserTable.css";
 
@@ -55,10 +56,8 @@ export default function UserHistoryPage({
     initialEmployeeId ? String(initialEmployeeId) : ""
   );
   const [search, setSearch] = useState("");
-  const [items, setItems] = useState<LeaderHistoryEntry[]>([]);
-  const [page, setPage] = useState(0);
+  const [timeline, setTimeline] = useState<UserTimeline | null>(null);
   const [retry, setRetry] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentLeaders, setCurrentLeaders] = useState<LeaderCurrent[]>([]);
@@ -78,9 +77,7 @@ export default function UserHistoryPage({
     setSearch("");
     if (String(id) === employeeId) return;
     setEmployeeId(String(id));
-    setPage(0);
-    setItems([]);
-    setHasMore(false);
+    setTimeline(null);
     setError(null);
   }
 
@@ -110,11 +107,10 @@ export default function UserHistoryPage({
     let cancelled = false;
     setLoading(true);
     setError(null);
-    void call(() => leaderAssignmentApi.history(Number(employeeId), page * 50))
-      .then((rows) => {
+    void call(() => leaderAssignmentApi.timeline(Number(employeeId)))
+      .then((data) => {
         if (cancelled) return;
-        setItems((previous) => (page === 0 ? rows : [...previous, ...rows]));
-        setHasMore(rows.length === 50);
+        setTimeline(data);
       })
       .catch((err: unknown) => {
         if (!cancelled)
@@ -128,7 +124,7 @@ export default function UserHistoryPage({
     return () => {
       cancelled = true;
     };
-  }, [employeeId, page, retry, call]);
+  }, [employeeId, retry, call]);
 
   return (
     <section className="dm-panel" aria-labelledby="user-history-title">
@@ -281,44 +277,66 @@ export default function UserHistoryPage({
             {employee.name}{" "}
             <span className="dm-pill">{employee.employeeId}</span>
           </h4>
-          <ol className="dm-leader-timeline">
-            {uiText(items.map((item) => (
-              <li key={item.id}>
-                <div className="dm-leader-timeline-title">
-                  <strong>
-                    {item.kind === "dm_leader"
-                      ? uiText("Leader DM")
-                      : uiText("Leader Line {{v0}}", { v0: item.line_code_snapshot })}
-                  </strong>
-                  <span className="dm-pill">
-                    {item.ended_at ? uiText("Selesai") : uiText("Aktif")}
-                  </span>
+          {timeline ? (
+            <dl className="dm-history-profile">
+              {[
+                [uiText("Role"), uiText(dmEmployeeRoles.find((role) => role.value === timeline.role)?.label ?? timeline.role)],
+                [uiText("Departemen"), timeline.dept ?? "-"],
+                [uiText("Jabatan"), timeline.position ?? "-"],
+                [uiText("Supervisor"), timeline.supervisor_name ?? "-"],
+                [uiText("Status"), timeline.is_active ? uiText("Aktif") : uiText("Nonaktif")],
+                [uiText("Akun dibuat"), uiText(dateLabel(timeline.created_at, uiLocale))],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
                 </div>
-                <p>{item.dm_name_snapshot}</p>
+              ))}
+            </dl>
+          ) : null}
+          <ol className="dm-leader-timeline">
+            {(timeline?.events ?? []).map((item) => (
+              <li key={item.key}>
+                <div className="dm-leader-timeline-title">
+                  <span className={`dm-history-kind is-${item.category}`}>
+                    {item.category === "account"
+                      ? uiText("Akun")
+                      : item.category === "leader"
+                      ? uiText("Leader")
+                      : uiText("Line")}
+                  </span>
+                  <strong>{uiText(item.title)}</strong>
+                  {item.category !== "account" ? (
+                    <span className="dm-pill">
+                      {item.ended_at ? uiText("Selesai") : uiText("Aktif")}
+                    </span>
+                  ) : null}
+                </div>
+                {item.detail ? <p>{item.detail}</p> : null}
                 <p>
                   <time dateTime={item.started_at}>
                     {uiText(dateLabel(item.started_at, uiLocale))}
-                  </time>{" "}
-                  —{" "}
-                  {item.ended_at ? (
-                    <time dateTime={item.ended_at}>
-                      {uiText(dateLabel(item.ended_at, uiLocale))}
-                    </time>
-                  ) : (
-                    "Sekarang"
-                  )}
+                  </time>
+                  {item.category !== "account" ? (
+                    <>
+                      {" "}
+                      —{" "}
+                      {item.ended_at ? (
+                        <time dateTime={item.ended_at}>
+                          {uiText(dateLabel(item.ended_at, uiLocale))}
+                        </time>
+                      ) : (
+                        uiText("Sekarang")
+                      )}
+                    </>
+                  ) : null}
                 </p>
-                {item.source === "line_membership" ? (
-                  <p>{uiText("Periode mengikuti catatan keanggotaan line; nama DM dan line mengikuti data saat ini.")}</p>
-                ) : null}
                 {item.reason ? <p>{item.reason}</p> : null}
+                {item.by ? <p>{uiText("Dicatat oleh {{v0}}", { v0: item.by })}</p> : null}
               </li>
-            )))}
+            ))}
           </ol>
           {loading ? <p role="status">{uiText("Memuat riwayat...")}</p> : null}
-          {!loading && !error && items.length === 0 ? (
-            <p>{uiText("Belum ada riwayat yang tercatat untuk User ini.")}</p>
-          ) : null}
           {error ? (
             <div role="alert">
               <p>{uiText(error)}</p>
@@ -329,14 +347,8 @@ export default function UserHistoryPage({
                 onClick={() => setRetry((value) => value + 1)}
               >{uiText("Coba lagi")}</button>
             </div>
-          ) : hasMore ? (
-            <button
-              type="button"
-              className="dm-admin-btn is-secondary"
-              disabled={loading}
-              onClick={() => setPage((value) => value + 1)}
-            >{uiText("Muat riwayat sebelumnya")}</button>
           ) : null}
+          <p className="dm-leader-note">{uiText("Perubahan data akun seperti role, NIK, atau departemen belum dicatat sistem, jadi tidak tampil di sini.")}</p>
         </div>
       ) : !loadingUsers && !usersError ? (
         <p className="dm-leader-note">{uiText("Pilih User untuk menampilkan timeline riwayatnya.")}</p>
