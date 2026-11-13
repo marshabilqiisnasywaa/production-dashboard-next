@@ -71,6 +71,7 @@ function localDateKey(value: string) {
 
 type Props = {
   headerActions?: ReactNode;
+  hideHeader?: boolean;
   onBusyChange?: (busy: boolean) => void;
   onDraftChange?: (dirty: boolean) => void;
 };
@@ -79,6 +80,7 @@ export default function DocumentLibrary({
   onBusyChange,
   onDraftChange,
   headerActions,
+  hideHeader,
 }: Props = {}) {
   const { text: uiText, locale } = useUiText();
   const [user, setUser] = useState<DmMe | null>(null);
@@ -98,7 +100,7 @@ export default function DocumentLibrary({
   const [picId, setPicId] = useState(0);
   const [lines, setLines] = useState<FiveWhyDocumentLine[]>([]);
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("analysis");
+  const [category, setCategory] = useState("");
   const [source, setSource] = useState<"file" | "simo">("file");
   const [url, setUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -271,7 +273,7 @@ export default function DocumentLibrary({
           normalizeCategoryMatch(value) === normalizeCategoryMatch(category)
       )
     ) {
-      setCategory("analysis");
+      setCategory("");
     }
     setPendingCategories([]);
     setCategorySelectionValid(true);
@@ -299,7 +301,7 @@ export default function DocumentLibrary({
     setError("");
     setNotice("");
     setTitle("");
-    setCategory("analysis");
+    setCategory("");
     setPendingCategories([]);
     setCategorySelectionValid(true);
     setSource("file");
@@ -499,21 +501,23 @@ export default function DocumentLibrary({
 
   return (
     <div className="dm-5w-page dm-5w-document-page">
-      <header className="dm-5w-page-head">
-        <div className="dm-5w-page-head-main">
-          <div>
-            <h1 className="dm-5w-page-title">
-              {uiText("Dokumen 5Why & PDCA")}
-            </h1>
-            <p className="dm-5w-page-sub">
-              {uiText(
-                "Tempat sementara untuk menyimpan Excel. Terpisah dari form analisis 5Why."
-              )}
-            </p>
+      {hideHeader ? null : (
+        <header className="dm-5w-page-head">
+          <div className="dm-5w-page-head-main">
+            <div>
+              <h1 className="dm-5w-page-title">
+                {uiText("Dokumen 5Why & PDCA")}
+              </h1>
+              <p className="dm-5w-page-sub">
+                {uiText(
+                  "Tempat sementara untuk menyimpan Excel. Terpisah dari form analisis 5Why."
+                )}
+              </p>
+            </div>
+            {headerActions}
           </div>
-          {headerActions}
-        </div>
-      </header>
+        </header>
+      )}
       {loadError ? (
         <div className="dm-5w-document-error" role="alert">
           {uiText(loadError)}{" "}

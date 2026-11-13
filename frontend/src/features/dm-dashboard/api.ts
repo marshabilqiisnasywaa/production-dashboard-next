@@ -3,9 +3,7 @@ import type { DmBoard, DmLineStatus, DmMember, DmMpv } from "./dmData";
 function apiBase(): string {
   const configured = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (configured) return configured.replace(/\/$/, "");
-  if (typeof window !== "undefined")
-    return `${window.location.protocol}//${window.location.hostname}:8000`;
-  return "http://localhost:8000";
+  return "https://cedar-childrens-algorithms-gnu.trycloudflare.com";
 }
 
 const TOKEN_KEY = "dm_token";
@@ -115,7 +113,10 @@ export type LeaderAssignment = {
   created_at: string;
 };
 
-export type LeaderHistoryEntry = Omit<LeaderAssignment, "created_by_employee_id"> & {
+export type LeaderHistoryEntry = Omit<
+  LeaderAssignment,
+  "created_by_employee_id"
+> & {
   created_by_employee_id: number | null;
   source: "assignment" | "line_membership";
 };
@@ -163,27 +164,44 @@ export type LeaderAssignmentInput = Pick<
 > & { dm_group_id: number; reason: string; close_assignment_ids: number[] };
 
 export const leaderAssignmentApi = {
-  active: (dmId: number) => request<LeaderAssignment[]>(
-    `/admin/leader-assignments/active?dm_group_id=${dmId}`, {}, true
-  ),
-  candidates: (dmId: number) => request<DmLeaderCandidate[]>(
-    `/admin/leader-assignments/dm-candidates?dm_group_id=${dmId}`, {}, true
-  ),
-  setDmLeader: (dmId: number, employeeId: number) => request<LeaderAssignment>(
-    `/admin/leader-assignments/dm/${dmId}`, json("PUT", { employee_id: employeeId }), true
-  ),
-  assign: (input: LeaderAssignmentInput) => request<LeaderAssignment>(
-    "/admin/leader-assignments", json("POST", input), true
-  ),
-  current: () => request<LeaderCurrent[]>(
-    "/admin/leader-assignments/current", {}, true
-  ),
-  timeline: (employeeId: number) => request<UserTimeline>(
-    `/admin/leader-assignments/employees/${employeeId}/timeline`, {}, true
-  ),
-  history: (employeeId: number, offset = 0) => request<LeaderHistoryEntry[]>(
-    `/admin/leader-assignments/employees/${employeeId}/history?limit=50&offset=${offset}`, {}, true
-  ),
+  active: (dmId: number) =>
+    request<LeaderAssignment[]>(
+      `/admin/leader-assignments/active?dm_group_id=${dmId}`,
+      {},
+      true
+    ),
+  candidates: (dmId: number) =>
+    request<DmLeaderCandidate[]>(
+      `/admin/leader-assignments/dm-candidates?dm_group_id=${dmId}`,
+      {},
+      true
+    ),
+  setDmLeader: (dmId: number, employeeId: number) =>
+    request<LeaderAssignment>(
+      `/admin/leader-assignments/dm/${dmId}`,
+      json("PUT", { employee_id: employeeId }),
+      true
+    ),
+  assign: (input: LeaderAssignmentInput) =>
+    request<LeaderAssignment>(
+      "/admin/leader-assignments",
+      json("POST", input),
+      true
+    ),
+  current: () =>
+    request<LeaderCurrent[]>("/admin/leader-assignments/current", {}, true),
+  timeline: (employeeId: number) =>
+    request<UserTimeline>(
+      `/admin/leader-assignments/employees/${employeeId}/timeline`,
+      {},
+      true
+    ),
+  history: (employeeId: number, offset = 0) =>
+    request<LeaderHistoryEntry[]>(
+      `/admin/leader-assignments/employees/${employeeId}/history?limit=50&offset=${offset}`,
+      {},
+      true
+    ),
 };
 
 export const dmEmployeeRoles: {
@@ -206,7 +224,13 @@ export async function syncEmployeeRoles() {
   if (rows.length) dmEmployeeRoles.splice(0, dmEmployeeRoles.length, ...rows);
 }
 
-export const dmDepartments: readonly string[] = ["ME", "PE", "PROD", "QC"];
+export const dmDepartments: readonly string[] = [
+  "ME",
+  "PE",
+  "PROD",
+  "QC",
+  "BPM",
+];
 
 export type DmEmployee = {
   id: number;
@@ -321,7 +345,11 @@ async function request<T>(
 export async function uploadPhoto(file: File): Promise<string> {
   const form = new FormData();
   form.append("photo", file);
-  const { url } = await request<{ url: string }>("/photos", { method: "POST", body: form }, true);
+  const { url } = await request<{ url: string }>(
+    "/photos",
+    { method: "POST", body: form },
+    true
+  );
   return url;
 }
 
@@ -350,33 +378,63 @@ export type FiveWhyDocumentLine = {
   id: number;
   code: string;
   leaders: string[];
-  pics: { id: number; name: string; employeeNo: string; supervisorName: string | null }[];
+  pics: {
+    id: number;
+    name: string;
+    employeeNo: string;
+    supervisorName: string | null;
+  }[];
 };
 
 export const fiveWhyDocumentsApi = {
-  options: () => request<FiveWhyDocumentLine[]>("/fivewhy/documents/options", {}, true),
+  options: () =>
+    request<FiveWhyDocumentLine[]>("/fivewhy/documents/options", {}, true),
   list: () => request<FiveWhyDocument[]>("/fivewhy/documents", {}, true),
-  categories: () => request<string[]>("/fivewhy/documents/categories", {}, true),
-  addLink: (input: { lineId: number; picId: number; title: string; category: string; url: string }) =>
-    request<FiveWhyDocument>("/fivewhy/documents/simo", json("POST", input), true),
-  upload: (lineId: number, picId: number, title: string, category: string, file: File) => {
+  categories: () =>
+    request<string[]>("/fivewhy/documents/categories", {}, true),
+  addLink: (input: {
+    lineId: number;
+    picId: number;
+    title: string;
+    category: string;
+    url: string;
+  }) =>
+    request<FiveWhyDocument>(
+      "/fivewhy/documents/simo",
+      json("POST", input),
+      true
+    ),
+  upload: (
+    lineId: number,
+    picId: number,
+    title: string,
+    category: string,
+    file: File
+  ) => {
     const form = new FormData();
     form.append("line_id", String(lineId));
     form.append("pic_id", String(picId));
     form.append("title", title);
     form.append("category", category);
     form.append("file", file);
-    return request<FiveWhyDocument>("/fivewhy/documents/file", { method: "POST", body: form }, true);
+    return request<FiveWhyDocument>(
+      "/fivewhy/documents/file",
+      { method: "POST", body: form },
+      true
+    );
   },
-  update: (documentId: string, input: {
-    lineId: number;
-    picId: number;
-    title: string;
-    category: string;
-    source: FiveWhyDocument["source"];
-    url?: string;
-    file?: File;
-  }) => {
+  update: (
+    documentId: string,
+    input: {
+      lineId: number;
+      picId: number;
+      title: string;
+      category: string;
+      source: FiveWhyDocument["source"];
+      url?: string;
+      file?: File;
+    }
+  ) => {
     const form = new FormData();
     form.append("line_id", String(input.lineId));
     form.append("pic_id", String(input.picId));
@@ -388,17 +446,30 @@ export const fiveWhyDocumentsApi = {
     return request<FiveWhyDocument>(
       `/fivewhy/documents/${encodeURIComponent(documentId)}`,
       { method: "PUT", body: form },
-      true,
+      true
     );
   },
-  remove: (documentId: string) => request<void>(
-    `/fivewhy/documents/${encodeURIComponent(documentId)}`, { method: "DELETE" }, true,
-  ),
+  remove: (documentId: string) =>
+    request<void>(
+      `/fivewhy/documents/${encodeURIComponent(documentId)}`,
+      { method: "DELETE" },
+      true
+    ),
   download: async (documentId: string): Promise<Blob> => {
-    const response = await fetch(`${apiBase()}/api/fivewhy/documents/${encodeURIComponent(documentId)}/download`, {
-      headers: { Authorization: `Bearer ${getToken() ?? ""}` }, cache: "no-store",
-    });
-    if (!response.ok) throw new ApiError(response.status, errorMessage(await response.json().catch(() => null), response.status));
+    const response = await fetch(
+      `${apiBase()}/api/fivewhy/documents/${encodeURIComponent(
+        documentId
+      )}/download`,
+      {
+        headers: { Authorization: `Bearer ${getToken() ?? ""}` },
+        cache: "no-store",
+      }
+    );
+    if (!response.ok)
+      throw new ApiError(
+        response.status,
+        errorMessage(await response.json().catch(() => null), response.status)
+      );
     return response.blob();
   },
 };
@@ -589,7 +660,11 @@ export const sqdipApi = {
     ),
 };
 
-export type DmHistoryKind = "papercard_kpi" | "standup_kpi" | "papercard_status" | "attendance";
+export type DmHistoryKind =
+  | "papercard_kpi"
+  | "standup_kpi"
+  | "papercard_status"
+  | "attendance";
 export type DmHistoryStatus = {
   role: "Leader" | "ME" | "PE" | "IPQC" | "PE Structure" | "PE Electric" | "QA";
   session: 1 | 2 | null;
@@ -620,61 +695,145 @@ export type DmHistoryImportInput = {
   archiveDetails?: DmHistoryRow[];
 };
 export type DmHistoryPreview = {
-  valid: number; added: number; existing: number; duplicates: number; archiveRows?: number;
-  errors: string[]; warnings: string[];
+  valid: number;
+  added: number;
+  existing: number;
+  duplicates: number;
+  archiveRows?: number;
+  errors: string[];
+  warnings: string[];
 };
 export type DmHistoryBatch = {
-  id: number; fileName: string; importedBy: string; createdAt: string;
-  added: number; updated: number; skipped: number;
+  id: number;
+  fileName: string;
+  importedBy: string;
+  createdAt: string;
+  added: number;
+  updated: number;
+  skipped: number;
 };
 export type DmHistoryStoredRow = {
-  id: number | string; kind: DmHistoryKind; date: string; line: string; leader: string;
-  scope?: "leader" | "dm"; sourceFile?: string;
-  dm: string | null; shift: string | null; sourceSheet: string; sourceRow: number;
-  data: { scores: number[]; statuses: DmHistoryStatus[]; mappingReview?: string[]; scoreReview?: string[] };
+  id: number | string;
+  kind: DmHistoryKind;
+  date: string;
+  line: string;
+  leader: string;
+  scope?: "leader" | "dm";
+  sourceFile?: string;
+  dm: string | null;
+  shift: string | null;
+  sourceSheet: string;
+  sourceRow: number;
+  data: {
+    scores: number[];
+    statuses: DmHistoryStatus[];
+    mappingReview?: string[];
+    scoreReview?: string[];
+  };
 };
 export const historyImportApi = {
-  statuses: (params: { from: string; to: string; kind: "papercard_status" | "attendance"; line?: string }) =>
-    request<DmHistoryStoredRow[]>("/history-import/statuses?" + new URLSearchParams({
-      from: params.from, to: params.to, kind: params.kind, ...(params.line ? { line: params.line } : {}),
-    }), {}, true),
-  preview: (data: DmHistoryImportInput) => request<DmHistoryPreview>("/history-import/preview", json("POST", data), true),
-  commit: (data: DmHistoryImportInput) => request<{ batchId: number; added: number; updated: number; skipped: number }>("/history-import/commit", json("POST", data), true),
+  statuses: (params: {
+    from: string;
+    to: string;
+    kind: "papercard_status" | "attendance";
+    line?: string;
+  }) =>
+    request<DmHistoryStoredRow[]>(
+      "/history-import/statuses?" +
+        new URLSearchParams({
+          from: params.from,
+          to: params.to,
+          kind: params.kind,
+          ...(params.line ? { line: params.line } : {}),
+        }),
+      {},
+      true
+    ),
+  preview: (data: DmHistoryImportInput) =>
+    request<DmHistoryPreview>(
+      "/history-import/preview",
+      json("POST", data),
+      true
+    ),
+  commit: (data: DmHistoryImportInput) =>
+    request<{
+      batchId: number;
+      added: number;
+      updated: number;
+      skipped: number;
+    }>("/history-import/commit", json("POST", data), true),
   batches: () => request<DmHistoryBatch[]>("/history-import/batches", {}, true),
-  entries: (params: { from: string; to: string; page: number; kind?: DmHistoryKind }) =>
-    request<{ total: number; rows: DmHistoryStoredRow[] }>("/history-import/entries?" + new URLSearchParams({
-      from: params.from, to: params.to, page: String(params.page), ...(params.kind ? { kind: params.kind } : {}),
-    }), {}, true),
+  entries: (params: {
+    from: string;
+    to: string;
+    page: number;
+    kind?: DmHistoryKind;
+  }) =>
+    request<{ total: number; rows: DmHistoryStoredRow[] }>(
+      "/history-import/entries?" +
+        new URLSearchParams({
+          from: params.from,
+          to: params.to,
+          page: String(params.page),
+          ...(params.kind ? { kind: params.kind } : {}),
+        }),
+      {},
+      true
+    ),
 };
 
 export type DmScorecardEntry = {
   scope?: "leader" | "dm";
-  key: string; info: DmScorecardLeader; papercard: DmPapercardKpiDay[]; standup: DmStandupKpiDay[];
-  sqdip: DmSqdipKpiDay[]; before: number; current: number; after: number; total?: number | null; archiveKey?: string | null; archiveRank?: number | null;
+  key: string;
+  info: DmScorecardLeader;
+  papercard: DmPapercardKpiDay[];
+  standup: DmStandupKpiDay[];
+  sqdip: DmSqdipKpiDay[];
+  before: number;
+  current: number;
+  after: number;
+  total?: number | null;
+  archiveKey?: string | null;
+  archiveRank?: number | null;
 };
 export type DmArchivedDmScore = {
-  dm: string; workshopName: string; leader: string; before: number; current: number; after: number; total: number; rank: number | null;
+  dm: string;
+  workshopName: string;
+  leader: string;
+  before: number;
+  current: number;
+  after: number;
+  total: number;
+  rank: number | null;
 };
 
 export const publicApi = {
-  scorecardReport: (range: { from: string; to: string }) => request<{
-    entries: DmScorecardEntry[]; details: DmScorecardEntry[]; archivedDmScores: DmArchivedDmScore[];
-    archiveMonth: string | null; archiveFile: string | null; averagedMonths?: string[];
-  }>("/public/scorecard/report?" + new URLSearchParams(range)),
-  scorecardEntries: (range: { from: string; to: string }) =>
+  scorecardReport: (range: { from: string; to: string }) =>
     request<{
-      key: string;
-      info: DmScorecardLeader;
-      papercard: DmPapercardKpiDay[];
-      standup: DmStandupKpiDay[];
-      sqdip: DmSqdipKpiDay[];
-      before: number;
-      current: number;
-      after: number;
-    }[]>("/public/scorecard/entries?" + new URLSearchParams(range)),
-  historicalAttendance: (range: { from: string; to: string }) => request<DmHistoryStoredRow[]>(
-    "/public/historical-attendance?" + new URLSearchParams(range),
-  ),
+      entries: DmScorecardEntry[];
+      details: DmScorecardEntry[];
+      archivedDmScores: DmArchivedDmScore[];
+      archiveMonth: string | null;
+      archiveFile: string | null;
+      averagedMonths?: string[];
+    }>("/public/scorecard/report?" + new URLSearchParams(range)),
+  scorecardEntries: (range: { from: string; to: string }) =>
+    request<
+      {
+        key: string;
+        info: DmScorecardLeader;
+        papercard: DmPapercardKpiDay[];
+        standup: DmStandupKpiDay[];
+        sqdip: DmSqdipKpiDay[];
+        before: number;
+        current: number;
+        after: number;
+      }[]
+    >("/public/scorecard/entries?" + new URLSearchParams(range)),
+  historicalAttendance: (range: { from: string; to: string }) =>
+    request<DmHistoryStoredRow[]>(
+      "/public/historical-attendance?" + new URLSearchParams(range)
+    ),
   workshops: () => request<{ id: number; name: string }[]>("/public/workshops"),
   scorecardLeaders: (range?: { from: string; to: string }) =>
     request<DmScorecardLeader[]>(
@@ -682,9 +841,7 @@ export const publicApi = {
         (range ? `?from=${range.from}&to=${range.to}` : "")
     ),
   papercardKpi: (params: KpiParams) =>
-    request<DmPapercardKpi>(
-      "/public/papercard-kpi?" + kpiQuery(params, true)
-    ),
+    request<DmPapercardKpi>("/public/papercard-kpi?" + kpiQuery(params, true)),
   standupKpi: (params: KpiParams) =>
     request<DmStandupKpi>("/public/standup-kpi?" + kpiQuery(params, true)),
   sqdipKpi: (params: KpiParams) =>
@@ -725,7 +882,11 @@ export const holidayApi = {
     request<DmHoliday[]>("/holidays", json("POST", { date, name }), true),
   remove: (date: string) =>
     request<DmHoliday[]>(`/holidays/${date}`, { method: "DELETE" }, true),
-  openMeetings: (input: { date: string; lineIds: number[]; workshopIds: number[] }) =>
+  openMeetings: (input: {
+    date: string;
+    lineIds: number[];
+    workshopIds: number[];
+  }) =>
     request<DmOpenHolidayMeetingsResult>(
       "/holidays/open-meetings",
       json("POST", input),
@@ -968,7 +1129,12 @@ export type DmPapercardSubmission = {
 
 export type DmPapercardSupervisors = {
   defaultSupervisorId: number | null;
-  supervisors: { id: number; name: string; employeeNo: string; dept: string | null }[];
+  supervisors: {
+    id: number;
+    name: string;
+    employeeNo: string;
+    dept: string | null;
+  }[];
 };
 
 export type DmInspectionRow = {
@@ -986,7 +1152,8 @@ export type DmInspectionRow = {
 };
 
 export const papercardApi = {
-  supervisors: () => request<DmPapercardSupervisors>("/papercards/supervisors", {}, true),
+  supervisors: () =>
+    request<DmPapercardSupervisors>("/papercards/supervisors", {}, true),
   inspection: (params: {
     lineId: number;
     from: string;
@@ -1324,7 +1491,9 @@ export const meetingApi = {
     }>("/meetings/summary-options", {}, true),
   representatives: (forEmployeeNo?: string) =>
     request<MeetingRepresentative[]>(
-      `/meetings/representatives?for_employee_no=${encodeURIComponent(forEmployeeNo ?? "")}`,
+      `/meetings/representatives?for_employee_no=${encodeURIComponent(
+        forEmployeeNo ?? ""
+      )}`,
       {},
       true
     ),

@@ -67,15 +67,18 @@ export default function CategoryCombobox({
   const selectedLabel = selected?.label ?? value;
   const [query, setQuery] = useState(selectedLabel);
   const [open, setOpen] = useState(false);
+  const [customMode, setCustomMode] = useState(false);
   const queryKey = normalizeCategoryMatch(query);
   const exactMatch = findCategoryMatch(options, query);
-  const filteredOptions = options.filter(
-    (option) =>
-      !queryKey ||
-      categoryAliases(option).some((alias) =>
-        normalizeCategoryMatch(alias).includes(queryKey)
-      )
-  );
+  const filteredOptions = customMode
+    ? []
+    : options.filter(
+        (option) =>
+          !queryKey ||
+          categoryAliases(option).some((alias) =>
+            normalizeCategoryMatch(alias).includes(queryKey)
+          )
+      );
   const canCreate =
     createEnabled &&
     isValidNewCategory(query) &&
@@ -94,18 +97,31 @@ export default function CategoryCombobox({
   }, [onValidityChange, selectionIsValid]);
 
   useEffect(() => {
-    if (!open) {
+    if (!open && !customMode) {
       setQuery(selectedLabel);
       setActiveIndex(0);
       onValidityChange(true);
     }
-  }, [onValidityChange, open, selectedLabel]);
+  }, [customMode, onValidityChange, open, selectedLabel]);
+
+  useEffect(() => {
+    setCustomMode(false);
+  }, [value]);
 
   useEffect(() => {
     setActiveIndex(rows.length ? 0 : -1);
   }, [open, queryKey, rows.length]);
 
   function chooseOption(option: CategoryOption) {
+    if (option.value === "other") {
+      setCustomMode(true);
+      setQuery("");
+      onValidityChange(false);
+      setOpen(false);
+      inputRef.current?.focus();
+      return;
+    }
+    setCustomMode(false);
     setQuery(option.label);
     onChange(option.value);
     onValidityChange(true);
@@ -115,6 +131,7 @@ export default function CategoryCombobox({
   function chooseNewCategory() {
     if (!canCreate) return;
     const name = normalizeCategoryName(query);
+    setCustomMode(false);
     onCreate(name);
     setQuery(name);
     onValidityChange(true);
@@ -151,7 +168,7 @@ export default function CategoryCombobox({
 
   return (
     <Popover.Root
-      open={open}
+      open={open && !(customMode && !rows.length)}
       onOpenChange={(next) => {
         setOpen(next);
       }}
@@ -177,6 +194,7 @@ export default function CategoryCombobox({
             aria-invalid={!selectionIsValid}
             required
             maxLength={40}
+            placeholder={customMode ? uiText("Tulis kategori...") : undefined}
             value={query}
             onFocus={() => setOpen(true)}
             onClick={() => setOpen(true)}
@@ -186,6 +204,7 @@ export default function CategoryCombobox({
               setOpen(true);
               const match = findCategoryMatch(options, next);
               if (match) {
+                setCustomMode(false);
                 onChange(match.value);
                 setQuery(match.label);
                 onValidityChange(true);

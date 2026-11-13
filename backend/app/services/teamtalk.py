@@ -180,23 +180,46 @@ async def notify_workshop_meeting_reminder(workshop_name: str, scheduled_time: s
 
 async def notify_papercard_reminder(entries: list[dict]) -> bool:
     """
-    Satu notifikasi pengingat papercard untuk semua line dan departemen yang belum submit,
-    dikelompokkan per batas jam pengisian.
+    Satu notifikasi pengingat papercard sebelum jam mulai pengisian, untuk semua line dan departemen,
+    dikelompokkan per jam mulai.
     """
     if not entries:
         return False
 
-    groups: dict[str, dict] = {}
+    groups: dict[tuple[str, str], dict] = {}
     for entry in entries:
-        group = groups.setdefault(entry["window_end"], {"lines": {}, "minutes_left": entry["minutes_left"]})
+        key = (entry["window_start"], entry["window_end"])
+        group = groups.setdefault(key, {"lines": {}, "minutes_left": entry["minutes_left"]})
         group["lines"].setdefault(entry["line_code"] or "-", []).append(entry["department"])
         group["minutes_left"] = min(group["minutes_left"], entry["minutes_left"])
 
     lines = ["[PENGINGAT PAPERCARD]"]
-    for window_end, group in sorted(groups.items()):
-        lines.append(f"Batas pengisian {window_end} (sekitar {group['minutes_left']} menit lagi)")
+    for (window_start, window_end), group in sorted(groups.items()):
+        lines.append(f"Pengisian dibuka {window_start} - {window_end} (sekitar {group['minutes_left']} menit lagi)")
         for line_code, departments in group["lines"].items():
             lines.append(f"   {line_code}: {', '.join(departments)}")
     lines.append("")
-    lines.append("Papercard di atas belum disubmit hari ini. Mohon personil terkait segera melengkapinya sebelum jam kerja berakhir.")
+    lines.append("Mohon personil terkait bersiap mengisi papercard sesuai jam di atas.")
+    return await send_teamtalk_message("\n".join(lines))
+
+
+async def notify_papercard_deadline(entries: list[dict]) -> bool:
+    """
+    Satu notifikasi saat batas pengisian papercard terlewat, berisi line dan departemen yang belum submit.
+    """
+    if not entries:
+        return False
+
+    groups: dict[str, dict[str, list[str]]] = {}
+    for entry in entries:
+        group = groups.setdefault(entry["window_end"], {})
+        group.setdefault(entry["line_code"] or "-", []).append(entry["department"])
+
+    lines = ["[PAPERCARD BELUM DISUBMIT]"]
+    for window_end, by_line in sorted(groups.items()):
+        lines.append(f"Batas pengisian {window_end} telah lewat")
+        for line_code, departments in by_line.items():
+            lines.append(f"   {line_code}: {', '.join(departments)}")
+    lines.append("")
+    lines.append("Papercard di atas belum disubmit. Mohon segera dilengkapi.")
     return await send_teamtalk_message("\n".join(lines))

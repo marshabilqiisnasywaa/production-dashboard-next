@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db.base import Base
 from app.db.session import engine
-from app.models import DmMeetingSession, DmMeetingSummary, Line, Workshop
+from app.models import DmMeetingSession, DmMeetingSummary, Employee, Line, PapercardSubmission, PapercardTemplate, Workshop
 from app.services import teamtalk_scheduler
 
 
@@ -65,6 +65,51 @@ class EscalationReminderTests(unittest.TestCase):
         session.status = "in_progress"
         self.db.flush()
         self.assertEqual(self.run_meeting_check(datetime(2026, 11, 4, 10, 0, 20)).call_count, 0)
+
+    def run_papercard_check(self, now: datetime) -> tuple[AsyncMock, AsyncMock]:
+        reminder = AsyncMock(return_value=True)
+        deadline = AsyncMock(return_value=True)
+        with patch.object(teamtalk_scheduler, "notify_papercard_reminder", reminder), \
+                patch.object(teamtalk_scheduler, "notify_papercard_deadline", deadline):
+            asyncio.run(teamtalk_scheduler.check_papercard_reminders(self.db, now))
+        return reminder, deadline
+
+    def add_papercard_template(self):
+        line = self.db.scalar(select(Line))
+        self.db.add(PapercardTemplate(workshop_id=line.workshop_id, line_id=line.id, department="PROD", name="PROD", window_start="08:00", window_end="08:15"))
+        self.db.flush()
+        return line
+
+    def test_papercard_reminded_at_start_and_at_deadline(self):
+        teamtalk_scheduler._sent_events_cache.clear()
+        self.add_papercard_template()
+        reminder, deadline = self.run_papercard_check(datetime(2026, 11, 4, 7, 44))
+        self.assertEqual((reminder.call_count, deadline.call_count), (0, 0))
+        reminder, deadline = self.run_papercard_check(datetime(2026, 11, 4, 7, 45))
+        self.assertEqual((reminder.call_count, deadline.call_count), (1, 0))
+        reminder, deadline = self.run_papercard_check(datetime(2026, 11, 4, 7, 50))
+        self.assertEqual((reminder.call_count, deadline.call_count), (0, 0))
+        reminder, deadline = self.run_papercard_check(datetime(2026, 11, 4, 8, 5))
+        self.assertEqual((reminder.call_count, deadline.call_count), (0, 0))
+        reminder, deadline = self.run_papercard_check(datetime(2026, 11, 4, 8, 15, 20))
+        self.assertEqual((reminder.call_count, deadline.call_count), (0, 1))
+        entry = deadline.call_args.args[0][0]
+        self.assertEqual((entry["line_code"], entry["department"]), ("TEST0", "PROD"))
+        reminder, deadline = self.run_papercard_check(datetime(2026, 11, 4, 8, 16, 20))
+        self.assertEqual((reminder.call_count, deadline.call_count), (0, 0))
+        reminder, deadline = self.run_papercard_check(datetime(2026, 11, 4, 8, 21))
+        self.assertEqual((reminder.call_count, deadline.call_count), (0, 0))
+
+    def test_papercard_deadline_skipped_when_submitted(self):
+        teamtalk_scheduler._sent_events_cache.clear()
+        line = self.add_papercard_template()
+        employee = Employee(employee_no="T-0001", name="Tester")
+        self.db.add(employee)
+        self.db.flush()
+        self.db.add(PapercardSubmission(line_id=line.id, employee_id=employee.id, department="PROD", date=datetime(2026, 11, 4).date()))
+        self.db.flush()
+        reminder, deadline = self.run_papercard_check(datetime(2026, 11, 4, 8, 15, 20))
+        self.assertEqual((reminder.call_count, deadline.call_count), (0, 0))
 
     def run_check(self, now: datetime) -> AsyncMock:
         notify = AsyncMock(return_value=True)

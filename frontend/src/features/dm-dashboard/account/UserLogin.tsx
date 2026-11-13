@@ -19,12 +19,17 @@ const SHOW_DEMO = process.env.NEXT_PUBLIC_SHOW_DEMO_LOGIN !== "false";
 
 const DEMO_ACCOUNTS = [
   { role: "Leader", nik: "112233", password: "11111111" },
-  { role: "Member", nik: "123123", password: "member123" },
-  { role: "Supervisor", nik: "supervisor", password: "super123" },
+  { role: "Member", nik: "234234", password: "11111111" },
+  { role: "Supervisor", nik: "supervisor", password: "11111111" },
   { role: "Admin", nik: "admin", password: "admin123" },
 ] as const;
 
-type LoginError = "requiredFields" | "invalidCredentials" | "tooManyAttempts" | "serverUnavailable" | "failed";
+type LoginError =
+  | "requiredFields"
+  | "invalidCredentials"
+  | "tooManyAttempts"
+  | "serverUnavailable"
+  | "failed";
 
 const LOGIN_ERROR_BY_STATUS: Partial<Record<number, LoginError>> = {
   0: "serverUnavailable",
@@ -118,7 +123,11 @@ export default function UserLogin() {
       }
       window.location.href = destination;
     } catch (err) {
-      setError(err instanceof ApiError ? LOGIN_ERROR_BY_STATUS[err.status] ?? "failed" : "failed");
+      setError(
+        err instanceof ApiError
+          ? LOGIN_ERROR_BY_STATUS[err.status] ?? "failed"
+          : "failed"
+      );
       setBusy(false);
     }
   }
@@ -182,9 +191,7 @@ export default function UserLogin() {
             <LanguageMenu />
           </div>
           <h1>{t("auth:login.title")}</h1>
-          <p className="dml-login__lead">
-            {t("auth:login.intro")}
-          </p>
+          <p className="dml-login__lead">{t("auth:login.intro")}</p>
 
           {sessionExpired && (
             <p className="dml-login__notice" role="status">
@@ -206,7 +213,9 @@ export default function UserLogin() {
           </div>
 
           <div className="dml-login__field">
-            <label htmlFor="user-password">{t("auth:login.passwordLabel")}</label>
+            <label htmlFor="user-password">
+              {t("auth:login.passwordLabel")}
+            </label>
             <div className="dml-login__pw">
               <input
                 id="user-password"
@@ -223,7 +232,9 @@ export default function UserLogin() {
                 aria-pressed={showPassword}
                 onClick={() => setShowPassword((v) => !v)}
               >
-                {showPassword ? t("auth:login.hidePassword") : t("auth:login.showPassword")}
+                {showPassword
+                  ? t("auth:login.hidePassword")
+                  : t("auth:login.showPassword")}
               </button>
             </div>
           </div>
@@ -248,7 +259,8 @@ export default function UserLogin() {
             <ShieldCheckIcon />
             {knownRole ? (
               <span>
-                {t("auth:login.rolePrefix")} <strong>{t(`common:roles.${knownRole}`)}</strong>
+                {t("auth:login.rolePrefix")}{" "}
+                <strong>{t(`common:roles.${knownRole}`)}</strong>
               </span>
             ) : (
               <span>{t("auth:login.roleAutomatic")}</span>
@@ -257,7 +269,9 @@ export default function UserLogin() {
 
           {SHOW_DEMO && (
             <div className="dml-login__demo">
-              <span className="dml-login__demotitle">{t("auth:login.demoTitle")}</span>
+              <span className="dml-login__demotitle">
+                {t("auth:login.demoTitle")}
+              </span>
               <div className="dml-login__chips">
                 {DEMO_ACCOUNTS.map((acc) => (
                   <button

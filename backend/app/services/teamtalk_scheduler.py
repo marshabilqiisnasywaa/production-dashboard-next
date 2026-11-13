@@ -24,6 +24,7 @@ from app.services.meeting_schedule import Slot, parse_days, slots_for_day
 from app.services.teamtalk import (
     notify_escalated_problems,
     notify_meeting_reminder,
+    notify_papercard_deadline,
     notify_papercard_reminder,
     notify_workshop_meeting_reminder,
 )
@@ -38,6 +39,7 @@ ESCALATION_WORK_START = time(8, 0)
 ESCALATION_WORK_END = time(17, 0)
 ESCALATION_BATCH_SIZE = 10
 MEETING_START_GRACE_MINUTES = 5
+PAPERCARD_DEADLINE_GRACE_MINUTES = 5
 
 
 def _cleanup_old_cache(today: date):
@@ -172,29 +174,36 @@ async def check_papercard_reminders(db: Session, now: datetime):
     lines = db.scalars(select(Line).where(Line.status != "stopped")).all()
     due_entries: list[dict] = []
     due_keys: list[str] = []
+    missed_entries: list[dict] = []
+    missed_keys: list[str] = []
 
     for line in lines:
         setting = get_line_setting(db, line.id)
         papercard_enabled = setting.papercard_enabled if setting else True
         reminder_mins = setting.papercard_reminder_minutes if setting else 15
 
-        if not papercard_enabled or reminder_mins <= 0:
+        if not papercard_enabled:
             continue
 
-        # Cek template papercard untuk mengetahui jam batas pengisian (window_end)
         templates = db.scalars(select(PapercardTemplate).where(PapercardTemplate.line_id == line.id)).all()
         for tpl in templates:
             try:
+                window_start = tpl.window_start or "07:30"
                 window_end = tpl.window_end or "08:15"
+                sh, sm = [int(p) for p in window_start.split(":")]
                 eh, em = [int(p) for p in window_end.split(":")]
-                target_dt = datetime(now.year, now.month, now.day, eh, em)
-                diff_sec = (target_dt - now).total_seconds()
-                diff_min = diff_sec / 60.0
+                start_min = (datetime(now.year, now.month, now.day, sh, sm) - now).total_seconds() / 60.0
+                end_min = (datetime(now.year, now.month, now.day, eh, em) - now).total_seconds() / 60.0
 
-                if 0 <= diff_min <= reminder_mins:
-                    event_key = f"papercard_{line.id}_{tpl.department}_{today}"
+                in_reminder = reminder_mins > 0 and 0 < start_min <= reminder_mins
+                in_deadline = -PAPERCARD_DEADLINE_GRACE_MINUTES < end_min <= 0
+                if in_reminder or in_deadline:
+                    event_key = (
+                        f"papercard_{line.id}_{tpl.department}_{today}"
+                        if in_reminder
+                        else f"papercard_end_{line.id}_{tpl.department}_{today}"
+                    )
                     if event_key not in _sent_events_cache:
-                        # Cek apakah sudah ada submission untuk departemen ini
                         has_submission = db.scalar(
                             select(PapercardSubmission.id).where(
                                 PapercardSubmission.line_id == line.id,
@@ -203,13 +212,19 @@ async def check_papercard_reminders(db: Session, now: datetime):
                             )
                         )
                         if not has_submission:
-                            due_entries.append({
+                            entry = {
                                 "line_code": line.code,
                                 "department": tpl.department,
+                                "window_start": window_start,
                                 "window_end": window_end,
-                                "minutes_left": max(1, int(diff_min)),
-                            })
-                            due_keys.append(event_key)
+                                "minutes_left": max(1, int(start_min)),
+                            }
+                            if in_reminder:
+                                due_entries.append(entry)
+                                due_keys.append(event_key)
+                            else:
+                                missed_entries.append(entry)
+                                missed_keys.append(event_key)
             except Exception as e:
                 logger.error("Error evaluasi papercard template %s: %s", tpl.id, e)
 
@@ -217,6 +232,10 @@ async def check_papercard_reminders(db: Session, now: datetime):
         logger.info("Mengirim pengingat papercard untuk %d line-departemen", len(due_entries))
         if await notify_papercard_reminder(due_entries):
             _sent_events_cache.update(due_keys)
+    if missed_entries:
+        logger.info("Mengirim pemberitahuan papercard belum submit untuk %d line-departemen", len(missed_entries))
+        if await notify_papercard_deadline(missed_entries):
+            _sent_events_cache.update(missed_keys)
 
 
 async def check_escalated_reminders(db: Session, now: datetime):

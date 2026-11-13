@@ -73,7 +73,7 @@ function MemberCard({ member }: { member: DmMember }) {
           </div>
           <div className="dm-spec-row">
             <dt className="dm-spec-label">{stripColon(uiText("Dept:"))}</dt>
-            <dd className="dm-spec-value">{member.dept ?? "-"}</dd>
+            <dd className="dm-spec-value">{departmentLabel(member.dept) || "-"}</dd>
           </div>
           <div className="dm-spec-row">
             <dt className="dm-spec-label">{stripColon(uiText("Position:"))}</dt>

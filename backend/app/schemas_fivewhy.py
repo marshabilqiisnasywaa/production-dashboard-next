@@ -1,11 +1,22 @@
-from typing import Literal
+from typing import Annotated
 from urllib.parse import urlsplit
 
-from pydantic import Field, field_validator
+from pydantic import AfterValidator, Field, field_validator
 
 from app.schemas import CamelModel
 
-DocumentCategory = Literal["analysis", "evidence", "standard", "other"]
+BUILT_IN_CATEGORIES = ("analysis", "evidence", "standard", "other")
+
+
+def clean_category(value: str) -> str:
+    value = " ".join(value.split())
+    if not 2 <= len(value) <= 40:
+        raise ValueError("Kategori harus 2-40 karakter.")
+    return value
+
+
+DocumentCategory = Annotated[str, AfterValidator(clean_category)]
+
 
 
 class SimoDocumentIn(CamelModel):

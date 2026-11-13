@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.db.session import get_db
 from app.models import Employee, Line
 from app.models.fivewhy import FiveWhyDocument
-from app.schemas_fivewhy import DocumentCategory, SimoDocumentIn
+from app.schemas_fivewhy import BUILT_IN_CATEGORIES, DocumentCategory, SimoDocumentIn
 from app.services.accounts import forbidden
 from app.services.fivewhy import document_access, line_leaders, pic_candidates, supervisor_for, upload_line_ids, validate_pic
 
@@ -50,6 +50,19 @@ def file_path(document_id: str) -> Path:
 def list_documents(principal: Principal = Depends(require("problems.read")), db: Session = Depends(get_db)):
     rows = db.scalars(select(FiveWhyDocument).where(document_access(db, principal)).order_by(FiveWhyDocument.created_at.desc()))
     return [document_out(row, db) for row in rows]
+
+@router.get("/documents/categories")
+def list_categories(principal: Principal = Depends(require("problems.read")), db: Session = Depends(get_db)):
+    rows = db.scalars(
+        select(FiveWhyDocument.category)
+        .where(document_access(db, principal))
+        .distinct()
+    )
+    return sorted(
+        (value for value in rows if value not in BUILT_IN_CATEGORIES),
+        key=str.lower,
+    )
+
 
 
 @router.get("/documents/options")

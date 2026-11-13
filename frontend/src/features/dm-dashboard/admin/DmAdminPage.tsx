@@ -42,6 +42,8 @@ import type { DmGroup } from "./dmGroupsStore";
 import "./AdminPanel.css";
 import ProblemsPage from "../leader/problems/ProblemsPage";
 import PapercardProblems from "./PapercardProblems";
+import DocumentLibrary from "../fivewhy/DocumentLibrary";
+import "../fivewhy/FiveWhy.css";
 import PapercardHistory from "./PapercardHistory";
 import StandupHistory from "./StandupHistory";
 import SqdipMonitor from "./sqdip/SqdipMonitor";
@@ -277,7 +279,7 @@ function AdminWorkspace({
   const [papercardSub, setPapercardSub] = useState<
     "template" | "workshop" | "meeting" | "holiday"
   >("template");
-  const [problemSub, setProblemSub] = useState<"meeting" | "papercard">(
+  const [problemSub, setProblemSub] = useState<"meeting" | "papercard" | "fivewhy">(
     "meeting"
   );
   const [historySub, setHistorySub] = useState<"papercard" | "standup">("papercard");
@@ -1247,11 +1249,25 @@ function AdminWorkspace({
                   >
                     {uiText("Papercard")}
                   </button>
+                  <button
+                    type="button"
+                    className={`dm-subtab${
+                      problemSub === "fivewhy" ? " is-active" : ""
+                    }`}
+                    aria-pressed={problemSub === "fivewhy"}
+                    onClick={() => setProblemSub("fivewhy")}
+                  >
+                    {uiText("5Why & PDCA")}
+                  </button>
                 </div>
                 {problemSub === "meeting" ? (
                   <ProblemsPage adminLayout />
-                ) : (
+                ) : problemSub === "papercard" ? (
                   <PapercardProblems lines={lines} call={call} />
+                ) : (
+                  <div className="dm-5w-root">
+                    <DocumentLibrary hideHeader />
+                  </div>
                 )}
               </div>
             )}
