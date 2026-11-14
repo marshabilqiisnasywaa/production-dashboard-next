@@ -5292,5 +5292,12 @@
   "Cari atau tambah PIC": "Cari atau tambah PIC",
   "PIC manual": "PIC manual",
   "PIC tidak ditemukan.": "PIC tidak ditemukan.",
-  "{{v0}} PIC dipilih": "{{v0}} PIC dipilih"
+  "{{v0}} PIC dipilih": "{{v0}} PIC dipilih",
+  "Lihat semua line": "Lihat semua line",
+  "Lihat semua PIC": "Lihat semua PIC",
+  "{{v0}} line": "{{v0}} line",
+  "{{v0}} PIC": "{{v0}} PIC",
+  "Line terkait": "Line terkait",
+  "PIC terkait": "PIC terkait",
+  "Hanya PIC yang dapat menindaklanjuti masalah ini.": "Hanya PIC yang dapat menindaklanjuti masalah ini."
 }

@@ -5291,5 +5291,12 @@
   "Cari atau tambah PIC": "Search or add PIC",
   "PIC manual": "Manual PIC",
   "PIC tidak ditemukan.": "No PIC found.",
-  "{{v0}} PIC dipilih": "{{v0}} PICs selected"
+  "{{v0}} PIC dipilih": "{{v0}} PICs selected",
+  "Lihat semua line": "View all lines",
+  "Lihat semua PIC": "View all PICs",
+  "{{v0}} line": "{{v0}} lines",
+  "{{v0}} PIC": "{{v0}} PICs",
+  "Line terkait": "Related lines",
+  "PIC terkait": "Assigned PICs",
+  "Hanya PIC yang dapat menindaklanjuti masalah ini.": "Only assigned PICs can update this problem."
 }

@@ -165,3 +165,9 @@ Migrasi `0043` menambahkan pilihan tampil di struktur pada penugasan supervisor.
 Supervisor yang terdaftar di workshop mana pun dapat dipindai dan ditampilkan dengan keterangan workshop asal. HOD ditampilkan sebagai HOD beserta workshop yang dikelolanya, termasuk HOD workshop lain. Hanya user aktif tanpa penugasan workshop dan bukan HOD yang memerlukan konfirmasi host sebagai tamu setelah scan wajah. Konfirmasi berlaku selama dua menit untuk sesi yang sama; pembatalan tidak mencatat kehadiran. Tamu tampil dalam rincian dan rekap absensi, tanpa menjadi peserta wajib pada sesi berikutnya.
 
 Pada setiap PC yang menjalankan backend, jalankan `alembic upgrade head` setelah memperbarui kode lalu restart backend. Tes fitur ini memakai SQLite terpisah: `.venv/bin/python -m unittest discover -s tests -p test_workshop_guests.py -v`. Pengenalan wajah dalam tes digantikan hasil simulasi.
+
+## Satu masalah untuk beberapa line dan PIC
+
+Migrasi `0044` menambahkan relasi line dan PIC untuk summary DM maupun workshop. Setiap poin masalah baru disimpan sekali dengan satu status, solusi, dan due date. Semua PIC terkait dapat menindaklanjuti ID masalah yang sama; daftar masalah tiap line dan perhitungan KPI memakai relasi tersebut tanpa menggandakan baris masalah.
+
+Migrasi mempertahankan summary lama beserta penugasan utamanya. Salinan masalah yang sudah terbentuk sebelum perubahan ini tidak digabung otomatis. Pada backend PC lain, jalankan `alembic upgrade head` setelah memperbarui kode.

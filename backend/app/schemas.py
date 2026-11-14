@@ -437,6 +437,18 @@ class FaceChallengeOut(CamelModel):
 
 
 
+class SummaryPicIn(CamelModel):
+    name: str = Field(min_length=1, max_length=120)
+    employee_id: int | None = Field(default=None, gt=0)
+    employee_no: str | None = Field(default=None, max_length=32)
+    manual: bool = False
+
+
+class SummaryPicOut(CamelModel):
+    employee_id: int | None = None
+    name: str
+
+
 class MeetingSummaryIn(CamelModel):
     problem: str
     problem_categories: list[str] | None = None
@@ -446,6 +458,9 @@ class MeetingSummaryIn(CamelModel):
     due_date: str | None = None
     line_code: str | None = Field(default=None, max_length=32)
     custom_line: bool = False
+    line_codes: list[Annotated[str, Field(min_length=1, max_length=32)]] | None = None
+    custom_line_codes: list[str] = Field(default_factory=list)
+    pics: list[SummaryPicIn] | None = None
 
     @model_validator(mode="after")
     def validate_custom_line(self):
@@ -453,10 +468,18 @@ class MeetingSummaryIn(CamelModel):
             self.line_code = self.line_code.strip() or None
         if self.custom_line and self.line_code is None:
             raise ValueError("Nama line khusus wajib diisi.")
+        if self.line_codes is not None:
+            self.line_codes = list(dict.fromkeys(code.strip() for code in self.line_codes))
+            if not self.line_codes or any(not code for code in self.line_codes):
+                raise ValueError("Pilih minimal satu line.")
+        if self.pics is not None and not self.pics:
+            raise ValueError("Pilih minimal satu PIC.")
         return self
 
 
 class MeetingSummaryOut(CamelModel):
+    line_codes: list[str] = Field(default_factory=list)
+    pics: list[SummaryPicOut] = Field(default_factory=list)
     id: int
     session_id: int
     line_id: int
@@ -473,6 +496,9 @@ class MeetingSummaryOut(CamelModel):
 ProblemStatus = Literal["open", "in_progress", "resolved"]
 
 class myProblemOut(CamelModel):
+    can_edit: bool = False
+    line_codes: list[str] = Field(default_factory=list)
+    pics: list[SummaryPicOut] = Field(default_factory=list)
     id : int
     session_id : int
     line_id : int

@@ -78,6 +78,8 @@ class DmMeetingAttendance(Base):
 
 class DmMeetingSummary(Base):
     __tablename__ = "dm_meeting_summaries"
+    affected_lines: Mapped[list["DmSummaryLine"]] = relationship("DmSummaryLine", cascade="all, delete-orphan", order_by="DmSummaryLine.id")
+    assigned_pics: Mapped[list["DmSummaryPic"]] = relationship("DmSummaryPic", cascade="all, delete-orphan", order_by="DmSummaryPic.id")
 
     id: Mapped[int] = mapped_column(primary_key=True)
     session_id: Mapped[int] = mapped_column(ForeignKey("dm_meeting_sessions.id", ondelete="CASCADE"), index=True)

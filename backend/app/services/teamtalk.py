@@ -90,14 +90,16 @@ async def notify_new_problems(line_code: str, session_label: str, summaries: lis
     def field(sm: Any, key: str) -> Any:
         return sm.get(key) if isinstance(sm, dict) else getattr(sm, key, None)
 
-    nos_by_id = employee_nos_by_id([field(sm, "pic_id") for sm in summaries])
+    nos_by_id = employee_nos_by_id([field(sm, "pic_id") for sm in summaries] + [field(pic, "employee_id") for sm in summaries for pic in field(sm, "pics") or []])
     job_nos: list[str] = []
 
     for idx, sm in enumerate(summaries, 1):
         problem = field(sm, "problem") or "-"
-        pic_name = field(sm, "pic_name") or "-"
+        pics = field(sm, "pics") or []
+        pic_name = ", ".join(field(pic, "name") for pic in pics) if pics else field(sm, "pic_name") or "-"
         due = format_due(field(sm, "due_date"))
         job_nos.append(field(sm, "pic_employee_no") or nos_by_id.get(field(sm, "pic_id")))
+        job_nos.extend(field(pic, "employee_no") or nos_by_id.get(field(pic, "employee_id")) for pic in pics)
         lines.append(f"{idx}. {problem}")
         lines.append(f"   👤 PIC: {pic_name} | ⏱️ Due: {due}")
 
@@ -122,8 +124,9 @@ async def notify_escalated_problems(escalations: list[dict]) -> bool:
         ""
     ]
 
-    nos_by_id = employee_nos_by_id([item.get("pic_id") for item in escalations])
+    nos_by_id = employee_nos_by_id([item.get("pic_id") for item in escalations] + [pic.get("employee_id") for item in escalations for pic in item.get("pics", [])])
     job_nos = [nos_by_id.get(item.get("pic_id")) for item in escalations]
+    job_nos.extend(nos_by_id.get(pic.get("employee_id")) for item in escalations for pic in item.get("pics", []))
 
     for idx, item in enumerate(escalations, 1):
         lines.append(f"{idx}. Line {item.get('line_code', '-')}: {item.get('problem', '-')}")

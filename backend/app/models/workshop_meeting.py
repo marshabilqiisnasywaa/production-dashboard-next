@@ -92,6 +92,8 @@ class WorkshopMeetingAttendance(Base):
 
 class WorkshopMeetingSummary(Base):
     __tablename__ = "workshop_meeting_summaries"
+    affected_lines: Mapped[list["WorkshopSummaryLine"]] = relationship("WorkshopSummaryLine", cascade="all, delete-orphan", order_by="WorkshopSummaryLine.id")
+    assigned_pics: Mapped[list["WorkshopSummaryPic"]] = relationship("WorkshopSummaryPic", cascade="all, delete-orphan", order_by="WorkshopSummaryPic.id")
 
     id: Mapped[int] = mapped_column(primary_key=True)
     session_id: Mapped[int] = mapped_column(ForeignKey("workshop_meeting_sessions.id", ondelete="CASCADE"), index=True)

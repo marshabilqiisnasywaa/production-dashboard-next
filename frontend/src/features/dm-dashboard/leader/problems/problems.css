@@ -313,6 +313,142 @@
   border-bottom-color: #e8ecef !important;
 }
 
+.dml-pb-assignment-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 7px;
+  border: 1px solid #d8e7de;
+  border-radius: 6px;
+  background: #f1f7f3;
+  color: #046a38;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 550;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dml-pb-action-error {
+  margin: 8px 16px;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.dml-pb-assignment-count:hover {
+  background: #e4f0e9;
+}
+
+.dml-pb-assignment-count:focus-visible {
+  outline: 2px solid #046a38;
+  outline-offset: 2px;
+}
+
+.dml-pb-assignment-dialog {
+  position: fixed;
+  inset: 0;
+  width: min(400px, calc(100vw - 32px));
+  height: fit-content;
+  max-height: calc(100dvh - 40px);
+  margin: auto;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  border: 1px solid var(--dm-border, #e2e8f0);
+  border-radius: 14px;
+  background: var(--dm-surface, #fff);
+  color: var(--dm-text, #1e293b);
+  font-family: inherit;
+  box-shadow: 0 20px 60px rgb(15 23 42 / 20%);
+}
+
+.dml-pb-assignment-dialog::backdrop {
+  background: rgb(15 23 42 / 45%);
+}
+
+.dml-pb-assignment-dialog__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dml-pb-assignment-dialog__head h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.dml-pb-assignment-dialog__head h2 > span {
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: #e8f1ec;
+  color: #046a38;
+  font-size: 12px;
+}
+
+.dml-pb-assignment-dialog__head button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--dm-border, #e2e8f0);
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.dml-pb-assignment-dialog__problem {
+  margin: 10px 0 16px;
+  color: var(--dm-muted, #64748b);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.dml-pb-assignment-dialog ul {
+  max-height: min(320px, 45dvh);
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+}
+
+.dml-pb-assignment-dialog li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--dm-border, #e2e8f0);
+}
+
+.dml-pb-assignment-dialog__number {
+  flex: 0 0 22px;
+  color: var(--dm-muted, #64748b);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dml-pb-assignment-dialog li strong {
+  min-width: 0;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.dml-pb-assignment-dialog li small {
+  flex-shrink: 0;
+  color: var(--dm-muted, #64748b);
+  font-size: 10px;
+}
+
 .dml-pb-table tbody td {
   height: 44px;
   color: #334155;

@@ -44,6 +44,8 @@ export function useMyProblems() {
         date: p.date,
         sessionLabel: p.sessionLabel ?? "-",
         line: p.lineCode ?? "-",
+        lineCodes: p.lineCodes,
+        pics: p.pics,
         problem: p.problem,
         problemCategories: p.problemCategories ?? [],
         solution: p.solution ?? null,

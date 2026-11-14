@@ -5,6 +5,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.models import DmMeetingAttendance, DmMeetingSession, DmMeetingSummary
+from app.services.problem_access import line_filter
 from app.services.representatives import REPRESENTED_PREFIX
 from app.services.joint_meetings import build_roster
 from app.services.papercard_kpi import to_jakarta, working_days
@@ -100,7 +101,7 @@ def line_standup(db: Session, line_id: int, start: date, end: date, shift: str, 
         select(DmMeetingSummary, DmMeetingSession.date)
         .join(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
         .where(
-            DmMeetingSummary.line_id == line_id,
+            line_filter(DmMeetingSummary, [line_id]),
             DmMeetingSession.shift == shift,
             DmMeetingSession.date >= start,
             DmMeetingSession.date <= end,

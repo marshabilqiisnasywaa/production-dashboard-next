@@ -33,7 +33,17 @@ export default function ProblemsPage({
   hideHeading?: boolean;
 }) {
   const { text: uiText } = useUiText();
-  const { rows, counts, ready, error, refresh } = useProblems();
+  const { rows, counts, ready, error, refresh, toggleSolved, saveSolution } = useProblems();
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  async function handleToggleSolved(id: string, currentlySolved: boolean) {
+    setActionError(null);
+    try {
+      await toggleSolved(id, currentlySolved);
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : "Status masalah gagal disimpan.");
+    }
+  }
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProblemFilter>("all");
@@ -52,7 +62,7 @@ export default function ProblemsPage({
   );
 
   const lines = useMemo(
-    () => [...new Set(rows.map((r) => r.line).filter((line) => line && line !== "-"))].sort(),
+    () => [...new Set(rows.flatMap((r) => r.lineCodes?.length ? r.lineCodes : [r.line]).filter((line) => line && line !== "-"))].sort(),
     [rows],
   );
 
@@ -69,7 +79,7 @@ export default function ProblemsPage({
         statusFilter === "all" || r.status === statusFilter;
 
       const matchesLine =
-        lineFilter === "all" || r.line === lineFilter;
+        lineFilter === "all" || (r.lineCodes?.length ? r.lineCodes.includes(lineFilter) : r.line === lineFilter);
 
       const matchesDue =
         dueFilter === "all" ||
@@ -220,8 +230,9 @@ export default function ProblemsPage({
         <div className="dml-pb-result-count">{uiText("Menampilkan ")}<strong>{visible.length}</strong>{uiText(" dari")}{" "}
           <strong>{rows.length}</strong>{uiText(" masalah")}</div>
 
+        {actionError && <p className="dml-pb-action-error" role="alert">{uiText(actionError)}</p>}
         {error ? <ProblemLoadError error={error} onRetry={refresh} /> : ready ? (
-          <ProblemTable rows={visible} />
+          <ProblemTable rows={visible} onToggleSolved={handleToggleSolved} onSaveSolution={saveSolution} />
         ) : (
           <div className="dml-empty">{uiText("Memuat masalah…")}</div>
         )}

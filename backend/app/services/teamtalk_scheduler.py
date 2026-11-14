@@ -7,6 +7,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
+from app.services.summary_assignments import summary_metadata, display_lines, display_pics
 from app.models import (
     DmMeetingSchedule,
     DmMeetingSession,
@@ -266,9 +267,10 @@ async def check_escalated_reminders(db: Session, now: datetime):
         logger.info("Mengirim pengingat eskalasi untuk %d masalah overdue ke TeamTalk", len(batch))
         items = [
             {
-                "line_code": sm.line_code or "-",
+                "line_code": display_lines(sm) or "-",
                 "problem": sm.problem,
-                "pic_name": sm.pic_name or "-",
+                "pic_name": display_pics(sm) or "-",
+                "pics": summary_metadata(sm)["pics"],
                 "pic_id": sm.pic_id,
                 "due_date": sm.due_date,
             }

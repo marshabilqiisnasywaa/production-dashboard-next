@@ -294,16 +294,20 @@ function MeetingView(props: MeetingViewProps) {
     if (session) {
       const summaries = state.items
         .filter((i) => !isBlank(i))
-        .flatMap((i) => summaryLines(i).flatMap((line) => summaryPics(i).map((pic) => ({
+        .map((i) => ({
           problem: i.problem.trim(),
           problemCategories: i.problemCategories ?? [],
-          picName: pic.manual ? pic.name.trim() : summaryMembers.find((m) => m.id === pic.id)?.name ?? "-",
-          picEmployeeNo:
-            pic.manual ? null : summaryMembers.find((m) => m.id === pic.id)?.employeeNo ?? null,
+          picName: summaryPics(i)[0]?.name || summaryMembers.find((m) => m.id === summaryPics(i)[0]?.id)?.name || "-",
+          pics: summaryPics(i).map((pic) => ({
+            name: pic.manual ? pic.name.trim() : summaryMembers.find((m) => m.id === pic.id)?.name ?? "-",
+            employeeNo: pic.manual ? null : summaryMembers.find((m) => m.id === pic.id)?.employeeNo ?? null,
+            manual: pic.manual,
+          })),
           dueDate: i.due || null,
-          lineCode: line,
-          customLine: !summaryOptions?.lines.includes(line) && Boolean(i.customLines?.includes(line)),
-        }))));
+          lineCode: summaryLines(i)[0] || null,
+          lineCodes: summaryLines(i),
+          customLineCodes: summaryLines(i).filter((line) => !summaryOptions?.lines.includes(line) && i.customLines?.includes(line)),
+        }));
       try {
         const updated = await api.endSession(session.dbId, {
           summaries,
@@ -392,16 +396,16 @@ function MeetingView(props: MeetingViewProps) {
           endedAt: server.endedAt ?? null,
           items: server.summaries.map((s) => ({
             id: String(s.id),
-            line: s.lineCode ?? "",
-            lines: s.lineCode ? [s.lineCode] : [],
-            customLines: s.lineCode ? [s.lineCode] : [],
+            line: s.lineCodes?.[0] ?? s.lineCode ?? "",
+            lines: s.lineCodes?.length ? s.lineCodes : s.lineCode ? [s.lineCode] : [],
+            customLines: s.lineCodes?.length ? s.lineCodes : s.lineCode ? [s.lineCode] : [],
             problem: s.problem,
             problemCategories: s.problemCategories ?? [],
             picId: s.picId != null ? String(s.picId) : `custom:${s.picName}`,
-            picName: s.picName,
-            pics: [{ id: s.picId != null ? String(s.picId) : `custom:${s.picName}`, name: s.picName, manual: s.picId == null }],
+            picName: s.pics?.[0]?.name ?? s.picName,
+            pics: s.pics?.length ? s.pics.map((pic) => ({ id: pic.employeeId != null ? String(pic.employeeId) : `custom:${pic.name}`, name: pic.name, manual: pic.employeeId == null })) : [{ id: s.picId != null ? String(s.picId) : `custom:${s.picName}`, name: s.picName, manual: s.picId == null }],
             customPic: s.picId == null,
-            customPics: s.picId == null ? [s.picName] : [],
+            customPics: s.pics?.length ? s.pics.filter((pic) => pic.employeeId == null).map((pic) => pic.name) : s.picId == null ? [s.picName] : [],
             due: s.dueDate ?? "",
           })),
         });

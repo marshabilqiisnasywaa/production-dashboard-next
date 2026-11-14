@@ -1,3 +1,5 @@
+from app.models import WorkshopSummaryLine, WorkshopSummaryPic
+from app.services.summary_assignments import resolve_assignments, summary_metadata, display_lines, display_pics
 from datetime import date, datetime, timedelta, timezone
 
 import jwt
@@ -298,9 +300,9 @@ def map_session(s: WorkshopMeetingSession, db: Session) -> MeetingSessionOut:
         attendances=[map_attendance(a, db.get(Employee, a.employee_id), db) for a in attendances],
         summaries=[
             MeetingSummaryOut(
-                id=sm.id, session_id=sm.session_id, line_id=SESSION_PLACEHOLDER_LINE, problem=sm.problem,
-                problem_categories=sm.problem_categories, solution=sm.solution, pic_name=sm.pic_name,
-                pic_id=sm.pic_id, due_date=sm.due_date, line_code=sm.line_code, status=sm.status,
+                id=sm.id, session_id=sm.session_id, line_id=SESSION_PLACEHOLDER_LINE, **summary_metadata(sm), problem=sm.problem,
+                problem_categories=sm.problem_categories, solution=sm.solution, pic_name=display_pics(sm),
+                pic_id=sm.pic_id, due_date=sm.due_date, line_code=display_lines(sm), status=sm.status,
                 created_at=sm.created_at,
             )
             for sm in summaries
@@ -627,17 +629,13 @@ def end_session(
     sync_sessions(db, session)
 
     for sm in payload.summaries:
-        pic_id = sm.pic_id
-        pic_name = sm.pic_name
-        if pic_id is None and sm.pic_employee_no:
-            pic = db.scalars(select(Employee).where(Employee.employee_no == sm.pic_employee_no)).first()
-            if pic is None or not pic.is_active:
-                raise HTTPException(400, "User PIC tidak ditemukan atau sudah nonaktif.")
-            pic_id = pic.id
-            pic_name = pic.name
+        assigned_lines, assigned_pics = resolve_assignments(db, sm)
         db.add(WorkshopMeetingSummary(
             session_id=session.id, problem=sm.problem, problem_categories=sm.problem_categories,
-            pic_name=pic_name, pic_id=pic_id, due_date=sm.due_date, line_code=sm.line_code, status="open",
+            pic_name=assigned_pics[0][1], pic_id=assigned_pics[0][0], due_date=sm.due_date,
+            line_code=assigned_lines[0][1] if assigned_lines else None, status="open",
+            affected_lines=[WorkshopSummaryLine(line_id=line_id, code=code) for line_id, code in assigned_lines],
+            assigned_pics=[WorkshopSummaryPic(employee_id=employee_id, name=name) for employee_id, name in assigned_pics],
         ))
     db.commit()
     db.refresh(session)

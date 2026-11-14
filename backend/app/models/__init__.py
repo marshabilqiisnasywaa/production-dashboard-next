@@ -22,6 +22,7 @@ from app.models.history_import import HistoricalEntry, HistoryImportBatch
 from app.models.scorecard_archive import ScorecardArchive
 from app.models.user import User
 from app.models.workshop import Workshop
+from app.models.summary_assignment import DmSummaryLine, DmSummaryPic, WorkshopSummaryLine, WorkshopSummaryPic
 from app.models.workshop_meeting import (
     SupervisorWorkshop,
     WorkshopMeetingAttendance,

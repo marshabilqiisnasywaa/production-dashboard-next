@@ -5,7 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Employee, Line, WorkshopMeetingSession, WorkshopMeetingSummary
-from app.services.problem_access import is_pic, pic_filter
+from app.services.problem_access import is_pic, pic_filter, line_filter
+from app.services.summary_assignments import summary_metadata, display_lines, display_pics
 from app.schemas import myProblemOut
 
 # Workshop problems share the problem list with DM problems. Their ids are sent negated so the
@@ -18,16 +19,17 @@ def is_workshop_id(problem_id: int) -> bool:
 
 def to_out(sm: WorkshopMeetingSummary, session: WorkshopMeetingSession) -> myProblemOut:
     return myProblemOut(
+        **summary_metadata(sm),
         id=-sm.id,
         session_id=-session.id,
         line_id=0,
-        line_code=sm.line_code,
+        line_code=display_lines(sm),
         date=session.date,
         session_label=session.label,
         problem=sm.problem,
         problem_categories=sm.problem_categories,
         solution=sm.solution,
-        pic_name=sm.pic_name,
+        pic_name=display_pics(sm),
         pic_id=sm.pic_id,
         due_date=sm.due_date,
         status=sm.status,
@@ -69,9 +71,7 @@ def for_lines(db: Session, line_ids: list[int] | None) -> list[myProblemOut]:
         WorkshopMeetingSession, WorkshopMeetingSession.id == WorkshopMeetingSummary.session_id,
     )
     if line_ids is not None:
-        stmt = stmt.where(WorkshopMeetingSummary.line_code.in_(
-            select(Line.code).where(Line.id.in_(line_ids)),
-        ))
+        stmt = stmt.where(line_filter(WorkshopMeetingSummary, line_ids))
     return [to_out(sm, session) for sm, session in db.execute(stmt).all()]
 
 

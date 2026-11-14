@@ -11,6 +11,7 @@ from app.api.meetings import list_problems, list_supervisor_escalations, my_prob
 from app.db.base import Base
 from app.db.session import engine
 from app.models import Board, BoardMember, DmMeetingSession, DmMeetingSummary, Employee, Line, Workshop, WorkshopMeetingSession, WorkshopMeetingSummary
+from app.models import DmSummaryLine, DmSummaryPic, WorkshopSummaryLine, WorkshopSummaryPic
 from app.schemas import ProblemSolutionIn, problemStatusIn
 
 
@@ -82,15 +83,34 @@ class ProblemAccessTests(unittest.TestCase):
             saved = set_problem_solution(problem_id, ProblemSolutionIn(solution="Legacy fix"), self.db, Principal(employee=owner))
             self.assertEqual(saved.solution, "Legacy fix")
 
-    def test_leader_tracking_includes_only_authorized_lines(self):
+    def test_leader_tracking_includes_all_lines(self):
         principal = Principal(employee=self.people[1])
         expected = {self.problem(self.people[0]), self.problem(self.people[0], workshop=True)}
-        self.problem(self.people[0], workshop=True, line=1)
-        self.problem(self.people[0], line=1)
+        other_line = {self.problem(self.people[0], workshop=True, line=1), self.problem(self.people[0], line=1)}
         rows = list_problems(None, self.db, principal)
-        self.assertEqual({row.id for row in rows}, expected)
+        self.assertEqual({row.id for row in rows}, expected | other_line)
         self.assertTrue(all(row.problem_categories == ["quality"] for row in rows))
         self.assertEqual({row.id for row in list_problems(self.lines[0].id, self.db, principal)}, expected)
+        self.assertEqual({row.id for row in list_problems(self.lines[1].id, self.db, principal)}, other_line)
+
+    def test_leader_actions_are_enabled_only_for_assigned_pic(self):
+        leader = self.people[1]
+        own = {self.problem(leader), self.problem(leader, workshop=True)}
+        others = {self.problem(self.people[0]), self.problem(self.people[0], workshop=True)}
+        rows = list_problems(None, self.db, Principal(employee=leader))
+        self.assertEqual({row.id for row in rows if row.can_edit}, own)
+        self.assertEqual({row.id for row in rows if not row.can_edit}, others)
+
+    def test_member_tracking_remains_restricted_to_assigned_lines(self):
+        employee = self.people[0]
+        board = self.db.query(Board).filter(Board.line_id == self.lines[0].id).one()
+        self.db.add(BoardMember(board_id=board.id, employee_id=employee.id))
+        self.db.commit()
+        expected = {self.problem(employee), self.problem(employee, workshop=True)}
+        self.problem(employee, line=1)
+        self.problem(employee, workshop=True, line=1)
+        principal = Principal(employee=employee)
+        self.assertEqual({row.id for row in list_problems(None, self.db, principal)}, expected)
         with self.assertRaises(HTTPException) as error:
             list_problems(self.lines[1].id, self.db, principal)
         self.assertEqual(error.exception.status_code, 403)
@@ -104,3 +124,38 @@ class ProblemAccessTests(unittest.TestCase):
         self.problem(outsider, workshop=True)
         rows = list_supervisor_escalations(self.db, Principal(employee=supervisor))
         self.assertEqual({row.id for row in rows}, expected)
+
+    def test_shared_problem_has_one_id_for_all_pics_and_lines(self):
+        first, second, outsider = self.people
+        for workshop in (False, True):
+            model = WorkshopMeetingSummary if workshop else DmMeetingSummary
+            line_model = WorkshopSummaryLine if workshop else DmSummaryLine
+            pic_model = WorkshopSummaryPic if workshop else DmSummaryPic
+            values = dict(
+                session_id=self.ws.id if workshop else self.dm.id,
+                problem="One shared issue", pic_id=first.id, pic_name=first.name,
+                line_code=self.lines[0].code, status="open",
+                affected_lines=[line_model(line_id=line.id, code=line.code) for line in self.lines],
+                assigned_pics=[pic_model(employee_id=employee.id, name=employee.name) for employee in (first, second)],
+            )
+            if not workshop:
+                values["line_id"] = self.lines[0].id
+            summary = model(**values)
+            self.db.add(summary)
+            self.db.commit()
+            problem_id = -summary.id if workshop else summary.id
+            for employee in (first, second):
+                rows = [row for row in my_problems(self.db, Principal(employee=employee)) if row.id == problem_id]
+                self.assertEqual(len(rows), 1)
+                self.assertEqual(rows[0].line_codes, [line.code for line in self.lines])
+                self.assertEqual(len(rows[0].pics), 2)
+            self.assertNotIn(problem_id, [row.id for row in my_problems(self.db, Principal(employee=outsider))])
+            saved = set_problem_solution(problem_id, ProblemSolutionIn(solution="Shared fix"), self.db, Principal(employee=second))
+            self.assertEqual(saved.id, problem_id)
+            set_problem_status(problem_id, problemStatusIn(status="resolved"), self.db, Principal(employee=first))
+            row = next(row for row in my_problems(self.db, Principal(employee=second)) if row.id == problem_id)
+            self.assertEqual(row.solution, "Shared fix")
+            self.assertEqual(row.status, "resolved")
+            for line in self.lines:
+                rows = [row for row in list_problems(line.id, self.db, Principal(employee=outsider)) if row.id == problem_id]
+                self.assertEqual(len(rows), 1)

@@ -1,7 +1,8 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { ChevronRight, X } from "lucide-react";
 import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import { formatDue } from "../../meeting/utils";
 import type { ProblemRow, ProblemStatus } from "../types";
@@ -64,6 +65,17 @@ export function ProblemTable({
   onSaveDueDate,
 }: Props) {
   const { text: uiText, locale: uiLocale } = useUiText();
+  const [assignmentDetails, setAssignmentDetails] = useState<{ kind: "line" | "pic"; problem: string; entries: { name: string; manual?: boolean }[] } | null>(null);
+  const assignmentDialogRef = useRef<HTMLDialogElement>(null);
+  const assignmentTitleId = useId();
+
+  useEffect(() => {
+    const dialog = assignmentDialogRef.current;
+    if (!dialog) return;
+    if (assignmentDetails && !dialog.open) dialog.showModal();
+    if (!assignmentDetails && dialog.open) dialog.close();
+    return () => { if (dialog.open) dialog.close(); };
+  }, [assignmentDetails]);
   const [confirming, setConfirming] = useState<ConfirmState>(null);
   const confirmRef = useRef<HTMLDivElement | null>(null);
 
@@ -240,6 +252,8 @@ export function ProblemTable({
               const view = STATUS_VIEW[r.status];
               const isSolved = r.status === "solved";
               const isConfirming = confirming?.id === r.id;
+              const lineEntries = (r.lineCodes?.length ? r.lineCodes : r.line && r.line !== "-" ? r.line.split(",").map((line) => line.trim()).filter(Boolean) : []).map((name) => ({ name }));
+              const picEntries = r.pics?.length ? r.pics.map((pic) => ({ name: pic.name, manual: pic.employeeId == null })) : r.picName && r.picName !== "-" ? [{ name: r.picName }] : [];
 
               return (
                 <tr
@@ -258,7 +272,11 @@ export function ProblemTable({
                     </span>
                   </td>
 
-                  <td title={uiText(r.line)}>{r.line || "-"}</td>
+                  <td>
+                    {lineEntries.length > 1 ? <button type="button" className="dml-pb-assignment-count" aria-haspopup="dialog" aria-label={uiText("Lihat semua line")} onClick={() => setAssignmentDetails({ kind: "line", problem: r.problem, entries: lineEntries })}>
+                      {uiText("{{v0}} line", { v0: lineEntries.length })}<ChevronRight size={13} aria-hidden="true" />
+                    </button> : <span className="dml-pb-truncate" title={lineEntries[0]?.name}>{lineEntries[0]?.name || "-"}</span>}
+                  </td>
 
                   <td style={{ whiteSpace: "normal" }}>
                     {r.problemCategories?.length
@@ -312,8 +330,10 @@ export function ProblemTable({
                     )}
                   </td>
 
-                  <td title={uiText(r.picName)}>
-                    <span className="dml-pb-truncate">{r.picName || "-"}</span>
+                  <td>
+                    {picEntries.length > 1 ? <button type="button" className="dml-pb-assignment-count" aria-haspopup="dialog" aria-label={uiText("Lihat semua PIC")} onClick={() => setAssignmentDetails({ kind: "pic", problem: r.problem, entries: picEntries })}>
+                      {uiText("{{v0}} PIC", { v0: picEntries.length })}<ChevronRight size={13} aria-hidden="true" />
+                    </button> : <span className="dml-pb-truncate" title={picEntries[0]?.name}>{picEntries[0]?.name || "-"}</span>}
                   </td>
 
                   <td>
@@ -417,6 +437,7 @@ export function ProblemTable({
 
                   {onToggleSolved && (
                     <td>
+                      {r.canEdit === false ? <span title={uiText("Hanya PIC yang dapat menindaklanjuti masalah ini.")}>—</span> : <>
                       {onSaveSolution && (
                         <div
                           style={{
@@ -509,6 +530,7 @@ export function ProblemTable({
                           {uiText("Tandai selesai")}
                         </button>
                       )}
+                      </>}
                     </td>
                   )}
                 </tr>
@@ -517,6 +539,21 @@ export function ProblemTable({
           )}
         </tbody>
       </table>
+      <dialog ref={assignmentDialogRef} className="dml-pb-assignment-dialog" aria-labelledby={assignmentTitleId} onCancel={(event) => { event.preventDefault(); setAssignmentDetails(null); }}>
+        {assignmentDetails && <>
+          <div className="dml-pb-assignment-dialog__head">
+            <h2 id={assignmentTitleId}>{assignmentDetails.kind === "line" ? uiText("Line terkait") : uiText("PIC terkait")} <span>{assignmentDetails.entries.length}</span></h2>
+            <button type="button" autoFocus aria-label={uiText("Tutup")} onClick={() => setAssignmentDetails(null)}><X size={18} aria-hidden="true" /></button>
+          </div>
+          <p className="dml-pb-assignment-dialog__problem">{assignmentDetails.problem}</p>
+          <ul>
+            {assignmentDetails.entries.map((entry, index) => <li key={index}>
+              <span className="dml-pb-assignment-dialog__number">{index + 1}</span><strong>{entry.name}</strong>
+              {entry.manual && <small>{uiText("PIC manual")}</small>}
+            </li>)}
+          </ul>
+        </>}
+      </dialog>
     </div>
   );
 }

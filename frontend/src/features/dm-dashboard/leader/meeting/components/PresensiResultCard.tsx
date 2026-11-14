@@ -9,6 +9,7 @@ import { absenceDetail, absenceLabel, formatClock } from "../utils";
 import { MeetingAvatar } from "./MeetingAvatar";
 import { IconPlay } from "./MeetingIcons";
 import { AbsenceFields } from "./AbsenceFields";
+import { useMeetingApi } from "../MeetingApiContext";
 
 interface Props {
   members: MeetingMember[];
@@ -38,6 +39,7 @@ const timeOf = (iso: string | null) => (iso ? new Date(iso).getTime() : 0);
 /** Step 3: presensi is closed, everyone who came (team and guests) is listed, absent members are recorded, the Leader starts the meeting. */
 export function PresensiResultCard({ members, attendance, guests, photoFor, absences, onAbsenceChange, onRedo, onStart }: Props) {
   const { text: uiText } = useUiText();
+  const workshopAttendance = Boolean(useMeetingApi().allowManualRepresentative);
   const [expandedAbsenceId, setExpandedAbsenceId] = useState<string | null>(null);
   const absent = members.filter((m) => attendance[m.id]?.status === "absent");
   const teamRows: PresentRow[] = members
@@ -106,9 +108,23 @@ export function PresensiResultCard({ members, attendance, guests, photoFor, abse
       {absent.length > 0 && (
         <div className="dml-mt-ready__section">
           <h3>{uiText("Tidak hadir (")}{absent.length})</h3>
-          <ul className="dml-mt-absence dml-mt-absence--compact" aria-label={uiText("Member tidak hadir")}>
+          <ul className={`dml-mt-absence${workshopAttendance ? " dml-mt-absence--compact" : ""}`} aria-label={uiText("Member tidak hadir")}>
             {absent.map((m) => {
               const entry: AbsenceNote = absences[m.id] ?? { reason: "none", note: "" };
+              if (!workshopAttendance) return (
+                <li key={m.id}>
+                  <div className="dml-mt-absence__who">
+                    <MeetingAvatar className="dml-mt-avatar" name={m.name} photo={m.photoUrl ?? null} />
+                    <div className="dml-mt-roster__who">
+                      <strong>{m.name}</strong>
+                      <span>{[m.employeeNo, m.roleLabel].filter(Boolean).join(" · ")}</span>
+                    </div>
+                  </div>
+                  <div className="dml-mt-absence__fields">
+                    <AbsenceFields idPrefix={"ar-" + m.id} name={m.name} employeeNo={m.employeeNo} value={entry} onChange={(next) => onAbsenceChange(m.id, next)} />
+                  </div>
+                </li>
+              );
               const expanded = expandedAbsenceId === m.id;
               const detail = entry.note.trim() ? absenceDetail(entry) : "";
               return (

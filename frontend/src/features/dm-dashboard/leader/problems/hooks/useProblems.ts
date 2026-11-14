@@ -42,9 +42,12 @@ export function useProblems(lineId?: number) {
 
       return {
         id: String(p.id),
+        canEdit: p.canEdit ?? false,
         date: p.date,
         sessionLabel: p.sessionLabel ?? "-",
         line: p.lineCode ?? "-",
+        lineCodes: p.lineCodes,
+        pics: p.pics,
         problem: p.problem,
         problemCategories: p.problemCategories ?? [],
         solution: p.solution ?? null,
@@ -63,36 +66,15 @@ export function useProblems(lineId?: number) {
 
   const counts = useMemo(() => countByStatus(rows), [rows]);
 
-  // Toggle checklist selesai/buka kembali via API backend
-  const toggleSolved = useCallback(
-    async (id: string, currentlySolved: boolean) => {
-      const nextStatus = currentlySolved ? "open" : "resolved";
-      const prevStatus = currentlySolved ? "resolved" : "open";
+  const toggleSolved = useCallback(async (id: string, currentlySolved: boolean) => {
+    const updated = await meetingApi.setProblemStatus(Number(id), currentlySolved ? "open" : "resolved");
+    setItems((prev) => prev ? prev.map((problem) => String(problem.id) === id ? { ...problem, status: updated.status } : problem) : prev);
+  }, []);
 
-      // Update optimistik di UI agar langsung berubah tanpa jeda
-      setItems((prev) =>
-        prev
-          ? prev.map((p) =>
-              String(p.id) === id ? { ...p, status: nextStatus } : p
-            )
-          : prev
-      );
-
-      try {
-        await meetingApi.setProblemStatus(Number(id), nextStatus);
-      } catch {
-        // Rollback jika request jaringan gagal
-        setItems((prev) =>
-          prev
-            ? prev.map((p) =>
-                String(p.id) === id ? { ...p, status: prevStatus } : p
-              )
-            : prev
-        );
-      }
-    },
-    []
-  );
+  const saveSolution = useCallback(async (id: string, solution: string) => {
+    const updated = await meetingApi.setProblemSolution(Number(id), solution);
+    setItems((prev) => prev ? prev.map((problem) => String(problem.id) === id ? { ...problem, solution: updated.solution } : problem) : prev);
+  }, []);
 
   return {
     rows,
@@ -101,6 +83,7 @@ export function useProblems(lineId?: number) {
     loading,
     ready: !loading && now !== null && items !== null,
     toggleSolved,
+    saveSolution,
     refresh: fetchProblems,
   };
 }

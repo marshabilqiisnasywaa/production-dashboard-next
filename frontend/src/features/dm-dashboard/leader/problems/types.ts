@@ -22,6 +22,9 @@ export interface StatusEntry {
 }
 
 export interface ProblemRow {
+  canEdit?: boolean;
+  lineCodes?: string[];
+  pics?: { employeeId: number | null; name: string }[];
   id: string;
   date: string;
   sessionLabel: string;

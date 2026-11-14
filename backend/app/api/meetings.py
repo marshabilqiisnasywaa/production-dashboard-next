@@ -1,3 +1,6 @@
+from app.models import DmSummaryLine, DmSummaryPic
+from app.services.summary_assignments import resolve_assignments, summary_metadata, display_lines, display_pics
+from app.services.problem_access import line_filter
 from datetime import date, datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func, or_, select
@@ -108,22 +111,26 @@ def _map_session(s: DmMeetingSession, db: Session) -> MeetingSessionOut:
 
 
     # Load summaries
+    source_id = s.source_session_id or s.id
     sum_stmt = select(DmMeetingSummary).where(DmMeetingSummary.session_id.in_(
-        select(DmMeetingSession.id).where(or_(DmMeetingSession.id == s.id, DmMeetingSession.source_session_id == s.id))
+        select(DmMeetingSession.id).where(or_(DmMeetingSession.id == source_id, DmMeetingSession.source_session_id == source_id))
     ))
+    if s.source_session_id is not None:
+        sum_stmt = sum_stmt.where(line_filter(DmMeetingSummary, [s.line_id]))
     summaries = list(db.scalars(sum_stmt).all())
     mapped_summaries = [
         MeetingSummaryOut(
             id=sm.id,
             session_id=sm.session_id,
             line_id=sm.line_id,
+            **summary_metadata(sm),
             problem=sm.problem,
             problem_categories=sm.problem_categories,
             solution=sm.solution,
-            pic_name=sm.pic_name,
+            pic_name=display_pics(sm),
             pic_id=sm.pic_id,
             due_date=sm.due_date,
-            line_code=sm.line_code,
+            line_code=display_lines(sm),
             status=sm.status,
             created_at=sm.created_at,
         )
@@ -645,39 +652,20 @@ def end_session(
 
     joint_meetings.sync_sessions(db, session)
 
-    # Insert summaries (Problem, PIC, Due Date)
     for sm in payload.summaries:
-        pic_id = sm.pic_id
-        pic_name = sm.pic_name
-        if pic_id is None and sm.pic_employee_no:
-            pic = db.scalars(
-                select(Employee).where(Employee.employee_no == sm.pic_employee_no)
-            ).first()
-            if pic is None or not pic.is_active:
-                raise HTTPException(400, "User PIC tidak ditemukan atau sudah nonaktif.")
-            pic_id = pic.id
-            pic_name = pic.name
-        summary_line_id = session.line_id
-        if sm.line_code:
-            selected_line = db.scalar(select(Line).where(Line.code == sm.line_code))
-            if selected_line is None and not sm.custom_line:
-                raise HTTPException(400, "Lini masalah tidak ditemukan.")
-            if selected_line is not None:
-                summary_line_id = selected_line.id
+        assigned_lines, assigned_pics = resolve_assignments(db, sm, session.line_id)
+        summary_line_id = next((line_id for line_id, _ in assigned_lines if line_id is not None), session.line_id)
         summary_session = db.scalar(select(DmMeetingSession).where(
             DmMeetingSession.source_session_id == session.id,
             DmMeetingSession.line_id == summary_line_id,
         )) if summary_line_id != session.line_id else session
         new_sm = DmMeetingSummary(
-            session_id=(summary_session or session).id,
-            line_id=summary_line_id,
-            problem=sm.problem,
-            problem_categories=sm.problem_categories,
-            pic_name=pic_name,
-            pic_id=pic_id,
-            due_date=sm.due_date,
-            line_code=sm.line_code,
-            status="open",
+            session_id=(summary_session or session).id, line_id=summary_line_id,
+            problem=sm.problem, problem_categories=sm.problem_categories,
+            pic_name=assigned_pics[0][1], pic_id=assigned_pics[0][0], due_date=sm.due_date,
+            line_code=assigned_lines[0][1] if assigned_lines else None, status="open",
+            affected_lines=[DmSummaryLine(line_id=line_id, code=code) for line_id, code in assigned_lines],
+            assigned_pics=[DmSummaryPic(employee_id=employee_id, name=name) for employee_id, name in assigned_pics],
         )
         db.add(new_sm)
 
@@ -703,13 +691,14 @@ def _my_problem_out(sm : DmMeetingSummary, session: DmMeetingSession) -> myProbl
         id=sm.id,
         session_id=sm.session_id,
         line_id=sm.line_id,
-        line_code=sm.line_code,
+        line_code=display_lines(sm),
         date=session.date,
         session_label=session.label,
+        **summary_metadata(sm),
         problem=sm.problem,
         problem_categories=sm.problem_categories,
         solution=sm.solution,
-        pic_name=sm.pic_name,
+        pic_name=display_pics(sm),
         pic_id=sm.pic_id,
         due_date=sm.due_date,
         status=sm.status,
@@ -757,7 +746,7 @@ def get_problem_closure_rate(
             DmMeetingSession.id == DmMeetingSummary.session_id,
         )
         .where(
-            DmMeetingSummary.line_id == line_id,
+            line_filter(DmMeetingSummary, [line_id]),
             DmMeetingSession.date >= from_date,
             DmMeetingSession.date <= to_date,
             DmMeetingSession.shift == shift,
@@ -813,7 +802,7 @@ def get_problem_on_time_rate(
             DmMeetingSession.id == DmMeetingSummary.session_id,
         )
         .where(
-            DmMeetingSummary.line_id == line_id,
+            line_filter(DmMeetingSummary, [line_id]),
             DmMeetingSession.shift == shift,
         )
     )
@@ -903,6 +892,8 @@ def my_problems(
     )
     rows = [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
     rows += workshop_problems.for_pic(db, employee)
+    for row in rows:
+        row.can_edit = True
     return sorted(rows, key=lambda row: (row.date, abs(row.id)), reverse=True)
 
 @router.get("/problems", response_model=list[myProblemOut])
@@ -911,14 +902,10 @@ def list_problems(
     db: Session = Depends(get_db),
     principal: Principal = Depends(require("problems.read")),
 ) -> list[myProblemOut]:
-    """
-    Mengambil seluruh daftar masalah dari meeting lini yang dipimpin oleh Leader (atau semua lini bagi SPV/Admin).
-    Mendukung multi-line assignment.
-    """
     employee = principal.employee
 
     # 1. Tentukan lini apa saja yang boleh diakses oleh user ini
-    if principal.role in ("leader", "member"):
+    if principal.role == "member":
         if not employee:
             return []
         user_line_ids = [l.id for _, l, _ in active_lines(db, employee.id)]
@@ -933,7 +920,6 @@ def list_problems(
         else:
             target_line_ids = user_line_ids
     else:
-        # Role Admin / Supervisor / Manager: bisa melihat semua atau difilter
         target_line_ids = [line_id] if line_id is not None else None
 
     # 2. Query masalah meeting dari database
@@ -942,12 +928,14 @@ def list_problems(
         .join(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
     )
     if target_line_ids is not None:
-        stmt = stmt.where(DmMeetingSummary.line_id.in_(target_line_ids))
+        stmt = stmt.where(line_filter(DmMeetingSummary, target_line_ids))
 
     stmt = stmt.order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
     rows = [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
     rows += workshop_problems.for_lines(db, target_line_ids)
     rows = with_pic_dept(db, rows)
+    for row in rows:
+        row.can_edit = employee is not None and is_pic(row, employee)
     return sorted(rows, key=lambda row: (row.date, abs(row.id)), reverse=True)
 
 @router.get("/problems/escalations", response_model=list[myProblemOut])

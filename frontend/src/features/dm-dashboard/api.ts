@@ -1369,6 +1369,8 @@ export type DmMeetingAttendance = {
 };
 
 export type DmMeetingSummary = {
+  lineCodes?: string[];
+  pics?: { employeeId: number | null; name: string }[];
   id: number;
   sessionId: number;
   lineId: number;
@@ -1477,6 +1479,9 @@ export type DmPostMeeting = {
 };
 
 export type DmMyProblem = {
+  canEdit?: boolean;
+  lineCodes?: string[];
+  pics?: { employeeId: number | null; name: string }[];
   id: number;
   sessionId: number;
   lineId: number;
@@ -1620,6 +1625,9 @@ export const meetingApi = {
     sessionId: number,
     input: {
       summaries: {
+        lineCodes?: string[];
+        customLineCodes?: string[];
+        pics?: { name: string; employeeNo?: string | null; manual: boolean }[];
         problem: string;
         problemCategories?: string[] | null;
         picName: string;
