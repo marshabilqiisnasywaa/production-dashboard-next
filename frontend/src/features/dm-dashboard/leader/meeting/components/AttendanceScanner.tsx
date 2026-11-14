@@ -2,7 +2,7 @@
 import { useUiText } from "@/locales/useUiText";
 
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconAlert, IconCheckCircle } from "@/components/ui/icons";
@@ -11,6 +11,7 @@ import { useMeetingApi } from "../MeetingApiContext";
 import type { AttendanceRecord, GuestRecord, MeetingMember } from "../types";
 import { formatClock } from "../utils";
 import { MeetingAvatar } from "./MeetingAvatar";
+import type { DmFaceScan, DmGuestCandidate } from "../../../api";
 
 interface Props {
   members: MeetingMember[];
@@ -103,6 +104,25 @@ export function AttendanceScanner({
   const [scanning, setScanning] = useState(false);
   const [step, setStep] = useState<ScanStep | null>(null);
   const [result, setResult] = useState<Result>(null);
+  const [guestCandidate, setGuestCandidate] = useState<DmGuestCandidate | null>(null);
+  const [guestError, setGuestError] = useState<string | null>(null);
+  const guestDialogRef = useRef<HTMLDialogElement>(null);
+  const guestTitleId = useId();
+  const guestDescriptionId = useId();
+
+  useEffect(() => {
+    const dialog = guestDialogRef.current;
+    if (!dialog) return;
+    if (guestCandidate && !dialog.open) dialog.showModal();
+    if (!guestCandidate && dialog.open) dialog.close();
+    return () => { if (dialog.open) dialog.close(); };
+  }, [guestCandidate]);
+
+  useEffect(() => {
+    setGuestCandidate(null);
+    setGuestError(null);
+    setResult(null);
+  }, [sessionDbId]);
 
   const pending = members.filter((m) => attendance[m.id]?.status !== "present");
   const presentCount = members.length - pending.length;
@@ -153,57 +173,84 @@ export function AttendanceScanner({
     setResult(null);
     try {
       const scan = await scanFace(video, sessionDbId, setStep, api);
-      const attended = scan.attendance;
-      if (!scan.recognized || !attended) {
-        setResult({
-          ok: false,
-          message: scan.message ?? "Wajah tidak dikenali. Coba lagi.",
-        });
-        return;
-      }
-      const member = members.find(
-        (m) => m.employeeNo && m.employeeNo === attended.employeeNo
-      );
-      if (member) {
-        onRecognized(member.id, attended.attendedAt ?? undefined);
-      } else if (attended.employeeNo) {
-        onGuest({
-          employeeNo: attended.employeeNo,
-          name: attended.employeeName ?? "-",
-          line: attended.employeeLine ?? null,
-          dept: attended.department ?? null,
-          position: attended.position ?? null,
-          at: attended.attendedAt,
-        });
-      }
-      setResult({
-        ok: true,
-        name: attended.employeeName ?? "-",
-        nik: attended.employeeNo ?? "",
-        role: [attended.department, attended.position]
-          .filter(Boolean)
-          .join(" · "),
-        line: attended.employeeLine ?? null,
-        time: formatClock(attended.attendedAt),
-        already: scan.alreadyPresent,
-        guest: member ? null : { line: attended.employeeLine ?? null },
-      });
+      applyScan(scan);
     } catch (err) {
-      setResult({
-        ok: false,
-        message: err instanceof Error ? err.message : "Scan gagal. Coba lagi.",
-      });
+      setResult({ ok: false, message: err instanceof Error ? err.message : "Scan gagal. Coba lagi." });
     } finally {
       setScanning(false);
       setStep(null);
     }
   }
 
+  function applyScan(scan: DmFaceScan) {
+    if (scan.guestCandidate) {
+      setGuestError(null);
+      setGuestCandidate(scan.guestCandidate);
+      return;
+    }
+    const attended = scan.attendance;
+    if (!scan.recognized || !attended) {
+      setResult({
+        ok: false,
+        message: scan.message ?? "Wajah tidak dikenali. Coba lagi.",
+      });
+      return;
+    }
+    const member = members.find(
+      (m) => m.employeeNo && m.employeeNo === attended.employeeNo
+    );
+    if (member) {
+      onRecognized(member.id, attended.attendedAt ?? undefined);
+    } else if (attended.employeeNo) {
+      onGuest({
+        employeeNo: attended.employeeNo,
+        name: attended.employeeName ?? "-",
+        line: attended.employeeLine ?? null,
+        dept: attended.department ?? null,
+        position: attended.position ?? null,
+        at: attended.attendedAt,
+        isGuest: attended.participantLabel ? attended.isGuest : true,
+        participantLabel: attended.participantLabel,
+        workshopNames: attended.workshopNames,
+      });
+    }
+    setResult({
+      ok: true,
+      name: attended.employeeName ?? "-",
+      nik: attended.employeeNo ?? "",
+      role: [attended.department, attended.position]
+        .filter(Boolean)
+        .join(" · "),
+      line: attended.participantLabel && !attended.isGuest ? attended.participantLabel : attended.employeeLine ?? null,
+      time: formatClock(attended.attendedAt),
+      already: scan.alreadyPresent,
+      guest: member || (attended.participantLabel && !attended.isGuest) ? null : { line: attended.employeeLine ?? null },
+    });
+    setGuestCandidate(null);
+  }
+
+  async function handleGuest() {
+    if (scanning || sessionDbId === null) return;
+    setScanning(true);
+    setResult(null);
+    setGuestError(null);
+    try {
+      if (guestCandidate && api.confirmGuest) {
+        applyScan(await api.confirmGuest(sessionDbId, guestCandidate.token));
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Tamu gagal ditambahkan.";
+      setGuestError(message);
+    } finally {
+      setScanning(false);
+    }
+  }
+
   const canFinish =
-    !scanning &&
+    !scanning && !guestCandidate &&
     (isLateAttendance ||
       (presentCount > 0 && (!requireAllPresent || pending.length === 0)));
-  const canScan = !scanning && camera === "on" && sessionDbId !== null;
+  const canScan = !scanning && !guestCandidate && camera === "on" && sessionDbId !== null;
 
   return (
     <Card
@@ -330,6 +377,35 @@ export function AttendanceScanner({
           {isLateAttendance ? uiText("Tutup Presensi") : uiText("Selesai Presensi")}
         </Button>
       </div>
+
+      <dialog
+        ref={guestDialogRef}
+        className="dml-mt-guest-dialog"
+        aria-labelledby={guestTitleId}
+        aria-describedby={guestDescriptionId}
+        onCancel={(event) => {
+          event.preventDefault();
+          if (!scanning) { setGuestCandidate(null); setGuestError(null); }
+        }}
+      >
+        {guestCandidate && <>
+          <h2 id={guestTitleId}>{uiText("Konfirmasi peserta tamu")}</h2>
+          <div className="dml-mt-guest-dialog__person">
+          <MeetingAvatar className="dml-mt-avatar" name={guestCandidate.name} photo={guestCandidate.photoUrl} />
+          <div>
+          <strong>{guestCandidate.name}</strong>
+          <p>{[guestCandidate.employeeNo, guestCandidate.dept, guestCandidate.position].filter(Boolean).join(" · ")}</p>
+          </div>
+          </div>
+          <p id={guestDescriptionId}>{uiText("Peserta ini belum terdaftar. Tambahkan sebagai tamu dan catat hadir?")}</p>
+          {guestError && <p className="dml-mt-guest-dialog__error" role="alert">{uiText(guestError)}</p>}
+          <div className="dml-mt-scanactions">
+            <Button variant="primary" disabled={scanning} onClick={() => handleGuest()}>{scanning ? uiText("Menyimpan…") : uiText("Tambahkan tamu & catat hadir")}</Button>
+            <Button variant="outline" disabled={scanning} onClick={() => { setGuestCandidate(null); setGuestError(null); setResult(null); }}>{uiText("Batal")}</Button>
+          </div>
+        </>}
+      </dialog>
+
 
       <p className="dml-mt-hint">
         {pending.length === 0

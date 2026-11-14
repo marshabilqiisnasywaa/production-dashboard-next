@@ -421,6 +421,8 @@ export default function AttendanceRecap({ lines, call }: Props) {
                       const status =
                         attendance.status === "present"
                           ? { label: "Hadir", css: "is-hadir" }
+                          : attendance.absenceReason === "represented"
+                          ? { label: "Diwakilkan", css: "is-izin" }
                           : attendance.status === "permit"
                           ? { label: "Izin", css: "is-izin" }
                           : attendance.status === "sick"
@@ -445,10 +447,13 @@ export default function AttendanceRecap({ lines, call }: Props) {
                               <div className="dm-recap-user-info">
                                 <span className="dm-recap-user-name">
                                   {name}
+                                  {attendance.isGuest && <span className="dm-recap-guest-tag">{uiText("Tamu")}</span>}
+                                  {!attendance.isGuest && attendance.participantLabel && <span className="dm-recap-guest-tag">{attendance.participantLabel}</span>}
                                 </span>
                                 <span className="dm-recap-user-id">
                                   {attendance.employeeNo ?? "-"}
                                 </span>
+                                {attendance.absenceReason === "represented" && attendance.absenceNote && <span className="dm-recap-user-id">{uiText("Diwakilkan oleh ")}{attendance.absenceNote}</span>}
                               </div>
                             </div>
                           </td>

@@ -70,7 +70,7 @@ export function useMeetingFlow(sessionId: string | null, members: MeetingMember[
   }, []);
 
   const markGuest = useCallback((guest: GuestRecord) => {
-    setState((s) => (s.guests[guest.employeeNo] ? s : { ...s, guests: { ...s.guests, [guest.employeeNo]: guest } }));
+    setState((s) => (JSON.stringify(s.guests[guest.employeeNo]) === JSON.stringify(guest) ? s : { ...s, guests: { ...s.guests, [guest.employeeNo]: guest } }));
   }, []);
 
 

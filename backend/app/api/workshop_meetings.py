@@ -1,5 +1,6 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
+import jwt
 import numpy as np
 from pydantic import Field, model_validator
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
@@ -26,6 +27,7 @@ from app.schemas import (
     CamelModel,
     FaceChallengeOut,
     FaceScanOut,
+    GuestCandidateOut,
     MeetingAttendanceOut,
     MeetingSessionEndIn,
     MeetingSessionOut,
@@ -109,11 +111,13 @@ class WorkshopSupervisorsOut(CamelModel):
     workshop_id: int
     employee_ids: list[int]
     responsibilities: dict[int, str | None] = Field(default_factory=dict)
+    structure_visibility: dict[int, bool] = Field(default_factory=dict)
 
 
 class WorkshopSupervisorsIn(CamelModel):
     employee_ids: list[int]
     responsibilities: dict[int, str | None] = Field(default_factory=dict)
+    structure_visibility: dict[int, bool] = Field(default_factory=dict)
 
 
 def assigned_workshop_ids(db: Session, employee_id: int) -> set[int]:
@@ -178,7 +182,8 @@ def sync_attendance(db: Session, source: WorkshopMeetingSession, attendance: Wor
         select(WorkshopMeetingSession).where(WorkshopMeetingSession.source_session_id == source.id)
     ).all()
     for target in targets:
-        if not any(item["employee_id"] == attendance.employee_id for item in target.roster or []):
+        additional = not any(item["employee_id"] == attendance.employee_id for item in source.roster or [])
+        if not additional and not any(item["employee_id"] == attendance.employee_id for item in target.roster or []):
             continue
         mirrored = db.scalar(select(WorkshopMeetingAttendance).where(
             WorkshopMeetingAttendance.session_id == target.id,
@@ -187,7 +192,7 @@ def sync_attendance(db: Session, source: WorkshopMeetingSession, attendance: Wor
         if mirrored is None:
             mirrored = WorkshopMeetingAttendance(session_id=target.id, employee_id=attendance.employee_id)
             db.add(mirrored)
-        for field in ("status", "verification_method", "face_confidence", "attended_at", "notes", "note_by_id", "note_at"):
+        for field in ("status", "verification_method", "face_confidence", "attended_at", "notes", "note_by_id", "note_at", "is_guest"):
             setattr(mirrored, field, getattr(attendance, field))
 
 
@@ -225,15 +230,43 @@ def absence_fields(a: WorkshopMeetingAttendance) -> tuple[str | None, str | None
     return "none", notes
 
 
-def map_attendance(a: WorkshopMeetingAttendance, emp: Employee | None) -> MeetingAttendanceOut:
+def participant_context(db: Session, employee: Employee, session: WorkshopMeetingSession | None = None) -> tuple[bool, list[str], str]:
+    names = set(db.scalars(
+        select(Workshop.name).join(SupervisorWorkshop, SupervisorWorkshop.workshop_id == Workshop.id)
+        .where(SupervisorWorkshop.employee_id == employee.id)
+    ))
+    if session is not None:
+        for item in session.roster or []:
+            if item["employee_id"] == employee.id:
+                names.update(item["line_codes"])
+    if employee.role == "hod":
+        for workshop in db.scalars(select(Workshop).where(Workshop.hod.is_not(None))):
+            hod = workshop.hod or {}
+            hod_id = hod.get("employee_id", hod.get("employeeId"))
+            if str(hod_id) == str(employee.id) or (hod_id is None and str(hod.get("name", "")).strip().casefold() == employee.name.strip().casefold()):
+                names.add(workshop.name)
+    workshop_names = sorted(names)
+    is_guest = employee.role != "hod" and not workshop_names
+    label = " · ".join((["HOD"] if employee.role == "hod" else []) + workshop_names)
+    return is_guest, workshop_names, label or "Tamu"
+
+
+def map_attendance(a: WorkshopMeetingAttendance, emp: Employee | None, db: Session) -> MeetingAttendanceOut:
     reason, note = absence_fields(a)
+    manual_representative = reason == "represented" and a.verification_method == "manual_representative"
+    representative_name, _, representative_no = (note or "").rpartition(" (") if manual_representative else (None, None, None)
+    is_guest, workshop_names, label = participant_context(db, emp, db.get(WorkshopMeetingSession, a.session_id)) if emp else (a.is_guest, [], None)
     return MeetingAttendanceOut(
         id=a.id, session_id=a.session_id, employee_id=a.employee_id,
         employee_name=emp.name if emp else None, employee_no=emp.employee_no if emp else None,
         department=emp.dept if emp else None, position=emp.position if emp else None,
         status=a.status, verification_method=a.verification_method, face_confidence=a.face_confidence,
-        attended_at=a.attended_at, notes=a.notes, employee_line=None,
+        attended_at=a.attended_at, notes=a.notes, employee_line=", ".join(workshop_names) or None,
         absence_reason=reason, absence_note=note,
+        is_guest=is_guest, workshop_names=workshop_names, participant_label=label,
+        representative_mode=("manual" if manual_representative else "user") if reason == "represented" else None,
+        representative_name=representative_name,
+        representative_employee_no=representative_no.removesuffix(")") if representative_no else None,
     )
 
 
@@ -262,7 +295,7 @@ def map_session(s: WorkshopMeetingSession, db: Session) -> MeetingSessionOut:
         meeting_scope="dm" if len(line_codes) > 1 else "line", source_session_id=s.source_session_id,
         dm_group_name=None, meeting_line_codes=line_codes,
         participants=participants, roster_prepared=s.roster is not None,
-        attendances=[map_attendance(a, db.get(Employee, a.employee_id)) for a in attendances],
+        attendances=[map_attendance(a, db.get(Employee, a.employee_id), db) for a in attendances],
         summaries=[
             MeetingSummaryOut(
                 id=sm.id, session_id=sm.session_id, line_id=SESSION_PLACEHOLDER_LINE, problem=sm.problem,
@@ -490,7 +523,11 @@ def save_absence_notes(
             db.add(attendance)
         text = (item.note or "").strip()
         if item.reason == "represented":
-            if text:
+            if item.representative_mode == "manual":
+                if item.representative_employee_no == employee.employee_no:
+                    raise HTTPException(400, "NIK wakil harus berbeda dari peserta yang diwakili.")
+                text = f"{item.representative_name} ({item.representative_employee_no})"
+            elif text:
                 validate_representative(db, employee, text)
             attendance.status = "absent"
             attendance.notes = "Diwakilkan oleh " + text if text else "Diwakilkan"
@@ -503,7 +540,7 @@ def save_absence_notes(
         else:
             attendance.status = "absent"
             attendance.notes = text or None
-        attendance.verification_method = "manual"
+        attendance.verification_method = "manual_representative" if item.reason == "represented" and item.representative_mode == "manual" else "manual"
         attendance.face_confidence = None
         attendance.note_by_id = principal.employee.id if principal.employee else None
         attendance.note_at = now
@@ -537,7 +574,8 @@ def close_presensi(
             attendance = WorkshopMeetingAttendance(session_id=session.id, employee_id=employee.id)
             db.add(attendance)
         attendance.status = "absent"
-        attendance.verification_method = "manual"
+        if attendance.verification_method != "manual_representative":
+            attendance.verification_method = "manual"
         attendance.face_confidence = None
         db.flush()
         sync_attendance(db, session, attendance)
@@ -629,6 +667,60 @@ def open_scan_session(db: Session, principal: Principal, session_id: int) -> Wor
     return session
 
 
+class GuestConfirmIn(CamelModel):
+    token: str = Field(min_length=1, max_length=2048)
+
+
+def guest_candidate(session: WorkshopMeetingSession, employee: Employee, method: str, score: float | None = None) -> FaceScanOut:
+    token = jwt.encode({
+        "purpose": "workshop_guest", "session_id": session.id, "employee_id": employee.id,
+        "method": method, "score": score,
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=2),
+    }, settings.secret_key, algorithm="HS256")
+    return FaceScanOut(recognized=True, guest_candidate=GuestCandidateOut(
+        token=token, employee_no=employee.employee_no, name=employee.name,
+        dept=employee.dept, position=employee.position, photo_url=employee.photo_url,
+    ))
+
+
+@router.post("/sessions/{session_id}/guests/confirm", response_model=FaceScanOut)
+def confirm_guest(session_id: int, payload: GuestConfirmIn, db: Session = Depends(get_db), principal: Principal = Depends(get_active_principal)) -> FaceScanOut:
+    db.scalar(select(WorkshopMeetingSession).where(WorkshopMeetingSession.id == session_id).with_for_update())
+    session = open_scan_session(db, principal, session_id)
+    try:
+        claims = jwt.decode(payload.token, settings.secret_key, algorithms=["HS256"], options={"require": ["exp", "purpose", "session_id", "employee_id", "method"]})
+        if claims["purpose"] != "workshop_guest" or claims["session_id"] != session_id or claims["method"] != "face_id":
+            raise ValueError()
+        employee_id = int(claims["employee_id"])
+    except (jwt.PyJWTError, ValueError, TypeError):
+        raise HTTPException(400, "Konfirmasi tamu tidak valid atau kedaluwarsa. Scan wajah kembali.")
+    employee = db.get(Employee, employee_id)
+    if employee is None or not employee.is_active:
+        raise HTTPException(400, "User sudah tidak aktif.")
+    attendance = db.scalar(select(WorkshopMeetingAttendance).where(
+        WorkshopMeetingAttendance.session_id == session.id, WorkshopMeetingAttendance.employee_id == employee.id,
+    ))
+    if attendance is not None and attendance.status == "present":
+        return FaceScanOut(recognized=True, already_present=True, attendance=map_attendance(attendance, employee, db))
+    if any(item["employee_id"] == employee.id for item in session.roster or []):
+        raise HTTPException(409, "User sudah menjadi peserta rutin. Scan wajah kembali.")
+    if attendance is None:
+        attendance = WorkshopMeetingAttendance(session_id=session.id, employee_id=employee.id)
+        db.add(attendance)
+    attendance.status = "present"
+    attendance.is_guest = participant_context(db, employee, session)[0]
+    attendance.verification_method = claims["method"]
+    attendance.face_confidence = claims.get("score")
+    attendance.attended_at = datetime.now(timezone.utc)
+    attendance.note_by_id = principal.employee.id if principal.employee else None
+    attendance.note_at = datetime.now(timezone.utc)
+    db.flush()
+    sync_attendance(db, session, attendance)
+    db.commit()
+    db.refresh(attendance)
+    return FaceScanOut(recognized=True, attendance=map_attendance(attendance, employee, db))
+
+
 @router.post("/sessions/{session_id}/challenge", response_model=FaceChallengeOut)
 def request_challenge(
     session_id: int,
@@ -681,19 +773,31 @@ def scan_attendance(
         return not_recognized("Wajah tidak dikenali. Coba scan lagi.")
 
     employee = db.get(Employee, match.employee_id)
-    require_participant(db, session, match.employee_id)
+    if employee is None or not employee.is_active:
+        return not_recognized("User tidak ditemukan atau sudah nonaktif.")
+    is_guest = participant_context(db, employee, session)[0]
+    if is_guest and not any(item["employee_id"] == employee.id for item in session.roster or []):
+        existing = db.scalar(select(WorkshopMeetingAttendance).where(
+            WorkshopMeetingAttendance.session_id == session.id,
+            WorkshopMeetingAttendance.employee_id == employee.id,
+        ))
+        if existing is not None and existing.status == "present":
+            return FaceScanOut(recognized=True, already_present=True, attendance=map_attendance(existing, employee, db))
+        return guest_candidate(session, employee, "face_id", match.score)
     attendance = db.scalars(select(WorkshopMeetingAttendance).where(
         WorkshopMeetingAttendance.session_id == session_id, WorkshopMeetingAttendance.employee_id == match.employee_id,
     )).first()
     if attendance is not None and attendance.status == "present":
+        attendance.is_guest = is_guest
         sync_attendance(db, session, attendance)
         db.commit()
-        return FaceScanOut(recognized=True, already_present=True, attendance=map_attendance(attendance, employee))
+        return FaceScanOut(recognized=True, already_present=True, attendance=map_attendance(attendance, employee, db))
 
     if attendance is None:
         attendance = WorkshopMeetingAttendance(session_id=session_id, employee_id=match.employee_id)
         db.add(attendance)
     attendance.status = "present"
+    attendance.is_guest = is_guest
     attendance.verification_method = "face_id"
     attendance.face_confidence = match.score
     attendance.attended_at = datetime.now(timezone.utc)
@@ -716,7 +820,7 @@ def scan_attendance(
     db.commit()
     db.refresh(attendance)
     matcher.reload(db)
-    return FaceScanOut(recognized=True, attendance=map_attendance(attendance, employee))
+    return FaceScanOut(recognized=True, attendance=map_attendance(attendance, employee, db))
 
 
 @router.get("/assignments", response_model=list[WorkshopSupervisorsOut])
@@ -744,6 +848,7 @@ def list_assignments(
                 row.employee_id: row.responsibility
                 for row in members
             },
+            structure_visibility={row.employee_id: row.show_in_structure for row in members},
         )
         for workshop_id, members in grouped.items()
     ]
@@ -760,6 +865,9 @@ def save_assignment(
         raise HTTPException(404, "Workshop tidak ditemukan.")
 
     wanted = set(payload.employee_ids)
+
+    if not set(payload.structure_visibility).issubset(wanted):
+        raise HTTPException(400, "Pengaturan struktur hanya untuk supervisor yang dipilih.")
 
     if not set(payload.responsibilities).issubset(wanted):
         raise HTTPException(
@@ -811,10 +919,14 @@ def save_assignment(
                 workshop_id=workshop_id,
             )
             db.add(row)
+            current[employee_id] = row
 
         if employee_id in payload.responsibilities:
             value = payload.responsibilities[employee_id]
             row.responsibility = (value or "").strip() or None
+
+        if employee_id in payload.structure_visibility:
+            row.show_in_structure = payload.structure_visibility[employee_id]
 
         saved_responsibilities[employee_id] = row.responsibility
 
@@ -824,4 +936,5 @@ def save_assignment(
         workshop_id=workshop_id,
         employee_ids=sorted(wanted),
         responsibilities=saved_responsibilities,
+        structure_visibility={employee_id: row.show_in_structure for employee_id, row in current.items() if employee_id in wanted},
     )

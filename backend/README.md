@@ -157,3 +157,11 @@ Migrasi `0042` menyimpan nilai final bulanan Excel dalam `scorecard_archives`, t
 `GET /api/public/scorecard/report` mengembalikan ringkasan final dan detail secara terpisah. Untuk bulan arsip, ringkasan selalu mencakup satu bulan penuh; filter tanggal membatasi detail. Rentang yang mencampur bulan arsip dengan bulan lain ditolak agar rekap bulanan tidak diprorata atau digabung dengan nilai operasional. File yang diunggah ulang memakai mode lewati atau perbarui secara eksplisit.
 
 Impor histori ditolak untuk periode dengan papercard atau meeting operasional. Pengisian papercard dan pembukaan meeting ditolak pada bulan yang sudah menjadi arsip. Kunci transaksi per bulan mencegah impor dan aktivitas operasional bersamaan. Pada bulan operasional, papercard dan standup tetap dihitung dari aktivitas sistem serta masa tugas leader; SQDIP tetap melalui impor tersendiri. Perubahan akun, penugasan, dan impor SQDIP berikutnya tidak menghitung ulang nilai final arsip.
+
+## Struktur supervisor dan peserta tamu workshop
+
+Migrasi `0043` menambahkan pilihan tampil di struktur pada penugasan supervisor. Penugasan lama tetap tampil secara default. Semua supervisor yang ditugaskan tetap menjadi peserta rutin presensi gabungan, termasuk yang disembunyikan dari struktur. Jumlah supervisor inti mengikuti pilihan admin.
+
+Supervisor yang terdaftar di workshop mana pun dapat dipindai dan ditampilkan dengan keterangan workshop asal. HOD ditampilkan sebagai HOD beserta workshop yang dikelolanya, termasuk HOD workshop lain. Hanya user aktif tanpa penugasan workshop dan bukan HOD yang memerlukan konfirmasi host sebagai tamu setelah scan wajah. Konfirmasi berlaku selama dua menit untuk sesi yang sama; pembatalan tidak mencatat kehadiran. Tamu tampil dalam rincian dan rekap absensi, tanpa menjadi peserta wajib pada sesi berikutnya.
+
+Pada setiap PC yang menjalankan backend, jalankan `alembic upgrade head` setelah memperbarui kode lalu restart backend. Tes fitur ini memakai SQLite terpisah: `.venv/bin/python -m unittest discover -s tests -p test_workshop_guests.py -v`. Pengenalan wajah dalam tes digantikan hasil simulasi.

@@ -19,7 +19,18 @@ export interface AttendanceRecord {
   at: string | null;
 }
 
+export interface SummaryPic {
+  id: string;
+  name: string;
+  manual: boolean;
+}
+
 export interface SummaryItem {
+  pics?: SummaryPic[];
+  lines?: string[];
+  customLines?: string[];
+  customPics?: string[];
+  customPic?: boolean;
   id: string;
   problem: string;
   problemCategories?: string[];
@@ -35,6 +46,9 @@ export type ItemErrors = Partial<
 >;
 
 export interface GuestRecord {
+  isGuest?: boolean;
+  workshopNames?: string[];
+  participantLabel?: string | null;
   employeeNo: string;
   name: string;
   line: string | null;
@@ -48,6 +62,9 @@ export type AbsenceReason = "none" | "represented" | "permit" | "sick";
 export interface AbsenceNote {
   reason: AbsenceReason;
   note: string;
+  representativeMode?: "user" | "manual";
+  representativeName?: string;
+  representativeEmployeeNo?: string;
 }
 
 export interface MeetingFlowState {

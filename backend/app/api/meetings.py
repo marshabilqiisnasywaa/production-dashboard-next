@@ -660,9 +660,10 @@ def end_session(
         summary_line_id = session.line_id
         if sm.line_code:
             selected_line = db.scalar(select(Line).where(Line.code == sm.line_code))
-            if selected_line is None:
+            if selected_line is None and not sm.custom_line:
                 raise HTTPException(400, "Lini masalah tidak ditemukan.")
-            summary_line_id = selected_line.id
+            if selected_line is not None:
+                summary_line_id = selected_line.id
         summary_session = db.scalar(select(DmMeetingSession).where(
             DmMeetingSession.source_session_id == session.id,
             DmMeetingSession.line_id == summary_line_id,

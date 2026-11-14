@@ -4,7 +4,7 @@ import Link from "next/link";
 import { IconCheckCircle } from "@/components/ui/icons";
 import { LEADER_ROUTES } from "../../routes";
 import type { MeetingMember, SummaryItem } from "../types";
-import { formatClock, formatDue, formatDuration } from "../utils";
+import { formatClock, formatDue, formatDuration, summaryLines, summaryPics } from "../utils";
 
 interface Props {
   startedAt: string;
@@ -56,7 +56,7 @@ export function MeetingDoneCard({ startedAt, endedAt, present, total, items, mem
             <li key={i.id}>
               <strong>{i.problem}</strong>
               <span>
-                {i.line}{uiText(" · PIC ")}{i.picName ?? picName(i.picId)}{uiText(" · due ")}{formatDue(i.due, uiLocale)}
+                {summaryLines(i).join(", ")}{uiText(" · PIC ")}{summaryPics(i).map((pic) => pic.name || picName(pic.id)).join(", ")}{uiText(" · due ")}{formatDue(i.due, uiLocale)}
               </span>
             </li>
           )))}

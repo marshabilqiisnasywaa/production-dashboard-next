@@ -36,6 +36,8 @@ import {
   initialsOf,
   isBlank,
   pickSessionId,
+  summaryLines,
+  summaryPics,
   validateItem,
 } from "./utils";
 
@@ -177,15 +179,13 @@ function MeetingView(props: MeetingViewProps) {
       const itemErrors = validateItem(item);
       if (
         summaryOptions &&
-        item.line &&
-        !summaryOptions.lines.includes(item.line)
+        summaryLines(item).some((line) => !summaryOptions.lines.includes(line) && !item.customLines?.includes(line))
       ) {
         itemErrors.line = "Pilih line yang tersedia.";
       }
       if (
         summaryOptions &&
-        item.picId &&
-        !summaryMembers.some((user) => user.id === item.picId)
+        summaryPics(item).some((pic) => !pic.manual && !summaryMembers.some((user) => user.id === pic.id))
       ) {
         itemErrors.picId = "Pilih user PIC yang masih aktif.";
       }
@@ -237,7 +237,7 @@ function MeetingView(props: MeetingViewProps) {
     if (!session || !member?.employeeNo) return false;
     try {
       await api.saveAbsenceNotes(session.dbId, [
-        { employeeNo: member.employeeNo, reason: next.reason, note: next.note },
+        { ...next, employeeNo: member.employeeNo },
       ]);
       actions.setAbsence(memberId, next);
       setSyncError(null);
@@ -259,6 +259,7 @@ function MeetingView(props: MeetingViewProps) {
           (m) => m.employeeNo && state.attendance[m.id]?.status === "absent"
         )
         .map((m) => ({
+          ...state.absences[m.id],
           employeeNo: m.employeeNo as string,
           reason: state.absences[m.id]?.reason ?? "none",
           note: state.absences[m.id]?.note ?? "",
@@ -293,15 +294,16 @@ function MeetingView(props: MeetingViewProps) {
     if (session) {
       const summaries = state.items
         .filter((i) => !isBlank(i))
-        .map((i) => ({
+        .flatMap((i) => summaryLines(i).flatMap((line) => summaryPics(i).map((pic) => ({
           problem: i.problem.trim(),
           problemCategories: i.problemCategories ?? [],
-          picName: summaryMembers.find((m) => m.id === i.picId)?.name ?? "-",
+          picName: pic.manual ? pic.name.trim() : summaryMembers.find((m) => m.id === pic.id)?.name ?? "-",
           picEmployeeNo:
-            summaryMembers.find((m) => m.id === i.picId)?.employeeNo ?? null,
+            pic.manual ? null : summaryMembers.find((m) => m.id === pic.id)?.employeeNo ?? null,
           dueDate: i.due || null,
-          lineCode: i.line || null,
-        }));
+          lineCode: line,
+          customLine: !summaryOptions?.lines.includes(line) && Boolean(i.customLines?.includes(line)),
+        }))));
       try {
         const updated = await api.endSession(session.dbId, {
           summaries,
@@ -391,10 +393,15 @@ function MeetingView(props: MeetingViewProps) {
           items: server.summaries.map((s) => ({
             id: String(s.id),
             line: s.lineCode ?? "",
+            lines: s.lineCode ? [s.lineCode] : [],
+            customLines: s.lineCode ? [s.lineCode] : [],
             problem: s.problem,
             problemCategories: s.problemCategories ?? [],
-            picId: "",
+            picId: s.picId != null ? String(s.picId) : `custom:${s.picName}`,
             picName: s.picName,
+            pics: [{ id: s.picId != null ? String(s.picId) : `custom:${s.picName}`, name: s.picName, manual: s.picId == null }],
+            customPic: s.picId == null,
+            customPics: s.picId == null ? [s.picName] : [],
             due: s.dueDate ?? "",
           })),
         });

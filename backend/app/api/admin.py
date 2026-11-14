@@ -75,6 +75,14 @@ def save_workshop_hod(workshop_id: int, body: WorkshopHod, db: Session = Depends
     workshop = db.get(Workshop, workshop_id)
     if workshop is None:
         raise not_found("Workshop")
+    if body.employee_id is not None:
+        employee = db.get(Employee, body.employee_id)
+        if employee is None or not employee.is_active or employee.role != "hod":
+            raise HTTPException(400, "Pilih user HOD aktif.")
+        body.name = employee.name
+        body.position = employee.position or "HOD"
+        body.work_phone = employee.work_phone
+        body.photo_url = employee.photo_url
     workshop.hod = body.model_dump()
     db.commit()
     return body

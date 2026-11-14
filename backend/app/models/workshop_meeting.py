@@ -19,6 +19,7 @@ class SupervisorWorkshop(Base):
         ForeignKey("workshops.id", ondelete="CASCADE"), index=True
     )
     responsibility: Mapped[str | None] = mapped_column(Text, nullable=True)
+    show_in_structure: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -78,6 +79,7 @@ class WorkshopMeetingAttendance(Base):
     session_id: Mapped[int] = mapped_column(ForeignKey("workshop_meeting_sessions.id", ondelete="CASCADE"), index=True)
     employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id", ondelete="CASCADE"), index=True)
     status: Mapped[str] = mapped_column(String(16), default="present", server_default="present")
+    is_guest: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     verification_method: Mapped[str] = mapped_column(String(32), default="face_id", server_default="face_id")
     face_confidence: Mapped[float | None] = mapped_column(Float)
     attended_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

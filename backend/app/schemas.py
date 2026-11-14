@@ -78,6 +78,7 @@ class MeOut(CamelModel):
 
 
 class WorkshopHod(CamelModel):
+    employee_id: int | None = Field(default=None, gt=0)
     name: str = Field(min_length=1, max_length=120)
     position: str = Field(min_length=1, max_length=120)
     work_phone: str | None = Field(default=None, max_length=32)
@@ -402,7 +403,22 @@ class MeetingAttendanceOut(CamelModel):
     employee_line: str | None = None
     absence_reason: str | None = None
     absence_note: str | None = None
+    is_guest: bool = False
+    workshop_names: list[str] = Field(default_factory=list)
+    participant_label: str | None = None
+    representative_mode: Literal["user", "manual"] | None = None
+    representative_name: str | None = None
+    representative_employee_no: str | None = None
 
+
+
+class GuestCandidateOut(CamelModel):
+    token: str
+    employee_no: str
+    name: str
+    dept: str | None = None
+    position: str | None = None
+    photo_url: str | None = None
 
 
 class FaceScanOut(CamelModel):
@@ -410,6 +426,7 @@ class FaceScanOut(CamelModel):
     already_present: bool = False
     message: str | None = None
     attendance: MeetingAttendanceOut | None = None
+    guest_candidate: GuestCandidateOut | None = None
 
 class FaceChallengeOut(CamelModel):
     required: bool
@@ -423,11 +440,20 @@ class FaceChallengeOut(CamelModel):
 class MeetingSummaryIn(CamelModel):
     problem: str
     problem_categories: list[str] | None = None
-    pic_name: str
+    pic_name: str = Field(min_length=1, max_length=120)
     pic_id: int | None = None
     pic_employee_no: str | None = None
     due_date: str | None = None
-    line_code: str | None = None
+    line_code: str | None = Field(default=None, max_length=32)
+    custom_line: bool = False
+
+    @model_validator(mode="after")
+    def validate_custom_line(self):
+        if self.line_code is not None:
+            self.line_code = self.line_code.strip() or None
+        if self.custom_line and self.line_code is None:
+            raise ValueError("Nama line khusus wajib diisi.")
+        return self
 
 
 class MeetingSummaryOut(CamelModel):
@@ -494,6 +520,20 @@ class AbsenceNoteIn(CamelModel):
     employee_no: str
     reason: Literal["none", "represented", "permit", "sick"] = "none"
     note: str | None = Field(default=None, max_length=200)
+    representative_mode: Literal["user", "manual"] = "user"
+    representative_name: str | None = Field(default=None, max_length=120)
+    representative_employee_no: str | None = Field(default=None, max_length=32)
+
+    @model_validator(mode="after")
+    def validate_manual_representative(self):
+        if self.reason == "represented" and self.representative_mode == "manual":
+            self.representative_name = (self.representative_name or "").strip()
+            self.representative_employee_no = (self.representative_employee_no or "").strip()
+            if not self.representative_name or not self.representative_employee_no:
+                raise ValueError("Nama dan NIK wakil wajib diisi.")
+            if any(char.isspace() or char in "()" for char in self.representative_employee_no):
+                raise ValueError("NIK wakil tidak boleh mengandung spasi atau tanda kurung.")
+        return self
 
 
 class AbsenceNotesIn(CamelModel):
@@ -549,6 +589,11 @@ class WorkshopRecapAttendanceOut(CamelModel):
     department: str | None = None
     status: str
     attended_at: datetime
+    is_guest: bool = False
+    workshop_names: list[str] = Field(default_factory=list)
+    participant_label: str | None = None
+    absence_reason: str | None = None
+    absence_note: str | None = None
 
 
 class WorkshopRecapSessionOut(CamelModel):

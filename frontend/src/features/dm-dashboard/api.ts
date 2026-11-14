@@ -484,6 +484,7 @@ export type DmPublicWorkshopSupervisor = {
 };
 
 export type DmWorkshopHod = {
+  employeeId?: number | null;
   name: string;
   position: string;
   workPhone: string | null;
@@ -997,6 +998,11 @@ export type DmWorkshopAttendanceRecap = Pick<
     dept: string | null;
   }[];
   attendances: {
+    isGuest: boolean;
+    workshopNames: string[];
+    participantLabel: string | null;
+    absenceReason?: string | null;
+    absenceNote?: string | null;
     employeeId: number;
     employeeNo: string | null;
     employeeName: string | null;
@@ -1329,7 +1335,22 @@ export type DmSupervisorOverview = {
   mySubordinates: DmSupervisorSubordinate[];
 };
 
+export type DmAbsenceNoteInput = {
+  employeeNo: string;
+  reason: string;
+  note?: string | null;
+  representativeMode?: "user" | "manual";
+  representativeName?: string;
+  representativeEmployeeNo?: string;
+};
+
 export type DmMeetingAttendance = {
+  representativeMode?: "user" | "manual" | null;
+  representativeName?: string | null;
+  representativeEmployeeNo?: string | null;
+  isGuest?: boolean;
+  workshopNames?: string[];
+  participantLabel?: string | null;
   id: number;
   sessionId: number;
   employeeId: number;
@@ -1411,6 +1432,16 @@ export type DmFaceScan = {
   alreadyPresent: boolean;
   message: string | null;
   attendance: DmMeetingAttendance | null;
+  guestCandidate?: DmGuestCandidate | null;
+};
+
+export type DmGuestCandidate = {
+  token: string;
+  employeeNo: string;
+  name: string;
+  dept: string | null;
+  position: string | null;
+  photoUrl: string | null;
 };
 
 export type DmMeetingScheduleItem = {
@@ -1546,7 +1577,7 @@ export const meetingApi = {
     ),
   saveAbsenceNotes: (
     sessionId: number,
-    items: { employeeNo: string; reason: string; note?: string | null }[]
+    items: DmAbsenceNoteInput[]
   ) =>
     request<DmMeetingSession>(
       "/meetings/sessions/" + sessionId + "/absence-notes",
@@ -1595,6 +1626,7 @@ export const meetingApi = {
         picId?: number | null;
         dueDate?: string | null;
         lineCode?: string | null;
+        customLine?: boolean;
         picEmployeeNo?: string | null;
       }[];
     }
@@ -1712,7 +1744,10 @@ export type MeetingApi = Pick<
   | "summaryOptions"
   | "representatives"
   | "employeePhoto"
->;
+> & {
+  allowManualRepresentative?: boolean;
+  confirmGuest?: (sessionId: number, token: string) => Promise<DmFaceScan>;
+};
 
 export type DmWorkshopRef = { id: number; name: string };
 
@@ -1720,6 +1755,7 @@ export type DmWorkshopSupervisors = {
   workshopId: number;
   employeeIds: number[];
   responsibilities: Record<string, string | null>;
+  structureVisibility: Record<string, boolean>;
 };
 
 const workshopBase = "/workshop-meetings";
@@ -1742,6 +1778,9 @@ export type DmWorkshopScheduleInput = Pick<
 >;
 
 export const workshopMeetingApi = {
+  allowManualRepresentative: true,
+  confirmGuest: (sessionId: number, token: string) =>
+    request<DmFaceScan>(`${workshopBase}/sessions/${sessionId}/guests/confirm`, json("POST", { token }), true),
   mine: () => request<DmWorkshopRef[]>(workshopBase + "/mine", {}, true),
   getSchedule: () =>
     request<DmWorkshopSchedule[]>(workshopBase + "/schedule", {}, true),
@@ -1771,7 +1810,7 @@ export const workshopMeetingApi = {
     ),
   saveAbsenceNotes: (
     sessionId: number,
-    items: { employeeNo: string; reason: string; note?: string | null }[]
+    items: DmAbsenceNoteInput[]
   ) =>
     request<DmMeetingSession>(
       `${workshopBase}/sessions/${sessionId}/absence-notes`,
@@ -1830,13 +1869,15 @@ export const workshopMeetingApi = {
   saveAssignment: (
     workshopId: number,
     employeeIds: number[],
-    responsibilities?: Record<string, string | null>
+    responsibilities?: Record<string, string | null>,
+    structureVisibility?: Record<string, boolean>
   ) =>
     request<DmWorkshopSupervisors>(
       `${workshopBase}/assignments/${workshopId}`,
       json("PUT", {
         employeeIds,
         ...(responsibilities === undefined ? {} : { responsibilities }),
+        ...(structureVisibility === undefined ? {} : { structureVisibility }),
       }),
       true
     ),

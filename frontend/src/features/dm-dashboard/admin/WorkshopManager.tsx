@@ -6,7 +6,7 @@ import type { FormEvent } from "react";
 import { adminApi, workshopMeetingApi } from "../api";
 import type { DmEmployee, DmWorkshop } from "../api";
 import { FactoryIcon, PlusIcon } from "./AdminIcons";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
 import WorkshopHodSection from "./WorkshopHodSection";
 
 interface WorkshopManagerProps {
@@ -19,6 +19,36 @@ interface WorkshopManagerProps {
 
 function messageOf(error: unknown) {
   return error instanceof Error ? error.message : "Terjadi kesalahan.";
+}
+
+function SupervisorIdentity({ person, fallback }: { person?: DmEmployee; fallback?: string }) {
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const name = person?.name ?? fallback ?? "Supervisor";
+  const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("");
+
+  useEffect(() => { setPhotoFailed(false); }, [person?.photoUrl]);
+
+  return (
+    <div className="dm-ws-person-identity">
+      <div className="dm-ws-person-avatar" aria-hidden="true">
+        {person?.photoUrl && !photoFailed ? <img src={person.photoUrl} alt="" onError={() => setPhotoFailed(true)} /> : <span>{initials}</span>}
+      </div>
+      <div className="dm-ws-person-name">
+        <strong>{name}</strong>
+        <span>NIK · {person?.employeeId ?? "—"}</span>
+      </div>
+    </div>
+  );
+}
+
+function SupervisorDetails({ person }: { person?: DmEmployee }) {
+  const { text: uiText } = useUiText();
+  return (
+    <dl className="dm-ws-person-details">
+      <div><dt>{uiText("Departemen")}</dt><dd>{person?.dept || uiText("Belum diisi")}</dd></div>
+      <div><dt>{uiText("Posisi")}</dt><dd>{person?.position || uiText("Posisi belum diisi")}</dd></div>
+    </dl>
+  );
 }
 
 export default function WorkshopManager({
@@ -56,6 +86,8 @@ export default function WorkshopManager({
     null
   );
   const [responsibility, setResponsibility] = useState("");
+  const [structureVisibility, setStructureVisibility] = useState<Record<number, Record<string, boolean>>>({});
+  const [showInStructure, setShowInStructure] = useState(true);
 
   const selectedSupervisor = supervisors.find(
     (person) => person.id === Number(selectedSupervisorId)
@@ -77,6 +109,7 @@ export default function WorkshopManager({
     Promise.all([adminApi.employees(), workshopMeetingApi.assignments()])
       .then(([employees, assignments]) => {
         if (!alive) return;
+        setStructureVisibility(Object.fromEntries(assignments.map((item) => [item.workshopId, item.structureVisibility])));
         setSupervisors(
           employees.filter(
             (item) => item.role === "supervisor" && item.isActive
@@ -113,6 +146,7 @@ export default function WorkshopManager({
   }
 
   function openSupervisorForm(workshopId: number, employeeId?: number) {
+    setShowInStructure(employeeId === undefined ? true : structureVisibility[workshopId]?.[String(employeeId)] ?? true);
     setAddingSupervisorFor(workshopId);
     setEditingSupervisorId(employeeId ?? null);
     setSelectedSupervisorId(employeeId === undefined ? "" : String(employeeId));
@@ -129,6 +163,7 @@ export default function WorkshopManager({
 
     void run(async () => {
       const saved = await workshopMeetingApi.saveAssignment(workshopId, next);
+      setStructureVisibility((prev) => ({ ...prev, [workshopId]: saved.structureVisibility }));
 
       setAssigned((prev) => ({
         ...prev,
@@ -172,8 +207,10 @@ export default function WorkshopManager({
       const saved = await workshopMeetingApi.saveAssignment(
         workshopId,
         nextIds,
-        { [String(employeeId)]: task }
+        { [String(employeeId)]: task },
+        { [String(employeeId)]: showInStructure }
       );
+      setStructureVisibility((prev) => ({ ...prev, [workshopId]: saved.structureVisibility }));
 
       setAssigned((prev) => ({
         ...prev,
@@ -399,6 +436,7 @@ export default function WorkshopManager({
                     }}
                   >
                     <div className="dm-ws-sup-dialog-head">
+                      <span className="dm-ws-dialog-icon" aria-hidden="true"><Users size={22} /></span>
                       <div>
                         <h3 id={`ws-supervisors-title-${workshop.id}`}>{uiText("Kelola Workshop")}</h3>
                         <p>{workshop.name}</p>
@@ -475,6 +513,10 @@ export default function WorkshopManager({
                         </div>
                       ) : (
                         <>
+                          <div className="dm-ws-team-summary">
+                            <div><strong>{uiText("Tim supervisor")}</strong></div>
+                            <span>{uiText("{{v0}} inti · {{v1}} peserta rutin", { v0: (assigned[workshop.id] ?? []).filter((id) => structureVisibility[workshop.id]?.[String(id)] !== false).length, v1: (assigned[workshop.id] ?? []).length })}</span>
+                          </div>
                           {(assigned[workshop.id] ?? []).length === 0 && (
                             <span>{uiText("Belum ada supervisor ditambahkan.")}</span>
                           )}
@@ -488,54 +530,51 @@ export default function WorkshopManager({
                                 responsibilities[workshop.id]?.[String(id)];
 
                               return (
-                                <li key={id} className="dm-ws-sup-row">
-                                  <div className="dm-ws-sup-person">
-                                    <span>
-                                      {person
-                                        ? person.name
-                                        : uiText("Supervisor #{{v0}}", { v0: id })}
+                                <li key={id} className={`dm-ws-person-card${editingSupervisorId === id ? " is-editing" : ""}`}>
+                                  <div className="dm-ws-person-top">
+                                    <SupervisorIdentity person={person} fallback={uiText("Supervisor #{{v0}}", { v0: id })} />
+                                    <span className={`dm-ws-person-badge${structureVisibility[workshop.id]?.[String(id)] === false ? " is-routine" : ""}`}>
+                                      {structureVisibility[workshop.id]?.[String(id)] === false ? uiText("Peserta rutin") : uiText("Supervisor inti")}
                                     </span>
-                                    <small>
-                                      {person?.employeeId ?? "-"} ·{" "}
-                                      {person?.position?.trim() ||
-                                        uiText("Posisi belum diisi")}
-                                    </small>
-                                    <p className="dm-ws-sup-task">
-                                      {task || uiText("Tugas belum diisi.")}
-                                    </p>
                                   </div>
-
-                                  <div className="dm-ws-sup-actions">
-                                    <button
-                                      type="button"
-                                      className="dm-admin-btn is-tonal"
-                                      aria-label={uiText("Edit tugas {{v0}}", { v0: person?.name ?? id })}
-                                      disabled={
-                                        busy ||
-                                        !person ||
-                                        addingSupervisorFor === workshop.id
-                                      }
-                                      onClick={() =>
-                                        openSupervisorForm(workshop.id, id)
-                                      }
-                                    >{uiText("Edit")}</button>
-                                    <button
-                                      type="button"
-                                      className="dm-admin-btn is-danger-soft"
-                                      aria-label={uiText("Lepas {{v0}} dari {{v1}}", { v0: person?.name ?? id, v1: workshop.name })}
-                                      disabled={
-                                        busy ||
-                                        addingSupervisorFor === workshop.id
-                                      }
-                                      onClick={() =>
-                                        changeSupervisors(
-                                          workshop.id,
-                                          (assigned[workshop.id] ?? []).filter(
-                                            (x) => x !== id
+                                  <SupervisorDetails person={person} />
+                                  <div className="dm-ws-person-function">
+                                    <span>{uiText("Fungsi / tanggung jawab")}</span>
+                                    <p>{task || uiText("Tugas belum diisi.")}</p>
+                                  </div>
+                                  <div className="dm-ws-person-footer">
+                                    <div className="dm-ws-sup-actions">
+                                      <button
+                                        type="button"
+                                        className="dm-admin-btn is-tonal"
+                                        aria-label={uiText("Edit tugas {{v0}}", { v0: person?.name ?? id })}
+                                        disabled={
+                                          busy ||
+                                          !person ||
+                                          addingSupervisorFor === workshop.id
+                                        }
+                                        onClick={() =>
+                                          openSupervisorForm(workshop.id, id)
+                                        }
+                                      >{uiText("Edit")}</button>
+                                      <button
+                                        type="button"
+                                        className="dm-admin-btn is-danger-soft"
+                                        aria-label={uiText("Lepas {{v0}} dari {{v1}}", { v0: person?.name ?? id, v1: workshop.name })}
+                                        disabled={
+                                          busy ||
+                                          addingSupervisorFor === workshop.id
+                                        }
+                                        onClick={() =>
+                                          changeSupervisors(
+                                            workshop.id,
+                                            (assigned[workshop.id] ?? []).filter(
+                                              (x) => x !== id
+                                            )
                                           )
-                                        )
-                                      }
-                                    >{uiText("Hapus")}</button>
+                                        }
+                                      >{uiText("Hapus")}</button>
+                                    </div>
                                   </div>
                                 </li>
                               );
@@ -544,11 +583,12 @@ export default function WorkshopManager({
 
                           {addingSupervisorFor === workshop.id ? (
                             <form
-                              className="dm-ws-sup-form"
+                              className="dm-ws-sup-form dm-ws-person-form"
                               onSubmit={(event) =>
                                 submitSupervisor(event, workshop.id)
                               }
                             >
+                              <div className="dm-ws-person-form-title">{editingSupervisorId === null ? uiText("Tambah supervisor") : uiText("Edit supervisor")}</div>
                               <label
                                 className="dm-ws-edit-label"
                                 htmlFor={`ws-supervisor-${workshop.id}`}
@@ -582,27 +622,17 @@ export default function WorkshopManager({
                                   ))}
                               </select>
 
-                              <label
-                                className="dm-ws-edit-label"
-                                htmlFor={`ws-position-${workshop.id}`}
-                              >{uiText("Posisi dari data karyawan")}</label>
-                              <input
-                                id={`ws-position-${workshop.id}`}
-                                className="dm-admin-input"
-                                value={
-                                  selectedSupervisor
-                                    ? selectedSupervisor.position?.trim() ||
-                                      "Posisi belum diisi"
-                                    : ""
-                                }
-                                placeholder={uiText("Pilih supervisor terlebih dahulu")}
-                                readOnly
-                              />
+                              {selectedSupervisor && (
+                                <div className="dm-ws-person-preview">
+                                  <SupervisorIdentity person={selectedSupervisor} />
+                                  <SupervisorDetails person={selectedSupervisor} />
+                                </div>
+                              )}
 
                               <label
                                 className="dm-ws-edit-label"
                                 htmlFor={`ws-responsibility-${workshop.id}`}
-                              >{uiText("Tugas / tanggung jawab")}</label>
+                              >{uiText("Fungsi / tanggung jawab")}</label>
                               <textarea
                                 id={`ws-responsibility-${workshop.id}`}
                                 className="dm-admin-input dm-ws-sup-textarea"
@@ -617,6 +647,13 @@ export default function WorkshopManager({
                                 autoFocus={editingSupervisorId !== null}
                               />
 
+                              <div className="dm-ws-person-visibility">
+                                <label>
+                                  <input type="checkbox" checked={showInStructure} disabled={busy} onChange={(event) => setShowInStructure(event.target.checked)} />
+                                  {uiText("Tampilkan di struktur workshop")}
+                                </label>
+                                <small>{uiText("Semua supervisor yang ditambahkan tetap menjadi peserta rutin absensi workshop.")}</small>
+                              </div>
                               <div className="dm-ws-sup-actions">
                                 <button
                                   type="submit"

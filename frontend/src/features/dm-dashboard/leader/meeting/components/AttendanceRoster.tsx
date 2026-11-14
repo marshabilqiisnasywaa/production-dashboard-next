@@ -27,6 +27,8 @@ export function AttendanceRoster({ title, members, attendance, note, absences = 
   const { text: uiText } = useUiText();
   const present = members.filter((m) => attendance[m.id]?.status === "present").length;
   const guestList = Object.values(guests);
+  const guestCount = guestList.filter((guest) => guest.isGuest !== false).length;
+  const additionalCount = guestList.length - guestCount;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<AbsenceNote>({ reason: "none", note: "" });
   const [saving, setSaving] = useState(false);
@@ -50,7 +52,7 @@ export function AttendanceRoster({ title, members, attendance, note, absences = 
         <div>
           <h2>{uiText(title)}</h2>
           <p>
-            {members.length}{uiText(" member")}{guestList.length ? " · " + guestList.length + " tamu" : ""}
+            {members.length}{uiText(" member")}{additionalCount > 0 && <> · {uiText("{{v0}} peserta tambahan", { v0: additionalCount })}</>}{guestCount > 0 && <> · {guestCount}{uiText(" tamu")}</>}
           </p>
         </div>
         <span className="dml-mt-roster__count">
@@ -107,7 +109,7 @@ export function AttendanceRoster({ title, members, attendance, note, absences = 
             <span className="dml-mt-avatar">{initialsOf(g.name)}</span>
             <div className="dml-mt-roster__who">
               <strong>{g.name}</strong>
-              <span>{"Tamu" + (g.line ? " · " + g.line : "")}</span>
+              <span>{g.participantLabel ? uiText(g.participantLabel) : g.isGuest === false ? g.line : uiText("Tamu") + (g.line ? " · " + g.line : "")}</span>
             </div>
             <div className="dml-mt-roster__state">
               <StatusChip tone="ok">{uiText("Hadir")}</StatusChip>

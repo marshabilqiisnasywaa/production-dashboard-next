@@ -68,18 +68,24 @@ export const makeEmptyItem = (): SummaryItem => ({
   due: "",
 });
 
+export const summaryLines = (item: SummaryItem): string[] =>
+  Array.from(new Set(item.lines ?? (item.line ? [item.line] : [])));
+
+export const summaryPics = (item: SummaryItem) =>
+  item.pics ?? (item.picId ? [{ id: item.picId, name: item.picName ?? "", manual: Boolean(item.customPic) }] : []);
+
 export const isBlank = (i: SummaryItem) =>
-  !i.line &&
+  summaryLines(i).length === 0 &&
   !i.problem.trim() &&
   !i.problemCategories?.length &&
-  !i.picId &&
+  summaryPics(i).length === 0 &&
   !i.due;
 
 export function validateItem(i: SummaryItem): ItemErrors {
   const errors: ItemErrors = {};
-  if (!i.line) errors.line = "Pilih line"; // new
+  if (summaryLines(i).length === 0) errors.line = "Pilih line";
   if (!i.problem.trim()) errors.problem = "Masalah wajib diisi";
-  if (!i.picId) errors.picId = "Pilih PIC";
+  if (summaryPics(i).length === 0 || summaryPics(i).some((pic) => pic.manual ? !pic.name.trim() || pic.name.trim().length > 120 : !pic.id)) errors.picId = "Pilih PIC";
   if (!i.due) errors.due = "Tentukan due date";
   return errors;
 }

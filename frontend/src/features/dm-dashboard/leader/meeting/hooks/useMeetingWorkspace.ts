@@ -78,7 +78,7 @@ export function useMeetingWorkspace() {
 export function meetingMembers(session: DmMeetingSession | undefined): MeetingMember[] {
   return (session?.participants ?? []).map((item) => ({
     id: String(item.employeeId), employeeNo: item.employeeNo, name: item.name,
-    initials: initialsOf(item.name), roleLabel: item.position || item.dept || "Anggota",
+    initials: initialsOf(item.name), roleLabel: session?.sessionType === "workshop" ? [item.position || item.dept, ...item.lineCodes].filter(Boolean).join(" · ") : item.position || item.dept || "Anggota",
     dept: item.dept ?? undefined, position: item.position ?? undefined,
     lineCode: item.lineCodes.join(", "), photoUrl: item.photoUrl,
   }));

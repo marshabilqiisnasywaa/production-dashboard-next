@@ -52,12 +52,18 @@ export function useSessionAttendance({
                 dept: a.department ?? null,
                 position: a.position ?? null,
                 at: a.attendedAt,
+                isGuest: a.participantLabel ? a.isGuest : true,
+                participantLabel: a.participantLabel,
+                workshopNames: a.workshopNames,
               });
             }
           } else if (restoreAbsent && member) {
             onAbsent(member.id, {
               reason: (a.absenceReason ?? "none") as AbsenceReason,
               note: a.absenceNote ?? "",
+              representativeMode: a.representativeMode ?? undefined,
+              representativeName: a.representativeName ?? undefined,
+              representativeEmployeeNo: a.representativeEmployeeNo ?? undefined,
             });
           }
         }

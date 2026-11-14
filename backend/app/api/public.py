@@ -157,6 +157,7 @@ def get_workshop_team(
         )
         .where(
             SupervisorWorkshop.workshop_id == workshop.id,
+            SupervisorWorkshop.show_in_structure.is_(True),
             Employee.role == "supervisor",
             Employee.is_active.is_(True),
         )
@@ -350,6 +351,11 @@ def attendance_recap(
                             department=a.department,
                             status=a.status,
                             attended_at=a.attended_at,
+                            is_guest=a.is_guest,
+                            workshop_names=a.workshop_names,
+                            participant_label=a.participant_label,
+                            absence_reason=a.absence_reason,
+                            absence_note=a.absence_note,
                         )
                         for a in mapped.attendances
                     ],
