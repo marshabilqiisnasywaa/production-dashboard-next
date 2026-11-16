@@ -95,21 +95,21 @@ export function InspectionDetailTable({
             showDate ? " dml-inspection-table--with-date" : ""
           }`}
         >
-          <colgroup>
+          {/* <colgroup>
             {showDate && <col className="dml-inspection-table__date" />}
             <col className="dml-inspection-table__leader" />
             {ROLE_COLUMNS.slice(1).map((column) => (
               <col key={column.key} className="dml-inspection-table__role" />
             ))}
             <col className="dml-inspection-table__total" />
-          </colgroup>
+          </colgroup> */}
           <thead>
             <tr>
               {showDate && <th>{uiText("Tanggal")}</th>}
               {ROLE_COLUMNS.map((column) => (
                 <th key={column.key}>{uiText(column.label)}</th>
               ))}
-              <th className="is-num">{uiText("Total")}</th>
+              {/* <th className="is-num">{uiText("Total")}</th> */}
             </tr>
           </thead>
           <tbody>
@@ -139,13 +139,13 @@ export function InspectionDetailTable({
                       </td>
                     );
                   })}
-                  <td className="is-num">{row.total}</td>
+                  {/* <td className="is-num">{row.total}</td> */}
                 </tr>
               ))}
           </tbody>
         </table>
       </div>
-      {!loading && !error && filtered.length === 1 && (
+      {/* {!loading && !error && filtered.length === 1 && (
         <p className="dml-inspection-detail__caption">
           {uiText(
             showDate
@@ -153,7 +153,7 @@ export function InspectionDetailTable({
               : "Data untuk tanggal terpilih. Ubah periode di atas untuk melihat hari lain.",
           )}
         </p>
-      )}
+      )} */}
 
       <Pagination
         page={safePage}

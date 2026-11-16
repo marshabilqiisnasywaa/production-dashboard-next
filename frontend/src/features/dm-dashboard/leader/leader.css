@@ -376,24 +376,63 @@
   flex-wrap: wrap;
   gap: 12px;
   padding: 20px 24px 16px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
 }
+
 .dml-detail__toolbar h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
+  line-height: 1.4;
+  flex: 1 1 auto;
+  min-width: 0;
 }
+
 .dml-detail__filters {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
 }
+
 .dml-detail__filters .ui-input {
   width: 240px;
+  max-width: 100%;
 }
+
 .dml-table-wrap {
+  width: 100%;
+  min-width: 0;
   overflow-x: auto;
   border-top: 1px solid var(--dm-border);
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .dml-detail__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .dml-detail__toolbar h3 {
+    flex: none;
+  }
+
+  .dml-detail__filters {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .dml-detail__filters .ui-input {
+    width: auto;
+    flex: 1 1 120px;
+    min-width: 0;
+  }
 }
 .dml-table {
   width: 100%;
@@ -918,32 +957,68 @@
 }
 
 .dml-inspection-table-wrap {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
+  --t-bg: #ffffff;
+  --t-head-bg: #f6f7f9;
+  --t-border: #e6e8ec;
+  --t-row-hover: #f9fafb;
+  --t-text: #1f2937;
+  --t-text-muted: #6b7280;
+  --t-radius: 8px;
 }
+
+.dml-table-wrap.dml-inspection-table-wrap {
+  background: var(--t-bg);
+  border: 1px solid var(--dm-border);
+  border-radius: var(--t-radius);
+  overflow: hidden;
+  max-height: 560px; /* enables sticky header; remove if not needed */
+}
+
+.dml-table.dml-inspection-table,
+.dml-table.dml-inspection-table--with-date {
+  min-width: 0 !important;
+  width: 100%;
+}
+
 
 .dml-inspection-table {
-  width: 100%;
-  min-width: 0;
-  table-layout: fixed;
-  font-size: 11px;
+  /* width: 100%; */
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
+  /* table-layout: fixed; */
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--t-text);
+  font-variant-numeric: tabular-nums;
 }
 
-.dml-inspection-table th {
-  padding: 8px 4px;
-  font-size: 10px;
-  text-align: center;
-  white-space: normal;
-  overflow-wrap: anywhere;
+.dml-inspection-table__date  { width: 96px; }
+.dml-inspection-table__leader { width: auto; }
+.dml-inspection-table__role   { width: auto; }
+
+.dml-inspection-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--t-head-bg);
+  color: var(--t-text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 12px 16px;
+  /* border-bottom: 1px solid var(--t-border); */
+  white-space: nowrap;
 }
 
-.dml-inspection-table td {
-  padding: 13px 4px;
-  text-align: center;
-  white-space: normal;
+.dml-inspection-table tbody td {
+  padding: 12px 16px;
+  /* border-bottom: 1px solid var(--t-border); */
+  vertical-align: middle;
+  background: var(--t-bg);
+  transition: background-color 0.15s ease;
 }
 
 .dml-inspection-table th:first-child,
@@ -982,13 +1057,34 @@
   width: 19%;
 }
 
-.dml-inspection-table .ui-chip {
-  max-width: 100%;
-  min-height: 22px;
-  padding: 2px 5px;
-  font-size: 10px;
-  line-height: 1.15;
-  white-space: normal;
+.dml-inspection-table .dml-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.dml-inspection-table .dml-chip::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.dml-chip--success { background: #e8f7ee; color: #15803d; }
+.dml-chip--warning { background: #fff4e0; color: #b45309; }
+.dml-chip--danger  { background: #fdecec; color: #b91c1c; }
+.dml-chip--neutral { background: #f1f2f4; color: #6b7280; }
+
+/* ---------- Mobile ---------- */
+@media (max-width: 640px) {
+  .dml-inspection-table thead th,
+  .dml-inspection-table tbody td {
+    padding: 10px 12px;
+  }
 }
 
 .dml-inspection-detail__caption {
@@ -1021,9 +1117,9 @@
 
 .dml-inspection-detail .ui-pagination .ui-select {
   width: auto;
-  height: 28px;
-  padding: 0 6px;
-  font-size: 11px;
+  height: 32px;
+  padding: 0 8px;
+  font-size: 12px;
 }
 
 @media (max-width: 767px) {
