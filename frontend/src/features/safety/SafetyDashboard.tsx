@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { MetricChart } from "@/features/repair/RepairDashboard";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
 import PicMetricCard, { type PicMetricCardData } from "@/features/pic-repair/PicMetricCard";
+import DateRangePicker, { type DateRange } from "@/components/ui/DateRangePicker";
 
 export type SafetySection = "overview" | "safety" | "isc" | "ga-admin" | "data-source";
 type SafetyTrendKey = "safety-battery" | "safety-incident" | "safety-information" | "safety-material" | "isc-abnormal";
@@ -50,6 +51,7 @@ export default function SafetyDashboard({ section = "overview", onNavigate }: { 
   const meta = sectionMeta[section];
   const [selected, setSelected] = useState<SafetyTrendKey | null>(null);
   const [aiCard, setAiCard] = useState<PicMetricCardData | null>(null);
+  const [filterRange, setFilterRange] = useState<DateRange>({ start: new Date(2026, 9, 7), end: new Date(2026, 9, 7) });
   const allCards = useMemo(() => [...safetyHomeCards, ...iscCards, ...safetyMonitoringCards], []);
   const toggle = (id: string) => setSelected((c) => (c === id ? null : (id as SafetyTrendKey)));
 
@@ -60,7 +62,7 @@ export default function SafetyDashboard({ section = "overview", onNavigate }: { 
           <div><div className="repair-eyebrow">{meta.eyebrow}</div>
           <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{meta.title}</h1></div>
           <p>{meta.subtitle}</p></div>
-          <div className="repair-actions"><input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" /></div>
+          <div className="repair-actions"><DateRangePicker value={filterRange} onChange={setFilterRange} /></div>
         </div>
         <article className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60">
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
@@ -79,7 +81,7 @@ export default function SafetyDashboard({ section = "overview", onNavigate }: { 
           <div><div className="repair-eyebrow">{meta.eyebrow}</div>
           <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{meta.title}</h1></div>
           <p>{meta.subtitle}</p></div>
-          <div className="repair-actions"><input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" /></div>
+          <div className="repair-actions"><DateRangePicker value={filterRange} onChange={setFilterRange} /></div>
         </div>
         <article className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-white/60 dark:border-slate-800/60">
           <div className="repair-card-head"><div><h2>Data Source</h2><p>Sumber data dan waktu pembaruan terakhir</p></div></div>
@@ -106,7 +108,7 @@ export default function SafetyDashboard({ section = "overview", onNavigate }: { 
         <div className="repair-title-row"><h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{meta.title}</h1></div>
         <p>{meta.subtitle}</p></div>
         <div className="repair-actions">
-          <input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" />
+          <DateRangePicker value={filterRange} onChange={setFilterRange} />
           <button className="repair-primary text-white font-bold" type="button" onClick={() => onNavigate?.("safety-data-source")}>Data Source</button>
         </div>
       </div>

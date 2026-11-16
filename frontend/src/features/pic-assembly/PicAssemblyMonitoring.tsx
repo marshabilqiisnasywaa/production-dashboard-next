@@ -1,4 +1,6 @@
 "use client";
+import { useState } from "react";
+import DateRangePicker, { type DateRange } from "@/components/ui/DateRangePicker";
 import { MetricChart } from "@/features/repair/RepairDashboard";
 import {
   ASSEMBLY_LINES,
@@ -42,6 +44,7 @@ function LineBreakdown({ lines, plans, actuals, subtitle }: { lines: string[]; p
 }
 
 export default function PicAssemblyMonitoring({ module }: { module: AssemblyModuleKey }) {
+  const [filterRange, setFilterRange] = useState<DateRange>({ start: new Date(2026, 9, 7), end: new Date(2026, 9, 7) });
   const isAssembly = module === "assembly";
   return (
     <div className="pic-page">
@@ -54,7 +57,7 @@ export default function PicAssemblyMonitoring({ module }: { module: AssemblyModu
           <p>{isAssembly ? "Output, cycle time, dan plan vs actual Line Assembly 01 - 07." : "Output line packing, sealing, dan boxing vs plan."}</p>
         </div>
         <div className="repair-actions">
-          <input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" />
+          <DateRangePicker value={filterRange} onChange={setFilterRange} />
         </div>
       </div>
 

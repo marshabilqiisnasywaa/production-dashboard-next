@@ -131,8 +131,6 @@ export default function SidebarNav({
         </nav>
 
         <div className="sidebar-foot">
-          <button className="support-item" data-tooltip="Help & Support"><Icon name="help" /><span className="sidebar-copy">Help & Support</span></button>
-          <div className="version sidebar-copy">MANUFLOW <span>v2.4.0</span></div>
         </div>
       </aside>
     </>

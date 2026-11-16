@@ -7,6 +7,7 @@ import {
 } from "@/features/repair/RepairDashboard";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
 import CustomSelect from "@/components/shell/CustomSelect";
+import DateRangePicker, { type DateRange } from "@/components/ui/DateRangePicker";
 import {
   ASSEMBLY_LINES,
   ASSEMBLY_LINE_OUTPUT,
@@ -103,6 +104,7 @@ export default function PicAssemblyHome() {
   const [inputOpen, setInputOpen] = useState(false);
   const [toast, setToast] = useState(false);
   const [aiCard, setAiCard] = useState<MeetingCard | null>(null);
+  const [filterRange, setFilterRange] = useState<DateRange>({ start: new Date(2026, 9, 7), end: new Date(2026, 9, 7) });
 
   const cards = useMemo(() => baseCards.map((card) => {
     if (values[card.id] === undefined) return card;
@@ -143,7 +145,7 @@ export default function PicAssemblyHome() {
           <p>Core metric summary for Assembly area: plan, actual, achievement, packaging, and finish good.</p>
         </div>
         <div className="repair-actions">
-          <input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" />
+          <DateRangePicker value={filterRange} onChange={setFilterRange} />
           <button className="repair-primary text-white font-bold" type="button" onClick={() => setInputOpen(true)}>+ Input Data</button>
         </div>
       </div>

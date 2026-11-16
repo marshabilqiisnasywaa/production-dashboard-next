@@ -25,6 +25,7 @@ import {
 } from "@/features/repair/RepairDashboard";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
 import PeriodControl, { periodView, type PeriodKey } from "@/components/shell/PeriodControl";
+import DateRangePicker, { type DateRange } from "@/components/ui/DateRangePicker";
 
 export type PicMonitorArea = "Preassembly" | "Rework" | "Warranty";
 
@@ -93,6 +94,7 @@ function DailyTrend({ title, subtitle, series, target }: { title: string; subtit
 function PreassemblyDeepDive() {
   const [aiCard, setAiCard] = useState<OpsCard | null>(null);
   const [showWipTable, setShowWipTable] = useState(false);
+  const [filterRange, setFilterRange] = useState<DateRange>({ start: new Date(2026, 9, 7), end: new Date(2026, 9, 7) });
   return (
     <div className="pic-page">
       <div className="repair-header">
@@ -104,7 +106,7 @@ function PreassemblyDeepDive() {
           <p>Metric operasional dan tren histori harian area Pre-assembly.</p>
         </div>
         <div className="repair-actions">
-          <input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" />
+          <DateRangePicker value={filterRange} onChange={setFilterRange} />
         </div>
       </div>
 

@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import CustomSelect from "@/components/shell/CustomSelect";
 import ChartTooltip from "@/components/shell/ChartTooltip";
+import DateRangePicker, { toIso, type DateRange } from "@/components/ui/DateRangePicker";
 import PeriodControl, { periodView, windowForPeriod, type PeriodKey } from "@/components/shell/PeriodControl";
 import {
   QC_AREAS,
@@ -30,6 +31,8 @@ import {
 
 const EMERALD = "#059669";
 const RED = "#ef4444";
+const QC_DAY_START = new Date(`${QC_DAY_ISO[0]}T00:00:00`);
+const QC_DAY_END = new Date(`${QC_DAY_ISO[QC_DAY_ISO.length - 1]}T00:00:00`);
 
 type QcMonitoringProps = {
   module: QcModuleKey;
@@ -188,10 +191,10 @@ function AreaDefectChart({ moduleKey, endIdx, areaSel }: { moduleKey: QcModuleKe
 }
 
 export default function PicQcMonitoring({ module }: QcMonitoringProps) {
-  const [asOf, setAsOf] = useState(QC_DAY_ISO[QC_DAY_ISO.length - 1]);
+  const [filterRange, setFilterRange] = useState<DateRange>({ start: QC_DAY_END, end: QC_DAY_END });
   const [areaSel, setAreaSel] = useState("All Areas");
   const [modelSel, setModelSel] = useState("All Models");
-  const endIdx = cutoffIndex(asOf);
+  const endIdx = cutoffIndex(toIso(filterRange.end));
 
   const dataDef = QC_MODULE_DATA[module];
   const acc = dataDef.dailyAcc[endIdx] ?? dataDef.dailyAcc[dataDef.dailyAcc.length - 1];
@@ -225,7 +228,7 @@ export default function PicQcMonitoring({ module }: QcMonitoringProps) {
           <p>Acceptance and defect monitoring with daily trend for {module} area.</p>
         </div>
         <div className="repair-actions" style={{ flexWrap: "wrap", justifyContent: "flex-end", rowGap: 8, maxWidth: 560 }}>
-          <input type="date" className="mm-sq-date w-44" value={asOf} min={QC_DAY_ISO[0]} max={QC_DAY_ISO[QC_DAY_ISO.length - 1]} onChange={(event) => setAsOf(event.target.value || QC_DAY_ISO[QC_DAY_ISO.length - 1])} aria-label="Filter date" />
+          <DateRangePicker value={filterRange} onChange={setFilterRange} minDate={QC_DAY_START} maxDate={QC_DAY_END} />
           <CustomSelect value={areaSel} options={[{ value: "All Areas", label: "All Areas" }, ...QC_AREAS]} onChange={setAreaSel} ariaLabel="Area filter" />
           <CustomSelect value={modelSel} options={[{ value: "All Models", label: "All Models" }, ...QC_MODELS]} onChange={setModelSel} ariaLabel="Model filter" />
           <button type="button" className="repair-primary text-white font-bold" style={{ background: "linear-gradient(135deg,var(--accent-1),var(--accent-2))", color: "#fff" }} onClick={exportCsv}>Export</button>

@@ -84,7 +84,7 @@ export default function LoginPage() {
           <h1 className="mml-login__title">Morning Meeting &amp; Production KPI</h1>
           <p className="mml-login__lead">Satu tempat untuk membaca KPI produksi dan menjalankan morning meeting harian.</p>
         </div>
-        <p className="mml-login__brand-foot">OPPO Manufacturing · Manuflow</p>
+        <p className="mml-login__brand-foot">OPPO Manufacturing</p>
       </section>
       <section className="mml-login__panel">
         <form className="mml-login__form" onSubmit={handleSubmit}>

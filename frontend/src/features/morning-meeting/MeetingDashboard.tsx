@@ -4,6 +4,7 @@ import { MetricChart, Sparkline, isOnTarget } from "@/features/repair/RepairDash
 import { Download } from "lucide-react";
 import PicAiInsight from "@/features/pic-repair/PicAiInsight";
 import PicMetricCard, { type PicMetricCardData } from "@/features/pic-repair/PicMetricCard";
+import DateRangePicker, { type DateRange } from "@/components/ui/DateRangePicker";
 
 type CostTrendKey = "slc" | "ope" | "upph" | "ratio" | "intern";
 
@@ -95,6 +96,7 @@ export default function MeetingDashboard({ section = "overview", onNavigate }: {
   const [toast, setToast] = useState(false);
   const [aiCard, setAiCard] = useState<CostMeetingCard | null>(null);
   const [safetyAi, setSafetyAi] = useState<PicMetricCardData | null>(null);
+  const [filterRange, setFilterRange] = useState<DateRange>({ start: new Date(2026, 9, 7), end: new Date(2026, 9, 7) });
 
   const cards = baseCards;
 
@@ -128,7 +130,7 @@ export default function MeetingDashboard({ section = "overview", onNavigate }: {
           <p>{meta.subtitle}</p>
         </div>
         <div className="repair-actions">
-          <input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" />
+          <DateRangePicker value={filterRange} onChange={setFilterRange} />
           <button className="repair-outline" type="button" onClick={exportCsv}><Download size={14} />Export</button>
         </div>
       </div>

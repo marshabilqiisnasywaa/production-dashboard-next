@@ -17,7 +17,7 @@ const day0 = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 const sameDay = (a: Date, b: Date) => a.getTime() === b.getTime();
 const pad = (n: number) => String(n).padStart(2, "0");
-const toIso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+export const toIso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const fromIso = (s: string) => {
   const [y, m, d] = s.split("-").map(Number);
   const date = new Date(y, m - 1, d);

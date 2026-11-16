@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PIC_NAME, useRepairPic, type PicRepairInput, type PicRepairRecord, type PicRepairStatus } from "@/features/pic-repair/RepairPicContext";
 import AbnormalityTable from "@/features/pic-repair/AbnormalityTable";
 import CustomSelect from "@/components/shell/CustomSelect";
+import DateRangePicker, { type DateRange } from "@/components/ui/DateRangePicker";
 import PicAttachmentPreview from "@/features/pic-repair/PicAttachmentPreview";
 import PicPlanUpload, { type PlanUploadValue } from "@/features/pic-repair/PicPlanUpload";
 import KpiCard, { type KpiCardProps } from "@/components/ui/KpiCard";
@@ -54,6 +55,7 @@ export function AbnormalityBoard({ records, addRecord, picName, areaOptions, def
   const [form, setForm] = useState({ ...emptyForm, area: defaultArea });
   const [attachment, setAttachment] = useState<PlanUploadValue | null>(null);
   const [preview, setPreview] = useState<PicRepairRecord | null>(null);
+  const [filterRange, setFilterRange] = useState<DateRange>({ start: new Date(2026, 9, 7), end: new Date(2026, 9, 7) });
 
   const summary = useMemo<KpiCardProps[]>(() => ([
     { label: "Total Abnormality", value: String(records.length), helper: "Total recorded cases", tone: "neutral", icon: FileText },
@@ -133,7 +135,7 @@ export function AbnormalityBoard({ records, addRecord, picName, areaOptions, def
         eyebrow={kicker}
         title="Abnormality Log"
         subtitle={description}
-        actions={<input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" />}
+        actions={<DateRangePicker value={filterRange} onChange={setFilterRange} />}
         className="mb-0!"
       />
 
