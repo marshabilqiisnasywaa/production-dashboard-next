@@ -149,7 +149,7 @@
   cursor: pointer;
 }
 .ui-segmented__btn.is-active {
-  background: #fff;
+  background: var(--dm-green-50);
   color: var(--dm-text);
   font-weight: 600;
   box-shadow: 0 0 0 1px var(--dm-border);

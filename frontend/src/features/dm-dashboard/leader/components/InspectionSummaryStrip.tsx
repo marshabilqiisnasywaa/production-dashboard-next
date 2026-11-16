@@ -34,21 +34,21 @@ export function InspectionSummaryStrip({
     {
       label: "Pengisian",
       value: available ? `${uiText(submitted)} / ${uiText(total)}` : "–",
-      detail: available
-        ? uiText("{{v0}}% papercard terisi", { v0: rate })
-        : uiText(error ? "Data tidak tersedia" : "Belum ada data"),
+      // detail: available
+      //   ? uiText("{{v0}}% papercard terisi", { v0: rate })
+      //   : uiText(error ? "Data tidak tersedia" : "Belum ada data"),
       skeletonWidth: "68%",
     },
     {
       label: "Target",
       value: `${TARGET}%`,
-      detail: available ? targetDescription : "–",
+      // detail: available ? targetDescription : "–",
       skeletonWidth: "54%",
     },
     {
       label: "Cakupan",
       value: `${uiText(dayCount)} ${uiText("hari")}`,
-      detail: available ? uiText("{{v0}} role wajib mengisi", { v0: roleCount }) : "–",
+      // detail: available ? uiText("{{v0}} role wajib mengisi", { v0: roleCount }) : "–",
       skeletonWidth: "42%",
     },
   ];
@@ -68,7 +68,7 @@ export function InspectionSummaryStrip({
             ) : (
               <>
                 {item.value}
-                <span className="dml-inspection-summary__description">{item.detail}</span>
+                {/* <span className="dml-inspection-summary__description">{item.detail}</span> */}
               </>
             )}
           </dd>

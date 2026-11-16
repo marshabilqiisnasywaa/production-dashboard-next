@@ -7,6 +7,7 @@ import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import { formatDue } from "../../meeting/utils";
 import type { ProblemRow, ProblemStatus } from "../types";
 import { formatMeetingDate, formatOverdue } from "../utils";
+import ProblemDetailDrawer from "./ProblemDetailDrawer";
 
 const STATUS_VIEW: Record<ProblemStatus, { tone: ChipTone; label: string }> = {
   unsolved: { tone: "wait", label: "Unsolved" },
@@ -66,6 +67,7 @@ export function ProblemTable({
 }: Props) {
   const { text: uiText, locale: uiLocale } = useUiText();
   const [assignmentDetails, setAssignmentDetails] = useState<{ kind: "line" | "pic"; problem: string; entries: { name: string; manual?: boolean }[] } | null>(null);
+  const [selectedProblem, setSelectedProblem] = useState<ProblemRow | null>(null);
   const assignmentDialogRef = useRef<HTMLDialogElement>(null);
   const assignmentTitleId = useId();
 
@@ -258,9 +260,32 @@ export function ProblemTable({
               return (
                 <tr
                   key={r.id}
-                  className={
-                    r.status === "escalated" ? "is-escalated" : undefined
-                  }
+                  className={`dml-pb-clickable${r.status === "escalated" ? " is-escalated" : ""}`}
+                  tabIndex={0}
+                  aria-label={uiText("Lihat detail masalah: {{v0}}", {
+                    v0: r.problem,
+                  })}
+                  onClick={(event) => {
+                    if (
+                      event.target instanceof Element &&
+                      event.target.closest(
+                        "button, a, input, select, textarea, [role='button']",
+                      )
+                    ) {
+                      return;
+                    }
+                    setSelectedProblem(r);
+                  }}
+                  onKeyDown={(event) => {
+                    if (
+                      event.target !== event.currentTarget ||
+                      (event.key !== "Enter" && event.key !== " ")
+                    ) {
+                      return;
+                    }
+                    event.preventDefault();
+                    setSelectedProblem(r);
+                  }}
                 >
                   <td title={uiText(r.date)}>
                     {formatMeetingDate(r.date, uiLocale)}
@@ -539,6 +564,10 @@ export function ProblemTable({
           )}
         </tbody>
       </table>
+      <ProblemDetailDrawer
+        problem={selectedProblem}
+        onClose={() => setSelectedProblem(null)}
+      />
       <dialog ref={assignmentDialogRef} className="dml-pb-assignment-dialog" aria-labelledby={assignmentTitleId} onCancel={(event) => { event.preventDefault(); setAssignmentDetails(null); }}>
         {assignmentDetails && <>
           <div className="dml-pb-assignment-dialog__head">

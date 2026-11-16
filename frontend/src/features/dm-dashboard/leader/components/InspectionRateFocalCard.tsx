@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState } from "react";
@@ -11,7 +12,11 @@ import {
   periodLabel,
   trendGranularityForRange,
 } from "../utils";
-import type { InspectionDateRange, InspectionRow, TrendGranularity } from "../types";
+import type {
+  InspectionDateRange,
+  InspectionRow,
+  TrendGranularity,
+} from "../types";
 import { InspectionDetailTable } from "./InspectionDetailTable";
 import { InspectionSummaryStrip } from "./InspectionSummaryStrip";
 import { InspectionTrendChart } from "./InspectionTrendChart";
@@ -39,15 +44,25 @@ export function InspectionRateFocalCard({
   error,
 }: Props) {
   const { text: uiText, locale } = useUiText();
-  const [navigationUnit, setNavigationUnit] = useState<TrendGranularity>("day");
+  const [navigationUnit, setNavigationUnit] =
+    useState<TrendGranularity>("day");
   const granularity = trendGranularityForRange(range);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const visibleRows = loading || error ? [] : rows;
+
   const trend = useMemo(() => {
     const observed = new Map(
-      buildTrend(visibleRows, granularity).map((point) => [point.key, point]),
+      buildTrend(visibleRows, granularity).map((point) => [
+        point.key,
+        point,
+      ]),
     );
-    const periodCount = Math.max(0, daysBetween(range.from, range.to));
+
+    const periodCount = Math.max(
+      0,
+      daysBetween(range.from, range.to),
+    );
+
     const keys = new Set(
       Array.from({ length: periodCount }, (_, index) =>
         periodKey(addDays(range.from, index), granularity),
@@ -65,11 +80,15 @@ export function InspectionRateFocalCard({
         },
     );
   }, [visibleRows, range.from, range.to, granularity]);
+
   const activeKey =
     selectedKey &&
-    trend.some((point) => point.key === selectedKey && point.total > 0)
+    trend.some(
+      (point) => point.key === selectedKey && point.total > 0,
+    )
       ? selectedKey
       : null;
+
   const tableRows = useMemo(
     () =>
       activeKey
@@ -79,9 +98,15 @@ export function InspectionRateFocalCard({
         : visibleRows,
     [visibleRows, activeKey, granularity],
   );
+
   const hasData = total > 0;
   const chartHasData = trend.some((point) => point.total > 0);
-  const submitted = visibleRows.reduce((sum, row) => sum + row.submitted, 0);
+
+  const submitted = visibleRows.reduce(
+    (sum, row) => sum + row.submitted,
+    0,
+  );
+
   const roleCount = new Set(
     visibleRows.flatMap((row) =>
       Object.entries(row.statuses)
@@ -89,21 +114,18 @@ export function InspectionRateFocalCard({
         .map(([role]) => role),
     ),
   ).size;
+
   const dateFormatter = new Intl.DateTimeFormat(locale, {
     day: "numeric",
     month: "long",
     year: "numeric",
     timeZone: "UTC",
   });
+
   const periodDescription = dateFormatter.formatRange(
     new Date(`${range.from}T00:00:00Z`),
     new Date(`${range.to}T00:00:00Z`),
   );
-  const groupingLabel = granularity === "day"
-    ? "Ditampilkan per hari"
-    : granularity === "week"
-      ? "Ditampilkan per minggu"
-      : "Ditampilkan per bulan";
 
   return (
     <div className="dml-inspection-grid">
@@ -111,11 +133,15 @@ export function InspectionRateFocalCard({
         <div className="dml-inspection-panel__header">
           <div className="dml-inspection-panel__heading">
             <h2>{uiText("Tren Inspection Rate")}</h2>
-            <p className="dml-inspection-panel__period" aria-live="polite">
+
+            <p
+              className="dml-inspection-panel__period"
+              aria-live="polite"
+            >
               <span>{periodDescription}</span>
-              <span>{uiText(groupingLabel)}</span>
             </p>
           </div>
+
           <InspectionTrendFilters
             range={range}
             maxDate={maxDate}
@@ -127,24 +153,28 @@ export function InspectionRateFocalCard({
             }}
           />
         </div>
+
         <div className="dml-inspection-panel__status-row">
           {loading ? (
-            <p className="dml-inspection-panel__message" role="status">
+            <p
+              className="dml-inspection-panel__message"
+              role="status"
+            >
               {uiText("Memuat tren Inspection Rate…")}
             </p>
           ) : error ? (
-            <p className="dml-inspection-panel__message" role="alert">
+            <p
+              className="dml-inspection-panel__message"
+              role="alert"
+            >
               {error}
             </p>
           ) : !hasData || !chartHasData ? (
             <p className="dml-inspection-panel__message">
               {uiText("Belum ada data inspeksi pada periode ini.")}
             </p>
-          ) : (
-            <p className="dml-inspection-panel__summary">
-              {uiText("Klik titik grafik untuk melihat detail periode.")}
-            </p>
-          )}
+          ) : null}
+
           {activeKey && (
             <button
               type="button"
@@ -157,9 +187,13 @@ export function InspectionRateFocalCard({
             </button>
           )}
         </div>
+
         <div className="dml-inspection-panel__chart">
           {loading ? (
-            <div className="dml-inspection-chart-skeleton" aria-hidden="true" />
+            <div
+              className="dml-inspection-chart-skeleton"
+              aria-hidden="true"
+            />
           ) : (
             <InspectionTrendChart
               data={trend}
@@ -170,15 +204,18 @@ export function InspectionRateFocalCard({
             />
           )}
         </div>
-        <InspectionSummaryStrip
-          submitted={submitted}
-          total={total}
-          rate={rate}
-          dayCount={daysBetween(range.from, range.to)}
-          roleCount={roleCount}
-          loading={loading}
-          error={error}
-        />
+
+        {/* <div className="dml-inspection-panel__summary-wrapper">
+          <InspectionSummaryStrip
+            submitted={submitted}
+            total={total}
+            rate={rate}
+            dayCount={daysBetween(range.from, range.to)}
+            roleCount={roleCount}
+            loading={loading}
+            error={error}
+          />
+        </div> */}
       </section>
 
       <section className="dml-inspection-panel dml-inspection-panel--detail">

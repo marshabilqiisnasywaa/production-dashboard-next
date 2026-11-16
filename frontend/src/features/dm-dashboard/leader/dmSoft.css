@@ -1601,10 +1601,10 @@
   flex: 0 0 auto;
   align-items: center;
   gap: 2px;
-  padding: 2px;
+  padding: 8px 2px 8px 2px;
   border: 1px solid #e1e8e3;
   border-radius: 9px;
-  background: #f3f7f4;
+  background: #ffffff;
 }
 
 .dml-inspection-period-nav__arrow {
@@ -1700,6 +1700,18 @@
   font-weight: 400;
   line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+/* Additional separation between chart and summary */
+.dml-inspection-panel__summary-wrapper {
+  margin-top: 24px;
+}
+
+/* White summary background and dark typography */
+.dml-inspection-panel__summary-wrapper > * {
+  background-color: #ffffff;
+  color: #000000;
+  font-family: Inter, sans-serif;
 }
 
 @media (pointer: coarse) {
