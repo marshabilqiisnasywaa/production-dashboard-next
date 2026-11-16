@@ -44,7 +44,7 @@ export default function SupervisorDashboard() {
   const meta = `Dept ${departmentLabel(currentSupervisor.dept)} · ${dbLines.length} lini · ${totalCount} anggota tim`;
 
   return (
-    <div className="dms-container">
+    <div className="dms-container spv-dashboard">
       <div className="dml-page-head">
         <SupervisorPageHeader
           title={uiText("Dashboard Supervisor")}

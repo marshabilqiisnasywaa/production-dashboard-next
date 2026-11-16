@@ -1,17 +1,26 @@
+
 "use client";
+
 import { useUiText } from "@/locales/useUiText";
-
-
-import { departmentLabel } from "../../departments";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { RefreshCw } from "lucide-react";
+
+import { departmentLabel } from "../../departments";
 import { SupervisorApprovalsTab, SupervisorPageHeader } from "../components";
 import { useSupervisor } from "../SupervisorProvider";
 import type { DmSupervisorSubordinate } from "../../api";
 
 function ApprovalsDeepLinkHandler() {
-  const { overviewData, dbLines, allListItems, isLoading, openReview, showToast } =
-    useSupervisor();
+  const {
+    overviewData,
+    dbLines,
+    allListItems,
+    isLoading,
+    openReview,
+    showToast,
+  } = useSupervisor();
+
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -20,30 +29,44 @@ function ApprovalsDeepLinkHandler() {
   const clearTinjauParam = useCallback(() => {
     const params = new URLSearchParams(searchParams?.toString() ?? "");
     params.delete("tinjau");
+
     const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
   }, [pathname, router, searchParams]);
 
   useEffect(() => {
     const requestedId = searchParams?.get("tinjau");
+
     if (!requestedId) {
       handledTinjauRef.current = null;
       return;
     }
+
     if (isLoading || !overviewData) return;
     if (handledTinjauRef.current === requestedId) return;
+
     handledTinjauRef.current = requestedId;
 
     const submissionId = Number(requestedId);
+
     const targetMember =
-      allListItems.find((member) => member.submission?.id === submissionId) ??
+      allListItems.find(
+        (member) => member.submission?.id === submissionId,
+      ) ??
       dbLines
         .flatMap((line) => line.members)
         .find((member) => member.submission?.id === submissionId);
+
     const targetLine =
       dbLines.find((line) =>
-        line.members.some((member) => member.submission?.id === submissionId),
+        line.members.some(
+          (member) => member.submission?.id === submissionId,
+        ),
       ) ?? dbLines.find((line) => line.lineId === targetMember?.lineId);
+
     const target = targetMember
       ? {
           ...targetMember,
@@ -65,14 +88,26 @@ function ApprovalsDeepLinkHandler() {
       const card = document.querySelector<HTMLElement>(
         `[data-submission-id="${submissionId}"]`,
       );
+
       const lineGroup = card?.closest<HTMLElement>(".spv-line-group");
+
       if (!lineGroup) return;
+
       document
         .querySelectorAll<HTMLElement>(".spv-line-group.is-highlight")
         .forEach((element) => element.classList.remove("is-highlight"));
-      lineGroup.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      lineGroup.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
       lineGroup.classList.add("is-highlight");
-      window.setTimeout(() => lineGroup.classList.remove("is-highlight"), 2200);
+
+      window.setTimeout(
+        () => lineGroup.classList.remove("is-highlight"),
+        2200,
+      );
     }, 80);
   }, [
     searchParams,
@@ -90,25 +125,25 @@ function ApprovalsDeepLinkHandler() {
 
 export default function SupervisorApprovalsPage() {
   const { text: uiText } = useUiText();
+
   const {
     currentSupervisor,
     dbLines,
     allListItems,
-    pendingApprovalsCount,
-    approvedCount,
-    abnormalCount,
     isLoading,
     refresh,
     isSubmittingApproval,
     handleBatchApproveLine,
     openReview,
   } = useSupervisor();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLineFilter, setSelectedLineFilter] = useState("ALL");
   const [selectedDeptFilter, setSelectedDeptFilter] = useState("ALL");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("ALL");
 
   const totalCount = allListItems.length;
+
   const meta = `Dept ${departmentLabel(currentSupervisor.dept)} · ${dbLines.length} lini · ${totalCount} anggota tim`;
 
   const hasActiveFilters =
@@ -120,32 +155,51 @@ export default function SupervisorApprovalsPage() {
   const matchesFilters = useCallback(
     (member: DmSupervisorSubordinate) => {
       const query = searchQuery.trim().toLowerCase();
+
       const matchesSearch =
         query.length === 0 ||
         member.name.toLowerCase().includes(query) ||
         member.employeeNo.toLowerCase().includes(query);
+
       const matchesLine =
         selectedLineFilter === "ALL" ||
-        (member.lineId !== undefined && String(member.lineId) === selectedLineFilter);
+        (member.lineId !== undefined &&
+          String(member.lineId) === selectedLineFilter);
+
       const matchesDept =
-        selectedDeptFilter === "ALL" || member.dept === selectedDeptFilter;
+        selectedDeptFilter === "ALL" ||
+        member.dept === selectedDeptFilter;
 
       let matchesStatus = true;
+
       if (selectedStatusFilter === "PENDING") {
-        matchesStatus = member.submission?.approvalStatus === "pending";
+        matchesStatus =
+          member.submission?.approvalStatus === "pending";
       } else if (selectedStatusFilter === "APPROVED") {
-        matchesStatus = member.submission?.approvalStatus === "approved";
+        matchesStatus =
+          member.submission?.approvalStatus === "approved";
       } else if (selectedStatusFilter === "REVISION") {
-        matchesStatus = member.submission?.approvalStatus === "rejected";
+        matchesStatus =
+          member.submission?.approvalStatus === "rejected";
       } else if (selectedStatusFilter === "NG") {
         matchesStatus = Boolean(member.submission?.hasNg);
       } else if (selectedStatusFilter === "NOT_SUBMITTED") {
         matchesStatus = !member.submission;
       }
 
-      return matchesSearch && matchesLine && matchesDept && matchesStatus;
+      return (
+        matchesSearch &&
+        matchesLine &&
+        matchesDept &&
+        matchesStatus
+      );
     },
-    [searchQuery, selectedDeptFilter, selectedLineFilter, selectedStatusFilter],
+    [
+      searchQuery,
+      selectedDeptFilter,
+      selectedLineFilter,
+      selectedStatusFilter,
+    ],
   );
 
   const filteredLines = useMemo(
@@ -153,16 +207,27 @@ export default function SupervisorApprovalsPage() {
       dbLines
         .filter(
           (line) =>
-            selectedLineFilter === "ALL" || String(line.lineId) === selectedLineFilter,
+            selectedLineFilter === "ALL" ||
+            String(line.lineId) === selectedLineFilter,
         )
         .map((line) => ({
           ...line,
           members: line.members.filter((member) =>
-            matchesFilters({ ...member, lineId: line.lineId }),
+            matchesFilters({
+              ...member,
+              lineId: line.lineId,
+            }),
           ),
         }))
-        .filter((line) => line.members.length > 0 || !hasActiveFilters),
-    [dbLines, hasActiveFilters, matchesFilters, selectedLineFilter],
+        .filter(
+          (line) => line.members.length > 0 || !hasActiveFilters,
+        ),
+    [
+      dbLines,
+      hasActiveFilters,
+      matchesFilters,
+      selectedLineFilter,
+    ],
   );
 
   const filteredMemberCount = filteredLines.reduce(
@@ -182,35 +247,15 @@ export default function SupervisorApprovalsPage() {
       <Suspense fallback={null}>
         <ApprovalsDeepLinkHandler />
       </Suspense>
+
       <div className="dml-page-head">
         <SupervisorPageHeader
           title={uiText("Persetujuan Checklist")}
           userName={currentSupervisor.name}
           meta={meta}
         />
+
         <div className="spv-page-toolbar">
-          <div className="spv-inline-stats">
-            {pendingApprovalsCount > 0 ? (
-              <span
-                className="spv-stat-pill spv-stat-pill--warning"
-                title={uiText("Papercard menunggu verifikasi")}
-              >
-                ⚡ <strong>{pendingApprovalsCount}</strong>{uiText(" Menunggu")}</span>
-            ) : (
-              <span className="spv-stat-pill spv-stat-pill--success">{uiText("✓ Semua Tuntas")}</span>
-            )}
-
-            {abnormalCount > 0 && (
-              <span className="spv-stat-pill spv-stat-pill--danger" title={uiText("Ada temuan abnormal (NG)")}>
-                ⚠️ <strong>{abnormalCount}</strong>{uiText(" NG")}</span>
-            )}
-
-            <span className="spv-stat-pill spv-stat-pill--info" title={uiText("Jumlah disetujui")}>
-              ✓ <strong>{approvedCount}</strong>{uiText(" Disetujui")}</span>
-
-            <span className="spv-stat-pill spv-stat-pill--neutral" title={uiText("Total tim terdaftar")}>
-              <strong>{totalCount}</strong>{uiText(" Anggota Tim")}</span>
-          </div>
           <button
             type="button"
             onClick={() => {
@@ -220,7 +265,11 @@ export default function SupervisorApprovalsPage() {
             className="spv-btn spv-btn--secondary spv-btn--sm"
             title={uiText("Muat ulang data terbaru dari database")}
           >
-            {isLoading ? uiText("Memuat...") : uiText("↻ Segarkan")}
+            <RefreshCw
+              size={12}
+              className={isLoading ? "spv-spin" : undefined}
+            />
+            {isLoading ? uiText("Memuat...") : uiText("Segarkan")}
           </button>
         </div>
       </div>
