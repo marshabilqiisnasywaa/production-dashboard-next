@@ -463,15 +463,16 @@
 
 @media (max-width: 767px) {
   .dml-dashboard-toolbar {
-    align-items: stretch;
+    display: flex;
     flex-direction: column;
-    gap: 8px;
+    align-items: stretch;
+    gap: 10px;
   }
 
   .dml-dashboard-toolbar .dmf-trigger--date.dml-dashboard-date-picker {
-    width: min(100%, 320px);
-    min-width: 0;
-    align-self: flex-end;
+    width: 100%;
+    margin-left: 0;
+    box-sizing: border-box;
   }
 
   .dml-dashboard-tabs {
@@ -1508,6 +1509,7 @@
   border-radius: 12px;
   background: #fff;
   box-shadow: none;
+  gap: 2px;
 }
 
 .dml-leader-dashboard .dml-kpi__value {
@@ -1589,7 +1591,8 @@
 }
 
 .dml-leader-dashboard .dml-kpi--focal .dml-kpi__icon {
-  color: var(--dm-green);
+  color: var(--color-white);
+  background: var(--dm-green);
 }
 
 .dml-leader-dashboard .dml-kpi--focal .dml-kpi__value {
@@ -1718,7 +1721,7 @@
   .dml-inspection-period-nav__arrow,
   .dml-inspection-period-nav .ui-segmented__btn {
     min-width: 44px;
-    height: 44px;
+    /* height: 44px; */
   }
 
 }
