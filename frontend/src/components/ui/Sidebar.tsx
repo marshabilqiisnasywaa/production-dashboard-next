@@ -5,7 +5,7 @@ import { useUiText } from "@/locales/useUiText";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { SIDEBAR_ID, useSidebar } from "./SidebarProvider";
+import { SIDEBAR_ID, SidebarCloseButton, useSidebar } from "./SidebarProvider";
 
 export interface SidebarItem {
   label: string;
@@ -49,7 +49,7 @@ export function Sidebar({ brand, sections, footer, className = "", onNavigate }:
 
   return (
     <aside id={SIDEBAR_ID} className={`ui-sidebar ${className}${state}`.trim()}>
-      <div className="ui-sidebar__brand">{brand}</div>
+      <div className="ui-sidebar__brand">{brand}<SidebarCloseButton /></div>
       <nav className="ui-sidebar__nav" aria-label={uiText("Navigasi utama")}>
         {sections.map((section, i) => (
           <div key={section.title ?? i} className="ui-sidebar__section">

@@ -118,3 +118,16 @@ export function SidebarBackdrop() {
   if (!sidebar || !sidebar.isDrawer || !sidebar.open) return null;
   return <button type="button" className="ui-sidebar-backdrop" aria-label={uiText("Tutup menu")} onClick={sidebar.close} />;
 }
+
+export function SidebarCloseButton() {
+  const { text: uiText } = useUiText();
+  const sidebar = useSidebar();
+  if (!sidebar || !sidebar.isDrawer) return null;
+  return (
+    <button type="button" className="ui-sidebar-close" aria-label={uiText("Tutup menu")} onClick={sidebar.close}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+        <path d="M18 6 6 18M6 6l12 12" />
+      </svg>
+    </button>
+  );
+}

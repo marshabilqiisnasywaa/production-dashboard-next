@@ -3,9 +3,9 @@ import { useUiText } from "@/locales/useUiText";
 
 import Link from "next/link";
 import { IconLogout, IconHistory } from "@/components/ui/icons";
-import { SIDEBAR_ID, useSidebar } from "@/components/ui/SidebarProvider";
 import { setToken } from "../api";
 import { Gauge as IconGauge } from "lucide-react";
+import { SIDEBAR_ID, SidebarCloseButton, useSidebar } from "@/components/ui/SidebarProvider";
 
 
 export type DmAdminTabKey =
@@ -188,11 +188,12 @@ export default function DmAdminSidebar({
   return (
     <aside id={SIDEBAR_ID} className={`dm-admin-sidebar${state}`}>
       {/* Brand / Logo */}
-      <div className="dm-admin-sidebar-brand">
+            <div className="dm-admin-sidebar-brand">
         <span className="dml-logo">
           <IconGauge size={22} />
         </span>
         <strong>{uiText("DM Digital")}</strong>
+        <SidebarCloseButton />
       </div>
 
       {/* Menu Navigasi */}
