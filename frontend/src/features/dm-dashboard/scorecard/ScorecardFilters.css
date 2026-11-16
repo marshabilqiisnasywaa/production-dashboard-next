@@ -758,3 +758,70 @@
 .dmf-panel.dmf-panel .dmf-preset {
   height: 1.75rem;
 }
+
+@media (max-width: 639px) {
+  .dmf-date-panel {
+    width: min(22rem, calc(100vw - 1.5rem));
+  }
+
+  .dmf-panel.dmf-panel .dmf-presets {
+    width: auto;
+    flex-direction: row;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .dmf-panel.dmf-panel .dmf-presets::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dmf-panel.dmf-panel .dmf-presets-title {
+    display: none;
+  }
+
+  .dmf-panel.dmf-panel .dmf-preset {
+    flex: none;
+    height: 1.875rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+  }
+
+  .dmf-panel.dmf-panel .dmf-preset.is-active {
+    border-color: var(--color-primary);
+  }
+
+  .dmf-panel.dmf-panel .dmf-cal-wrap {
+    padding: 0.75rem 2.25rem 1rem;
+  }
+
+  .dmf-panel.dmf-panel .dmf-cal,
+  .dmf-panel.dmf-panel .dmf-months {
+    width: 100%;
+  }
+
+  .dmf-panel.dmf-panel .dmf-grid {
+    width: 100% !important;
+  }
+
+  .dmf-panel.dmf-panel .dmf-weekday,
+  .dmf-panel.dmf-panel .dmf-day {
+    width: auto;
+  }
+
+  .dmf-panel.dmf-panel .dmf-weekday {
+    height: 1.75rem;
+  }
+
+  .dmf-panel.dmf-panel .dmf-day {
+    height: 2.25rem;
+  }
+
+  .dmf-panel.dmf-panel .dmf-day-btn {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.8125rem;
+  }
+}
