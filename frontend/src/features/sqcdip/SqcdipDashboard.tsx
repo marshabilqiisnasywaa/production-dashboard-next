@@ -1,5 +1,6 @@
 "use client";
 import CustomSelect from "@/components/shell/CustomSelect";
+import DateRangePicker, { type DateRange } from "@/components/ui/DateRangePicker";
 import type { ChartTimeTab } from "@/components/shell/ChartTimeTabs";
 import ChartTooltip from "@/components/shell/ChartTooltip";
 import { useMemo, useState } from "react";
@@ -118,8 +119,9 @@ function Icon({ name, size = 16 }: { name: "calendar"|"download"|"chevron"|"tren
 const onTarget = (kpi: Kpi) => kpi.direction === "lower" ? kpi.actual <= kpi.target : kpi.actual >= kpi.target;
 
 function Header({ tracker, onNew }: { tracker?: boolean; onNew?: () => void }) {
+  const [date,setDate] = useState<DateRange>({start:new Date(2025,8,26),end:new Date(2025,9,2)});
   return <header className="sq-header"><div><div className="sq-eyebrow">SQDCIP / {tracker ? "ABNORMAL TRACKER" : "OVERVIEW"}</div><h1>{tracker ? "Abnormal Tracker" : "SQDCIP"}</h1><p>{tracker ? "Kelola abnormal lintas kategori, faktor, dan area." : "Pantau performa Safety, Quality, Delivery, Cost, Inventory, dan Productivity."}</p></div><div className="sq-header-actions">
-    {!tracker && <><button className="sq-outline"><Icon name="calendar"/>02 Oct 2025</button><CustomSelect defaultValue="Semua Area" options={["Semua Area", ...areas]} /></>}
+    {!tracker && <><DateRangePicker value={date} onChange={setDate} /><CustomSelect defaultValue="Semua Area" options={["Semua Area", ...areas]} /></>}
     <button className="sq-outline"><Icon name="download"/>Export</button>{tracker&&<button className="sq-primary" onClick={onNew}><Icon name="plus"/>Abnormal Baru</button>}
   </div></header>;
 }

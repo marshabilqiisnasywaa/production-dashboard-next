@@ -179,7 +179,7 @@ main { min-width: 0; }
   border-bottom: 1px solid var(--border);
   backdrop-filter: none;
 }
-.dark .topbar { background: #0b1224; }
+.dark .topbar { background: #102018; }
 .navbar-left,.navbar-right { display: flex; align-items: center; }
 .navbar-left { gap: 11px; min-width: 0; }
 .navbar-right { gap: 8px; }

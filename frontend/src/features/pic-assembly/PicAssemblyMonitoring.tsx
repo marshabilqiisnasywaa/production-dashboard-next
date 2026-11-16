@@ -54,7 +54,7 @@ export default function PicAssemblyMonitoring({ module }: { module: AssemblyModu
           <p>{isAssembly ? "Output, cycle time, dan plan vs actual Line Assembly 01 - 07." : "Output line packing, sealing, dan boxing vs plan."}</p>
         </div>
         <div className="repair-actions">
-          <button className="repair-outline" type="button">07 Oct 2026</button>
+          <input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" />
         </div>
       </div>
 

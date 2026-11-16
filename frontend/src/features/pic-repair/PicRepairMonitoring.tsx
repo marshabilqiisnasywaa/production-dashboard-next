@@ -104,7 +104,7 @@ function PreassemblyDeepDive() {
           <p>Metric operasional dan tren histori harian area Pre-assembly.</p>
         </div>
         <div className="repair-actions">
-          <button className="repair-outline" type="button">07 Oct 2026</button>
+          <input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" />
         </div>
       </div>
 

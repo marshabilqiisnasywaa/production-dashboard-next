@@ -140,7 +140,7 @@ export default function PicServiceHome() {
           <p>Core metric summary for Service area: WIP Mainboard Service and WIP Service External.</p>
         </div>
         <div className="repair-actions">
-          <button className="repair-outline" type="button">07 Oct 2026</button>
+          <input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" />
           <button className="repair-primary text-white font-bold" type="button" onClick={() => setInputOpen(true)}>+ Input Data</button>
         </div>
       </div>

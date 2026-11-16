@@ -133,7 +133,7 @@ export function AbnormalityBoard({ records, addRecord, picName, areaOptions, def
         eyebrow={kicker}
         title="Abnormality Log"
         subtitle={description}
-        actions={<button className="qc-secondary-button" type="button">07 Oct 2026</button>}
+        actions={<input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" />}
         className="mb-0!"
       />
 

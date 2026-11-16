@@ -11,6 +11,7 @@ import {
   XAxis,
 } from "recharts";
 import Icon from "@/components/shell/Icon";
+import DateRangePicker, { type DateRange } from "@/components/ui/DateRangePicker";
 
 const chartData = [
   { day: "Mon", actual: 2.8, capacity: 3.4 },
@@ -56,7 +57,7 @@ function ChartLegend({ payload }: { payload?: readonly { value?: string; color?:
 }
 
 export default function WarehouseOverview() {
-  const [rangeOpen, setRangeOpen] = useState(false);
+  const [range, setRange] = useState<DateRange>({ start: new Date(2025, 5, 10), end: new Date(2025, 5, 16) });
   const [chartYear, setChartYear] = useState("2025");
   const [yearOpen, setYearOpen] = useState(false);
   const [activeBar, setActiveBar] = useState<number | null>(null);
@@ -65,10 +66,7 @@ export default function WarehouseOverview() {
     <>
       <div className="page-heading">
         <div><p>WAREHOUSE ANALYTICS</p><h1>Material overview</h1><span>Track inventory health and clearance performance.</span></div>
-        <div className="range-wrap">
-          <button className="filter-pill" onClick={() => setRangeOpen(!rangeOpen)}><Icon name="calendar" size={15} />Jun 10 – Jun 16<Icon name="chevron" size={12} /></button>
-          {rangeOpen && <div className="range-menu"><button>This week</button><button>Last 30 days</button><button>This quarter</button></div>}
-        </div>
+        <DateRangePicker value={range} onChange={setRange} />
       </div>
 
       <div className="bento-top">

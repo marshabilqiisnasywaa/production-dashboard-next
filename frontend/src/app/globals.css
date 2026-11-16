@@ -24,3 +24,201 @@
 @import "../styles/sqcdip.css";
 @import "../styles/morning-meeting.css";
 @import "../styles/pic-area.css";
+@import "../styles/date-range-picker.css";
+
+/* ===== Dark mode overrides ===== */
+
+@theme {
+  --color-slate-50: #F5F8F6;
+  --color-slate-100: #ECF5F0;
+  --color-slate-200: #E3EAE6;
+  --color-slate-300: #C9D6CF;
+  --color-slate-400: #8DA39A;
+  --color-slate-500: #6B7C73;
+  --color-slate-600: #52635A;
+  --color-slate-700: #2A3F34;
+  --color-slate-800: #1A2E24;
+  --color-slate-900: #112019;
+  --color-slate-950: #0D1714;
+}
+
+.dark .topbar { background: var(--sidebar); }
+
+.dark h1,
+.dark .page-header h1,
+.dark .page-heading h1,
+.dark .sq-header h1,
+.dark .repair-title-row h1,
+.dark .qc-page-header h1,
+.dark .mm-hero h1,
+.dark .pd-header h1,
+.dark .material-header h1,
+.dark .abnormal-header h1,
+.dark .oqc-header h1,
+.dark .repair-empty h1 { color: #ECF5F0 !important; }
+
+.dark .mml-pass-visibility,
+.dark .mml-pass-secondary:hover,
+.dark .mml-pass-gate__logout:hover,
+.dark .mml-pass-gate__eyebrow,
+.dark .mml-pass-modal__close:hover,
+.dark .mml-login__toggle,
+.dark .mml-login__chip:hover,
+.dark .mmu-eyebrow,
+.dark .mmu-secondary:hover,
+.dark .mmu-notice,
+.dark .mmu-row-actions button:hover,
+.dark .mmu-editor__close:hover,
+.dark .mm-hero span,
+.dark .mm-panel button:hover,
+.dark .mm-fold:hover,
+.dark .mm-card-actions button:hover,
+.dark .mm-important button:hover,
+.dark .mm-project-row span,
+.dark .mm-host-agenda b,
+.dark .mm-host-actions button:hover,
+.dark .mm-photo-compare span,
+.dark .mm-sq-thumb:hover,
+.dark .repair-eyebrow,
+.dark .repair-outline:hover,
+.dark .export-wrap > div button:hover,
+.dark .chart-toggle:hover,
+.dark .chart-toggle.active,
+.dark .attachment-thumb,
+.dark .pic-ai-btn,
+.dark .pic-ai-kicker,
+.dark .pic-pagination-controls button:hover:not(:disabled),
+.dark .pic-source.log,
+.dark .oqc-eyebrow,
+.dark .oqc-metric-value.down,
+.dark .oqc-metric-delta.down,
+.dark .pd-header span,
+.dark .pd-area-head>span,
+.dark .pd-area-card footer,
+.dark .pd-all-areas,
+.dark .off-target td button,
+.dark .pd-sq-badge,
+.dark .pd-abnormal-item b,
+.dark .pd-tracker-link,
+.dark .submenu button:hover,
+.dark .submenu button.current,
+.dark .ghost-button:hover,
+.dark .breadcrumb button:hover,
+.dark .language-menu b,
+.dark .topbar-logout:hover,
+.dark .packing-model-tabs button.active,
+.dark .packing-pill,
+.dark .abnormal-breadcrumb,
+.dark .abnormal-track-badge,
+.dark .mini-link,
+.dark .abnormal-chip,
+.dark .why-root,
+.dark .wizard-stepper button span,
+.dark .segmented-row button.active,
+.dark .review-why-item span,
+.dark .sqcdip-quality,
+.dark .sq-eyebrow,
+.dark .sq-outline:hover,
+.dark .sq-panel-head>button,
+.dark .sq-category-head>span,
+.dark .sq-kpi-head b,
+.dark .sq-badge,
+.dark .sq-sheet-head span,
+.dark .filter-chips button.active,
+.dark .sq-view-tag,
+.dark .qc-kicker,
+.dark .qc-filter-group button.active,
+.dark .qc-source-badge.fqc,
+.dark .year-filter b { color: #5FCB93; }
+
+.dark .sq-tiles>button.good>strong,
+.dark .sq-tiles>button.good.active>strong,
+.dark .sq-tiles>button.good em { color: #5FCB93; }
+.dark .sq-tiles>button.warning>strong,
+.dark .sq-tiles>button.warning.active>strong,
+.dark .sq-tiles>button.warning em { color: #FBBF24; }
+.dark .sq-tiles>button.bad>strong,
+.dark .sq-tiles>button.bad.active>strong,
+.dark .sq-tiles>button.bad em { color: #F87171; }
+
+.dark .cat-S { color: #4ADE80 !important; }
+.dark .cat-Q { color: #60A5FA !important; }
+.dark .cat-C { color: #FBBF24 !important; }
+.dark .cat-D { color: #C084FC !important; }
+.dark .cat-I { color: #38BDF8 !important; }
+.dark .cat-P { color: #34D399 !important; }
+
+.dark .period-tabs,
+.dark .sq-period,
+.dark .view-toggle,
+.dark .sq-detail-tabs { background: rgba(17,32,25,.72); }
+
+.dark .repair-status.good,
+.dark .sq-status.good,
+.dark .good-text { color: #5FCB93; }
+.dark .repair-status.good,
+.dark .sq-status.good { background: rgba(95,203,147,.16); font-weight: 600; }
+
+.dark .repair-status.bad,
+.dark .sq-status.bad,
+.dark .bad-text { color: #F87171; }
+.dark .repair-status.bad,
+.dark .sq-status.bad { background: rgba(248,113,113,.16); font-weight: 600; }
+
+/* ===== SQCDIP: panel Abnormal Hari Ini ===== */
+
+@media (min-width: 1201px) {
+  .sq-overview-main { grid-template-columns: minmax(0, 1fr) calc((100% - 60px) * 2 / 7 + 10px); }
+}
+
+.today-abnormal .sq-panel-head h2 { margin: 0 0 4px; font-size: 15px; white-space: nowrap; }
+.today-abnormal .sq-panel-head p { font-size: 11px; }
+.today-abnormal .sq-panel-head > button { font-size: 11px; white-space: nowrap; }
+
+.today-abnormal .today-list h3 { margin: 10px 0 4px; padding-right: 60px; font-size: 12px; font-weight: 300; line-height: 1.4; }
+.today-abnormal .today-list article {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--card) 93%, var(--app));
+}
+.today-abnormal .today-badges b { min-width: 22px; height: 22px; width: auto; border-radius: 7px; font-size: 10px; }
+.today-abnormal .today-badges span { font-size: 10px; }
+.today-abnormal .today-list h3 { margin: 10px 0 4px; padding-right: 60px; font-size: 12px; font-weight: 600; line-height: 1.4; }
+.today-abnormal .today-list p { font-size: 10px; }
+.today-abnormal .today-list em { top: 14px; right: 14px; }
+
+.today-abnormal .today-list .today-badges b {
+  background: rgba(var(--accent-rgb), .13) !important;
+  color: var(--accent-2) !important;
+}
+.dark .today-abnormal .today-list .today-badges b {
+  background: rgba(95,203,147,.18) !important;
+  color: #86EFAC !important;
+}
+
+.dark .today-abnormal .today-list em { font-size: 10px; font-weight: 600; padding: 4px 8px; }
+.dark .ab-status.closed,
+.dark .ab-status.closed-loop { color: #86EFAC; background: rgba(134,239,172,.18); }
+.dark .ab-status.on-progress,
+.dark .ab-status.in-progress { color: #FCD34D; background: rgba(252,211,77,.18); }
+.dark .ab-status.open { color: #FCA5A5; background: rgba(252,165,165,.18); }
+
+/* ===== Menimpa class Tailwind berakhiran "!" (harus di dalam layer utilities) ===== */
+
+@layer utilities {
+  .dark .repair-kpi:not([style*="border-color"]),
+  .dark .pic-kpi:not([style*="border-color"]) { border-color: rgba(255,255,255,.08) !important; }
+
+  .sq-panel.today-abnormal { padding: 0 !important; }
+  .today-abnormal .sq-panel-head {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    height: 64px !important;
+    min-height: 64px !important;
+    margin: 0 !important;
+    padding: 0 16px !important;
+    align-items: center !important;
+    border-bottom: 1px solid var(--line) !important;
+  }
+}

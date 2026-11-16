@@ -51,6 +51,7 @@
   --surface: #112019;
   --line: rgba(255,255,255,0.08);
   --text: #ECF5F0;
+  --heading: #ECF5F0;
   --muted: #AABBB2;
   --faint: #8DA39A;
   --canvas: #0E1713;
@@ -94,10 +95,14 @@ h1,
 .abnormal-header h1,
 .oqc-header h1,
 .repair-empty h1 {
-  color: #032B22 !important;
+  color: var(--heading, #032B22) !important;
   font-size: clamp(1.6rem, 2vw, 2.25rem);
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.04em;
   text-rendering: optimizeLegibility;
 }
+
+.dark .sq-eyebrow,
+.dark .repair-eyebrow,
+.dark .mm-hero span { color: #5FCB93; }

@@ -1,5 +1,6 @@
 "use client";
 import CustomSelect from "@/components/shell/CustomSelect";
+import DateRangePicker, { type DateRange } from "@/components/ui/DateRangePicker";
 import { useEffect, useState } from "react";
 import {
   Area,
@@ -143,6 +144,7 @@ export default function ProductionDashboard({ onNavigate }: { onNavigate: Naviga
   const [loading,setLoading]=useState(true);
   const [period,setPeriod]=useState("2025");
   const [hovered,setHovered]=useState<number|null>(null);
+  const [range,setRange]=useState<DateRange>({start:new Date(2025,8,30),end:new Date(2025,9,6)});
   useEffect(()=>{const timer=window.setTimeout(()=>setLoading(false),450);return()=>window.clearTimeout(timer)},[]);
   if(loading)return <div className="pd-skeleton"><i/><div>{Array.from({length:5},(_,index)=><b key={index}/>)}</div><section><b/><b/></section></div>;
   const kpiCards=[
@@ -152,7 +154,7 @@ export default function ProductionDashboard({ onNavigate }: { onNavigate: Naviga
     {name:"Workorder Close",value:"94%",target:"100%",delta:"-6.0%",go:"SQDCIP Overview"},
     {name:"Abnormal Terbuka",value:"7",unit:"kasus",target:"2 overdue",delta:"Needs action",go:"Abnormal Tracker"},
   ];
-  return <div className="production-dashboard"><header className="pd-header"><div><span>PRODUCTION ANALYTICS</span><h1>Production Overview</h1><p>Ringkasan performa semua area produksi</p></div><div><button><Icon name="calendar"/>30 Sep – 06 Oct 2025</button><button><Icon name="download"/>Export</button></div></header>
+  return <div className="production-dashboard"><header className="pd-header"><div><span>PRODUCTION ANALYTICS</span><h1>Production Overview</h1><p>Ringkasan performa semua area produksi</p></div><div><DateRangePicker value={range} onChange={setRange}/><button><Icon name="download"/>Export</button></div></header>
     <div className="pd-kpis">{kpiCards.map((item)=><KpiCard item={item} onClick={()=>onNavigate(item.go)} key={item.name} />)}</div>
     <div className="pd-row-two"><article className="pd-panel output-chart"><div className="pd-panel-head"><div><h2>Output vs Target</h2><p>Actual production output per day</p></div><CustomSelect value={period} options={["2025", "2024"]} onChange={(next) => setPeriod(next)} /></div><div className="pd-chart"><ResponsiveContainer><BarChart data={outputData} onMouseMove={(state)=>setHovered(typeof state?.activeTooltipIndex==="number"?state.activeTooltipIndex:null)} onMouseLeave={()=>setHovered(null)}><CartesianGrid vertical={false}/><XAxis dataKey="day" axisLine={false} tickLine={false} tickMargin={10}/><Tooltip cursor={{fill:"var(--chart-cursor)"}}/><Legend/><Bar dataKey="actual" name="Actual" fill="var(--chart-1)" radius={6} maxBarSize={28}>{outputData.map((_,index)=><Cell key={index} opacity={hovered===null||hovered===index?1:.6}/>)}</Bar><Bar dataKey="target" name="Target" fill="var(--chart-2)" radius={6} maxBarSize={28}>{outputData.map((_,index)=><Cell key={index} opacity={hovered===null||hovered===index?1:.6}/>)}</Bar></BarChart></ResponsiveContainer></div><footer><strong>Trending up by 5.2% this month <Icon name="trend"/></strong><span>Showing production output for the last 7 days</span></footer></article>
       <article className="pd-panel kpi-donut"><div className="pd-panel-head"><div><h2>Status KPI Semua Area</h2><p>Ringkasan pencapaian target</p></div></div><div className="pd-donut"><span><strong>25</strong><small>KPI</small></span></div><div className="pd-donut-legend"><span><i className="good"/>On Target <b>18</b></span><span><i className="bad"/>Off Target <b>7</b></span></div></article></div>

@@ -129,7 +129,7 @@ export default function PicRepairHome() {
           <p>Ringkasan metric inti morning review: WIP Pre-assembly, Rework, dan Warranty.</p>
         </div>
         <div className="repair-actions">
-          <button className="repair-outline" type="button">07 Oct 2026</button>
+          <input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" />
           {canInput && <button className="repair-primary text-white font-bold" type="button" onClick={() => setInputOpen(true)}>+ Input Data</button>}
         </div>
       </div>

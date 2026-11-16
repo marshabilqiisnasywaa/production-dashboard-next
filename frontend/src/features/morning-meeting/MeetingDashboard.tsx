@@ -128,7 +128,7 @@ export default function MeetingDashboard({ section = "overview", onNavigate }: {
           <p>{meta.subtitle}</p>
         </div>
         <div className="repair-actions">
-          <button className="repair-outline" type="button">07 Oct 2026</button>
+          <input type="date" defaultValue="2026-10-07" aria-label="Filter tanggal" />
           <button className="repair-outline" type="button" onClick={exportCsv}><Download size={14} />Export</button>
         </div>
       </div>

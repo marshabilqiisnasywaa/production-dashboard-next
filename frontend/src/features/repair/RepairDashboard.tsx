@@ -4,6 +4,7 @@ import ChartTooltip from "@/components/shell/ChartTooltip";
 import PeriodControl, { periodView, type PeriodKey } from "@/components/shell/PeriodControl";
 import ChartTimeTabs from "@/components/shell/ChartTimeTabs";
 import PageHeader from "@/components/ui/PageHeader";
+import DateRangePicker, { type DateRange } from "@/components/ui/DateRangePicker";
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -158,9 +159,10 @@ function NgProductionCard() {
 export function Header({ page, onInput }: { page: string; onInput: () => void }) {
   const [periodType,setPeriodType] = useState<PeriodKey>("Week");
   const [exportOpen,setExportOpen] = useState(false);
+  const [date,setDate] = useState<DateRange>({start:new Date(2025,8,24),end:new Date(2025,8,30)});
   return <div className="repair-header"><div><div className="repair-eyebrow">REPAIR CENTER</div><div className="repair-title-row"><h1>{page}</h1></div><p>Monitor performa repair dan quality secara real-time.</p></div><div className="repair-actions">
     <ChartTimeTabs activeTab={periodType} onChange={setPeriodType} ariaLabel="Repair period" />
-    <button className="repair-outline"><Glyph name="calendar"/>30 Sep 2025</button>
+    <DateRangePicker value={date} onChange={setDate} />
     <div className="export-wrap"><button className="repair-outline" onClick={()=>setExportOpen(!exportOpen)}><Glyph name="download"/>Export</button>{exportOpen&&<div><button>Excel (.xlsx)</button><button>PDF</button></div>}</div>
     <button className="repair-primary" onClick={onInput}><Glyph name="plus"/>Input Data</button>
   </div></div>;
