@@ -14,8 +14,18 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export default function SupervisorEscalationsPage() {
   const { text: uiText, locale: uiLocale } = useUiText();
-  const { escalatedRows, allProblemRows, escalationsError, escalationsReady, refreshEscalations } = useSupervisor();
+  const { escalatedRows, allProblemRows, escalationsError, escalationsReady, refreshEscalations, toggleProblemSolved, saveProblemSolution } = useSupervisor();
+  const [actionError, setActionError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+
+  async function handleToggleSolved(id: string, currentlySolved: boolean) {
+    setActionError(null);
+    try {
+      await toggleProblemSolved(id, currentlySolved);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Status masalah gagal disimpan.");
+    }
+  }
   const [statusFilter, setStatusFilter] = useState<ProblemFilter>("all");
   const [lineFilter, setLineFilter] = useState("all");
 
@@ -64,7 +74,7 @@ export default function SupervisorEscalationsPage() {
       <div className="dml-page-head dml-pb-heading">
         <div>
           <h1>{uiText("Eskalasi Masalah")}</h1>
-          <p>{uiText("Daftar masalah bawahan yang melewati tenggat waktu (due date) dan belum diselesaikan.")}</p>
+          <p>{uiText("Daftar masalah dari semua PIC yang melewati tenggat waktu (due date) dan belum diselesaikan.")}</p>
         </div>
       </div>
 
@@ -137,9 +147,12 @@ export default function SupervisorEscalationsPage() {
           </div>
         </div>
 
+        {actionError && <p role="alert">{actionError}</p>}
         {escalationsError ? <ProblemLoadError error={escalationsError} onRetry={refreshEscalations} /> : !escalationsReady ? <div className="dml-empty">{uiText("Memuat eskalasi masalah...")}</div> : <ProblemTable
           rows={visible}
-          emptyMessage={hasFilters ? uiText("Tidak ada masalah yang sesuai dengan filter.") : uiText("Tidak ada masalah bawahan yang tercatat saat ini.")}
+          onToggleSolved={handleToggleSolved}
+          onSaveSolution={saveProblemSolution}
+          emptyMessage={hasFilters ? uiText("Tidak ada masalah yang sesuai dengan filter.") : uiText("Tidak ada masalah yang tercatat saat ini.")}
         />}
       </section>
     </div>

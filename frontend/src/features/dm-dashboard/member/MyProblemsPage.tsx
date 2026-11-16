@@ -7,11 +7,20 @@ import "../leader/problems/problems.css"; // table styles shared with the Leader
 import { Card } from "@/components/ui/Card";
 import { ProblemTable } from "../leader/problems/components/ProblemTable";
 import { ProblemLoadError } from "../leader/problems/components/ProblemLoadError";
+import ProblemsPage from "../leader/problems/ProblemsPage";
 import { useMyProblems } from "./hooks/useMyProblems";
 
-/** "Masalah Saya": the Leader's Tracking Masalah table, but only the rows where this member is the PIC. */
+type ProblemView = "mine" | "all";
+
+const VIEWS: readonly { key: ProblemView; label: string }[] = [
+  { key: "mine", label: "Masalah saya" },
+  { key: "all", label: "Semua masalah" },
+];
+
+/** "Masalah Saya": rows where this user is the PIC, plus a read-only tab of every problem (only PICs can act). */
 export default function MyProblemsPage() {
   const { text: uiText } = useUiText();
+  const [view, setView] = useState<ProblemView>("mine");
   const { mine, open, escalated, solved, ready, toggleSolved, saveSolution, error, refresh } =
     useMyProblems();
   const [toast, setToast] = useState<string | null>(null);
@@ -50,7 +59,21 @@ export default function MyProblemsPage() {
         </div>
       </div>
 
-      <Card
+      <div className="dml-pb-sources" role="group" aria-label={uiText("Tampilan masalah")}>
+        {VIEWS.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            className={"dml-pb-source" + (view === item.key ? " is-active" : "")}
+            aria-pressed={view === item.key}
+            onClick={() => setView(item.key)}
+          >
+            {uiText(item.label)}
+          </button>
+        ))}
+      </div>
+
+      {view === "all" ? <ProblemsPage hideHeading /> : <Card
         flush
         title={uiText("Daftar masalah")}
         subtitle={uiText("{{v0}} terbuka · {{v1}} eskalasi SPV · {{v2}} selesai", { v0: open.length, v1: escalated, v2: solved })}
@@ -66,7 +89,7 @@ export default function MyProblemsPage() {
         ) : (
           <div className="dml-empty">{uiText("Memuat masalah…")}</div>
         )}
-      </Card>
+      </Card>}
 
       {toast && (
         <div

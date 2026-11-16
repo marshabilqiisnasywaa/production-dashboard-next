@@ -16,7 +16,7 @@ from app.models import Employee, Line
 from app.models.fivewhy import FiveWhyDocument
 from app.schemas_fivewhy import BUILT_IN_CATEGORIES, DocumentCategory, SimoDocumentIn
 from app.services.accounts import forbidden
-from app.services.fivewhy import document_access, line_leaders, pic_candidates, supervisor_for, upload_line_ids, validate_pic
+from app.services.fivewhy import document_access, document_write_access, line_leaders, pic_candidates, supervisor_for, upload_line_ids, validate_pic
 
 router = APIRouter(prefix="/fivewhy", tags=["fivewhy"])
 MAX_FILE_BYTES = 20 * 1024 * 1024
@@ -137,6 +137,12 @@ def upload_document(line_id: int = Form(gt=0), pic_id: int = Form(gt=0), title: 
 
 def document(db: Session, principal: Principal, document_id: str) -> FiveWhyDocument:
     row = db.scalar(select(FiveWhyDocument).where(FiveWhyDocument.id == document_id, document_access(db, principal)))
+    if row is None:
+        raise HTTPException(404, "Dokumen tidak ditemukan.")
+    return row
+
+def writable_document(db: Session, principal: Principal, document_id: str) -> FiveWhyDocument:
+    row = db.scalar(select(FiveWhyDocument).where(FiveWhyDocument.id == document_id, document_write_access(db, principal)))
     if row is None:
         raise HTTPException(404, "Dokumen tidak ditemukan.")
     return row

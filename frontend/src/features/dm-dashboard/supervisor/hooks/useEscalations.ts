@@ -1,20 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  meetingApi,
-  type DmMyProblem,
-  type DmSupervisorLine,
-  type DmSupervisorSubordinate,
-} from "../../api";
+import { meetingApi, type DmMyProblem } from "../../api";
 import { useNow } from "../../leader/hooks/useNow";
 import type { ProblemRow } from "../../leader/problems/types";
 import { getStatus, sortRows } from "../../leader/problems/utils";
 
-export function useEscalations(
-  allListItems: DmSupervisorSubordinate[],
-  dbLines: DmSupervisorLine[]
-): {
+export function useEscalations(): {
   rows: ProblemRow[];
   allRows: ProblemRow[];
   count: number;
@@ -22,6 +14,7 @@ export function useEscalations(
   error: string | null;
   loading: boolean;
   toggleSolved: (id: string, currentlySolved: boolean) => Promise<void>;
+  saveSolution: (id: string, solution: string) => Promise<void>;
   refresh: () => Promise<void>;
 } {
   const now = useNow(60_000); // Evaluasi ulang keterlambatan waktu setiap menit
@@ -47,28 +40,7 @@ export function useEscalations(
     fetchEscalations();
   }, [fetchEscalations]);
 
-  const subordinateIds = useMemo(
-    () => new Set(allListItems.map((item) => item.id)),
-    [allListItems],
-  );
-  const subordinateNames = useMemo(
-    () =>
-      new Set(
-        allListItems
-          .map((item) => item.name.trim().toLowerCase())
-          .filter((name) => name !== ""),
-      ),
-    [allListItems],
-  );
-
-  const subordinateItems = useMemo<DmMyProblem[]>(() => {
-    if (!items) return [];
-    return items.filter((p) =>
-      p.picId != null
-        ? subordinateIds.has(p.picId)
-        : subordinateNames.has((p.picName ?? "").trim().toLowerCase()),
-    );
-  }, [items, subordinateIds, subordinateNames]);
+  const subordinateItems = useMemo<DmMyProblem[]>(() => items ?? [], [items]);
 
   // Filter: HANYA masalah yang belum selesai DAN sudah melewati tenggat waktu (Overdue)
   const rows = useMemo<ProblemRow[]>(() => {
@@ -88,6 +60,7 @@ export function useEscalations(
 
       escalatedOnly.push({
         id: String(p.id),
+        canEdit: p.canEdit ?? false,
         date: p.date,
         sessionLabel: p.sessionLabel ?? "-",
         line: p.lineCode ?? "-",
@@ -120,6 +93,7 @@ export function useEscalations(
 
       return {
         id: String(p.id),
+        canEdit: p.canEdit ?? false,
         date: p.date,
         sessionLabel: p.sessionLabel ?? "-",
         line: p.lineCode ?? "-",
@@ -156,7 +130,7 @@ export function useEscalations(
 
       try {
         await meetingApi.setProblemStatus(Number(id), nextStatus);
-      } catch {
+      } catch (err) {
         setItems((prev) =>
           prev
             ? prev.map((p) =>
@@ -164,10 +138,18 @@ export function useEscalations(
               )
             : prev
         );
+        throw err;
       }
     },
     []
   );
+
+  const saveSolution = useCallback(async (id: string, solution: string) => {
+    const updated = await meetingApi.setProblemSolution(Number(id), solution);
+    setItems((prev) =>
+      prev ? prev.map((p) => (String(p.id) === id ? { ...updated, canEdit: p.canEdit } : p)) : prev
+    );
+  }, []);
 
   return {
     rows,
@@ -177,6 +159,7 @@ export function useEscalations(
     loading,
     ready: !loading && now !== null && items !== null,
     toggleSolved,
+    saveSolution,
     refresh: fetchEscalations,
   };
 }

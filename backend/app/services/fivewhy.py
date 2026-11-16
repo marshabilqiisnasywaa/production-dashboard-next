@@ -89,7 +89,7 @@ def validate_pic(db: Session, principal: Principal, line_id: int, pic_id: int) -
     return pic
 
 
-def document_access(db: Session, principal: Principal):
+def document_write_access(db: Session, principal: Principal): 
     if principal.is_admin or principal.role == "hod":
         return true()
     employee = principal.employee
@@ -100,13 +100,10 @@ def document_access(db: Session, principal: Principal):
     if principal.role == "leader":
         return or_(own, FiveWhyDocument.line_id.in_(leader_line_ids(db, employee.id)))
     if principal.role == "supervisor":
-        same_name = list(db.scalars(select(Employee.id).where(
-            Employee.role == "supervisor", Employee.is_active.is_(True),
-            func.lower(func.trim(Employee.name)) == employee.name.strip().lower(),
-        )))
-        direct = Employee.supervisor_id == employee.id
-        if same_name == [employee.id]:
-            direct = or_(direct, and_(Employee.supervisor_id.is_(None), func.lower(func.trim(Employee.supervisor)) == employee.name.strip().lower()))
-        subordinates = select(Employee.id).where(direct)
-        return or_(own, pic_id.in_(subordinates))
+        return true()
     return own
+
+def document_access(db: Session, principal: Principal):          # ← tambah, taruh setelah baris 104
+    if principal.is_admin or principal.role in ("hod", "supervisor", "leader", "member"):
+        return true()
+    return FiveWhyDocument.id.is_(None)

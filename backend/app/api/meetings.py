@@ -904,23 +904,8 @@ def list_problems(
 ) -> list[myProblemOut]:
     employee = principal.employee
 
-    # 1. Tentukan lini apa saja yang boleh diakses oleh user ini
-    if principal.role == "member":
-        if not employee:
-            return []
-        user_line_ids = [l.id for _, l, _ in active_lines(db, employee.id)]
-        if not user_line_ids:
-            return []
-        
-        # Jika difilter per lini tertentu, pastikan lini tersebut memang milik user
-        if line_id is not None:
-            if line_id not in user_line_ids:
-                raise HTTPException(status_code=403, detail="Akses ditolak: Anda tidak memiliki akses ke lini ini.")
-            target_line_ids = [line_id]
-        else:
-            target_line_ids = user_line_ids
-    else:
-        target_line_ids = [line_id] if line_id is not None else None
+    # 1. Semua role boleh melihat masalah semua lini; hanya PIC yang bisa mengubahnya (can_edit)
+    target_line_ids = [line_id] if line_id is not None else None
 
     # 2. Query masalah meeting dari database
     stmt = (
@@ -944,51 +929,20 @@ def list_supervisor_escalations(
     principal: Principal = Depends(get_active_principal),
 ) -> list[myProblemOut]:
     """
-    Mengambil daftar masalah meeting milik bawahan supervisor yang belum selesai.
-    Filter eskalasi waktu dilakukan berdasarkan due_date.
+    Mengambil seluruh masalah meeting DM dan workshop yang belum selesai, dari semua PIC.
+    Filter eskalasi waktu dilakukan berdasarkan due_date. Hanya PIC yang bisa mengubahnya (can_edit).
     """
-    spv_emp = principal.employee
-
-    # 1. Jika role supervisor, cari siapa saja bawahan langsungnya di tabel employees
-    if principal.role == "supervisor":
-        if not spv_emp:
-            return []
-        
-        # Subordinate filter: cek supervisor_id atau supervisor name
-        sub_stmt = select(Employee.id, Employee.name).where(
-            or_(
-                Employee.supervisor_id == spv_emp.id,
-                func.lower(func.trim(Employee.supervisor)) == spv_emp.name.strip().lower(),
-            )
-        )
-        subordinates = db.execute(sub_stmt).all()
-        if not subordinates:
-            return []
-        
-        sub_ids = [sub.id for sub in subordinates]
-        sub_names = [sub.name.strip().lower() for sub in subordinates if sub.name]
-
-        pic_filter = problem_pic_filter(DmMeetingSummary, sub_ids, sub_names)
-    else:
-        # Jika Admin / Manager, dapat melihat seluruh eskalasi
-        pic_filter = None
-
-    # 2. Query masalah yang statusnya belum selesai (bukan 'resolved')
+    employee = principal.employee
     stmt = (
         select(DmMeetingSummary, DmMeetingSession)
         .join(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
         .where(DmMeetingSummary.status != "resolved")
+        .order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
     )
-
-    if pic_filter is not None:
-        stmt = stmt.where(pic_filter)
-
-    stmt = stmt.order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
     rows = [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
-    if principal.role == "supervisor":
-        rows += workshop_problems.unresolved_for_pics(db, sub_ids, sub_names)
-    else:
-        rows += workshop_problems.unresolved_for_pics(db, None, None)
+    rows += workshop_problems.unresolved_for_pics(db, None, None)
+    for row in rows:
+        row.can_edit = employee is not None and is_pic(row, employee)
     return sorted(rows, key=lambda row: (row.date, abs(row.id)), reverse=True)
 
 

@@ -101,29 +101,33 @@ class ProblemAccessTests(unittest.TestCase):
         self.assertEqual({row.id for row in rows if row.can_edit}, own)
         self.assertEqual({row.id for row in rows if not row.can_edit}, others)
 
-    def test_member_tracking_remains_restricted_to_assigned_lines(self):
-        employee = self.people[0]
+    def test_member_tracking_includes_all_lines_but_edits_only_own(self):
+        employee, other = self.people[:2]
         board = self.db.query(Board).filter(Board.line_id == self.lines[0].id).one()
         self.db.add(BoardMember(board_id=board.id, employee_id=employee.id))
         self.db.commit()
-        expected = {self.problem(employee), self.problem(employee, workshop=True)}
-        self.problem(employee, line=1)
-        self.problem(employee, workshop=True, line=1)
-        principal = Principal(employee=employee)
-        self.assertEqual({row.id for row in list_problems(None, self.db, principal)}, expected)
-        with self.assertRaises(HTTPException) as error:
-            list_problems(self.lines[1].id, self.db, principal)
-        self.assertEqual(error.exception.status_code, 403)
+        own = {self.problem(employee), self.problem(employee, workshop=True)}
+        others = {
+            self.problem(other, line=1), self.problem(other, workshop=True, line=1),
+            self.problem(employee, line=1), self.problem(employee, workshop=True, line=1),
+        }
+        rows = list_problems(None, self.db, Principal(employee=employee))
+        self.assertEqual({row.id for row in rows}, own | others)
+        self.assertEqual({row.id for row in rows if row.can_edit}, own | {
+            row.id for row in rows if row.id in others and row.pic_id == employee.id
+        })
+        self.assertEqual({row.id for row in list_problems(self.lines[1].id, self.db, Principal(employee=employee))}, others)
 
-    def test_escalations_do_not_match_another_pic_with_same_name(self):
+    def test_escalations_show_all_pics_but_edit_only_own(self):
         subordinate, outsider, supervisor = self.people
         subordinate.supervisor_id = supervisor.id
         self.db.commit()
-        expected = {self.problem(subordinate), self.problem(subordinate, workshop=True)}
-        self.problem(outsider)
-        self.problem(outsider, workshop=True)
+        subordinate_problems = {self.problem(subordinate), self.problem(subordinate, workshop=True)}
+        outsider_problems = {self.problem(outsider), self.problem(outsider, workshop=True)}
+        supervisor_problems = {self.problem(supervisor), self.problem(supervisor, workshop=True)}
         rows = list_supervisor_escalations(self.db, Principal(employee=supervisor))
-        self.assertEqual({row.id for row in rows}, expected)
+        self.assertEqual({row.id for row in rows}, subordinate_problems | outsider_problems | supervisor_problems)
+        self.assertEqual({row.id for row in rows if row.can_edit}, supervisor_problems)
 
     def test_shared_problem_has_one_id_for_all_pics_and_lines(self):
         first, second, outsider = self.people

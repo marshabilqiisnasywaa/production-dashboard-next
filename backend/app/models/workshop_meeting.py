@@ -106,6 +106,7 @@ class WorkshopMeetingSummary(Base):
     line_code: Mapped[str | None] = mapped_column(String(32))
     status: Mapped[str] = mapped_column(String(16), default="open", server_default="open")
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_escalated_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     session: Mapped["WorkshopMeetingSession"] = relationship("WorkshopMeetingSession", back_populates="summaries")

@@ -38,6 +38,8 @@ interface SupervisorContextValue {
   escalationsError: string | null;
   escalationsReady: boolean;
   refreshEscalations: () => Promise<void>;
+  toggleProblemSolved: (id: string, currentlySolved: boolean) => Promise<void>;
+  saveProblemSolution: (id: string, solution: string) => Promise<void>;
   totalCount: number;
   submittedCount: number;
   pendingApprovalsCount: number;
@@ -172,7 +174,9 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
     error: escalationsError,
     ready: escalationsReady,
     refresh: refreshEscalations,
-  } = useEscalations(allListItems, dbLines);
+    toggleSolved: toggleProblemSolved,
+    saveSolution: saveProblemSolution,
+  } = useEscalations();
 
   const totalCount = allListItems.length;
   const submittedCount = allListItems.filter((item) => Boolean(item.submission)).length;
@@ -289,6 +293,8 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
       escalationsError,
       escalationsReady,
       refreshEscalations,
+      toggleProblemSolved,
+      saveProblemSolution,
       totalCount,
       submittedCount,
       pendingApprovalsCount,
@@ -321,6 +327,8 @@ export function SupervisorProvider({ children }: { children: ReactNode }) {
       escalationsError,
       escalationsReady,
       refreshEscalations,
+      toggleProblemSolved,
+      saveProblemSolution,
       totalCount,
       submittedCount,
       pendingApprovalsCount,

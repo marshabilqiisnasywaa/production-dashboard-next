@@ -19,6 +19,7 @@ from app.models import (
     Workshop,
     WorkshopMeetingSession,
     WorkshopMeetingSetting,
+    WorkshopMeetingSummary,
 )
 from app.services.holidays import is_holiday
 from app.services.meeting_schedule import Slot, parse_days, slots_for_day
@@ -247,20 +248,19 @@ async def check_escalated_reminders(db: Session, now: datetime):
         return
 
     now_iso = now.strftime("%Y-%m-%dT%H:%M")
-    stmt = (
-        select(DmMeetingSummary)
-        .where(
-            DmMeetingSummary.status != "resolved",
-            DmMeetingSummary.due_date.isnot(None),
-            DmMeetingSummary.due_date < now_iso,
-            or_(
-                DmMeetingSummary.last_escalated_on.is_(None),
-                DmMeetingSummary.last_escalated_on < today,
-            ),
-        )
-        .order_by(DmMeetingSummary.due_date, DmMeetingSummary.id)
-    )
-    overdue_summaries = db.scalars(stmt).all()
+    overdue_summaries = []
+    for model in (DmMeetingSummary, WorkshopMeetingSummary):
+        overdue_summaries += db.scalars(
+            select(model)
+            .where(
+                model.status != "resolved",
+                model.due_date.isnot(None),
+                model.due_date < now_iso,
+                or_(model.last_escalated_on.is_(None), model.last_escalated_on < today),
+            )
+            .order_by(model.due_date, model.id)
+        ).all()
+    overdue_summaries.sort(key=lambda summary: summary.due_date)
 
     for start in range(0, len(overdue_summaries), ESCALATION_BATCH_SIZE):
         batch = overdue_summaries[start:start + ESCALATION_BATCH_SIZE]

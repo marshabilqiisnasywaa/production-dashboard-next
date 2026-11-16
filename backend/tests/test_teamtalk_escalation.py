@@ -139,6 +139,28 @@ class EscalationReminderTests(unittest.TestCase):
         self.db.flush()
         self.assertEqual(self.run_check(datetime(2026, 11, 4, 10, 0)).call_count, 0)
 
+    def test_workshop_problem_is_escalated_once_per_day(self):
+        from app.models import WorkshopMeetingSession, WorkshopMeetingSummary
+
+        self.summary.status = "resolved"
+        session = WorkshopMeetingSession(
+            workshop_id=self.db.scalar(select(Workshop.id)), date=datetime(2026, 11, 4).date(),
+            label="Workshop Meeting", scheduled_time="08:00",
+        )
+        self.db.add(session)
+        self.db.flush()
+        workshop_summary = WorkshopMeetingSummary(
+            session_id=session.id, problem="Material kurang", pic_name="PIC Workshop",
+            due_date="2026-11-04T09:10", line_code="TEST0", status="open",
+        )
+        self.db.add(workshop_summary)
+        self.db.flush()
+        notify = self.run_check(datetime(2026, 11, 4, 10, 0))
+        self.assertEqual(notify.call_count, 1)
+        self.assertEqual([item["problem"] for item in notify.call_args.args[0]], ["Material kurang"])
+        self.assertEqual(workshop_summary.last_escalated_on, datetime(2026, 11, 4).date())
+        self.assertEqual(self.run_check(datetime(2026, 11, 4, 10, 30)).call_count, 0)
+
     def test_failed_send_is_retried(self):
         failing = AsyncMock(return_value=False)
         with patch.object(teamtalk_scheduler, "notify_escalated_problems", failing):
