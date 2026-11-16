@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.models import Board, BoardMember, DmGroup, Employee, Line
 
 
-TEAM_SLOTS = {"PROD": 1, "PE": 2, "QC": 3, "ME": 4}
+TEAM_SLOTS = {"PROD": (1,), "PE": (2, 3), "QC": (4,), "ME": (5,)}
 
 
 def team_department(value: str | None) -> str:
@@ -15,12 +15,20 @@ def team_department(value: str | None) -> str:
     return "QC" if department in {"QA", "QUALITY", "QUALITY CONTROL"} else department
 
 
+def effective_slot(member: BoardMember, employee: Employee) -> int:
+    slots = TEAM_SLOTS.get(team_department(employee.dept))
+    if slots is None:
+        return member.sort_order
+    return member.sort_order if member.sort_order in slots else slots[0]
+
+
 def validate_team_slot(
     db: Session, board_id: int, employee: Employee, exclude_member_id: int | None = None,
+    requested: int | None = None,
 ) -> int:
     department = team_department(employee.dept)
-    slot = TEAM_SLOTS.get(department)
-    if slot is None:
+    slots = TEAM_SLOTS.get(department)
+    if slots is None:
         raise HTTPException(400, "Departemen anggota tim harus PROD, PE, Quality/QC, atau ME.")
     if department == "PROD" and employee.role != "leader":
         raise HTTPException(400, "Slot 1 hanya untuk karyawan PROD dengan role Leader.")
@@ -35,7 +43,16 @@ def validate_team_slot(
         .join(Employee, Employee.id == BoardMember.employee_id)
         .where(BoardMember.board_id == board_id, BoardMember.ended_at.is_(None))
     ).all()
-    for member, person in members:
-        if member.id != exclude_member_id and team_department(person.dept) == department:
-            raise HTTPException(409, f"Slot {slot} ({department}) sudah terisi. Lepas anggota lama terlebih dahulu.")
-    return slot
+    peers = [
+        effective_slot(member, person) for member, person in members
+        if member.id != exclude_member_id and team_department(person.dept) == department
+    ]
+    free = [slot for slot in slots if slot not in peers]
+    if requested in slots:
+        if requested not in free:
+            raise HTTPException(409, f"Slot {requested} ({department}) sudah terisi. Lepas anggota lama terlebih dahulu.")
+        return requested
+    if len(peers) >= len(slots) or not free:
+        label = ", ".join(str(slot) for slot in slots)
+        raise HTTPException(409, f"Slot {label} ({department}) sudah terisi. Lepas anggota lama terlebih dahulu.")
+    return free[0]

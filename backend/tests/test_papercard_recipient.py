@@ -165,5 +165,45 @@ class PapercardRecipientTests(unittest.TestCase):
         received = self.overview(self.alternate)
         self.assertEqual({item["lineId"] for item in received}, {self.line.id, second.id})
 
+    def test_second_pe_sees_first_pe_card_and_cannot_overwrite_it(self):
+        pe_supervisor = Employee(employee_no="SPV5", name="Supervisor PE Utama", role="supervisor", dept="PE", must_change_password=False)
+        self.db.add(pe_supervisor)
+        self.db.flush()
+        structure = Employee(employee_no="PE1", name="PE Structure", role="member", dept="PE", supervisor_id=pe_supervisor.id, must_change_password=False)
+        electrical = Employee(employee_no="PE2", name="PE Electrical", role="member", dept="PE", supervisor_id=pe_supervisor.id, must_change_password=False)
+        self.db.add_all([structure, electrical])
+        self.db.flush()
+        board = self.db.scalar(select(Board).where(Board.line_id == self.line.id))
+        self.db.add_all([
+            BoardMember(board_id=board.id, employee_id=structure.id, sort_order=2),
+            BoardMember(board_id=board.id, employee_id=electrical.id, sort_order=3),
+            PapercardTemplate(workshop_id=self.workshop.id, line_id=self.line.id, department="PE", name="Template PE", template_data={}),
+        ])
+        self.db.commit()
+
+        def send(employee, status="OK"):
+            return self.client.post("/api/papercards/submissions", headers=self.headers(employee), json={
+                "lineId": self.line.id, "department": "PE", "date": self.day, "shift": "Shift 1",
+                "answers": [{"itemId": "q1", "status": status}],
+            })
+
+        first = send(electrical)
+        self.assertEqual(first.status_code, 200, first.text)
+        for employee in (structure, electrical):
+            listed = self.client.get("/api/papercards/submissions", headers=self.headers(employee), params={"date": self.day})
+            self.assertEqual([s["id"] for s in listed.json()], [first.json()["id"]])
+            self.assertEqual(listed.json()[0]["employeeName"], "PE Electrical")
+        blocked = send(structure, "NG")
+        self.assertEqual(blocked.status_code, 409)
+        self.assertIn("PE Electrical", blocked.json()["detail"])
+        stored = self.db.get(PapercardSubmission, first.json()["id"])
+        self.assertEqual(stored.answers[0]["status"], "OK")
+        self.assertEqual(stored.employee_id, electrical.id)
+        self.assertEqual(self.approve(stored.id, pe_supervisor, "rejected").status_code, 200)
+        revised = send(structure)
+        self.assertEqual(revised.status_code, 200, revised.text)
+        self.assertEqual(revised.json()["employeeName"], "PE Structure")
+        self.assertEqual(len(list(self.db.scalars(select(PapercardSubmission).where(PapercardSubmission.department == "PE")))), 1)
+
     def test_member_cannot_open_supervisor_overview(self):
         self.assertEqual(self.client.get("/api/papercards/supervisor/overview", headers=self.headers(self.member)).status_code, 403)

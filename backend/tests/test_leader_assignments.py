@@ -311,10 +311,40 @@ class LeaderAssignmentTests(unittest.TestCase):
             Employee(id=4, employee_no="E4", name="Maintenance", dept="ME", role="member"),
         ])
         self.db.commit()
-        for employee_id, expected in [(1, 1), (2, 2), (3, 3), (4, 4)]:
+        for employee_id, expected in [(1, 1), (2, 2), (3, 4), (4, 5)]:
             result = add_member(1, MemberIn(employee_pk=employee_id, sort_order=99), self.db, self.admin)
             self.assertEqual(result.sort_order, expected)
             self.assertEqual(self.db.get(BoardMember, result.id).sort_order, expected)
+
+    def test_two_pe_members_share_slots_two_and_three(self):
+        from app.api.admin import add_member, release_member
+        from app.schemas import MemberIn
+
+        self.db.get(Employee, 1).dept = "PE"
+        self.db.get(Employee, 2).dept = "PE"
+        self.db.add(Employee(id=3, employee_no="E3", name="Electrical", dept="PE", role="member"))
+        self.db.commit()
+        electrical = add_member(1, MemberIn(employee_pk=1, sort_order=3), self.db, self.admin)
+        structure = add_member(1, MemberIn(employee_pk=2, sort_order=2), self.db, self.admin)
+        self.assertEqual((structure.sort_order, electrical.sort_order), (2, 3))
+        with self.assertRaises(HTTPException) as caught:
+            add_member(1, MemberIn(employee_pk=3), self.db, self.admin)
+        self.assertEqual(caught.exception.status_code, 409)
+        release_member(structure.id, self.db, self.admin)
+        refill = add_member(1, MemberIn(employee_pk=3, sort_order=2), self.db, self.admin)
+        self.assertEqual(refill.sort_order, 2)
+
+    def test_requested_pe_slot_cannot_be_taken_twice(self):
+        from app.api.admin import add_member
+        from app.schemas import MemberIn
+
+        self.db.get(Employee, 1).dept = "PE"
+        self.db.get(Employee, 2).dept = "PE"
+        self.db.commit()
+        add_member(1, MemberIn(employee_pk=1, sort_order=3), self.db, self.admin)
+        with self.assertRaises(HTTPException) as caught:
+            add_member(1, MemberIn(employee_pk=2, sort_order=3), self.db, self.admin)
+        self.assertEqual(caught.exception.status_code, 409)
 
     def test_duplicate_department_is_rejected(self):
         from app.api.admin import add_member

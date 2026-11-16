@@ -330,7 +330,7 @@ def add_member(line_id: int, body: MemberIn, db: Session = Depends(get_db), admi
             f"Ditolak: {employee.name} dari departemen {employee_dept or 'tanpa departemen'}, "
             f"hanya petugas departemen {target_dept} yang bisa mengisi atau mewakili papercard {target_dept}."
         )
-    slot = validate_team_slot(db, board.id, employee)
+    slot = validate_team_slot(db, board.id, employee, requested=body.sort_order)
     has_other_line = db.scalar(
         select(BoardMember.id).where(
             BoardMember.employee_id == employee.id,
@@ -387,7 +387,7 @@ def update_member(member_id: int, body: MemberUpdate, db: Session = Depends(get_
     if "position" in sent:
         employee.position = body.position
     if "sort_order" in sent and body.sort_order is not None:
-        slot = validate_team_slot(db, member.board_id, employee, member.id)
+        slot = validate_team_slot(db, member.board_id, employee, member.id, requested=body.sort_order)
         if body.sort_order != slot:
             raise HTTPException(400, "Nomor tim ditentukan otomatis dari departemen karyawan.")
         member.sort_order = slot

@@ -307,13 +307,36 @@
   text-transform: uppercase;
 }
 
-/* Team Grid (2x2) */
+/* Team Grid: 2 columns by default; with five members the last card spans the row,
+   and once the column is wide enough for three cards it becomes 3 + 2 */
+.dm-col-right {
+  container-type: inline-size;
+}
+
 .dm-team-grid {
   flex: 1 1 auto;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-rows: minmax(0, 1fr);
   gap: 0.8rem;
+}
+
+.dm-team-grid--five > .dm-member-card:last-child {
+  grid-column: 1 / -1;
+}
+
+@container (min-width: 52rem) {
+  .dm-team-grid--five {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .dm-team-grid--five > .dm-member-card {
+    grid-column: span 2;
+  }
+
+  .dm-team-grid--five > .dm-member-card:nth-child(n + 4) {
+    grid-column: span 3;
+  }
 }
 
 /* Member Card */

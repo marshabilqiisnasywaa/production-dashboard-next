@@ -3,7 +3,14 @@
 .ltm-native-dialog[open] { display: flex; align-items: center; justify-content: center; }
 .ltm-native-dialog::backdrop { background: rgba(15, 23, 42, .55); }
 .ltm-fixed-team { display: flex; flex-direction: column; gap: 16px; }
-.ltm-fixed-team .ltm-slots-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ltm-fixed-team .ltm-slots-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.ltm-fixed-team .ltm-slots-grid > .ltm-slot-card { grid-column: span 2; }
+.ltm-fixed-team .ltm-slots-grid > .ltm-slot-card:nth-child(n + 4) { grid-column: span 3; }
+@media (max-width: 860px) {
+  .ltm-fixed-team .ltm-slots-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ltm-fixed-team .ltm-slots-grid > .ltm-slot-card, .ltm-fixed-team .ltm-slots-grid > .ltm-slot-card:nth-child(n + 4) { grid-column: auto; }
+  .ltm-fixed-team .ltm-slots-grid > .ltm-slot-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
 .ltm-fixed-note { margin: 0; color: #64748b; font-size: 13px; line-height: 1.5; }
 .ltm-fixed-occupant { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
 .ltm-fixed-error { margin: 0; color: #b42318; font-size: 13px; line-height: 1.5; }
@@ -14,7 +21,10 @@
 .ltm-fixed-candidates button:hover { background: #f3f4f6; }
 .ltm-fixed-candidates button:focus-visible { outline: 2px solid #046a38; outline-offset: -2px; }
 .ltm-fixed-candidates span { color: #64748b; }
-@media (max-width: 640px) { .ltm-fixed-team .ltm-slots-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  .ltm-fixed-team .ltm-slots-grid { grid-template-columns: minmax(0, 1fr); }
+  .ltm-fixed-team .ltm-slots-grid > .ltm-slot-card:last-child:nth-child(odd) { grid-column: auto; }
+}
 .ltm-modal-backdrop {
   position: fixed;
   inset: 0;

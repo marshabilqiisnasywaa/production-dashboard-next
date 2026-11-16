@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Board, BoardMember, Employee, Line, MpvAward, Workshop
 from app.schemas import LineOut, MemberOut, MpvOut, PublicBoardOut
-from app.services.team_slots import TEAM_SLOTS, team_department
+from app.services.team_slots import TEAM_SLOTS, effective_slot, team_department
 
 RESERVED_SLUGS = {"admin", "masuk", "akun"}
 
@@ -50,7 +50,7 @@ def active_members(db: Session, board_id: int) -> list[tuple[BoardMember, Employ
     ).all()
     return sorted(
         [(row[0], row[1]) for row in rows],
-        key=lambda row: (TEAM_SLOTS.get(team_department(row[1].dept), 99), row[0].id),
+        key=lambda row: (effective_slot(row[0], row[1]) if team_department(row[1].dept) in TEAM_SLOTS else 99, row[0].id),
     )
 
 
@@ -65,7 +65,7 @@ def member_out(member: BoardMember, employee: Employee) -> MemberOut:
         work_phone=employee.work_phone,
         photo_url=employee.photo_url,
         position=employee.position,
-        sort_order=TEAM_SLOTS.get(team_department(employee.dept), member.sort_order),
+        sort_order=effective_slot(member, employee),
         is_substitute=member.is_substitute,
     )
 

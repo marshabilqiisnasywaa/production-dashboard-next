@@ -754,6 +754,13 @@ def submit_papercard(
                 status_code=400,
                 detail="Papercard hari ini sudah disetujui oleh Supervisor dan tidak dapat diubah lagi.",
             )
+        if existing.employee_id != emp_id and existing.approval_status != "rejected":
+            filler = db.get(Employee, existing.employee_id)
+            raise HTTPException(
+                status_code=409,
+                detail=f"Papercard {dept} hari ini sudah diisi oleh {filler.name if filler else 'rekan satu departemen'}.",
+            )
+        existing.employee_id = emp_id
         existing.answers = payload.answers
         existing.abnormal_notes = result_notes
         existing.status = result_status

@@ -27,7 +27,11 @@ import {
   UsersIcon,
 } from "./AdminIcons";
 import { UserMenu } from "../shared/UserMenu";
-import { SidebarBackdrop, SidebarProvider, SidebarToggle } from "@/components/ui/SidebarProvider";
+import {
+  SidebarBackdrop,
+  SidebarProvider,
+  SidebarToggle,
+} from "@/components/ui/SidebarProvider";
 import { Layers, Pencil, Trash2 } from "lucide-react";
 import WorkshopManager from "./WorkshopManager";
 import WorkshopScheduleCard from "./WorkshopScheduleCard";
@@ -172,7 +176,10 @@ export default function DmAdminPage() {
 }
 
 const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
-  "history-import": { crumb: "Impor Histori", title: "Impor Histori Papercard & Standup Meeting" },
+  "history-import": {
+    crumb: "Impor Histori",
+    title: "Impor Histori Papercard & Standup Meeting",
+  },
   dashboard: {
     crumb: "Dashboard",
     title: "Dashboard Lini: KPI, Absensi, dan Meeting",
@@ -213,7 +220,8 @@ const ADMIN_TAB_HEADERS: Record<
 > = {
   "history-import": {
     title: "Impor Histori Papercard & Standup Meeting",
-    description: "Upload workbook asesmen, cocokkan line, dan periksa histori sebelum disimpan.",
+    description:
+      "Upload workbook asesmen, cocokkan line, dan periksa histori sebelum disimpan.",
   },
   workshop: {
     title: "Line, Workshop & Tim",
@@ -245,7 +253,7 @@ const ADMIN_TAB_HEADERS: Record<
     description:
       "Pantau tindak lanjut masalah DM meeting dan temuan NG papercard harian.",
   },
-    history: {
+  history: {
     title: "Riwayat Papercard & Standup Meeting",
     description:
       "Telusuri riwayat papercard dan standup meeting per tanggal, line, dan shift.",
@@ -279,10 +287,12 @@ function AdminWorkspace({
   const [papercardSub, setPapercardSub] = useState<
     "template" | "workshop" | "meeting" | "holiday"
   >("template");
-  const [problemSub, setProblemSub] = useState<"meeting" | "papercard" | "fivewhy">(
-    "meeting"
+  const [problemSub, setProblemSub] = useState<
+    "meeting" | "papercard" | "fivewhy"
+  >("meeting");
+  const [historySub, setHistorySub] = useState<"papercard" | "standup">(
+    "papercard"
   );
-  const [historySub, setHistorySub] = useState<"papercard" | "standup">("papercard");
   const [workshops, setWorkshops] = useState<DmWorkshop[]>([]);
   const [lines, setLines] = useState<DmLine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -554,7 +564,7 @@ function AdminWorkspace({
                 <UsersIcon size={14} />
                 <span>
                   {uiText("Atur Tim (")}
-                  {line.memberCount}/4)
+                  {line.memberCount}/5)
                 </span>
               </button>
               <button
@@ -1273,18 +1283,40 @@ function AdminWorkspace({
             )}
 
             {activeTab === "history" && (
-  <div className="dm-admin-section">
-    <div className="dm-subtabs" role="group" aria-label={uiText("Sumber arsip")}>
-      <button type="button" className={`dm-subtab${historySub === "papercard" ? " is-active" : ""}`} aria-pressed={historySub === "papercard"} onClick={() => setHistorySub("papercard")}>{uiText("Papercard")}</button>
-      <button type="button" className={`dm-subtab${historySub === "standup" ? " is-active" : ""}`} aria-pressed={historySub === "standup"} onClick={() => setHistorySub("standup")}>{uiText("Standup Meeting")}</button>
-    </div>
-    {historySub === "papercard" ? (
-      <PapercardHistory lines={lines} call={call} />
-    ) : (
-      <StandupHistory lines={lines} call={call} />
-    )}
-  </div>
-)}
+              <div className="dm-admin-section">
+                <div
+                  className="dm-subtabs"
+                  role="group"
+                  aria-label={uiText("Sumber arsip")}
+                >
+                  <button
+                    type="button"
+                    className={`dm-subtab${
+                      historySub === "papercard" ? " is-active" : ""
+                    }`}
+                    aria-pressed={historySub === "papercard"}
+                    onClick={() => setHistorySub("papercard")}
+                  >
+                    {uiText("Papercard")}
+                  </button>
+                  <button
+                    type="button"
+                    className={`dm-subtab${
+                      historySub === "standup" ? " is-active" : ""
+                    }`}
+                    aria-pressed={historySub === "standup"}
+                    onClick={() => setHistorySub("standup")}
+                  >
+                    {uiText("Standup Meeting")}
+                  </button>
+                </div>
+                {historySub === "papercard" ? (
+                  <PapercardHistory lines={lines} call={call} />
+                ) : (
+                  <StandupHistory lines={lines} call={call} />
+                )}
+              </div>
+            )}
 
             {activeTab === "sqdip" && (
               <div className="dm-admin-section dm-tab-lines">
@@ -1292,7 +1324,9 @@ function AdminWorkspace({
               </div>
             )}
             {activeTab === "history-import" && isAdmin && (
-              <div className="dm-admin-section"><HistoryImportPage lines={lines} /></div>
+              <div className="dm-admin-section">
+                <HistoryImportPage lines={lines} />
+              </div>
             )}
           </div>
         </main>

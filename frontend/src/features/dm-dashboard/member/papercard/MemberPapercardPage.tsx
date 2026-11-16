@@ -366,6 +366,10 @@ export default function MemberPapercardPage({
         )}
       </PapercardMetaCard>
 
+      {realSubmission?.employeeName && realSubmission.employeeNo !== currentUser?.username ? (
+        <p className="dml-pc__intro" style={{ fontSize: 12.5, lineHeight: 1.5, margin: "8px 0 0" }}>{uiText("Papercard hari ini sudah diisi oleh ")}<strong>{realSubmission.employeeName}</strong>{uiText(" (satu departemen).")}</p>
+      ) : null}
+
       {/* 6. Dynamic Database Template Checklist Section */}
       {templateLoading ? (
         <div

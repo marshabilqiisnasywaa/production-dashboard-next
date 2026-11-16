@@ -81,7 +81,7 @@ export default function TeamManager({ line, call, onChanged, onBusyChange }: Pro
   return <div className="ltm-fixed-team">
     <p className="ltm-fixed-note">{uiText("Klik slot kosong untuk memilih anggota dari departemen tersebut.")}</p>
     <div className="ltm-slots-grid">{teamSlots.map((item) => {
-      const occupants = members.filter((member) => teamDepartment(member.dept) === item.department);
+      const occupants = members.filter((member) => teamDepartment(member.dept) === item.department && member.sortOrder === item.order);
       return occupants.length ? <section key={item.order} className={`ltm-slot-card${item.order === 1 ? " is-leader" : ""}`} aria-label={uiText("Slot {{v0}} {{v1}}", { v0: item.order, v1: item.label })}>
         <div className="ltm-slot-head"><span className="ltm-slot-badge">#{item.order} {uiText(item.label)}</span></div>
         {occupants.map((member) => <div key={member.id ?? member.employeeId} className="ltm-fixed-occupant">
@@ -102,7 +102,7 @@ export default function TeamManager({ line, call, onChanged, onBusyChange }: Pro
       {candidates.length === 0 ? <p className="ltm-fixed-note">{uiText("Tidak ada User aktif ")}{uiText(slot.label)}{uiText(" yang cocok. Tambahkan atau periksa departemen User di menu User.")}</p> : null}
       {busy ? <p role="status">{uiText("Menyimpan...")}</p> : null}
     </section> : null}
-    {extraMembers.length ? <section><strong>{uiText("Anggota dengan departemen di luar empat slot")}</strong>{extraMembers.map((member) => <div key={member.id ?? member.employeeId} className="ltm-fixed-extra"><span>{member.name} — {member.dept ?? uiText("Tanpa departemen")}</span><button type="button" className="ltm-btn-release" disabled={busy} onClick={() => void release(member)}>{uiText("Keluarkan")}</button></div>)}</section> : null}
+    {extraMembers.length ? <section><strong>{uiText("Anggota dengan departemen di luar lima slot")}</strong>{extraMembers.map((member) => <div key={member.id ?? member.employeeId} className="ltm-fixed-extra"><span>{member.name} — {member.dept ?? uiText("Tanpa departemen")}</span><button type="button" className="ltm-btn-release" disabled={busy} onClick={() => void release(member)}>{uiText("Keluarkan")}</button></div>)}</section> : null}
     {error ? <p className="ltm-fixed-error" role="alert">{uiText(error)}</p> : null}
   </div>;
 }

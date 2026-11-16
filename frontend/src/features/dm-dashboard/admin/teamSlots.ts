@@ -3,9 +3,10 @@ import type { DmEmployee } from "../api";
 
 export const teamSlots = [
   { order: 1, department: "PROD", label: "Leader Produksi" },
-  { order: 2, department: "PE", label: "PE" },
-  { order: 3, department: "QC", label: "Quality" },
-  { order: 4, department: "ME", label: "ME" },
+  { order: 2, department: "PE", label: "PE Structure" },
+  { order: 3, department: "PE", label: "PE Electrical" },
+  { order: 4, department: "QC", label: "Quality" },
+  { order: 5, department: "ME", label: "ME" },
 ] as const;
 
 export function teamDepartment(value: string | null | undefined) {

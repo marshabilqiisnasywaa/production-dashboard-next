@@ -144,7 +144,7 @@ export default function DmDashboard({ slug }: { slug: string }) {
   // Hook harus dipanggil di level paling atas sebelum early return sesuai aturan React Rules of Hooks
   const readyBoard = state.kind === "ready" ? state.board : null;
 
-  // Tim Inti 4 Personil di grid atas (Leader selalu #1) dan 1 Operator Teladan di slot MPV bawah
+  // Tim Inti 5 Personil di grid atas (Leader selalu #1) dan 1 Operator Teladan di slot MPV bawah
   const { topMembers, displayMpv } = useMemo(() => {
     if (!readyBoard) {
       return { topMembers: [], displayMpv: null };
@@ -155,7 +155,7 @@ export default function DmDashboard({ slug }: { slug: string }) {
     );
 
     return {
-      topMembers: all.slice(0, 4),
+      topMembers: all.slice(0, 5),
       displayMpv: readyBoard.mpv,
     };
   }, [readyBoard]);
@@ -285,7 +285,7 @@ export default function DmDashboard({ slug }: { slug: string }) {
               <h2 className="dm-team-title">{uiText("DM TRIANGLE TEAM")}</h2>
             </header>
 
-            <div className="dm-team-grid">
+            <div className={`dm-team-grid${topMembers.length === 5 ? " dm-team-grid--five" : ""}`}>
               {topMembers.length === 0 ? (
                 <p className="dm-team-empty">{uiText("Anggota tim belum diatur. Admin bisa menambahkannya di Panel Admin.")}</p>
               ) : (
