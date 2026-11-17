@@ -362,8 +362,9 @@ export type FiveWhyDocument = {
   senderName: string | null;
   picId: number | null;
   picName: string | null;
-  lineId: number;
+  lineId: number | null;
   lineCode: string;
+  lineDeleted?: boolean;
   id: string;
   title: string;
   category: string;

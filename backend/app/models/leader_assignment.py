@@ -30,7 +30,7 @@ class LeaderAssignment(Base):
         ),
         CheckConstraint(
             """
-            (kind = 'line_leader' AND line_id IS NOT NULL)
+            (kind = 'line_leader' AND (line_id IS NOT NULL OR line_code_snapshot IS NOT NULL))
             OR
             (kind = 'dm_leader' AND line_id IS NULL)
             """,
@@ -68,13 +68,13 @@ class LeaderAssignment(Base):
     kind: Mapped[str] = mapped_column(String(20))
 
     dm_group_id: Mapped[int | None] = mapped_column(
-        ForeignKey("dm_groups.id", ondelete="RESTRICT"),
+        ForeignKey("dm_groups.id", ondelete="SET NULL"),
         index=True,
         nullable=True,
     )
 
     line_id: Mapped[int | None] = mapped_column(
-        ForeignKey("lines.id", ondelete="RESTRICT"),
+        ForeignKey("lines.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )

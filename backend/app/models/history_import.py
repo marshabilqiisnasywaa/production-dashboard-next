@@ -28,7 +28,7 @@ class HistoricalEntry(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     batch_id: Mapped[int] = mapped_column(ForeignKey("history_import_batches.id", ondelete="RESTRICT"))
     kind: Mapped[str] = mapped_column(String(32))
-    line_id: Mapped[int] = mapped_column(ForeignKey("lines.id", ondelete="RESTRICT"), index=True)
+    line_id: Mapped[int | None] = mapped_column(ForeignKey("lines.id", ondelete="SET NULL"), index=True)
     date: Mapped[date] = mapped_column(Date, index=True)
     shift: Mapped[str] = mapped_column(String(16))
     leader_name: Mapped[str] = mapped_column(String(120))

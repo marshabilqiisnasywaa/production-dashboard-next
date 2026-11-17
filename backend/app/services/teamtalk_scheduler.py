@@ -60,7 +60,7 @@ def get_line_setting(db: Session, line_id: int) -> DmNotificationSetting | None:
 
 async def check_meeting_reminders(db: Session, now: datetime):
     today = now.date()
-    lines = db.scalars(select(Line).where(Line.status != "stopped")).all()
+    lines = db.scalars(select(Line).where(Line.status == "running")).all()
     due_slots: list[dict] = []
     due_keys: list[str] = []
     start_slots: list[dict] = []
@@ -173,7 +173,7 @@ async def check_workshop_meeting_reminders(db: Session, now: datetime):
 
 async def check_papercard_reminders(db: Session, now: datetime):
     today = now.date()
-    lines = db.scalars(select(Line).where(Line.status != "stopped")).all()
+    lines = db.scalars(select(Line).where(Line.status == "running")).all()
     due_entries: list[dict] = []
     due_keys: list[str] = []
     missed_entries: list[dict] = []
@@ -185,6 +185,17 @@ async def check_papercard_reminders(db: Session, now: datetime):
         reminder_mins = setting.papercard_reminder_minutes if setting else 15
 
         if not papercard_enabled:
+            continue
+
+        if is_holiday(db, today):
+            has_meeting = db.scalar(select(DmMeetingSession.id).where(
+                DmMeetingSession.line_id == line.id,
+                DmMeetingSession.date == today,
+                DmMeetingSession.status == "pending",
+            )) is not None
+        else:
+            has_meeting = bool(slots_for_day(db, line.id, today))
+        if not has_meeting:
             continue
 
         templates = db.scalars(select(PapercardTemplate).where(PapercardTemplate.line_id == line.id)).all()

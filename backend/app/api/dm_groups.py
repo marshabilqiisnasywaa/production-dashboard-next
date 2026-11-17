@@ -1,5 +1,8 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_current_admin, get_principal
@@ -162,8 +165,18 @@ def delete_dm_group(
     if group.lines:
         raise HTTPException(409, "DM masih punya lini. Pindahkan atau hapus lininnya terlebih dahulu.")
 
+    now = datetime.now(timezone.utc)
+    for assignment in db.scalars(select(LeaderAssignment).where(
+        LeaderAssignment.dm_group_id == group.id, LeaderAssignment.ended_at.is_(None),
+    )):
+        assignment.ended_at = max(now, assignment.started_at + timedelta(seconds=1))
+        assignment.reason = assignment.reason or "DM dihapus"
     db.delete(group)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(409, "DM masih dipakai data lain sehingga tidak bisa dihapus.") from error
 
 
 @router.patch("/lines/{line_id}")

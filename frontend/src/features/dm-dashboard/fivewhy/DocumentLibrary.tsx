@@ -130,7 +130,7 @@ export default function DocumentLibrary({
   const dirty = editingDocument
     ? title.trim() !== editingDocument.title ||
       selectedCategory !== editingDocument.category ||
-      lineId !== editingDocument.lineId ||
+      lineId !== (editingDocument.lineId ?? 0) ||
       picId !== (editingDocument.picId ?? 0) ||
       (editingDocument.source === "simo"
         ? url.trim() !== (editingDocument.url ?? "")
@@ -323,7 +323,7 @@ export default function DocumentLibrary({
     setEditingDocument(document);
     setError("");
     setNotice("");
-    setLineId(document.lineId);
+    setLineId(document.lineId ?? 0);
     setPicId(document.picId ?? 0);
     setTitle(document.title);
     setCategory(
@@ -468,8 +468,8 @@ export default function DocumentLibrary({
   const documentLines = Array.from(
     new Map(
       documents.map((document) => [
-        document.lineId,
-        document.lineCode || String(document.lineId),
+        document.lineId ?? 0,
+        document.lineCode || (document.lineId ? String(document.lineId) : "—"),
       ] as const)
     ),
     ([id, code]) => ({ id, code })
@@ -489,7 +489,7 @@ export default function DocumentLibrary({
   const visible = documents.filter(
     (document) =>
       (filter === "all" || document.category === filter) &&
-      (lineFilter === "all" || document.lineId === Number(lineFilter)) &&
+      (lineFilter === "all" || (document.lineId ?? 0) === Number(lineFilter)) &&
       (!dateFrom || localDateKey(document.createdAt) >= dateFrom) &&
       (!dateTo || localDateKey(document.createdAt) <= dateTo) &&
       `${document.title} ${document.senderName ?? ""} ${document.lineCode} ${

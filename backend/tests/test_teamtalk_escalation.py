@@ -100,6 +100,34 @@ class EscalationReminderTests(unittest.TestCase):
         reminder, deadline = self.run_papercard_check(datetime(2026, 11, 4, 8, 21))
         self.assertEqual((reminder.call_count, deadline.call_count), (0, 0))
 
+    def test_papercard_follows_dm_meeting_schedule(self):
+        from app.models import DmMeetingSchedule
+
+        teamtalk_scheduler._sent_events_cache.clear()
+        line = self.add_papercard_template()
+        self.db.add(DmMeetingSchedule(line_id=line.id, label="Sesi 1", time="10:00", days="1,2,3,4,5"))
+        self.db.flush()
+        saturday = self.run_papercard_check(datetime(2026, 11, 7, 7, 45))
+        self.assertEqual((saturday[0].call_count, saturday[1].call_count), (0, 0))
+        saturday = self.run_papercard_check(datetime(2026, 11, 7, 8, 15, 20))
+        self.assertEqual((saturday[0].call_count, saturday[1].call_count), (0, 0))
+        wednesday = self.run_papercard_check(datetime(2026, 11, 4, 7, 45))
+        self.assertEqual(wednesday[0].call_count, 1)
+
+    def test_reminders_only_for_running_lines(self):
+        teamtalk_scheduler._sent_events_cache.clear()
+        line = self.add_papercard_template()
+        for status in ("idle", "stopped"):
+            line.status = status
+            self.db.flush()
+            reminder, deadline = self.run_papercard_check(datetime(2026, 11, 4, 7, 45))
+            self.assertEqual((reminder.call_count, deadline.call_count), (0, 0))
+            self.assertEqual(self.run_meeting_check(datetime(2026, 11, 4, 9, 50)).call_count, 0)
+        line.status = "running"
+        self.db.flush()
+        self.assertEqual(self.run_papercard_check(datetime(2026, 11, 4, 7, 45))[0].call_count, 1)
+        self.assertEqual(self.run_meeting_check(datetime(2026, 11, 4, 9, 50)).call_count, 1)
+
     def test_papercard_deadline_skipped_when_submitted(self):
         teamtalk_scheduler._sent_events_cache.clear()
         line = self.add_papercard_template()

@@ -1,6 +1,7 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response, status
 from sqlalchemy import delete, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_admin
@@ -255,10 +256,21 @@ def delete_line(line_id: int, db: Session = Depends(get_db)) -> Response:
     board, line, _ = line_row(db, line_id)
     if active_members(db, board.id):
         raise conflict("Lini masih punya anggota aktif. Lepas semua anggota dulu.")
+    now = datetime.now(timezone.utc)
+    for assignment in db.scalars(select(LeaderAssignment).where(
+        LeaderAssignment.line_id == line.id, LeaderAssignment.ended_at.is_(None),
+    )):
+        assignment.line_code_snapshot = assignment.line_code_snapshot or line.code
+        assignment.ended_at = max(now, assignment.started_at + timedelta(seconds=1))
+        assignment.reason = assignment.reason or "Line dihapus"
     db.execute(delete(BoardMember).where(BoardMember.board_id == board.id))
     db.delete(board)
     db.delete(line)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        raise conflict("Lini masih dipakai data lain sehingga tidak bisa dihapus.") from error
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

@@ -10,7 +10,8 @@ class FiveWhyAnalysis(Base):
     __tablename__ = "fivewhy_analyses"
 
     id: Mapped[str] = mapped_column(String(100), primary_key=True)
-    line_id: Mapped[int] = mapped_column(ForeignKey("lines.id", ondelete="RESTRICT"), index=True)
+    line_id: Mapped[int | None] = mapped_column(ForeignKey("lines.id", ondelete="SET NULL"), index=True)
+    line_code: Mapped[str | None] = mapped_column(String(32))
     created_by: Mapped[int] = mapped_column(ForeignKey("employees.id", ondelete="RESTRICT"), index=True)
     revision: Mapped[int] = mapped_column(Integer, default=1)
     data: Mapped[dict] = mapped_column(JSON)
@@ -22,7 +23,8 @@ class FiveWhyDocument(Base):
     __tablename__ = "fivewhy_documents"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    line_id: Mapped[int] = mapped_column(ForeignKey("lines.id", ondelete="RESTRICT"), index=True)
+    line_id: Mapped[int | None] = mapped_column(ForeignKey("lines.id", ondelete="SET NULL"), index=True)
+    line_code: Mapped[str | None] = mapped_column(String(32))
     created_by: Mapped[int] = mapped_column(ForeignKey("employees.id", ondelete="RESTRICT"), index=True)
     pic_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id", ondelete="RESTRICT"), index=True)
     title: Mapped[str] = mapped_column(String(200))

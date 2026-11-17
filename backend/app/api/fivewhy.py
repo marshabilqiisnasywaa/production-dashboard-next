@@ -28,7 +28,7 @@ def can_write(principal: Principal) -> None:
 
 
 def document_out(row: FiveWhyDocument, db: Session) -> dict:
-    line = db.get(Line, row.line_id)
+    line = db.get(Line, row.line_id) if row.line_id is not None else None
     sender = db.get(Employee, row.created_by)
     pic = db.get(Employee, row.pic_id) if row.pic_id is not None else None
     return {
@@ -37,7 +37,8 @@ def document_out(row: FiveWhyDocument, db: Session) -> dict:
         "size": row.size, "createdAt": row.created_at,
         "senderName": sender.name if sender else None,
         "lineId": row.line_id,
-        "lineCode": line.code if line else "",
+        "lineCode": line.code if line else (row.line_code or ""),
+        "lineDeleted": row.line_id is None,
         "picId": row.pic_id,
         "picName": pic.name if pic else None,
     }
@@ -83,7 +84,7 @@ def add_simo_document(payload: SimoDocumentIn, principal: Principal = Depends(re
     can_write(principal)
     validate_pic(db, principal, payload.line_id, payload.pic_id)
     assert principal.employee is not None
-    row = FiveWhyDocument(id=str(uuid4()), line_id=payload.line_id, pic_id=payload.pic_id, created_by=principal.employee.id, title=payload.title, category=payload.category, source="simo", url=payload.url)
+    row = FiveWhyDocument(id=str(uuid4()), line_id=payload.line_id, line_code=db.get(Line, payload.line_id).code, pic_id=payload.pic_id, created_by=principal.employee.id, title=payload.title, category=payload.category, source="simo", url=payload.url)
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -120,7 +121,7 @@ def upload_document(line_id: int = Form(gt=0), pic_id: int = Form(gt=0), title: 
     except (BadZipFile, ValueError, RuntimeError, NotImplementedError, ElementTree.ParseError):
         raise HTTPException(422, "File bukan workbook .xlsx yang valid atau ukurannya terlalu besar setelah dibuka.")
     assert principal.employee is not None
-    row = FiveWhyDocument(id=str(uuid4()), line_id=line_id, pic_id=pic_id, created_by=principal.employee.id, title=title.strip(), category=category, source="file", file_name=name, size=len(content))
+    row = FiveWhyDocument(id=str(uuid4()), line_id=line_id, line_code=db.get(Line, line_id).code, pic_id=pic_id, created_by=principal.employee.id, title=title.strip(), category=category, source="file", file_name=name, size=len(content))
     path = file_path(row.id)
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
