@@ -1605,53 +1605,124 @@ main.dml-content:has(.spv-approvals) .spv-stat-pill--neutral {
   color: #5c6f64;
 }
 
+/* ==========================================================================
+   Tambahan bersama (semua lebar layar)
+   ========================================================================== */
+.spv-btn,
+.spv-select,
+.spv-search-box input,
+.spv-status-badge,
+.spv-chip {
+  font-family: inherit;
+}
+
+.spv-line-header__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+.spv-member-card__ng-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  white-space: normal;
+}
+
+.spv-member-card__ng-note svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.spv-member-card__ng-note span {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+@keyframes spv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spv-spin {
+  animation: spv-spin 0.8s linear infinite;
+}
+
+/* ==========================================================================
+   Mobile (<= 767px)
+   ========================================================================== */
 @media (max-width: 767px) {
-  .spv-dashboard .dml-kpis {
+  /* ---------- Margin halaman seragam dengan halaman lain (12px) ---------- */
+  main.dml-content:has(.spv-approvals),
+  main.dml-content:has(.spv-monitoring) {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* ---------- Dashboard Supervisor ---------- */
+  .dms-container.spv-dashboard {
+    gap: 10px;
+  }
+
+  .dms-container.spv-dashboard .dml-grid,
+  .dms-container.spv-dashboard .dml-aside {
+    gap: 10px;
+  }
+
+  /* Kartu KPI 2x2 */
+  .dms-container.spv-dashboard .dml-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    margin-bottom: 12px;
+    margin-bottom: 0;
   }
 
-  .spv-dashboard .dml-kpi {
-    gap: 2px;
-    padding: 12px 14px;
-    border-radius: 12px;
+  .dms-container.spv-dashboard .dml-kpi {
+    gap: 0;
+    padding: 10px;
+    border-radius: 10px;
   }
 
-  .spv-dashboard .dml-kpi__top h3 {
-    font-size: 12px;
+  .dms-container.spv-dashboard .dml-kpi__top {
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .dms-container.spv-dashboard .dml-kpi__top h3 {
+    font-size: 11px;
     font-weight: 500;
     line-height: 1.25;
   }
 
-  .spv-dashboard .dml-kpi__icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 9px;
+  .dms-container.spv-dashboard .dml-kpi__icon {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
   }
 
-  .spv-dashboard .dml-kpi__icon svg {
-    width: 16px;
-    height: 16px;
+  .dms-container.spv-dashboard .dml-kpi__icon svg {
+    width: 13px;
+    height: 13px;
   }
 
-  .spv-dashboard .dml-kpi__value {
-    font-size: 24px;
+  .dms-container.spv-dashboard .dml-kpi__value {
+    margin-top: auto;
+    font-size: 20px;
+    line-height: 1.15;
   }
 
-  .spv-dashboard .dml-kpi__hint {
-    margin-bottom: 8px;
-    font-size: 11px;
-    line-height: 1.25;
+  .dms-container.spv-dashboard .dml-kpi__hint {
+    margin-bottom: 6px;
+    font-size: 10px;
+    line-height: 1.3;
   }
-}
 
-@media (min-width: 600px) and (max-width: 767px) {
-  .spv-dashboard .dml-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 767px) {
+  /* Kartu "Menunggu persetujuan" dan "Ringkasan per lini" */
   .dms-container.spv-dashboard .dms-card {
     padding: 12px;
     border-radius: 12px;
@@ -1741,71 +1812,18 @@ main.dml-content:has(.spv-approvals) .spv-stat-pill--neutral {
     padding: 0 7px;
     font-size: 11px;
   }
-}
 
-.spv-btn,
-.spv-select,
-.spv-search-box input,
-.spv-status-badge,
-.spv-chip {
-  font-family: inherit;
-}
-
-.spv-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.spv-line-header__title-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 6px;
-}
-
-.spv-member-card__ng-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
-  white-space: normal;
-}
-
-.spv-member-card__ng-note svg {
-  flex: none;
-  margin-top: 1px;
-}
-
-.spv-member-card__ng-note span {
-  display: -webkit-box;
-  min-width: 0;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-@keyframes spv-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.spv-spin {
-  animation: spv-spin 0.8s linear infinite;
-}
-
-@media (max-width: 767px) {
+  /* ---------- Persetujuan Checklist ---------- */
   .spv-page-toolbar {
     justify-content: flex-start;
   }
 
-  .spv-toolbar {
+  .spv-approvals .spv-toolbar {
     gap: 6px;
     margin-bottom: 10px;
-    padding: 8px;
   }
 
-  .spv-toolbar__left {
+  .spv-approvals .spv-toolbar__left {
     display: grid;
     flex: none;
     grid-template-columns: 1fr 1fr;
@@ -1813,80 +1831,201 @@ main.dml-content:has(.spv-approvals) .spv-stat-pill--neutral {
     width: 100%;
   }
 
-  .spv-toolbar .spv-search-box {
+  .spv-approvals .spv-search-box {
     grid-column: 1 / -1;
     min-width: 0;
     max-width: none;
+    height: 34px;
   }
 
-  .spv-toolbar .spv-select {
+  .spv-approvals .spv-search-box input {
+    font-size: 12.5px;
+  }
+
+  .spv-approvals .spv-select {
     width: 100%;
     min-width: 0;
-    height: 32px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 12.5px;
   }
 
-  .spv-toolbar__left .spv-select:last-child {
+  .spv-approvals .spv-toolbar__left .spv-select:last-child {
     grid-column: 1 / -1;
   }
 
-  .spv-toolbar__right {
+  .spv-approvals .spv-toolbar__right {
     width: 100%;
     font-size: 11px;
   }
 
-  .spv-line-group {
+  .spv-approvals .spv-line-group {
     margin-bottom: 10px;
+    border-radius: 12px;
   }
 
-  .spv-line-header {
+  .spv-approvals .spv-line-header {
     gap: 8px;
     padding: 10px 12px;
   }
 
-  .spv-line-header__left {
+  .spv-approvals .spv-line-header__left {
     align-items: flex-start;
+    gap: 10px;
     width: 100%;
   }
 
-  .spv-line-header__left > div:last-child {
+  .spv-approvals .spv-line-header__left > div:last-child {
     min-width: 0;
   }
 
-  .spv-line-header__badge {
+  .spv-approvals .spv-line-header__badge,
+  .spv-approvals .spv-line-header__badge.has-ng,
+  .spv-approvals .spv-line-header__badge.is-all-approved {
     flex: none;
     width: 30px;
     height: 30px;
-    font-size: 12px;
+    font-size: 12.5px;
   }
 
-  .spv-line-header__title {
-    font-size: 13px;
+  .spv-approvals .spv-line-header__title {
+    font-size: 13.5px;
     line-height: 1.3;
   }
 
-  .spv-line-header__meta {
+  .spv-approvals .spv-line-header__meta {
     font-size: 11px;
     line-height: 1.4;
   }
 
-  .spv-line-header__actions {
+  .spv-approvals .spv-line-header__actions {
     justify-content: space-between;
     gap: 8px;
     width: 100%;
   }
 
-  .spv-line-header__actions .spv-btn {
-    padding: 4px 10px;
+  .spv-approvals .spv-line-header__actions .spv-btn {
+    height: 30px;
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .spv-approvals .spv-status-badge,
+  .spv-approvals .spv-chip {
+    font-size: 11px;
+  }
+
+  .spv-approvals .spv-member-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px 12px 12px;
+  }
+
+  .spv-approvals .spv-member-card {
+    gap: 4px;
+    padding: 10px 12px;
+  }
+
+  .spv-approvals .spv-member-card__name {
+    font-size: 13px;
+  }
+
+  .spv-approvals .spv-member-card__sub,
+  .spv-approvals .spv-member-card__time,
+  .spv-approvals .spv-member-card__ng-note {
     font-size: 11.5px;
   }
 
-  .spv-member-grid {
-    grid-template-columns: 1fr;
-    gap: 6px;
-    padding: 8px;
+  /* ---------- Monitoring Lini ---------- */
+  .spv-monitoring {
+    gap: 8px;
   }
 
-  .spv-member-card {
-    padding: 8px 10px;
+  .spv-monitoring .spv-readiness-card {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .spv-monitoring .spv-readiness-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .spv-monitoring .spv-readiness-title {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .spv-monitoring .spv-readiness-subtitle {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .spv-monitoring .spv-readiness-count {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #eaf4ee;
+    color: #286b46;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .spv-monitoring .spv-line-row {
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .spv-monitoring .spv-line-row__main {
+    width: 100%;
+  }
+
+  .spv-monitoring .spv-line-row__name {
+    font-size: 13.5px;
+    line-height: 1.3;
+  }
+
+  .spv-monitoring .spv-line-row__shift {
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: #eaf4ee;
+    color: #286b46;
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .spv-monitoring .spv-line-row__shift::before {
+    content: none;
+  }
+
+  .spv-monitoring .spv-line-row__meta {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .spv-monitoring .spv-line-row__actions {
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    padding-top: 10px;
+    border-top: 1px solid #eef3ef;
+  }
+
+  .spv-monitoring .spv-line-row__actions .spv-btn {
+    height: 30px;
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .spv-monitoring .spv-status-badge {
+    font-size: 11px;
   }
 }
