@@ -52,7 +52,7 @@ export function Pagination({
         >
           {pageSizeOptions.map((s) => (
             <option key={s} value={s}>
-              {uiText(s)}{uiText("/page")}</option>
+              {uiText(s)}{uiText(" per page")}</option>
           ))}
         </select>
       </div>

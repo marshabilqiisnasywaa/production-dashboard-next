@@ -193,24 +193,36 @@
 
 /* ---------- Pagination ---------- */
 .ui-pagination {
+   margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 12px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 16px 24px;
-  /* border-top: 1px solid var(--dm-border); */
 }
+
 .ui-pagination__info {
   font-size: 13px;
   color: var(--dm-muted);
+  min-width: 0;
 }
+
 .ui-pagination__controls {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
+  flex-shrink: 0;
 }
+
 .ui-pagination__page {
+  flex: 0 0 32px;
   min-width: 32px;
   height: 32px;
   border: 1px solid var(--dm-border);
@@ -219,11 +231,20 @@
   font: inherit;
   font-size: 13px;
   cursor: pointer;
+  box-sizing: border-box;
 }
+
 .ui-pagination__page.is-active {
   background: var(--dm-green);
   border-color: var(--dm-green);
   color: #fff;
+}
+
+.ui-pagination__controls select {
+  width: 116px;
+  min-width: 116px;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 /* ---------- Sidebar ---------- */

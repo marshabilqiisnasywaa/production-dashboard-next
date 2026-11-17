@@ -178,9 +178,11 @@
 .dml-kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
+
+
 .dml-kpi {
   display: flex;
   flex-direction: column;
@@ -628,7 +630,7 @@
 }
 @media (max-width: 1099px) {
   .dml-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .dml-content {
     padding: 24px;
@@ -735,11 +737,16 @@
   }
   .dml-kpis,
   .dml-aside {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .dml-detail__filters .ui-input {
     width: 100%;
   }
+
+  .dml-aside {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .dml-detail__filters {
     width: 100%;
   }
