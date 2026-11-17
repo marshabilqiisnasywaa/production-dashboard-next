@@ -150,6 +150,12 @@
   font-size: 15px;
 }
 
+.dml-page-head > div > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
 
 
 .dml-daterange {

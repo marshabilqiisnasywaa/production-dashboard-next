@@ -18,6 +18,7 @@ import { EndMeetingDialog } from "./components/EndMeetingDialog";
 import { MeetingDoneCard } from "./components/MeetingDoneCard";
 import { MeetingHeaderCard } from "./components/MeetingHeaderCard";
 import { MeetingMaterials } from "./components/MeetingMaterials";
+import { StartAttendanceDialog } from "./components/StartAttendanceDialog";
 import { IconStop } from "./components/MeetingIcons";
 import { PresensiResultCard } from "./components/PresensiResultCard";
 import { SummaryForm } from "./components/SummaryForm";
@@ -134,6 +135,8 @@ function MeetingView(props: MeetingViewProps) {
   );
   const [showErrors, setShowErrors] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [startAttendanceConfirmOpen, setStartAttendanceConfirmOpen] =
+    useState(false);
   const [lateAttendanceSessionId, setLateAttendanceSessionId] = useState<
     number | null
   >(null);
@@ -143,6 +146,11 @@ function MeetingView(props: MeetingViewProps) {
   > | null>(null);
   const [summaryOptionsError, setSummaryOptionsError] = useState(false);
   const [summaryOptionsRetry, setSummaryOptionsRetry] = useState(0);
+
+  useEffect(() => {
+    setScope("line");
+    setStartAttendanceConfirmOpen(false);
+  }, [sessionId, workspace.line?.id]);
 
   useEffect(() => {
     let alive = true;
@@ -212,20 +220,28 @@ function MeetingView(props: MeetingViewProps) {
     setConfirmOpen(true);
   }
 
-  async function handleOpenPresensi() {
-    if (!session || preparing || members.length === 0) return;
+  async function handleOpenPresensi(): Promise<boolean> {
+    if (!session || preparing) return false;
     setPreparing(true);
     try {
       const updated = await api.prepare(session.dbId, effectiveScope);
       workspace.updateSession(updated);
       actions.openPresensi();
       setSyncError(null);
+      return true;
     } catch (err) {
       setSyncError(
         err instanceof Error ? err.message : "Gagal membuka presensi."
       );
+      return false;
     } finally {
       setPreparing(false);
+    }
+  }
+
+  async function handleConfirmOpenPresensi() {
+    if (await handleOpenPresensi()) {
+      setStartAttendanceConfirmOpen(false);
     }
   }
 
@@ -457,7 +473,7 @@ function MeetingView(props: MeetingViewProps) {
           </label>
         )
       : workspace.ownLines.length > 1 && (
-          <label>{uiText("Lini saya")}{" "}
+          <label>{" "}
             <select
               className="ui-select"
               aria-label={uiText("Pilih lini meeting")}
@@ -502,22 +518,26 @@ function MeetingView(props: MeetingViewProps) {
 
   return (
     <div className="dml-mt">
-      <div className="dml-page-head">
-        <div>
+      <div className="dml-page-head dml-mt-page-head">
+        <div className="dml-mt-page-head__intro">
           <h1>{pageTitle}</h1>
           <p>{pageSubtitle}</p>
-          {lineSelector}
         </div>
-        <SegmentedControl
-          ariaLabel="Pilih sesi meeting"
-          options={sessionOptions}
-          value={session.id}
-          onChange={(id) => {
-            setLateAttendanceSessionId(null);
-            setPickedId(id);
-            setShowErrors(false);
-          }}
-        />
+        <div className="dml-mt-page-head__controls">
+          {lineSelector}
+          <div className="dml-mt-page-head__session">
+            <SegmentedControl
+              ariaLabel="Pilih sesi meeting"
+              options={sessionOptions}
+              value={session.id}
+              onChange={(id) => {
+                setLateAttendanceSessionId(null);
+                setPickedId(id);
+                setShowErrors(false);
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {readOnly && (
@@ -542,39 +562,6 @@ function MeetingView(props: MeetingViewProps) {
             : workspace.line?.name ?? MEETING_AREA
         }
         sessionText={`${session.label} · ${session.start}`}
-        participants={
-          variant === "dm" && phase === "idle" && !serverSession?.rosterPrepared && !readOnly
-            ? {
-                title: uiText("Peserta meeting"),
-                description:
-                  scope === "dm"
-                    ? uiText("Satu leader mengambil presensi seluruh DM. Hasilnya tetap masuk ke lini masing-masing. Jadwal mengikuti sesi lini yang dipilih.")
-                    : workspace.group
-                    ? uiText("Presensi hanya untuk tim lini yang dipilih.")
-                    : uiText("Lini ini belum masuk DM. Meeting tersedia per lini."),
-                control: (
-                  <SegmentedControl
-                    ariaLabel="Cakupan meeting"
-                    value={scope}
-                    options={[
-                      { value: "line", label: "Lini Saya" },
-                      ...(workspace.group
-                        ? [
-                            {
-                              value: "dm" as const,
-                              label: `Gabungan ${workspace.group.name}`,
-                            },
-                          ]
-                        : []),
-                    ]}
-                    onChange={(value) => {
-                      if (!preparing) setScope(value);
-                    }}
-                  />
-                ),
-              }
-            : undefined
-        }
         phase={phase}
         lines={meetingLines}
         dateText={
@@ -607,7 +594,14 @@ function MeetingView(props: MeetingViewProps) {
             {!readOnly && phase === "idle" && (
               <AttendanceEmptyState
                 requireAllPresent={MEETING_CONFIG.requireAllPresent}
-                onStart={() => void handleOpenPresensi()}
+                onStart={() => {
+                  if (variant === "dm" && !serverSession?.rosterPrepared) {
+                    setSyncError(null);
+                    setStartAttendanceConfirmOpen(true);
+                  } else {
+                    void handleOpenPresensi();
+                  }
+                }}
               />
             )}
 
@@ -729,6 +723,30 @@ function MeetingView(props: MeetingViewProps) {
 
       {MEETING_CONFIG.faceScanSimulation && hydrated && phase !== "idle" && (
         <button type="button" className="dml-mt-reset" onClick={actions.reset}>{uiText("Reset sesi ini (dev)")}</button>
+      )}
+
+      {variant === "dm" && (
+        <StartAttendanceDialog
+          open={startAttendanceConfirmOpen}
+          scope={scope}
+          sessionText={session.label}
+          dateText={new Date(`${session.date}T00:00:00`).toLocaleDateString(
+            uiLocale,
+            { day: "numeric", month: "long", year: "numeric" },
+          )}
+          lineText={
+            workspace.line
+              ? `${workspace.line.code} · ${workspace.line.name}`
+              : "-"
+          }
+          groupName={workspace.group?.name ?? null}
+          groupLines={workspace.group?.lineCodes ?? []}
+          preparing={preparing}
+          error={startAttendanceConfirmOpen ? syncError : null}
+          onScopeChange={setScope}
+          onCancel={() => setStartAttendanceConfirmOpen(false)}
+          onConfirm={() => void handleConfirmOpenPresensi()}
+        />
       )}
 
       <EndMeetingDialog

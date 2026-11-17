@@ -1,5 +1,4 @@
 "use client";
-import type { ReactNode } from "react";
 import { useUiText } from "@/locales/useUiText";
 import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import { IconClock, IconUsers } from "@/components/ui/icons";
@@ -14,12 +13,6 @@ const STATUS: Record<MeetingPhase, { tone: ChipTone; label: string }> = {
   done: { tone: "ok", label: "Selesai" },
 };
 
-interface Participants {
-  title: string;
-  description: string;
-  control: ReactNode;
-}
-
 interface Props {
   title: string;
   sessionText: string;
@@ -28,10 +21,9 @@ interface Props {
   dateText: string;
   timeText: string;
   location: string;
-  participants?: Participants;
 }
 
-export function MeetingHeaderCard({ title, sessionText, phase, lines, dateText, timeText, location, participants }: Props) {
+export function MeetingHeaderCard({ title, sessionText, phase, lines, dateText, timeText, location }: Props) {
   const { text: uiText } = useUiText();
   const status = STATUS[phase];
   return (
@@ -48,10 +40,10 @@ export function MeetingHeaderCard({ title, sessionText, phase, lines, dateText, 
             </StatusChip>
           </div>
           <div className="dml-mt-head__sub">
-            <span>{uiText(sessionText)}</span>
+            {/* <span>{uiText(sessionText)}</span> */}
             <ul className="dml-mt-head__lines" aria-label={uiText("Line yang dibahas")}>
               {lines.map((l) => (
-                <li key={l}>{uiText("Line ")}{l}</li>
+                <li key={l}>{l}</li>
               ))}
             </ul>
           </div>
@@ -76,16 +68,6 @@ export function MeetingHeaderCard({ title, sessionText, phase, lines, dateText, 
         </dl>
       </div>
 
-      {participants && (
-        <div className="dml-mt-head__participants">
-          <IconUsers size={18} />
-          <div className="dml-mt-head__participants-text">
-            <strong>{participants.title}</strong>
-            <p>{participants.description}</p>
-          </div>
-          <div className="dml-mt-head__participants-control">{participants.control}</div>
-        </div>
-      )}
     </section>
   );
 }
