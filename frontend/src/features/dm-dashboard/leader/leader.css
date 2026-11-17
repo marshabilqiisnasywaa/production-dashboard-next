@@ -149,6 +149,9 @@
   color: var(--dm-muted);
   font-size: 15px;
 }
+
+
+
 .dml-daterange {
   display: inline-flex;
   align-items: center;
@@ -1118,7 +1121,7 @@
 .dml-inspection-detail .ui-pagination .ui-select {
   width: auto;
   height: 32px;
-  padding: 0 8px;
+  padding: 0 8%;
   font-size: 12px;
 }
 

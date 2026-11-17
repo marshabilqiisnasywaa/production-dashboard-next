@@ -55,7 +55,7 @@ export function ResultsHeatmap({ days, rows, today, mode, selectedId, onOpen }: 
           </tr>
         </thead>
         <tbody>
-          {uiText(rows.map((row) => (
+          {(rows.map((row) => (
             <tr key={row.role}>
               <th scope="row" className="dmr-grid__role">
                 {uiText(row.label)}

@@ -52,25 +52,26 @@ export default function ResultsHeatmapPanel({
       <div className="dmr-panel__head">
         <div className="dmr-panel__title">
           <h2 id="dmr-title">{uiText("Status pengisian Papercard")}</h2>
-          <p>{uiText("OK jika semua aspek OK. NG jika ada minimal 1 aspek NG.")}</p>
+          {/* <p>{uiText("OK jika semua aspek OK. NG jika ada minimal 1 aspek NG.")}</p> */}
         </div>
         <div className="dmr-panel__actions">
-          <div className="dmr-fill-count" aria-live="polite">
-            {fillCountLoading ? (
-              <span className="dmr-fill-count__skeleton" aria-label={uiText("Memuat data")} />
-            ) : fillCountError ? (
-              <span role="alert">{uiText(fillCountError)}</span>
-            ) : fillCount ? (
-              <span>
-                {uiText("{{v0}} dari {{v1}} papercard terisi", {
-                  v0: fillCount.submitted,
-                  v1: fillCount.total,
-                })}
-              </span>
-            ) : (
-              <span>{uiText("Papercard terisi pada periode terpilih")}</span>
-            )}
-          </div>
+<div className="dmr-fill-count" aria-live="polite">
+  {fillCountLoading ? (
+    <span
+      className="dmr-fill-count__skeleton"
+      aria-label={uiText("Memuat data")}
+    />
+  ) : fillCountError ? (
+    <span role="alert">{uiText(fillCountError)}</span>
+  ) : fillCount ? (
+    <span>
+      {uiText("{{v0}} / {{v1}} terisi", {
+        v0: fillCount.submitted,
+        v1: fillCount.total,
+      })}
+    </span>
+  ) : null}
+</div>
           <div className="dmr-summary" aria-label={uiText("Ringkasan hasil periode terpilih")}>
             <div className="dmr-summary__chip dmr-summary__chip--ok">
               <IconCheckCircle size={16} />
@@ -81,10 +82,10 @@ export default function ResultsHeatmapPanel({
               <strong>{loading || error ? "—" : counts.ng}{uiText(" NG")}</strong>
             </div>
           </div>
-          <div className="dmr-mode" role="group" aria-label={uiText("Filter hasil")}>
+          {/* <div className="dmr-mode" role="group" aria-label={uiText("Filter hasil")}>
             <button type="button" className={mode === "all" ? "is-active" : ""} onClick={() => setMode("all")}>{uiText("Semua")}</button>
             <button type="button" className={mode === "ng" ? "is-active" : ""} onClick={() => setMode("ng")}>{uiText("Hanya NG")}</button>
-          </div>
+          </div> */}
         </div>
       </div>
 

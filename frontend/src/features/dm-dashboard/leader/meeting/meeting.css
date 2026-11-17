@@ -7,7 +7,7 @@
 }
 .dml-mt > .dml-page-head {
   margin-bottom: 8px;
-  align-items: center;
+  /* align-items: center; */
 }
 .dml-mt__grid {
   display: grid;
@@ -29,6 +29,13 @@
   flex-direction: column;
   padding: 0;
 }
+
+.dml-page__label {
+  margin: 6px 0;
+}
+
+
+
 .dml-mt-head__top {
   display: flex;
   align-items: center;
