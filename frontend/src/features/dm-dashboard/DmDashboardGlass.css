@@ -1115,8 +1115,9 @@
   grid-area: details;
   align-self: center;
   min-width: 0;
-  font-size: clamp(11px, 0.9vw, 14px);
+  font-size: clamp(11px, 1vw, 14px);
   line-height: 1.25;
+  font-weight: 500;
 }
 
 .dmg-stage--fluid .dmg-details div {
@@ -1152,7 +1153,8 @@
   min-width: 0;
   text-align: center;
   overflow-wrap: anywhere;
-  padding-top: clamp(8px, 0.7vw, 14px);
+  padding-top: clamp(10px, 0.7vw, 16px);
+  font-weight: 500;
 }
 
 .dmg-stage--fluid .dmg-member-role {
