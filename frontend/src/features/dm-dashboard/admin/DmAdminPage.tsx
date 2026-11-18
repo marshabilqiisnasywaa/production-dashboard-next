@@ -15,6 +15,7 @@ import DashboardTab from "./DashboardTab";
 import MeetingScheduleManager from "./MeetingScheduleManager";
 import LineDetailModal from "./LineDetailModal";
 import type { TabKey } from "./LineDetailModal";
+import LineStatusBadge from "./LineStatusBadge";
 import LineTeamModal from "./LineTeamModal";
 import MpvManager from "./MpvManager";
 import UserManager from "./UserManager";
@@ -413,6 +414,48 @@ function AdminWorkspace({
     return saved;
   }
 
+  // Ganti status langsung dari badge (tanpa membuka "Kelola line").
+  // Optimistic: UI berubah dulu, dikembalikan kalau server menolak.
+  const [statusBusyId, setStatusBusyId] = useState<number | null>(null);
+
+  async function changeLineStatus(line: DmLine, status: DmLineStatus) {
+    if (line.status === status) return;
+    const previous = line.status;
+    setStatusBusyId(line.id);
+    setLines((current) =>
+      current.map((item) => (item.id === line.id ? { ...item, status } : item))
+    );
+    try {
+      await call(() =>
+        adminApi.updateLine(line.id, {
+          workshopId: line.workshopId,
+          dmGroupId: line.dmGroupId ?? lineGroupMap[line.id] ?? null,
+          code: line.code,
+          name: line.name,
+          model: line.model ?? null,
+          status,
+          slogan: line.slogan ?? null,
+          lineLabel: line.lineLabel ?? null,
+          lineLabelZh: line.lineLabelZh ?? null,
+          values: line.values,
+          teamPhotoUrl: line.teamPhotoUrl ?? null,
+          slug: line.slug,
+          published: undefined, // sama seperti modal: jangan ubah status terbit
+        })
+      );
+      notify("success", `Line ${line.code} sekarang ${status.toUpperCase()}.`);
+    } catch (error) {
+      setLines((current) =>
+        current.map((item) =>
+          item.id === line.id ? { ...item, status: previous } : item
+        )
+      );
+      notify("error", messageOf(error));
+    } finally {
+      setStatusBusyId(null);
+    }
+  }
+
   function finishLine(line: DmLine) {
     setModal({ open: false, line: null, tab: "general" });
     notify(
@@ -491,10 +534,11 @@ function AdminWorkspace({
           <li key={line.id} className="dm-line-card">
             <div className="dm-line-card-top">
               <span className="dm-line-code">{line.code}</span>
-              <span className={`dm-status-badge is-${line.status}`}>
-                <span className="dm-status-dot" aria-hidden="true" />
-                {line.status.toUpperCase()}
-              </span>
+              <LineStatusBadge
+                status={line.status}
+                disabled={statusBusyId === line.id}
+                onChange={(next) => void changeLineStatus(line, next)}
+              />
             </div>
             <span className="dm-line-name">{line.name}</span>
             <div className="dm-line-chips">

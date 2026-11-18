@@ -3533,3 +3533,103 @@
   font-weight: 700;
   color: var(--dm-admin-text, #111827);
 }
+
+/* ==========================================================================
+   Badge status yang bisa di-tap + menu pilihan status
+   ========================================================================== */
+.dm-status-switch {
+  position: relative;
+  display: inline-flex;
+}
+
+button.dm-status-badge.is-switchable {
+  font-family: inherit;
+  cursor: pointer;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+button.dm-status-badge.is-switchable:hover:not(:disabled) {
+  filter: brightness(0.97);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+button.dm-status-badge.is-switchable:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+button.dm-status-badge.is-switchable:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.dm-status-caret {
+  margin-left: 0.1rem;
+  opacity: 0.7;
+}
+
+.dm-status-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  min-width: 212px;
+  padding: 6px;
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px -8px rgba(24, 24, 27, 0.22), 0 2px 6px rgba(24, 24, 27, 0.06);
+}
+
+.dm-status-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #18181b;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dm-status-option:hover,
+.dm-status-option:focus-visible {
+  background: #f4f4f5;
+  outline: 0;
+}
+
+.dm-status-option .dm-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dm-status-option.is-running .dm-status-dot { background: #1b8748; }
+.dm-status-option.is-idle    .dm-status-dot { background: #d48b00; }
+.dm-status-option.is-stopped .dm-status-dot { background: #b52920; }
+
+.dm-status-option-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.dm-status-option-text strong {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.dm-status-option-text small {
+  color: #71717a;
+  font-size: 0.74rem;
+}
+
+/* kartu yang menunya terbuka harus di atas kartu tetangga */
+.dm-line-card:has(.dm-status-menu) {
+  position: relative;
+  z-index: 5;
+}
