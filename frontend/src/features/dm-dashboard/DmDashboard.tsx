@@ -33,14 +33,20 @@ function Avatar({ src, alt }: { src?: string | null; alt: string }) {
   );
 }
 
-function Details({ m }: { m: Partial<DmMember> }) {
+function Details({ m, showPosition = false }: { m: Partial<DmMember>; showPosition?: boolean }) {
   const { text: uiText } = useUiText();
   const phone = m.workPhone && m.workPhone !== "-" ? m.workPhone : "-";
   return (
     <dl className="dmg-details">
       <div><dt>{uiText("Department")}</dt><dd>{departmentLabel(m.dept) || "-"}</dd></div>
-      <div><dt>{uiText("Supervisor")}</dt><dd>{m.supervisor || "-"}</dd></div>
-      <div><dt>{uiText("Work Phone")}</dt><dd>{phone}</dd></div>
+      {showPosition ? (
+        <div><dt>{uiText("Position")}</dt><dd>{m.position || "-"}</dd></div>
+      ) : (
+        <>
+          <div><dt>{uiText("Supervisor")}</dt><dd>{m.supervisor || "-"}</dd></div>
+          <div><dt>{uiText("Work Phone")}</dt><dd>{phone}</dd></div>
+        </>
+      )}
     </dl>
   );
 }
@@ -218,7 +224,7 @@ export default function DmDashboard({ slug }: { slug: string }) {
                     <strong>{mvp.name}</strong>
                     <span>{mvp.employeeId ?? "-"}</span>
                   </div>
-                  <Details m={mvp} />
+                  <Details m={mvp} showPosition />
                 </div>
               ) : null}
 
