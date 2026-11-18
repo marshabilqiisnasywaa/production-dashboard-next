@@ -9,15 +9,16 @@ import { ApiError, publicApi } from "./api";
 import type { DmPublicWorkshopTeam } from "./api";
 import "./DmDashboardSupervisor.css";
 import "./WorkshopTeamTv.css";
+import "./WorkshopOrgChart.css";
 
 function Avatar({ name, photoUrl }: { name: string; photoUrl: string | null }) {
   const [failed, setFailed] = useState(false);
   if (photoUrl && !failed) {
-    return <img className="dsv-photo" src={photoUrl} alt={name} onError={() => setFailed(true)} />;
+    return <img className="wso-photo" src={photoUrl} alt={name} onError={() => setFailed(true)} />;
   }
   return (
-    <span className="dsv-avatar-icon" aria-hidden="true">
-      <svg className="dsv-person-svg" viewBox="0 0 40 40">
+    <span className="wso-avatar-icon" aria-hidden="true">
+      <svg className="wso-person-svg" viewBox="0 0 40 40">
         <circle cx="20" cy="14" r="7" />
         <path d="M6 36c0-7.7 6.3-12 14-12s14 4.3 14 12z" />
       </svg>
@@ -89,54 +90,59 @@ export default function WorkshopTeamTv({ workshopId }: { workshopId: number }) {
   const centers = team.supervisors.map((_, index) => ((index + 0.5) / count) * 100);
 
   return (
-    <main className="dsv-root wtv-root">
-      <header className="dsv-card dsv-header">
-        <Image src="/assets/oppo-logo-light.png" alt={uiText("OPPO Indonesia Manufacturing")} width={120} height={36} className="dsv-logo" priority />
-        <div className="dsv-header-title">
-          <h1 className="dsv-ws-code">{team.workshopName}</h1>
-          <p className="dsv-header-sub">{uiText("车间组织架构")}</p>
-        </div>
-        <div className="dsv-header-brand"><strong>{uiText("DM WORKSHOP TEAM")}</strong></div>
+    <main className="wso-root" style={{ "--wso-columns": Math.min(Math.max(count, 1), 5), "--wso-gap": count <= 4 ? 72 : 36 } as CSSProperties}>
+      <Image src="/assets/oppo-logo-green.png" alt="OPPO" width={360} height={88} className="wso-logo" priority />
+
+      <header className="wso-title">
+        <h1>{team.workshopName}</h1>
+        <p>{uiText("车间组织架构")}</p>
       </header>
 
-      {error && <p className="wtv-notice" role="status">{uiText("Pembaruan gagal. Menampilkan data terakhir. ")}{uiText(error)}</p>}
+      {error && <p className="wso-notice" role="status">{uiText("Pembaruan gagal. Menampilkan data terakhir. ")}{uiText(error)}</p>}
 
-      <section className="dsv-hod" aria-label={uiText("Head of Department")}>
-        <div className="dsv-hod-bar"><span>{uiText("HEAD OF DEPARTMENT")}</span><strong>{team.hod?.position ?? ""}</strong></div>
-        <div className="dsv-hod-body">
-          <div className="dsv-hod-avatar"><Avatar key={team.hod?.photoUrl} name={team.hod?.name ?? "HOD"} photoUrl={team.hod?.photoUrl ?? null} /></div>
-          <div className="dsv-hod-who">
-            <span className="dsv-hod-name">{team.hod?.name ?? uiText("Belum diisi")}</span>
-            {team.hod && <span className="dsv-hod-title">{team.hod.position}</span>}
-          </div>
-          {team.hod && <div className="dsv-contact"><span className="dsv-contact-label">{uiText("TELEPHONE / CONTACT")}</span><span className="dsv-contact-value">{team.hod.workPhone || "-"}</span></div>}
+      <section className="wso-hod" aria-label={uiText("Head of Department")}>
+        <div className="wso-hod-avatar"><Avatar key={team.hod?.photoUrl} name={team.hod?.name ?? "HOD"} photoUrl={team.hod?.photoUrl ?? null} /></div>
+        <div className="wso-hod-left">
+          <strong>{uiText("Head of Department")}</strong>
+          <span>{team.hod?.position ?? ""}</span>
         </div>
+        <span className="wso-hod-name">{team.hod?.name ?? uiText("Belum diisi")}</span>
+        {team.hod && (
+          <dl className="wso-hod-contact">
+            <div><dt>{uiText("Work Phone:")}</dt><dd>{team.hod.workPhone || "-"}</dd></div>
+          </dl>
+        )}
       </section>
 
       {count > 0 && count <= 5 && (
-        <div className="dsv-connector" aria-hidden="true">
-          <span className="dsv-line dsv-line--down" />
-          <span className="dsv-line dsv-line--across" style={{ left: `${centers[0]}%`, right: `${100 - centers[count - 1]}%` }} />
-          {centers.map((center, index) => <span key={team.supervisors[index].employeeId} className="dsv-line dsv-line--drop" style={{ left: `${center}%` }} />)}
+        <div className="wso-connector" aria-hidden="true">
+          <span className="wso-line wso-line--down" />
+          <span className="wso-line wso-line--across" style={{ left: `${centers[0]}%`, right: `${100 - centers[count - 1]}%` }} />
+          {centers.map((center, index) => <span key={team.supervisors[index].employeeId} className="wso-line wso-line--drop" style={{ left: `${center}%` }} />)}
         </div>
       )}
 
       {count === 0 ? (
-        <p className="wtv-empty" role="status">{uiText("Belum ada supervisor yang ditambahkan ke workshop ini.")}</p>
+        <p className="wso-empty" role="status">{uiText("Belum ada supervisor yang ditambahkan ke workshop ini.")}</p>
       ) : (
-        <section className="dsv-columns" aria-label={uiText("Supervisor workshop")} style={{ "--wtv-columns": Math.min(count, 5) } as CSSProperties}>
+        <section className="wso-columns" aria-label={uiText("Supervisor workshop")}>
           {team.supervisors.map((person) => {
             const position = person.position?.trim() || "Posisi belum diisi";
+            // Deskripsi tugas dari template lama; baris baru = kartu terpisah.
+            const duties = (person.responsibility ?? "").split(/\r?\n+/).map((line) => line.trim()).filter(Boolean);
             return (
-              <article key={person.employeeId} className="dsv-col">
-                <h2 className="dsv-col-head">{position}</h2>
-                <dl className="dsv-info">
-                  <div><dt>{uiText("Nama:")}</dt><dd className="dsv-info-name">{person.name}</dd></div>
-                  <div><dt>{uiText("Tlp:")}</dt><dd className="dsv-info-phone">{person.workPhone || "-"}</dd></div>
-                </dl>
-                <div className="dsv-photo-frame"><Avatar key={person.photoUrl} name={person.name} photoUrl={person.photoUrl} /></div>
-                <h3 className="dsv-col-title">{position}</h3>
-                <p className="dsv-col-desc">{person.responsibility?.trim() || uiText("Tugas belum diisi.")}</p>
+              <article key={person.employeeId} className="wso-col">
+                <div className="wso-person">
+                  <div className="wso-person-avatar"><Avatar key={person.photoUrl} name={person.name} photoUrl={person.photoUrl} /></div>
+                  <h2 className="wso-person-name">{person.name}</h2>
+                  <p className="wso-person-role">{position}</p>
+                  <p className="wso-person-phone">{person.workPhone || "-"}</p>
+                </div>
+                <div className="wso-duties">
+                  {(duties.length ? duties : [uiText("Tugas belum diisi.")]).map((duty, i) => (
+                    <p key={i} className="wso-duty">{duty}</p>
+                  ))}
+                </div>
               </article>
             );
           })}
