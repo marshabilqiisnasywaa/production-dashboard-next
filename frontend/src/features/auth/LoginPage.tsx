@@ -15,6 +15,7 @@ type QuickChip = {
 };
 
 const demoRoles: Role[] = ["Host", "HOD", "Superadmin"];
+const MULTI_AREA_KEY = "multi-area";
 
 function areaLabel(area: PicAreaKey): string {
   return picAreaOptions.find((option) => option.key === area)?.label ?? area;
@@ -28,6 +29,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [demoGroup, setDemoGroup] = useState<string | null>(null);
+  const [demoArea, setDemoArea] = useState<string | null>(null);
 
   const { picChips, roleChips, multiAreaUser } = useMemo(() => ({
     picChips: picAreaOptions.flatMap((option): QuickChip[] => {
@@ -56,6 +59,17 @@ export default function LoginPage() {
     setNik(account.nik);
     setPassword(account.nik);
     setError("");
+  };
+
+  const pickDemoGroup = (group: string, account?: ManagedUser) => {
+    setDemoGroup(group);
+    setDemoArea(null);
+    if (account) fillDemoAccount(account);
+  };
+
+  const pickDemoArea = (area: string, account: ManagedUser) => {
+    setDemoArea(area);
+    fillDemoAccount(account);
   };
 
   if (!ready || user) return null;
@@ -138,44 +152,57 @@ export default function LoginPage() {
             <div className="mml-login__demo">
               <p className="mml-login__demo-title">Akses cepat demo</p>
               <div className="mml-login__demo-row">
-                <span className="mml-login__demo-label">PIC Area</span>
+                <span className="mml-login__demo-label">Role</span>
                 <div className="mml-login__chips">
-                  {picChips.map((chip) => (
-                    <button
-                      key={chip.key}
-                      type="button"
-                      className="mml-login__chip"
-                      onClick={() => fillDemoAccount(chip.account)}
-                    >
-                      {chip.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="mml-login__demo-row">
-                <span className="mml-login__demo-label">Role lain</span>
-                <div className="mml-login__chips">
+                  <button
+                    type="button"
+                    className={`mml-login__chip${demoGroup === "PIC" ? " mml-login__chip--active" : ""}`}
+                    aria-pressed={demoGroup === "PIC"}
+                    onClick={() => pickDemoGroup("PIC")}
+                  >
+                    PIC Area
+                  </button>
                   {roleChips.map((chip) => (
                     <button
                       key={chip.key}
                       type="button"
-                      className="mml-login__chip"
-                      onClick={() => fillDemoAccount(chip.account)}
+                      className={`mml-login__chip${demoGroup === chip.key ? " mml-login__chip--active" : ""}`}
+                      aria-pressed={demoGroup === chip.key}
+                      onClick={() => pickDemoGroup(chip.key, chip.account)}
                     >
                       {chip.label}
                     </button>
                   ))}
-                  {multiAreaUser && (
-                    <button
-                      type="button"
-                      className="mml-login__chip"
-                      onClick={() => fillDemoAccount(multiAreaUser)}
-                    >
-                      PIC 2 area
-                    </button>
-                  )}
                 </div>
               </div>
+              {demoGroup === "PIC" && (
+                <div className="mml-login__demo-row">
+                  <span className="mml-login__demo-label">Area</span>
+                  <div className="mml-login__chips">
+                    {picChips.map((chip) => (
+                      <button
+                        key={chip.key}
+                        type="button"
+                        className={`mml-login__chip${demoArea === chip.key ? " mml-login__chip--active" : ""}`}
+                        aria-pressed={demoArea === chip.key}
+                        onClick={() => pickDemoArea(chip.key, chip.account)}
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
+                    {multiAreaUser && (
+                      <button
+                        type="button"
+                        className={`mml-login__chip${demoArea === MULTI_AREA_KEY ? " mml-login__chip--active" : ""}`}
+                        aria-pressed={demoArea === MULTI_AREA_KEY}
+                        onClick={() => pickDemoArea(MULTI_AREA_KEY, multiAreaUser)}
+                      >
+                        PIC 2 area
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
               <p className="mml-login__demo-note">Klik chip untuk mengisi NIK dan password (sama dengan NIK), lalu tekan Masuk.</p>
             </div>
           )}

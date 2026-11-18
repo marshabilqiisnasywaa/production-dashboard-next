@@ -280,6 +280,13 @@
   color: var(--accent-2);
 }
 
+.mml-login__chip--active,
+.mml-login__chip--active:hover {
+  border-color: var(--accent-1);
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent-2);
+}
+
 .mml-login__demo-note {
   margin: 0;
   font-size: 11px;

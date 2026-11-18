@@ -408,6 +408,11 @@ body,button,input { font-family: var(--font-sans); }
   .bento-top,.bento-bottom { grid-template-columns: 1fr; }
   .page-heading { gap: 12px; }
 }
+.user-menu-wrap { position: relative; }
+.user-menu { position: absolute; z-index: 50; top: 46px; right: 0; min-width: 148px; padding: 5px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); box-shadow: var(--shadow); }
+.user-menu__item { width: 100%; height: 34px; padding: 0 10px; display: flex; align-items: center; gap: 8px; border: 0; border-radius: 7px; background: transparent; font-size: 12px; cursor: pointer; }
+.user-menu__item--danger { color: var(--danger); }
+.user-menu__item--danger:hover { background: var(--danger-soft); }
 .topbar-user-area { width: 132px; }
 .topbar-logout { height: 34px; padding: 0 11px; border: 1px solid var(--border); border-radius: 9px; background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; transition: .18s; }
 .topbar-logout:hover { color: var(--accent-2); border-color: color-mix(in srgb,var(--accent-1) 42%,var(--border)); background: rgba(var(--accent-rgb),.07); }
