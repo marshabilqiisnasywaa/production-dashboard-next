@@ -394,7 +394,7 @@
 
 .dml-detail__toolbar h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   line-height: 1.4;
   flex: 1 1 auto;
@@ -804,6 +804,23 @@
   font-size: 15px;
   font-weight: 650;
   letter-spacing: -0.015em;
+}
+
+.dml-inspection-panel__period-controls {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  /* justify-content: flex-end; */
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dml-inspection-panel--trend .dml-inspection-panel__period {
+  flex: 0 0 auto;
+  margin: 0;
+  white-space: nowrap;
 }
 
 .dml-inspection-panel__header .ui-segmented {

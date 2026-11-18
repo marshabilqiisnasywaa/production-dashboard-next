@@ -462,6 +462,27 @@
 }
 
 @media (max-width: 767px) {
+
+
+  .dml-inspection-period-nav {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .dml-inspection-period-nav__arrow {
+    flex: 0 0 36px;
+  }
+
+  .dml-inspection-period-nav__trigger {
+    flex: 1 1 0;
+    width: 100%;
+    min-width: 0;
+    justify-content: space-between;
+  }
+
+
   .dml-dashboard-toolbar {
     display: flex;
     flex-direction: column;
@@ -1600,49 +1621,47 @@
 }
 
 .dml-inspection-period-nav {
-  display: inline-flex;
-  flex: 0 0 auto;
+  display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 8px 2px 8px 2px;
-  border: 1px solid #e1e8e3;
-  border-radius: 9px;
-  background: #ffffff;
+  gap: 8px;
+}
+
+.dml-inspection-period-nav__select {
+  height: 36px;
+  min-width: 112px;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--dm-border);
+  border-radius: 8px;
+  background-color: #fff;
+  color: var(--dm-text);
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  outline-offset: 2px;
+}
+
+.dml-inspection-period-nav__select:focus-visible {
+  outline: 2px solid var(--dm-green);
 }
 
 .dml-inspection-period-nav__arrow {
-  height: 30px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: #46564d;
-  font: inherit;
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 36px;
+  border: 1px solid var(--dm-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--dm-text);
+  font-size: 20px;
   cursor: pointer;
 }
 
-.dml-inspection-period-nav__arrow {
-  width: 30px;
-  font-size: 20px;
-}
-
-.dml-inspection-period-nav .ui-segmented {
-  padding: 0;
-  background: transparent;
-}
-
-.dml-inspection-period-nav__arrow:hover:not(:disabled) {
-  background: #e5eee8;
-}
-
 .dml-inspection-period-nav__arrow:disabled {
-  color: #a1ada5;
-  cursor: default;
-}
-
-.dml-inspection-period-nav__arrow:focus-visible {
-  outline: 2px solid var(--dm-green);
-  outline-offset: 2px;
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .dml-inspection-panel--trend .dml-inspection-panel__header {

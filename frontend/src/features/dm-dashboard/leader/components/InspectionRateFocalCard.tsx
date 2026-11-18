@@ -133,25 +133,27 @@ export function InspectionRateFocalCard({
         <div className="dml-inspection-panel__header">
           <div className="dml-inspection-panel__heading">
             <h2>{uiText("Tren Inspection Rate")}</h2>
+          </div>
 
+          <div className="dml-inspection-panel__period-controls">
             <p
               className="dml-inspection-panel__period"
               aria-live="polite"
             >
               <span>{periodDescription}</span>
             </p>
-          </div>
 
-          <InspectionTrendFilters
-            range={range}
-            maxDate={maxDate}
-            navigationUnit={navigationUnit}
-            onNavigationUnitChange={setNavigationUnit}
-            onRangeChange={(nextRange) => {
-              setSelectedKey(null);
-              onRangeChange(nextRange);
-            }}
-          />
+            <InspectionTrendFilters
+              range={range}
+              maxDate={maxDate}
+              navigationUnit={navigationUnit}
+              onNavigationUnitChange={setNavigationUnit}
+              onRangeChange={(nextRange) => {
+                setSelectedKey(null);
+                onRangeChange(nextRange);
+              }}
+            />
+          </div>
         </div>
 
         <div className="dml-inspection-panel__status-row">
