@@ -1,0 +1,1397 @@
+/* ================= root + state screens ================= */
+.dmg-root {
+  --dmg-green-dark: #0a6a37;
+  --dmg-green-text: #0d6b3b;
+  --dmg-ink: #1c1f1d;
+
+  /* glass tints: edit freely */
+  --dmg-tint-pill: rgba(125, 185, 150, 0.6);
+  --dmg-tint-soft: rgba(145, 190, 155, 0.6);
+  --dmg-tint-card: rgba(105, 175, 125, 0.52);
+  --dmg-tint-strong: rgba(80, 190, 115, 0.55);
+  --dmg-tint-white: rgba(255, 255, 255, 0.42);
+  --dmg-tint-values: rgba(255, 255, 255, 0.55);
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #F6F8ED;
+  font-family:
+    "OPPO Sans", "Outfit", "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  color: var(--dmg-ink);
+}
+
+.dmg-state-screen {
+  flex-direction: column;
+  gap: 14px;
+  text-align: center;
+  padding: 24px;
+}
+.dmg-state-title {
+  margin: 0;
+  font-size: 32px;
+  color: var(--dmg-green-dark);
+}
+.dmg-state-action {
+  padding: 10px 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--dmg-green-dark);
+  color: #fff;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* ================= fixed stage, scaled by JS (desktop) ================= */
+.dmg-scaler {
+  position: relative;
+  flex: none;
+}
+.dmg-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2540px;
+  height: 1456px;
+  transform-origin: top left;
+  overflow: hidden;
+}
+.dmg-stage > * {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+/* ================= full-screen background ================= */
+.dmg-bg {
+  inset: 0;
+  background: url("/assets/dm/dm-line-background.png") center / 100% 100% no-repeat;
+}
+
+/* ================= glass base ================= */
+.dmg-glass {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.32) 0%,
+      rgba(255, 255, 255, 0.05) 55%,
+      rgba(255, 255, 255, 0.14) 100%
+    ),
+    var(--dmg-tint-pill);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  box-shadow:
+    0 10px 26px rgba(20, 100, 55, 0.12),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1.5px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* ================= header ================= */
+.dmg-oppo-logo {
+  top: 38px;
+  left: 2330px;
+  width: 162px;
+  height: auto;
+}
+.dmg-line-code {
+  top: 62px;
+  left: 0;
+  width: 2540px;
+  margin: 0;
+  text-align: center;
+  font-size: 124px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: var(--dmg-green-dark);
+  letter-spacing: -1px;
+}
+
+/* ================= left column ================= */
+.dmg-status {
+  top: 172px;
+  left: 85px;
+  width: 162px;
+  height: 44px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 24px;
+  color: var(--dmg-ink);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.35),
+      rgba(255, 255, 255, 0.1)
+    ),
+    rgba(150, 240, 185, 0.6);
+}
+.dmg-status-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #22e06b;
+  box-shadow: 0 0 8px #22e06b;
+  flex: none;
+}
+.dmg-status--idle .dmg-status-dot {
+  background: #f5b82e;
+  box-shadow: 0 0 8px #f5b82e;
+}
+.dmg-status--stopped .dmg-status-dot {
+  background: #ef4a4a;
+  box-shadow: 0 0 8px #ef4a4a;
+}
+
+.dmg-chip {
+  top: 243px;
+  width: 564px;
+  height: 79px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 35px;
+  font-weight: 500;
+  color: #111;
+}
+.dmg-chip-line {
+  left: 85px;
+  font-weight:700;
+}
+.dmg-chip-workshop {
+  left: 662px;
+  font-weight:700;
+}
+
+.dmg-model {
+  top: 349px;
+  left: 85px;
+  width: 1141px;
+  height: 123px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.3),
+      rgba(255, 255, 255, 0.05)
+    ),
+    var(--dmg-tint-soft);
+}
+.dmg-model .dmg-label {
+  font-size: 30px;
+  font-weight: 300;
+}
+.dmg-model strong {
+  font-size: 50px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.dmg-photo-frame {
+  top: 499px;
+  left: 83px;
+  width: 1144px;
+  height: 835px;
+  border-radius: 26px;
+  padding: 17px 22px 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.3),
+      rgba(255, 255, 255, 0.05)
+    ),
+    var(--dmg-tint-soft);
+}
+.dmg-photo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 18px;
+  display: block;
+}
+.dmg-photo-empty {
+  font-size: 28px;
+  color: #4b5a50;
+}
+
+.dmg-values {
+  top: 1361px;
+  left: 85px;
+  width: 1141px;
+  height: 45px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 41px;
+}
+.dmg-values li {
+  position: static;
+  height: 45px;
+  padding: 0 28px;
+  border-radius: 23px;
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--dmg-green-text);
+  white-space: nowrap;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.2)),
+    var(--dmg-tint-values);
+}
+
+/* ================= right column ================= */
+.dmg-team-title {
+  top: 173px;
+  left: 1592px;
+  width: 564px;
+  height: 78px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  font-weight: 700;
+  color: #111;
+}
+
+.dmg-card {
+  height: 162px;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.28),
+      rgba(255, 255, 255, 0.04)
+    ),
+    var(--dmg-tint-card);
+}
+
+/* avatar (circle overlapping the card's top edge) */
+.dmg-avatar {
+  position: absolute;
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #fff;
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.dmg-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.dmg-person-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  fill: #7d8190;
+}
+
+/* details block: "Department : ME" */
+.dmg-details {
+  position: absolute;
+  margin: 0;
+  font-size: 21px;
+  font-weight: 300;
+  line-height: 28px;
+}
+.dmg-details div {
+  display: flex;
+  white-space: nowrap;
+}
+.dmg-details dt {
+  width: 106px;
+  margin: 0;
+}
+.dmg-details dd {
+  margin: 0;
+}
+.dmg-details dd::before {
+  content: ":";
+  display: inline-block;
+  width: 24px;
+  text-align: center;
+}
+
+/* leader */
+.dmg-leader {
+  top: 345px;
+  left: 1535px;
+  width: 684px;
+}
+.dmg-leader .dmg-avatar {
+  left: 61px;
+  top: -66px;
+}
+.dmg-leader-id {
+  position: absolute;
+  left: 0;
+  top: 60px;
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-weight: 700;
+}
+.dmg-leader-id strong {
+  font-size: 35px;
+  font-weight: 700;
+  line-height: 40px;
+}
+.dmg-leader-id span {
+  font-size: 24px;
+  font-weight: 300;
+  margin-top: 4px;
+}
+.dmg-leader-title {
+  position: absolute;
+  left: 269px;
+  top: 6px;
+  width: 340px;
+  text-align: center;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--dmg-green-dark);
+}
+.dmg-leader .dmg-details {
+  left: 269px;
+  top: 53px;
+}
+
+/* members (2 x 2) */
+.dmg-member {
+  width: 562px;
+}
+.dmg-member-1 {
+  left: 1311px;
+  top: 600px;
+}
+.dmg-member-2 {
+  left: 1887px;
+  top: 600px;
+}
+.dmg-member-3 {
+  left: 1311px;
+  top: 856px;
+}
+.dmg-member-4 {
+  left: 1887px;
+  top: 856px;
+}
+.dmg-member .dmg-avatar {
+  left: 53px;
+  top: -66px;
+}
+.dmg-member-role {
+  position: absolute;
+  left: 0;
+  top: 80px;
+  width: 234px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 34px;
+}
+.dmg-member-name {
+  position: absolute;
+  left: 224px;
+  top: 10px;
+  font-size: 35px;
+  font-weight: 700;
+  line-height: 42px;
+  white-space: nowrap;
+}
+.dmg-member .dmg-details {
+  left: 224px;
+  top: 59px;
+}
+
+.dmg-team-empty {
+  top: 345px;
+  left: 1311px;
+  width: 1138px;
+  margin: 0;
+  font-size: 28px;
+  text-align: center;
+}
+
+/* MVP of the month */
+.dmg-mvp {
+  top: 1114px;
+  left: 1311px;
+  width: 1138px;
+  height: 142px;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.5),
+      rgba(255, 255, 255, 0.12)
+    ),
+    var(--dmg-tint-white);
+}
+.dmg-mvp-label {
+  position: absolute;
+  left: 52px;
+  top: 36px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 40px;
+}
+.dmg-mvp .dmg-avatar {
+  left: 500px;
+  top: -80px;
+}
+.dmg-mvp-id {
+  position: absolute;
+  left: 419px;
+  top: 66px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.dmg-mvp-id strong {
+  font-size: 35px;
+  font-weight: 700;
+  line-height: 40px;
+}
+.dmg-mvp-id span {
+  font-size: 24px;
+  font-weight: 300;
+  margin-top: 4px;
+}
+.dmg-mvp .dmg-details {
+  left: 775px;
+  top: 32px;
+  line-height: 27px;
+}
+
+/* line name + slogan */
+.dmg-box {
+  top: 1284px;
+  width: 562px;
+  height: 121px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.28),
+      rgba(255, 255, 255, 0.04)
+    ),
+    var(--dmg-tint-strong);
+}
+.dmg-linename {
+  left: 1311px;
+}
+.dmg-slogan {
+  left: 1887px;
+}
+.dmg-box .dmg-label {
+  font-size: 23px;
+  font-weight: 300;
+}
+.dmg-box strong {
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+/* =====================================================================
+   RESPONSIVE: FLUID LAYOUT (tablet + mobile)
+   Active only when the TSX adds .dmg-stage--fluid (width <= FLUID_MAX).
+   Everything is re-flowed with CSS grid; no absolute positions.
+   ===================================================================== */
+
+.dmg-root--fluid {
+  position: relative;
+  inset: auto;
+  display: block;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.dmg-scaler--fluid {
+  position: static;
+  width: 100%;
+  height: auto;
+}
+
+.dmg-stage--fluid {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  transform: none;
+  padding: 24px 24px 40px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+.dmg-stage--fluid > * {
+  position: static;
+  box-sizing: border-box;
+  grid-column: 1 / -1;
+}
+
+/* background stays fixed behind the scrolling content */
+.dmg-stage--fluid > .dmg-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+
+/* ----- header ----- */
+.dmg-stage--fluid .dmg-oppo-logo {
+  width: 96px;
+  justify-self: end;
+}
+.dmg-stage--fluid .dmg-line-code {
+  width: auto;
+  margin: 0;
+  text-align: center;
+  font-size: clamp(44px, 10vw, 88px);
+  letter-spacing: -0.5px;
+}
+
+/* ----- left column ----- */
+.dmg-stage--fluid .dmg-status {
+  width: auto;
+  height: auto;
+  justify-self: start;
+  padding: 8px 20px;
+  font-size: 18px;
+  gap: 10px;
+  border-radius: 999px;
+}
+.dmg-stage--fluid .dmg-status-dot {
+  width: 14px;
+  height: 14px;
+}
+
+.dmg-stage--fluid .dmg-chip {
+  grid-column: auto;
+  width: auto;
+  height: auto;
+  padding: 16px;
+  font-size: 22px;
+  text-align: center;
+  border-radius: 16px;
+}
+
+.dmg-stage--fluid .dmg-model {
+  width: auto;
+  height: auto;
+  padding: 16px;
+  border-radius: 16px;
+}
+.dmg-stage--fluid .dmg-model .dmg-label {
+  font-size: 18px;
+}
+.dmg-stage--fluid .dmg-model strong {
+  font-size: 32px;
+}
+
+.dmg-stage--fluid .dmg-photo-frame {
+  width: auto;
+  height: auto;
+  aspect-ratio: 1144 / 835;
+  padding: 10px;
+  border-radius: 20px;
+}
+.dmg-stage--fluid .dmg-photo-frame img {
+  border-radius: 12px;
+}
+.dmg-stage--fluid .dmg-photo-empty {
+  font-size: 16px;
+  text-align: center;
+}
+
+.dmg-stage--fluid .dmg-values {
+  width: auto;
+  height: auto;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.dmg-stage--fluid .dmg-values li {
+  height: auto;
+  padding: 8px 18px;
+  font-size: 15px;
+  white-space: normal;
+  text-align: center;
+}
+
+/* ----- right column ----- */
+.dmg-stage--fluid .dmg-team-title {
+  width: auto;
+  height: auto;
+  padding: 14px 16px;
+  font-size: 24px;
+  border-radius: 16px;
+}
+.dmg-stage--fluid .dmg-team-empty {
+  width: auto;
+  font-size: 16px;
+}
+
+/* shared card layout: avatar | text, no overlap */
+.dmg-stage--fluid .dmg-card,
+.dmg-stage--fluid .dmg-mvp {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  column-gap: 16px;
+  row-gap: 4px;
+  align-items: center;
+  width: auto;
+  height: auto;
+  padding: 16px;
+  border-radius: 18px;
+}
+.dmg-stage--fluid .dmg-member {
+  grid-column: auto;
+}
+
+.dmg-stage--fluid .dmg-leader {
+  grid-template-areas: "avatar title" "avatar details" "id details";
+}
+.dmg-stage--fluid .dmg-member {
+  grid-template-areas: "avatar name" "avatar details" "role details";
+}
+.dmg-stage--fluid .dmg-mvp {
+  grid-template-areas: "label label" "avatar details" "id details";
+}
+
+.dmg-stage--fluid .dmg-avatar {
+  position: relative;
+  left: auto;
+  top: auto;
+  grid-area: avatar;
+  /* justify-self: center; */
+  align-self: start;
+  width: 96px;
+  height: 96px;
+}
+.dmg-stage--fluid .dmg-details {
+  position: static;
+  grid-area: details;
+  align-self: start;
+  font-size: 15px;
+  line-height: 22px;
+}
+.dmg-stage--fluid .dmg-details div {
+  white-space: normal;
+}
+.dmg-stage--fluid .dmg-details dt {
+  width: 92px;
+  flex: none;
+}
+.dmg-stage--fluid .dmg-details dd {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dmg-stage--fluid .dmg-details dd::before {
+  width: 16px;
+  flex: none;
+}
+
+.dmg-stage--fluid .dmg-leader-id,
+.dmg-stage--fluid .dmg-mvp-id,
+.dmg-stage--fluid .dmg-member-role {
+  position: static;
+  left: auto;
+  top: auto;
+  width: auto;
+  grid-area: id;
+  text-align: center;
+  align-items: center;
+}
+.dmg-stage--fluid .dmg-member-role {
+  grid-area: role;
+  font-size: 14px;
+  line-height: 1.3;
+}
+.dmg-stage--fluid .dmg-leader-id strong,
+.dmg-stage--fluid .dmg-mvp-id strong {
+  font-size: 17px;
+  line-height: 1.25;
+}
+.dmg-stage--fluid .dmg-leader-id span,
+.dmg-stage--fluid .dmg-mvp-id span {
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.dmg-stage--fluid .dmg-leader-title {
+  position: static;
+  left: auto;
+  top: auto;
+  width: auto;
+  grid-area: title;
+  text-align: left;
+  font-size: 22px;
+  font-weight: 700;
+}
+.dmg-stage--fluid .dmg-member-name {
+  position: static;
+  left: auto;
+  top: auto;
+  grid-area: name;
+  font-size: 20px;
+  line-height: 1.25;
+  white-space: normal;
+}
+.dmg-stage--fluid .dmg-mvp-label {
+  position: static;
+  left: auto;
+  top: auto;
+  grid-area: label;
+  font-size: 20px;
+  line-height: 1.2;
+  padding-bottom: 6px;
+}
+
+/* ----- bottom boxes ----- */
+.dmg-stage--fluid .dmg-box {
+  grid-column: auto;
+  width: auto;
+  height: auto;
+  padding: 16px;
+  border-radius: 16px;
+}
+.dmg-stage--fluid .dmg-box .dmg-label {
+  font-size: 15px;
+}
+.dmg-stage--fluid .dmg-box strong {
+  font-size: 24px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* ================= MOBILE (single column) ================= */
+@media (max-width: 639px) {
+  .dmg-stage--fluid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px 14px 32px;
+    gap: 12px;
+  }
+  .dmg-stage--fluid .dmg-oppo-logo {
+    width: 78px;
+  }
+  .dmg-stage--fluid .dmg-line-code {
+    font-size: clamp(38px, 13vw, 60px);
+  }
+
+  .dmg-stage--fluid .dmg-chip {
+    font-size: 18px;
+    padding: 14px;
+  }
+  .dmg-stage--fluid .dmg-model strong {
+    font-size: 26px;
+  }
+  .dmg-stage--fluid .dmg-photo-frame {
+    padding: 8px;
+    border-radius: 16px;
+  }
+  .dmg-stage--fluid .dmg-values li {
+    font-size: 13px;
+    padding: 7px 14px;
+  }
+  .dmg-stage--fluid .dmg-team-title {
+    font-size: 20px;
+    padding: 12px;
+  }
+
+  .dmg-stage--fluid .dmg-card,
+  .dmg-stage--fluid .dmg-mvp {
+    grid-template-columns: 84px minmax(0, 1fr);
+    column-gap: 12px;
+    padding: 14px;
+  }
+  .dmg-stage--fluid .dmg-avatar {
+    width: 80px;
+    height: 80px;
+  }
+  .dmg-stage--fluid .dmg-details {
+    font-size: 14px;
+    line-height: 20px;
+  }
+  .dmg-stage--fluid .dmg-details dt {
+    width: 84px;
+  }
+  .dmg-stage--fluid .dmg-leader-title {
+    font-size: 19px;
+  }
+  .dmg-stage--fluid .dmg-member-name {
+    font-size: 18px;
+  }
+  .dmg-stage--fluid .dmg-mvp-label {
+    font-size: 16px;
+  }
+  .dmg-stage--fluid .dmg-box strong {
+    font-size: 20px;
+  }
+}
+
+.dmg-root--fluid {
+  position: fixed;
+  inset: 0;
+  display: block;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.dmg-scaler--fluid {
+  position: static;
+  width: 100%;
+  min-height: 100%;
+  height: auto;
+}
+
+.dmg-stage--fluid {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: auto;
+  flex-direction: column;
+  gap: clamp(8px, 1vw, 16px);
+  padding: clamp(12px, 1.6vw, 28px) clamp(12px, 2.4vw, 40px);
+  box-sizing: border-box;
+}
+
+.dmg-stage--fluid > * {
+  grid-column: auto;
+}
+
+.dmg-stage--fluid .dmg-stage__header {
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
+  min-height: clamp(56px, 8vh, 92px);
+  place-items: center;
+  padding-inline: clamp(56px, 8vw, 128px);
+}
+
+.dmg-stage--fluid .dmg-oppo-logo {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: auto;
+  width: clamp(56px, 6.8vw, 104px);
+  height: auto;
+  transform: translateY(-50%);
+}
+
+.dmg-stage--fluid .dmg-line-code {
+  width: auto;
+  margin: 0;
+  font-size: clamp(24px, 6vw, 64px);
+  line-height: 1.05;
+  text-align: center;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+  color: #2f8c57 !important;
+}
+
+.dmg-stage--fluid .dmg-stage__columns {
+  display: grid;
+  flex: 1 0 auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: clamp(16px, 2vw, 32px);
+  min-width: 0;
+}
+
+.dmg-stage--fluid .dmg-left-column,
+.dmg-stage--fluid .dmg-right-column {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: clamp(10px, 2vw, 20px);
+}
+
+.dmg-stage--fluid .dmg-status {
+  align-self: flex-start;
+  width: max-content;
+  max-width: 100%;
+  height: auto;
+  padding: 6px clamp(12px, 1.5vw, 20px);
+  gap: 8px;
+  font-size: clamp(12px, 1.3vw, 18px);
+}
+
+.dmg-stage--fluid .dmg-status-dot {
+  width: clamp(8px, 1vw, 14px);
+  height: clamp(8px, 1vw, 14px);
+}
+
+.dmg-stage--fluid .dmg-chip-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(8px, 1vw, 16px);
+}
+
+.dmg-stage--fluid .dmg-chip {
+  min-width: 0;
+  width: auto;
+  height: auto;
+  padding: clamp(10px, 1.2vw, 16px);
+  font-size: clamp(13px, 1.6vw, 22px);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.dmg-stage--fluid .dmg-model {
+  width: auto;
+  height: auto;
+  min-height: 72px;
+  padding: clamp(12px, 1.5vw, 20px);
+}
+
+.dmg-stage--fluid .dmg-model .dmg-label {
+  font-size: clamp(13px, 1.4vw, 18px);
+}
+
+.dmg-stage--fluid .dmg-model strong {
+  font-size: clamp(20px, 2.4vw, 32px);
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.dmg-stage--fluid .dmg-photo-frame {
+  flex: 0 0 auto;
+  width: auto;
+  height: 600px;
+  min-height: 0;
+  aspect-ratio: 1000 / 835;
+  padding: clamp(8px, 1.2vw, 16px);
+  border-radius: clamp(14px, 1.8vw, 24px);
+}
+
+.dmg-stage--fluid .dmg-photo-frame img {
+  min-height: 0;
+  border-radius: clamp(8px, 1.2vw, 18px);
+}
+
+.dmg-stage--fluid .dmg-photo-empty {
+  font-size: clamp(14px, 1.3vw, 18px);
+  text-align: center;
+}
+
+.dmg-stage--fluid .dmg-values {
+  width: auto;
+  height: auto;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(6px, 0.8vw, 12px);
+  margin: 0;
+}
+
+.dmg-stage--fluid .dmg-values li {
+  height: auto;
+  padding: 7px clamp(10px, 1.4vw, 20px);
+  font-size: clamp(12px, 1.15vw, 16px);
+  white-space: normal;
+  text-align: center;
+}
+
+.dmg-stage--fluid .dmg-team-title {
+  align-self: center;
+  width: fit-content;
+  max-width: 100%;
+  height: auto;
+  padding: clamp(10px, 1.2vw, 16px);
+  font-size: clamp(18px, 1.8vw, 28px);
+  line-height: 1.2;
+  color: var(--dmg-team-title-color);
+}
+
+.dmg-stage--fluid .dmg-team-empty {
+  position: static;
+  width: auto;
+  margin: 0;
+  font-size: clamp(14px, 1.3vw, 18px);
+  text-align: center;
+}
+
+.dmg-stage--fluid .dmg-member-grid,
+.dmg-stage--fluid .dmg-box-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(8px, 1vw, 16px);
+  min-width: 0;
+}
+
+.dmg-stage--fluid .dmg-member-grid {
+  row-gap: clamp(36px, 3vw, 48px);
+}
+
+.dmg-stage--fluid .dmg-card,
+.dmg-stage--fluid .dmg-mvp {
+  --dmg-card-avatar-size: clamp(56px, 5vw, 84px);
+  position: relative;
+  top: auto;
+  left: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+  grid-template-rows: auto 1fr;
+  column-gap: clamp(8px, 1vw, 16px);
+  row-gap: 2px;
+  align-items: center;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: clamp(104px, 7vw, 132px);
+  padding: 12px clamp(10px, 1.4vw, 16px);
+  border-radius: clamp(12px, 1.5vw, 18px);
+}
+
+.dmg-stage--fluid .dmg-leader {
+  grid-template-areas: ". title" "id details";
+  margin-top: clamp(18px, 1.5vw, 28px);
+}
+
+.dmg-stage--fluid .dmg-member {
+  grid-column: auto;
+  grid-template-areas: ". name" "role details";
+}
+
+.dmg-stage--fluid .dmg-mvp {
+  grid-template-areas: "label label" "id details";
+  margin-top: clamp(18px, 1.5vw, 28px);
+}
+
+.dmg-stage--fluid .dmg-avatar {
+  position: absolute;
+  top: -36px;
+  left: 18%;
+  width: var(--dmg-card-avatar-size);
+  height: var(--dmg-card-avatar-size);
+  transform: translateX(-50%);
+}
+
+.dmg-stage--fluid .dmg-details {
+  position: static;
+  grid-area: details;
+  align-self: center;
+  min-width: 0;
+  font-size: clamp(11px, 1vw, 14px);
+  line-height: 1.25;
+  font-weight: 500;
+}
+
+.dmg-stage--fluid .dmg-details div {
+  white-space: normal;
+}
+
+.dmg-stage--fluid .dmg-details dt {
+  width: clamp(76px, 5vw, 90px);
+  flex: 0 0 clamp(76px, 5vw, 90px);
+  white-space: nowrap;
+}
+
+.dmg-stage--fluid .dmg-details dd {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dmg-stage--fluid .dmg-details dd::before {
+  width: clamp(6px, 0.65vw, 10px);
+  flex: none;
+}
+
+.dmg-stage--fluid .dmg-leader-id,
+.dmg-stage--fluid .dmg-mvp-id,
+.dmg-stage--fluid .dmg-member-role {
+  position: static;
+  top: auto;
+  left: auto;
+  grid-area: id;
+  align-items: center;
+  width: auto;
+  min-width: 0;
+  text-align: center;
+  overflow-wrap: anywhere;
+  padding-top: clamp(10px, 0.7vw, 16px);
+  font-weight: 500;
+}
+
+.dmg-stage--fluid .dmg-member-role {
+  grid-area: role;
+  padding-top: clamp(0px, 0.5vw, 10px);
+  font-size: clamp(11px, 0.9vw, 13px);
+  line-height: 1.25;
+}
+
+.dmg-stage--fluid .dmg-leader-id strong,
+.dmg-stage--fluid .dmg-mvp-id strong {
+  font-size: clamp(14px, 1.2vw, 17px);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.dmg-stage--fluid .dmg-leader-id span,
+.dmg-stage--fluid .dmg-mvp-id span {
+  margin-top: 2px;
+  font-size: clamp(12px, 1vw, 14px);
+  overflow-wrap: anywhere;
+}
+
+.dmg-stage--fluid .dmg-leader-title {
+  position: static;
+  top: auto;
+  left: auto;
+  grid-area: title;
+  /* justify-self: center; */
+  width: fit-content;
+  max-width: 100%;
+  font-size: clamp(16px, 1.5vw, 22px);
+  text-align: center;
+  color: #2f8c57;
+}
+
+.dmg-stage--fluid .dmg-member-name {
+  position: static;
+  top: auto;
+  left: auto;
+  grid-area: name;
+  min-width: 0;
+  font-size: clamp(15px, 1.35vw, 20px);
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.dmg-stage--fluid .dmg-mvp-label {
+  position: static;
+  top: auto;
+  left: auto;
+  grid-area: label;
+  padding-bottom: 6px;
+  font-size: clamp(16px, 1.5vw, 20px);
+  line-height: 1.2;
+}
+
+.dmg-stage--fluid .dmg-box {
+  width: auto;
+  height: auto;
+  min-width: 0;
+  padding: clamp(10px, 1.4vw, 16px);
+  gap: 6px;
+}
+
+.dmg-stage--fluid .dmg-box .dmg-label {
+  font-size: clamp(12px, 1.1vw, 15px);
+}
+
+.dmg-stage--fluid .dmg-box strong {
+  font-size: clamp(14px, 1.5vw, 20px);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 960px) {
+  .dmg-stage--fluid .dmg-stage__columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 639px) {
+  .dmg-stage--fluid {
+    gap: 12px;
+    padding: 12px 12px 20px;
+  }
+
+  .dmg-stage--fluid .dmg-stage__header {
+    min-height: 54px;
+    padding-inline: 52px;
+  }
+
+  .dmg-stage--fluid .dmg-oppo-logo {
+    width: clamp(48px, 14vw, 72px);
+  }
+
+  .dmg-stage--fluid .dmg-line-code {
+    font-size: clamp(32px, 9vw, 54px);
+  }
+
+  .dmg-stage--fluid .dmg-chip-row {
+    gap: 8px;
+  }
+
+  .dmg-stage--fluid .dmg-chip {
+    padding: 10px 8px;
+    font-size: clamp(12px, 3.8vw, 16px);
+  }
+
+  .dmg-stage--fluid .dmg-member-grid,
+  .dmg-stage--fluid .dmg-box-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dmg-stage--fluid .dmg-card,
+  .dmg-stage--fluid .dmg-mvp {
+    --dmg-card-avatar-size: clamp(52px, 13vw, 72px);
+    min-height: 104px;
+    padding: 10px;
+  }
+
+  .dmg-stage--fluid .dmg-avatar {
+    top: -30px;
+  }
+
+  .dmg-stage--fluid .dmg-leader,
+  .dmg-stage--fluid .dmg-mvp {
+    margin-top: 16px;
+  }
+
+  .dmg-stage--fluid .dmg-member-grid {
+    row-gap: 36px;
+  }
+
+  .dmg-stage--fluid .dmg-member-role {
+    padding-top: 0;
+  }
+
+  .dmg-stage--fluid .dmg-details dt {
+    width: 72px;
+  }
+}
+
+.dmg-stage--fluid .dmg-mvp {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1fr);
+  grid-template-rows: 1fr;
+  grid-template-areas: "label id details";
+  min-height: clamp(132px, 8vw, 156px);
+  padding: clamp(12px, 1.2vw, 18px);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.14)),
+    rgba(175, 255, 207, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.dmg-stage--fluid .dmg-mvp .dmg-avatar {
+  /* top: clamp(-60px, -4vw, -42px); */
+  left: 50%;
+}
+
+.dmg-stage--fluid .dmg-mvp-label {
+  align-self: center;
+  padding: 0;
+  font-size: clamp(16px, 2vw, 24px);
+  line-height: 1.2;
+}
+
+.dmg-stage--fluid .dmg-mvp-id {
+  display: flex;
+  position: static;
+  grid-area: id;
+  align-items: center;
+  width: auto;
+  margin: 0;
+  /* padding-top: clamp(40px, 3.8vw, 56px); */
+  text-align: center;
+}
+
+.dmg-stage--fluid .dmg-mvp-id strong {
+  font-size: clamp(18px, 1.5vw, 24px);
+  line-height: 1.2;
+}
+
+.dmg-stage--fluid .dmg-mvp-id span {
+  margin-top: 2px;
+  font-size: clamp(14px, 1.2vw, 18px);
+}
+
+.dmg-stage--fluid .dmg-mvp .dmg-details {
+  font-size: clamp(12px, 1vw, 16px);
+  line-height: 1.35;
+}
+
+.dmg-stage--fluid .dmg-mvp .dmg-details dt {
+  width: clamp(76px, 5vw, 90px);
+  flex: 0 0 clamp(76px, 5vw, 90px);
+  white-space: nowrap;
+}
+
+.dmg-stage--fluid .dmg-mvp .dmg-details dd::before {
+  width: clamp(6px, 0.6vw, 10px);
+}
+
+@media (max-width: 639px) {
+  .dmg-stage--fluid .dmg-mvp {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    grid-template-areas: "label" "id" "details";
+    min-height: 0;
+    padding: 14px 12px 12px;
+  }
+
+  .dmg-stage--fluid .dmg-mvp-label {
+    text-align: left;
+  }
+
+  .dmg-stage--fluid .dmg-mvp-id {
+    padding-top: 0;
+  }
+
+  .dmg-stage--fluid .dmg-mvp .dmg-details {
+    grid-area: details;
+  }
+}
+
+.dmg-stage--fluid .dmg-leader {
+  align-self: center;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.dmg-stage--fluid .dmg-member-grid {
+  margin-top: clamp(26px, 2.4vw, 36px);
+}
+
+.dmg-stage--fluid .dmg-values,
+.dmg-stage--fluid .dmg-box-grid {
+  margin-top: auto;
+}

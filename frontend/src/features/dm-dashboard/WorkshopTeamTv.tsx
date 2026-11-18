@@ -109,7 +109,7 @@ export default function WorkshopTeamTv({ workshopId }: { workshopId: number }) {
         <span className="wso-hod-name">{team.hod?.name ?? uiText("Belum diisi")}</span>
         {team.hod && (
           <dl className="wso-hod-contact">
-            <div><dt>{uiText("Work No:")}</dt><dd>{team.hod.employeeNo || "-"}</dd></div>
+            <div><dt>{uiText("Work No:")}</dt><dd>{team.hod.employeeId || "-"}</dd></div>
             <div><dt>{uiText("Work Phone:")}</dt><dd>{team.hod.workPhone || "-"}</dd></div>
           </dl>
         )}
@@ -137,7 +137,7 @@ export default function WorkshopTeamTv({ workshopId }: { workshopId: number }) {
                   <div className="wso-person-avatar"><Avatar key={person.photoUrl} name={person.name} photoUrl={person.photoUrl} /></div>
                   <h2 className="wso-person-name">{person.name}</h2>
                   <p className="wso-person-role">{position}</p>
-                  <p className="wso-person-phone">{person.employeeNo || person.workPhone || "-"}</p>
+                  <p className="wso-person-phone">{person.employeeId || person.workPhone || "-"}</p>
                 </div>
                 <div className="wso-duties">
                   {(duties.length ? duties : [uiText("Tugas belum diisi.")]).map((duty, i) => (

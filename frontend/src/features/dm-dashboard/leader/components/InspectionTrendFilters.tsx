@@ -50,26 +50,47 @@ export function InspectionTrendFilters({ range, maxDate, navigationUnit, onNavig
   const nextRange = adjacentRange(1);
 
   return (
-    <div className="dml-inspection-period-nav" role="group" aria-label={uiText("Filter periode tren")}>
-        <button className="dml-inspection-period-nav__arrow" type="button" onClick={() => navigate(-1)} aria-label={uiText(previousLabel)} title={uiText(previousLabel)}>
-          <span aria-hidden="true">‹</span>
-        </button>
-        <SegmentedControl
-          ariaLabel={uiText("Navigasi periode")}
-          options={OPTIONS}
-          value={navigationUnit}
-          onChange={onNavigationUnitChange}
-        />
-        <button
-          className="dml-inspection-period-nav__arrow"
-          type="button"
-          onClick={() => navigate(1)}
-          disabled={nextRange.from > maxDate || (navigationUnit === "day" && nextRange.to > maxDate)}
-          aria-label={uiText(nextLabel)}
-          title={uiText(nextLabel)}
-        >
-          <span aria-hidden="true">›</span>
-        </button>
-    </div>
+<div
+  className="dml-inspection-period-nav"
+  role="group"
+  aria-label={uiText("Filter periode tren")}
+>
+  <button
+    className="dml-inspection-period-nav__arrow"
+    type="button"
+    onClick={() => navigate(-1)}
+    aria-label={uiText(previousLabel)}
+    title={uiText(previousLabel)}
+  >
+    <span aria-hidden="true">‹</span>
+  </button>
+
+  <select
+    className="dml-inspection-period-nav__select"
+    aria-label={uiText("Navigasi periode")}
+    value={navigationUnit}
+    onChange={(event) =>
+      onNavigationUnitChange(event.target.value as TrendGranularity)
+    }
+  >
+    <option value="day">{uiText("Harian")}</option>
+    <option value="week">{uiText("Mingguan")}</option>
+    <option value="month">{uiText("Bulanan")}</option>
+  </select>
+
+  <button
+    className="dml-inspection-period-nav__arrow"
+    type="button"
+    onClick={() => navigate(1)}
+    disabled={
+      nextRange.from > maxDate ||
+      (navigationUnit === "day" && nextRange.to > maxDate)
+    }
+    aria-label={uiText(nextLabel)}
+    title={uiText(nextLabel)}
+  >
+    <span aria-hidden="true">›</span>
+  </button>
+</div>
   );
 }
