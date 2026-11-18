@@ -286,7 +286,7 @@ export default function ProblemSummary({
         className="dm-5w-card dm-5w-problem-card"
         aria-labelledby="dm-5w-statement-title"
       >
-        <h2 className="dm-5w-card-title" id="dm-5w-statement-title">{uiText("Pernyataan masalah (4W + 1H)")}</h2>
+        <h2 className="dm-5w-card-title" id="dm-5w-statement-title">{uiText("Pernyataan masalah (5W + 1H)")}</h2>
         <div className="dm-5w-statement-grid">
           <div className="dm-5w-field">
             <span className="dm-5w-label">{uiText("When")}</span>
