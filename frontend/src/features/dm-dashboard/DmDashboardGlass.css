@@ -1137,7 +1137,7 @@
 }
 
 .dmg-stage--fluid .dmg-details dd::before {
-  width: clamp(6px, 0.65vw, 10px);
+  width: clamp(6px, 2vw, 10px);
   flex: none;
 }
 
@@ -1176,6 +1176,7 @@
   margin-top: 2px;
   font-size: clamp(12px, 1vw, 14px);
   overflow-wrap: anywhere;
+  font-weight: 500;
 }
 
 .dmg-stage--fluid .dmg-leader-title {
@@ -1223,6 +1224,7 @@
 
 .dmg-stage--fluid .dmg-box .dmg-label {
   font-size: clamp(12px, 1.1vw, 15px);
+  font-weight: 500;
 }
 
 .dmg-stage--fluid .dmg-box strong {
