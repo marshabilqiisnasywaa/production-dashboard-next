@@ -45,9 +45,12 @@ def build_roster(db: Session, line_ids: list[int]) -> list[dict]:
 
 def participants(db: Session, session: DmMeetingSession) -> list[dict]:
     roster = session.roster if session.roster is not None else build_roster(db, [session.line_id])
+    employees = {employee.id: employee for employee in db.scalars(
+        select(Employee).where(Employee.id.in_([item["employee_id"] for item in roster]))
+    )} if roster else {}
     result = []
     for item in roster:
-        employee = db.get(Employee, item["employee_id"])
+        employee = employees.get(item["employee_id"])
         result.append({**item, "photo_url": employee.photo_url if employee else None})
     return result
 

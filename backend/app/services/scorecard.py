@@ -7,6 +7,7 @@ from app.models import Employee, HistoricalEntry, LeaderAssignment, Line, SqdipE
 from app.schemas import PapercardKpiDayOut, ScorecardEntryOut, ScorecardLeaderOut, SqdipKpiDayOut, StandupKpiDayOut
 from app.services import history_import, papercard_kpi, sqdip, standup_kpi
 from app.services.scorecard_identity import assignment_on, normalize
+from app.services.scorecard_data import load_scorecard_data
 
 
 def scorecard_entries(db: Session, start: date, end: date, today: date, shift: str = "Shift 1") -> list[ScorecardEntryOut]:
@@ -20,6 +21,10 @@ def scorecard_entries(db: Session, start: date, end: date, today: date, shift: s
         select(Line, Workshop).join(Workshop, Workshop.id == Line.workshop_id)
     )}
     result: dict[tuple, ScorecardEntryOut] = {}
+    papercard_data, standup_data = load_scorecard_data(db, [line.id for line, _ in lines.values()], start, end, shift)
+    history_by_line = {}
+    for entry in history:
+        history_by_line.setdefault(entry.line_id, []).append(entry)
 
     def needs_dm_review(source):
         return "dm" in source.data.get("mappingReviewFields", []) or bool(
@@ -71,13 +76,14 @@ def scorecard_entries(db: Session, start: date, end: date, today: date, shift: s
         return result[key]
 
     for code, (line, _) in lines.items():
-        line_history = [entry for entry in history if entry.line_id == line.id]
+        line_history = history_by_line.get(line.id, [])
         for kind, service, field, schema in (
             ("papercard_kpi", papercard_kpi.line_kpi, "papercard", PapercardKpiDayOut),
             ("standup_kpi", standup_kpi.line_standup, "standup", StandupKpiDayOut),
         ):
-            live = service(db, line.id, start, end, shift, today)
-            days, _ = history_import.merge_kpi(db, line.id, start, end, shift, kind, live, today)
+            loaded = papercard_data[line.id] if field == "papercard" else standup_data[line.id]
+            live = service(db, line.id, start, end, shift, today, loaded=loaded)
+            days, _ = history_import.merge_kpi(db, line.id, start, end, shift, kind, live, today, entries=line_history)
             for row in days:
                 day = row["date"]
                 if row.get("source") == "excel":

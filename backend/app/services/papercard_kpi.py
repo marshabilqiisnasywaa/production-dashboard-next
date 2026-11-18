@@ -94,8 +94,8 @@ def working_days(db: Session, start: date, end: date):
         day += timedelta(days=1)
 
 
-def line_kpi(db: Session, line_id: int, start: date, end: date, shift: str, today: date) -> list[DayScore]:
-    templates = {
+def line_kpi(db: Session, line_id: int, start: date, end: date, shift: str, today: date, *, loaded=None) -> list[DayScore]:
+    templates = loaded[0] if loaded is not None else {
         t.department: t
         for t in db.scalars(
             select(PapercardTemplate).where(
@@ -108,7 +108,7 @@ def line_kpi(db: Session, line_id: int, start: date, end: date, shift: str, toda
     if not required:
         return []
 
-    submissions = db.scalars(
+    submissions = loaded[1] if loaded is not None else db.scalars(
         select(PapercardSubmission).where(
             PapercardSubmission.line_id == line_id,
             PapercardSubmission.shift == shift,
@@ -120,7 +120,7 @@ def line_kpi(db: Session, line_id: int, start: date, end: date, shift: str, toda
     by_key = {(s.date, s.department): s for s in submissions}
 
     days = []
-    for day in working_days(db, start, end):
+    for day in (loaded[2] if loaded is not None else working_days(db, start, end)):
         checks = [
             check_department(day, d, by_key.get((day, d)), templates[d].window_end)
             for d in required

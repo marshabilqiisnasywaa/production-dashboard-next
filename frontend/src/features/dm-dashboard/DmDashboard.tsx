@@ -2,7 +2,7 @@
 import { useUiText } from "@/locales/useUiText";
 
 import { departmentLabel } from "./departments";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ApiError, publicApi } from "./api";
 import { dmStatusLabels } from "./dmData";
@@ -36,15 +36,54 @@ function Avatar({ src, alt }: { src?: string | null; alt: string }) {
 function Details({ m, showPosition = false }: { m: Partial<DmMember>; showPosition?: boolean }) {
   const { text: uiText } = useUiText();
   const phone = m.workPhone && m.workPhone !== "-" ? m.workPhone : "-";
+  const detailsRef = useRef<HTMLDListElement>(null);
+
+  useLayoutEffect(() => {
+    const element = detailsRef.current;
+    if (!element) return;
+    let active = true;
+    let frame = 0;
+    const fit = () => {
+      if (!active) return;
+      element.style.removeProperty("font-size");
+      if (window.innerWidth < 640) return;
+      let size = Number.parseFloat(getComputedStyle(element).fontSize);
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        let ratio = Math.min(1, element.clientHeight / Math.max(element.scrollHeight, 1));
+        for (const field of element.querySelectorAll("dt, dd")) {
+          ratio = Math.min(ratio, field.clientWidth / Math.max(field.scrollWidth, 1));
+        }
+        if (ratio >= 1) break;
+        size *= ratio * 0.97;
+        element.style.fontSize = `${size}px`;
+      }
+    };
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(fit);
+    };
+    const observer = new ResizeObserver(schedule);
+    observer.observe(element);
+    window.addEventListener("resize", schedule);
+    document.fonts.ready.then(() => { if (active) schedule(); });
+    fit();
+    return () => {
+      active = false;
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", schedule);
+    };
+  }, [m.dept, m.position, m.supervisor, phone, showPosition, uiText]);
+
   return (
-    <dl className="dmg-details">
+    <dl ref={detailsRef} className="dmg-details">
       <div><dt>{uiText("Department")}</dt><dd>{departmentLabel(m.dept) || "-"}</dd></div>
       {showPosition ? (
         <div><dt>{uiText("Position")}</dt><dd>{m.position || "-"}</dd></div>
       ) : (
         <>
           <div><dt>{uiText("Supervisor")}</dt><dd>{m.supervisor || "-"}</dd></div>
-          <div><dt>{uiText("Work Phone")}</dt><dd>{phone}</dd></div>
+          <div><dt>{uiText("Work Phone")}</dt><dd className="dmg-phone">{phone}</dd></div>
         </>
       )}
     </dl>
@@ -138,7 +177,7 @@ export default function DmDashboard({ slug }: { slug: string }) {
   return (
     <main className="dmg-root dmg-root--fluid">
       <div className="dmg-scaler dmg-scaler--fluid">
-        <div className="dmg-stage dmg-stage--fluid">
+        <div className="dmg-stage dmg-stage--fluid dmg-stage--reference">
           <div className="dmg-bg" aria-hidden="true" />
 
           <header className="dmg-stage__header">

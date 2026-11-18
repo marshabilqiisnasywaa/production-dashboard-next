@@ -1,3 +1,8 @@
+import os
+
+from fastapi_radar import Radar
+from app.db.session import engine
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -9,6 +14,14 @@ from app.api import history_import
 from app.api import fivewhy
 
 app = FastAPI(title="Production Dashboard API")
+
+if os.getenv("ENABLE_RADAR") == "1":
+    radar = Radar(
+        app,
+        db_engine=engine,
+        capture_sql_bindings=False,
+    )
+    radar.create_tables()
 
 import asyncio
 

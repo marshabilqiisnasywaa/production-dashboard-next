@@ -1,3 +1,27 @@
+@font-face {
+  font-family: "OPPO Sans";
+  src: url("/fonts/OPPOSansRegular.woff") format("woff");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OPPO Sans";
+  src: url("/fonts/OPPOSansMedium.woff") format("woff");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OPPO Sans";
+  src: url("/fonts/OPPOSansBold.woff") format("woff");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
 /* ================= root + state screens ================= */
 .dmg-root {
   --dmg-green-dark: #0a6a37;
@@ -21,6 +45,7 @@
   background: #F6F8ED;
   font-family:
     "OPPO Sans", "Outfit", "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  font-weight: 400;
   color: var(--dmg-ink);
 }
 
@@ -1400,4 +1425,354 @@
 .dmg-stage--fluid .dmg-values,
 .dmg-stage--fluid .dmg-box-grid {
   margin-top: auto;
+}
+
+@media (min-width: 640px) {
+  .dmg-stage--reference {
+    --dmg-unit: min(1cqw, 1.75cqh);
+    --dmg-name-size: calc(var(--dmg-unit) * 1.15);
+    --dmg-detail-size: calc(var(--dmg-unit) * 0.88);
+    --dmg-caption-size: calc(var(--dmg-unit) * 0.85);
+    container-type: size;
+    display: block;
+    width: 100%;
+    height: 100dvh;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .dmg-stage--reference .dmg-stage__header,
+  .dmg-stage--reference .dmg-stage__columns,
+  .dmg-stage--reference .dmg-left-column,
+  .dmg-stage--reference .dmg-right-column,
+  .dmg-stage--reference .dmg-chip-row,
+  .dmg-stage--reference .dmg-member-grid,
+  .dmg-stage--reference .dmg-box-grid {
+    display: contents;
+  }
+
+  .dmg-stage--reference .dmg-oppo-logo,
+  .dmg-stage--reference .dmg-line-code,
+  .dmg-stage--reference .dmg-status,
+  .dmg-stage--reference .dmg-chip,
+  .dmg-stage--reference .dmg-model,
+  .dmg-stage--reference .dmg-photo-frame,
+  .dmg-stage--reference .dmg-values,
+  .dmg-stage--reference .dmg-team-title,
+  .dmg-stage--reference .dmg-card,
+  .dmg-stage--reference .dmg-mvp,
+  .dmg-stage--reference .dmg-box,
+  .dmg-stage--reference .dmg-team-empty {
+    position: absolute;
+    min-height: 0;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+  }
+
+  .dmg-stage--reference .dmg-glass {
+    border-radius: calc(var(--dmg-unit) * 0.7);
+  }
+
+  .dmg-stage--reference .dmg-oppo-logo {
+    top: 3%;
+    right: 2.1%;
+    left: auto;
+    width: 6.2%;
+    height: auto;
+    transform: none;
+  }
+
+  .dmg-stage--reference .dmg-line-code {
+    top: 5%;
+    left: 12%;
+    width: 76%;
+    font-size: calc(var(--dmg-unit) * 3.33);
+    line-height: 1.1;
+  }
+
+  .dmg-stage--reference .dmg-status {
+    top: 12%;
+    left: 3.45%;
+    width: auto;
+    height: 2.9%;
+    gap: calc(var(--dmg-unit) * 0.45);
+    padding: 0 calc(var(--dmg-unit) * 1.1);
+    font-size: calc(var(--dmg-unit) * 0.8);
+    border-radius: 999px;
+  }
+
+  .dmg-stage--reference .dmg-status-dot {
+    width: calc(var(--dmg-unit) * 0.7);
+    height: calc(var(--dmg-unit) * 0.7);
+  }
+
+  .dmg-stage--reference .dmg-chip {
+    top: 16.67%;
+    width: 22.14%;
+    height: 5.42%;
+    padding: 0 calc(var(--dmg-unit) * 0.7);
+    font-size: calc(var(--dmg-unit) * 1.3);
+    line-height: 1.1;
+  }
+
+  .dmg-stage--reference .dmg-chip-line { left: 3.45%; }
+  .dmg-stage--reference .dmg-chip-workshop { left: 26.07%; }
+
+  .dmg-stage--reference .dmg-model {
+    top: 23.96%;
+    left: 3.45%;
+    width: 44.76%;
+    height: 8.33%;
+    padding: 0;
+    gap: 0;
+  }
+
+  .dmg-stage--reference .dmg-model .dmg-label { font-size: calc(var(--dmg-unit) * 1.3); }
+  .dmg-stage--reference .dmg-model strong { font-size: calc(var(--dmg-unit) * 2); }
+
+  .dmg-stage--reference .dmg-photo-frame {
+    top: 34.38%;
+    left: 3.45%;
+    width: 44.76%;
+    height: 57.29%;
+    aspect-ratio: auto;
+    padding: calc(var(--dmg-unit) * 0.7);
+  }
+
+  .dmg-stage--reference .dmg-photo-frame img { border-radius: calc(var(--dmg-unit) * 0.5); }
+  .dmg-stage--reference .dmg-photo-empty { font-size: calc(var(--dmg-unit) * 1.3); }
+
+  .dmg-stage--reference .dmg-values {
+    top: 94%;
+    left: 3.45%;
+    width: 44.76%;
+    height: 2.9%;
+    flex-wrap: nowrap;
+    gap: calc(var(--dmg-unit) * 1.6);
+  }
+
+  .dmg-stage--reference .dmg-values li {
+    min-width: 0;
+    padding: 0 calc(var(--dmg-unit) * 1.1);
+    font-size: calc(var(--dmg-unit) * 0.8);
+    line-height: 1.2;
+    white-space: nowrap;
+    border-radius: 999px;
+  }
+
+  .dmg-stage--reference .dmg-team-title {
+    top: 11.88%;
+    left: 62.62%;
+    width: 22.14%;
+    height: 5.42%;
+    padding: 0;
+    font-size: calc(var(--dmg-unit) * 1.65);
+    line-height: 1.1;
+  }
+
+  .dmg-stage--reference .dmg-card,
+  .dmg-stage--reference .dmg-mvp {
+    display: block;
+    padding: 0;
+  }
+
+  .dmg-stage--reference .dmg-leader {
+    top: 23.54%;
+    left: 60.36%;
+    width: 26.9%;
+    height: 11.25%;
+  }
+
+  .dmg-stage--reference .dmg-member {
+    width: 22.14%;
+    height: 11.25%;
+  }
+
+  .dmg-stage--reference .dmg-member-1 { left: 51.55%; top: 41.25%; }
+  .dmg-stage--reference .dmg-member-2 { left: 74.17%; top: 41.25%; }
+  .dmg-stage--reference .dmg-member-3 { left: 51.55%; top: 58.75%; }
+  .dmg-stage--reference .dmg-member-4 { left: 74.17%; top: 58.75%; }
+
+  .dmg-stage--reference .dmg-avatar {
+    position: absolute;
+    top: calc(var(--dmg-unit) * -2.55);
+    left: 9%;
+    width: calc(var(--dmg-unit) * 5.1);
+    height: calc(var(--dmg-unit) * 5.1);
+    transform: none;
+  }
+
+  .dmg-stage--reference .dmg-leader-id,
+  .dmg-stage--reference .dmg-member-role,
+  .dmg-stage--reference .dmg-mvp-id {
+    position: absolute;
+    left: 0;
+    top: 48%;
+    width: 35%;
+    padding: 0;
+    font-size: calc(var(--dmg-unit) * 0.85);
+    line-height: 1.1;
+  }
+
+  .dmg-stage--reference .dmg-leader-id strong,
+  .dmg-stage--reference .dmg-mvp-id strong {
+    font-size: calc(var(--dmg-unit) * 1.15);
+    line-height: 1.1;
+  }
+
+  .dmg-stage--reference .dmg-leader-id span,
+  .dmg-stage--reference .dmg-mvp-id span {
+    font-size: calc(var(--dmg-unit) * 0.8);
+    line-height: 1.1;
+    margin-top: 2px;
+  }
+
+  .dmg-stage--reference .dmg-member-role { top: 52%; }
+
+  .dmg-stage--reference .dmg-leader-title,
+  .dmg-stage--reference .dmg-member-name {
+    position: absolute;
+    top: 7%;
+    left: 39%;
+    width: 59%;
+    max-width: none;
+    font-size: calc(var(--dmg-unit) * 1.15);
+    line-height: 1.05;
+    text-align: left;
+  }
+
+  .dmg-stage--reference .dmg-member-name { font-size: calc(var(--dmg-unit) * 1.05); }
+
+  .dmg-stage--reference .dmg-details,
+  .dmg-stage--reference .dmg-mvp .dmg-details {
+    position: absolute;
+    top: 40%;
+    left: 39%;
+    width: 59%;
+    font-size: calc(var(--dmg-unit) * 0.8);
+    line-height: 1.15;
+  }
+
+  .dmg-stage--reference .dmg-details div {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0 calc(var(--dmg-unit) * 0.4);
+  }
+
+  .dmg-stage--reference .dmg-details dt,
+  .dmg-stage--reference .dmg-mvp .dmg-details dt { width: auto; flex: none; }
+  .dmg-stage--reference .dmg-details dt::after { content: " :"; }
+  .dmg-stage--reference .dmg-details dd::before { content: none; }
+
+  .dmg-stage--reference .dmg-mvp {
+    top: 76.46%;
+    left: 51.55%;
+    width: 44.76%;
+    height: 10%;
+  }
+
+  .dmg-stage--reference .dmg-mvp .dmg-avatar {
+    top: calc(var(--dmg-unit) * -2.55);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .dmg-stage--reference .dmg-mvp-label {
+    position: absolute;
+    top: 26%;
+    left: 4.5%;
+    padding: 0;
+    font-size: calc(var(--dmg-unit) * 1.2);
+    line-height: 1.15;
+  }
+
+  .dmg-stage--reference .dmg-mvp-id { left: 32%; top: 48%; width: 36%; }
+  .dmg-stage--reference .dmg-mvp .dmg-details { left: 68%; top: 26%; width: 30%; }
+
+  .dmg-stage--reference .dmg-box {
+    top: 88.13%;
+    width: 22.14%;
+    height: 8.54%;
+    padding: 0 calc(var(--dmg-unit) * 0.7);
+    gap: calc(var(--dmg-unit) * 0.3);
+  }
+
+  .dmg-stage--reference .dmg-linename { left: 51.55%; }
+  .dmg-stage--reference .dmg-slogan { left: 74.17%; }
+  .dmg-stage--reference .dmg-box .dmg-label { font-size: calc(var(--dmg-unit) * 0.85); }
+  .dmg-stage--reference .dmg-box strong { font-size: calc(var(--dmg-unit) * 1.35); }
+  .dmg-stage--reference .dmg-team-empty { left: 51.55%; top: 27%; width: 44.76%; font-size: calc(var(--dmg-unit) * 1.3); }
+
+  .dmg-stage--reference .dmg-line-code {
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .dmg-stage--reference .dmg-chip,
+  .dmg-stage--reference .dmg-team-title,
+  .dmg-stage--reference .dmg-model strong,
+  .dmg-stage--reference .dmg-box strong {
+    font-weight: 500;
+    line-height: 1.15;
+  }
+
+  .dmg-stage--reference .dmg-member-name,
+  .dmg-stage--reference .dmg-leader-id strong,
+  .dmg-stage--reference .dmg-mvp-id strong,
+  .dmg-stage--reference .dmg-leader-title,
+  .dmg-stage--reference .dmg-mvp-label {
+    font-size: var(--dmg-name-size);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: 0;
+  }
+
+  .dmg-stage--reference .dmg-details,
+  .dmg-stage--reference .dmg-mvp .dmg-details {
+    font-size: var(--dmg-detail-size);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .dmg-stage--reference .dmg-details dt,
+  .dmg-stage--reference .dmg-details dd {
+    font-weight: 400;
+  }
+
+  .dmg-stage--reference .dmg-member-role,
+  .dmg-stage--reference .dmg-leader-id span,
+  .dmg-stage--reference .dmg-mvp-id span,
+  .dmg-stage--reference .dmg-box .dmg-label {
+    font-size: var(--dmg-caption-size);
+    font-weight: 400;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dmg-stage--reference .dmg-model .dmg-label {
+    font-size: calc(var(--dmg-unit) * 1.1);
+    font-weight: 400;
+  }
+
+  .dmg-stage--reference .dmg-details {
+    height: 56%;
+  }
+
+  .dmg-stage--reference .dmg-mvp .dmg-details {
+    height: 68%;
+  }
+
+  .dmg-stage--reference .dmg-details .dmg-phone {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1279px) {
+  .dmg-stage--reference {
+    --dmg-detail-size: calc(var(--dmg-unit) * 0.78);
+  }
 }

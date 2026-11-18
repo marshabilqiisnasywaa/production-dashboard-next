@@ -8,7 +8,7 @@ from pathlib import Path
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
 from fastapi.testclient import TestClient
-from sqlalchemy import text
+from sqlalchemy import event, text
 from sqlalchemy.orm import Session
 
 from app.db.base import Base
@@ -76,6 +76,52 @@ class ScorecardIdentityTests(unittest.TestCase):
             template_id=line, line_id=line, employee_id=employee, department="PROD", date=date(2026, 9, day),
             submitted_at=datetime(2026, 9, day, 0, 30, tzinfo=timezone.utc), answers=[],
         ))
+
+    def test_report_queries_do_not_grow_per_line_and_refresh_reads_new_submissions(self):
+        statements = []
+        def capture(*args):
+            if args[2].lstrip().upper().startswith("SELECT"):
+                statements.append(args[2])
+        event.listen(self.connection, "before_cursor_execute", capture)
+        try:
+            before = self.entries(last=7)
+            baseline = len(statements)
+            self.db.add(Line(id=3, workshop_id=1, code="L3", name="Line 3"))
+            self.db.flush()
+            self.db.add(PapercardTemplate(id=3, workshop_id=1, line_id=3, department="PROD", name="Daily"))
+            self.db.flush()
+            statements.clear()
+            self.entries(last=7)
+            self.assertEqual(len(statements), baseline)
+            self.submit(7, 1)
+            after = self.entries(last=7)
+            old = next(e for e in before if e.info.line_id == 1)
+            new = next(e for e in after if e.info.line_id == 1)
+            self.assertEqual(next(d.on_time for d in old.papercard if d.date.day == 7), 0)
+            self.assertEqual(next(d.on_time for d in new.papercard if d.date.day == 7), 8)
+        finally:
+            event.remove(self.connection, "before_cursor_execute", capture)
+
+    def test_batch_papercard_keeps_department_deadlines(self):
+        from dataclasses import asdict
+        from app.services.papercard_kpi import line_kpi
+        from app.services.scorecard_data import load_scorecard_data
+
+        day = date(2026, 9, 7)
+        self.db.get(PapercardTemplate, 1).window_end = "08:00"
+        self.db.add(PapercardTemplate(id=3, workshop_id=1, line_id=1, department="ME", name="ME", window_end="10:00"))
+        self.db.flush()
+        for template_id, department in ((1, "PROD"), (3, "ME")):
+            self.db.add(PapercardSubmission(
+                template_id=template_id, line_id=1, employee_id=1, department=department, date=day,
+                submitted_at=datetime(2026, 9, 7, 2, tzinfo=timezone.utc), answers=[],
+            ))
+        self.db.flush()
+        loaded, _ = load_scorecard_data(self.db, [1, 2], day, day, "Shift 1")
+        original = line_kpi(self.db, 1, day, day, "Shift 1", day)
+        batched = line_kpi(self.db, 1, day, day, "Shift 1", day, loaded=loaded[1])
+        self.assertEqual([asdict(row) for row in original], [asdict(row) for row in batched])
+        self.assertEqual({check.department: check.on_time for check in batched[0].checks}, {"PROD": False, "ME": True})
 
     def test_weekly_transfer_partitions_all_live_days_without_duplicates(self):
         self.submit(7, 1)

@@ -8,6 +8,7 @@ from pydantic import Field, model_validator
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+from app.services.meeting_start import ensure_start_window
 
 from app.api.deps import Principal, get_active_principal, get_current_admin
 from app.api.face_scan import MAX_FRAME_BYTES, MAX_FRAMES, MAX_CAMERA_TEMPLATES, check_liveness, logger, not_recognized
@@ -449,6 +450,8 @@ def prepare_session(
     if session is None:
         raise HTTPException(404, "Sesi meeting tidak ditemukan.")
     authorize_host(db, principal, session)
+    if session.status == "pending":
+        ensure_start_window(session.date, session.scheduled_time)
     if session.roster is None:
         if session.status != "pending":
             raise HTTPException(409, "Sesi ini sudah dimulai atau selesai.")

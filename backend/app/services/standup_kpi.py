@@ -65,7 +65,9 @@ def score_day(day: date, meetings: list[MeetingCheck], problems: int, problems_c
     )
 
 
-def line_standup(db: Session, line_id: int, start: date, end: date, shift: str, today: date) -> list[StandupDayScore]:
+def line_standup(db: Session, line_id: int, start: date, end: date, shift: str, today: date, *, loaded=None) -> list[StandupDayScore]:
+    if loaded is not None:
+        return score_sessions(*loaded, today)
     sessions = list(db.scalars(
         select(DmMeetingSession).where(
             DmMeetingSession.line_id == line_id,
@@ -76,8 +78,6 @@ def line_standup(db: Session, line_id: int, start: date, end: date, shift: str, 
             DmMeetingSession.status.in_(("pending", "in_progress", "completed")),
         )
     ))
-    by_key = {(s.date, s.session_number): s for s in sessions}
-
     present: dict[int, set[int]] = {}
     if sessions:
         for attendance in db.scalars(
@@ -109,8 +109,13 @@ def line_standup(db: Session, line_id: int, start: date, end: date, shift: str, 
     ):
         problems.setdefault(session_date, []).append(summary)
 
+    return score_sessions(sessions, present, default_roster, problems, working_days(db, start, end), today)
+
+
+def score_sessions(sessions, present, default_roster, problems, workdays, today):
+    by_key = {(s.date, s.session_number): s for s in sessions}
     days = []
-    for day in working_days(db, start, end):
+    for day in workdays:
         meetings = []
         for number in SESSION_NUMBERS:
             session = by_key.get((day, number))

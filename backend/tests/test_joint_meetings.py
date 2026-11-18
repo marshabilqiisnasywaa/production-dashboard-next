@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+from dataclasses import asdict
 from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -67,6 +68,65 @@ class JointMeetingTests(unittest.TestCase):
 
     def prepare(self, scope="dm"):
         return prepare_session(self.source_id, MeetingPrepareIn(scope=scope), self.db, self.host)
+
+    def test_presensi_cannot_open_twenty_minutes_before_schedule(self):
+        from app.services.meeting_start import JAKARTA
+
+        session = self.db.get(DmMeetingSession, self.source_id)
+        session.scheduled_time = "14:40"
+        self.db.flush()
+        with patch("app.services.meeting_start.datetime", wraps=datetime) as clock:
+            clock.now.return_value = datetime.combine(self.day, datetime.min.time(), tzinfo=JAKARTA).replace(hour=14, minute=20)
+            with self.assertRaises(HTTPException) as error:
+                self.prepare()
+            self.assertEqual(error.exception.status_code, 409)
+            self.assertIn("14:25", error.exception.detail)
+            self.assertIsNone(session.roster)
+            clock.now.return_value = clock.now.return_value.replace(minute=25)
+            result = self.prepare()
+            self.assertTrue(result.roster_prepared)
+
+    def test_start_requires_presensi_without_checking_time_again(self):
+        session = self.db.get(DmMeetingSession, self.source_id)
+        payload = MeetingSessionStartIn(line_id=session.line_id, date=session.date, session_number=session.session_number)
+        with patch("app.api.meetings.ensure_start_window", side_effect=HTTPException(409, "Belum waktunya")) as guard:
+            with self.assertRaises(HTTPException) as error:
+                start_session(payload, self.db, self.host)
+            self.assertEqual(error.exception.status_code, 409)
+            guard.assert_not_called()
+        self.assertEqual(session.status, "pending")
+        self.prepare()
+        with patch("app.api.meetings.ensure_start_window", side_effect=HTTPException(409, "Belum waktunya")) as guard:
+            result = start_session(payload, self.db, self.host)
+            guard.assert_not_called()
+        self.assertEqual(result.status, "in_progress")
+
+    def test_batch_standup_preserves_both_sessions_and_reads_latest_attendance(self):
+        from app.services.scorecard_data import load_scorecard_data
+        from app.services.standup_kpi import line_standup
+
+        line_ids = [line.id for line in self.lines]
+        def compare():
+            _, loaded = load_scorecard_data(self.db, line_ids, self.day, self.day, "Shift 1")
+            scores = []
+            for line_id in line_ids:
+                original = line_standup(self.db, line_id, self.day, self.day, "Shift 1", self.day)
+                batched = line_standup(self.db, line_id, self.day, self.day, "Shift 1", self.day, loaded=loaded[line_id])
+                self.assertEqual([asdict(day) for day in original], [asdict(day) for day in batched])
+                self.assertEqual([meeting.number for meeting in batched[0].meetings], [1, 2])
+                scores.extend(batched)
+            return scores
+
+        before = compare()
+        source = self.db.get(DmMeetingSession, self.source_id)
+        source.status = "completed"
+        for employee in (self.employees[0], self.employees[2]):
+            self.db.add(DmMeetingAttendance(session_id=source.id, employee_id=employee.id, status="present"))
+        self.db.flush()
+        after = compare()
+        self.assertEqual(before[0].attendance, 0)
+        self.assertEqual(after[0].attendance, 5)
+        self.assertFalse(after[0].meetings[1].held)
 
     def target(self):
         return self.db.scalar(select(DmMeetingSession).where(DmMeetingSession.source_session_id == self.source_id))

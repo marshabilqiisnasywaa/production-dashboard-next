@@ -213,11 +213,11 @@ def historical_rows(db: Session, line_id: int, start: date, end: date, kind: str
     ).order_by(HistoricalEntry.date)))
 
 
-def merge_kpi(db: Session, line_id: int, start: date, end: date, shift: str, kind: str, days: list, today: date):
+def merge_kpi(db: Session, line_id: int, start: date, end: date, shift: str, kind: str, days: list, today: date, *, entries=None):
     papercard = kind == "papercard_kpi"
     schema = PapercardKpiDayOut if papercard else StandupKpiDayOut
     merged = {day.date: schema.model_validate(day).model_dump() for day in days}
-    entries = list(db.scalars(select(HistoricalEntry).where(
+    entries = entries if entries is not None else list(db.scalars(select(HistoricalEntry).where(
         HistoricalEntry.line_id == line_id, HistoricalEntry.date >= start,
         HistoricalEntry.date <= end, HistoricalEntry.shift == shift,
     )))

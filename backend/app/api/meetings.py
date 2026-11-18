@@ -7,6 +7,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 from app.services.teamtalk import notify_new_problems
 from zoneinfo import ZoneInfo
+from app.services.meeting_start import ensure_start_window
 
 from app.api.deps import Principal, authorize_line, get_active_principal, get_current_admin, get_principal, require
 from app.db.session import get_db
@@ -414,6 +415,9 @@ def prepare_session(
     session = db.get(DmMeetingSession, session_id)
     if session is None:
         raise HTTPException(404, "Sesi meeting tidak ditemukan.")
+    joint_meetings.authorize_host(db, principal, session)
+    if session.status == "pending":
+        ensure_start_window(session.date, session.scheduled_time)
     joint_meetings.prepare(db, principal, session, payload.scope)
     db.commit()
     return _map_session(session, db)
@@ -444,33 +448,19 @@ def start_session(
     )
     session = db.scalars(stmt).first()
     if not session:
-        slot = next((x for x in slots_for_day(db, payload.line_id, payload.date) if x.number == payload.session_number), None)
-        if slot is None:
-            raise HTTPException(status_code=404, detail="Sesi ini tidak ada pada jadwal meeting lini untuk hari tersebut.")
-        session = DmMeetingSession(
-            line_id=payload.line_id,
-            leader_id=principal.employee.id if principal.employee else None,
-            date=payload.date,
-            shift=payload.shift,
-            session_type=f"during_{payload.session_number}",
-            session_number=payload.session_number,
-            label=slot.label,
-            scheduled_time=slot.time,
-            status="in_progress",
-            started_at=datetime.now(),
-            duration_seconds=0,
-        )
-        db.add(session)
-        db.flush()
+        raise HTTPException(409, "Buka presensi meeting terlebih dahulu.")
     joint_meetings.authorize_host(db, principal, session)
-    if session.roster is None:
-        session.status = "pending"
-        joint_meetings.prepare(db, principal, session, "line")
+
     if session.status == "completed":
         raise HTTPException(409, "Sesi ini sudah selesai.")
+
+    if session.roster is None:
+        raise HTTPException(409, "Buka presensi meeting terlebih dahulu.")
+
     if session.status != "in_progress":
         session.status = "in_progress"
         session.started_at = datetime.now()
+
     joint_meetings.sync_sessions(db, session)
 
     # Record / update attendances
