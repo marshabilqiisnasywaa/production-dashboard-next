@@ -5,99 +5,45 @@ import { departmentLabel } from "./departments";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ApiError, publicApi } from "./api";
-import { dmStatusLabels, formatPeriod, previousPeriod } from "./dmData";
+import { dmStatusLabels } from "./dmData";
 import type { DmBoard, DmMember } from "./dmData";
-import "./DmDashboard.css";
+import "./DmDashboardGlass.css";
+
+const REFRESH_MS = 60_000;
+
+/** Labels come translated with a trailing ":"; strip it where the design has no colon. */
+function stripColon(label: unknown) {
+  return String(label).replace(/\s*:\s*$/, "");
+}
 
 function PersonIcon() {
   return (
-    <svg
-      className="dm-person-svg"
-      viewBox="0 0 40 40"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <circle cx="20" cy="14" r="7" />
-      <path d="M6 36c0-7.7 6.3-12 14-12s14 4.3 14 12z" />
+    <svg className="dmg-person-svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+      <circle cx="50" cy="38" r="17" />
+      <path d="M14 100c0-22 16-36 36-36s36 14 36 36z" />
     </svg>
   );
 }
 
-function GearIcon() {
+function Avatar({ src, alt }: { src?: string | null; alt: string }) {
   return (
-    <svg
-      width="15"
-      height="15"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-    </svg>
-  );
-}
-
-/** Labels come translated with a trailing ":"; the colon is drawn by CSS so all colons line up in one column. */
-const stripColon = (label: unknown) => String(label).replace(/\s*:\s*$/, "");
-
-function MemberCard({ member }: { member: DmMember }) {
-  const { text: uiText } = useUiText();
-  return (
-    <div className="dm-member-card">
-      <div className="dm-member-banner">
-        <span className="dm-member-name">{member.name ?? uiText("Belum diisi")}</span>
-      </div>
-      <div className="dm-member-content">
-        <div className="dm-member-photo-frame">
-          {member.photoUrl ? (
-            <img
-              src={member.photoUrl}
-              alt={member.name ?? uiText("Anggota tim")}
-              className="dm-member-photo"
-            />
-          ) : (
-            <div className="dm-member-avatar-placeholder">
-              <PersonIcon />
-            </div>
-          )}
-        </div>
-        <dl className="dm-member-specs">
-          <div className="dm-spec-row">
-            <dt className="dm-spec-label">{stripColon(uiText("Work No:"))}</dt>
-            <dd className="dm-spec-value">{member.employeeId ?? "-"}</dd>
-          </div>
-          <div className="dm-spec-row">
-            <dt className="dm-spec-label">{stripColon(uiText("Dept:"))}</dt>
-            <dd className="dm-spec-value">{departmentLabel(member.dept) || "-"}</dd>
-          </div>
-          <div className="dm-spec-row">
-            <dt className="dm-spec-label">{stripColon(uiText("Position:"))}</dt>
-            <dd className="dm-spec-value">{member.position ?? "-"}</dd>
-          </div>
-          {member.supervisor ? (
-            <div className="dm-spec-row">
-              <dt className="dm-spec-label">{stripColon(uiText("Supervisor:"))}</dt>
-              <dd className="dm-spec-value">{member.supervisor}</dd>
-            </div>
-          ) : null}
-          {member.workPhone && member.workPhone !== "-" ? (
-            <div className="dm-spec-row">
-              <dt className="dm-spec-label">{stripColon(uiText("Work Phone:"))}</dt>
-              <dd className="dm-spec-value">{member.workPhone}</dd>
-            </div>
-          ) : null}
-        </dl>
-      </div>
+    <div className="dmg-avatar">
+      {src ? <img src={src} alt={alt} /> : <PersonIcon />}
     </div>
   );
 }
 
-const REFRESH_MS = 60_000;
+function Details({ m }: { m: Partial<DmMember> }) {
+  const { text: uiText } = useUiText();
+  const phone = m.workPhone && m.workPhone !== "-" ? m.workPhone : "-";
+  return (
+    <dl className="dmg-details">
+      <div><dt>{uiText("Department")}</dt><dd>{departmentLabel(m.dept) || "-"}</dd></div>
+      <div><dt>{uiText("Supervisor")}</dt><dd>{m.supervisor || "-"}</dd></div>
+      <div><dt>{uiText("Work Phone")}</dt><dd>{phone}</dd></div>
+    </dl>
+  );
+}
 
 type LoadState =
   | { kind: "loading" }
@@ -106,7 +52,7 @@ type LoadState =
   | { kind: "ready"; board: DmBoard };
 
 export default function DmDashboard({ slug }: { slug: string }) {
-  const { text: uiText, locale: uiLocale } = useUiText();
+  const { text: uiText } = useUiText();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
 
@@ -122,11 +68,8 @@ export default function DmDashboard({ slug }: { slug: string }) {
         if (error instanceof ApiError && error.status === 404) {
           setState({ kind: "missing" });
         } else {
-          const message =
-            error instanceof Error ? error.message : "Terjadi kesalahan.";
-          setState((prev) =>
-            prev.kind === "ready" ? prev : { kind: "error", message },
-          );
+          const message = error instanceof Error ? error.message : "Terjadi kesalahan.";
+          setState((prev) => (prev.kind === "ready" ? prev : { kind: "error", message }));
         }
       }
     }
@@ -141,28 +84,21 @@ export default function DmDashboard({ slug }: { slug: string }) {
     };
   }, [slug, attempt]);
 
-  // Hook harus dipanggil di level paling atas sebelum early return sesuai aturan React Rules of Hooks
   const readyBoard = state.kind === "ready" ? state.board : null;
 
-  // Tim Inti 5 Personil di grid atas (Leader selalu #1) dan 1 Operator Teladan di slot MPV bawah
-  const { topMembers, displayMpv } = useMemo(() => {
-    if (!readyBoard) {
-      return { topMembers: [], displayMpv: null };
-    }
-
+  // Leader = first member, then up to 4 team members, MVP separate
+  const { leader, teamMembers, displayMpv } = useMemo(() => {
+    if (!readyBoard) return { leader: null, teamMembers: [], displayMpv: null };
     const all = [...readyBoard.members].sort(
       (a, b) => (a.sortOrder ?? 99) - (b.sortOrder ?? 99),
     );
-
-    return {
-      topMembers: all.slice(0, 5),
-      displayMpv: readyBoard.mpv,
-    };
+    const top = all.slice(0, 5);
+    return { leader: top[0] ?? null, teamMembers: top.slice(1, 5), displayMpv: readyBoard.mpv };
   }, [readyBoard]);
 
   if (state.kind === "loading") {
     return (
-      <main className="dm-root dm-state-screen" aria-busy="true">
+      <main className="dmg-root dmg-state-screen" aria-busy="true">
         <p role="status">{uiText("Memuat dashboard ")}{slug}...</p>
       </main>
     );
@@ -170,247 +106,136 @@ export default function DmDashboard({ slug }: { slug: string }) {
 
   if (state.kind === "missing") {
     return (
-      <main className="dm-root dm-state-screen">
-        <h1 className="dm-state-title">{uiText("Dashboard tidak ditemukan")}</h1>
+      <main className="dmg-root dmg-state-screen">
+        <h1 className="dmg-state-title">{uiText("Dashboard tidak ditemukan")}</h1>
         <p>{uiText("Tidak ada dashboard dengan alamat \"")}{slug}{uiText("\". Periksa link-nya atau pilih dari daftar.")}</p>
-        <Link href="/dm-dashboard" className="dm-state-action">{uiText("Lihat daftar dashboard")}</Link>
+        <Link href="/dm-dashboard" className="dmg-state-action">{uiText("Lihat daftar dashboard")}</Link>
       </main>
     );
   }
 
   if (state.kind === "error") {
     return (
-      <main className="dm-root dm-state-screen">
-        <h1 className="dm-state-title">{uiText("Dashboard belum bisa dimuat")}</h1>
+      <main className="dmg-root dmg-state-screen">
+        <h1 className="dmg-state-title">{uiText("Dashboard belum bisa dimuat")}</h1>
         <p role="alert">{uiText(state.message)}</p>
-        <button
-          type="button"
-          className="dm-state-action"
-          onClick={() => setAttempt((n) => n + 1)}
-        >{uiText("Coba lagi")}</button>
+        <button type="button" className="dmg-state-action" onClick={() => setAttempt((n) => n + 1)}>
+          {uiText("Coba lagi")}
+        </button>
       </main>
     );
   }
 
   const board = state.board;
+  const mvp = displayMpv as Partial<DmMember> | null;
 
   return (
-    <main className="dm-root">
-      {/* Left Vertical Rail */}
-      <aside
-        className="dm-rail dm-rail-left"
-        aria-label={board.lineLabel ?? board.lineCode}
-      >
-        <span className="dm-rail-text dm-rail-zh" lang="zh">
-          {board.lineLabelZh}
-        </span>
-        <span className="dm-rail-text dm-rail-en">{uiText(board.lineLabel)}</span>
-      </aside>
+    <main className="dmg-root dmg-root--fluid">
+      <div className="dmg-scaler dmg-scaler--fluid">
+        <div className="dmg-stage dmg-stage--fluid">
+          <div className="dmg-bg" aria-hidden="true" />
 
-      {/* Main Board Container */}
-      <div className="dm-board-wrapper">
-        <div className="dm-board-main">
-          {/* Left Column: Branding, Code, Model, Status, Team Photo, Core Values */}
-          <section className="dm-col-left" aria-label={uiText("Informasi Lini")}>
-            <div className="dm-brand-header">
-              <div className="dm-brand-logo-wrap">
-                <img
-                  src="/assets/dm/oppo-green-logo.svg"
-                  alt={uiText("OPPO")}
-                  className="dm-oppo-logo"
-                />
-              </div>
-              <div className="dm-code-box">
-                <span className="dm-code-glow" aria-hidden="true" />
-                <h1 className="dm-line-code">{board.lineCode}</h1>
-              </div>
-              {/* <div className="dm-brand-actions">
-                <Link
-                  href="/dm-dashboard/admin"
-                  className="dm-admin-trigger-btn"
-                  title="Buka Halaman Admin untuk mengatur workshop, nama lini, dan anggota"
-                  style={{ textDecoration: "none" }}
-                >
-                  <GearIcon />
-                  <span>Panel Admin</span>
-                </Link>
-              </div> */}
-            </div>
+          <header className="dmg-stage__header">
+            <img src="/assets/dm/oppo-green-logo.svg" alt={uiText("OPPO")} className="dmg-oppo-logo" />
+            <h1 className="dmg-line-code">{board.lineCode}</h1>
+          </header>
 
-            <div className="dm-facts-row">
-              <div className="dm-card dm-fact-card">
-                <span className="dm-fact-label">{uiText("Model:")}</span>
-                <span className="dm-fact-value">{board.model ?? "-"}</span>
-              </div>
-              <div className="dm-card dm-fact-card">
-                <span className="dm-fact-label">{uiText("Line Status:")}</span>
-                <span className={`dm-status-badge is-${board.status}`}>
-                  <span className="dm-status-pulse" aria-hidden="true" />
-                  {uiText(dmStatusLabels[board.status])}
-                </span>
-              </div>
-            </div>
-
-            <div className="dm-card dm-panoramic-card">
-              {board.teamPhotoUrl ? (
-                <img
-                  src={board.teamPhotoUrl}
-                  alt={uiText("Foto Tim Produksi {{v0}}", { v0: board.lineCode })}
-                  className="dm-panoramic-img"
-                />
-              ) : (
-                <div className="dm-photo-empty">
-                  <p>{uiText("Foto tim belum diunggah.")}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="dm-values-footer" aria-label={uiText("Nilai Perusahaan")}>
-              {board.values.map((val, idx) => (
-                <span key={val} className="dm-value-item">
-                  {idx > 0 ? (
-                    <span className="dm-value-divider" aria-hidden="true">
-                      |
-                    </span>
-                  ) : null}
-                  <span>{val}</span>
-                </span>
-              ))}
-            </div>
-          </section>
-
-          {/* Right Column: Triangle Team (2x2), MPV of The Month, Line Name, Slogan */}
-          <section className="dm-col-right" aria-label={uiText("Tim dan Penghargaan")}>
-            <header className="dm-team-header">
-              <h2 className="dm-team-title">{uiText("DM TRIANGLE TEAM")}</h2>
-            </header>
-
-            <div className={`dm-team-grid${topMembers.length === 5 ? " dm-team-grid--five" : ""}`}>
-              {topMembers.length === 0 ? (
-                <p className="dm-team-empty">{uiText("Anggota tim belum diatur. Admin bisa menambahkannya di Panel Admin.")}</p>
-              ) : (
-                topMembers.map((member, idx) => (
-                  <MemberCard key={member.id ?? idx} member={member} />
-                ))
-              )}
-            </div>
-
-            <div className="dm-mpv-section">
-              <div className="dm-mpv-badge-block">
-                <div className="dm-mpv-title-wrap">
-                  <span className="dm-mpv-heading-main">{uiText("MVP")}</span>
-                  <span className="dm-mpv-heading-sub">{uiText("of The Month")}</span>
-                  {displayMpv ? (
-                    <span className="dm-mpv-period">
-                      {formatPeriod(displayMpv.period, uiLocale)}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="dm-chevrons" aria-hidden="true">
-                  <svg width="46" height="16" viewBox="0 0 46 16" fill="none">
-                    <path
-                      d="M2 2L7 8L2 14"
-                      stroke="#008a4f"
-                      strokeWidth="2.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M10 2L15 8L10 14"
-                      stroke="#008a4f"
-                      strokeWidth="2.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M18 2L23 8L18 14"
-                      stroke="#008a4f"
-                      strokeWidth="2.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M26 2L31 8L26 14"
-                      stroke="#008a4f"
-                      strokeWidth="2.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M34 2L39 8L34 14"
-                      stroke="#008a4f"
-                      strokeWidth="2.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
+          <div className="dmg-stage__columns">
+            <section className="dmg-left-column">
+              <div className={`dmg-glass dmg-status dmg-status--${board.status}`}>
+                <span className="dmg-status-dot" aria-hidden="true" />
+                {uiText(dmStatusLabels[board.status])}
               </div>
 
-              {displayMpv ? (
-                <div className="dm-member-card dm-mpv-card">
-                  <div className="dm-member-banner dm-mpv-banner">
-                    <span className="dm-member-name">{displayMpv.name}</span>
+              <div className="dmg-chip-row">
+                <div className="dmg-glass dmg-chip dmg-chip-line">{uiText(board.lineLabel)}</div>
+                <div className="dmg-glass dmg-chip dmg-chip-workshop">{uiText(board.workshopLabel)}</div>
+              </div>
+
+              <div className="dmg-glass dmg-model">
+                <span className="dmg-label">{stripColon(uiText("Model:"))}</span>
+                <strong>{board.model ?? "-"}</strong>
+              </div>
+
+              <div className="dmg-glass dmg-photo-frame">
+                {board.teamPhotoUrl ? (
+                  <img
+                    src={board.teamPhotoUrl}
+                    alt={uiText("Foto Tim Produksi {{v0}}", { v0: board.lineCode })}
+                  />
+                ) : (
+                  <span className="dmg-photo-empty">{uiText("Foto tim belum diunggah.")}</span>
+                )}
+              </div>
+
+              <ul className="dmg-values" aria-label={uiText("Nilai Perusahaan")}>
+                {board.values.map((val) => (
+                  <li key={val} className="dmg-glass">{val}</li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="dmg-right-column">
+              <div className="dmg-glass dmg-team-title">{uiText("DM Triangle Team")}</div>
+
+              {leader ? (
+                <div className="dmg-glass dmg-card dmg-leader">
+                  <Avatar src={leader.photoUrl} alt={leader.name ?? uiText("Anggota tim")} />
+                  <div className="dmg-leader-id">
+                    <strong>{leader.name ?? uiText("Belum diisi")}</strong>
+                    <span>{leader.employeeId ?? "-"}</span>
                   </div>
-                  <div className="dm-member-content">
-                    <div className="dm-member-photo-frame dm-mpv-photo-frame">
-                      {displayMpv.photoUrl ? (
-                        <img
-                          src={displayMpv.photoUrl}
-                          alt={displayMpv.name ?? uiText("MPV")}
-                          className="dm-member-photo"
-                        />
-                      ) : (
-                        <div className="dm-member-avatar-placeholder">
-                          <PersonIcon />
-                        </div>
-                      )}
+                  <div className="dmg-leader-title">{uiText("Team Leader")}</div>
+                  <Details m={leader} />
+                </div>
+              ) : (
+                <p className="dmg-team-empty">
+                  {uiText("Anggota tim belum diatur. Admin bisa menambahkannya di Panel Admin.")}
+                </p>
+              )}
+
+              <div className="dmg-member-grid">
+                {teamMembers.map((member, idx) => (
+                  <div key={member.id ?? idx} className={`dmg-glass dmg-card dmg-member dmg-member-${idx + 1}`}>
+                    <Avatar src={member.photoUrl} alt={member.name ?? uiText("Anggota tim")} />
+                    <div className="dmg-member-role">
+                      <span>{member.position ?? "-"}</span>
+                      <span>{member.employeeId ?? "-"}</span>
                     </div>
-                    <dl className="dm-member-specs">
-                      <div className="dm-spec-row">
-                        <dt className="dm-spec-label">{stripColon(uiText("Work No:"))}</dt>
-                        <dd className="dm-spec-value">
-                          {displayMpv.employeeId ?? "-"}
-                        </dd>
-                      </div>
-                      <div className="dm-spec-row">
-                        <dt className="dm-spec-label">{stripColon(uiText("Dept:"))}</dt>
-                        <dd className="dm-spec-value">
-                          {departmentLabel(displayMpv.dept) || "-"}
-                        </dd>
-                      </div>
-                      <div className="dm-spec-row">
-                        <dt className="dm-spec-label">{stripColon(uiText("Position:"))}</dt>
-                        <dd className="dm-spec-value">
-                          {displayMpv.position ?? "-"}
-                        </dd>
-                      </div>
-                    </dl>
+                    <strong className="dmg-member-name">{member.name ?? uiText("Belum diisi")}</strong>
+                    <Details m={member} />
                   </div>
+                ))}
+              </div>
+
+              {mvp ? (
+                <div className="dmg-glass dmg-mvp">
+                  <div className="dmg-mvp-label">
+                    {uiText("MVP")}<br />{uiText("of the Month")}
+                  </div>
+                  <Avatar src={mvp.photoUrl} alt={mvp.name ?? uiText("MPV")} />
+                  <div className="dmg-mvp-id">
+                    <strong>{mvp.name}</strong>
+                    <span>{mvp.employeeId ?? "-"}</span>
+                  </div>
+                  <Details m={mvp} />
                 </div>
               ) : null}
-            </div>
 
-            <div className="dm-bottom-cards">
-              <div className="dm-card dm-bottom-card">
-                <span className="dm-bottom-label">{uiText("Line Name:")}</span>
-                <span className="dm-bottom-value">{board.lineName}</span>
+              <div className="dmg-box-grid">
+                <div className="dmg-glass dmg-box dmg-linename">
+                  <span className="dmg-label">{uiText("Line Name:")}</span>
+                  <strong>{board.lineName}</strong>
+                </div>
+                <div className="dmg-glass dmg-box dmg-slogan">
+                  <span className="dmg-label">{uiText("Slogan:")}</span>
+                  <strong>{board.slogan ?? "-"}</strong>
+                </div>
               </div>
-              <div className="dm-card dm-bottom-card">
-                <span className="dm-bottom-label">{uiText("Slogan:")}</span>
-                <span className="dm-bottom-value dm-slogan-text">
-                  {board.slogan ?? "-"}
-                </span>
-              </div>
-            </div>
-          </section>
+            </section>
+          </div>
         </div>
       </div>
-
-      {/* Right Vertical Rail */}
-      <aside className="dm-rail dm-rail-right" aria-label={uiText(board.workshopLabel)}>
-        <span className="dm-rail-text dm-rail-en">{uiText(board.workshopLabel)}</span>
-      </aside>
     </main>
   );
 }
