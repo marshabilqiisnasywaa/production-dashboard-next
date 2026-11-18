@@ -388,3 +388,257 @@
   height: 72%;
   fill: #8a8d9e;
 }
+
+/* =====================================================================
+   RESPONSIVE: tablet & HP (<= 1024px)
+   Desktop/TV (> 1024px) tetap layar penuh tanpa scroll seperti sebelumnya.
+   Di bawah itu: halaman boleh scroll vertikal, ukuran tidak lagi diskala
+   dari artboard 1440x826 (--u jadi hampir 1px), kolom supervisor
+   otomatis jadi grid (tablet 2-3 kolom, HP 1 kolom).
+   ===================================================================== */
+@media (max-width: 1024px) {
+  main.wso-root {
+    --u: 1.15px;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 24px 20px 32px;
+    overflow: visible;
+    overflow-x: clip;
+  }
+
+  /* background segitiga dikunci ke layar (bukan ke tinggi konten) supaya
+     tidak melar saat halaman panjang dan di-scroll */
+  main.wso-root::before,
+  main.wso-root::after {
+    position: fixed;
+  }
+
+  /* logo ikut alur halaman, di kanan atas, tidak menimpa judul */
+  main.wso-root .wso-logo {
+    position: static;
+    align-self: flex-end;
+    height: 22px;
+    margin-bottom: 8px;
+  }
+
+  /* HOD: ditumpuk vertikal, di tengah */
+  main.wso-root .wso-hod {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    row-gap: calc(var(--u) * 4);
+    width: min(100%, 520px);
+    height: auto;
+    margin-top: calc(var(--u) * 64);
+    padding: calc(var(--u) * 46) calc(var(--u) * 16) calc(var(--u) * 16);
+  }
+
+  main.wso-root .wso-hod-name {
+    order: -1;
+    padding: 0;
+  }
+
+  main.wso-root .wso-hod-left {
+    align-items: center;
+    text-align: center;
+  }
+
+  main.wso-root .wso-hod-contact {
+    order: 1;
+    justify-self: center;
+    font-size: calc(var(--u) * 13);
+    line-height: calc(var(--u) * 18);
+  }
+
+  /* garis pendek dari HOD ke daftar supervisor */
+  main.wso-root .wso-hod::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 2px;
+    height: 18px;
+    background: var(--wso-green-dark);
+    transform: translateX(-50%);
+  }
+
+  /* konektor desktop disembunyikan; diganti garis per kolom di bawah (.wso-col / .wso-person) */
+  main.wso-root .wso-connector {
+    display: none;
+  }
+
+  /* flex-wrap (bukan grid) supaya baris terakhir yang isinya lebih sedikit
+     tetap rata tengah. Maksimal 2 kolom per baris agar garis cabang rapi. */
+  main.wso-root .wso-columns {
+    --g: calc(var(--u) * 22);   /* jarak antar baris (tempat garis datar) */
+    --gx: calc(var(--u) * 20);  /* jarak antar kolom */
+    --line: 2px;
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--g) var(--gx);
+    width: min(100%, 780px);
+    margin-top: calc(18px + var(--g) / 2);
+  }
+
+  main.wso-root .wso-col {
+    position: relative;
+    flex: 1 1 calc(var(--u) * 250);
+    min-width: 0;
+    max-width: calc(var(--u) * 320);
+    gap: calc(var(--u) * 11);
+  }
+
+  /* ---- garis cabang gaya bagan organisasi ----
+     garis datar di atas tiap kolom: dari tengah kolom ke tengah celah (tulang punggung) */
+  main.wso-root .wso-col::before {
+    content: "";
+    position: absolute;
+    top: calc(var(--g) / -2);
+    height: var(--line);
+    transform: translateY(-50%);
+    background: var(--wso-green-dark);
+  }
+
+  main.wso-root .wso-col:nth-child(odd)::before {
+    left: 50%;
+    right: calc(var(--gx) / -2);
+  }
+
+  main.wso-root .wso-col:nth-child(even)::before {
+    left: calc(var(--gx) / -2);
+    right: 50%;
+  }
+
+  /* kartu sendirian di baris terakhir (rata tengah): tidak perlu garis datar */
+  main.wso-root .wso-col:last-child:nth-child(odd)::before {
+    display: none;
+  }
+
+  /* tulang punggung vertikal di tengah celah, dari garis datar baris ini ke baris berikutnya
+     (digambar oleh kolom kiri; tidak untuk baris terakhir) */
+  main.wso-root .wso-col:nth-child(odd)::after {
+    content: "";
+    position: absolute;
+    top: calc(var(--g) / -2);
+    bottom: calc(var(--g) / -2);
+    right: calc(var(--gx) / -2);
+    width: var(--line);
+    transform: translateX(50%);
+    background: var(--wso-green-dark);
+  }
+
+  main.wso-root .wso-col:nth-child(odd):nth-last-child(-n + 2)::after {
+    display: none;
+  }
+
+  /* garis turun dari garis datar ke avatar (avatar menutupi ujung bawahnya) */
+  main.wso-root .wso-person::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: calc(var(--u) * -41 - var(--g) / 2);
+    height: calc(var(--u) * 41 + var(--g) / 2 + var(--u) * 12);
+    width: var(--line);
+    transform: translateX(-50%);
+    background: var(--wso-green-dark);
+  }
+
+  /* tinggi kartu nama mengikuti isi (nama panjang boleh turun baris) */
+  main.wso-root .wso-person {
+    height: auto;
+    min-height: calc(var(--u) * 117);
+    padding-bottom: calc(var(--u) * 14);
+  }
+
+  main.wso-root .wso-person-name {
+    font-size: calc(var(--u) * 17);
+  }
+
+  main.wso-root .wso-person-role,
+  main.wso-root .wso-person-phone {
+    font-size: calc(var(--u) * 13);
+    line-height: calc(var(--u) * 17);
+  }
+
+  /* kartu tugas: tinggi mengikuti isi, semua kolom dalam satu baris tetap sama tinggi */
+  main.wso-root .wso-duties {
+    flex: 1 1 auto;
+    overflow: visible;
+  }
+
+  main.wso-root .wso-duty {
+    font-size: calc(var(--u) * 12);
+  }
+
+  main.wso-root .wso-notice,
+  main.wso-root .wso-empty {
+    padding: 0 8px;
+  }
+}
+
+/* HP */
+@media (max-width: 600px) {
+  main.wso-root {
+    padding: 16px 14px 28px;
+  }
+
+  main.wso-root .wso-title h1 {
+    font-size: 26px;
+    line-height: 1.25;
+  }
+
+  main.wso-root .wso-title p {
+    margin-top: 4px;
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  main.wso-root .wso-logo {
+    height: 18px;
+  }
+
+  /* HP: 2 kolom per baris (mis. 5 supervisor -> 2, 2, 1; baris terakhir rata tengah).
+     Skala --u dikecilkan khusus area kolom supaya kartu muat 2 sejajar. */
+  main.wso-root .wso-columns {
+    --u: 0.85px;
+    --gx: 12px;
+  }
+
+  main.wso-root .wso-col {
+    flex: 0 0 calc(50% - 6px);
+    max-width: calc(50% - 6px);
+  }
+
+  main.wso-root .wso-person {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  main.wso-root .wso-person-name {
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  main.wso-root .wso-person-role,
+  main.wso-root .wso-person-phone {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  main.wso-root .wso-duties {
+    padding: 10px 8px;
+    gap: 10px;
+  }
+
+  main.wso-root .wso-duty {
+    padding: 8px 9px;
+    font-size: 11px;
+  }
+
+  main.wso-root .wso-hod {
+    --u: 0.9px;
+    margin-top: calc(var(--u) * 84);
+  }
+}
