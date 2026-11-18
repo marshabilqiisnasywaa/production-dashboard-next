@@ -194,9 +194,15 @@
   line-height: calc(var(--u) * 16);
 }
 
+/* dua kolom (label | nilai) supaya nilai Work No dan Work Phone rata */
+.wso-hod-contact {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: calc(var(--u) * 8);
+}
+
 .wso-hod-contact div {
-  display: flex;
-  gap: calc(var(--u) * 8);
+  display: contents;
 }
 
 .wso-hod-contact dt,
