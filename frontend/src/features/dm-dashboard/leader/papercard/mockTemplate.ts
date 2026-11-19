@@ -166,6 +166,11 @@ export const LEADER_TEMPLATE: ChecklistTemplate = {
 // Q-10: line code format is still open (501 vs TAC20601). TODO: lines come from Tim DM (FR-1.4).
 export const PAPERCARD_LINES = ["501", "502", "503"];
 
+export const PAPERCARD_OTHER_CHECKLIST_LINKS = [
+  { label: "E-SOP", href: "http://10.106.88.254:5176/login" },
+  { label: "QMS", href: "https://qms.oppoit.com/portal/#/" },
+];
+
 export const PAPERCARD_CONFIG: {
   shift: string;
   /** Dev only: force the banner state to preview it outside 08:00–09:00. null = real clock. */
