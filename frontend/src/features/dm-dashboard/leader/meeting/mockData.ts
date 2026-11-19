@@ -32,6 +32,6 @@ export const FALLBACK_MEMBERS: MeetingMember[] = [
 
 /** Meeting materials (FR-7.3). Set the real BI links in .env.local */
 export const BI_LINKS = [
-  { label: "Anomaly Tracking (BI)", href: process.env.NEXT_PUBLIC_BI_ANOMALY_URL ?? "#" },
-  { label: "SQDCIP (BI)", href: process.env.NEXT_PUBLIC_BI_SQDCIP_URL ?? "#" },
+  { label: "Anomaly Tracking (BI)", href: "https://bigdata.myoas.com/datav/displayShare/194394?shareType=tt&ticket=APPURLWITHTICKETd25abf77657f47f988f93c00a53ba102&tt_token=APPURLWITHTICKETd25abf77657f47f988f93c00a53ba102&lang=en-US&tt_lang=en-US&zone=%2B8&tt_zone=%2B8&tt_control=666666&tt_versionCode=800&new_client=1&client_id=12041&expire_time=1795075985651&mobileMsgShowStyle=1&pcMsgShowStyle=1&mtpLoading=true" },
+  { label: "SQDCIP (BI)", href: "https://bigdata.myoas.com/datav/displayShare/343263?shareType=tt&ticket=APPURLWITHTICKET2a97aaa3e1b5292b554aec394d03fe26&tt_token=APPURLWITHTICKET2a97aaa3e1b5292b554aec394d03fe26&lang=en-US&tt_lang=en-US&zone=%2B8&tt_zone=%2B8&tt_control=666666&tt_versionCode=800&new_client=1&client_id=12041&expire_time=1795075921663&mobileMsgShowStyle=1&pcMsgShowStyle=1&mtpLoading=true" },
 ];

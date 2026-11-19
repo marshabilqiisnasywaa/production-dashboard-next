@@ -181,9 +181,9 @@
 
 .wso-hod-name {
   padding: 0 calc(var(--u) * 16);
-  font-size: calc(var(--u) * 16);
+  font-size: calc(var(--u) * 22);
   font-weight: 700;
-  line-height: calc(var(--u) * 21);
+  line-height: calc(var(--u) * 28);
   text-align: center;
 }
 
@@ -246,7 +246,7 @@
 /* ---------- columns ---------- */
 .wso-columns {
   display: grid;
-  flex: 1 1 0;
+  flex: 1 1 0; /* kolom turun sampai dasar layar; kartu putih mengisi penuh, teks di tengah */
   min-height: 0;
   grid-template-columns: repeat(var(--wso-columns), minmax(0, 1fr));
   gap: calc(var(--u) * var(--wso-gap, 72));
@@ -306,10 +306,11 @@
 
 .wso-duties {
   position: relative;
-  flex: 1 1 0;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: calc(var(--u) * 110);
   display: flex;
   flex-direction: column;
+  justify-content: center; /* kartu putih berada di tengah kotak hijau */
   gap: calc(var(--u) * 17);
   padding: calc(var(--u) * 17) calc(var(--u) * 15);
   overflow: hidden;
@@ -323,10 +324,14 @@
 .wso-duty {
   position: relative;
   isolation: isolate;
-  flex: 0 0 auto;
+  flex: 0 0 auto; /* kartu putih setinggi isinya, diletakkan di tengah kotak hijau */
+  display: flex;
+  align-items: center;     /* teks di tengah (vertikal) */
+  justify-content: center; /* teks di tengah (horizontal) */
+  text-align: center;
   margin: 0;
-  padding: calc(var(--u) * 10) calc(var(--u) * 11);
-  font-size: calc(var(--u) * 11);
+  padding: calc(var(--u) * 12) calc(var(--u) * 13);
+  font-size: calc(var(--u) * 15);
   font-weight: 400;
   line-height: 1.35;
   white-space: pre-wrap;
@@ -336,6 +341,11 @@
   -webkit-backdrop-filter: blur(calc(var(--u) * 8)) hue-rotate(-6.4deg);
   backdrop-filter: blur(calc(var(--u) * 8)) hue-rotate(-6.4deg);
   box-shadow: var(--wso-duty-edge);
+}
+
+/* tinggi minimum supaya kartu putih antar kolom hampir sama (bila hanya 1 deskripsi) */
+.wso-duty:only-child {
+  min-height: calc(var(--u) * 150);
 }
 
 /* lapisan #dcffe8 yang di-blur di belakang kartu tugas (rectangle-12 di Figma) */
@@ -569,7 +579,12 @@
   }
 
   main.wso-root .wso-duty {
-    font-size: calc(var(--u) * 12);
+    flex: 1 1 auto; /* di tablet/HP kartu putih mengisi kotak hijau (tinggi sama sebaris) */
+    font-size: calc(var(--u) * 14);
+  }
+
+  main.wso-root .wso-duty:only-child {
+    min-height: 0;
   }
 
   main.wso-root .wso-notice,
@@ -634,7 +649,7 @@
 
   main.wso-root .wso-duty {
     padding: 8px 9px;
-    font-size: 11px;
+    font-size: 12px;
   }
 
   main.wso-root .wso-hod {
