@@ -617,6 +617,8 @@ export type DmScorecardLeader = {
   leaderName: string;
   leaderPhotoUrl: string | null;
   historical?: boolean;
+  lineStatus?: "running" | "idle" | "stopped" | null;
+  hasActivity?: boolean;
 };
 
 export type DmSqdipAdminRow = {

@@ -97,7 +97,14 @@ export default function DmScorecard({
   const workshopLines = lines.filter(
     (line) => workshop === "Semua" || line.info.workshopName === workshop
   );
-  const leaderScores = toLeaderScores(workshopLines);
+  // Peringkat Leader & DM: line non-running hanya dihitung bila ada aktivitas di periode ini.
+  const leaderScores = toLeaderScores(
+    workshopLines.filter(
+      (line) =>
+        (line.info.lineStatus !== "idle" && line.info.lineStatus !== "stopped") ||
+        line.info.hasActivity !== false
+    )
+  );
   const dmScores = computeDmScores(leaderScores, target, archivedDmScores.filter((row) => workshop === "Semua" || row.workshopName === workshop));
   const activeDm =
     selectedDm === "Semua" || dmScores[selectedDm] ? selectedDm : "Semua";

@@ -848,6 +848,8 @@ class ScorecardLeaderOut(CamelModel):
     leader_name: str
     leader_photo_url: str | None
     historical: bool = False
+    line_status: str | None = None
+    has_activity: bool = True
 
 
 class StandupKpiMeetingOut(CamelModel):

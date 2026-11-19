@@ -117,12 +117,15 @@ function parseDetail(table: unknown[][], sheet: string, kind: "papercard_status"
   if (head < 0) throw new Error(`${sheet}: header tanggal dan line tidak ditemukan.`);
   const attendance = kind === "attendance";
   const roles: DmHistoryStatus["role"][] = attendance ? ["Leader", "ME", "PE Structure", "PE Electric", "QA"] : ["Leader", "ME", "PE", "IPQC"];
+  // Format datar papercard: satu baris header (Production, ME, PE, Quality) langsung diikuti data.
+  const flat = !attendance && /production/i.test(value(table[head][5])) && /^ME$/i.test(value(table[head][6]))
+    && /^PE$/i.test(value(table[head][7])) && /quality/i.test(value(table[head][8]));
   const roleHeaders = table[head + 1] ?? [];
-  if (!/leader/i.test(value(roleHeaders[5])) || !/ME/i.test(value(roleHeaders[attendance ? 7 : 6]))) {
+  if (!flat && (!/leader/i.test(value(roleHeaders[5])) || !/ME/i.test(value(roleHeaders[attendance ? 7 : 6])))) {
     throw new Error(`${sheet}: susunan kolom role tidak sesuai format workbook asesmen.`);
   }
   const result: HistoryDraft[] = [];
-  for (let index = head + (attendance ? 4 : 3); index < table.length; index++) {
+  for (let index = head + (flat ? 1 : attendance ? 4 : 3); index < table.length; index++) {
     const raw = table[index];
     if (!raw.some((cell) => value(cell))) continue;
     const line = value(raw[1]).toUpperCase(), date = dateKey(raw[0]);

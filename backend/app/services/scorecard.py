@@ -70,7 +70,7 @@ def scorecard_entries(db: Session, start: date, end: date, today: date, shift: s
                     workshop_name=workshop.name if workshop else "Tanpa Workshop", dm_group_id=dm_id,
                     dm_name=dm_name, leader_id=leader_id, leader_name=name,
                     leader_photo_url=employees[leader_id].photo_url if leader_id in employees else None,
-                    historical=line is None,
+                    historical=line is None, line_status=line.status if line else None,
                 ), papercard=[], standup=[], sqdip=[], before=0, current=0, after=0,
             )
         return result[key]
@@ -97,7 +97,8 @@ def scorecard_entries(db: Session, start: date, end: date, today: date, shift: s
                     owner = assignment_on([a for a in assignments if a.line_id == line.id], day)
                     has_live = any(c["submitted"] for c in row["checks"]) if field == "papercard" else any(
                         m["held"] or m["present"] for m in row["meetings"])
-                    if owner is None and not has_live:
+                    # Line non-running hanya tampil di hari yang punya aktivitas nyata (riwayat).
+                    if not has_live and (owner is None or line.status != "running"):
                         continue
                     target = bucket(code, day)
                 row["leader_name"] = target.info.leader_name
@@ -124,5 +125,7 @@ def scorecard_entries(db: Session, start: date, end: date, today: date, shift: s
         return round(sum(values) / len(values), 2) if values else 0
 
     for entry in result.values():
+        # Baris papercard/standup line non-running hanya ada di hari yang punya aktivitas nyata.
+        entry.info.has_activity = bool(entry.papercard or entry.standup)
         entry.before, entry.current, entry.after = mean(entry.papercard), mean(entry.standup), mean(entry.sqdip, final_only=True)
     return sorted(result.values(), key=lambda e: (e.info.workshop_name, e.info.line_code, e.info.leader_name, e.key))

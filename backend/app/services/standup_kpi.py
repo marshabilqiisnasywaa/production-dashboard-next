@@ -112,6 +112,18 @@ def line_standup(db: Session, line_id: int, start: date, end: date, shift: str, 
     return score_sessions(sessions, present, default_roster, problems, working_days(db, start, end), today)
 
 
+def _line_required(session, default_roster: set[int]) -> set[int]:
+    """Wajib hadir untuk scorecard sebuah line: hanya anggota line itu, walau meeting gabungan DM."""
+    if session.roster is None:
+        return default_roster
+    line_id = getattr(session, "line_id", None)
+    own = {
+        item["employee_id"] for item in session.roster
+        if line_id is None or line_id in (item.get("line_ids") or [line_id])
+    }
+    return own or default_roster
+
+
 def score_sessions(sessions, present, default_roster, problems, workdays, today):
     by_key = {(s.date, s.session_number): s for s in sessions}
     days = []
@@ -122,7 +134,7 @@ def score_sessions(sessions, present, default_roster, problems, workdays, today)
             if session is None:
                 meetings.append(check_meeting(number, False, default_roster, set()))
                 continue
-            required = {item["employee_id"] for item in session.roster} if session.roster is not None else default_roster
+            required = _line_required(session, default_roster)
             present_ids = present.get(session.id, set())
             finished = session.status == "completed"
             held = finished or (day == today and (session.started_at is not None or bool(present_ids)))
