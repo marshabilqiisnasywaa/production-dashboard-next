@@ -124,6 +124,9 @@ def scorecard_entries(db: Session, start: date, end: date, today: date, shift: s
         values = [d.total for d in days if (d.final or not final_only) and d.total is not None]
         return round(sum(values) / len(values), 2) if values else 0
 
+    for key in [k for k, e in result.items() if e.info.line_status in ("idle", "stopped") and not (e.papercard or e.standup)]:
+        # Line non-running tanpa papercard/standup di periode ini (mis. hanya bucket SQDIP) tidak ditampilkan.
+        del result[key]
     for entry in result.values():
         # Baris papercard/standup line non-running hanya ada di hari yang punya aktivitas nyata.
         entry.info.has_activity = bool(entry.papercard or entry.standup)

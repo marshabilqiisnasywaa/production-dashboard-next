@@ -994,6 +994,7 @@ export type DmWorkshopAttendanceRecap = Pick<
   DmMeetingSession,
   "id" | "date" | "scheduledTime" | "status"
 > & {
+  startedAt?: string | null;
   participants: {
     employeeNo: string;
     name: string;

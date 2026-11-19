@@ -333,6 +333,7 @@ def attendance_recap(
                     date=mapped.date,
                     scheduled_time=mapped.scheduled_time,
                     status=mapped.status,
+                    started_at=mapped.started_at,
                     participants=[
                         WorkshopRecapParticipantOut(
                             employee_no=p.employee_no,
