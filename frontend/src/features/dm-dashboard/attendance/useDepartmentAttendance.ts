@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { publicApi } from "../api";
+import { lateMinutes } from "./useAttendanceData";
 import type {
   AttendanceRecord,
   SessionStat,
@@ -29,6 +30,8 @@ type SessionRoster = {
     dept: string | null;
   }[];
   scheduledTime: string;
+  startedAt: string | null;
+  status: string;
   date: string;
 };
 
@@ -126,6 +129,8 @@ async function loadRoster(
     sessionId,
     date: session.date,
     scheduledTime: session.scheduledTime,
+    startedAt: session.startedAt ?? null,
+    status: session.status,
     participants,
     attendanceByEmployeeNo,
     departmentByEmployeeNo: new Map(
@@ -158,12 +163,8 @@ function rosterCounts(roster: SessionRoster): Omit<
       continue;
     }
 
-    const attended = new Date(attendance.attendedAt);
-    const scheduled = new Date(
-      `${roster.date}T${roster.scheduledTime}:00`
-    );
-    const difference = Math.round(
-      (attended.getTime() - scheduled.getTime()) / 60_000
+    const difference = lateMinutes(
+      attendance.attendedAt, roster.date, roster.scheduledTime, roster.startedAt, roster.status
     );
     if (difference > 0) late += 1;
     else onTime += 1;
@@ -285,12 +286,8 @@ export function useDepartmentAttendance({
         if (!attendance || attendance.status !== "present") {
           aggregate.absent += 1;
         } else {
-          const attended = new Date(attendance.attendedAt);
-          const scheduled = new Date(
-            `${roster.date}T${roster.scheduledTime}:00`
-          );
-          const difference = Math.round(
-            (attended.getTime() - scheduled.getTime()) / 60_000
+          const difference = lateMinutes(
+            attendance.attendedAt, roster.date, roster.scheduledTime, roster.startedAt, roster.status
           );
           if (difference > 0) aggregate.late += 1;
           else aggregate.onTime += 1;

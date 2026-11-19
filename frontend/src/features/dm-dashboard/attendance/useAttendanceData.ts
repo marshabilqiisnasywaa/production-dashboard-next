@@ -79,10 +79,23 @@ function timeHM(iso: string) {
   ).padStart(2, "0")}`;
 }
 
-function lateMinutes(attendedAt: string, date: string, scheduledTime: string) {
-  const attended = new Date(attendedAt);
-  const scheduled = new Date(`${date}T${scheduledTime}:00`);
-  return Math.round((attended.getTime() - scheduled.getTime()) / 60000);
+// Telat = presensi setelah meeting benar-benar dimulai (started_at), bukan setelah jam jadwal.
+// Presensi sebelum meeting di-start tidak pernah telat. Tanpa started_at, sesi yang belum
+// selesai dianggap belum mulai; sesi selesai tanpa started_at jatuh kembali ke jam jadwal.
+export function lateMinutes(
+  attendedAt: string,
+  date: string,
+  scheduledTime: string,
+  startedAt?: string | null,
+  sessionStatus?: string
+) {
+  const attended = new Date(attendedAt).getTime();
+  if (startedAt) {
+    return Math.floor((attended - new Date(startedAt).getTime()) / 60000);
+  }
+  if (sessionStatus && sessionStatus !== "completed") return 0;
+  const scheduled = new Date(`${date}T${scheduledTime}:00`).getTime();
+  return Math.round((attended - scheduled) / 60000);
 }
 
 function mapStatus(
@@ -115,7 +128,7 @@ function fromLineRecap(recap: DmAttendanceRecap): DayAttendance {
     for (const r of rows) {
       const difference =
         r.status === "present"
-          ? lateMinutes(r.attendedAt, recap.date, s.scheduledTime)
+          ? lateMinutes(r.attendedAt, recap.date, s.scheduledTime, s.startedAt, s.status)
           : null;
       const status = mapStatus(r.status, difference);
       records.push({
@@ -176,7 +189,7 @@ function fromWorkshopSession(s: DmWorkshopAttendanceRecap): DayAttendance {
     role: string,
     attendedAt: string
   ) => {
-    const difference = lateMinutes(attendedAt, s.date, s.scheduledTime);
+    const difference = lateMinutes(attendedAt, s.date, s.scheduledTime, s.startedAt, s.status);
     const status = mapStatus("present", difference);
     if (status === "Tepat waktu") onTime += 1;
     else late += 1;

@@ -627,6 +627,7 @@ class WorkshopRecapSessionOut(CamelModel):
     date: date
     scheduled_time: str
     status: str
+    started_at: datetime | None = None
     participants: list[WorkshopRecapParticipantOut]
     attendances: list[WorkshopRecapAttendanceOut]
 
