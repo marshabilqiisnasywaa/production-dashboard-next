@@ -1126,6 +1126,9 @@ export type DmPapercardSubmission = {
   employeeNo?: string | null;
   recipientSupervisorId?: number | null;
   recipientSupervisorName?: string | null;
+  replacedEmployeeId?: number | null;
+  replacedEmployeeName?: string | null;
+  isSubstitute?: boolean;
   department: string;
   date: string;
   shift: string;
@@ -1165,9 +1168,31 @@ export type DmInspectionRow = {
   onTime: number;
 };
 
+export type DmFillableLine = {
+  id: number;
+  code: string;
+  name: string;
+  model: string | null;
+  status: "running" | "idle" | "stopped";
+  workshopName: string;
+  isOwn: boolean;
+  mainMembers: string[];
+};
+
 export const papercardApi = {
-  supervisors: () =>
-    request<DmPapercardSupervisors>("/papercards/supervisors", {}, true),
+  fillableLines: () =>
+    request<DmFillableLine[]>("/papercards/fillable-lines", {}, true),
+  supervisors: (target?: { lineId?: number; department?: string }) => {
+    const q = new URLSearchParams();
+    if (target?.lineId) q.set("line_id", String(target.lineId));
+    if (target?.department) q.set("department", target.department);
+    const qs = q.toString();
+    return request<DmPapercardSupervisors>(
+      `/papercards/supervisors${qs ? `?${qs}` : ""}`,
+      {},
+      true
+    );
+  },
   inspection: (params: {
     lineId: number;
     from: string;
@@ -1315,6 +1340,9 @@ export type DmSupervisorSubordinate = {
     supervisorNotes?: string | null;
     approvedByName?: string | null;
     approvedAt?: string | null;
+    isSubstitute?: boolean;
+    replacedEmployeeName?: string | null;
+    filledByName?: string | null;
   } | null;
 };
 

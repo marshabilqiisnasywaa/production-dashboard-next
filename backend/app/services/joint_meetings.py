@@ -27,7 +27,10 @@ def build_roster(db: Session, line_ids: list[int]) -> list[dict]:
         .join(Employee, Employee.id == BoardMember.employee_id)
         .join(Board, Board.id == BoardMember.board_id)
         .join(Line, Line.id == Board.line_id)
-        .where(Line.id.in_(line_ids), BoardMember.ended_at.is_(None), Employee.is_active.is_(True))
+        .where(
+            Line.id.in_(line_ids), BoardMember.ended_at.is_(None), BoardMember.replaces_member_id.is_(None),
+            Employee.is_active.is_(True),
+        )
         .order_by(Line.code, BoardMember.sort_order, Employee.id)
     ).all()
     members: dict[int, dict] = {}

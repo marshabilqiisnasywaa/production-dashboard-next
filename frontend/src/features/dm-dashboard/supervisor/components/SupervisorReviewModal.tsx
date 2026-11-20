@@ -160,6 +160,19 @@ export function SupervisorReviewModal({
                   <span>{uiText("Diwakilkan oleh ")}{reviewTarget.substitutedBy.name} ({reviewTarget.substitutedBy.employeeNo})</span>
                 </>
               )}
+              {reviewTarget.submission?.isSubstitute && (
+                <>
+                  <span className="spv-dot-sep">•</span>
+                  <span style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", borderRadius: 6, padding: "2px 8px" }}>
+                    {uiText("Diisi oleh ")}
+                    <strong>{reviewTarget.submission.filledByName ?? reviewTarget.name}</strong>
+                    {uiText(" (pengganti)")}
+                    {" · "}
+                    {uiText("Pengisi asli: ")}
+                    <strong>{reviewTarget.submission.replacedEmployeeName ?? "-"}</strong>
+                  </span>
+                </>
+              )}
               <span className="spv-dot-sep">•</span>
               <span>{uiText("Submit:")}{" "}
                 {reviewTarget.submission?.submittedAt

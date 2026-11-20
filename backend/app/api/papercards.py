@@ -20,6 +20,7 @@ from app.schemas import (
 )
 from app.seed_papercards import FACTORY_PRESETS
 from app.services.accounts import active_line, active_lines
+from app.services.team_slots import main_team_members
 from app.services.papercard_kpi import to_jakarta
 
 router = APIRouter(prefix="/papercards", tags=["papercards"])
@@ -54,8 +55,65 @@ def recipient_fields(db: Session, submission: PapercardSubmission) -> dict:
     }
 
 
+def replaced_employee_id(db: Session, employee: Employee, line_id: int, dept: str) -> int | None:
+    board = db.scalar(select(Board).where(Board.line_id == line_id))
+    if board is None:
+        return None
+    main = main_team_members(db, board.id, dept)
+    if not main or any(person.id == employee.id for _, person in main):
+        return None
+    return main[0][1].id
+
+
+def replaced_fields(db: Session, submission: PapercardSubmission) -> dict:
+    replaced = db.get(Employee, submission.replaced_employee_id) if submission.replaced_employee_id else None
+    return {
+        "replaced_employee_id": replaced.id if replaced else None,
+        "replaced_employee_name": replaced.name if replaced else None,
+        "is_substitute": replaced is not None,
+    }
+
+
+@router.get("/fillable-lines")
+def list_fillable_lines(
+    db: Session = Depends(get_db), principal: Principal = Depends(get_principal),
+) -> list[dict]:
+    employee = principal.employee
+    if employee is None:
+        raise HTTPException(403, "Pengisian papercard memerlukan akun karyawan.")
+    own_ids = {line.id for _, line, _ in active_lines(db, employee.id)}
+    dept = (employee.dept or "").upper()
+    rows = db.execute(
+        select(Board, Line, Workshop)
+        .join(Line, Line.id == Board.line_id)
+        .join(Workshop, Workshop.id == Line.workshop_id)
+        .where(Line.status == "running")
+        .order_by(Workshop.name, Line.code)
+    ).all()
+    result = []
+    for board, line, workshop in rows:
+        main = [person for _, person in main_team_members(db, board.id, dept)] if dept else []
+        result.append({
+            "id": line.id, "code": line.code, "name": line.name, "model": line.model, "status": line.status,
+            "workshopName": workshop.name, "isOwn": line.id in own_ids,
+            "mainMembers": [person.name for person in main if person.id != employee.id],
+        })
+    return result
+
+
+def default_recipient(db: Session, employee: Employee, line_id: int | None, dept: str | None) -> Employee | None:
+    if line_id is not None and dept:
+        replaced_id = replaced_employee_id(db, employee, line_id, dept.upper())
+        replaced = db.get(Employee, replaced_id) if replaced_id else None
+        found = default_supervisor(db, replaced) if replaced else None
+        if found is not None and found.role == "supervisor" and found.is_active and same_dept(employee, found):
+            return found
+    return default_supervisor(db, employee)
+
+
 @router.get("/supervisors")
 def list_recipient_supervisors(
+    line_id: int | None = None, department: str | None = None,
     db: Session = Depends(get_db), principal: Principal = Depends(get_principal),
 ) -> dict:
     employee = principal.employee
@@ -65,7 +123,7 @@ def list_recipient_supervisors(
         Employee.role == "supervisor", Employee.is_active.is_(True), Employee.id != employee.id,
     ).order_by(Employee.name, Employee.id))
     supervisors = [s for s in candidates if same_dept(employee, s)]
-    default = default_supervisor(db, employee)
+    default = default_recipient(db, employee, line_id, department or employee.dept)
     return {
         "defaultSupervisorId": default.id if default and any(s.id == default.id for s in supervisors) else None,
         "supervisors": [{"id": s.id, "name": s.name, "employeeNo": s.employee_no, "dept": s.dept} for s in supervisors],
@@ -354,6 +412,10 @@ def get_supervisor_overview(
                     "approvedAt": submission.approved_at.isoformat() if submission.approved_at else None,
                     "recipientSupervisorId": recipient.id if recipient else None,
                     "recipientSupervisorName": recipient.name if recipient else None,
+                    "isSubstitute": submission.replaced_employee_id is not None,
+                    "replacedEmployeeName": replaced_fields(db, submission)["replaced_employee_name"],
+                    "filledByName": (db.get(Employee, submission.employee_id).name
+                                     if db.get(Employee, submission.employee_id) else None),
                 }
                 if submission.employee_id != employee.id:
                     substitute = db.get(Employee, submission.employee_id)
@@ -459,7 +521,7 @@ def list_templates(
     if principal.role in ("member", "leader") and principal.employee:
         user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
         if line_id is not None:
-            if user_line_ids and line_id not in user_line_ids:
+            if principal.role == "leader" and user_line_ids and line_id not in user_line_ids:
                 return []
         elif user_line_ids:
             line_id = user_line_ids[0]
@@ -586,7 +648,7 @@ def list_submissions(
     if principal.role in ("member", "leader") and principal.employee:
         user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
         if line_id is not None:
-            if user_line_ids and line_id not in user_line_ids:
+            if principal.role == "leader" and user_line_ids and line_id not in user_line_ids:
                 return []
         elif user_line_ids:
             line_id = user_line_ids[0]
@@ -628,6 +690,7 @@ def list_submissions(
                 employee_name=emp.name if emp else None,
                 employee_no=emp.employee_no if emp else None,
                 **recipient_fields(db, s),
+                **replaced_fields(db, s),
                 department=s.department,
                 date=s.date,
                 shift=s.shift,
@@ -659,11 +722,10 @@ def submit_papercard(
     # Enforce strict boundary for member and leader role: only assigned lines & department
     if principal.role in ("member", "leader") and principal.employee:
         user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
-        if user_line_ids and payload.line_id not in user_line_ids:
-            role_label = "Leader" if principal.role == "leader" else "Anggota"
+        if principal.role == "leader" and user_line_ids and payload.line_id not in user_line_ids:
             raise HTTPException(
                 status_code=403,
-                detail=f"Akses ditolak: {role_label} hanya dapat mengisi papercard untuk lini penugasan sendiri.",
+                detail="Akses ditolak: Leader hanya dapat mengisi papercard untuk lini penugasan sendiri.",
             )
         if principal.employee.dept and dept != principal.employee.dept.upper():
             role_label = "Leader" if principal.role == "leader" else "Anggota"
@@ -680,6 +742,7 @@ def submit_papercard(
         )
 
     emp_id = principal.employee.id
+    replaced_id = replaced_employee_id(db, principal.employee, payload.line_id, dept)
 
     # Find template
     tmpl = db.scalars(
@@ -749,7 +812,7 @@ def submit_papercard(
     recipient_id = payload.recipient_supervisor_id
     if recipient_id is None and existing is not None:
         recipient_id = existing.recipient_supervisor_id
-    recipient = db.get(Employee, recipient_id) if recipient_id is not None else default_supervisor(db, principal.employee)
+    recipient = db.get(Employee, recipient_id) if recipient_id is not None else default_recipient(db, principal.employee, payload.line_id, dept)
     if recipient is None or recipient.role != "supervisor" or not recipient.is_active or recipient.id == emp_id:
         raise HTTPException(400, "Pilih supervisor penerima yang aktif.")
     if not same_dept(principal.employee, recipient):
@@ -768,6 +831,7 @@ def submit_papercard(
                 detail=f"Papercard {dept} hari ini sudah diisi oleh {filler.name if filler else 'rekan satu departemen'}.",
             )
         existing.employee_id = emp_id
+        existing.replaced_employee_id = replaced_id
         existing.answers = payload.answers
         existing.abnormal_notes = result_notes
         existing.status = result_status
@@ -782,6 +846,7 @@ def submit_papercard(
             template_id=tmpl.id if tmpl else None,
             line_id=payload.line_id,
             employee_id=emp_id,
+            replaced_employee_id=replaced_id,
             recipient_supervisor_id=recipient.id,
             department=dept,
             date=payload.date,
@@ -805,6 +870,7 @@ def submit_papercard(
         employee_name=emp.name if emp else None,
         employee_no=emp.employee_no if emp else None,
         **recipient_fields(db, target),
+        **replaced_fields(db, target),
         department=target.department,
         date=target.date,
         shift=target.shift,

@@ -22,6 +22,20 @@ def effective_slot(member: BoardMember, employee: Employee) -> int:
     return member.sort_order if member.sort_order in slots else slots[0]
 
 
+def main_team_members(db: Session, board_id: int, department: str) -> list[tuple[BoardMember, Employee]]:
+    department = team_department(department)
+    rows = db.execute(
+        select(BoardMember, Employee)
+        .join(Employee, Employee.id == BoardMember.employee_id)
+        .where(BoardMember.board_id == board_id, BoardMember.ended_at.is_(None), BoardMember.replaces_member_id.is_(None))
+    ).all()
+    found = [
+        (member, person) for member, person in rows
+        if team_department(person.dept) == department and (department != "PROD" or person.role == "leader")
+    ]
+    return sorted(found, key=lambda row: (effective_slot(row[0], row[1]), row[0].id))
+
+
 def validate_team_slot(
     db: Session, board_id: int, employee: Employee, exclude_member_id: int | None = None,
     requested: int | None = None,
@@ -45,7 +59,8 @@ def validate_team_slot(
     ).all()
     peers = [
         effective_slot(member, person) for member, person in members
-        if member.id != exclude_member_id and team_department(person.dept) == department
+        if member.id != exclude_member_id and member.replaces_member_id is None
+        and team_department(person.dept) == department
     ]
     free = [slot for slot in slots if slot not in peers]
     if requested in slots:

@@ -210,6 +210,7 @@ class MemberOut(CamelModel):
     position: str | None
     sort_order: int
     is_substitute: bool = False
+    replaces_name: str | None = None
 
 
 class EmployeeIn(CamelModel):
@@ -357,6 +358,9 @@ class PapercardSubmissionOut(CamelModel):
     employee_no: str | None = None
     recipient_supervisor_id: int | None = None
     recipient_supervisor_name: str | None = None
+    replaced_employee_id: int | None = None
+    replaced_employee_name: str | None = None
+    is_substitute: bool = False
     department: str
     date: date
     shift: str

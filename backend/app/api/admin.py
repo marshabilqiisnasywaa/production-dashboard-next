@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_admin
 from app.services.leader_assignments import change_line_dm, sync_member_leader_history
-from app.services.team_slots import team_department, validate_team_slot
+from app.services.team_slots import main_team_members, team_department, validate_team_slot
 from app.models.leader_assignment import LeaderAssignment
 from app.api.meetings import _absence_fields
 from app.core.roles import ADMIN_ROLES, ROLES
@@ -38,6 +38,7 @@ from app.services.boards import (
     active_members,
     line_out,
     member_out,
+    members_out,
     mpv_out,
     parse_period,
     pick_slug,
@@ -277,7 +278,7 @@ def delete_line(line_id: int, db: Session = Depends(get_db)) -> Response:
 @router.get("/lines/{line_id}/members", response_model=list[MemberOut])
 def list_members(line_id: int, db: Session = Depends(get_db)) -> list[MemberOut]:
     board, _, _ = line_row(db, line_id)
-    return [member_out(m, e) for m, e in active_members(db, board.id)]
+    return members_out(db, board.id)
 
 
 def employee_board_name(db: Session, employee_id: int) -> str | None:
@@ -342,7 +343,14 @@ def add_member(line_id: int, body: MemberIn, db: Session = Depends(get_db), admi
             f"Ditolak: {employee.name} dari departemen {employee_dept or 'tanpa departemen'}, "
             f"hanya petugas departemen {target_dept} yang bisa mengisi atau mewakili papercard {target_dept}."
         )
-    slot = validate_team_slot(db, board.id, employee, requested=body.sort_order)
+    replaces = None
+    try:
+        slot = validate_team_slot(db, board.id, employee, requested=body.sort_order)
+    except HTTPException as exc:
+        main = main_team_members(db, board.id, target_dept) if target_dept and exc.status_code == 409 else []
+        if not main:
+            raise
+        slot, replaces = 0, main[0][0]
     has_other_line = db.scalar(
         select(BoardMember.id).where(
             BoardMember.employee_id == employee.id,
@@ -353,11 +361,13 @@ def add_member(line_id: int, body: MemberIn, db: Session = Depends(get_db), admi
         board_id=board.id,
         employee_id=employee.id,
         sort_order=slot,
-        is_substitute=bool(has_other_line),
+        is_substitute=bool(has_other_line) or replaces is not None,
+        replaces_member_id=replaces.id if replaces is not None else None,
         started_at=datetime.now(timezone.utc),
     )
     db.add(member)
-    sync_member_leader_history(db, member, employee, admin, False, member.started_at)
+    if replaces is None:
+        sync_member_leader_history(db, member, employee, admin, False, member.started_at)
     db.commit()
     return member_out(member, employee)
 

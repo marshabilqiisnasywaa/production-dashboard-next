@@ -11,7 +11,8 @@ import { departmentLabel } from "../../../departments";
 
 export function usePapercardSupervisor(
   scope: string,
-  submission: DmPapercardSubmission | null
+  submission: DmPapercardSubmission | null,
+  target?: { lineId?: number; department?: string }
 ) {
   const [state, setState] = useState<{
     scope: string;
@@ -27,7 +28,7 @@ export function usePapercardSupervisor(
     let alive = true;
     setState({ scope, data: null, error: null });
     papercardApi
-      .supervisors()
+      .supervisors(target)
       .then((data) => {
         if (alive) setState({ scope, data, error: null });
       })

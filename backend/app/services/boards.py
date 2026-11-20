@@ -54,8 +54,18 @@ def active_members(db: Session, board_id: int) -> list[tuple[BoardMember, Employ
     )
 
 
-def member_out(member: BoardMember, employee: Employee) -> MemberOut:
+def members_out(db: Session, board_id: int) -> list[MemberOut]:
+    rows = active_members(db, board_id)
+    names = {member.id: employee.name for member, employee in rows}
+    return [
+        member_out(member, employee, names.get(member.replaces_member_id))
+        for member, employee in rows
+    ]
+
+
+def member_out(member: BoardMember, employee: Employee, replaces_name: str | None = None) -> MemberOut:
     return MemberOut(
+        replaces_name=replaces_name,
         id=member.id,
         employee_id=employee.employee_no,
         name=employee.name,
@@ -125,7 +135,7 @@ def public_board(db: Session, board: Board, line: Line, workshop: Workshop) -> P
         workshop_label=workshop_label(workshop.name),
         values=list(board.values or []),
         team_photo_url=board.team_photo_url,
-        members=[member_out(m, e) for m, e in active_members(db, board.id)],
+        members=members_out(db, board.id),
         mpv=current_mpv(db, line.id),
     )
 
@@ -133,7 +143,8 @@ def public_board(db: Session, board: Board, line: Line, workshop: Workshop) -> P
 def line_out(db: Session, board: Board, line: Line, workshop: Workshop) -> LineOut:
     count = db.scalar(
         select(func.count(BoardMember.id)).where(
-            BoardMember.board_id == board.id, BoardMember.ended_at.is_(None)
+            BoardMember.board_id == board.id, BoardMember.ended_at.is_(None),
+            BoardMember.replaces_member_id.is_(None),
         )
     )
     return LineOut(

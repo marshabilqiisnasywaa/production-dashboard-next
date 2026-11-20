@@ -418,6 +418,17 @@ export function SupervisorApprovalsTab({
                         {member.employeeNo} · {member.position}
                       </span>
 
+                      {sub?.isSubstitute && (
+                        <span
+                          className="spv-member-card__sub"
+                          style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", borderRadius: 6, padding: "3px 8px", display: "block" }}
+                        >
+                          {uiText("Diisi oleh ")}<strong>{sub.filledByName ?? member.name}</strong>{uiText(" (pengganti)")}
+                          <br />
+                          {uiText("Pengisi asli: ")}<strong>{sub.replacedEmployeeName ?? "-"}</strong>
+                        </span>
+                      )}
+
                       {member.substitutedBy && (
                         <span className="spv-member-card__sub">
                           {uiText("Diwakilkan oleh ")}

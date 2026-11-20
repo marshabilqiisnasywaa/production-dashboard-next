@@ -1057,11 +1057,20 @@ export default function PapercardTemplateManager({
                       className="ptm-worker-chip"
                     >
                       <div className="ptm-worker-info">
-                        <span className="ptm-worker-name">{m.name}</span>
+                        <span className="ptm-worker-name">
+                          {m.name}
+                          {m.replacesName && (
+                            <em style={{ fontStyle: "normal", fontWeight: 600, color: "#b45309", marginLeft: 6 }}>
+                              {uiText("(pengganti)")}
+                            </em>
+                          )}
+                        </span>
                         <span className="ptm-worker-sub">{uiText("NIK: ")}{m.employeeId}{" "}
                           {((m as any).role === "leader" ||
                             selectedDept === "PROD") &&
                             uiText("· Leader")}
+                          {m.replacesName &&
+                            uiText(" · Pengganti {{v0}} ({{v1}})", { v0: m.replacesName, v1: selectedDept })}
                         </span>
                       </div>
                       {m.id && (
@@ -1083,6 +1092,10 @@ export default function PapercardTemplateManager({
                   ))}
                 </div>
               )}
+
+              <p className="ptm-worker-sub" style={{ marginTop: 12 }}>
+                {uiText("Jika slot {{v0}} sudah terisi, karyawan yang ditugaskan menjadi pengganti. Pengganti tidak dihitung sebagai anggota wajib, dan nilai KPI tetap masuk ke tim utama.", { v0: selectedDept })}
+              </p>
 
               {/* Quick Assign Form */}
               <form

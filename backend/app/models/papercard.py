@@ -44,6 +44,7 @@ class PapercardSubmission(Base):
     recipient_supervisor_id: Mapped[int | None] = mapped_column(
         ForeignKey("employees.id", ondelete="RESTRICT"), index=True,
     )
+    replaced_employee_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id", ondelete="SET NULL"))
     department: Mapped[str] = mapped_column(String(32), index=True)  # "PROD", "ME", "PE", "QC"
     date: Mapped[date] = mapped_column(Date, index=True)
     shift: Mapped[str] = mapped_column(String(16), default="Shift 1", server_default="Shift 1")

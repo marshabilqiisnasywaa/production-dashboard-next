@@ -12,6 +12,7 @@ export type DmMember = {
   photoUrl?: string | null;
   sortOrder?: number;
   isSubstitute?: boolean;
+  replacesName?: string | null;
 };
 
 export type DmMpv = DmMember & { period: string };
