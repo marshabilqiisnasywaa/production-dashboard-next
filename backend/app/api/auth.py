@@ -84,6 +84,8 @@ def me(principal: Principal = Depends(require("account.self", active=False)), db
             id=line_row.id,
             code=line_row.code,
             name=line_row.name,
+            model=line_row.model,
+            status=line_row.status,
             workshop_name=workshop.name,
             slug=board.slug,
         )

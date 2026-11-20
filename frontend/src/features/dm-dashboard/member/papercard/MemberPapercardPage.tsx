@@ -1,7 +1,6 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
 
-
 import { labelWithDepartment } from "../../departments";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -12,14 +11,28 @@ import { CategoryNav } from "../../leader/papercard/components/CategoryNav";
 import { CategoryPanel } from "../../leader/papercard/components/CategoryPanel";
 import { OverallProgress } from "../../leader/papercard/components/OverallProgress";
 import { PapercardMetaCard } from "../../leader/papercard/components/PapercardMetaCard";
-import { SupervisorSelect, usePapercardSupervisor } from "../../leader/papercard/components/SupervisorSelect";
+import {
+  SupervisorSelect,
+  usePapercardSupervisor,
+} from "../../leader/papercard/components/SupervisorSelect";
 import { SubmitBar } from "../../leader/papercard/components/SubmitBar";
 import { WindowBanner } from "../../leader/papercard/components/WindowBanner";
 import { useInspectionWindow } from "../../leader/papercard/hooks/useInspectionWindow";
 import { usePapercardForm } from "../../leader/papercard/hooks/usePapercardForm";
-import { PAPERCARD_CONFIG, PAPERCARD_LINES } from "../../leader/papercard/mockTemplate";
-import type { ChecklistCategory, ChecklistTemplate, Submission } from "../../leader/papercard/types";
-import { buildAnswerPayload, formatDateId, groupItemsBySubject } from "../../leader/papercard/utils";
+import {
+  PAPERCARD_CONFIG,
+  PAPERCARD_LINES,
+} from "../../leader/papercard/mockTemplate";
+import type {
+  ChecklistCategory,
+  ChecklistTemplate,
+  Submission,
+} from "../../leader/papercard/types";
+import {
+  buildAnswerPayload,
+  formatDateId,
+  groupItemsBySubject,
+} from "../../leader/papercard/utils";
 import type { DepartmentKey } from "../../leader/types";
 import { accountApi, papercardApi } from "../../api";
 import type { DmMe, DmPapercardSubmission } from "../../api";
@@ -29,7 +42,10 @@ const EMPTY_MEMBER_TEMPLATE: ChecklistTemplate = {
   id: "0",
   version: 1,
   window: { start: "07:30", end: "08:15" },
-  rule: { ok: "OK jika seluruh item normal.", ng: "NG jika ada deviasi abnormal." },
+  rule: {
+    ok: "OK jika seluruh item normal.",
+    ng: "NG jika ada deviasi abnormal.",
+  },
   categories: [],
 };
 
@@ -48,19 +64,25 @@ export default function MemberPapercardPage({
   const [currentUser, setCurrentUser] = useState<DmMe | null>(null);
 
   // Template strictly from PostgreSQL Database
-  const [dynamicTemplate, setDynamicTemplate] = useState<ChecklistTemplate>(EMPTY_MEMBER_TEMPLATE);
+  const [dynamicTemplate, setDynamicTemplate] = useState<ChecklistTemplate>(
+    EMPTY_MEMBER_TEMPLATE
+  );
   const [templateLoading, setTemplateLoading] = useState(true);
 
   const [activeId, setActiveId] = useState<string>("");
 
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [realSubmission, setRealSubmission] = useState<DmPapercardSubmission | null>(null);
+  const [realSubmission, setRealSubmission] =
+    useState<DmPapercardSubmission | null>(null);
 
-  const [selectedLineOverride, setSelectedLineOverride] = useState<DmMe["line"] | null>(null);
+  const [selectedLineOverride, setSelectedLineOverride] = useState<
+    DmMe["line"] | null
+  >(null);
 
   const activeLine = selectedLineOverride ?? currentUser?.line ?? null;
-  const effectiveLineId = activeLine?.id || (line === "502" ? 2 : line === "503" ? 3 : 1);
+  const effectiveLineId =
+    activeLine?.id || (line === "502" ? 2 : line === "503" ? 3 : 1);
 
   // 1. Fetch authenticated user profile if token exists
   useEffect(() => {
@@ -73,12 +95,21 @@ export default function MemberPapercardPage({
         if (me.dept) {
           const rawDept = me.dept.toUpperCase();
           const mappedDept: DepartmentKey =
-            rawDept === "QA" ? "QC" : ["PROD", "ME", "PE", "QC"].includes(rawDept) ? (rawDept as DepartmentKey) : "PROD";
+            rawDept === "QA"
+              ? "QC"
+              : ["PROD", "ME", "PE", "QC"].includes(rawDept)
+              ? (rawDept as DepartmentKey)
+              : "PROD";
           setSelectedDept(mappedDept);
         }
         if (me.lines && me.lines.length > 0) {
-          const savedId = typeof window !== "undefined" ? localStorage.getItem("dm_member_line_id") : null;
-          const matched = savedId ? me.lines.find((l) => l.id === Number(savedId)) : null;
+          const savedId =
+            typeof window !== "undefined"
+              ? localStorage.getItem("dm_member_line_id")
+              : null;
+          const matched = savedId
+            ? me.lines.find((l) => l.id === Number(savedId))
+            : null;
           const chosen = matched || me.lines[0];
           setSelectedLineOverride(chosen);
           setLine(chosen.name);
@@ -109,7 +140,7 @@ export default function MemberPapercardPage({
         : dept === "PROD"
         ? "Produksi"
         : dept === "PE"
-        ? "Process Eng"
+        ? ""
         : "Quality";
 
     return {
@@ -120,8 +151,12 @@ export default function MemberPapercardPage({
       dept,
       deptLabel,
       line: activeLine?.code || currentUser.line?.code || line,
-      lineName: activeLine?.name || currentUser.line?.name || "Lini belum diatur",
-      workshop: activeLine?.workshopName || currentUser.line?.workshopName || "Workshop belum diatur",
+      lineName:
+        activeLine?.name || currentUser.line?.name || "Lini belum diatur",
+      workshop:
+        activeLine?.workshopName ||
+        currentUser.line?.workshopName ||
+        "Workshop belum diatur",
       supervisor: {
         name: currentUser.supervisor || "Belum diatur admin",
         employeeId: "SPV-019",
@@ -149,12 +184,24 @@ export default function MemberPapercardPage({
         }
 
         const matched = res[0];
-        if (matched && matched.templateData && matched.templateData.categories && matched.templateData.categories.length > 0) {
-          const loadedCategories: ChecklistCategory[] = matched.templateData.categories.map((c: any) => ({
-            id: c.id,
-            name: c.name,
-            groups: c.groups ?? groupItemsBySubject(c.id, c.items ?? [], matched.templateData.okRule),
-          }));
+        if (
+          matched &&
+          matched.templateData &&
+          matched.templateData.categories &&
+          matched.templateData.categories.length > 0
+        ) {
+          const loadedCategories: ChecklistCategory[] =
+            matched.templateData.categories.map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              groups:
+                c.groups ??
+                groupItemsBySubject(
+                  c.id,
+                  c.items ?? [],
+                  matched.templateData.okRule
+                ),
+            }));
 
           setDynamicTemplate({
             id: String(matched.id),
@@ -165,7 +212,8 @@ export default function MemberPapercardPage({
             },
             rule: {
               ok: matched.templateData.okRule || "OK jika seluruh item normal.",
-              ng: matched.templateData.ngRule || "NG jika ada deviasi abnormal.",
+              ng:
+                matched.templateData.ngRule || "NG jika ada deviasi abnormal.",
             },
             categories: loadedCategories,
           });
@@ -234,7 +282,11 @@ export default function MemberPapercardPage({
 
   // Pre-fill answers from database submission if present
   useEffect(() => {
-    if (realSubmission && realSubmission.answers && realSubmission.answers.length > 0) {
+    if (
+      realSubmission &&
+      realSubmission.answers &&
+      realSubmission.answers.length > 0
+    ) {
       realSubmission.answers.forEach((ans: any) => {
         form.update(ans.itemId, {
           status: ans.status,
@@ -246,7 +298,13 @@ export default function MemberPapercardPage({
     }
   }, [realSubmission]);
 
-  const supervisor = usePapercardSupervisor(`${currentUser?.username}:${effectiveLineId}:${selectedDept}`, realSubmission?.lineId === effectiveLineId && realSubmission?.department === selectedDept ? realSubmission : null);
+  const supervisor = usePapercardSupervisor(
+    `${currentUser?.username}:${effectiveLineId}:${selectedDept}`,
+    realSubmission?.lineId === effectiveLineId &&
+      realSubmission?.department === selectedDept
+      ? realSubmission
+      : null
+  );
 
   const approvalStatus = (realSubmission?.approvalStatus || "").toLowerCase();
   const isApproved = approvalStatus === "approved";
@@ -254,16 +312,27 @@ export default function MemberPapercardPage({
   const isPending = Boolean(realSubmission) && !isApproved && !isRejected;
   const isRevisionMode = isRejected;
   const readOnly = isApproved || isPending;
+  const lineInactive = Boolean(activeLine?.status && activeLine.status !== "running");
+  const lineCount = currentUser?.lines?.length ?? 0;
+  const inactiveText = lineInactive
+    ? uiText("Line {{v0}} nonaktif. Papercard tidak dapat diisi untuk line ini.", {
+        v0: activeLine?.code ?? "",
+      })
+    : undefined;
 
   const active =
-    dynamicTemplate.categories.find((c) => c.id === activeId) ?? dynamicTemplate.categories[0];
+    dynamicTemplate.categories.find((c) => c.id === activeId) ??
+    dynamicTemplate.categories[0];
   const activeProgress = active
-    ? (form.progress.byCategory[active.id] ?? { done: 0, total: 0 })
+    ? form.progress.byCategory[active.id] ?? { done: 0, total: 0 }
     : { done: 0, total: 0 };
 
-  const activeIndex = dynamicTemplate.categories.findIndex((c) => c.id === active?.id);
+  const activeIndex = dynamicTemplate.categories.findIndex(
+    (c) => c.id === active?.id
+  );
   const isFirstStep = activeIndex <= 0;
-  const isLastStep = activeIndex < 0 || activeIndex >= dynamicTemplate.categories.length - 1;
+  const isLastStep =
+    activeIndex < 0 || activeIndex >= dynamicTemplate.categories.length - 1;
   const goToStep = (index: number) => {
     const target = dynamicTemplate.categories[index];
     if (!target) return;
@@ -280,13 +349,23 @@ export default function MemberPapercardPage({
     supervisorNotes: realSubmission?.supervisorNotes,
     submittedAt: realSubmission?.submittedAt
       ? (realSubmission.submittedAt.includes("T")
-          ? new Date(realSubmission.submittedAt).toLocaleTimeString(uiLocale, { hour: "2-digit", minute: "2-digit" })
+          ? new Date(realSubmission.submittedAt).toLocaleTimeString(uiLocale, {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
           : realSubmission.submittedAt) + " WIB"
       : null,
   };
 
   const handleSubmit = async () => {
-    if (!form.progress.complete || !supervisor.available || !win.now || readOnly) return;
+    if (
+      !form.progress.complete ||
+      !supervisor.available ||
+      !win.now ||
+      readOnly ||
+      lineInactive
+    )
+      return;
     const now = win.now;
     const status = win.state === "closed" ? "LATE" : "ON_TIME";
 
@@ -317,16 +396,50 @@ export default function MemberPapercardPage({
     <div className="dml-pc">
       <div className="dml-page-head" style={{ marginBottom: 12 }}>
         <div>
-          <h1 className="dml-pc__title" style={{ fontSize: 18, margin: "0 0 4px" }}>{uiText("Papercard Kesiapan Anggota Lini")}</h1>
-          <p className="dml-pc__intro" style={{ fontSize: 12.5, lineHeight: 1.5, margin: 0 }}>{uiText("Checklist kesiapan kerja sebelum DM Meeting khusus departemen")}{" "}
-            <strong>{labelWithDepartment(activeProfile.deptLabel, selectedDept)}</strong>{uiText(" pada")}{" "}
-            <strong>{activeProfile.lineName}</strong>{uiText(". Hasil pemeriksaan otomatis diteruskan ke Supervisor ")}{supervisor.name}{uiText(" untuk persetujuan.")}</p>
+          <h1
+            className="dml-pc__title"
+            style={{ fontSize: 18, margin: "0 0 4px" }}
+          >
+            {uiText("Papercard Kesiapan Anggota Lini")}
+          </h1>
+          <p
+            className="dml-pc__intro"
+            style={{ fontSize: 12.5, lineHeight: 1.5, margin: 0 }}
+          >
+            {uiText(
+              "Checklist kesiapan kerja sebelum DM Meeting khusus departemen"
+            )}{" "}
+            <strong>
+              {labelWithDepartment(activeProfile.deptLabel, selectedDept)}
+            </strong>
+            {uiText(" pada")} <strong>{activeProfile.lineName}</strong>
+            {uiText(". Hasil pemeriksaan otomatis diteruskan ke Supervisor ")}
+            {supervisor.name}
+            {uiText(" untuk persetujuan.")}
+          </p>
         </div>
       </div>
 
       {isRejected && (
         <div className="dml-pc-revision">
           <WindowBanner {...bannerProps} submissionStatus="rejected" />
+        </div>
+      )}
+
+      {lineCount > 1 && (
+        <div className="dml-banner dml-banner--pending" role="note" style={{ marginBottom: 12 }}>
+          <p className="dml-banner__title">
+            {uiText("Anda terdaftar di {{v0}} line", { v0: lineCount })}
+          </p>
+          <p className="dml-banner__sub" style={{ margin: "2px 0 0" }}>
+            {uiText("Pilih line di kolom Line sebelum mengisi. Papercard diisi terpisah untuk setiap line.")}
+          </p>
+        </div>
+      )}
+      {inactiveText && (
+        <div className="dml-banner dml-banner--rejected" role="alert" style={{ marginBottom: 12 }}>
+          <p className="dml-banner__title">{uiText("Line nonaktif")}</p>
+          <p className="dml-banner__sub" style={{ margin: "2px 0 0" }}>{inactiveText}</p>
         </div>
       )}
 
@@ -337,11 +450,25 @@ export default function MemberPapercardPage({
             ? currentUser.lines.map((l) => l.name.replace(/^Line\s+/i, ""))
             : PAPERCARD_LINES
         }
-        line={(activeLine?.name || line).replace(/^Line\s+/i, "")}
+        lineOptions={
+          currentUser?.lines && currentUser.lines.length > 0
+            ? currentUser.lines.map((l) => ({
+                value: String(l.id),
+                label: `${l.model ? `${l.code} · ${l.model}` : l.code}${
+                  l.status && l.status !== "running" ? ` (${uiText("Nonaktif")})` : ""
+                }`,
+              }))
+            : undefined
+        }
+        line={
+          currentUser?.lines && currentUser.lines.length > 0 && activeLine
+            ? String(activeLine.id)
+            : (activeLine?.name || line).replace(/^Line\s+/i, "")
+        }
         onLineChange={(newLineVal) => {
           if (!currentUser?.lines) return;
           const found = currentUser.lines.find(
-            (l) => l.name.replace(/^Line\s+/i, "").toLowerCase() === newLineVal.replace(/^Line\s+/i, "").toLowerCase()
+            (l) => String(l.id) === newLineVal
           );
           if (found) {
             setSelectedLineOverride(found);
@@ -355,19 +482,31 @@ export default function MemberPapercardPage({
         operatorLabel="Operator / Anggota"
         shift={PAPERCARD_CONFIG.shift}
         date={win.now ? formatDateId(win.now, uiLocale) : ""}
-        supervisorField={<SupervisorSelect selection={supervisor} disabled={readOnly} />}
+        supervisorField={
+          <SupervisorSelect selection={supervisor} disabled={readOnly} />
+        }
         lineLocked={!(currentUser?.lines && currentUser.lines.length > 1)}
       >
         {!isRejected && (
           <WindowBanner
             {...bannerProps}
-            submissionStatus={isApproved ? "approved" : isPending ? "pending" : null}
+            submissionStatus={
+              isApproved ? "approved" : isPending ? "pending" : null
+            }
           />
         )}
       </PapercardMetaCard>
 
-      {realSubmission?.employeeName && realSubmission.employeeNo !== currentUser?.username ? (
-        <p className="dml-pc__intro" style={{ fontSize: 12.5, lineHeight: 1.5, margin: "8px 0 0" }}>{uiText("Papercard hari ini sudah diisi oleh ")}<strong>{realSubmission.employeeName}</strong>{uiText(" (satu departemen).")}</p>
+      {realSubmission?.employeeName &&
+      realSubmission.employeeNo !== currentUser?.username ? (
+        <p
+          className="dml-pc__intro"
+          style={{ fontSize: 12.5, lineHeight: 1.5, margin: "8px 0 0" }}
+        >
+          {uiText("Papercard hari ini sudah diisi oleh ")}
+          <strong>{realSubmission.employeeName}</strong>
+          {uiText(" (satu departemen).")}
+        </p>
       ) : null}
 
       {/* 6. Dynamic Database Template Checklist Section */}
@@ -396,8 +535,16 @@ export default function MemberPapercardPage({
               marginBottom: "12px",
             }}
           />
-          <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{uiText("Memuat Checklist Papercard dari Database...")}</div>
-          <div style={{ fontSize: "12.5px", color: "#64748b", marginTop: "4px" }}>{uiText("Mengambil konfigurasi resmi untuk ")}{labelWithDepartment(activeProfile.deptLabel, selectedDept)}{uiText(" pada ")}{activeProfile.lineName}
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>
+            {uiText("Memuat Checklist Papercard dari Database...")}
+          </div>
+          <div
+            style={{ fontSize: "12.5px", color: "#64748b", marginTop: "4px" }}
+          >
+            {uiText("Mengambil konfigurasi resmi untuk ")}
+            {labelWithDepartment(activeProfile.deptLabel, selectedDept)}
+            {uiText(" pada ")}
+            {activeProfile.lineName}
           </div>
         </div>
       ) : dynamicTemplate.categories.length === 0 ? (
@@ -413,8 +560,31 @@ export default function MemberPapercardPage({
           }}
         >
           <div style={{ fontSize: "36px", marginBottom: "12px" }}>📋</div>
-          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>{uiText("Belum Ada Template Papercard di Database")}</h3>
-          <p style={{ fontSize: "13px", color: "#64748b", maxWidth: "480px", margin: "0 auto 16px", lineHeight: "1.5" }}>{uiText("Database belum memiliki konfigurasi checklist pertanyaan papercard untuk Lini ")}<strong>{activeProfile.lineName}</strong>{uiText(" dan Departemen ")}<strong>{selectedDept}</strong>.
+          <h3
+            style={{
+              fontSize: "16px",
+              fontWeight: 700,
+              color: "#1e293b",
+              marginBottom: "6px",
+            }}
+          >
+            {uiText("Belum Ada Template Papercard di Database")}
+          </h3>
+          <p
+            style={{
+              fontSize: "13px",
+              color: "#64748b",
+              maxWidth: "480px",
+              margin: "0 auto 16px",
+              lineHeight: "1.5",
+            }}
+          >
+            {uiText(
+              "Database belum memiliki konfigurasi checklist pertanyaan papercard untuk Lini "
+            )}
+            <strong>{activeProfile.lineName}</strong>
+            {uiText(" dan Departemen ")}
+            <strong>{selectedDept}</strong>.
           </p>
           <div
             style={{
@@ -427,13 +597,20 @@ export default function MemberPapercardPage({
               border: "1px solid #ccfbf1",
               fontWeight: 500,
             }}
-          >{uiText("💡 Silakan hubungi Administrator untuk membuat template melalui menu ")}<strong>{uiText("Admin Panel > Papercard Template")}</strong>.
+          >
+            {uiText(
+              "💡 Silakan hubungi Administrator untuk membuat template melalui menu "
+            )}
+            <strong>{uiText("Admin Panel > Papercard Template")}</strong>.
           </div>
         </div>
       ) : (
         <>
           {/* Overall Progress Bar */}
-          <OverallProgress done={form.progress.done} total={form.progress.total} />
+          <OverallProgress
+            done={form.progress.done}
+            total={form.progress.total}
+          />
 
           {/* Category Navigation (Left) + Checklist Item Panel (Right) */}
           <div className="dml-pc__grid">
@@ -449,7 +626,7 @@ export default function MemberPapercardPage({
                 rule={dynamicTemplate.rule}
                 done={activeProgress.done}
                 total={activeProgress.total}
-                readOnly={readOnly}
+                readOnly={readOnly || lineInactive}
                 getAnswer={form.getAnswer}
                 onChange={form.update}
                 onMarkAllOk={() => form.markAllOk(active.id)}
@@ -464,6 +641,7 @@ export default function MemberPapercardPage({
             complete={form.progress.complete && supervisor.available}
             submitted={readOnly}
             isRevision={isRevisionMode}
+            blockedText={inactiveText}
             onSubmit={handleSubmit}
             showNext={!isLastStep}
             onNext={() => goToStep(activeIndex + 1)}

@@ -926,6 +926,8 @@ export type DmMe = {
     id: number;
     code: string;
     name: string;
+    model?: string | null;
+    status?: "running" | "idle" | "stopped";
     workshopName: string;
     slug: string;
   } | null;
@@ -933,6 +935,8 @@ export type DmMe = {
     id: number;
     code: string;
     name: string;
+    model?: string | null;
+    status?: "running" | "idle" | "stopped";
     workshopName: string;
     slug: string;
   }[];

@@ -672,6 +672,13 @@ def submit_papercard(
                 detail=f"Akses ditolak: {role_label} hanya dapat mengisi papercard untuk departemen {principal.employee.dept}.",
             )
 
+    target_line = db.get(Line, payload.line_id)
+    if target_line is not None and target_line.status != "running":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Line {target_line.code} nonaktif, papercard tidak dapat diisi.",
+        )
+
     emp_id = principal.employee.id
 
     # Find template

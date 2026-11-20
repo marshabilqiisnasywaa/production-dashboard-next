@@ -10,6 +10,7 @@ interface Props {
   submitted: boolean;
   onSubmit: () => void;
   isRevision?: boolean;
+  blockedText?: string;
   buttonText?: string;
   /** Selanjutnya: tampil di semua langkah kecuali yang terakhir. Di langkah terakhir tombol utama jadi Kirim. */
   showNext?: boolean;
@@ -45,6 +46,7 @@ export function SubmitBar({
   submitted,
   onSubmit,
   isRevision = false,
+  blockedText,
   buttonText,
   showNext = false,
   onNext,
@@ -59,7 +61,9 @@ export function SubmitBar({
           <strong>
             {done}/{total}{uiText(" selesai")}</strong>
           <p>
-            {submitted
+            {blockedText
+              ? blockedText
+              : submitted
               ? uiText("Papercard berstatus terkunci dan tidak dapat diubah lagi hari ini.")
               : isRevision
                 ? uiText("Mode Revisi: Perbaiki poin yang diminta lalu kirim ulang ke Supervisor.")
@@ -80,7 +84,7 @@ export function SubmitBar({
                 {uiText("Selanjutnya")} <IconArrow dir="right" />
               </Button>
             ) : (
-              <Button variant="primary" size="lg" disabled={!complete} onClick={onSubmit}>
+              <Button variant="primary" size="lg" disabled={!complete || Boolean(blockedText)} onClick={onSubmit}>
                 <IconCheck size={18} /> {buttonText || (isRevision ? "Kirim Ulang Revisi" : "Kirim")}
               </Button>
             )}

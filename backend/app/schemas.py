@@ -55,6 +55,8 @@ class LineRef(CamelModel):
     id: int
     code: str
     name: str
+    model: str | None = None
+    status: str = "running"
     workshop_name: str
     slug: str
 

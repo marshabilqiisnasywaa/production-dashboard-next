@@ -5,6 +5,7 @@ import { Field } from "@/components/ui/Field";
 
 interface Props {
   lines: string[];
+  lineOptions?: { value: string; label: string }[];
   line: string;
   onLineChange: (line: string) => void;
   leader: string;
@@ -21,6 +22,7 @@ interface Props {
 /** Auto-filled header (FR-3.2): line, leader, shift, date. */
 export function PapercardMetaCard({
   lines,
+  lineOptions,
   line,
   onLineChange,
   leader,
@@ -47,7 +49,11 @@ export function PapercardMetaCard({
                 color: "#0f766e",
               }}
             >
-              <span>{uiText("Line ")}{line}</span>
+              {lineOptions ? (
+                <span>{lineOptions.find((o) => o.value === line)?.label ?? line}</span>
+              ) : (
+                <span>{uiText("Line ")}{line}</span>
+              )}
               <span
                 style={{
                   fontSize: "11px",
@@ -68,9 +74,9 @@ export function PapercardMetaCard({
               disabled={lineLocked}
               onChange={(e) => onLineChange(e.target.value)}
             >
-              {lines.map((l) => (
-                <option key={l} value={l}>
-                  {uiText(l)}
+              {(lineOptions ?? lines.map((l) => ({ value: l, label: uiText(l) }))).map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
                 </option>
               ))}
             </select>
