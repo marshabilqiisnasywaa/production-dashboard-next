@@ -41,6 +41,12 @@ type DayAttendance = {
   sessions: SessionStat[];
 };
 
+const LIVE_REFRESH_MS = 5000;
+
+function jakartaTodayISO() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date());
+}
+
 function localISO(d: Date) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -256,7 +262,7 @@ function fromWorkshopSession(s: DmWorkshopAttendanceRecap): DayAttendance {
     onTime,
     late,
     absent,
-    total: Math.max(roster.length, s.attendances.length),
+    total: onTime + late + absent,
   });
 
   return { records, sessions };
@@ -335,6 +341,43 @@ export function useAttendanceData(dates: string[]) {
       alive = false;
     };
   }, [dates, version]);
+
+  const datesKey = dates.join(",");
+  useEffect(() => {
+    const today = jakartaTodayISO();
+    if (!dates.includes(today)) return;
+    let alive = true;
+    let inFlight = false;
+    const refreshToday = async () => {
+      if (inFlight || !alive || document.visibilityState === "hidden") return;
+      if (!cacheRef.current.has(today)) return;
+      inFlight = true;
+      try {
+        const recap = await publicApi.attendanceRecap(today);
+        const day = mergeDays([
+          fromLineRecap(recap),
+          ...recap.workshopSessions.map(fromWorkshopSession),
+        ]);
+        if (!alive) return;
+        const previous = cacheRef.current.get(today);
+        if (JSON.stringify(previous) === JSON.stringify(day)) return;
+        cacheRef.current.set(today, day);
+        setLoaded((value) => value + 1);
+      } catch {
+      } finally {
+        inFlight = false;
+      }
+    };
+    const timer = window.setInterval(() => void refreshToday(), LIVE_REFRESH_MS);
+    window.addEventListener("focus", refreshToday);
+    document.addEventListener("visibilitychange", refreshToday);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshToday);
+      document.removeEventListener("visibilitychange", refreshToday);
+    };
+  }, [datesKey]);
 
   const reload = useCallback(() => {
     cacheRef.current.clear();

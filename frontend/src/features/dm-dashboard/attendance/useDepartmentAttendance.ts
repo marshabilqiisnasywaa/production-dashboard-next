@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { publicApi } from "../api";
 import { lateMinutes } from "./useAttendanceData";
 import type {
@@ -104,26 +104,41 @@ async function loadRoster(
     throw new Error(`Roster peserta ${stat.session} belum tersedia.`);
   }
 
-  const participants = session.participants.map((participant) => ({
+  const isLine = stat.level === "DM Line";
+  const lineId = isLine ? (session as { lineId: number }).lineId : null;
+  const members = session.participants.filter((participant) => {
+    if (lineId === null) return true;
+    const ids = (participant as { lineIds?: number[] }).lineIds;
+    return !ids || ids.includes(lineId);
+  });
+  const participants: SessionRoster["participants"] = members.map((participant) => ({
     employeeNo: participant.employeeNo,
     dept: participant.dept,
   }));
   const attendanceByEmployeeNo = new Map(
     session.attendances
-      .filter(
-        (attendance): attendance is typeof attendance & {
-          employeeNo: string;
-        } => Boolean(attendance.employeeNo)
-      )
-      .map((attendance) => [
-        attendance.employeeNo,
+      .map((attendance) => ({
+        key: attendance.employeeNo ?? String(attendance.employeeId),
+        attendance,
+      }))
+      .map(({ key, attendance }) => [
+        key,
         {
           status: attendance.status,
           attendedAt: attendance.attendedAt,
           department: attendance.department,
         },
-      ])
+      ] as const)
   );
+  if (!isLine) {
+    const known = new Set(participants.map((participant) => participant.employeeNo));
+    for (const attendance of session.attendances) {
+      const key = attendance.employeeNo ?? String(attendance.employeeId);
+      if (known.has(key)) continue;
+      known.add(key);
+      participants.push({ employeeNo: key, dept: attendance.department ?? null });
+    }
+  }
 
   return {
     sessionId,
@@ -201,9 +216,10 @@ export function useDepartmentAttendance({
     [sessions]
   );
 
+  const rosterCache = useRef(new Map<string, { signature: string; roster: SessionRoster }>());
+
   useEffect(() => {
     let active = true;
-    setRosters(null);
     setError(null);
     const requestedSessions = sessions;
 
@@ -218,7 +234,11 @@ export function useDepartmentAttendance({
               if (sessionId === null) {
                 throw new Error(`ID ${session.session} tidak tersedia.`);
               }
+              const signature = `${session.date}|${session.level}|${session.onTime}|${session.late}|${session.absent}|${session.total}`;
+              const cached = rosterCache.current.get(session.key);
+              if (cached && cached.signature === signature) return [session.key, cached.roster] as const;
               const roster = await loadRoster(session, sessionId);
+              rosterCache.current.set(session.key, { signature, roster });
               return [session.key, roster] as const;
             })
           );
@@ -277,8 +297,14 @@ export function useDepartmentAttendance({
       if (level !== "Semua" && session.level !== level) continue;
       if (range && (session.date < range.from || session.date > range.to)) continue;
 
+      const counted = new Set<string>();
       for (const participant of roster.participants) {
-        const department = normalizeDepartment(participant.dept);
+        if (counted.has(participant.employeeNo)) continue;
+        counted.add(participant.employeeNo);
+        const department = normalizeDepartment(
+          participant.dept ?? roster.attendanceByEmployeeNo.get(participant.employeeNo)?.department
+        );
+        if (!DEPARTMENTS.includes(department)) continue;
         const aggregate = departments.get(department)!;
         const attendance = roster.attendanceByEmployeeNo.get(
           participant.employeeNo
