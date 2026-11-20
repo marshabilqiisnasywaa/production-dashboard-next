@@ -12,6 +12,11 @@ import { CategoryPanel } from "../../leader/papercard/components/CategoryPanel";
 import { OverallProgress } from "../../leader/papercard/components/OverallProgress";
 import { PapercardMetaCard } from "../../leader/papercard/components/PapercardMetaCard";
 import {
+  NextLineModal,
+  SubstituteConfirmModal,
+  lineLabel,
+} from "./components/PapercardModals";
+import {
   SupervisorSelect,
   usePapercardSupervisor,
 } from "../../leader/papercard/components/SupervisorSelect";
@@ -94,7 +99,17 @@ export default function MemberPapercardPage({
     };
   }, []);
 
-  const activeLine = selectedLineOverride ?? currentUser?.line ?? null;
+  // Line aktif HANYA berasal dari pilihan member (tidak ada auto-select diam-diam).
+  const activeLine = selectedLineOverride;
+  const hasLine = Boolean(activeLine);
+
+  // Modal konfirmasi pengganti & modal jadwal berikutnya
+  const [pendingLine, setPendingLine] = useState<DmFillableLine | null>(null);
+  const [nextPrompt, setNextPrompt] = useState<{
+    submitted: DmFillableLine | null;
+    next: DmFillableLine;
+    remaining: number;
+  } | null>(null);
   const activeFillable = fillable.find((l) => l.id === activeLine?.id) ?? null;
   const isSubstituteFill = Boolean(activeFillable && !activeFillable.isOwn);
   const effectiveLineId =
@@ -118,25 +133,6 @@ export default function MemberPapercardPage({
               : "PROD";
           setSelectedDept(mappedDept);
         }
-        if (me.lines && me.lines.length > 0) {
-          const savedId =
-            typeof window !== "undefined"
-              ? localStorage.getItem("dm_member_line_id")
-              : null;
-          const matched = savedId
-            ? me.lines.find((l) => l.id === Number(savedId))
-            : null;
-          const runningLines = me.lines.filter((l) => !l.status || l.status === "running");
-          const chosen =
-            (matched && (!matched.status || matched.status === "running") ? matched : null) ||
-            runningLines[0] ||
-            matched ||
-            me.lines[0];
-          setSelectedLineOverride(chosen);
-          setLine(chosen.name);
-        } else if (me.line?.name) {
-          setLine(me.line.name);
-        }
       })
       .catch(() => {});
 
@@ -145,12 +141,23 @@ export default function MemberPapercardPage({
     };
   }, []);
 
+  // Hanya ada satu line yang bisa diisi -> tidak perlu memilih manual.
+  useEffect(() => {
+    if (selectedLineOverride) return;
+    if (fillable.length === 1 && fillable[0].isOwn) {
+      applyLine(String(fillable[0].id));
+    } else if (fillable.length === 0 && currentUser?.lines?.length === 1) {
+      applyLine(String(currentUser.lines[0].id));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fillable, currentUser, selectedLineOverride]);
+
   const activeProfile = useMemo(() => {
     if (!currentUser) {
       return {
         name: "Member",
         deptLabel: "Departemen belum diatur",
-        lineName: "Lini belum diatur",
+        lineName: "Lini belum dipilih",
         supervisor: { name: "Belum diatur admin" },
       };
     }
@@ -171,13 +178,9 @@ export default function MemberPapercardPage({
       position: currentUser.position || `${deptLabel} Operator`,
       dept,
       deptLabel,
-      line: activeLine?.code || currentUser.line?.code || line,
-      lineName:
-        activeLine?.name || currentUser.line?.name || "Lini belum diatur",
-      workshop:
-        activeLine?.workshopName ||
-        currentUser.line?.workshopName ||
-        "Workshop belum diatur",
+      line: activeLine?.code || "",
+      lineName: activeLine?.name || "Lini belum dipilih",
+      workshop: activeLine?.workshopName || "Workshop belum diatur",
       supervisor: {
         name: currentUser.supervisor || "Belum diatur admin",
         employeeId: "SPV-019",
@@ -189,6 +192,12 @@ export default function MemberPapercardPage({
   // 2. Fetch template strictly from PostgreSQL database
   useEffect(() => {
     let cancelled = false;
+    if (!hasLine) {
+      setDynamicTemplate(EMPTY_MEMBER_TEMPLATE);
+      setActiveId("");
+      setTemplateLoading(false);
+      return;
+    }
     setTemplateLoading(true);
 
     papercardApi
@@ -260,10 +269,11 @@ export default function MemberPapercardPage({
     return () => {
       cancelled = true;
     };
-  }, [effectiveLineId, selectedDept]);
+  }, [effectiveLineId, selectedDept, hasLine]);
 
   // 3. Load today's submissions for this department
   const loadDailySubmissions = useCallback(() => {
+    if (!hasLine) return;
     const today = new Date().toISOString().slice(0, 10);
     papercardApi
       .listSubmissions({
@@ -285,7 +295,7 @@ export default function MemberPapercardPage({
         }
       })
       .catch(() => {});
-  }, [effectiveLineId, selectedDept]);
+  }, [effectiveLineId, selectedDept, hasLine]);
 
   useEffect(() => {
     loadDailySubmissions();
@@ -385,6 +395,31 @@ export default function MemberPapercardPage({
       : null,
   };
 
+  /** Jadwal milik sendiri (selain yang baru dikirim) yang belum diisi / perlu revisi. */
+  const findUnfilledOwnLines = async (excludeId: number) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const candidates = fillable.filter(
+      (l) =>
+        l.isOwn &&
+        l.id !== excludeId &&
+        (!l.status || l.status === "running")
+    );
+    const checked = await Promise.all(
+      candidates.map((l) =>
+        papercardApi
+          .listSubmissions({ lineId: l.id, department: selectedDept, date: today })
+          .then((subs) => ({ line: l, sub: subs?.[0] ?? null }))
+          .catch(() => null) // gagal cek -> jangan menawarkan apa pun
+      )
+    );
+    return checked
+      .filter((r): r is { line: DmFillableLine; sub: DmPapercardSubmission | null } => r !== null)
+      // belum ada submission = belum diisi; rejected = perlu direvisi.
+      // pending / approved dianggap selesai -> tidak ditawarkan lagi.
+      .filter((r) => !r.sub || (r.sub.approvalStatus || "").toLowerCase() === "rejected")
+      .map((r) => r.line);
+  };
+
   const handleSubmit = async () => {
     if (
       !form.progress.complete ||
@@ -396,13 +431,15 @@ export default function MemberPapercardPage({
       return;
     const now = win.now;
     const status = win.state === "closed" ? "LATE" : "ON_TIME";
+    const submittedLineId = effectiveLineId;
+    const submittedFillable = activeFillable;
 
     setSubmission({ submittedAt: now, status });
     setIsEditing(false);
 
     try {
       await papercardApi.submit({
-        lineId: effectiveLineId,
+        lineId: submittedLineId,
         department: selectedDept,
         date: new Date().toISOString().slice(0, 10),
         shift: PAPERCARD_CONFIG.shift,
@@ -412,6 +449,18 @@ export default function MemberPapercardPage({
       });
       loadDailySubmissions();
       window.dispatchEvent(new Event(PAPERCARD_CHANGED_EVENT));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      // Modal jadwal berikutnya: hanya setelah submit sukses & masih ada sisa.
+      const unfilled = await findUnfilledOwnLines(submittedLineId);
+      if (unfilled.length > 0) {
+        setNextPrompt({
+          submitted: submittedFillable,
+          next: unfilled[0],
+          remaining: unfilled.length,
+        });
+      }
+      return;
     } catch (e: any) {
       console.warn("Papercard API submission warning:", e);
       alert(e?.message || uiText("Gagal mengirimkan papercard."));
@@ -419,6 +468,65 @@ export default function MemberPapercardPage({
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  /** Terapkan line terpilih (tanpa konfirmasi). */
+  function applyLine(newLineVal: string) {
+    const pick = fillable.find((l) => String(l.id) === newLineVal);
+    const found = pick
+      ? { id: pick.id, code: pick.code, name: pick.name, model: pick.model, status: pick.status, workshopName: pick.workshopName, slug: "" }
+      : currentUser?.lines?.find((l) => String(l.id) === newLineVal);
+    if (found) {
+      setSelectedLineOverride(found);
+      setLine(found.name);
+    }
+  }
+
+  /** Dipanggil dropdown: line sendiri -> langsung; line orang lain -> konfirmasi dulu. */
+  const selectLineById = (newLineVal: string) => {
+    if (!newLineVal) return;
+    const pick = fillable.find((l) => String(l.id) === newLineVal);
+    if (pick && !pick.isOwn && pick.id !== activeLine?.id) {
+      setPendingLine(pick);
+      return;
+    }
+    applyLine(newLineVal);
+  };
+
+  const confirmSubstitute = () => {
+    if (!pendingLine) return;
+    applyLine(String(pendingLine.id));
+    setPendingLine(null);
+  };
+
+  const continueToNextLine = () => {
+    if (!nextPrompt) return;
+    applyLine(String(nextPrompt.next.id)); // jadwal sendiri -> tanpa konfirmasi
+    setNextPrompt(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Dropdown: kode line · model — pemilik jadwal
+  const lineOptionList =
+    fillable.length > 0
+      ? fillable.map((l) => {
+          const owner = l.isOwn
+            ? uiText("Jadwal Anda")
+            : l.mainMembers?.length
+            ? l.mainMembers.join(", ")
+            : "";
+          return {
+            value: String(l.id),
+            label: `${lineLabel(l)}${owner ? ` — ${owner}` : ""}${
+              l.status && l.status !== "running" ? ` (${uiText("Nonaktif")})` : ""
+            }`,
+          };
+        })
+      : (currentUser?.lines ?? []).map((l) => ({
+          value: String(l.id),
+          label: `${lineLabel(l)} — ${uiText("Jadwal Anda")}${
+            l.status && l.status !== "running" ? ` (${uiText("Nonaktif")})` : ""
+          }`,
+        }));
 
   return (
     <div className="dml-pc">
@@ -430,21 +538,30 @@ export default function MemberPapercardPage({
           >
             {uiText("Papercard Kesiapan Anggota Lini")}
           </h1>
-          <p
-            className="dml-pc__intro"
-            style={{ fontSize: 12.5, lineHeight: 1.5, margin: 0 }}
-          >
-            {uiText(
-              "Checklist kesiapan kerja sebelum DM Meeting khusus departemen"
-            )}{" "}
-            <strong>
-              {labelWithDepartment(activeProfile.deptLabel, selectedDept)}
-            </strong>
-            {uiText(" pada")} <strong>{activeProfile.lineName}</strong>
-            {uiText(". Hasil pemeriksaan otomatis diteruskan ke Supervisor ")}
-            {supervisor.name}
-            {uiText(" untuk persetujuan.")}
-          </p>
+          {hasLine ? (
+            <p
+              className="dml-pc__intro"
+              style={{ fontSize: 12.5, lineHeight: 1.5, margin: 0 }}
+            >
+              {uiText(
+                "Checklist kesiapan kerja sebelum DM Meeting khusus departemen"
+              )}{" "}
+              <strong>
+                {labelWithDepartment(activeProfile.deptLabel, selectedDept)}
+              </strong>
+              {uiText(" pada")} <strong>{activeProfile.lineName}</strong>
+              {uiText(". Hasil pemeriksaan otomatis diteruskan ke Supervisor ")}
+              {supervisor.name}
+              {uiText(" untuk persetujuan.")}
+            </p>
+          ) : (
+            <p
+              className="dml-pc__intro"
+              style={{ fontSize: 12.5, lineHeight: 1.5, margin: 0 }}
+            >
+              {uiText("Pilih line untuk mulai mengisi papercard.")}
+            </p>
+          )}
         </div>
       </div>
 
@@ -454,33 +571,6 @@ export default function MemberPapercardPage({
         </div>
       )}
 
-      {lineCount > 1 && (
-        <div className="dml-banner dml-banner--pending" role="note" style={{ marginBottom: 12 }}>
-          <p className="dml-banner__title">
-            {uiText("Anda terdaftar di {{v0}} line", { v0: lineCount })}
-          </p>
-          <p className="dml-banner__sub" style={{ margin: "2px 0 0" }}>
-            {uiText("Pilih line di kolom Line sebelum mengisi. Papercard diisi terpisah untuk setiap line.")}
-          </p>
-        </div>
-      )}
-      {isSubstituteFill && activeFillable && (
-        <div className="dml-banner dml-banner--pending" role="note" style={{ marginBottom: 12 }}>
-          <p className="dml-banner__title">
-            {uiText("Anda mengisi sebagai pengganti")}
-          </p>
-          <p className="dml-banner__sub" style={{ margin: "2px 0 0" }}>
-            {activeFillable.mainMembers.length > 0
-              ? uiText("Line {{v0}} bukan line Anda. Anda menggantikan {{v1}}. Supervisor akan melihat nama Anda dan siapa yang digantikan.", {
-                  v0: activeFillable.code,
-                  v1: activeFillable.mainMembers[0],
-                })
-              : uiText("Line {{v0}} bukan line Anda. Supervisor akan melihat bahwa Anda mengisi sebagai pengganti.", {
-                  v0: activeFillable.code,
-                })}
-          </p>
-        </div>
-      )}
       {inactiveText && (
         <div className="dml-banner dml-banner--rejected" role="alert" style={{ marginBottom: 12 }}>
           <p className="dml-banner__title">{uiText("Line nonaktif")}</p>
@@ -496,40 +586,12 @@ export default function MemberPapercardPage({
             : PAPERCARD_LINES
         }
         lineOptions={
-          fillable.length > 0
-            ? fillable.map((l) => ({
-                value: String(l.id),
-                label: `${l.model ? `${l.code} · ${l.model}` : l.code}${
-                  l.isOwn ? ` (${uiText("Line Anda")})` : ""
-                }${l.status !== "running" ? ` (${uiText("Nonaktif")})` : ""}`,
-              }))
-            : currentUser?.lines && currentUser.lines.length > 0
-            ? currentUser.lines.map((l) => ({
-                value: String(l.id),
-                label: `${l.model ? `${l.code} · ${l.model}` : l.code}${
-                  l.status && l.status !== "running" ? ` (${uiText("Nonaktif")})` : ""
-                }`,
-              }))
-            : undefined
+          hasLine
+            ? lineOptionList
+            : [{ value: "", label: uiText("Pilih Line") }, ...lineOptionList]
         }
-        line={
-          (fillable.length > 0 || (currentUser?.lines && currentUser.lines.length > 0)) && activeLine
-            ? String(activeLine.id)
-            : (activeLine?.name || line).replace(/^Line\s+/i, "")
-        }
-        onLineChange={(newLineVal) => {
-          const pick = fillable.find((l) => String(l.id) === newLineVal);
-          const found = pick
-            ? { id: pick.id, code: pick.code, name: pick.name, model: pick.model, status: pick.status, workshopName: pick.workshopName, slug: "" }
-            : currentUser?.lines?.find((l) => String(l.id) === newLineVal);
-          if (found) {
-            setSelectedLineOverride(found);
-            setLine(found.name);
-            try {
-              localStorage.setItem("dm_member_line_id", String(found.id));
-            } catch {}
-          }
-        }}
+        line={hasLine && activeLine ? String(activeLine.id) : ""}
+        onLineChange={selectLineById}
         leader={`${activeProfile.name} (${selectedDept})`}
         operatorLabel="Operator / Anggota"
         shift={PAPERCARD_CONFIG.shift}
@@ -538,7 +600,9 @@ export default function MemberPapercardPage({
           <SupervisorSelect selection={supervisor} disabled={readOnly} />
         }
         lineLocked={
-          fillable.length > 1
+          !hasLine
+            ? false
+            : fillable.length > 1
             ? false
             : !(currentUser?.lines && currentUser.lines.length > 1)
         }
@@ -552,6 +616,21 @@ export default function MemberPapercardPage({
           />
         )}
       </PapercardMetaCard>
+
+      {hasLine && isSubstituteFill && !realSubmission && (
+        <p
+          className="dml-pc__intro"
+          style={{ fontSize: 12.5, lineHeight: 1.5, margin: "8px 0 0" }}
+        >
+          {uiText("Mengisi sebagai pengganti ")}
+          <strong>
+            {activeFillable?.mainMembers?.length
+              ? activeFillable.mainMembers.join(", ")
+              : uiText("anggota line ini")}
+          </strong>
+          .
+        </p>
+      )}
 
       {realSubmission?.isSubstitute && realSubmission.replacedEmployeeName ? (
         <p
@@ -576,7 +655,7 @@ export default function MemberPapercardPage({
       ) : null}
 
       {/* 6. Dynamic Database Template Checklist Section */}
-      {templateLoading ? (
+      {!hasLine ? null : templateLoading ? (
         <div
           className="ui-card"
           style={{
@@ -715,6 +794,26 @@ export default function MemberPapercardPage({
             onPrev={() => goToStep(activeIndex - 1)}
           />
         </>
+      )}
+
+      {pendingLine && (
+        <SubstituteConfirmModal
+          line={pendingLine}
+          onConfirm={confirmSubstitute}
+          onCancel={() => setPendingLine(null)}
+        />
+      )}
+
+      {nextPrompt && (
+        <NextLineModal
+          submittedLine={nextPrompt.submitted}
+          next={nextPrompt.next}
+          remaining={nextPrompt.remaining}
+          userName={activeProfile.name}
+          shift={PAPERCARD_CONFIG.shift}
+          onContinue={continueToNextLine}
+          onLater={() => setNextPrompt(null)}
+        />
       )}
     </div>
   );

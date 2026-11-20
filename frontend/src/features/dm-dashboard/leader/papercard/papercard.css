@@ -815,3 +815,127 @@
   font-weight: 700;
   color: #64748b;
 }
+
+/* ===== Modal: konfirmasi pengganti & jadwal berikutnya ===== */
+.dml-mdl {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.45);
+  animation: dml-mdl-fade 0.15s ease-out;
+}
+.dml-mdl__card {
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 22px 22px 18px;
+  border-radius: var(--dm-radius-md, 12px);
+  background: #fff;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  animation: dml-mdl-pop 0.18s ease-out;
+}
+.dml-mdl__title {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.dml-mdl__lead {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #475569;
+}
+.dml-mdl__box {
+  margin: 0 0 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--dm-border, #e2e8f0);
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.dml-mdl__box--accent {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+}
+.dml-mdl__label {
+  margin: 0 0 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+}
+.dml-mdl__value {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.dml-mdl__sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+.dml-mdl__note {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #334155;
+}
+.dml-mdl__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+.dml-mdl__btn {
+  padding: 9px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dml-mdl__btn:hover {
+  background: #f1f5f9;
+}
+.dml-mdl__btn--primary {
+  border-color: #0f766e;
+  background: #0f766e;
+  color: #fff;
+}
+.dml-mdl__btn--primary:hover {
+  background: #115e59;
+}
+.dml-mdl__btn:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+@keyframes dml-mdl-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes dml-mdl-pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dml-mdl,
+  .dml-mdl__card { animation: none; }
+}
+@media (max-width: 480px) {
+  .dml-mdl { align-items: flex-end; padding: 0; }
+  .dml-mdl__card {
+    max-width: none;
+    border-radius: 16px 16px 0 0;
+  }
+  .dml-mdl__actions { flex-direction: column-reverse; }
+  .dml-mdl__btn { width: 100%; }
+}
