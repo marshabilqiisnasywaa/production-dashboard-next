@@ -2,6 +2,8 @@
 import { useUiText } from "@/locales/useUiText";
 import { IconCheck } from "@/components/ui/icons";
 import type { ChecklistCategory } from "../types";
+import { PAPERCARD_OTHER_CHECKLIST_LINKS } from "../mockTemplate";
+import { IconExternal } from "../../meeting/components/MeetingIcons";
 
 interface Props {
   categories: ChecklistCategory[];
@@ -14,8 +16,9 @@ interface Props {
 export function CategoryNav({ categories, activeId, progress, onSelect }: Props) {
   const { text: uiText } = useUiText();
   return (
-    <nav className="ui-card dml-catnav" aria-label={uiText("Kategori checklist")}>
-      <ul>
+    <div className="dml-catnav-column">
+      <nav className="ui-card dml-catnav" aria-label={uiText("Kategori checklist")}>
+        <ul>
         {categories.map((c, i) => {
           const p = progress[c.id] ?? { done: 0, total: 0 };
           const active = c.id === activeId;
@@ -37,7 +40,22 @@ export function CategoryNav({ categories, activeId, progress, onSelect }: Props)
             </li>
           );
         })}
-      </ul>
-    </nav>
+        </ul>
+      </nav>
+      <div className="ui-card dml-catnav__links">
+        <strong>{uiText("Link to Other Checklist")}</strong>
+        <p>{uiText("External links, not part of the DM workflow")}</p>
+        <ul>
+          {PAPERCARD_OTHER_CHECKLIST_LINKS.map((link) => (
+            <li key={link.label}>
+              <a href={link.href} target="_blank" rel="noopener noreferrer">
+                <span>{uiText(link.label)}</span>
+                <IconExternal size={18} />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 }
