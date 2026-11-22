@@ -30,10 +30,10 @@ const roleProfiles: Record<Role, Omit<AppUser, "role" | "area">> = {
   "PIC Area": { id: "pic-area", name: "PIC Area", email: "pic.area@manuflow.id", initials: "PA" },
   Host: { id: "host", name: "Host Meeting", email: "host@manuflow.id", initials: "HM" },
   HOD: { id: "hod", name: "HOD", email: "hod@manuflow.id", initials: "HD" },
-  Superadmin: { id: "superadmin", name: "Superadmin", email: "superadmin@manuflow.id", initials: "SA" },
+  Admin: { id: "admin", name: "Admin", email: "admin@manuflow.id", initials: "AD" },
 };
 
-export const appRoles: Role[] = ["Superadmin", "PIC Area", "Host", "HOD"];
+export const appRoles: Role[] = ["Admin", "PIC Area", "Host", "HOD"];
 export const picAreaOptions: { key: PicAreaKey; label: string }[] = [
   { key: "assembly", label: "Assembly" },
   { key: "packing", label: "Packing" },
@@ -46,7 +46,7 @@ export const picAreaOptions: { key: PicAreaKey; label: string }[] = [
 ];
 
 export function RoleProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<Role>("Superadmin");
+  const [role, setRole] = useState<Role>("Admin");
   const [picArea, setPicArea] = useState<PicAreaKey>("assembly");
   const user = useMemo<AppUser>(() => ({ ...roleProfiles[role], role, area: role === "PIC Area" ? picArea : undefined }), [role, picArea]);
   const value = useMemo(() => ({ user, role, picArea, setRole, setPicArea }), [user, role, picArea]);

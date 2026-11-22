@@ -100,12 +100,12 @@ export default function ShellTopbar({
             <button onClick={() => onSelectLanguage("EN")}><span>🇬🇧 English</span>{language === "EN" && <b>✓</b>}</button>
           </div>}
         </div>
-        <button className="ghost-button theme-button" onClick={onToggleTheme} aria-label="Switch theme"><Icon name={dark ? "sun" : "moon"} size={17} /></button>
+        <button className="theme-switch" role="switch" aria-checked={dark} aria-label="Switch theme" data-dark={dark ? "true" : "false"} onClick={onToggleTheme}><span className="theme-switch__thumb" /><span className="theme-switch__icon"><Icon name="sun" size={15} /></span><span className="theme-switch__icon"><Icon name="moon" size={15} /></span></button>
         {mode === "morning-meeting" ? <div className="mm-notification-wrap"><button className="ghost-button notification" aria-label="Notifications" onClick={() => setNotificationOpen((value) => !value)}><Icon name="bell" size={18} /><i /><b>{notifications.length}</b></button>{notificationOpen && <div className="mm-notification-menu"><div><strong>Notifications</strong><SimulationBadge /></div>{notifications.map((item) => <button key={item.id} className={item.severity} onClick={() => { onNavigate(item.target); setNotificationOpen(false); }}><b>{item.title}</b><span>{item.body}</span></button>)}</div>}</div> : <button className="ghost-button notification" aria-label="Notifications"><Icon name="bell" size={18} /><i /></button>}
         <span className="divider" />
         <div className="user-menu-wrap" ref={userMenuRef}>
           <button type="button" className="profile-button topbar-user" aria-haspopup="menu" aria-expanded={userMenuOpen} onClick={() => setUserMenuOpen((value) => !value)}>
-            <span className="avatar">{user.initials}</span>
+            <span className="avatar"><Icon name="profile" size={18} /></span>
             <span className="account-copy"><strong>{user.nik ?? user.name}</strong><small>{user.role}{currentArea ? ` · ${currentArea}` : ""}</small></span>
             <Icon name="chevron" size={14} />
           </button>

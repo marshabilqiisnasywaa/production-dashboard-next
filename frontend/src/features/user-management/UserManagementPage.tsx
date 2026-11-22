@@ -1,8 +1,11 @@
 "use client";
 import { useState } from "react";
+import { Ellipsis, Pencil } from "lucide-react";
 import { appRoles, picAreaOptions, type PicAreaKey } from "@/components/providers/RoleProvider";
 import { accessModuleOrder, accessModuleRules, type AccessModuleKey } from "@/config/access";
 import { useAuth } from "@/features/auth/AuthProvider";
+import ActionMenu, { type ActionMenuItem } from "@/features/user-management/ActionMenu";
+import ConfirmDialog from "@/features/user-management/ConfirmDialog";
 import {
   getUsers,
   removeUser,
@@ -41,6 +44,8 @@ function newUserId(nik: string, users: ManagedUser[]): string {
   }
   return id;
 }
+
+type ConfirmState = { kind: "deactivate" | "reset" | "remove" | "seed"; user?: ManagedUser };
 
 function UserEditor({
   user,
@@ -105,8 +110,8 @@ function UserEditor({
         return;
       }
     }
-    if (user?.role === "Superadmin" && role !== "Superadmin" && users.filter((item) => item.role === "Superadmin" && item.id !== user.id).length === 0) {
-      setError("Superadmin terakhir tidak boleh diturunkan.");
+    if (user?.role === "Admin" && role !== "Admin" && users.filter((item) => item.role === "Admin" && item.id !== user.id).length === 0) {
+      setError("Admin terakhir tidak boleh diturunkan.");
       return;
     }
 
@@ -196,6 +201,8 @@ export default function UserManagementPage() {
   const [editing, setEditing] = useState<ManagedUser | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [confirm, setConfirm] = useState<ConfirmState | null>(null);
+  const [menu, setMenu] = useState<{ user: ManagedUser; anchor: DOMRect } | null>(null);
 
   if (!currentUser) return null;
 
@@ -226,51 +233,111 @@ export default function UserManagementPage() {
     setNotice("Data user tersimpan.");
   };
 
-  const handleResetPassword = (user: ManagedUser) => {
+  const clearMessages = () => {
     setError("");
     setNotice("");
-    if (!window.confirm(`Reset password ${user.name}? Password akan kembali ke NIK dan user wajib menggantinya saat masuk.`)) return;
-    resetPassword(user.nik);
-    refreshList();
-    setNotice("Password berhasil direset.");
   };
 
-  const handleToggleActive = (user: ManagedUser) => {
-    setError("");
-    setNotice("");
+  const doResetPassword = (user: ManagedUser) => {
+    resetPassword(user.nik);
+    refreshList();
+    setNotice(`Password ${user.name} direset ke NIK.`);
+  };
+
+  const doToggleActive = (user: ManagedUser) => {
+    saveUser({ ...user, active: !user.active });
+    refreshList();
+    setNotice(user.active ? `${user.name} dinonaktifkan.` : `${user.name} diaktifkan.`);
+  };
+
+  const doRemove = (user: ManagedUser) => {
+    removeUser(user.nik);
+    refreshList();
+    setNotice(`${user.name} dihapus.`);
+  };
+
+  const doResetSeed = () => {
+    resetToSeed();
+    refreshList();
+    setNotice("Data user dikembalikan ke data demo.");
+  };
+
+  const requestToggle = (user: ManagedUser) => {
+    clearMessages();
     if (user.id === currentUser.id) {
       setError("Akun yang sedang login tidak dapat dinonaktifkan.");
       return;
     }
-    saveUser({ ...user, active: !user.active });
-    refreshList();
-    setNotice(user.active ? "Akun dinonaktifkan." : "Akun diaktifkan.");
+    if (user.active) setConfirm({ kind: "deactivate", user });
+    else doToggleActive(user);
   };
 
-  const handleRemove = (user: ManagedUser) => {
-    setError("");
-    setNotice("");
+  const requestReset = (user: ManagedUser) => {
+    clearMessages();
+    setConfirm({ kind: "reset", user });
+  };
+
+  const requestRemove = (user: ManagedUser) => {
+    clearMessages();
     if (user.id === currentUser.id) {
       setError("Akun yang sedang login tidak dapat dihapus.");
       return;
     }
-    if (user.role === "Superadmin" && users.filter((item) => item.role === "Superadmin").length === 1) {
-      setError("Superadmin terakhir tidak boleh dihapus.");
+    if (user.role === "Admin" && users.filter((item) => item.role === "Admin").length === 1) {
+      setError("Admin terakhir tidak boleh dihapus.");
       return;
     }
-    if (!window.confirm(`Hapus user ${user.name} (${user.nik})?`)) return;
-    removeUser(user.nik);
-    refreshList();
-    setNotice("User dihapus.");
+    setConfirm({ kind: "remove", user });
   };
 
-  const handleResetSeed = () => {
-    setError("");
-    setNotice("");
-    if (!window.confirm("Reset semua data user ke data demo? Perubahan yang sudah dibuat akan hilang.")) return;
-    resetToSeed();
-    refreshList();
-    setNotice("Data user dikembalikan ke data demo.");
+  const requestResetSeed = () => {
+    clearMessages();
+    setConfirm({ kind: "seed" });
+  };
+
+  const runConfirm = () => {
+    if (!confirm) return;
+    const { kind, user } = confirm;
+    setConfirm(null);
+    if (kind === "seed") doResetSeed();
+    else if (user && kind === "deactivate") doToggleActive(user);
+    else if (user && kind === "reset") doResetPassword(user);
+    else if (user && kind === "remove") doRemove(user);
+  };
+
+  const confirmCopy = (state: ConfirmState): { title: string; body: string; label: string; tone: "default" | "danger" } => {
+    const name = state.user?.name ?? "";
+    const who = state.user ? `${state.user.name} (${state.user.nik})` : "";
+    switch (state.kind) {
+      case "deactivate":
+        return { title: `Nonaktifkan ${name}?`, body: `${who} tidak akan bisa masuk sampai akunnya diaktifkan lagi.`, label: "Nonaktifkan", tone: "default" };
+      case "reset":
+        return { title: `Reset password ${name}?`, body: `Password ${who} kembali ke NIK dan user wajib menggantinya saat masuk.`, label: "Reset password", tone: "default" };
+      case "remove":
+        return { title: `Hapus ${name}?`, body: `${who} akan dihapus permanen dan tidak bisa dikembalikan. Kalau hanya ingin menutup akses, pilih Nonaktifkan.`, label: "Hapus", tone: "danger" };
+      case "seed":
+        return { title: "Reset ke data demo?", body: "Semua perubahan data user akan hilang dan kembali ke data demo.", label: "Reset data", tone: "danger" };
+    }
+  };
+
+  const toggleMenu = (user: ManagedUser, button: HTMLElement) => {
+    setMenu((current) => (current?.user.id === user.id ? null : { user, anchor: button.getBoundingClientRect() }));
+  };
+
+  const menuItems = (user: ManagedUser): ActionMenuItem[] => {
+    const isSelf = user.id === currentUser.id;
+    return [
+      { key: "reset", label: "Reset password", onSelect: () => requestReset(user) },
+      {
+        key: "remove",
+        label: "Hapus user",
+        danger: true,
+        separatorBefore: true,
+        disabled: isSelf,
+        hint: isSelf ? "Akun yang sedang login tidak dapat dihapus" : undefined,
+        onSelect: () => requestRemove(user),
+      },
+    ];
   };
 
   const areaLabels = (user: ManagedUser) => {
@@ -292,7 +359,7 @@ export default function UserManagementPage() {
           <p>Kelola akun, area, dan akses tambahan pengguna dashboard.</p>
         </div>
         <div className="mmu-head__actions">
-          <button type="button" className="mmu-secondary" onClick={handleResetSeed}>Reset ke data demo</button>
+          <button type="button" className="mmu-secondary" onClick={requestResetSeed}>Reset ke data demo</button>
           <button type="button" className="mmu-primary" onClick={openCreate}>+ Tambah user</button>
         </div>
       </header>
@@ -309,30 +376,61 @@ export default function UserManagementPage() {
                 <th>Area</th>
                 <th>Akses tambahan</th>
                 <th>Status</th>
-                <th>Ganti password wajib</th>
                 <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td><b>{user.nik}</b></td>
-                  <td>{user.name}</td>
-                  <td>{user.role}</td>
-                  <td>{areaLabels(user)}</td>
-                  <td>{extraLabels(user)}</td>
-                  <td><span className={`mmu-badge ${user.active ? "mmu-badge--active" : "mmu-badge--inactive"}`}>{user.active ? "Aktif" : "Nonaktif"}</span></td>
-                  <td>{user.mustChangePassword ? "Ya" : "Tidak"}</td>
-                  <td>
-                    <div className="mmu-row-actions">
-                      <button type="button" onClick={() => openEdit(user)}>Edit</button>
-                      <button type="button" onClick={() => handleResetPassword(user)}>Reset password</button>
-                      <button type="button" onClick={() => handleToggleActive(user)}>{user.active ? "Nonaktifkan" : "Aktifkan"}</button>
-                      <button type="button" className="mmu-danger" onClick={() => handleRemove(user)}>Hapus</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {users.map((user) => {
+                const isSelf = user.id === currentUser.id;
+                return (
+                  <tr key={user.id}>
+                    <td><b>{user.nik}</b></td>
+                    <td>
+                      {user.name}
+                      {user.mustChangePassword && <span className="mmu-tag">Wajib ganti password</span>}
+                    </td>
+                    <td>{user.role}</td>
+                    <td>{areaLabels(user)}</td>
+                    <td>{extraLabels(user)}</td>
+                    <td>
+                      <div className="mmu-status">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={user.active}
+                          aria-label={`${user.active ? "Nonaktifkan" : "Aktifkan"} ${user.name}`}
+                          className={`mmu-switch${user.active ? " is-on" : ""}`}
+                          disabled={isSelf}
+                          title={isSelf ? "Akun yang sedang login tidak dapat dinonaktifkan" : undefined}
+                          onClick={() => requestToggle(user)}
+                        >
+                          <span className="mmu-switch__thumb" />
+                        </button>
+                        <span className={`mmu-status__text${user.active ? " is-on" : ""}`}>{user.active ? "Aktif" : "Nonaktif"}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="mmu-row-actions">
+                        <button type="button" className="mmu-icon-btn" aria-label={`Edit ${user.name}`} title="Edit" onClick={() => openEdit(user)}>
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          className="mmu-icon-btn"
+                          data-mmu-menu-trigger
+                          aria-label={`Aksi lain untuk ${user.name}`}
+                          aria-haspopup="menu"
+                          aria-expanded={menu?.user.id === user.id}
+                          title="Aksi lain"
+                          onClick={(event) => toggleMenu(user, event.currentTarget)}
+                        >
+                          <Ellipsis size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -342,6 +440,15 @@ export default function UserManagementPage() {
           <UserEditor user={editing} currentUser={currentUser} users={users} onSave={handleSave} onCancel={() => setFormOpen(false)} />
         </div>
       )}
+      {menu && <ActionMenu anchor={menu.anchor} items={menuItems(menu.user)} onClose={() => setMenu(null)} />}
+      {confirm && (() => {
+        const copy = confirmCopy(confirm);
+        return (
+          <ConfirmDialog title={copy.title} confirmLabel={copy.label} tone={copy.tone} onConfirm={runConfirm} onCancel={() => setConfirm(null)}>
+            {copy.body}
+          </ConfirmDialog>
+        );
+      })()}
     </div>
   );
 }

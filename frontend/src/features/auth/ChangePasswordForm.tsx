@@ -1,5 +1,6 @@
 "use client";
 import { useState, type FormEvent } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import "./change-password.css";
 
@@ -9,12 +10,43 @@ type ChangePasswordFormProps = {
   submitLabel?: string;
 };
 
+function PasswordField({ label, value, onChange, autoComplete, placeholder }: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  autoComplete: string;
+  placeholder: string;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <label className="mml-pass-field">
+      <span>{label}</span>
+      <div className="mml-pass-input">
+        <input
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          autoComplete={autoComplete}
+          placeholder={placeholder}
+        />
+        <button
+          type="button"
+          className="mml-pass-eye"
+          onClick={() => setShow((value) => !value)}
+          aria-label={show ? "Sembunyikan password" : "Lihat password"}
+        >
+          {show ? <Eye size={18} /> : <EyeOff size={18} />}
+        </button>
+      </div>
+    </label>
+  );
+}
+
 export default function ChangePasswordForm({ onSuccess, onCancel, submitLabel = "Simpan password" }: ChangePasswordFormProps) {
   const { changePassword } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
-  const [visible, setVisible] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -35,43 +67,29 @@ export default function ChangePasswordForm({ onSuccess, onCancel, submitLabel = 
     onSuccess();
   };
 
-  const inputType = visible ? "text" : "password";
-
   return (
     <form className="mml-pass-form" onSubmit={handleSubmit}>
-      <label className="mml-pass-field">
-        <span>Password lama</span>
-        <input
-          type={inputType}
-          value={currentPassword}
-          onChange={(event) => setCurrentPassword(event.target.value)}
-          autoComplete="current-password"
-          placeholder="Masukkan password lama"
-        />
-      </label>
-      <label className="mml-pass-field">
-        <span>Password baru</span>
-        <input
-          type={inputType}
-          value={newPassword}
-          onChange={(event) => setNewPassword(event.target.value)}
-          autoComplete="new-password"
-          placeholder="Minimal 6 karakter"
-        />
-      </label>
-      <label className="mml-pass-field">
-        <span>Konfirmasi password baru</span>
-        <input
-          type={inputType}
-          value={confirmation}
-          onChange={(event) => setConfirmation(event.target.value)}
-          autoComplete="new-password"
-          placeholder="Ulangi password baru"
-        />
-      </label>
-      <button type="button" className="mml-pass-visibility" onClick={() => setVisible((value) => !value)}>
-        {visible ? "Sembunyikan password" : "Lihat password"}
-      </button>
+      <PasswordField
+        label="Password lama"
+        value={currentPassword}
+        onChange={setCurrentPassword}
+        autoComplete="current-password"
+        placeholder="Masukkan password lama"
+      />
+      <PasswordField
+        label="Password baru"
+        value={newPassword}
+        onChange={setNewPassword}
+        autoComplete="new-password"
+        placeholder="Minimal 6 karakter"
+      />
+      <PasswordField
+        label="Konfirmasi password baru"
+        value={confirmation}
+        onChange={setConfirmation}
+        autoComplete="new-password"
+        placeholder="Ulangi password baru"
+      />
       {error && <p className="mml-pass-error" role="alert">{error}</p>}
       <div className="mml-pass-actions">
         {onCancel && <button type="button" className="mml-pass-secondary" onClick={onCancel}>Batal</button>}

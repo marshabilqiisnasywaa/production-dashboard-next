@@ -57,5 +57,5 @@ export const mockUsers: MockUser[] = [
   picUser("24010009", "Reynard", ["assembly", "cost"]),
   roleUser("24020001", "Marsha", "Host"),
   roleUser("24020002", "Koh Alvin", "HOD"),
-  roleUser("24020003", "Admin Sistem", "Superadmin"),
+  roleUser("24020003", "Admin Sistem", "Admin"),
 ];

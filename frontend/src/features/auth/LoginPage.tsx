@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { picAreaOptions, type PicAreaKey } from "@/components/providers/RoleProvider";
 import { landingPathFor, landingTitleFor } from "@/config/access";
 import { findMultiAreaPicUser, findPicUserForArea, findUserByNik, findUserByRole, type ManagedUser } from "@/features/user-management/userStore";
@@ -14,7 +15,7 @@ type QuickChip = {
   account: ManagedUser;
 };
 
-const demoRoles: Role[] = ["Host", "HOD", "Superadmin"];
+const demoRoles: Role[] = ["Host", "HOD", "Admin"];
 const MULTI_AREA_KEY = "multi-area";
 
 function areaLabel(area: PicAreaKey): string {
@@ -134,8 +135,9 @@ export default function LoginPage() {
                 type="button"
                 className="mml-login__toggle"
                 onClick={() => setShowPassword((value) => !value)}
+                aria-label={showPassword ? "Sembunyikan password" : "Lihat password"}
               >
-                {showPassword ? "Sembunyikan" : "Lihat"}
+                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
               </button>
             </span>
           </label>

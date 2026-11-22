@@ -18,7 +18,8 @@ export type NavIconName =
   | "warehouse" | "alert" | "search" | "bell" | "moon" | "sun"
   | "calendar" | "chevron" | "arrow" | "boxes" | "refresh" | "users"
   | "panel" | "globe" | "help" | "settings" | "chart" | "message"
-  | "profile" | "billing" | "trending" | "cost" | "database";
+  | "profile" | "billing" | "trending" | "cost" | "database"
+  | "chip" | "clipboard" | "truck";
 
 export type NavItem = {
   label: string;
@@ -67,7 +68,7 @@ export const monitoringGroup: NavGroup = {
       label: "Area Monitoring",
       key: "repair-monitor",
       href: "/morning-meeting/repair-monitoring",
-      icon: "assembly",
+      icon: "wrench",
       mode: morningMeetingMode,
       area: "repair",
       allowedRoles: ["PIC Area"],
@@ -81,7 +82,7 @@ export const monitoringGroup: NavGroup = {
       label: "Area Monitoring",
       key: "service-monitor",
       href: "/service",
-      icon: "assembly",
+      icon: "chip",
       mode: morningMeetingMode,
       area: "service",
       allowedRoles: ["PIC Area"],
@@ -96,7 +97,7 @@ export const monitoringGroup: NavGroup = {
       label: "Area Monitoring",
       key: "qc-monitor",
       href: "/qc/monitoring/fqc",
-      icon: "assembly",
+      icon: "clipboard",
       mode: morningMeetingMode,
       area: "qc",
       allowedRoles: ["PIC Area"],
@@ -123,7 +124,7 @@ export const monitoringGroup: NavGroup = {
       label: "Area Monitoring",
       key: "cost-area-monitoring",
       href: "/morning-meeting",
-      icon: "assembly",
+      icon: "cost",
       mode: morningMeetingMode,
       area: "cost",
       allowedRoles: ["PIC Area"],

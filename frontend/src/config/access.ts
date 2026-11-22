@@ -3,7 +3,7 @@ import type { Role } from "@/types/morningMeeting";
 
 export const roleLandingPaths: Record<Role, string> = {
   HOD: "/morning-meeting/hod",
-  Superadmin: "/sqcdip",
+  Admin: "/sqcdip",
   Host: "/morning-meeting",
   "PIC Area": "/morning-meeting",
 };
@@ -13,11 +13,11 @@ export function landingPathFor(user: Pick<AppUser, "role">): string {
 }
 
 export function landingTitleFor(user: Pick<AppUser, "role">): string {
-  return user.role === "Superadmin" ? "SQDCIP Overview" : "Morning Meeting";
+  return user.role === "Admin" ? "SQDCIP Overview" : "Morning Meeting";
 }
 
 export function isAreaMonitoringViewer(role: Role): boolean {
-  return role === "HOD" || role === "Superadmin";
+  return role === "HOD" || role === "Admin";
 }
 
 export type AccessGroupTitle = "MORNING MEETING" | "PRODUCTION KPI" | "MONITORING" | "REPORTS" | "ADMINISTRASI";
@@ -102,14 +102,14 @@ export const accessModuleRules: Record<AccessModuleKey, AccessModuleRule> = {
   "meeting-home": { group: "MORNING MEETING", label: "Meeting Dashboard", roles: ["PIC Area", "Host"] },
   "hod-overview": { group: "MORNING MEETING", label: "Meeting Dashboard", roles: ["HOD"] },
   followup: { group: "MORNING MEETING", label: "Follow-up", roles: ["PIC Area", "Host", "HOD"] },
-  "sqcdip-overview": { group: "PRODUCTION KPI", label: "SQDCIP Overview", roles: ["HOD", "Superadmin"] },
-  "sqcdip-abnormal": { group: "PRODUCTION KPI", label: "Abnormal Tracker", roles: ["HOD", "Superadmin"] },
-  "repair-monitor": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "Superadmin", "PIC Area"], area: "repair" },
-  "service-monitor": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "Superadmin", "PIC Area"], area: "service" },
-  "qc-monitor": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "Superadmin", "PIC Area"], area: "qc" },
-  "assembly-monitor": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "Superadmin", "PIC Area"], area: "assembly" },
-  "cost-area-monitoring": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "Superadmin", "PIC Area"], area: "cost" },
-  "safety-area-monitoring": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "Superadmin", "PIC Area"], area: "safety" },
+  "sqcdip-overview": { group: "PRODUCTION KPI", label: "SQDCIP Overview", roles: ["HOD", "Admin"] },
+  "sqcdip-abnormal": { group: "PRODUCTION KPI", label: "Abnormal Tracker", roles: ["HOD", "Admin"] },
+  "repair-monitor": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "Admin", "PIC Area"], area: "repair" },
+  "service-monitor": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "Admin", "PIC Area"], area: "service" },
+  "qc-monitor": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "Admin", "PIC Area"], area: "qc" },
+  "assembly-monitor": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "Admin", "PIC Area"], area: "assembly" },
+  "cost-area-monitoring": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "Admin", "PIC Area"], area: "cost" },
+  "safety-area-monitoring": { group: "MONITORING", label: "Area Monitoring", roles: ["HOD", "Admin", "PIC Area"], area: "safety" },
   "hod-daily-plan": { group: "REPORTS", label: "Daily Plan", roles: ["HOD"] },
   Abnormality: { group: "REPORTS", label: "Abnormality", roles: ["PIC Area"], area: "repair" },
   "repair-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area"], area: "repair" },
@@ -123,7 +123,7 @@ export const accessModuleRules: Record<AccessModuleKey, AccessModuleRule> = {
   "cost-daily-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area"], area: "cost" },
   "safety-abnormality": { group: "REPORTS", label: "Abnormality", roles: ["PIC Area"], area: "safety" },
   "safety-daily-plan": { group: "REPORTS", label: "Daily Plan", roles: ["PIC Area"], area: "safety" },
-  "user-management": { group: "ADMINISTRASI", label: "Atur User", roles: ["Superadmin"] },
+  "user-management": { group: "ADMINISTRASI", label: "Atur User", roles: ["Admin"] },
 };
 
 const allPicAreas: PicAreaKey[] = ["assembly", "packing", "material", "qc", "service", "repair", "cost", "safety"];
@@ -139,7 +139,7 @@ export function areasForUser(user: AccessUser): PicAreaKey[] {
 }
 
 export function canAccess(user: AccessUser, key: AccessModuleKey, area?: PicAreaKey | null): boolean {
-  if (key === "user-management") return user.role === "Superadmin";
+  if (key === "user-management") return user.role === "Admin";
   if (user.extraModules?.includes(key)) return true;
   const rule = accessModuleRules[key];
   if (!rule.roles.includes(user.role)) return false;
