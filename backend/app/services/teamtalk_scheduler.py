@@ -26,6 +26,7 @@ from app.services.meeting_schedule import Slot, parse_days, slots_for_day
 from app.services.teamtalk import (
     notify_escalated_problems,
     notify_meeting_reminder,
+    notify_papercard_complete,
     notify_papercard_deadline,
     notify_papercard_reminder,
     notify_workshop_meeting_reminder,
@@ -40,7 +41,6 @@ _last_cache_cleanup_date: date | None = None
 ESCALATION_WORK_START = time(8, 0)
 ESCALATION_WORK_END = time(17, 0)
 ESCALATION_BATCH_SIZE = 10
-MEETING_START_GRACE_MINUTES = 5
 PAPERCARD_DEADLINE_GRACE_MINUTES = 5
 
 
@@ -63,8 +63,6 @@ async def check_meeting_reminders(db: Session, now: datetime):
     lines = db.scalars(select(Line).where(Line.status == "running")).all()
     due_slots: list[dict] = []
     due_keys: list[str] = []
-    start_slots: list[dict] = []
-    start_keys: list[str] = []
 
     for line in lines:
         setting = get_line_setting(db, line.id)
@@ -104,19 +102,6 @@ async def check_meeting_reminders(db: Session, now: datetime):
                     if event_key not in _sent_events_cache:
                         due_slots.append(entry)
                         due_keys.append(event_key)
-                # Pengingat kedua: tepat saat jam meeting, kecuali meeting sudah dimulai
-                elif -MEETING_START_GRACE_MINUTES < diff_min <= 0:
-                    event_key = f"meeting_start_{line.id}_{slot.label}_{today}"
-                    if event_key not in _sent_events_cache:
-                        already_started = db.scalar(select(DmMeetingSession.id).where(
-                            DmMeetingSession.line_id == line.id,
-                            DmMeetingSession.date == today,
-                            DmMeetingSession.session_number == slot.number,
-                            DmMeetingSession.status != "pending",
-                        ))
-                        if already_started is None:
-                            start_slots.append(entry)
-                            start_keys.append(event_key)
             except Exception as e:
                 logger.error("Error saat evaluasi slot meeting %s: %s", slot, e)
 
@@ -124,10 +109,6 @@ async def check_meeting_reminders(db: Session, now: datetime):
         logger.info("Mengirim pengingat meeting untuk %d line", len(due_slots))
         if await notify_meeting_reminder(due_slots):
             _sent_events_cache.update(due_keys)
-    if start_slots:
-        logger.info("Mengirim pengingat jam meeting untuk %d line", len(start_slots))
-        if await notify_meeting_reminder(start_slots, started=True):
-            _sent_events_cache.update(start_keys)
 
 
 async def check_workshop_meeting_reminders(db: Session, now: datetime):
@@ -171,6 +152,46 @@ async def check_workshop_meeting_reminders(db: Session, now: datetime):
             logger.error("Error saat evaluasi workshop meeting %s: %s", setting.workshop_id, e)
 
 
+def _papercard_review_state(db: Session, line: Line, templates: list, today: date) -> dict | None:
+    departments = sorted({tpl.department for tpl in templates})
+    if not departments:
+        return None
+    submissions = db.scalars(select(PapercardSubmission).where(
+        PapercardSubmission.line_id == line.id,
+        PapercardSubmission.date == today,
+    )).all()
+    by_department = {sub.department: sub for sub in submissions}
+    complete = all(department in by_department for department in departments)
+    waiting = [
+        by_department[department] for department in departments
+        if department in by_department and (by_department[department].approval_status or "pending").lower() == "pending"
+    ]
+
+    from app.api.papercards import recipient_of
+
+    supervisors = {}
+    for submission in waiting:
+        supervisor = recipient_of(db, submission)
+        if supervisor is not None:
+            supervisors[supervisor.id] = supervisor
+    return {
+        "line_code": line.code,
+        "departments": departments,
+        "complete": complete,
+        "waiting": bool(waiting),
+        "supervisor_names": [s.name for s in supervisors.values()],
+        "supervisor_nos": [s.employee_no for s in supervisors.values() if s.employee_no],
+    }
+
+
+def _latest_window_end(templates: list, now: datetime) -> datetime:
+    latest = datetime(now.year, now.month, now.day, 0, 0)
+    for tpl in templates:
+        eh, em = [int(p) for p in (tpl.window_end or "08:15").split(":")]
+        latest = max(latest, datetime(now.year, now.month, now.day, eh, em))
+    return latest
+
+
 async def check_papercard_reminders(db: Session, now: datetime):
     today = now.date()
     lines = db.scalars(select(Line).where(Line.status == "running")).all()
@@ -178,6 +199,8 @@ async def check_papercard_reminders(db: Session, now: datetime):
     due_keys: list[str] = []
     missed_entries: list[dict] = []
     missed_keys: list[str] = []
+    review_states: list[dict] = []
+    review_deadline = datetime(now.year, now.month, now.day, 0, 0)
 
     for line in lines:
         setting = get_line_setting(db, line.id)
@@ -241,6 +264,20 @@ async def check_papercard_reminders(db: Session, now: datetime):
             except Exception as e:
                 logger.error("Error evaluasi papercard template %s: %s", tpl.id, e)
 
+        state = _papercard_review_state(db, line, templates, today)
+        if state is not None:
+            review_states.append(state)
+            review_deadline = max(review_deadline, _latest_window_end(templates, now))
+
+    complete_key = f"papercard_complete_{today}"
+    if review_states and complete_key not in _sent_events_cache:
+        everyone_done = all(state["complete"] for state in review_states)
+        if everyone_done or now >= review_deadline:
+            complete_entries = [state for state in review_states if state["complete"] and state["waiting"]]
+            if complete_entries:
+                logger.info("Mengirim pemberitahuan papercard lengkap untuk %d line", len(complete_entries))
+                if await notify_papercard_complete(complete_entries):
+                    _sent_events_cache.add(complete_key)
     if due_entries:
         logger.info("Mengirim pengingat papercard untuk %d line-departemen", len(due_entries))
         if await notify_papercard_reminder(due_entries):

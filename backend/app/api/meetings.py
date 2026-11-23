@@ -5,7 +5,7 @@ from datetime import date, datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
-from app.services.teamtalk import notify_new_problems
+from app.services.teamtalk import notify_meeting_reminder, notify_new_problems
 from zoneinfo import ZoneInfo
 from app.services.meeting_start import ensure_start_window
 
@@ -54,8 +54,6 @@ from app.services.representatives import same_dept_representatives, validate_rep
 from app.services import joint_meetings, workshop_problems
 from app.services.problem_access import is_pic, pic_filter as problem_pic_filter, with_pic_dept
 from app.services.meeting_schedule import (
-    ALL_DAYS,
-    DEFAULT_SLOTS,
     format_days,
     line_schedule_rows,
     parse_days,
@@ -176,14 +174,7 @@ def _map_session(s: DmMeetingSession, db: Session) -> MeetingSessionOut:
 def _schedule_out(db: Session, line_id: int) -> MeetingScheduleOut:
     rows = line_schedule_rows(db, line_id)
     if not rows:
-        return MeetingScheduleOut(
-            line_id=line_id,
-            is_default=True,
-            items=[
-                MeetingScheduleItemOut(label=label, time=time, days=list(ALL_DAYS), is_active=True)
-                for label, time in DEFAULT_SLOTS
-            ],
-        )
+        return MeetingScheduleOut(line_id=line_id, is_default=True, items=[])
     return MeetingScheduleOut(
         line_id=line_id,
         is_default=False,
@@ -426,6 +417,7 @@ def prepare_session(
 @router.post("/sessions/start", response_model=MeetingSessionOut)
 def start_session(
     payload: MeetingSessionStartIn,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_principal),
 ) -> MeetingSessionOut:
@@ -457,7 +449,8 @@ def start_session(
     if session.roster is None:
         raise HTTPException(409, "Buka presensi meeting terlebih dahulu.")
 
-    if session.status != "in_progress":
+    just_started = session.status != "in_progress"
+    if just_started:
         session.status = "in_progress"
         session.started_at = datetime.now()
 
@@ -495,6 +488,21 @@ def start_session(
 
     db.commit()
     db.refresh(session)
+
+    if just_started:
+        line_ids = [session.line_id] + list(db.scalars(
+            select(DmMeetingSession.line_id).where(DmMeetingSession.source_session_id == session.id)
+        ))
+        codes = [code for code in db.scalars(select(Line.code).where(Line.id.in_(line_ids)).order_by(Line.code))]
+        background_tasks.add_task(
+            notify_meeting_reminder,
+            [
+                {"line_code": code, "session_label": session.label, "scheduled_time": session.scheduled_time, "minutes_left": 0}
+                for code in codes
+            ],
+            True,
+        )
+
     return _map_session(session, db)
 
 @router.post("/sessions/{session_id}/presensi/close", response_model=MeetingSessionOut)

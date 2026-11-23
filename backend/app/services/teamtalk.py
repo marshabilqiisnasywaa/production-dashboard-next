@@ -104,7 +104,9 @@ async def notify_new_problems(line_code: str, session_label: str, summaries: lis
         lines.append(f"   👤 PIC: {pic_name} | ⏱️ Due: {due}")
 
     lines.append("")
-    lines.append("Mohon PIC segera menindaklanjuti. Terima kasih!")
+    lines.append("Mohon PIC segera: ")
+    lines.append("1. Masuk ke akun dan tambahkan solusi.")
+    lines.append("2. Selesaikan masalah sebelum due date, lalu tandai selesai. Terima kasih!")
 
     return await send_teamtalk_message("\n".join(lines), job_nos=job_nos)
 
@@ -133,7 +135,7 @@ async def notify_escalated_problems(escalations: list[dict]) -> bool:
         lines.append(f"   👤 PIC: {item.get('pic_name', '-')} | ⏱️ Due: {format_due(item.get('due_date'))}")
 
     lines.append("")
-    lines.append("Mohon segera berkoordinasi dan menyelesaikan masalah tersebut.")
+    lines.append("Mohon segera berkoordinasi untuk menyelesaikan masalah tersebut, Jika masalah sudah selesai, segera isi kolom solusi dan klik tombol Selesai melalui akun PIC.")
 
     return await send_teamtalk_message("\n".join(lines), job_nos=job_nos)
 
@@ -162,7 +164,7 @@ async def notify_meeting_reminder(slots: list[dict], started: bool = False) -> b
         lines.append(f"   Line: {', '.join(group['lines'])}")
     lines.append("")
     if started:
-        lines.append("Waktunya DM meeting. Harap Leader dan seluruh anggota segera berkumpul di papan DM meeting. @ALL")
+        lines.append("DM Meeting sudah dimulai oleh Leader.")
     else:
         lines.append("Harap Leader dan seluruh anggota bersiap di papan DM meeting. @ALL")
     return await send_teamtalk_message("\n".join(lines))
@@ -204,6 +206,26 @@ async def notify_papercard_reminder(entries: list[dict]) -> bool:
     lines.append("")
     lines.append("Mohon personil terkait bersiap mengisi papercard sesuai jam di atas.")
     return await send_teamtalk_message("\n".join(lines))
+
+
+async def notify_papercard_complete(entries: list[dict]) -> bool:
+    """
+    Satu notifikasi untuk supervisor saat seluruh papercard sebuah line sudah disubmit
+    dan menunggu pengecekan (approve atau revisi).
+    """
+    if not entries:
+        return False
+
+    lines = ["[PAPERCARD SUDAH DISUBMIT SEMUA]"]
+    job_nos: list[str] = []
+    for entry in entries:
+        lines.append(f"   {entry['line_code'] or '-'}: {', '.join(entry['departments'])}")
+        if entry["supervisor_names"]:
+            lines.append(f"   Supervisor: {', '.join(entry['supervisor_names'])}")
+        job_nos.extend(entry["supervisor_nos"])
+    lines.append("")
+    lines.append("Seluruh papercard di atas telah disubmit. Mohon supervisor melakukan pengecekan dan memberikan persetujuan atau meminta revisi jika diperlukan.")
+    return await send_teamtalk_message("\n".join(lines), job_nos=job_nos)
 
 
 async def notify_papercard_deadline(entries: list[dict]) -> bool:

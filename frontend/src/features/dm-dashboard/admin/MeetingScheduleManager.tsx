@@ -17,10 +17,7 @@ type Row = DmMeetingScheduleItem & { key: string };
 
 const DAY_LABELS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
 const ALL_DAYS = [1, 2, 3, 4, 5, 6, 7];
-const DEFAULT_ROWS: DmMeetingScheduleItem[] = [
-  { label: "Sesi 1", time: "10:00", days: ALL_DAYS, isActive: true },
-  { label: "Sesi 2", time: "14:00", days: ALL_DAYS, isActive: true },
-];
+const WEEKDAYS = [1, 2, 3, 4, 5];
 
 const strip = (rows: Row[]) =>
   rows.map(({ label, time, days, isActive }) => ({ label: label.trim(), time, days: [...days].sort(), isActive }));
@@ -29,7 +26,7 @@ function summarize(schedule: DmMeetingSchedule | undefined): string {
   if (!schedule) return "Memuat...";
   const times = schedule.items.filter((i) => i.isActive).map((i) => i.time).sort();
   const text = times.length ? times.join(" · ") : "Tidak ada sesi aktif";
-  return schedule.isDefault ? `${text} (bawaan)` : text;
+  return schedule.items.length ? text : "Libur (belum ada jadwal)";
 }
 
 export default function MeetingScheduleManager({ lines }: MeetingScheduleManagerProps) {
@@ -143,7 +140,7 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
   const addRow = () =>
     setRows((prev) => [
       ...prev,
-      { key: nextKey(), label: `Sesi ${prev.length + 1}`, time: "08:00", days: [...ALL_DAYS], isActive: true },
+      { key: nextKey(), label: `Sesi ${prev.length + 1}`, time: "", days: [...WEEKDAYS], isActive: true },
     ]);
 
   const validate = (): string | null => {
@@ -252,7 +249,7 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
                 </h3>
                 <p className="msm-editor__sub">
                   {selectedSchedule?.isDefault
-                    ? uiText("Lini ini belum punya jadwal sendiri dan memakai jadwal bawaan. Simpan untuk mengaturnya sendiri.")
+                    ? uiText("Lini ini belum punya jadwal, jadi dianggap libur dan tanpa notifikasi. Tambahkan sesi lalu simpan untuk mengaktifkannya.")
                     : uiText("Jam, jumlah sesi, dan hari berlaku diatur per lini.")}
                 </p>
               </div>
@@ -339,7 +336,6 @@ export default function MeetingScheduleManager({ lines }: MeetingScheduleManager
               <button type="button" className="msm-btn msm-btn--primary" onClick={handleSave} disabled={saving || !dirty}>
                 {saving ? uiText("Menyimpan...") : uiText("Simpan jadwal")}
               </button>
-              <button type="button" className="msm-btn" onClick={() => setRows(toRows(DEFAULT_ROWS))} disabled={saving}>{uiText("Isi Dengan Jadwal Standar")}</button>
               <button
                 type="button"
                 className="msm-btn msm-btn--ghost"
