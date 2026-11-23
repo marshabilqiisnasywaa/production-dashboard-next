@@ -408,6 +408,16 @@
   max-width: calc(100vw - 28px);
 }
 
+@media (max-width: 480px) {
+  .dm-liquid-toast-portal {
+    top: calc(8px + env(safe-area-inset-top, 0px));
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+  }
+}
+
 .dm-liquid-toast {
   position: relative;
   pointer-events: auto;
