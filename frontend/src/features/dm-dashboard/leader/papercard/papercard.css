@@ -148,6 +148,26 @@
     min-height: 44px;
     font-size: 13px;
   }
+  .dml-lsel__list {
+    max-height: 220px;
+    padding: 3px;
+  }
+  .dml-lsel__option {
+    min-height: 40px;
+    padding: 4px 8px;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .dml-lsel__model {
+    font-size: 12px;
+  }
+  .dml-lsel__owner {
+    font-size: 11.5px;
+  }
+  .dml-lsel__tag {
+    padding: 1px 6px;
+    font-size: 10.5px;
+  }
 }
 .dml-pc-meta__fields {
   display: grid;
