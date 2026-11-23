@@ -6,6 +6,7 @@ import { departmentLabel } from "../../departments";
 import { useMemo } from "react";
 import { IconCheck, IconCheckCircle, IconClose } from "@/components/ui/icons";
 import type { DmSupervisorSubordinate } from "../../api";
+import { SubstituteBadge } from "./SubstituteBadge";
 import { ITEM_CATEGORY_MAP, PRESET_TITLES } from "../types";
 
 interface SupervisorReviewModalProps {
@@ -160,19 +161,6 @@ export function SupervisorReviewModal({
                   <span>{uiText("Diwakilkan oleh ")}{reviewTarget.substitutedBy.name} ({reviewTarget.substitutedBy.employeeNo})</span>
                 </>
               )}
-              {reviewTarget.submission?.isSubstitute && (
-                <>
-                  <span className="spv-dot-sep">•</span>
-                  <span style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", borderRadius: 6, padding: "2px 8px" }}>
-                    {uiText("Diisi oleh ")}
-                    <strong>{reviewTarget.submission.filledByName ?? reviewTarget.name}</strong>
-                    {uiText(" (pengganti)")}
-                    {" · "}
-                    {uiText("Pengisi asli: ")}
-                    <strong>{reviewTarget.submission.replacedEmployeeName ?? "-"}</strong>
-                  </span>
-                </>
-              )}
               <span className="spv-dot-sep">•</span>
               <span>{uiText("Submit:")}{" "}
                 {reviewTarget.submission?.submittedAt
@@ -190,6 +178,13 @@ export function SupervisorReviewModal({
                 <span className="spv-mini-badge spv-mini-badge--clean">{uiText("Nol Temuan")}</span>
               )}
             </div>
+            {reviewTarget.submission?.isSubstitute && (
+              <SubstituteBadge
+                variant="banner"
+                filledByName={reviewTarget.submission.filledByName ?? reviewTarget.name}
+                replacedName={reviewTarget.submission.replacedEmployeeName}
+              />
+            )}
           </div>
         </div>
 
