@@ -3,7 +3,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useUiText } from "@/locales/useUiText";
 import type { DmFillableLine } from "../../../api";
 
-export function lineLabel(line: Pick<DmFillableLine, "code" | "model">) {
+export function lineLabel(line: { code: string; model?: string | null }) {
   return line.model ? `${line.code} · ${line.model}` : line.code;
 }
 
@@ -69,7 +69,11 @@ interface SubstituteProps {
   onCancel: () => void;
 }
 
-export function SubstituteConfirmModal({ line, onConfirm, onCancel }: SubstituteProps) {
+export function SubstituteConfirmModal({
+  line,
+  onConfirm,
+  onCancel,
+}: SubstituteProps) {
   const { text: uiText } = useUiText();
   const replaced = line.mainMembers?.length
     ? line.mainMembers.join(", ")
@@ -88,7 +92,9 @@ export function SubstituteConfirmModal({ line, onConfirm, onCancel }: Substitute
       <div className="dml-mdl__box">
         <p className="dml-mdl__label">{uiText("Line yang dipilih")}</p>
         <p className="dml-mdl__value">{lineLabel(line)}</p>
-        {line.workshopName && <p className="dml-mdl__sub">{line.workshopName}</p>}
+        {line.workshopName && (
+          <p className="dml-mdl__sub">{line.workshopName}</p>
+        )}
       </div>
 
       <div className="dml-mdl__box">
@@ -97,9 +103,12 @@ export function SubstituteConfirmModal({ line, onConfirm, onCancel }: Substitute
       </div>
 
       <p className="dml-mdl__note">
-        {uiText("Anda akan mengisi papercard untuk {{v0}} sebagai anggota pengganti.", {
-          v0: replaced,
-        })}
+        {uiText(
+          "Anda akan mengisi papercard untuk {{v0}} sebagai anggota pengganti.",
+          {
+            v0: replaced,
+          }
+        )}
       </p>
 
       <div className="dml-mdl__actions">
@@ -159,10 +168,15 @@ export function NextLineModal({
       )}
 
       <div className="dml-mdl__box dml-mdl__box--accent">
-        <p className="dml-mdl__label">{uiText("Jadwal berikutnya · Belum diisi")}</p>
+        <p className="dml-mdl__label">
+          {uiText("Jadwal berikutnya · Belum diisi")}
+        </p>
         <p className="dml-mdl__value">{lineLabel(next)}</p>
         <p className="dml-mdl__sub">
-          {uiText("Shift {{v0}} · Jadwal {{v1}}", { v0: String(shift), v1: firstName })}
+          {uiText("Shift {{v0}} · Jadwal {{v1}}", {
+            v0: String(shift),
+            v1: firstName,
+          })}
         </p>
       </div>
 

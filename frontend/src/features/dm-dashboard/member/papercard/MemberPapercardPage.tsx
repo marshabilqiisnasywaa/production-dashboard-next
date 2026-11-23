@@ -141,12 +141,13 @@ export default function MemberPapercardPage({
     };
   }, []);
 
-  // Hanya ada satu line yang bisa diisi -> tidak perlu memilih manual.
+  // Line default = line sendiri (jika punya dua, yang pertama); tetap bisa diganti manual.
   useEffect(() => {
     if (selectedLineOverride) return;
-    if (fillable.length === 1 && fillable[0].isOwn) {
-      applyLine(String(fillable[0].id));
-    } else if (fillable.length === 0 && currentUser?.lines?.length === 1) {
+    const own = fillable.find((l) => l.isOwn);
+    if (own) {
+      applyLine(String(own.id));
+    } else if (fillable.length === 0 && currentUser?.lines?.length) {
       applyLine(String(currentUser.lines[0].id));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -350,12 +351,17 @@ export default function MemberPapercardPage({
   const isPending = Boolean(realSubmission) && !isApproved && !isRejected;
   const isRevisionMode = isRejected;
   const readOnly = isApproved || isPending;
-  const lineInactive = Boolean(activeLine?.status && activeLine.status !== "running");
+  const lineInactive = Boolean(
+    activeLine?.status && activeLine.status !== "running"
+  );
   const lineCount = currentUser?.lines?.length ?? 0;
   const inactiveText = lineInactive
-    ? uiText("Line {{v0}} nonaktif. Papercard tidak dapat diisi untuk line ini.", {
-        v0: activeLine?.code ?? "",
-      })
+    ? uiText(
+        "Line {{v0}} nonaktif. Papercard tidak dapat diisi untuk line ini.",
+        {
+          v0: activeLine?.code ?? "",
+        }
+      )
     : undefined;
 
   const active =
@@ -400,24 +406,37 @@ export default function MemberPapercardPage({
     const today = new Date().toISOString().slice(0, 10);
     const candidates = fillable.filter(
       (l) =>
-        l.isOwn &&
-        l.id !== excludeId &&
-        (!l.status || l.status === "running")
+        l.isOwn && l.id !== excludeId && (!l.status || l.status === "running")
     );
     const checked = await Promise.all(
-      candidates.map((l) =>
-        papercardApi
-          .listSubmissions({ lineId: l.id, department: selectedDept, date: today })
-          .then((subs) => ({ line: l, sub: subs?.[0] ?? null }))
-          .catch(() => null) // gagal cek -> jangan menawarkan apa pun
+      candidates.map(
+        (l) =>
+          papercardApi
+            .listSubmissions({
+              lineId: l.id,
+              department: selectedDept,
+              date: today,
+            })
+            .then((subs) => ({ line: l, sub: subs?.[0] ?? null }))
+            .catch(() => null) // gagal cek -> jangan menawarkan apa pun
       )
     );
-    return checked
-      .filter((r): r is { line: DmFillableLine; sub: DmPapercardSubmission | null } => r !== null)
-      // belum ada submission = belum diisi; rejected = perlu direvisi.
-      // pending / approved dianggap selesai -> tidak ditawarkan lagi.
-      .filter((r) => !r.sub || (r.sub.approvalStatus || "").toLowerCase() === "rejected")
-      .map((r) => r.line);
+    return (
+      checked
+        .filter(
+          (
+            r
+          ): r is { line: DmFillableLine; sub: DmPapercardSubmission | null } =>
+            r !== null
+        )
+        // belum ada submission = belum diisi; rejected = perlu direvisi.
+        // pending / approved dianggap selesai -> tidak ditawarkan lagi.
+        .filter(
+          (r) =>
+            !r.sub || (r.sub.approvalStatus || "").toLowerCase() === "rejected"
+        )
+        .map((r) => r.line)
+    );
   };
 
   const handleSubmit = async () => {
@@ -473,7 +492,15 @@ export default function MemberPapercardPage({
   function applyLine(newLineVal: string) {
     const pick = fillable.find((l) => String(l.id) === newLineVal);
     const found = pick
-      ? { id: pick.id, code: pick.code, name: pick.name, model: pick.model, status: pick.status, workshopName: pick.workshopName, slug: "" }
+      ? {
+          id: pick.id,
+          code: pick.code,
+          name: pick.name,
+          model: pick.model,
+          status: pick.status,
+          workshopName: pick.workshopName,
+          slug: "",
+        }
       : currentUser?.lines?.find((l) => String(l.id) === newLineVal);
     if (found) {
       setSelectedLineOverride(found);
@@ -509,23 +536,30 @@ export default function MemberPapercardPage({
   const lineOptionList =
     fillable.length > 0
       ? fillable.map((l) => {
-          const owner = l.isOwn
-            ? uiText("Jadwal Anda")
-            : l.mainMembers?.length
-            ? l.mainMembers.join(", ")
-            : "";
+          const owner = l.isOwn ? "" : l.mainMembers?.join(", ") ?? "";
+          const inactive = l.status && l.status !== "running";
           return {
             value: String(l.id),
-            label: `${lineLabel(l)}${owner ? ` — ${owner}` : ""}${
-              l.status && l.status !== "running" ? ` (${uiText("Nonaktif")})` : ""
-            }`,
+            label: lineLabel(l),
+            title: l.code,
+            model: l.model,
+            owner: owner ? `${uiText("Line")} ${owner}` : undefined,
+            tag: inactive
+              ? uiText("Nonaktif")
+              : l.isOwn
+              ? uiText("Line Anda")
+              : undefined,
           };
         })
       : (currentUser?.lines ?? []).map((l) => ({
           value: String(l.id),
-          label: `${lineLabel(l)} — ${uiText("Jadwal Anda")}${
-            l.status && l.status !== "running" ? ` (${uiText("Nonaktif")})` : ""
-          }`,
+          label: lineLabel(l),
+          title: l.code,
+          model: l.model,
+          tag:
+            l.status && l.status !== "running"
+              ? uiText("Nonaktif")
+              : uiText("Line Anda"),
         }));
 
   return (
@@ -572,9 +606,15 @@ export default function MemberPapercardPage({
       )}
 
       {inactiveText && (
-        <div className="dml-banner dml-banner--rejected" role="alert" style={{ marginBottom: 12 }}>
+        <div
+          className="dml-banner dml-banner--rejected"
+          role="alert"
+          style={{ marginBottom: 12 }}
+        >
           <p className="dml-banner__title">{uiText("Line nonaktif")}</p>
-          <p className="dml-banner__sub" style={{ margin: "2px 0 0" }}>{inactiveText}</p>
+          <p className="dml-banner__sub" style={{ margin: "2px 0 0" }}>
+            {inactiveText}
+          </p>
         </div>
       )}
 
@@ -643,7 +683,7 @@ export default function MemberPapercardPage({
           <strong>{realSubmission.replacedEmployeeName}</strong>.
         </p>
       ) : realSubmission?.employeeName &&
-      realSubmission.employeeNo !== currentUser?.username ? (
+        realSubmission.employeeNo !== currentUser?.username ? (
         <p
           className="dml-pc__intro"
           style={{ fontSize: 12.5, lineHeight: 1.5, margin: "8px 0 0" }}

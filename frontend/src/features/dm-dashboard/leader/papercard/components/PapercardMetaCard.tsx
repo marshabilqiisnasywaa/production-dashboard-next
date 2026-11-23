@@ -2,10 +2,11 @@
 import { useUiText } from "@/locales/useUiText";
 import type { ReactNode } from "react";
 import { Field } from "@/components/ui/Field";
+import { LineSelect, type LineSelectOption } from "./LineSelect";
 
 interface Props {
   lines: string[];
-  lineOptions?: { value: string; label: string }[];
+  lineOptions?: LineSelectOption[];
   line: string;
   onLineChange: (line: string) => void;
   leader: string;
@@ -66,6 +67,14 @@ export function PapercardMetaCard({
               >
               </span>
             </div>
+          ) : lineOptions ? (
+            <LineSelect
+              id="pc-line"
+              value={line}
+              options={lineOptions}
+              placeholder={lineOptions.find((o) => o.value === "")?.label ?? uiText("Pilih Line")}
+              onChange={onLineChange}
+            />
           ) : (
             <select
               id="pc-line"

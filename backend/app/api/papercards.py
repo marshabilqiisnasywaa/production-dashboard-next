@@ -520,10 +520,7 @@ def list_templates(
     # Restrict member and leader strictly to their assigned lines and department
     if principal.role in ("member", "leader") and principal.employee:
         user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
-        if line_id is not None:
-            if principal.role == "leader" and user_line_ids and line_id not in user_line_ids:
-                return []
-        elif user_line_ids:
+        if line_id is None and user_line_ids:
             line_id = user_line_ids[0]
         if principal.employee.dept:
             department = principal.employee.dept
@@ -647,10 +644,7 @@ def list_submissions(
     # Restrict member and leader strictly to their assigned lines
     if principal.role in ("member", "leader") and principal.employee:
         user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
-        if line_id is not None:
-            if principal.role == "leader" and user_line_ids and line_id not in user_line_ids:
-                return []
-        elif user_line_ids:
+        if line_id is None and user_line_ids:
             line_id = user_line_ids[0]
         if principal.role == "member" and principal.employee.dept:
             department = principal.employee.dept
@@ -721,12 +715,6 @@ def submit_papercard(
 
     # Enforce strict boundary for member and leader role: only assigned lines & department
     if principal.role in ("member", "leader") and principal.employee:
-        user_line_ids = [l.id for _, l, _ in active_lines(db, principal.employee.id)]
-        if principal.role == "leader" and user_line_ids and payload.line_id not in user_line_ids:
-            raise HTTPException(
-                status_code=403,
-                detail="Akses ditolak: Leader hanya dapat mengisi papercard untuk lini penugasan sendiri.",
-            )
         if principal.employee.dept and dept != principal.employee.dept.upper():
             role_label = "Leader" if principal.role == "leader" else "Anggota"
             raise HTTPException(
