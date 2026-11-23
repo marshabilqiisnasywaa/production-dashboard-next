@@ -11,7 +11,7 @@
 }
 
 /* ---------- Meta card + banner ---------- */
-.dml-pc-meta {
+.dml-pc .dml-pc-meta.ui-card {
   overflow: visible;
 }
 .dml-pc-meta > .dml-banner:last-child {
