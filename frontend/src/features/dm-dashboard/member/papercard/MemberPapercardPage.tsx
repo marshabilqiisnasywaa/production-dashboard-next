@@ -543,7 +543,7 @@ export default function MemberPapercardPage({
             label: lineLabel(l),
             title: l.code,
             model: l.model,
-            owner: owner ? `${uiText("Line")} ${owner}` : undefined,
+            owner: owner || undefined,
             tag: inactive
               ? uiText("Nonaktif")
               : l.isOwn
