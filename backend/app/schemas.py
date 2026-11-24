@@ -74,6 +74,7 @@ class MeOut(CamelModel):
     supervisor: str | None = None
     work_phone: str | None = None
     photo_url: str | None = None
+    can_impersonate: bool = False
     home: str | None = None
     scope: str | None = None
     capabilities: list[str] | None = None

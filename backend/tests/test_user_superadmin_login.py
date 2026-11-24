@@ -5,6 +5,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
+from unittest.mock import patch
+
+from app.core.config import settings
 from app.core.security import create_access_token, decode_access_token, hash_password, verify_password
 from app.db.base import Base
 from app.db.session import engine, get_db
@@ -32,6 +35,9 @@ class UserSuperadminLoginTests(unittest.TestCase):
         self.addCleanup(app.dependency_overrides.clear)
         self.client = TestClient(app)
         self.addCleanup(self.client.close)
+        patcher = patch.object(settings, "allow_impersonation", True)
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def login(self, username=None, password="root-password-123"):
         return self.client.post("/api/auth/login", json={"username": username or self.user.username, "password": password})
@@ -116,6 +122,78 @@ class UserSuperadminLoginTests(unittest.TestCase):
             "lineId": 1, "department": "PROD", "date": "2026-11-03", "shift": "Shift 1", "answers": [],
         })
         self.assertEqual(response.status_code, 403, response.text)
+
+    def make_employee(self, role="member", **extra):
+        employee = Employee(employee_no="EMP-" + uuid4().hex[:8], name="Target", role=role,
+                            password_hash=hash_password("employee-password"), must_change_password=True, **extra)
+        self.db.add(employee)
+        self.db.commit()
+        return employee
+
+    def test_superadmin_user_can_impersonate_employee(self):
+        employee = self.make_employee()
+        response = self.client.post(f"/api/auth/impersonate/{employee.id}", headers=self.headers())
+        self.assertEqual(response.status_code, 200, response.text)
+        body = response.json()
+        self.assertEqual((body["username"], body["role"], body["mustChangePassword"]), (employee.employee_no, "member", False))
+        headers = {"Authorization": "Bearer " + body["accessToken"]}
+        me = self.client.get("/api/auth/me", headers=headers)
+        self.assertEqual((me.json()["name"], me.json()["mustChangePassword"]), ("Target", False))
+        self.assertEqual(self.client.get("/api/admin/employees", headers=headers).status_code, 403)
+        self.assertTrue(employee.must_change_password)
+
+    def test_superadmin_employee_can_impersonate(self):
+        root = self.make_employee(role="superadmin")
+        root.must_change_password = False
+        target = self.make_employee()
+        self.db.commit()
+        token = create_access_token(root.id, "employee")
+        response = self.client.post(f"/api/auth/impersonate/{target.id}", headers={"Authorization": "Bearer " + token})
+        self.assertEqual(response.status_code, 200, response.text)
+
+    def test_impersonation_is_limited_to_superadmin(self):
+        admin = self.make_employee(role="admin")
+        admin.must_change_password = False
+        target = self.make_employee()
+        self.db.commit()
+        token = create_access_token(admin.id, "employee")
+        response = self.client.post(f"/api/auth/impersonate/{target.id}", headers={"Authorization": "Bearer " + token})
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(self.client.post(f"/api/auth/impersonate/{target.id}").status_code, 401)
+
+    def test_impersonated_session_cannot_impersonate_or_change_password(self):
+        target = self.make_employee(role="superadmin")
+        other = self.make_employee()
+        first = self.client.post(f"/api/auth/impersonate/{target.id}", headers=self.headers()).json()
+        headers = {"Authorization": "Bearer " + first["accessToken"]}
+        self.assertEqual(self.client.post(f"/api/auth/impersonate/{other.id}", headers=headers).status_code, 403)
+        changed = self.client.post("/api/auth/change-password", headers=headers,
+                                   json={"currentPassword": "employee-password", "newPassword": "another-password-1"})
+        self.assertEqual(changed.status_code, 403)
+        self.assertTrue(verify_password("employee-password", target.password_hash))
+
+    def test_impersonation_is_off_when_env_flag_is_off(self):
+        employee = self.make_employee()
+        headers = self.headers()
+        self.assertTrue(self.client.get("/api/auth/me", headers=headers).json()["canImpersonate"])
+        with patch.object(settings, "allow_impersonation", False):
+            self.assertFalse(self.client.get("/api/auth/me", headers=headers).json()["canImpersonate"])
+            self.assertEqual(self.client.post(f"/api/auth/impersonate/{employee.id}", headers=headers).status_code, 403)
+
+    def test_can_impersonate_is_false_for_non_superadmin(self):
+        admin = self.make_employee(role="admin")
+        admin.must_change_password = False
+        self.db.commit()
+        headers = {"Authorization": "Bearer " + create_access_token(admin.id, "employee")}
+        self.assertFalse(self.client.get("/api/auth/me", headers=headers).json()["canImpersonate"])
+
+    def test_impersonate_rejects_missing_or_inactive_employee(self):
+        inactive = self.make_employee()
+        inactive.is_active = False
+        self.db.commit()
+        headers = self.headers()
+        self.assertEqual(self.client.post("/api/auth/impersonate/999999", headers=headers).status_code, 404)
+        self.assertEqual(self.client.post(f"/api/auth/impersonate/{inactive.id}", headers=headers).status_code, 409)
 
     def test_user_can_manage_employee_with_same_numeric_id(self):
         employee = Employee(id=self.user.id, employee_no="OTHER", name="Other", role="member")

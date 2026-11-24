@@ -59,7 +59,7 @@ type Auth =
   | { kind: "checking" }
   | { kind: "offline"; message: string }
   | { kind: "anon" }
-  | { kind: "in"; username: string; isAdmin: boolean };
+  | { kind: "in"; username: string; isAdmin: boolean; canImpersonate: boolean };
 
 type Banner = { type: "success" | "info" | "error"; message: string };
 
@@ -108,6 +108,7 @@ export default function DmAdminPage() {
           kind: "in",
           username: me.name ?? me.username,
           isAdmin: true,
+          canImpersonate: me.canImpersonate === true,
         });
       })
       .catch((error: unknown) => {
@@ -171,6 +172,7 @@ export default function DmAdminPage() {
       <AdminWorkspace
         username={auth.username}
         isAdmin={auth.isAdmin}
+        canImpersonate={auth.canImpersonate}
         onLogout={logout}
       />
     </SidebarProvider>
@@ -284,10 +286,12 @@ const ADMIN_TAB_HEADERS: Record<
 function AdminWorkspace({
   username,
   isAdmin,
+  canImpersonate,
   onLogout,
 }: {
   username: string;
   isAdmin: boolean;
+  canImpersonate: boolean;
   onLogout: (notice: string | null) => void;
 }) {
   const { text: uiText } = useUiText();
@@ -1188,7 +1192,7 @@ function AdminWorkspace({
 
             {activeTab === "users" && (
               <div className="dm-admin-section dm-tab-lines">
-                <UserManager call={call} />
+                <UserManager call={call} canImpersonate={canImpersonate} />
               </div>
             )}
 
