@@ -136,10 +136,13 @@ export function LineSelect({ id, value, options, placeholder, onChange }: Props)
               <span className="dml-lsel__text">
                 <span className="dml-lsel__line">
                   <strong>{option.title ?? option.label}</strong>
-                  {option.model ? <span className="dml-lsel__model">{option.model}</span> : null}
+                  {option.model || option.owner ? (
+                    <span className="dml-lsel__model">
+                      {[option.model, option.owner].filter(Boolean).join(" - ")}
+                    </span>
+                  ) : null}
                   {option.tag ? <span className="dml-lsel__tag">{option.tag}</span> : null}
                 </span>
-                {option.owner ? <span className="dml-lsel__owner">{option.owner}</span> : null}
               </span>
               {option.value === value && (
                 <svg className="dml-lsel__check" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">

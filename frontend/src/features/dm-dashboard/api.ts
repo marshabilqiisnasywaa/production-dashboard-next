@@ -928,6 +928,20 @@ export type DmArchivedDmScore = {
   rank: number | null;
 };
 
+export type DmPublicPapercardProblem = {
+  date: string;
+  lineCode: string | null;
+  category: string; // nama kategori checklist, mis. "Mesin & Peralatan Lini"
+  title: string;    // judul item checklist yang NG
+};
+
+export type DmPublicMeetingProblem = {
+  date: string;
+  lineCode: string | null;
+  problem: string;
+  categories: string[] | null; // kategori loss P/H/T/R/Q/M
+}; 
+
 export const publicApi = {
   scorecardReport: (range: { from: string; to: string }) =>
     request<{
@@ -961,6 +975,11 @@ export const publicApi = {
       "/public/scorecard/leaders" +
         (range ? `?from=${range.from}&to=${range.to}` : "")
     ),
+  problemsReport: (range: { from: string; to: string }) =>
+  request<{
+    papercard: DmPublicPapercardProblem[];
+    meeting: DmPublicMeetingProblem[];
+  }>("/public/problems/report?" + new URLSearchParams(range)),
   papercardKpi: (params: KpiParams) =>
     request<DmPapercardKpi>("/public/papercard-kpi?" + kpiQuery(params, true)),
   standupKpi: (params: KpiParams) =>

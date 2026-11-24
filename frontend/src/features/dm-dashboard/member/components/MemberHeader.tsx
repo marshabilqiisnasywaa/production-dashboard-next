@@ -24,18 +24,29 @@ export function MemberHeader() {
   return (
     <header className="dml-header">
       <SidebarToggle />
-      <div className="dml-header__right">
+      <div className="dml-header__right" style={{ minWidth: 0 }}>
         <LanguageMenu />
         {availableLines.length > 1 && (
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "12px", color: "var(--text-secondary, #64748b)" }}>{uiText("Lini:")}</span>
+          <div
+            className="dml-header__line"
+            style={{ display: "flex", alignItems: "center", minWidth: 0, flex: "0 1 auto" }}
+          >
             <select
+              className="dml-header__line-select"
+              aria-label={uiText("Lini")}
+              title={uiText("Lini")}
               value={activeLine?.id ?? ""}
               onChange={(e) => {
                 const found = availableLines.find((l) => l.id === Number(e.target.value));
                 if (found) setActiveLine(found);
               }}
               style={{
+                minWidth: 0,
+                width: "100%",
+                maxWidth: "min(240px, 38vw)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
                 fontSize: "12px",
                 fontWeight: 600,
                 padding: "4px 8px",

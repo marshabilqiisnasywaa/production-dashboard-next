@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useUiText } from "@/locales/useUiText";
 import type { DmFillableLine } from "../../../api";
 
@@ -37,7 +38,9 @@ function ModalShell({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       className="dml-mdl"
       onMouseDown={(e) => {
@@ -56,7 +59,8 @@ function ModalShell({
         </h2>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

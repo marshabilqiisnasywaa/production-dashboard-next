@@ -2,6 +2,7 @@
 import { useUiText } from "@/locales/useUiText";
 
 
+import { SubstituteBadge } from "../SubstituteBadge";
 import { departmentLabel } from "../../../departments";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -275,11 +276,10 @@ export function SupervisorHistoryTab({ onSelectReview }: SupervisorHistoryTabPro
                       <div><strong>{member.name}</strong> · <span style={{ color: "#64748b" }}>{member.employeeNo}</span></div>
                       <div style={{ color: "#64748b", fontSize: "11px" }}>{member.position} · {departmentLabel(member.dept)}</div>
                       {sub?.isSubstitute && (
-                        <div style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", borderRadius: 6, padding: "3px 8px", fontSize: "11px", marginTop: 4 }}>
-                          {uiText("Diisi oleh ")}<strong>{sub.filledByName ?? member.name}</strong>{uiText(" (pengganti)")}
-                          <br />
-                          {uiText("Pengisi asli: ")}<strong>{sub.replacedEmployeeName ?? "-"}</strong>
-                        </div>
+                        <SubstituteBadge
+                          filledByName={sub.filledByName ?? member.name}
+                          replacedName={sub.replacedEmployeeName}
+                        />
                       )}
                       {member.substitutedBy && (
                         <div style={{ color: "#64748b", fontSize: "11px" }}>{uiText("Diwakilkan oleh ")}<strong>{member.substitutedBy.name}</strong> ({member.substitutedBy.employeeNo})</div>

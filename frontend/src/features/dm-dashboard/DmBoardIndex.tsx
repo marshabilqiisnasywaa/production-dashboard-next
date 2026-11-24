@@ -9,14 +9,16 @@ import { dmStatusLabels } from "./dmData";
 import DmScorecard from "./scorecard/DmScorecard";
 import "./DmDashboard.css";
 import AttendanceDashboardPage from "./attendance/page";
+import MasalahPage from "./masalah/MasalahPage";
 
 
-type IndexTab = "line" | "kpi" | "rekap";
+type IndexTab = "line" | "kpi" | "rekap" | "masalah";
 
 const TABS: { key: IndexTab; label: string }[] = [
   { key: "line", label: "Line" },
   { key: "kpi", label: "Scorecard" },
   { key: "rekap", label: "Rekap Absensi" },
+  { key: "masalah", label: "Masalah" },
 ];
 
 type LoadState =
@@ -245,6 +247,11 @@ export default function DmBoardIndex() {
     className="dmi-panel"
   >
     <AttendanceDashboardPage />
+  </div>
+)}
+{tab === "masalah" && (
+  <div id="dmi-panel-masalah" role="tabpanel" aria-labelledby="dmi-tab-masalah" className="dmi-panel">
+    <MasalahPage />
   </div>
 )}
       </div>
