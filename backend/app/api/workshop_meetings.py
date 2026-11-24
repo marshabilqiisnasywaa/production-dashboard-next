@@ -41,7 +41,7 @@ from app.services.face import antispoof, liveness
 from app.services.face.engine import FaceError, FaceResult, extract_face
 from app.services.face.matcher import matcher
 from app.services.holidays import is_holiday
-from app.services.meeting_schedule import ALL_DAYS, format_days, parse_days
+from app.services.meeting_schedule import DEFAULT_DAYS, format_days, parse_days
 from app.services.representatives import same_dept_representatives, validate_representative
 from app.services.teamtalk import notify_new_problems
 
@@ -72,7 +72,7 @@ class WorkshopScheduleOut(CamelModel):
 
 class WorkshopScheduleIn(CamelModel):
     time: str = Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
-    days: list[int] = Field(default_factory=lambda: list(ALL_DAYS), min_length=1)
+    days: list[int] = Field(default_factory=lambda: list(DEFAULT_DAYS), min_length=1)
     is_active: bool = True
     reminder_enabled: bool = True
     reminder_minutes: int = Field(default=15, ge=1, le=180)
@@ -101,7 +101,7 @@ def schedule_out(db: Session) -> list[WorkshopScheduleOut]:
         result.append(WorkshopScheduleOut(
             workshop_id=w.id, workshop_name=w.name, label=WORKSHOP_MEETING_LABEL,
             time=s.time if s else WORKSHOP_MEETING_TIME,
-            days=parse_days(s.days) if s else list(ALL_DAYS),
+            days=parse_days(s.days) if s else list(DEFAULT_DAYS),
             is_active=s.is_active if s else True,
             reminder_enabled=s.reminder_enabled if s else True,
             reminder_minutes=s.reminder_minutes if s else 15,

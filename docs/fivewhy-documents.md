@@ -25,10 +25,20 @@ File asli disimpan utuh termasuk gambar dan shapes; tidak ada import isinya
 ke form. SIMO tetap memakai akses login SIMO, dan upload dashboard tidak
 mengunggah file ke SIMO.
 
-Bagian **Form 5Why (belum siap)** tetap menampilkan prototype sebelumnya dengan
-localStorage. Data dan alurnya tidak terhubung ke daftar dokumen. Tidak ada
-pilihan acuan Dokumen/Web, migrasi localStorage, atau proses penyatuan otomatis.
-Pengembangan form penuh dari web merupakan pekerjaan terpisah nantinya.
+Bagian **Analisis 5Why** membuka daftar semua analisis yang dikelompokkan per
+bulan kejadian. Tiap baris menampilkan intinya (tanggal kejadian, judul, status,
+pengusul, masalah, Root Cause, tindakan sementara, dan beberapa solusi dengan PIC
+dan tenggat); seluruh baris bisa diklik untuk membuka laporan. Filter: cari, status,
+line, dan bulan kejadian (satu pilihan dengan tombol bulan sebelumnya dan berikutnya).
+Detail terbuka lewat `?id=<id analisis>` sebagai tampilan laporan
+baca-saja yang urutannya mengikuti Excel lama (header, pernyataan masalah, rantai
+5Why dengan bukti dan foto, lalu tabel solusi PDCA). Pembuat dan leader line
+menekan **Edit** untuk membuka form isian dan **Lihat hasil** untuk kembali;
+tombol "Kembali ke daftar" menutup detail. Leader dan member membuat analisis baru dari daftar;
+supervisor dan HOD (sub-tab 5Why & PDCA di admin) hanya membaca. Form menyimpan ke server (tabel `fivewhy_analyses`) dan
+foto bukti ke `<upload_dir>/fivewhy/photos/<uuid>.<ext>`. Data dan alurnya tidak
+terhubung ke daftar dokumen. Data prototype lama di `localStorage` browser
+(`dm_fivewhy_records`) tidak dibaca dan tidak dimigrasikan.
 
 ## Penyimpanan dan akses
 
@@ -36,38 +46,45 @@ Dokumen memiliki ID, line, PIC, pembuat, judul, kategori, sumber, dan waktu pemb
 Metadata disimpan pada database; file berada di `<upload_dir>/fivewhy/<uuid>.xlsx`.
 Sediakan volume persisten dan backup file bersama database.
 
-- Member dapat mengunggah untuk dirinya sendiri pada line penugasan aktif dan
-  melihat dokumen dengan dirinya sebagai PIC. Anggota satu line tidak otomatis
-  bisa melihat dokumen PIC lain.
-- Leader dapat mengunggah untuk anggota line yang dipimpinnya dan melihat dokumen
-  line tersebut. Penugasan leader line/DM aktif menjadi acuan; slot leader board
-  dipakai untuk data lama yang belum mempunyai penugasan leader line.
-- Supervisor membaca dokumen PIC yang merupakan bawahannya melalui `supervisor_id`.
-  Nama supervisor lama hanya dipakai bila ID kosong dan nama tersebut cocok dengan
-  tepat satu akun supervisor aktif. Penugasan workshop saja tidak membuka semua dokumen.
-- HOD/admin membaca seluruh line.
-- Download file memerlukan token login dan pemeriksaan akses PIC/leader/supervisor
-  yang sama dengan daftar dokumen. Hak hapus tetap untuk member/leader yang berhak
-  melihat dokumen.
+- Semua akun yang login (member, leader, supervisor, HOD, admin) dapat melihat
+  seluruh daftar dokumen dan mengunduh filenya. Tidak ada pembatasan lihat per PIC,
+  line, atau supervisor.
+- Member dapat mengunggah untuk dirinya sendiri pada line penugasan aktif.
+- Leader dapat mengunggah untuk anggota line yang dipimpinnya. Penugasan leader
+  line/DM aktif menjadi acuan; slot leader board dipakai untuk data lama yang belum
+  mempunyai penugasan leader line.
+- Supervisor dan HOD hanya membaca. Supervisor tetap tampil sebagai informasi di
+  modal berdasarkan `supervisor_id`; nama supervisor lama hanya dipakai bila ID
+  kosong dan nama tersebut cocok dengan tepat satu akun supervisor aktif.
+- Download file memerlukan token login. Hapus dokumen tersedia untuk leader dan
+  member, dan pemeriksaannya memakai aturan lihat yang sama (semua dokumen).
 
 Supervisor membuka daftar melalui menu **5Why & PDCA** di sidebar. Jika supervisor
 PIC belum diatur, modal menampilkan **Belum diatur**; perbaiki master akun agar
-dokumen tampil pada supervisor yang tepat.
+nama supervisor yang tampil benar.
 
 API dokumen mandiri: `GET /api/fivewhy/documents`,
 `GET /api/fivewhy/documents/options` untuk pilihan line dan PIC yang boleh diisi,
 `POST /api/fivewhy/documents/file`, `POST /api/fivewhy/documents/simo`,
 `GET /api/fivewhy/documents/{id}/download`, dan
-`DELETE /api/fivewhy/documents/{id}`. API penyimpanan form analisis yang dibuat
-sebelumnya telah dilepas dari router.
+`DELETE /api/fivewhy/documents/{id}`.
+
+API analisis: `GET /api/fivewhy/analyses` (daftar ringan),
+`GET|PUT|DELETE /api/fivewhy/analyses/{id}`, `POST /api/fivewhy/analyses` (membuat
+draf kosong dengan nomor `5W-YYMMDD-NN` dari server),
+`POST /api/fivewhy/analyses/{id}/photos`, `DELETE
+/api/fivewhy/analyses/{id}/photos/{photo_id}`, dan `GET /api/fivewhy/photos/{photo_id}`.
+Semua akun yang login dapat melihat. Mengubah dan menghapus hanya untuk pembuat
+atau leader line tersebut. `PUT` memerlukan `revision` terbaru dan menolak simpanan
+yang basi dengan 409. Satu analisis hanya boleh punya satu Root Cause. Foto JPEG,
+PNG, atau WebP maksimal 5 MB, 60 foto per analisis; browser mengecilkan foto besar
+sebelum unggah.
 
 ## Migrasi
 
 Migrasi `0040_fivewhy_document_pic` menambahkan PIC. Upload baru, termasuk link SIMO,
 wajib menyertakan PIC yang valid. Dokumen sebelum migrasi tidak ditebak PIC-nya:
-kolom PIC tetap kosong dan daftar menampilkan **PIC belum ditentukan**. Untuk
-menjaga akses data lama, routing dokumen tersebut sementara memakai pembuatnya
-sebagai dasar akses personal dan supervisor, selain leader line terkait.
+kolom PIC tetap kosong dan daftar menampilkan **PIC belum ditentukan**.
 
 Migrasi `0039_standalone_fivewhy_documents` mengikuti `0038`. Migrasi ini mengubah
 hubungan dokumen dari analisis menjadi line dan pembuat secara langsung.
@@ -79,6 +96,10 @@ Jalankan `alembic upgrade head` dari backend memakai environment deployment
 yang sesuai sebelum menggunakan fitur. Migrasi tidak dijalankan otomatis.
 Downgrade `0039` ditolak bila masih ada dokumen agar metadata dokumen mandiri
 tidak hilang. Server/proxy perlu mengizinkan multipart sedikit di atas 20 MB.
+
+Migrasi `0051_fivewhy_analysis_storage` menambah `nomor` (unik), `title`, dan
+`status` pada `fivewhy_analyses`, mengisi baris lama dari kolom `data`, dan membuat
+tabel `fivewhy_photos`. Downgrade ditolak bila masih ada foto.
 
 ## Review sumber
 

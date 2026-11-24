@@ -543,7 +543,7 @@ export default function MemberPapercardPage({
             label: lineLabel(l),
             title: l.code,
             model: l.model,
-            owner: owner ? `${uiText("Line")} ${owner}` : undefined,
+            owner: owner || undefined,
             tag: inactive
               ? uiText("Nonaktif")
               : l.isOwn
@@ -633,7 +633,7 @@ export default function MemberPapercardPage({
         line={hasLine && activeLine ? String(activeLine.id) : ""}
         onLineChange={selectLineById}
         leader={`${activeProfile.name} (${selectedDept})`}
-        operatorLabel="Operator / Anggota"
+        operatorLabel="Pic"
         shift={PAPERCARD_CONFIG.shift}
         date={win.now ? formatDateId(win.now, uiLocale) : ""}
         supervisorField={

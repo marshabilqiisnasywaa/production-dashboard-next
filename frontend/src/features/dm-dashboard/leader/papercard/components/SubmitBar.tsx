@@ -73,7 +73,7 @@ export function SubmitBar({
           </p>
         </div>
         {!submitted && (
-          <span style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+          <span className="dml-submitbar__actions" style={{ display: "flex", gap: 8, flexShrink: 0 }}>
             {showPrev && (
               <Button variant="outline" size="lg" onClick={onPrev}>
                 <IconArrow dir="left" /> {uiText("Sebelumnya")}

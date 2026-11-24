@@ -63,11 +63,14 @@ def prepare(db: Session, principal, session: DmMeetingSession, scope: str) -> Dm
     ensure_live_period(db, session.date)
     authorize_host(db, principal, session)
     line = db.get(Line, session.line_id)
+    if line.status != "running":
+        raise HTTPException(409, "Lini ini tidak aktif, meeting tidak dapat dibuka.")
     if scope == "dm":
         if line.dm_group_id is None:
             raise HTTPException(400, "Lini ini belum masuk DM. Hubungi admin.")
         lines = list(db.scalars(select(Line).where(
             Line.dm_group_id == line.dm_group_id, Line.workshop_id == line.workshop_id,
+            Line.status == "running",
         ).order_by(Line.id).with_for_update()).all())
     else:
         lines = list(db.scalars(select(Line).where(Line.id == line.id).with_for_update()).all())

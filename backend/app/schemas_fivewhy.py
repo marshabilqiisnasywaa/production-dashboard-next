@@ -1,7 +1,7 @@
-from typing import Annotated
+from typing import Annotated, Literal
 from urllib.parse import urlsplit
 
-from pydantic import AfterValidator, Field, field_validator
+from pydantic import AfterValidator, Field, StringConstraints, field_validator, model_validator
 
 from app.schemas import CamelModel
 
@@ -45,3 +45,114 @@ class SimoDocumentIn(CamelModel):
         if not valid:
             raise ValueError("Gunakan link HTTPS SIMO dari mtp.myoas.com.")
         return value
+
+
+AnalysisStatus = Literal["draft", "in_analysis", "done"]
+WhyVerification = Literal["unverified", "verified", "not_root", "root"]
+BranchVerification = Literal["unverified", "verified", "not_root"]
+SumberAbnormal = Literal["pre", "onProgress", "post", "lainnya"]
+TingkatPengaruh = Literal["sering", "siklusPanjang", "lainnya"]
+SolutionType = Literal["short", "long"]
+SolutionStatus = Literal["rencana", "dikerjakan", "dipantau", "standar"]
+Recurrence = Literal["ya", "tidak", "belum"]
+
+Short = Annotated[str, StringConstraints(max_length=200)]
+Long = Annotated[str, StringConstraints(max_length=2000)]
+Identifier = Annotated[str, StringConstraints(min_length=1, max_length=100)]
+PhotoId = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")]
+DateText = Annotated[str, StringConstraints(max_length=40)]
+MAX_ROOT_CAUSES = 1
+
+
+class SummaryIn(CamelModel):
+    when: DateText = ""
+    where: Short = ""
+    what: Long = ""
+    who: Short = ""
+    how: Long = ""
+    how_much: Short = ""
+    downtime: Annotated[str, StringConstraints(max_length=10)] = ""
+    short_term_solution: Long = ""
+
+
+class AbnormalIn(CamelModel):
+    label: Short = ""
+    line: Short = ""
+    pengusul: Short = ""
+    jenis: Short = ""
+    sumber_abnormal: list[SumberAbnormal] = Field(default_factory=list, max_length=4)
+    sumber_lainnya: Short = ""
+    tingkat_pengaruh: list[TingkatPengaruh] = Field(default_factory=list, max_length=3)
+    pengaruh_lainnya: Short = ""
+    summary: SummaryIn = Field(default_factory=SummaryIn)
+
+
+class EvidenceIn(CamelModel):
+    id: Identifier
+    label: Annotated[str, StringConstraints(max_length=40)] = ""
+    text: Long = ""
+    photos: list[PhotoId] = Field(default_factory=list, max_length=20)
+
+
+class BranchIn(CamelModel):
+    id: Identifier
+    statement: Long = ""
+    verification: BranchVerification = "not_root"
+    evidence: list[EvidenceIn] = Field(default_factory=list, max_length=20)
+
+
+class WhyIn(CamelModel):
+    id: Identifier
+    level: int = Field(ge=1, le=5)
+    statement: Long = ""
+    verification: WhyVerification = "unverified"
+    evidence: list[EvidenceIn] = Field(default_factory=list, max_length=20)
+    branches: list[BranchIn] = Field(default_factory=list, max_length=20)
+
+
+class SolutionIn(CamelModel):
+    id: Identifier
+    text: Long = ""
+    type: SolutionType = "short"
+    pic: Short = ""
+    dept: Short = ""
+    deadline: Annotated[str, StringConstraints(pattern=r"^(\d{4}-\d{2}-\d{2})?$")] = ""
+    status: SolutionStatus = "rencana"
+    recurred: Recurrence = "belum"
+    remark: Long = ""
+    photos_before: list[PhotoId] = Field(default_factory=list, max_length=20)
+    photos_after: list[PhotoId] = Field(default_factory=list, max_length=20)
+
+
+class AnalysisCreateIn(CamelModel):
+    line_id: int = Field(gt=0)
+
+
+class AnalysisIn(CamelModel):
+    revision: int = Field(ge=1)
+    status: AnalysisStatus
+    abnormal: AbnormalIn
+    whys: list[WhyIn] = Field(max_length=5)
+    solutions: list[SolutionIn] = Field(default_factory=list, max_length=50)
+
+    @model_validator(mode="after")
+    def check_tree(self) -> "AnalysisIn":
+        levels = [why.level for why in self.whys]
+        if len(set(levels)) != len(levels):
+            raise ValueError("Level Why tidak boleh dobel.")
+        if sum(why.verification == "root" for why in self.whys) > MAX_ROOT_CAUSES:
+            raise ValueError("Hanya satu Why yang boleh ditandai Root Cause.")
+        return self
+
+    def photo_ids(self) -> set[str]:
+        found: set[str] = set()
+        for why in self.whys:
+            for entry in why.evidence:
+                found.update(entry.photos)
+            for branch in why.branches:
+                for entry in branch.evidence:
+                    found.update(entry.photos)
+        for solution in self.solutions:
+            found.update(solution.photos_before)
+            found.update(solution.photos_after)
+        return found

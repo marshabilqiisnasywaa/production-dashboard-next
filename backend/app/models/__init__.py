@@ -3,7 +3,7 @@ from app.models.board_member import BoardMember
 from app.models.dm_group import DmGroup
 from app.models.employee import Employee
 from app.models.face_template import FaceTemplate
-from app.models.fivewhy import FiveWhyAnalysis, FiveWhyDocument
+from app.models.fivewhy import FiveWhyAnalysis, FiveWhyDocument, FiveWhyPhoto
 from app.models.line import Line
 from app.models.leader_assignment import LeaderAssignment
 from app.models.meeting import (
@@ -36,6 +36,7 @@ __all__ = [
     "ScorecardArchive",
     "FiveWhyAnalysis",
     "FiveWhyDocument",
+    "FiveWhyPhoto",
     "HistoricalEntry",
     "HistoryImportBatch",
     "Holiday",

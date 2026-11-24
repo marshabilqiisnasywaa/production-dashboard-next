@@ -1,0 +1,345 @@
+/* Tab "Masalah". Gayanya meniru kartu "Rekap per Departemen" di Rekap Absensi. Semua class berawalan "msl-". */
+.msl {
+  min-width: 0;
+  color: #172b24;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+}
+
+.msl * {
+  box-sizing: border-box;
+}
+
+.msl button {
+  font: inherit;
+  cursor: pointer;
+}
+
+
+/* ---------- Judul halaman + filter periode (meniru Rekapitulasi Presensi) ---------- */
+.msl-page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding-top: 1.25rem;
+}
+
+.msl-page-heading h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3.6vw, 2.2rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.msl-eyebrow {
+  margin: 0;
+  color: #087443;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+
+.msl-muted {
+  margin: 0.4rem 0 0;
+  font-size: 0.92rem;
+  color: var(--dmi-muted, #6b7d72);
+}
+
+.msl-filters {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.msl-filters > label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #232528;
+  font-size: 12px;
+}
+
+/* ---------- Kartu KPI ---------- */
+.msl-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.msl-kpi {
+  min-width: 0;
+  min-height: 137px;
+  padding: 16px;
+  border: 1px solid #e5e9ec;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 2%);
+}
+
+.msl-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.msl-kpi-label {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.msl-kpi-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+}
+
+.msl-kpi-icon.amber {
+  background: #fff6e7;
+  color: #d97706;
+}
+
+.msl-kpi-icon.red {
+  background: #fff0ef;
+  color: #dc2626;
+}
+
+.msl-kpi > strong {
+  display: block;
+  margin-top: 10px;
+  color: #172b24;
+  font-size: 28px;
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* nilai berupa teks (nama kategori) dibuat lebih kecil supaya muat */
+.msl-kpi > strong.is-text {
+  margin-top: 12px;
+  font-size: 20px;
+  line-height: 1.25;
+  letter-spacing: -0.2px;
+}
+
+.msl-kpi > p {
+  margin: 7px 0 0;
+  color: #232528;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.msl-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.msl-panel {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #e5e9ec;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 2%);
+}
+
+.msl-heading {
+  min-width: 0;
+}
+
+.msl-heading h2 {
+  margin: 0 0 5px;
+  color: #172b24;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+}
+
+/* Header kartu: judul di kiri, date picker di kanan atas */
+.msl-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+}
+
+.msl-card-head .msl-heading {
+  flex: 1 1 260px;
+}
+
+.msl-card-filter {
+  flex: none;
+}
+
+.msl-heading p {
+  margin: 0.4rem 0 0;
+  font-size: 0.92rem;
+  color: var(--dmi-muted, #6b7d72);
+}
+
+.msl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 15px;
+}
+
+.msl-row {
+  display: grid;
+  grid-template-columns: 18px minmax(96px, 1.1fr) minmax(70px, 1fr) minmax(68px, auto);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #172b24;
+}
+
+.msl-row.is-top {
+  border-color: #ffd6d3;
+  background: #fff1f0;
+}
+
+.msl-rank {
+  color: #64756d;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.msl-row.is-top .msl-rank {
+  color: #c93630;
+}
+
+.msl-name {
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.msl-bar {
+  display: block;
+  width: 100%;
+  height: 11px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #edf0f2;
+}
+
+.msl-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #ef9999, #de6666);
+  transition: width 180ms ease;
+}
+
+.msl-rate {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.msl-rate strong {
+  color: #172b24;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.msl-row.is-top .msl-rate strong {
+  color: #c93630;
+}
+
+.msl-rate small {
+  color: #64756d;
+  font-size: 10px;
+}
+
+.msl-empty {
+  margin-top: 15px;
+  padding: 28px 0;
+  text-align: center;
+  color: #64756d;
+  font-size: 12px;
+}
+
+.msl-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  color: #64756d;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.msl-message p {
+  margin: 0;
+}
+
+.msl-message button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #d5e5dc;
+  border-radius: 7px;
+  background: #fff;
+  color: #087443;
+  font-weight: 600;
+}
+
+.msl-message button:hover {
+  background: #eaf4ee;
+}
+
+@media (max-width: 1100px) {
+  .msl-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  .msl-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 680px) {
+  .msl-panel {
+    padding: 16px;
+  }
+
+  .msl-kpis {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .msl-bar i {
+    transition: none;
+  }
+}

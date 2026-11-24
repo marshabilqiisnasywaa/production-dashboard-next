@@ -103,7 +103,7 @@ def document_write_access(db: Session, principal: Principal):
         return true()
     return own
 
-def document_access(db: Session, principal: Principal):          # ← tambah, taruh setelah baris 104
+def document_access(db: Session, principal: Principal):
     if principal.is_admin or principal.role in ("hod", "supervisor", "leader", "member"):
         return true()
     return FiveWhyDocument.id.is_(None)

@@ -322,7 +322,7 @@ export default function PapercardPage() {
     model: l.model,
     owner:
       !l.isOwn && l.mainMembers?.length
-        ? `${uiText("Line")} ${l.mainMembers.join(", ")}`
+        ? l.mainMembers.join(", ")
         : undefined,
     tag: l.isOwn ? uiText("Line Anda") : undefined,
   }));

@@ -47,7 +47,7 @@ import type { DmGroup } from "./dmGroupsStore";
 import "./AdminPanel.css";
 import ProblemsPage from "../leader/problems/ProblemsPage";
 import PapercardProblems from "./PapercardProblems";
-import DocumentLibrary from "../fivewhy/DocumentLibrary";
+import FiveWhyWorkspace from "../fivewhy/FiveWhyWorkspace";
 import "../fivewhy/FiveWhy.css";
 import PapercardHistory from "./PapercardHistory";
 import StandupHistory from "./StandupHistory";
@@ -1335,9 +1335,7 @@ function AdminWorkspace({
                 ) : problemSub === "papercard" ? (
                   <PapercardProblems lines={lines} call={call} />
                 ) : (
-                  <div className="dm-5w-root">
-                    <DocumentLibrary hideHeader />
-                  </div>
+                  <FiveWhyWorkspace embedded />
                 )}
               </div>
             )}

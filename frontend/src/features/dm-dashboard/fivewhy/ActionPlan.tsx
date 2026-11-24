@@ -1,7 +1,7 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { IconClose } from "@/components/ui/icons";
 import {
@@ -14,8 +14,8 @@ import {
   SOLUTION_TYPE_LABELS,
   SOLUTION_TYPE_OPTIONS,
   createEmptySolution,
-  readImageAsDataUrl,
 } from "./fiveWhyData";
+import AuthImage from "./AuthImage";
 import type {
   PdcaStage,
   RecurrenceStatus,
@@ -34,6 +34,7 @@ type ActionPlanProps = {
   onNotify: (message: string) => void;
   onGoToWhy: () => void;
   onShowRootCause: () => void;
+  onUploadPhotos: (files: File[]) => Promise<string[]>;
 };
 
 type PhotoFieldProps = {
@@ -43,8 +44,9 @@ type PhotoFieldProps = {
   ariaLabel: string;
   onAdd: (photos: string[]) => void;
   onRemove: (index: number) => void;
-  onPreview: (url: string) => void;
+  onPreview: (photoId: string) => void;
   onNotify: (message: string) => void;
+  onUpload: (files: File[]) => Promise<string[]>;
 };
 
 const STATUS_BY_STAGE: Record<PdcaStage, SolutionStatus> = {
@@ -78,17 +80,16 @@ function PhotoField({
   onRemove,
   onPreview,
   onNotify,
+  onUpload,
 }: PhotoFieldProps) {
   const { text: uiText } = useUiText();
-  async function handleFiles(files: FileList | null) {
-    if (!files || files.length === 0) return;
+  async function handleFiles(files: File[]) {
+    if (files.length === 0) return;
     try {
-      const urls = await Promise.all(
-        Array.from(files).map((file) => readImageAsDataUrl(file))
-      );
-      onAdd(urls);
-    } catch {
-      onNotify("Foto tidak bisa dibaca.");
+      const ids = await onUpload(files);
+      if (ids.length > 0) onAdd(ids);
+    } catch (error) {
+      onNotify(error instanceof Error ? error.message : "Foto gagal diunggah.");
     }
   }
 
@@ -104,7 +105,7 @@ function PhotoField({
               onClick={() => onPreview(photo)}
               aria-label={uiText("Lihat foto {{v0}} lebih besar", { v0: label })}
             >
-              <img src={photo} alt="" />
+              <AuthImage photoId={photo} />
             </button>
             <button
               type="button"
@@ -126,7 +127,7 @@ function PhotoField({
             disabled={!canEdit}
             aria-label={uiText("Unggah foto {{v0}} {{v1}}", { v0: label, v1: ariaLabel })}
             onChange={(event) => {
-              const files = event.target.files;
+              const files = Array.from(event.target.files ?? []);
               event.target.value = "";
               void handleFiles(files);
             }}
@@ -147,19 +148,32 @@ export default function ActionPlan({
   onNotify,
   onGoToWhy,
   onShowRootCause,
+  onUploadPhotos,
 }: ActionPlanProps) {
   const { text: uiText, locale: uiLocale } = useUiText();
   const [view, setView] = useState<"list" | "board">("list");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<PdcaStage | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const solutionsRef = useRef(solutions);
+  solutionsRef.current = solutions;
 
   function updateSolution(id: string, patch: Partial<Solution>) {
     onChange(
-      solutions.map((solution) =>
+      solutionsRef.current.map((solution) =>
         solution.id === id ? { ...solution, ...patch } : solution
       )
     );
+  }
+
+  function addPhotos(
+    id: string,
+    key: "photosBefore" | "photosAfter",
+    photos: string[]
+  ) {
+    const current = solutionsRef.current.find((solution) => solution.id === id);
+    if (!current) return;
+    updateSolution(id, { [key]: [...current[key], ...photos] });
   }
 
   function addSolution() {
@@ -501,12 +515,7 @@ export default function ActionPlan({
                             canEdit={canEdit}
                             ariaLabel={`solusi ${index + 1}`}
                             onAdd={(photos) =>
-                              updateSolution(solution.id, {
-                                photosBefore: [
-                                  ...solution.photosBefore,
-                                  ...photos,
-                                ],
-                              })
+                              addPhotos(solution.id, "photosBefore", photos)
                             }
                             onRemove={(photoIndex) =>
                               updateSolution(solution.id, {
@@ -515,8 +524,9 @@ export default function ActionPlan({
                                 ),
                               })
                             }
-                            onPreview={setPreviewUrl}
+                            onPreview={setPreviewId}
                             onNotify={onNotify}
+                            onUpload={onUploadPhotos}
                           />
                           <PhotoField
                             label={uiText("After")}
@@ -524,12 +534,7 @@ export default function ActionPlan({
                             canEdit={canEdit}
                             ariaLabel={`solusi ${index + 1}`}
                             onAdd={(photos) =>
-                              updateSolution(solution.id, {
-                                photosAfter: [
-                                  ...solution.photosAfter,
-                                  ...photos,
-                                ],
-                              })
+                              addPhotos(solution.id, "photosAfter", photos)
                             }
                             onRemove={(photoIndex) =>
                               updateSolution(solution.id, {
@@ -538,8 +543,9 @@ export default function ActionPlan({
                                 ),
                               })
                             }
-                            onPreview={setPreviewUrl}
+                            onPreview={setPreviewId}
                             onNotify={onNotify}
+                            onUpload={onUploadPhotos}
                           />
                         </div>
                       </div>
@@ -667,24 +673,24 @@ export default function ActionPlan({
         </section>
       ) : null}
 
-      {previewUrl ? (
+      {previewId ? (
         <div
           className="dm-5w-lightbox"
           role="dialog"
           aria-modal="true"
           aria-label={uiText("Foto solusi")}
-          onClick={() => setPreviewUrl(null)}
+          onClick={() => setPreviewId(null)}
         >
           <button
             type="button"
             className="dm-5w-lightbox-close"
-            onClick={() => setPreviewUrl(null)}
+            onClick={() => setPreviewId(null)}
             aria-label={uiText("Tutup foto")}
           >
             <IconClose size={16} />
           </button>
-          <img
-            src={previewUrl}
+          <AuthImage
+            photoId={previewId}
             alt={uiText("Foto solusi diperbesar")}
             onClick={(event) => event.stopPropagation()}
           />

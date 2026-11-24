@@ -19,7 +19,7 @@ from app.api import face_scan
 from app.api.meetings import close_presensi, end_session, list_sessions, prepare_session, save_absence_notes, start_session, summary_options
 from app.db.base import Base
 from app.db.session import engine
-from app.models import Board, BoardMember, DmGroup, DmMeetingAttendance, DmMeetingSession, Employee, Line, Workshop
+from app.models import Board, BoardMember, DmGroup, DmMeetingAttendance, DmMeetingSchedule, DmMeetingSession, Employee, Line, Workshop
 from app.schemas import AbsenceNotesIn, DmGroupLineAssignIn, LineIn, MeetingPrepareIn, MeetingSessionEndIn, MeetingSessionStartIn, PresensiCloseIn
 from app.services import joint_meetings
 
@@ -42,6 +42,12 @@ class JointMeetingTests(unittest.TestCase):
         self.db.flush()
         self.lines = [Line(workshop_id=workshop.id, dm_group_id=self.group.id, code=code, name=code) for code in ("501", "502")]
         self.db.add_all(self.lines)
+        self.db.flush()
+        for line in self.lines:
+            self.db.add_all([
+                DmMeetingSchedule(line_id=line.id, label="Sesi 1", time="10:00", days="1,2,3,4,5"),
+                DmMeetingSchedule(line_id=line.id, label="Sesi 2", time="14:00", days="1,2,3,4,5"),
+            ])
         self.db.flush()
         self.employees = [Employee(employee_no=f"TEST{i}", name=f"Person {i}", role="leader" if i < 2 else "member", dept="PROD", must_change_password=False) for i in range(4)]
         self.db.add_all(self.employees)
@@ -91,15 +97,29 @@ class JointMeetingTests(unittest.TestCase):
         payload = MeetingSessionStartIn(line_id=session.line_id, date=session.date, session_number=session.session_number)
         with patch("app.api.meetings.ensure_start_window", side_effect=HTTPException(409, "Belum waktunya")) as guard:
             with self.assertRaises(HTTPException) as error:
-                start_session(payload, self.db, self.host)
+                start_session(payload, BackgroundTasks(), self.db, self.host)
             self.assertEqual(error.exception.status_code, 409)
             guard.assert_not_called()
         self.assertEqual(session.status, "pending")
         self.prepare()
         with patch("app.api.meetings.ensure_start_window", side_effect=HTTPException(409, "Belum waktunya")) as guard:
-            result = start_session(payload, self.db, self.host)
+            result = start_session(payload, BackgroundTasks(), self.db, self.host)
             guard.assert_not_called()
         self.assertEqual(result.status, "in_progress")
+
+    def test_start_notifies_once_for_host_and_mirrored_lines(self):
+        session = self.db.get(DmMeetingSession, self.source_id)
+        payload = MeetingSessionStartIn(line_id=session.line_id, date=session.date, session_number=session.session_number)
+        self.prepare()
+        first = BackgroundTasks()
+        start_session(payload, first, self.db, self.host)
+        self.assertEqual(len(first.tasks), 1)
+        entries, started = first.tasks[0].args
+        self.assertTrue(started)
+        self.assertEqual([entry["line_code"] for entry in entries], ["501", "502"])
+        again = BackgroundTasks()
+        start_session(payload, again, self.db, self.host)
+        self.assertEqual(len(again.tasks), 0)
 
     def test_batch_standup_preserves_both_sessions_and_reads_latest_attendance(self):
         from app.services.scorecard_data import load_scorecard_data
@@ -166,7 +186,7 @@ class JointMeetingTests(unittest.TestCase):
 
     def test_start_end_and_problem_belong_to_affected_line(self):
         self.prepare()
-        start_session(MeetingSessionStartIn(line_id=self.lines[0].id, date=self.day, session_number=1), self.db, self.host)
+        start_session(MeetingSessionStartIn(line_id=self.lines[0].id, date=self.day, session_number=1), BackgroundTasks(), self.db, self.host)
         self.assertEqual(self.target().status, "in_progress")
         result = end_session(self.source_id, MeetingSessionEndIn(summaries=[{"problem": "Test issue", "picName": self.employees[3].name, "picEmployeeNo": self.employees[3].employee_no, "lineCode": "502"}]), BackgroundTasks(), self.db, self.host)
         self.assertEqual(self.target().status, "completed")
@@ -190,7 +210,7 @@ class JointMeetingTests(unittest.TestCase):
             summary_options(self.db, Principal(employee=outside_pic))
         self.assertEqual(denied.exception.status_code, 403)
         self.prepare()
-        start_session(MeetingSessionStartIn(line_id=self.lines[0].id, date=self.day, session_number=1), self.db, self.host)
+        start_session(MeetingSessionStartIn(line_id=self.lines[0].id, date=self.day, session_number=1), BackgroundTasks(), self.db, self.host)
         result = end_session(self.source_id, MeetingSessionEndIn(summaries=[{
             "problem": "Outside issue", "picName": "Old name", "picEmployeeNo": "OUTSIDE", "lineCode": "999",
         }]), BackgroundTasks(), self.db, self.host)
@@ -232,6 +252,21 @@ class JointMeetingTests(unittest.TestCase):
     def test_existing_line_meeting_blocks_joint_prepare(self):
         own = list_sessions(self.lines[1].id, self.day, "Shift 1", self.db, self.other)
         prepare_session(own[0].id, MeetingPrepareIn(scope="line"), self.db, self.other)
+        with self.assertRaises(HTTPException) as error:
+            self.prepare()
+        self.assertEqual(error.exception.status_code, 409)
+
+    def test_dm_meeting_skips_stopped_lines(self):
+        self.lines[1].status = "stopped"
+        self.db.commit()
+        result = self.prepare()
+        self.assertEqual({p.employee_id for p in result.participants}, {self.employees[0].id, self.employees[2].id})
+        mirrored = self.db.scalars(select(DmMeetingSession).where(DmMeetingSession.source_session_id == self.source_id)).all()
+        self.assertEqual(mirrored, [])
+
+    def test_stopped_line_cannot_open_meeting(self):
+        self.lines[0].status = "stopped"
+        self.db.commit()
         with self.assertRaises(HTTPException) as error:
             self.prepare()
         self.assertEqual(error.exception.status_code, 409)

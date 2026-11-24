@@ -3,26 +3,39 @@
 import { useState } from "react";
 import { useUiText } from "@/locales/useUiText";
 import DocumentLibrary from "./DocumentLibrary";
-import FiveWhyPage from "./FiveWhyPage";
+import FiveWhyAnalyses from "./FiveWhyAnalyses";
 import "./FiveWhy.css";
 import "../admin/UserTable.css";
 
-export default function FiveWhyWorkspace() {
-  const { text: uiText } = useUiText();
-  const [section, setSection] = useState<"documents" | "form">("documents");
-  const [busy, setBusy] = useState(false);
-  const [dirty, setDirty] = useState(false);
+type Section = "analysis" | "documents";
 
-  function openSection(next: "documents" | "form") {
+export default function FiveWhyWorkspace({
+  embedded = false,
+}: {
+  embedded?: boolean;
+}) {
+  const { text: uiText } = useUiText();
+  const [section, setSection] = useState<Section>("analysis");
+  const [busy, setBusy] = useState(false);
+  const [documentDirty, setDocumentDirty] = useState(false);
+  const [analysisDirty, setAnalysisDirty] = useState(false);
+
+  function openSection(next: Section) {
     if (busy || next === section) return;
+    const dirty = section === "documents" ? documentDirty : analysisDirty;
     if (
       dirty &&
       !window.confirm(
-        uiText("Pindah bagian? Isian dokumen yang belum disimpan akan dibuang.")
+        uiText(
+          section === "documents"
+            ? "Pindah bagian? Isian dokumen yang belum disimpan akan dibuang."
+            : "Pindah bagian? Perubahan analisis yang belum disimpan akan dibuang."
+        )
       )
     )
       return;
-    setDirty(false);
+    setDocumentDirty(false);
+    setAnalysisDirty(false);
     setSection(next);
   }
 
@@ -34,6 +47,17 @@ export default function FiveWhyWorkspace() {
       <button
         type="button"
         className={`dm-5w-workspace-tab ${
+          section === "analysis" ? "is-active" : ""
+        }`}
+        disabled={busy}
+        aria-pressed={section === "analysis"}
+        onClick={() => openSection("analysis")}
+      >
+        {uiText("Analisis 5Why")}
+      </button>
+      <button
+        type="button"
+        className={`dm-5w-workspace-tab ${
           section === "documents" ? "is-active" : ""
         }`}
         disabled={busy}
@@ -42,34 +66,25 @@ export default function FiveWhyWorkspace() {
       >
         {uiText("Upload")}
       </button>
-      <button
-        type="button"
-        className={`dm-5w-workspace-tab ${
-          section === "form" ? "is-active" : ""
-        }`}
-        disabled={busy}
-        aria-pressed={section === "form"}
-        onClick={() => openSection("form")}
-      >
-        {uiText("Form 5Why (belum siap)")}
-      </button>
     </nav>
   );
 
   return (
     <div className="dm-5w-root">
-      {section === "documents" ? (
-        <DocumentLibrary
-          onBusyChange={setBusy}
-          onDraftChange={setDirty}
-          headerActions={sectionControls}
+      {embedded ? sectionControls : null}
+      {section === "analysis" ? (
+        <FiveWhyAnalyses
+          syncUrl={!embedded}
+          hideHeader={embedded}
+          headerActions={embedded ? undefined : sectionControls}
+          onDirtyChange={setAnalysisDirty}
         />
       ) : (
-        <FiveWhyPage
-          headerActions={sectionControls}
-          notice={uiText(
-            "Form 5Why masih dalam pengembangan dan memakai penyimpanan browser. Untuk sementara, gunakan bagian Dokumen Excel / SIMO."
-          )}
+        <DocumentLibrary
+          hideHeader={embedded}
+          onBusyChange={setBusy}
+          onDraftChange={setDocumentDirty}
+          headerActions={embedded ? undefined : sectionControls}
         />
       )}
     </div>

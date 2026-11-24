@@ -163,19 +163,6 @@ export default function ProblemSummary({
             />
           </label>
 
-          <label className="dm-5w-field dm-5w-field-wide">
-            <span className="dm-5w-label">{uiText("Jenis perbaikan abnormal")}</span>
-            <input
-              className="dm-5w-input"
-              value={abnormal.jenis}
-              onChange={(event) =>
-                onChange({ ...abnormal, jenis: event.target.value })
-              }
-              disabled={!canEdit}
-              aria-label={uiText("Jenis perbaikan abnormal")}
-            />
-          </label>
-
           <div className="dm-5w-choice-grid dm-5w-field-wide">
             <div className="dm-5w-choice-group">
               <span className="dm-5w-label">{uiText("Sumber abnormal")}</span>

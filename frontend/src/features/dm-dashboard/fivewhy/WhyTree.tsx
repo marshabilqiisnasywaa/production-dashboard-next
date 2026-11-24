@@ -7,8 +7,8 @@ import { IconClose } from "@/components/ui/icons";
 import {
   EVIDENCE_LABEL_OPTIONS,
   createFiveWhyId,
-  readImageAsDataUrl,
 } from "./fiveWhyData";
+import AuthImage from "./AuthImage";
 import type { Evidence, WhyBranch, WhyNode } from "./fiveWhyData";
 
 type WhyTreeProps = {
@@ -20,6 +20,7 @@ type WhyTreeProps = {
   onChange: (next: WhyNode[]) => void;
   onSave: () => void;
   onNotify: (message: string) => void;
+  onUploadPhotos: (files: File[]) => Promise<string[]>;
 };
 
 type EvidenceOwner = {
@@ -199,17 +200,20 @@ export default function WhyTree({
   onChange,
   onSave,
   onNotify,
+  onUploadPhotos,
 }: WhyTreeProps) {
   const { text: uiText } = useUiText();
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [customLabelFor, setCustomLabelFor] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [openEvidenceKeys, setOpenEvidenceKeys] = useState<string[]>([]);
   const [visibleLevel, setVisibleLevel] = useState(() =>
     initialVisibleLevel(whys)
   );
   const recordKeyRef = useRef(whys[0]?.id ?? "");
+  const whysRef = useRef(whys);
+  whysRef.current = whys;
 
   const ordered = [...whys].sort((a, b) => a.level - b.level);
 
@@ -391,20 +395,34 @@ export default function WhyTree({
   async function addPhotos(
     owner: EvidenceOwner,
     evidenceId: string,
-    files: FileList | null
+    files: File[]
   ) {
-    if (!files || files.length === 0) return;
+    if (files.length === 0) return;
     try {
-      const photos = await Promise.all(
-        Array.from(files).map((file) => readImageAsDataUrl(file))
+      const photos = await onUploadPhotos(files);
+      if (photos.length === 0) return;
+      const append = (entries: Evidence[]) =>
+        entries.map((entry) =>
+          entry.id === evidenceId
+            ? { ...entry, photos: [...entry.photos, ...photos] }
+            : entry
+        );
+      onChange(
+        whysRef.current.map((node) => {
+          if (node.id !== owner.nodeId) return node;
+          if (!owner.branchId) return { ...node, evidence: append(node.evidence) };
+          return {
+            ...node,
+            branches: node.branches.map((branch) =>
+              branch.id === owner.branchId
+                ? { ...branch, evidence: append(branch.evidence) }
+                : branch
+            ),
+          };
+        })
       );
-      const entry = evidenceFor(owner).find((item) => item.id === evidenceId);
-      if (!entry) return;
-      updateEvidence(owner, evidenceId, {
-        photos: [...entry.photos, ...photos],
-      });
-    } catch {
-      onNotify("Foto tidak bisa dibaca.");
+    } catch (error) {
+      onNotify(error instanceof Error ? error.message : "Foto gagal diunggah.");
     }
   }
 
@@ -652,10 +670,10 @@ export default function WhyTree({
               <button
                 type="button"
                 className="dm-5w-evidence-thumb-open"
-                onClick={() => setPreviewUrl(photo)}
+                onClick={() => setPreviewId(photo)}
                 aria-label={uiText("Lihat foto lebih besar")}
               >
-                <img src={photo} alt="" />
+                <AuthImage photoId={photo} />
               </button>
               <button
                 type="button"
@@ -677,7 +695,7 @@ export default function WhyTree({
               disabled={!canEdit}
               aria-label={uiText("Unggah foto bukti {{v0}}", { v0: positionLabel })}
               onChange={(event) => {
-                const files = event.target.files;
+                const files = Array.from(event.target.files ?? []);
                 event.target.value = "";
                 void addPhotos(owner, evidence.id, files);
               }}
@@ -961,24 +979,24 @@ export default function WhyTree({
         </div>
       </aside>
 
-      {previewUrl ? (
+      {previewId ? (
         <div
           className="dm-5w-lightbox"
           role="dialog"
           aria-modal="true"
           aria-label={uiText("Foto bukti")}
-          onClick={() => setPreviewUrl(null)}
+          onClick={() => setPreviewId(null)}
         >
           <button
             type="button"
             className="dm-5w-lightbox-close"
-            onClick={() => setPreviewUrl(null)}
+            onClick={() => setPreviewId(null)}
             aria-label={uiText("Tutup foto")}
           >
             <IconClose size={16} />
           </button>
-          <img
-            src={previewUrl}
+          <AuthImage
+            photoId={previewId}
             alt={uiText("Foto bukti diperbesar")}
             onClick={(event) => event.stopPropagation()}
           />
