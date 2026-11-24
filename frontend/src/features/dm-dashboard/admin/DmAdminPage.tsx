@@ -53,6 +53,7 @@ import PapercardHistory from "./PapercardHistory";
 import StandupHistory from "./StandupHistory";
 import SqdipMonitor from "./sqdip/SqdipMonitor";
 import HistoryImportPage from "./history-import/HistoryImportPage";
+import FlowchartManager from "../flowchart/admin/FlowchartManager";
 
 type Auth =
   | { kind: "checking" }
@@ -198,6 +199,10 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
     crumb: "MVP of The Month",
     title: "MVP of The Month per Lini dan Riwayatnya",
   },
+  flowchart: {
+    crumb: "Dokumen DM",
+    title: "Dokumen DM",
+  },
   attendance: {
     crumb: "Rekap Presensi",
     title: "Rekapitulasi Presensi & Riwayat Meeting per Tanggal",
@@ -243,6 +248,11 @@ const ADMIN_TAB_HEADERS: Record<
     title: "MVP of The Month",
     description:
       "Kelola kandidat dan tentukan pemenang MVP bulanan untuk operator lini produksi.",
+  },
+  flowchart: {
+    title: "Dokumen DM",
+    description:
+      "Kelola Dokumen DM dalam bentuk flowchart dan manual.",
   },
   attendance: {
     title: "Rekapitulasi Absensi",
@@ -1268,6 +1278,12 @@ function AdminWorkspace({
                 ) : (
                   <MpvManager lines={lines} call={call} />
                 )}
+              </div>
+            )}
+
+            {activeTab === "flowchart" && isAdmin && (
+              <div className="dm-admin-section">
+                <FlowchartManager />
               </div>
             )}
 

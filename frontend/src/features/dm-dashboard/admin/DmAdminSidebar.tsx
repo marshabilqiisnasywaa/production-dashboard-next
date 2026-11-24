@@ -4,7 +4,7 @@ import { useUiText } from "@/locales/useUiText";
 import Link from "next/link";
 import { IconLogout, IconHistory } from "@/components/ui/icons";
 import { setToken } from "../api";
-import { Gauge as IconGauge } from "lucide-react";
+import { Gauge as IconGauge, Workflow } from "lucide-react";
 import { SIDEBAR_ID, SidebarCloseButton, useSidebar } from "@/components/ui/SidebarProvider";
 
 
@@ -14,6 +14,7 @@ export type DmAdminTabKey =
   | "users"
   | "papercard"
   | "mpv"
+  | "flowchart"
   | "attendance"
   | "problems"
   | "history"
@@ -263,6 +264,19 @@ export default function DmAdminSidebar({
                 <TrophyIcon />
               </span>
               <span>{uiText("MVP of The Month")}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`dm-admin-nav-btn ${
+                activeTab === "flowchart" ? "is-active" : ""
+              }`}
+              onClick={() => select("flowchart")}
+            >
+              <span className="dm-admin-nav-icon">
+                <Workflow size={18} />
+              </span>
+              <span>{uiText("Dokumen DM")}</span>
             </button>
 
             <button

@@ -1,4 +1,10 @@
 import type { DmBoard, DmLineStatus, DmMember, DmMpv } from "./dmData";
+import type {
+  Flowchart,
+  FlowchartBoard,
+  FlowchartKind,
+  FlowchartListItem,
+} from "./flowchart/types";
 
 function apiBase(): string {
   const configured = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -2000,4 +2006,39 @@ export const dmGroupApi = {
       json("PATCH", { groupId }),
       true
     ),
+};
+
+export const flowchartApi = {
+  list: () => request<FlowchartListItem[]>("/flowcharts", {}, false),
+  get: (id: number) =>
+    request<Flowchart>(`/flowcharts/${id}`, {}, false),
+  create: (input: {
+    title: string;
+    kind: FlowchartKind;
+    board?: FlowchartBoard;
+  }) => request<Flowchart>("/flowcharts", json("POST", input), true),
+  update: (
+    id: number,
+    input: {
+      title?: string;
+      board?: FlowchartBoard;
+      sortOrder?: number;
+    }
+  ) =>
+    request<Flowchart>(
+      `/flowcharts/${id}`,
+      json("PATCH", input),
+      true
+    ),
+  remove: (id: number) =>
+    request<void>(`/flowcharts/${id}`, { method: "DELETE" }, true),
+  uploadImage: (id: number, file: File) => {
+    const form = new FormData();
+    form.append("image", file);
+    return request<FlowchartListItem>(
+      `/flowcharts/${id}/image`,
+      { method: "POST", body: form },
+      true
+    );
+  },
 };

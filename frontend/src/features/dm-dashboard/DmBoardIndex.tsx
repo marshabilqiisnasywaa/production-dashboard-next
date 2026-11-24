@@ -3,6 +3,7 @@ import { useUiText } from "@/locales/useUiText";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { publicApi } from "./api";
 import type { DmBoardListItem } from "./api";
 import { dmStatusLabels } from "./dmData";
@@ -10,13 +11,15 @@ import DmScorecard from "./scorecard/DmScorecard";
 import "./DmDashboard.css";
 import AttendanceDashboardPage from "./attendance/page";
 
+const FlowchartViewer = dynamic(() => import("./flowchart/FlowchartViewer"), { ssr: false });
 
-type IndexTab = "line" | "kpi" | "rekap";
+type IndexTab = "line" | "kpi" | "rekap" | "flowchart";
 
 const TABS: { key: IndexTab; label: string }[] = [
   { key: "line", label: "Line" },
   { key: "kpi", label: "Scorecard" },
   { key: "rekap", label: "Rekap Absensi" },
+  { key: "flowchart", label: "Dokumen" },
 ];
 
 type LoadState =
@@ -245,6 +248,17 @@ export default function DmBoardIndex() {
     className="dmi-panel"
   >
     <AttendanceDashboardPage />
+  </div>
+)}
+
+{tab === "flowchart" && (
+  <div
+    id="dmi-panel-flowchart"
+    role="tabpanel"
+    aria-labelledby="dmi-tab-flowchart"
+    className="dmi-panel"
+  >
+    <FlowchartViewer />
   </div>
 )}
       </div>
