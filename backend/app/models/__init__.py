@@ -4,6 +4,7 @@ from app.models.dm_group import DmGroup
 from app.models.employee import Employee
 from app.models.face_template import FaceTemplate
 from app.models.flowchart import Flowchart
+from app.models.flowchart import Flowchart
 from app.models.fivewhy import FiveWhyAnalysis, FiveWhyDocument, FiveWhyPhoto
 from app.models.line import Line
 from app.models.leader_assignment import LeaderAssignment
