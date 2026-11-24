@@ -1,4 +1,10 @@
 import type { DmBoard, DmLineStatus, DmMember, DmMpv } from "./dmData";
+import type {
+  FiveWhyAbnormal,
+  FiveWhyAnalysisStatus,
+  Solution,
+  WhyNode,
+} from "./fivewhy/fiveWhyData";
 
 function apiBase(): string {
   const configured = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -465,6 +471,117 @@ export const fiveWhyDocumentsApi = {
         headers: { Authorization: `Bearer ${getToken() ?? ""}` },
         cache: "no-store",
       }
+    );
+    if (!response.ok)
+      throw new ApiError(
+        response.status,
+        errorMessage(await response.json().catch(() => null), response.status)
+      );
+    return response.blob();
+  },
+};
+
+export type FiveWhyAnalysisSummary = {
+  id: string;
+  nomor: string;
+  title: string;
+  status: FiveWhyAnalysisStatus;
+  lineId: number | null;
+  lineCode: string;
+  pengusul: string;
+  createdByName: string | null;
+  major: boolean;
+  rootCause: string;
+  solutionCounts: {
+    rencana: number;
+    dikerjakan: number;
+    dipantau: number;
+    standar: number;
+    total: number;
+  };
+  countermeasures: {
+    text: string;
+    pic: string;
+    deadline: string;
+    type: "short" | "long";
+    done: boolean;
+  }[];
+  occurredAt: string;
+  what: string;
+  who: string;
+  how: string;
+  howMuch: string;
+  where: string;
+  downtime: string;
+  shortTerm: string;
+  photoCount: number;
+  createdAt: string;
+  updatedAt: string;
+  canEdit: boolean;
+};
+
+export type FiveWhyAnalysisDetail = Omit<FiveWhyAnalysisSummary, "solutionCounts"> & {
+  revision: number;
+  abnormal: Omit<FiveWhyAbnormal, "id">;
+  whys: WhyNode[];
+  solutions: Solution[];
+};
+
+export type FiveWhyAnalysisInput = {
+  revision: number;
+  status: FiveWhyAnalysisStatus;
+  abnormal: Omit<FiveWhyAbnormal, "id">;
+  whys: WhyNode[];
+  solutions: Solution[];
+};
+
+export const fiveWhyAnalysesApi = {
+  list: () => request<FiveWhyAnalysisSummary[]>("/fivewhy/analyses", {}, true),
+  get: (id: string) =>
+    request<FiveWhyAnalysisDetail>(
+      `/fivewhy/analyses/${encodeURIComponent(id)}`,
+      {},
+      true
+    ),
+  create: (lineId: number) =>
+    request<FiveWhyAnalysisDetail>(
+      "/fivewhy/analyses",
+      json("POST", { lineId }),
+      true
+    ),
+  save: (id: string, input: FiveWhyAnalysisInput) =>
+    request<FiveWhyAnalysisDetail>(
+      `/fivewhy/analyses/${encodeURIComponent(id)}`,
+      json("PUT", input),
+      true
+    ),
+  remove: (id: string) =>
+    request<void>(
+      `/fivewhy/analyses/${encodeURIComponent(id)}`,
+      { method: "DELETE" },
+      true
+    ),
+  uploadPhoto: (id: string, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request<{ id: string }>(
+      `/fivewhy/analyses/${encodeURIComponent(id)}/photos`,
+      { method: "POST", body: form },
+      true
+    );
+  },
+  removePhoto: (id: string, photoId: string) =>
+    request<void>(
+      `/fivewhy/analyses/${encodeURIComponent(id)}/photos/${encodeURIComponent(
+        photoId
+      )}`,
+      { method: "DELETE" },
+      true
+    ),
+  photo: async (photoId: string): Promise<Blob> => {
+    const response = await fetch(
+      `${apiBase()}/api/fivewhy/photos/${encodeURIComponent(photoId)}`,
+      { headers: { Authorization: `Bearer ${getToken() ?? ""}` } }
     );
     if (!response.ok)
       throw new ApiError(

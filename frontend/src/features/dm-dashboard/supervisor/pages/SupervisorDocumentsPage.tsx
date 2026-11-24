@@ -1,8 +1,7 @@
 "use client";
 
-import DocumentLibrary from "../../fivewhy/DocumentLibrary";
-import "../../fivewhy/FiveWhy.css";
+import FiveWhyWorkspace from "../../fivewhy/FiveWhyWorkspace";
 
 export default function SupervisorDocumentsPage() {
-  return <div className="dm-5w-root"><DocumentLibrary /></div>;
+  return <FiveWhyWorkspace />;
 }

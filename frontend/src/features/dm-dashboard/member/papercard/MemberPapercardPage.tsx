@@ -633,7 +633,7 @@ export default function MemberPapercardPage({
         line={hasLine && activeLine ? String(activeLine.id) : ""}
         onLineChange={selectLineById}
         leader={`${activeProfile.name} (${selectedDept})`}
-        operatorLabel="Operator / Anggota"
+        operatorLabel="Pic"
         shift={PAPERCARD_CONFIG.shift}
         date={win.now ? formatDateId(win.now, uiLocale) : ""}
         supervisorField={
