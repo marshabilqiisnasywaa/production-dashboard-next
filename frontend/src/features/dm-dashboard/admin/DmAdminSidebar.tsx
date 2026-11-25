@@ -4,9 +4,17 @@ import { useUiText } from "@/locales/useUiText";
 import Link from "next/link";
 import { IconLogout, IconHistory } from "@/components/ui/icons";
 import { setToken } from "../api";
-import { Gauge as IconGauge, ListTree, Workflow } from "lucide-react";
-import { SIDEBAR_ID, SidebarCloseButton, useSidebar } from "@/components/ui/SidebarProvider";
-
+import {
+  CalendarClock,
+  Gauge as IconGauge,
+  ListTree,
+  Workflow,
+} from "lucide-react";
+import {
+  SIDEBAR_ID,
+  SidebarCloseButton,
+  useSidebar,
+} from "@/components/ui/SidebarProvider";
 
 export type DmAdminTabKey =
   | "dashboard"
@@ -16,6 +24,7 @@ export type DmAdminTabKey =
   | "mpv"
   | "flowchart"
   | "abnormal"
+  | "mechanism"
   | "attendance"
   | "problems"
   | "history"
@@ -182,7 +191,9 @@ export default function DmAdminSidebar({
 }: DmAdminSidebarProps) {
   const { text: uiText } = useUiText();
   const sidebar = useSidebar();
-  const state = `${sidebar?.open ? " is-open" : ""}${sidebar?.collapsed ? " is-collapsed" : ""}`;
+  const state = `${sidebar?.open ? " is-open" : ""}${
+    sidebar?.collapsed ? " is-collapsed" : ""
+  }`;
   const select = (tab: DmAdminTabKey) => {
     onSelectTab(tab);
     sidebar?.close();
@@ -190,7 +201,7 @@ export default function DmAdminSidebar({
   return (
     <aside id={SIDEBAR_ID} className={`dm-admin-sidebar${state}`}>
       {/* Brand / Logo */}
-            <div className="dm-admin-sidebar-brand">
+      <div className="dm-admin-sidebar-brand">
         <span className="dml-logo">
           <IconGauge size={22} />
         </span>
@@ -283,6 +294,19 @@ export default function DmAdminSidebar({
             <button
               type="button"
               className={`dm-admin-nav-btn ${
+                activeTab === "mechanism" ? "is-active" : ""
+              }`}
+              onClick={() => select("mechanism")}
+            >
+              <span className="dm-admin-nav-icon">
+                <CalendarClock size={18} />
+              </span>
+              <span>{uiText("Mekanisme DM")}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`dm-admin-nav-btn ${
                 activeTab === "attendance" ? "is-active" : ""
               }`}
               onClick={() => select("attendance")}
@@ -347,13 +371,19 @@ export default function DmAdminSidebar({
 
             <button
               type="button"
-              className={`dm-admin-nav-btn ${activeTab === "history-import" ? "is-active" : ""}`}
+              className={`dm-admin-nav-btn ${
+                activeTab === "history-import" ? "is-active" : ""
+              }`}
               onClick={() => select("history-import")}
             >
-              <span className="dm-admin-nav-icon"><IconHistory size={18} /></span>
+              <span className="dm-admin-nav-icon">
+                <IconHistory size={18} />
+              </span>
               <span>{uiText("Impor Histori Excel")}</span>
             </button>
-            <div className="dm-admin-nav-heading">{uiText("SQDIP MONITORING")}</div>
+            <div className="dm-admin-nav-heading">
+              {uiText("SQDIP MONITORING")}
+            </div>
             <button
               type="button"
               className={`dm-admin-nav-btn ${

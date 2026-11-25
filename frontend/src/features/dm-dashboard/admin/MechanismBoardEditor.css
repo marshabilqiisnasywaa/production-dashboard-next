@@ -1,0 +1,334 @@
+/* ==========================================================================
+   Editor template DM Mechanism (admin)
+   Tampilan sama dengan halaman asli (class .dmm-* dari ../mechanism/mechanism.css);
+   file ini hanya menambah perilaku edit di bawah .dmm--edit.
+   Selector memakai .dmm.dmm--edit agar menang atas nilai bawaan walau urutan
+   CSS berbeda.
+   ========================================================================== */
+
+.dmm.dmm--edit {
+  --dmm-label-w: 11rem;
+  width: 100%;
+}
+
+/* Toolbar atas ----------------------------------------------------------- */
+
+.dmm-edit-top {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dmm-edit-hint {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--dmm-muted);
+}
+
+.dmm-edit-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.dmm-edit-bar .dm-admin-btn {
+  gap: 0.35rem;
+  text-decoration: none;
+}
+
+.dmm-edit-dirty {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #9a6b12;
+}
+
+.dmm-edit-notice {
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.dmm-edit-notice.is-ok {
+  color: var(--dmm-brand);
+}
+
+.dmm-edit-notice.is-error {
+  color: var(--dmm-danger);
+}
+
+/* Teks yang bisa diedit: tampak seperti teks biasa -----------------------
+   Padding dan margin negatif saling meniadakan sehingga posisi teks sama
+   persis dengan halaman asli; kotak baru terlihat saat hover/fokus. */
+
+.dmm-step__input,
+.dmm-label__input,
+.dmm-cell__input {
+  display: block;
+  box-sizing: border-box;
+  width: calc(100% + 0.6rem);
+  margin: -0.15rem -0.3rem;
+  padding: 0.15rem 0.3rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  resize: none;
+  overflow: hidden;
+}
+
+.dmm-step__input:hover,
+.dmm-label__input:hover,
+.dmm-cell__input:hover {
+  box-shadow: 0 0 0 1px rgba(10, 122, 71, 0.35);
+}
+
+.dmm-step__input:hover {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+
+.dmm-step__input:focus-visible,
+.dmm-label__input:focus-visible,
+.dmm-cell__input:focus-visible {
+  outline: 0;
+  background: var(--dmm-surface);
+  box-shadow: 0 0 0 2px var(--dmm-brand);
+  color: var(--dmm-ink);
+}
+
+.dmm-cell__input::placeholder {
+  color: inherit;
+  opacity: 0.4;
+}
+
+.dmm-cell__input {
+  min-height: 1.4em;
+}
+
+.dmm.dmm--edit .dmm-step {
+  cursor: text;
+}
+
+.dmm-step__input {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+
+.dmm-label__input {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+
+/* Tombol ikon kecil ------------------------------------------------------ */
+
+.dmm-iconbtn {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--dmm-line);
+  border-radius: 8px;
+  background: var(--dmm-surface);
+  color: var(--dmm-ink);
+  cursor: pointer;
+}
+
+.dmm-iconbtn:hover:not(:disabled) {
+  border-color: #98c7ad;
+  background: var(--dmm-tint);
+}
+
+.dmm-iconbtn.is-danger:hover:not(:disabled) {
+  border-color: #d69f9a;
+  background: #fdf4f4;
+  color: #a83830;
+}
+
+.dmm-iconbtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dmm-iconbtn:focus-visible {
+  outline: 2px solid var(--dmm-brand);
+  outline-offset: 2px;
+}
+
+/* Kontrol kolom: di atas slot foto, muncul saat hover/fokus ---------------- */
+
+.dmm-photo-cell--edit {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  min-height: 5.6rem;
+  padding-top: 0.15rem;
+}
+
+.dmm-stagebar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.2rem;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.dmm-photo-cell--edit:hover .dmm-stagebar,
+.dmm-photo-cell--edit:focus-within .dmm-stagebar {
+  opacity: 1;
+}
+
+/* Foto per tahap: kotak kecil + tombol tambah ------------------------------ */
+
+.dmm-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.dmm-thumbedit {
+  position: relative;
+  width: 4.4rem;
+  height: 3.2rem;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--dmm-soft);
+}
+
+.dmm-thumbedit img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dmm-thumbedit__remove {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  display: grid;
+  place-items: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(24, 38, 30, 0.72);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.dmm-thumbedit__remove:hover {
+  background: var(--dmm-danger);
+}
+
+.dmm-thumbadd {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  min-width: 4.4rem;
+  height: 3.2rem;
+  flex: 1 1 4.4rem;
+  padding: 0 0.4rem;
+  border: 1px dashed #b9c9be;
+  border-radius: 8px;
+  background: var(--dmm-soft);
+  color: var(--dmm-muted);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.dmm-thumbadd:hover:not(:disabled) {
+  border-color: var(--dmm-brand);
+  color: var(--dmm-brand);
+}
+
+.dmm-thumbadd:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.dmm-thumbadd:focus-visible,
+.dmm-thumbedit__remove:focus-visible {
+  outline: 2px solid var(--dmm-brand);
+  outline-offset: 2px;
+}
+
+/* Kontrol baris: ikon gear di kolom label, panel terbuka di bawah label --- */
+
+.dmm.dmm--edit .dmm-label {
+  position: relative;
+  flex-wrap: wrap;
+}
+
+.dmm-label__gear {
+  flex: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.dmm-label:hover .dmm-label__gear,
+.dmm-label:focus-within .dmm-label__gear,
+.dmm-label.is-open .dmm-label__gear {
+  opacity: 1;
+}
+
+.dmm-rowpanel {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  background: var(--dmm-soft);
+}
+
+.dmm-rowpanel__line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dmm-field {
+  box-sizing: border-box;
+  width: 100%;
+  height: 30px;
+  min-width: 0;
+  padding: 0 0.5rem;
+  border: 1px solid #cfd9d2;
+  border-radius: 8px;
+  background: var(--dmm-surface);
+  color: var(--dmm-ink);
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.dmm-field:focus-visible {
+  outline: 2px solid var(--dmm-brand);
+  outline-offset: 1px;
+}
+
+.dmm-rowpanel .dm-admin-btn {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 0.6rem;
+  font-size: 0.76rem;
+}
+
+/* Layar sentuh tidak punya hover: selalu tampilkan kontrol. */
+@media (hover: none) {
+  .dmm-stagebar,
+  .dmm-label__gear {
+    opacity: 1;
+  }
+}

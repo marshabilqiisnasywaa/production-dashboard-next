@@ -1248,3 +1248,39 @@
 }
 .sqdip-chip.is-full { background: #e3f4ea; color: #0b5d34; }
 .sqdip-chip.is-miss { background: #fde4e4; color: #9b1c1c; }
+
+.dmi-mech {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+  min-height: 40px;
+  padding: 0 0.95rem;
+  border: 1px solid var(--dmi-line);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--dmi-ink);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.dmi-mech:hover {
+  border-color: #98c7ad;
+  color: var(--dmi-brand);
+}
+
+.dmi-mech:focus-visible {
+  outline: 2px solid var(--dmi-brand);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .dmi-mech {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
+  }
+}

@@ -11,10 +11,13 @@ import FlowchartImageViewer from "./FlowchartImageViewer";
 import { fromBoard } from "./board/boardModel";
 import { listManualProcedures, type ManualProcedure } from "./manualProcedures";
 import "./flowchart.css";
+import DocumentViewer from "./DocumentViewer";
 
 const FlowchartCanvas = dynamic(() => import("./board/FlowchartCanvas"), { ssr: false });
 
 export default function FlowchartViewer() {
+  return <DocumentViewer />;
+
   const { text: uiText } = useUiText();
   const [list, setList] = useState<FlowchartListItem[]>([]);
   const [listLoading, setListLoading] = useState(true);

@@ -54,6 +54,7 @@ import StandupHistory from "./StandupHistory";
 import SqdipMonitor from "./sqdip/SqdipMonitor";
 import HistoryImportPage from "./history-import/HistoryImportPage";
 import FlowchartManager from "../flowchart/admin/FlowchartManager";
+import MechanismBoardEditor from "./MechanismBoardEditor";
 import AbnormalCategoryManager from "./abnormal/AbnormalCategoryManager";
 
 type Auth =
@@ -206,6 +207,10 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
     crumb: "Dokumen DM",
     title: "Dokumen DM",
   },
+  mechanism: {
+    crumb: "Mekanisme DM",
+    title: "Editor Template Mekanisme DM",
+  },
   abnormal: {
     crumb: "Kategori Abnormal",
     title: "Kategori Abnormal: Code 1, Code 2, dan Code 3",
@@ -258,13 +263,17 @@ const ADMIN_TAB_HEADERS: Record<
   },
   flowchart: {
     title: "Dokumen DM",
-    description:
-      "Kelola Dokumen DM dalam bentuk flowchart dan manual.",
+    description: "Kelola Dokumen DM dalam bentuk flowchart dan manual.",
   },
   abnormal: {
     title: "Kategori Abnormal",
     description:
       "Kelola kode abnormal tiga tingkat, cari jalurnya, dan import dari Excel.",
+  },
+  mechanism: {
+    title: "Mekanisme DM",
+    description:
+      "Edit langsung template DM Mechanism: ubah teks dan jam, tambah kolom dan baris, serta unggah foto tiap tahap.",
   },
   attendance: {
     title: "Rekapitulasi Absensi",
@@ -1305,6 +1314,12 @@ function AdminWorkspace({
             {activeTab === "abnormal" && isAdmin && (
               <div className="dm-admin-section">
                 <AbnormalCategoryManager />
+              </div>
+            )}
+
+            {activeTab === "mechanism" && isAdmin && (
+              <div className="dm-admin-section">
+                <MechanismBoardEditor />
               </div>
             )}
 

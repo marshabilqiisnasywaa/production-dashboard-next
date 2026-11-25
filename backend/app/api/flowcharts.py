@@ -33,6 +33,15 @@ def flowchart_list_item(row: Flowchart) -> FlowchartListItem:
         imageUrl="/api/flowcharts/image/" + row.image_name if row.image_name else None,
         sortOrder=row.sort_order,
         updatedAt=row.updated_at,
+        phase=row.phase,
+        subtitle=row.subtitle,
+        purpose=row.purpose,
+        scope=row.scope,
+        effectiveDate=row.effective_date,
+        version=row.version,
+        owner=row.owner,
+        approver=row.approver,
+        status=row.status,
     )
 
 
@@ -44,16 +53,45 @@ def flowchart_out(row: Flowchart) -> FlowchartOut:
         imageUrl="/api/flowcharts/image/" + row.image_name if row.image_name else None,
         sortOrder=row.sort_order,
         updatedAt=row.updated_at,
+        phase=row.phase,
+        subtitle=row.subtitle,
+        purpose=row.purpose,
+        scope=row.scope,
+        effectiveDate=row.effective_date,
+        version=row.version,
+        owner=row.owner,
+        approver=row.approver,
+        status=row.status,
         board=row.board,
+        requirements=row.requirements or [],
+        contacts=row.contacts or [],
     )
 
 
 @router.get("", response_model=list[FlowchartListItem])
-def list_flowcharts(db: Session = Depends(get_db)):
-    rows = db.scalars(
-        select(Flowchart).order_by(Flowchart.sort_order, Flowchart.id)
-    )
+def list_flowcharts(phase: str | None = None, db: Session = Depends(get_db)):
+    stmt = select(Flowchart).where(Flowchart.status == "published")
+    if phase in ("pre", "during", "post"):
+        stmt = stmt.where(Flowchart.phase == phase)
+    rows = db.scalars(stmt.order_by(Flowchart.sort_order, Flowchart.id))
     return [flowchart_list_item(row) for row in rows]
+
+
+@router.get("/manage", response_model=list[FlowchartListItem])
+def manage_flowcharts(phase: str | None = None, db: Session = Depends(get_db), _admin=Depends(get_current_admin)):
+    stmt = select(Flowchart)
+    if phase in ("pre", "during", "post"):
+        stmt = stmt.where(Flowchart.phase == phase)
+    rows = db.scalars(stmt.order_by(Flowchart.phase, Flowchart.sort_order, Flowchart.id))
+    return [flowchart_list_item(row) for row in rows]
+
+
+@router.get("/manage/{flowchart_id}", response_model=FlowchartOut)
+def manage_flowchart(flowchart_id: int, db: Session = Depends(get_db), _admin=Depends(get_current_admin)):
+    row = db.get(Flowchart, flowchart_id)
+    if row is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Flowchart tidak ditemukan.")
+    return flowchart_out(row)
 
 
 @router.get("/image/{name}")
@@ -71,7 +109,7 @@ def get_flowchart_image(name: str) -> FileResponse:
 @router.get("/{flowchart_id}", response_model=FlowchartOut)
 def get_flowchart(flowchart_id: int, db: Session = Depends(get_db)):
     row = db.get(Flowchart, flowchart_id)
-    if row is None:
+    if row is None or row.status != "published":
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Flowchart tidak ditemukan.")
     return flowchart_out(row)
 
@@ -89,6 +127,17 @@ def create_flowchart(
         board=board,
         image_name=None,
         sort_order=0,
+        phase=payload.phase,
+        subtitle=payload.subtitle,
+        purpose=payload.purpose,
+        scope=payload.scope,
+        effective_date=payload.effective_date,
+        version=payload.version,
+        owner=payload.owner,
+        approver=payload.approver,
+        status=payload.status,
+        requirements=[item for item in payload.requirements],
+        contacts=[item.model_dump() for item in payload.contacts],
     )
     db.add(row)
     db.commit()
@@ -112,6 +161,17 @@ def update_flowchart(
         row.title = payload.title
     if "sort_order" in fields and payload.sort_order is not None:
         row.sort_order = payload.sort_order
+    for field_name in ("phase", "status"):
+        if field_name in fields and getattr(payload, field_name) is not None:
+            setattr(row, field_name, getattr(payload, field_name))
+    for field_name in ("subtitle", "purpose", "scope", "effective_date", "version", "owner", "approver"):
+        if field_name in fields:
+            value = getattr(payload, field_name)
+            setattr(row, field_name, "" if value is None and field_name != "effective_date" else value)
+    if "requirements" in fields and payload.requirements is not None:
+        row.requirements = list(payload.requirements)
+    if "contacts" in fields and payload.contacts is not None:
+        row.contacts = [item.model_dump() for item in payload.contacts]
     if "board" in fields:
         if row.kind != "board":
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Hanya flowchart board yang boleh memiliki data board.")
