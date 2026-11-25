@@ -72,28 +72,22 @@ export default function FlowEdge(props: EdgeProps) {
         style={{ stroke, strokeWidth: selected ? 3 : 2, markerEnd: `url(#arrow-${id})` }}
       />
       <EdgeLabelRenderer>
-        {!editing ? (
-          <div
-            className={`dmfc-edge-label${typeof label === "string" && label ? "" : " dmfc-edge-label--empty"}`}
-            style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
-            onDoubleClick={() => { if (!edgeData?.readOnly) setEditing(true); }}
-          >
-            {typeof label === "string" && label ? label : edgeData?.readOnly ? "" : "+"}
-          </div>
-        ) : editing ? (
-          <input
-            className="dmfc-edge-label dmfc-edge-label-input"
-            style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
-            value={labelValue}
-            onChange={(event) => setLabelValue(event.target.value)}
-            onBlur={commit}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") commit();
-              if (event.key === "Escape") setEditing(false);
-            }}
-            autoFocus
-          />
-        ) : null}
+{editing && (
+  <input
+    className="dmfc-edge-label dmfc-edge-label-input"
+    style={{
+      transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+    }}
+    value={labelValue}
+    onChange={(event) => setLabelValue(event.target.value)}
+    onBlur={commit}
+    onKeyDown={(event) => {
+      if (event.key === "Enter") commit();
+      if (event.key === "Escape") setEditing(false);
+    }}
+    autoFocus
+  />
+)}
       </EdgeLabelRenderer>
     </>
   );

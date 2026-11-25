@@ -11,8 +11,11 @@ import FlowchartEditor from "./FlowchartEditor";
 import RowMenu from "../../admin/RowMenu";
 import { addManualProcedure, listManualProcedures, removeManualProcedure, type ManualProcedure } from "../manualProcedures";
 import "../flowchart.css";
+import DocumentManager from "./DocumentManager";
 
 export default function FlowchartManager() {
+  return <DocumentManager />;
+
   const { text: uiText, locale } = useUiText();
   const [items, setItems] = useState<FlowchartListItem[]>([]);
   const [loading, setLoading] = useState(true);

@@ -10,6 +10,9 @@ import type {
   FlowchartBoard,
   FlowchartKind,
   FlowchartListItem,
+  FlowchartPhase,
+  FlowchartStatus,
+  FlowchartContact,
 } from "./flowchart/types";
 
 function apiBase(): string {
@@ -2145,13 +2148,33 @@ export const dmGroupApi = {
 };
 
 export const flowchartApi = {
-  list: () => request<FlowchartListItem[]>("/flowcharts", {}, false),
+  list: (phase?: FlowchartPhase) => {
+    const query = phase ? `?phase=${encodeURIComponent(phase)}` : "";
+    return request<FlowchartListItem[]>(`/flowcharts${query}`, {}, false);
+  },
   get: (id: number) =>
     request<Flowchart>(`/flowcharts/${id}`, {}, false),
+  listAll: (phase?: FlowchartPhase) => {
+    const query = phase ? `?phase=${encodeURIComponent(phase)}` : "";
+    return request<FlowchartListItem[]>(`/flowcharts/manage${query}`, {}, true);
+  },
+  getAdmin: (id: number) =>
+    request<Flowchart>(`/flowcharts/manage/${id}`, {}, true),
   create: (input: {
     title: string;
     kind: FlowchartKind;
     board?: FlowchartBoard;
+    phase?: FlowchartPhase;
+    subtitle?: string;
+    purpose?: string;
+    scope?: string;
+    effectiveDate?: string | null;
+    version?: string;
+    owner?: string;
+    approver?: string;
+    status?: FlowchartStatus;
+    requirements?: string[];
+    contacts?: FlowchartContact[];
   }) => request<Flowchart>("/flowcharts", json("POST", input), true),
   update: (
     id: number,
@@ -2159,6 +2182,17 @@ export const flowchartApi = {
       title?: string;
       board?: FlowchartBoard;
       sortOrder?: number;
+      phase?: FlowchartPhase;
+      subtitle?: string;
+      purpose?: string;
+      scope?: string;
+      effectiveDate?: string | null;
+      version?: string;
+      owner?: string;
+      approver?: string;
+      status?: FlowchartStatus;
+      requirements?: string[];
+      contacts?: FlowchartContact[];
     }
   ) =>
     request<Flowchart>(
