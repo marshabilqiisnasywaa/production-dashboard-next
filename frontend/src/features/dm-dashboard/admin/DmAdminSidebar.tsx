@@ -2,9 +2,11 @@
 import { useUiText } from "@/locales/useUiText";
 
 import Link from "next/link";
+import { useState } from "react";
+import type { ReactNode } from "react";
 import { IconLogout, IconHistory } from "@/components/ui/icons";
 import { setToken } from "../api";
-import { CalendarClock, Gauge as IconGauge, Workflow } from "lucide-react";
+import { BookOpen, CalendarClock, ChevronDown, Gauge as IconGauge, Workflow } from "lucide-react";
 import { SIDEBAR_ID, SidebarCloseButton, useSidebar } from "@/components/ui/SidebarProvider";
 
 
@@ -174,6 +176,64 @@ function GridIcon() {
   );
 }
 
+type NavGroupItem = {
+  tab: DmAdminTabKey;
+  label: string;
+  icon: ReactNode;
+};
+
+/** Menu induk yang bisa dibuka-tutup. Klik induk hanya membuka daftar, bukan pindah halaman. */
+function NavGroup({
+  id,
+  label,
+  icon,
+  items,
+  activeTab,
+  onSelect,
+}: {
+  id: string;
+  label: string;
+  icon: ReactNode;
+  items: NavGroupItem[];
+  activeTab: DmAdminTabKey;
+  onSelect: (tab: DmAdminTabKey) => void;
+}) {
+  const { text: uiText } = useUiText();
+  const hasActive = items.some((item) => item.tab === activeTab);
+  const [open, setOpen] = useState(hasActive);
+
+  return (
+    <div className="dm-admin-nav-group">
+      <button
+        type="button"
+        className={`dm-admin-nav-btn dm-admin-nav-parent${hasActive ? " has-active" : ""}`}
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className="dm-admin-nav-icon">{icon}</span>
+        <span>{uiText(label)}</span>
+        <ChevronDown size={16} className="dm-admin-nav-chevron" aria-hidden="true" />
+      </button>
+
+      <div id={id} className="dm-admin-nav-sub" hidden={!open}>
+        {items.map((item) => (
+          <button
+            key={item.tab}
+            type="button"
+            className={`dm-admin-nav-btn ${activeTab === item.tab ? "is-active" : ""}`}
+            aria-current={activeTab === item.tab ? "page" : undefined}
+            onClick={() => onSelect(item.tab)}
+          >
+            <span className="dm-admin-nav-icon">{item.icon}</span>
+            <span>{uiText(item.label)}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function DmAdminSidebar({
   isAdmin,
   activeTab,
@@ -270,46 +330,6 @@ export default function DmAdminSidebar({
             <button
               type="button"
               className={`dm-admin-nav-btn ${
-                activeTab === "flowchart" ? "is-active" : ""
-              }`}
-              onClick={() => select("flowchart")}
-            >
-              <span className="dm-admin-nav-icon">
-                <Workflow size={18} />
-              </span>
-              <span>{uiText("Dokumen DM")}</span>
-            </button>
-
-            <button
-              type="button"
-              className={`dm-admin-nav-btn ${
-                activeTab === "mechanism" ? "is-active" : ""
-              }`}
-              onClick={() => select("mechanism")}
-            >
-              <span className="dm-admin-nav-icon">
-                <CalendarClock size={18} />
-              </span>
-              <span>{uiText("Mekanisme DM")}</span>
-            </button>
-
-            <button
-              type="button"
-              className={`dm-admin-nav-btn ${
-                activeTab === "attendance" ? "is-active" : ""
-              }`}
-              onClick={() => select("attendance")}
-            >
-              <span className="dm-admin-nav-icon">
-                <ClipboardCheckIcon />
-              </span>
-              <span>{uiText("Rekap Presensi")}</span>
-              {/* <span className="dm-admin-nav-badge-pill" style={{ background: "#eaf3f9", color: "#1e5a7d" }}>3 Sesi</span> */}
-            </button>
-
-            <button
-              type="button"
-              className={`dm-admin-nav-btn ${
                 activeTab === "problems" ? "is-active" : ""
               }`}
               onClick={() => select("problems")}
@@ -331,28 +351,19 @@ export default function DmAdminSidebar({
 
         {isAdmin && (
           <>
-            <div className="dm-admin-nav-heading">{uiText("HISTORY")}</div>
-            <button
-              type="button"
-              className={`dm-admin-nav-btn ${
-                activeTab === "history" ? "is-active" : ""
-              }`}
-              onClick={() => select("history")}
-            >
-              <span className="dm-admin-nav-icon">
-                <IconHistory size={18} />
-              </span>
-              <span>{uiText("Arsip")}</span>
-            </button>
+            <NavGroup
+              id="dm-nav-history"
+              label="History"
+              icon={<IconHistory size={18} />}
+              activeTab={activeTab}
+              onSelect={select}
+              items={[
+                { tab: "attendance", label: "Rekap Presensi", icon: <ClipboardCheckIcon /> },
+                { tab: "history", label: "Arsip", icon: <IconHistory size={16} /> },
+                { tab: "history-import", label: "Impor Histori Excel", icon: <IconHistory size={16} /> },
+              ]}
+            />
 
-            <button
-              type="button"
-              className={`dm-admin-nav-btn ${activeTab === "history-import" ? "is-active" : ""}`}
-              onClick={() => select("history-import")}
-            >
-              <span className="dm-admin-nav-icon"><IconHistory size={18} /></span>
-              <span>{uiText("Impor Histori Excel")}</span>
-            </button>
             <div className="dm-admin-nav-heading">{uiText("SQDIP MONITORING")}</div>
             <button
               type="button"
@@ -366,6 +377,19 @@ export default function DmAdminSidebar({
               </span>
               <span>{uiText("SQDIP")}</span>
             </button>
+
+            <div className="dm-admin-nav-divider" role="separator" />
+            <NavGroup
+              id="dm-nav-info-settings"
+              label="DM Info Settings"
+              icon={<BookOpen size={18} />}
+              activeTab={activeTab}
+              onSelect={select}
+              items={[
+                { tab: "flowchart", label: "Dokumen DM", icon: <Workflow size={16} /> },
+                { tab: "mechanism", label: "Mekanisme DM", icon: <CalendarClock size={16} /> },
+              ]}
+            />
           </>
         )}
 
