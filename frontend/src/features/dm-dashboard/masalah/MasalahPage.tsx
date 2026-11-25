@@ -466,7 +466,7 @@ export default function MasalahPage() {
       <section className="msl-page-heading">
         <div>
           <p className="msl-eyebrow">{tr(["OPERASIONAL DM", "DM OPERATIONS"])}</p>
-          <h1>{tr(["Masalah", "Issues"])}</h1>
+          <h1>{tr(["Tracking Abnormal", "Abnormal Tracking"])}</h1>
           <p className="msl-muted">
             {tr([
               "Pantau masalah terbanyak dari papercard dan DM meeting.",
