@@ -8,140 +8,118 @@ import { IconPlus, IconTrash } from "./MeetingIcons";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import { summaryLines, summaryPics } from "../utils";
+import { abnormalCategoryApi } from "../../../api";
+import type { DmAbnormalCategory } from "../../../api";
 
-const PROBLEM_CATEGORIES = [
-  { value: "P-Planning Losses", label: "P-Planning Losses" },
-  { value: "H-Human Losses (MP)", label: "H-Human Losses (MP)" },
-  { value: "T-Time Losses (Overtime)", label: "T-Time Losses (Overtime)" },
-  { value: "R-ResuIt Losses (Output)", label: "R-ResuIt Losses (Output)" },
-  { value: "Q-Quality Losses", label: "Q-Quality Losses" },
-  { value: "M--Machine Losses", label: "M--Machine Losses" },
-];
+function byCode(a: DmAbnormalCategory, b: DmAbnormalCategory) {
+  return a.code.localeCompare(b.code, "en", { numeric: true });
+}
 
-function CategorySelect({
+function optionLabel(row: DmAbnormalCategory) {
+  return `${row.code} · ${row.name}`;
+}
+
+function CategoryPathSelect({
   id,
   value,
+  options,
+  invalid,
   onChange,
 }: {
   id: string;
   value: string[];
+  options: DmAbnormalCategory[] | null;
+  invalid: boolean;
   onChange: (value: string[]) => void;
 }) {
   const { text: uiText } = useUiText();
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const all = options ?? [];
+  const code1 = value[0] ?? "";
+  const code2 = value[1] ?? "";
+  const code3 = value[2] ?? "";
+  const level1 = all.filter((row) => row.level === 1).sort(byCode);
+  const picked1 = level1.find((row) => row.code === code1);
+  const sharedBranches = all.filter((row) => row.level === 2 && row.parentId === null);
+  const level2 = picked1
+    ? [
+        ...all.filter((row) => row.level === 2 && row.parentId === picked1.id),
+        ...sharedBranches,
+      ].sort(byCode)
+    : [];
+  const picked2 = level2.find((row) => row.code === code2);
+  const sharedIds = new Set(sharedBranches.map((row) => row.id));
+  const level3 = picked2
+    ? Array.from(
+        new Map(
+          all
+            .filter(
+              (row) =>
+                row.level === 3 &&
+                (row.parentId === picked2.id ||
+                  (row.parentId !== null && sharedIds.has(row.parentId)))
+            )
+            .map((row) => [row.id, row])
+        ).values()
+      ).sort(byCode)
+    : [];
+  const loading = options === null;
 
-  useEffect(() => {
-    if (!open) return;
-
-    function handleOutsideClick(event: PointerEvent) {
-      if (
-        event.target instanceof Node &&
-        !containerRef.current?.contains(event.target)
-      ) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("pointerdown", handleOutsideClick);
-    return () =>
-      document.removeEventListener("pointerdown", handleOutsideClick);
-  }, [open]);
-
-  const selectedLabels = value.map(
-    (selected) =>
-      PROBLEM_CATEGORIES.find((category) => category.value === selected)
-        ?.label ?? selected
-  );
+  function pick(level: 1 | 2 | 3, next: string) {
+    const current = [code1, code2, code3];
+    current[level - 1] = next;
+    for (let index = level; index < 3; index += 1) current[index] = "";
+    while (current.length && !current[current.length - 1]) current.pop();
+    onChange(current);
+  }
 
   return (
-    <div
-      ref={containerRef}
-      style={{ position: "relative", minWidth: 0 }}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setOpen(false);
-        }
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          setOpen(false);
-          buttonRef.current?.focus();
-        }
-      }}
-    >
-      <button
-        ref={buttonRef}
-        id={id}
-        type="button"
-        className="ui-select ui-select--block"
-        aria-expanded={open}
-        aria-controls={`${id}-options`}
-        onClick={() => setOpen((previous) => !previous)}
-        style={{
-          textAlign: "left",
-          cursor: "pointer",
-          whiteSpace: "normal",
-          height: "auto",
-          minHeight: 40,
-        }}
-      >
-        {selectedLabels.length
-          ? selectedLabels.join(", ")
-          : uiText("Pilih kategori masalah")}
-      </button>
-
-      {open && (
-        <div
-          id={`${id}-options`}
-          role="group"
-          aria-label={uiText("Kategori masalah")}
-          style={{
-            position: "absolute",
-            top: "calc(100% + 4px)",
-            left: 0,
-            right: 0,
-            zIndex: 20,
-            maxHeight: 240,
-            overflowY: "auto",
-            padding: 8,
-            border: "1px solid var(--dm-border, #cbd5e1)",
-            borderRadius: 8,
-            background: "var(--dm-card, Canvas)",
-            color: "var(--dm-text, CanvasText)",
-            boxShadow: "0 4px 12px rgb(0 0 0 / 12%)",
-          }}
+    <div className="dml-mt-item__cats">
+      <Field label={uiText("Code 1 (wajib)")} htmlFor={`${id}-1`}>
+        <select
+          id={`${id}-1`}
+          className="ui-select ui-select--block"
+          value={code1}
+          disabled={loading}
+          aria-invalid={invalid}
+          aria-required="true"
+          onChange={(event) => pick(1, event.target.value)}
         >
-          {PROBLEM_CATEGORIES.map((category) => (
-            <label
-              key={category.value}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                minHeight: 44,
-                padding: "8px",
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={value.includes(category.value)}
-                onChange={(event) =>
-                  onChange(
-                    event.target.checked
-                      ? [...value, category.value]
-                      : value.filter((entry) => entry !== category.value)
-                  )
-                }
-              />
-              <span>{uiText(category.label)}</span>
-            </label>
+          <option value="">
+            {loading ? uiText("Memuat kategori...") : uiText("Pilih Code 1")}
+          </option>
+          {level1.map((row) => (
+            <option key={row.id} value={row.code}>{optionLabel(row)}</option>
           ))}
-        </div>
-      )}
+        </select>
+      </Field>
+      <Field label={uiText("Code 2 (opsional)")} htmlFor={`${id}-2`}>
+        <select
+          id={`${id}-2`}
+          className="ui-select ui-select--block"
+          value={code2}
+          disabled={loading || !picked1}
+          onChange={(event) => pick(2, event.target.value)}
+        >
+          <option value="">{uiText("Tidak dipilih")}</option>
+          {level2.map((row) => (
+            <option key={row.id} value={row.code}>{optionLabel(row)}</option>
+          ))}
+        </select>
+      </Field>
+      <Field label={uiText("Code 3 (opsional)")} htmlFor={`${id}-3`}>
+        <select
+          id={`${id}-3`}
+          className="ui-select ui-select--block"
+          value={code3}
+          disabled={loading || !picked2}
+          onChange={(event) => pick(3, event.target.value)}
+        >
+          <option value="">{uiText("Tidak dipilih")}</option>
+          {level3.map((row) => (
+            <option key={row.id} value={row.code}>{optionLabel(row)}</option>
+          ))}
+        </select>
+      </Field>
     </div>
   );
 }
@@ -311,6 +289,18 @@ export function SummaryForm({
   const { text: uiText } = useUiText();
   const availableLines = Array.from(new Set([...lines, ...items.flatMap((item) => item.customLines ?? [])]));
   const customPicNames = items.flatMap((item) => item.customPics ?? []);
+  const [categories, setCategories] = useState<DmAbnormalCategory[] | null>(null);
+  const [categoryError, setCategoryError] = useState(false);
+  const loadCategories = () => {
+    setCategoryError(false);
+    abnormalCategoryApi
+      .options()
+      .then(setCategories)
+      .catch(() => setCategoryError(true));
+  };
+  useEffect(() => {
+    loadCategories();
+  }, []);
   return (
     <Card
       className="dml-mt-summary"
@@ -355,20 +345,54 @@ export function SummaryForm({
               </Field>
               {/* </div> */}
 
-              <div className="dml-mt-item__row">
-                <Field
-                  label={uiText("Kategori Masalah")}
-                  htmlFor={`categories-${item.id}`}
-                >
-                  <CategorySelect
-                    id={`categories-${item.id}`}
-                    value={item.problemCategories ?? []}
-                    onChange={(problemCategories) =>
-                      onChange(item.id, { problemCategories })
-                    }
-                  />
-                </Field>
+              <div className="dml-mt-item__group" role="group" aria-label={uiText("Kategori Masalah")}>
+                <span className="dml-mt-item__group-title">{uiText("Kategori Masalah")}</span>
+                {categoryError ? (
+                  <p className="dml-mt-error" role="alert">
+                    {uiText("Kategori masalah gagal dimuat.")}{" "}
+                    <button type="button" className="dml-mt-item__retry" onClick={loadCategories}>
+                      {uiText("Coba lagi")}
+                    </button>
+                  </p>
+                ) : null}
+                <CategoryPathSelect
+                  id={`categories-${item.id}`}
+                  value={item.categoryCodes ?? []}
+                  options={categories}
+                  invalid={Boolean(err.category)}
+                  onChange={(categoryCodes) => onChange(item.id, { categoryCodes })}
+                />
+                {err.category && <span className="dml-mt-error">{uiText(err.category)}</span>}
+              </div>
 
+              <div className="dml-mt-item__row">
+                <Field label={uiText("Jam terjadi")} htmlFor={`oc-${item.id}`}>
+                  <input
+                    id={`oc-${item.id}`}
+                    type="datetime-local"
+                    className="ui-input ui-input--block"
+                    value={item.occurredAt ?? ""}
+                    aria-invalid={Boolean(err.occurredAt)}
+                    aria-required="true"
+                    onChange={(e) => onChange(item.id, { occurredAt: e.target.value })}
+                  />
+                  {err.occurredAt && <span className="dml-mt-error">{uiText(err.occurredAt)}</span>}
+                </Field>
+                <Field label={uiText("Waktu respon (opsional)")} htmlFor={`rs-${item.id}`}>
+                  <input
+                    id={`rs-${item.id}`}
+                    type="datetime-local"
+                    className="ui-input ui-input--block"
+                    value={item.respondedAt ?? ""}
+                    min={item.occurredAt || undefined}
+                    aria-invalid={Boolean(err.respondedAt)}
+                    onChange={(e) => onChange(item.id, { respondedAt: e.target.value })}
+                  />
+                  {err.respondedAt && <span className="dml-mt-error">{uiText(err.respondedAt)}</span>}
+                </Field>
+              </div>
+
+              <div className="dml-mt-item__row">
                 <Field label={uiText("Line")} htmlFor={`l-${item.id}`}>
                   <LineSelect
                     id={`l-${item.id}`}

@@ -7,6 +7,7 @@ import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import { formatDue } from "../../meeting/utils";
 import type { ProblemRow, ProblemStatus } from "../types";
 import { formatMeetingDate, formatOverdue } from "../utils";
+import { categoryText } from "../categoryText";
 import ProblemDetailDrawer from "./ProblemDetailDrawer";
 
 const STATUS_VIEW: Record<ProblemStatus, { tone: ChipTone; label: string }> = {
@@ -304,9 +305,7 @@ export function ProblemTable({
                   </td>
 
                   <td style={{ whiteSpace: "normal" }}>
-                    {r.problemCategories?.length
-                      ? r.problemCategories.join(", ")
-                      : "-"}
+                    {categoryText(r) || "-"}
                   </td>
 
                   <td className="dml-pb-problem" title={r.problem}>

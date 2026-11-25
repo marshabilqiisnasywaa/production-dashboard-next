@@ -48,6 +48,27 @@ def summary_metadata(summary) -> dict:
     return {
         "line_codes": [line.code for line in getattr(summary, "affected_lines", [])] or ([summary.line_code] if summary.line_code else []),
         "pics": [{"employee_id": pic.employee_id, "name": pic.name} for pic in getattr(summary, "assigned_pics", [])] or [{"employee_id": summary.pic_id, "name": summary.pic_name}],
+        "category_codes": getattr(summary, "category_codes", None),
+        "occurred_at": getattr(summary, "occurred_at", None),
+        "responded_at": getattr(summary, "responded_at", None),
+    }
+
+
+def resolve_category_fields(db: Session, body: MeetingSummaryIn) -> dict:
+    from app.services.abnormal_categories import resolve_category_path
+
+    codes, labels = resolve_category_path(db, body.category_codes)
+    occurred = (body.occurred_at or "").strip()
+    responded = (body.responded_at or "").strip() or None
+    if not occurred:
+        raise HTTPException(422, "Jam terjadi wajib diisi.")
+    if responded and responded < occurred:
+        raise HTTPException(422, "Waktu respon tidak boleh lebih awal dari jam terjadi.")
+    return {
+        "problem_categories": labels,
+        "category_codes": codes,
+        "occurred_at": occurred,
+        "responded_at": responded,
     }
 
 

@@ -1594,6 +1594,9 @@ export type DmMeetingSummary = {
   lineId: number;
   problem: string;
   problemCategories?: string[] | null;
+  categoryCodes?: string[] | null;
+  occurredAt?: string | null;
+  respondedAt?: string | null;
   solution?: string | null;
   picName: string;
   picId?: number | null;
@@ -1709,6 +1712,9 @@ export type DmMyProblem = {
   sessionLabel?: string | null;
   problem: string;
   problemCategories?: string[] | null;
+  categoryCodes?: string[] | null;
+  occurredAt?: string | null;
+  respondedAt?: string | null;
   solution?: string | null;
   picName: string;
   picId?: number | null;
@@ -1848,7 +1854,9 @@ export const meetingApi = {
         customLineCodes?: string[];
         pics?: { name: string; employeeNo?: string | null; manual: boolean }[];
         problem: string;
-        problemCategories?: string[] | null;
+        categoryCodes?: string[];
+        occurredAt?: string | null;
+        respondedAt?: string | null;
         picName: string;
         picId?: number | null;
         dueDate?: string | null;
@@ -2218,4 +2226,79 @@ export const flowchartApi = {
       true
     );
   },
+};
+
+export type DmAbnormalCategory = {
+  id: number;
+  level: number;
+  code: string;
+  name: string;
+  parentId: number | null;
+  isActive: boolean;
+  childCount: number;
+  updatedAt: string;
+};
+
+export type DmAbnormalImportInput = {
+  code1: string[];
+  code2: string[];
+  code3: string[];
+  deactivateMissing?: boolean;
+};
+
+export type DmAbnormalImportItem = {
+  level: number;
+  position: number;
+  code: string;
+  name: string;
+  parentCode: string | null;
+  action: "baru" | "diperbarui" | "tetap" | "error";
+  message: string | null;
+};
+
+export type DmAbnormalImportPreview = {
+  items: DmAbnormalImportItem[];
+  created: number;
+  updated: number;
+  unchanged: number;
+  errors: number;
+  missing: string[];
+};
+
+export type DmAbnormalImportResult = {
+  created: number;
+  updated: number;
+  unchanged: number;
+  deactivated: number;
+};
+
+export const abnormalCategoryApi = {
+  list: () => request<DmAbnormalCategory[]>("/abnormal-categories", {}, true),
+  options: () =>
+    request<DmAbnormalCategory[]>("/abnormal-categories/options", {}, true),
+  create: (input: { code: string; name: string; parentId: number | null }) =>
+    request<DmAbnormalCategory>("/abnormal-categories", json("POST", input), true),
+  update: (
+    id: number,
+    input: { code?: string; name?: string; isActive?: boolean }
+  ) =>
+    request<DmAbnormalCategory>(
+      `/abnormal-categories/${id}`,
+      json("PATCH", input),
+      true
+    ),
+  remove: (id: number) =>
+    request<void>(`/abnormal-categories/${id}`, { method: "DELETE" }, true),
+  previewImport: (input: DmAbnormalImportInput) =>
+    request<DmAbnormalImportPreview>(
+      "/abnormal-categories/import/preview",
+      json("POST", input),
+      true
+    ),
+  runImport: (input: DmAbnormalImportInput) =>
+    request<DmAbnormalImportResult>(
+      "/abnormal-categories/import",
+      json("POST", input),
+      true
+    ),
 };

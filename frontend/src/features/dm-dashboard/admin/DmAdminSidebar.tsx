@@ -4,7 +4,7 @@ import { useUiText } from "@/locales/useUiText";
 import Link from "next/link";
 import { IconLogout, IconHistory } from "@/components/ui/icons";
 import { setToken } from "../api";
-import { Gauge as IconGauge, Workflow } from "lucide-react";
+import { Gauge as IconGauge, ListTree, Workflow } from "lucide-react";
 import { SIDEBAR_ID, SidebarCloseButton, useSidebar } from "@/components/ui/SidebarProvider";
 
 
@@ -15,6 +15,7 @@ export type DmAdminTabKey =
   | "papercard"
   | "mpv"
   | "flowchart"
+  | "abnormal"
   | "attendance"
   | "problems"
   | "history"
@@ -304,6 +305,19 @@ export default function DmAdminSidebar({
                 <ClipboardCheckIcon />
               </span>
               <span>{uiText("Tracking Masalah")}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`dm-admin-nav-btn ${
+                activeTab === "abnormal" ? "is-active" : ""
+              }`}
+              onClick={() => select("abnormal")}
+            >
+              <span className="dm-admin-nav-icon">
+                <ListTree size={18} />
+              </span>
+              <span>{uiText("Kategori Abnormal")}</span>
             </button>
           </>
         ) : (

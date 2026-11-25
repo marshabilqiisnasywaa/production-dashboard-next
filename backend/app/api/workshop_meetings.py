@@ -1,5 +1,5 @@
 from app.models import WorkshopSummaryLine, WorkshopSummaryPic
-from app.services.summary_assignments import resolve_assignments, summary_metadata, display_lines, display_pics
+from app.services.summary_assignments import resolve_assignments, resolve_category_fields, summary_metadata, display_lines, display_pics
 from datetime import date, datetime, timedelta, timezone
 
 import jwt
@@ -636,8 +636,9 @@ def end_session(
 
     for sm in payload.summaries:
         assigned_lines, assigned_pics = resolve_assignments(db, sm)
+        category_fields = resolve_category_fields(db, sm)
         db.add(WorkshopMeetingSummary(
-            session_id=session.id, problem=sm.problem, problem_categories=sm.problem_categories,
+            session_id=session.id, problem=sm.problem, **category_fields,
             pic_name=assigned_pics[0][1], pic_id=assigned_pics[0][0], due_date=sm.due_date,
             line_code=assigned_lines[0][1] if assigned_lines else None, status="open",
             affected_lines=[WorkshopSummaryLine(line_id=line_id, code=code) for line_id, code in assigned_lines],

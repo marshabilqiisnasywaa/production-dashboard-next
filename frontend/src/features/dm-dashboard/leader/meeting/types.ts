@@ -34,6 +34,11 @@ export interface SummaryItem {
   id: string;
   problem: string;
   problemCategories?: string[];
+  categoryCodes?: string[];
+  /** datetime-local value */
+  occurredAt?: string;
+  /** datetime-local value, optional */
+  respondedAt?: string;
   line: string;
   picId: string;
   /** datetime-local value, e.g. "2025-06-17T12:00" */
@@ -42,7 +47,10 @@ export interface SummaryItem {
 }
 
 export type ItemErrors = Partial<
-  Record<"line" | "problem" | "picId" | "due", string>
+  Record<
+    "line" | "problem" | "picId" | "due" | "category" | "occurredAt" | "respondedAt",
+    string
+  >
 >;
 
 export interface GuestRecord {

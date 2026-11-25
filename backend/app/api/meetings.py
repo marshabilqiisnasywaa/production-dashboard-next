@@ -1,5 +1,5 @@
 from app.models import DmSummaryLine, DmSummaryPic
-from app.services.summary_assignments import resolve_assignments, summary_metadata, display_lines, display_pics
+from app.services.summary_assignments import resolve_assignments, resolve_category_fields, summary_metadata, display_lines, display_pics
 from app.services.problem_access import line_filter
 from datetime import date, datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
@@ -652,6 +652,7 @@ def end_session(
 
     for sm in payload.summaries:
         assigned_lines, assigned_pics = resolve_assignments(db, sm, session.line_id)
+        category_fields = resolve_category_fields(db, sm)
         summary_line_id = next((line_id for line_id, _ in assigned_lines if line_id is not None), session.line_id)
         summary_session = db.scalar(select(DmMeetingSession).where(
             DmMeetingSession.source_session_id == session.id,
@@ -659,7 +660,7 @@ def end_session(
         )) if summary_line_id != session.line_id else session
         new_sm = DmMeetingSummary(
             session_id=(summary_session or session).id, line_id=summary_line_id,
-            problem=sm.problem, problem_categories=sm.problem_categories,
+            problem=sm.problem, **category_fields,
             pic_name=assigned_pics[0][1], pic_id=assigned_pics[0][0], due_date=sm.due_date,
             line_code=assigned_lines[0][1] if assigned_lines else None, status="open",
             affected_lines=[DmSummaryLine(line_id=line_id, code=code) for line_id, code in assigned_lines],

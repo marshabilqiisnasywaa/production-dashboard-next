@@ -459,6 +459,9 @@ class SummaryPicOut(CamelModel):
 class MeetingSummaryIn(CamelModel):
     problem: str
     problem_categories: list[str] | None = None
+    category_codes: list[Annotated[str, Field(max_length=24)]] | None = Field(default=None, max_length=3)
+    occurred_at: str | None = Field(default=None, max_length=32)
+    responded_at: str | None = Field(default=None, max_length=32)
     pic_name: str = Field(min_length=1, max_length=120)
     pic_id: int | None = None
     pic_employee_no: str | None = None
@@ -492,6 +495,9 @@ class MeetingSummaryOut(CamelModel):
     line_id: int
     problem: str
     problem_categories: list[str] | None = None
+    category_codes: list[str] | None = None
+    occurred_at: str | None = None
+    responded_at: str | None = None
     solution: str | None = None
     pic_name: str
     pic_id: int | None
@@ -514,6 +520,9 @@ class myProblemOut(CamelModel):
     session_label : str | None = None
     problem : str
     problem_categories : list[str] | None = None
+    category_codes: list[str] | None = None
+    occurred_at: str | None = None
+    responded_at: str | None = None
     solution : str | None = None
     pic_name : str
     pic_id : int | None

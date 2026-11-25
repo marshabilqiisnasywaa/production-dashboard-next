@@ -31,6 +31,9 @@ export interface ProblemRow {
   line: string;
   problem: string;
   problemCategories?: string[];
+  categoryCodes?: string[] | null;
+  occurredAt?: string | null;
+  respondedAt?: string | null;
   solution?: string | null;
   picName: string;
   picDept?: string | null;
