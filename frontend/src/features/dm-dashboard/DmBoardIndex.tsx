@@ -20,7 +20,7 @@ const TABS: { key: IndexTab; label: string }[] = [
   { key: "line", label: "Line" },
   { key: "kpi", label: "Scorecard" },
   { key: "rekap", label: "Rekap Absensi" },
-  { key: "masalah", label: "Masalah" },
+  { key: "masalah", label: "Tracking Abnormal" },
   { key: "flowchart", label: "Dokumen" },
 ];
 

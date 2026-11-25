@@ -77,8 +77,10 @@ export function useMasalahData(range: { from: string; to: string }, attempt: num
 /* ---------- Kategori papercard (5M 1E, sesuai template papercard) ---------- */
 
 /** Hanya kategori ini yang dihitung. Kategori lain di template (5S, 6S, Lainnya) diabaikan.
- *  Measurement tidak dipakai di template mana pun, jadi tidak ada di sini. */
-export const PAPERCARD_CATEGORIES = ["Manusia", "Mesin", "Material", "Metode", "Lingkungan"];
+ *  Measurement belum dipakai di template mana pun, jadi barisnya hanya tampil bila ada temuan. */
+export const PAPERCARD_CATEGORIES = ["Manusia", "Mesin", "Material", "Metode", "Measurement", "Lingkungan"];
+
+const OPTIONAL_CATEGORIES = ["Measurement"];
 
 /** Label English untuk tampilan (5M 1E). */
 export const PAPERCARD_EN: Record<string, string> = {
@@ -86,18 +88,31 @@ export const PAPERCARD_EN: Record<string, string> = {
   Mesin: "Machine",
   Material: "Material",
   Metode: "Method",
+  Measurement: "Measurement",
   Lingkungan: "Environment",
 };
 
-/** Cocokkan nama kategori dari backend (tidak peka huruf besar/kecil, terima Indonesia atau
- *  English). Hasilnya selalu nama Indonesia. null = diabaikan. */
+/** Nama kategori template papercard bebas diisi admin ("Mesin & Peralatan Lini", "Nama Mesin",
+ *  "Jig, Fixture & Instruksi Kerja"), jadi dicocokkan lewat kata kunci di dalam namanya. */
+const CATEGORY_KEYWORDS: Record<string, RegExp> = {
+  Manusia: /\b(manusia|man)\b/,
+  Mesin: /\b(mesin|machine)\b/,
+  Material: /\bmaterial\b/,
+  Metode: /\b(metode|method|jig|fixture|instruksi)\b/,
+  Measurement: /\b(alat ukur|pengukuran|measurement)\b/,
+  Lingkungan: /\b(lingkungan|environment)\b/,
+};
+
+/** Kata kunci yang muncul paling awal di nama kategori menang ("Mesin & Temperatur" = Mesin).
+ *  Hasilnya selalu nama Indonesia. null = bukan 5M+1E (5S, Lainnya, dll.), diabaikan. */
 export function papercardCategory(raw: string) {
   const text = raw.trim().toLowerCase();
-  return (
-    PAPERCARD_CATEGORIES.find(
-      (name) => name.toLowerCase() === text || PAPERCARD_EN[name].toLowerCase() === text
-    ) ?? null
-  );
+  let best: { name: string; index: number } | null = null;
+  for (const name of PAPERCARD_CATEGORIES) {
+    const index = text.search(CATEGORY_KEYWORDS[name]);
+    if (index >= 0 && (!best || index < best.index)) best = { name, index };
+  }
+  return best?.name ?? null;
 }
 
 /* ---------- Kategori loss DM meeting (P-H-T-R-Q-M) ---------- */
@@ -138,7 +153,9 @@ export function papercardRank(items: DmPublicPapercardProblem[]) {
     const name = papercardCategory(item.category);
     return name ? [name] : [];
   });
-  return rankCategories(names, PAPERCARD_CATEGORIES);
+  return rankCategories(names, PAPERCARD_CATEGORIES).filter(
+    (row) => row.count > 0 || !OPTIONAL_CATEGORIES.includes(row.name)
+  );
 }
 
 /** Satu masalah boleh punya beberapa kategori; tiap kategori dihitung sekali per masalah. */
@@ -186,6 +203,7 @@ function buildMock() {
     { value: "Manusia", weight: 7 },
     { value: "Metode", weight: 5 },
     { value: "Material", weight: 3 },
+    { value: "Measurement", weight: 2 },
     { value: "Lingkungan", weight: 1 },
     { value: "5S", weight: 2 }, // sengaja: harus diabaikan
     { value: "Lainnya", weight: 1 }, // sengaja: harus diabaikan
@@ -195,6 +213,7 @@ function buildMock() {
     Manusia: ["Operator sesuai skill matrix", "APD lengkap dipakai"],
     Metode: ["Jig dan fixture sesuai instruksi kerja"],
     Material: ["Material lot pertama lengkap di rak"],
+    Measurement: ["Alat ukur terkalibrasi dan tidak kedaluwarsa", "Hasil pengukuran sesuai toleransi"],
     Lingkungan: ["Suhu dan kelembapan area sesuai"],
     "5S": ["Area kerja bersih dan rapi"],
     Lainnya: ["Temuan lain"],
@@ -219,22 +238,32 @@ function buildMock() {
     for (let i = 0; i < ngCount; i++) {
       const category = pick(rand, papercardCategories);
       const options = titles[category];
+      const variant = rand() < 0.6 ? 0 : 1;
       papercard.push({
         date,
         lineCode: lines[Math.floor(rand() * lines.length)],
         category,
         title: options[Math.floor(rand() * options.length)],
+        department: rand() < 0.5 ? "PROD" : "QC",
+        cause: ["Komponen aus dan belum diganti", "Setting parameter belum sesuai SOP"][variant],
+        solution: ["Ganti komponen dan verifikasi ulang", "Setel ulang parameter sesuai SOP"][variant],
       });
     }
     if (rand() < 0.7) {
       const first = pick(rand, lossCategories);
       const second = rand() < 0.25 ? pick(rand, lossCategories) : null;
       const categories = rand() < 0.08 ? null : second && second !== first ? [first, second] : [first];
+      const solved = rand() < 0.4;
       meeting.push({
         date,
         lineCode: lines[Math.floor(rand() * lines.length)],
         problem: "Contoh masalah dari DM meeting",
         categories,
+        sessionLabel: `Sesi ${1 + Math.floor(rand() * 2)}`,
+        solution: solved ? "Contoh solusi dari PIC" : "",
+        picNames: ["Contoh PIC"],
+        dueDate: `${isoDaysAgo(Math.max(0, day - 2))}T16:00`,
+        status: solved ? "resolved" : "open",
       });
     }
   }
