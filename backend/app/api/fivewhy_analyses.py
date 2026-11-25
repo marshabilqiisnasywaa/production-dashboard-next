@@ -27,6 +27,7 @@ from app.services.fivewhy_analyses import (
     next_nomor,
     require_photos_owned,
     root_cause_text,
+    settle_category,
     section,
     solution_counts,
 )
@@ -165,6 +166,7 @@ def update_analysis(analysis_id: str, payload: AnalysisIn, principal: Principal 
         found = set(db.scalars(select(FiveWhyPhoto.id).where(FiveWhyPhoto.analysis_id == row.id, FiveWhyPhoto.id.in_(wanted))))
         require_photos_owned(found, wanted)
     body = payload.model_dump(by_alias=True)
+    body["abnormal"]["categoryCodes"], body["abnormal"]["categoryLabels"] = settle_category(db, row, body["abnormal"])
     row.data = {"abnormal": body["abnormal"], "whys": body["whys"], "solutions": body["solutions"]}
     row.title = payload.abnormal.label.strip()
     row.status = payload.status

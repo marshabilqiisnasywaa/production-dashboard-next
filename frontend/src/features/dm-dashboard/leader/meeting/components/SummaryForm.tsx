@@ -8,121 +8,7 @@ import { IconPlus, IconTrash } from "./MeetingIcons";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import { summaryLines, summaryPics } from "../utils";
-import { abnormalCategoryApi } from "../../../api";
-import type { DmAbnormalCategory } from "../../../api";
-
-function byCode(a: DmAbnormalCategory, b: DmAbnormalCategory) {
-  return a.code.localeCompare(b.code, "en", { numeric: true });
-}
-
-function optionLabel(row: DmAbnormalCategory) {
-  return `${row.code} · ${row.name}`;
-}
-
-function CategoryPathSelect({
-  id,
-  value,
-  options,
-  invalid,
-  onChange,
-}: {
-  id: string;
-  value: string[];
-  options: DmAbnormalCategory[] | null;
-  invalid: boolean;
-  onChange: (value: string[]) => void;
-}) {
-  const { text: uiText } = useUiText();
-  const all = options ?? [];
-  const code1 = value[0] ?? "";
-  const code2 = value[1] ?? "";
-  const code3 = value[2] ?? "";
-  const level1 = all.filter((row) => row.level === 1).sort(byCode);
-  const picked1 = level1.find((row) => row.code === code1);
-  const sharedBranches = all.filter((row) => row.level === 2 && row.parentId === null);
-  const level2 = picked1
-    ? [
-        ...all.filter((row) => row.level === 2 && row.parentId === picked1.id),
-        ...sharedBranches,
-      ].sort(byCode)
-    : [];
-  const picked2 = level2.find((row) => row.code === code2);
-  const sharedIds = new Set(sharedBranches.map((row) => row.id));
-  const level3 = picked2
-    ? Array.from(
-        new Map(
-          all
-            .filter(
-              (row) =>
-                row.level === 3 &&
-                (row.parentId === picked2.id ||
-                  (row.parentId !== null && sharedIds.has(row.parentId)))
-            )
-            .map((row) => [row.id, row])
-        ).values()
-      ).sort(byCode)
-    : [];
-  const loading = options === null;
-
-  function pick(level: 1 | 2 | 3, next: string) {
-    const current = [code1, code2, code3];
-    current[level - 1] = next;
-    for (let index = level; index < 3; index += 1) current[index] = "";
-    while (current.length && !current[current.length - 1]) current.pop();
-    onChange(current);
-  }
-
-  return (
-    <div className="dml-mt-item__cats">
-      <Field label={uiText("Code 1 (wajib)")} htmlFor={`${id}-1`}>
-        <select
-          id={`${id}-1`}
-          className="ui-select ui-select--block"
-          value={code1}
-          disabled={loading}
-          aria-invalid={invalid}
-          aria-required="true"
-          onChange={(event) => pick(1, event.target.value)}
-        >
-          <option value="">
-            {loading ? uiText("Memuat kategori...") : uiText("Pilih Code 1")}
-          </option>
-          {level1.map((row) => (
-            <option key={row.id} value={row.code}>{optionLabel(row)}</option>
-          ))}
-        </select>
-      </Field>
-      <Field label={uiText("Code 2 (opsional)")} htmlFor={`${id}-2`}>
-        <select
-          id={`${id}-2`}
-          className="ui-select ui-select--block"
-          value={code2}
-          disabled={loading || !picked1}
-          onChange={(event) => pick(2, event.target.value)}
-        >
-          <option value="">{uiText("Tidak dipilih")}</option>
-          {level2.map((row) => (
-            <option key={row.id} value={row.code}>{optionLabel(row)}</option>
-          ))}
-        </select>
-      </Field>
-      <Field label={uiText("Code 3 (opsional)")} htmlFor={`${id}-3`}>
-        <select
-          id={`${id}-3`}
-          className="ui-select ui-select--block"
-          value={code3}
-          disabled={loading || !picked2}
-          onChange={(event) => pick(3, event.target.value)}
-        >
-          <option value="">{uiText("Tidak dipilih")}</option>
-          {level3.map((row) => (
-            <option key={row.id} value={row.code}>{optionLabel(row)}</option>
-          ))}
-        </select>
-      </Field>
-    </div>
-  );
-}
+import { CategoryPathSelect, useCategoryOptions } from "../../../categoryPath";
 
 function LineSelect({ id, lines, value, invalid, onChange, onAddCustom }: {
   id: string;
@@ -289,18 +175,7 @@ export function SummaryForm({
   const { text: uiText } = useUiText();
   const availableLines = Array.from(new Set([...lines, ...items.flatMap((item) => item.customLines ?? [])]));
   const customPicNames = items.flatMap((item) => item.customPics ?? []);
-  const [categories, setCategories] = useState<DmAbnormalCategory[] | null>(null);
-  const [categoryError, setCategoryError] = useState(false);
-  const loadCategories = () => {
-    setCategoryError(false);
-    abnormalCategoryApi
-      .options()
-      .then(setCategories)
-      .catch(() => setCategoryError(true));
-  };
-  useEffect(() => {
-    loadCategories();
-  }, []);
+  const { options: categories, failed: categoryError, reload: loadCategories } = useCategoryOptions();
   return (
     <Card
       className="dml-mt-summary"
@@ -360,6 +235,11 @@ export function SummaryForm({
                   value={item.categoryCodes ?? []}
                   options={categories}
                   invalid={Boolean(err.category)}
+                  className="dml-mt-item__cats"
+                  selectClassName="ui-select ui-select--block"
+                  renderField={(label, htmlFor, control) => (
+                    <Field label={label} htmlFor={htmlFor}>{control}</Field>
+                  )}
                   onChange={(categoryCodes) => onChange(item.id, { categoryCodes })}
                 />
                 {err.category && <span className="dml-mt-error">{uiText(err.category)}</span>}

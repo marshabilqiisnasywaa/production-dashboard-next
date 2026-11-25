@@ -1,3 +1,4 @@
+import re
 from typing import Annotated, Literal
 from urllib.parse import urlsplit
 
@@ -62,6 +63,7 @@ Identifier = Annotated[str, StringConstraints(min_length=1, max_length=100)]
 PhotoId = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")]
 DateText = Annotated[str, StringConstraints(max_length=40)]
 MAX_ROOT_CAUSES = 1
+TIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}")
 
 
 class SummaryIn(CamelModel):
@@ -75,16 +77,38 @@ class SummaryIn(CamelModel):
     short_term_solution: Long = ""
 
 
+Factor = Annotated[str, StringConstraints(max_length=500)]
+
+
+class FactorsIn(CamelModel):
+    man: Factor = ""
+    machine: Factor = ""
+    material: Factor = ""
+    method: Factor = ""
+    environment: Factor = ""
+
+
 class AbnormalIn(CamelModel):
     label: Short = ""
     line: Short = ""
     pengusul: Short = ""
     jenis: Short = ""
+    category_codes: list[Annotated[str, StringConstraints(max_length=24)]] = Field(default_factory=list, max_length=3)
+    category_labels: list[Short] = Field(default_factory=list, max_length=3)
+    responded_at: DateText = ""
+    factors: FactorsIn = Field(default_factory=FactorsIn)
     sumber_abnormal: list[SumberAbnormal] = Field(default_factory=list, max_length=4)
     sumber_lainnya: Short = ""
     tingkat_pengaruh: list[TingkatPengaruh] = Field(default_factory=list, max_length=3)
     pengaruh_lainnya: Short = ""
     summary: SummaryIn = Field(default_factory=SummaryIn)
+
+    @model_validator(mode="after")
+    def check_response_time(self) -> "AbnormalIn":
+        occurred, responded = self.summary.when.strip(), self.responded_at.strip()
+        if occurred and responded and TIME_RE.match(occurred) and TIME_RE.match(responded) and responded[:16] < occurred[:16]:
+            raise ValueError("Waktu respon tidak boleh lebih awal dari waktu kejadian.")
+        return self
 
 
 class EvidenceIn(CamelModel):

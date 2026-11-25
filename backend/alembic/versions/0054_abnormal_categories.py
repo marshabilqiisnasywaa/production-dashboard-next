@@ -3,13 +3,15 @@
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0053"
-down_revision = "0052"
+revision = "0054"
+down_revision = "0053"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
+    if "abnormal_categories" in sa.inspect(op.get_bind()).get_table_names():
+        return
     op.create_table(
         "abnormal_categories",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),

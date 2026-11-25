@@ -3,7 +3,9 @@ import { useUiText } from "@/locales/useUiText";
 
 import { Fragment, useEffect, useRef } from "react";
 import { IconCheck } from "@/components/ui/icons";
+import { CategoryPathSelect, useCategoryOptions } from "../categoryPath";
 import {
+  FACTOR_ROWS,
   SUMBER_ABNORMAL_OPTIONS,
   TINGKAT_PENGARUH_OPTIONS,
   buildProblemSummary,
@@ -11,6 +13,7 @@ import {
   splitDateTime,
 } from "./fiveWhyData";
 import type {
+  FactorKey,
   FiveWhyAbnormal,
   ProblemSummaryFields,
   SumberAbnormal,
@@ -61,6 +64,7 @@ export default function ProblemSummary({
 }: ProblemSummaryProps) {
   const { text: uiText, locale: uiLocale } = useUiText();
   const titleRef = useRef<HTMLInputElement | null>(null);
+  const categories = useCategoryOptions(canEdit);
 
   useEffect(() => {
     if (!focusTitleToken) return;
@@ -69,6 +73,10 @@ export default function ProblemSummary({
 
   function updateSummary(patch: Partial<ProblemSummaryFields>) {
     onChange({ ...abnormal, summary: { ...abnormal.summary, ...patch } });
+  }
+
+  function updateFactor(key: FactorKey, value: string) {
+    onChange({ ...abnormal, factors: { ...abnormal.factors, [key]: value } });
   }
 
   function toggleSumber(value: SumberAbnormal) {
@@ -98,18 +106,27 @@ export default function ProblemSummary({
   }
 
   function renderSummary() {
-    const parts = buildProblemSummary(abnormal.summary, uiLocale).split("(belum diisi)");
+    const parts = buildProblemSummary(abnormal.summary, uiLocale).split(
+      "(belum diisi)"
+    );
     return parts.map((part, index) => (
       <Fragment key={`summary-${index}`}>
         {part}
         {index < parts.length - 1 ? (
-          <span className="dm-5w-summary-missing">{uiText("(belum diisi)")}</span>
+          <span className="dm-5w-summary-missing">
+            {uiText("(belum diisi)")}
+          </span>
         ) : null}
       </Fragment>
     ));
   }
 
   const when = splitDateTime(abnormal.summary.when);
+  const responded = splitDateTime(abnormal.respondedAt);
+  const respondedEarly =
+    Boolean(abnormal.summary.when && abnormal.respondedAt) &&
+    abnormal.respondedAt < abnormal.summary.when;
+  const categoryText = abnormal.categoryLabels.join(" › ");
 
   return (
     <>
@@ -117,17 +134,23 @@ export default function ProblemSummary({
         className="dm-5w-card dm-5w-problem-card"
         aria-labelledby="dm-5w-metadata-title"
       >
-        <h2 className="dm-5w-card-title" id="dm-5w-metadata-title">{uiText("Metadata abnormal")}</h2>
+        <h2 className="dm-5w-card-title" id="dm-5w-metadata-title">
+          {uiText("Metadata abnormal")}
+        </h2>
 
         <div className="dm-5w-summary-grid">
           <label className="dm-5w-field dm-5w-field-wide">
-            <span className="dm-5w-label">{uiText("Judul abnormal ")}<span className="dm-5w-required">*</span>
+            <span className="dm-5w-label">
+              {uiText("Judul abnormal ")}
+              <span className="dm-5w-required">*</span>
             </span>
             <input
               ref={titleRef}
               className="dm-5w-input"
               value={abnormal.label}
-              placeholder={uiText("Tulis ringkas masalahnya, misalnya: PC Upgrade fail")}
+              placeholder={uiText(
+                "Tulis ringkas masalahnya, misalnya: PC Upgrade fail"
+              )}
               onChange={(event) =>
                 onChange({ ...abnormal, label: event.target.value })
               }
@@ -179,7 +202,9 @@ export default function ProblemSummary({
                     <button
                       key={option.value}
                       type="button"
-                      className={`dm-5w-choice ${selected ? "is-selected" : ""}`}
+                      className={`dm-5w-choice ${
+                        selected ? "is-selected" : ""
+                      }`}
                       aria-pressed={selected}
                       disabled={!canEdit}
                       onClick={() => toggleSumber(option.value)}
@@ -209,7 +234,9 @@ export default function ProblemSummary({
                     aria-required="true"
                   />
                   {!abnormal.sumberLainnya.trim() ? (
-                    <span className="dm-5w-field-error">{uiText("Wajib diisi")}</span>
+                    <span className="dm-5w-field-error">
+                      {uiText("Wajib diisi")}
+                    </span>
                   ) : null}
                 </>
               ) : null}
@@ -230,7 +257,9 @@ export default function ProblemSummary({
                     <button
                       key={option.value}
                       type="button"
-                      className={`dm-5w-choice ${selected ? "is-selected" : ""}`}
+                      className={`dm-5w-choice ${
+                        selected ? "is-selected" : ""
+                      }`}
                       aria-pressed={selected}
                       disabled={!canEdit}
                       onClick={() => togglePengaruh(option.value)}
@@ -260,7 +289,9 @@ export default function ProblemSummary({
                     aria-required="true"
                   />
                   {!abnormal.pengaruhLainnya.trim() ? (
-                    <span className="dm-5w-field-error">{uiText("Wajib diisi")}</span>
+                    <span className="dm-5w-field-error">
+                      {uiText("Wajib diisi")}
+                    </span>
                   ) : null}
                 </>
               ) : null}
@@ -271,12 +302,68 @@ export default function ProblemSummary({
 
       <section
         className="dm-5w-card dm-5w-problem-card"
-        aria-labelledby="dm-5w-statement-title"
+        aria-labelledby="dm-5w-category-title"
       >
-        <h2 className="dm-5w-card-title" id="dm-5w-statement-title">{uiText("Pernyataan masalah (5W + 1H)")}</h2>
-        <div className="dm-5w-statement-grid">
+        <h2 className="dm-5w-card-title" id="dm-5w-category-title">
+          {uiText("Kategori dan waktu abnormal")}
+        </h2>
+
+        <div className="dm-5w-summary-grid">
+          <div
+            className="dm-5w-field dm-5w-field-wide"
+            role="group"
+            aria-label={uiText("Kategori abnormal")}
+          >
+            <span className="dm-5w-label">{uiText("Kategori abnormal")}</span>
+            {canEdit ? (
+              <>
+                {categories.failed ? (
+                  <span className="dm-5w-field-error" role="alert">
+                    {uiText("Kategori masalah gagal dimuat.")}{" "}
+                    <button
+                      type="button"
+                      className="dm-5w-link-button"
+                      onClick={categories.reload}
+                    >
+                      {uiText("Coba lagi")}
+                    </button>
+                  </span>
+                ) : null}
+                <CategoryPathSelect
+                  id="dm-5w-category"
+                  value={abnormal.categoryCodes}
+                  options={categories.options}
+                  invalid={false}
+                  className="dm-5w-category-grid"
+                  selectClassName="dm-5w-select"
+                  renderField={(label, htmlFor, control) => (
+                    <div className="dm-5w-field">
+                      <label className="dm-5w-label" htmlFor={htmlFor}>
+                        {label}
+                      </label>
+                      {control}
+                    </div>
+                  )}
+                  onChange={(categoryCodes) =>
+                    onChange({ ...abnormal, categoryCodes, categoryLabels: [] })
+                  }
+                />
+                {categories.options && !abnormal.categoryCodes[0] ? (
+                  <span className="dm-5w-field-error">
+                    {uiText("Pilih Code 1")}
+                  </span>
+                ) : null}
+              </>
+            ) : (
+              <span className="dm-5w-readonly">{categoryText || "-"}</span>
+            )}
+          </div>
+
           <div className="dm-5w-field">
-            <span className="dm-5w-label">{uiText("When")}</span>
+            <span className="dm-5w-label">
+              {uiText("Waktu kejadian")}
+              <span className="dm-5w-required"> *</span>
+            </span>
             <div className="dm-5w-datetime">
               <input
                 type="date"
@@ -289,6 +376,7 @@ export default function ProblemSummary({
                 }
                 disabled={!canEdit}
                 aria-label={uiText("Tanggal kejadian")}
+                aria-required="true"
               />
               <input
                 type="time"
@@ -305,8 +393,111 @@ export default function ProblemSummary({
             </div>
           </div>
 
+          <div className="dm-5w-field">
+            <span className="dm-5w-label">
+              {uiText("Waktu respon (opsional)")}
+            </span>
+            <div className="dm-5w-datetime">
+              <input
+                type="date"
+                className="dm-5w-input"
+                value={responded.date}
+                min={when.date || undefined}
+                onChange={(event) =>
+                  onChange({
+                    ...abnormal,
+                    respondedAt: joinDateTime(
+                      event.target.value,
+                      responded.time
+                    ),
+                  })
+                }
+                disabled={!canEdit}
+                aria-label={uiText("Tanggal respon")}
+                aria-invalid={respondedEarly}
+              />
+              <input
+                type="time"
+                className="dm-5w-input"
+                value={responded.time}
+                onChange={(event) =>
+                  onChange({
+                    ...abnormal,
+                    respondedAt: joinDateTime(
+                      responded.date,
+                      event.target.value
+                    ),
+                  })
+                }
+                disabled={!canEdit || !responded.date}
+                aria-label={uiText("Jam respon")}
+                aria-invalid={respondedEarly}
+              />
+            </div>
+            {respondedEarly ? (
+              <span className="dm-5w-field-error" role="alert">
+                {uiText(
+                  "Waktu respon tidak boleh lebih awal dari waktu kejadian."
+                )}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="dm-5w-card dm-5w-problem-card"
+        aria-labelledby="dm-5w-factors-title"
+      >
+        <h2 className="dm-5w-card-title" id="dm-5w-factors-title">
+          {uiText("4M 1E")}
+        </h2>
+        <table className="dm-5w-factor-table">
+          <tbody>
+            {FACTOR_ROWS.map((row) => (
+              <tr key={row.key}>
+                <th scope="row" id={`dm-5w-factor-${row.key}`}>
+                  <span className="dm-5w-factor-name">{row.label}</span>
+                  <span className="dm-5w-factor-hint">{uiText(row.hint)}</span>
+                </th>
+                <td>
+                  <textarea
+                    className="dm-5w-textarea"
+                    rows={1}
+                    ref={(element) => {
+                      if (element) resizeTextarea(element);
+                    }}
+                    value={abnormal.factors[row.key]}
+                    maxLength={500}
+                    onChange={(event) => {
+                      resizeTextarea(event.currentTarget);
+                      updateFactor(row.key, event.target.value);
+                    }}
+                    disabled={!canEdit}
+                    aria-labelledby={`dm-5w-factor-${row.key}`}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section
+        className="dm-5w-card dm-5w-problem-card"
+        aria-labelledby="dm-5w-statement-title"
+      >
+        <h2 className="dm-5w-card-title" id="dm-5w-statement-title">
+          {uiText("Pernyataan masalah (5W + 1H)")}
+        </h2>
+        <div className="dm-5w-statement-grid">
           {STATEMENT_FIELDS.slice(0, 3).map((field) => (
-            <label className="dm-5w-field" key={field.key}>
+            <label
+              className={`dm-5w-field${
+                field.key === "what" ? " dm-5w-field-wide" : ""
+              }`}
+              key={field.key}
+            >
               <span className="dm-5w-label">{uiText(field.label)}</span>
               <input
                 className="dm-5w-input"
@@ -330,7 +521,9 @@ export default function ProblemSummary({
                 if (element) resizeTextarea(element);
               }}
               value={abnormal.summary.how}
-              placeholder={uiText("Kronologi singkat: bagaimana masalah ini terjadi")}
+              placeholder={uiText(
+                "Kronologi singkat: bagaimana masalah ini terjadi"
+              )}
               onChange={(event) => {
                 resizeTextarea(event.currentTarget);
                 updateSummary({ how: event.target.value });
@@ -386,7 +579,9 @@ export default function ProblemSummary({
           </label>
         </div>
         <div className="dm-5w-summary-preview">
-          <span className="dm-5w-label">{uiText("Ringkasan masalah (otomatis)")}</span>
+          <span className="dm-5w-label">
+            {uiText("Ringkasan masalah (otomatis)")}
+          </span>
           <p>{renderSummary()}</p>
         </div>
       </section>

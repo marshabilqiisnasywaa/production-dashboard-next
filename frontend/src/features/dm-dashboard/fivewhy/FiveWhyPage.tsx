@@ -10,6 +10,7 @@ import type { FiveWhyAnalysisDetail } from "../api";
 import {
   FIVE_WHY_ANALYSIS_LABELS,
   analysisStatusTone,
+  emptyFactors,
   findRootCause,
   getTabStatus,
   isMajorProblem,
@@ -64,6 +65,10 @@ function toRecord(detail: FiveWhyAnalysisDetail): FiveWhyRecord {
       line: base.line ?? "",
       pengusul: base.pengusul ?? "",
       jenis: base.jenis ?? "",
+      categoryCodes: base.categoryCodes ?? [],
+      categoryLabels: base.categoryLabels ?? [],
+      respondedAt: base.respondedAt ?? "",
+      factors: { ...emptyFactors(), ...(base.factors ?? {}) },
       sumberAbnormal: base.sumberAbnormal ?? [],
       sumberLainnya: base.sumberLainnya ?? "",
       tingkatPengaruh: base.tingkatPengaruh ?? [],

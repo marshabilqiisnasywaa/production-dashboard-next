@@ -16,6 +16,7 @@ from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
 from app.models import Board, BoardMember, Employee, Line, Workshop
+from app.models.abnormal_category import AbnormalCategory
 from app.models.fivewhy import FiveWhyPhoto
 from app.schemas_fivewhy import AnalysisCreateIn, AnalysisIn
 
@@ -115,6 +116,54 @@ class FiveWhyAnalysisTests(unittest.TestCase):
         with self.assertRaises(HTTPException) as caught:
             self.save(created)
         self.assertEqual(caught.exception.status_code, 409)
+
+    def test_category_path_and_response_time_are_validated_and_stored(self):
+        self.db.add_all([
+            AbnormalCategory(level=1, code="P", name="Planning Losses"),
+            AbnormalCategory(level=1, code="M", name="Machine Losses"),
+        ])
+        self.db.flush()
+        p = self.db.scalar(select(AbnormalCategory).where(AbnormalCategory.code == "P"))
+        self.db.add(AbnormalCategory(level=2, code="P01", name="Ramp Up", parent_id=p.id))
+        self.db.commit()
+        created = self.create()
+        self.assertEqual((created["abnormal"]["categoryCodes"], created["abnormal"]["respondedAt"]), ([], ""))
+        self.assertEqual(set(created["abnormal"]["factors"]), {"man", "machine", "material", "method", "environment"})
+        when = created["abnormal"]["summary"]["when"]
+        abnormal = {**created["abnormal"], "categoryCodes": ["p", "P01"], "respondedAt": when}
+        saved = self.save(created, abnormal=abnormal)
+        self.assertEqual(saved["abnormal"]["categoryCodes"], ["P", "P01"])
+        self.assertEqual(saved["abnormal"]["categoryLabels"], ["P-Planning Losses", "P01-Ramp Up"])
+        with self.assertRaises(HTTPException) as caught:
+            self.save(saved, abnormal={**saved["abnormal"], "categoryCodes": ["M", "P01"]})
+        self.assertEqual(caught.exception.status_code, 422)
+        with self.assertRaises(ValidationError):
+            AnalysisIn.model_validate({
+                "revision": 1, "status": "draft", "whys": [], "solutions": [],
+                "abnormal": {**saved["abnormal"], "summary": {**saved["abnormal"]["summary"], "when": "2026-10-26T09:00"}, "respondedAt": "2026-10-26T08:59"},
+            })
+
+    def test_four_m_one_e_factors_are_optional_and_saved(self):
+        created = self.create()
+        saved = self.save(created, abnormal={**created["abnormal"], "factors": {"man": "Operator baru", "machine": "", "material": "", "method": "", "environment": ""}})
+        self.assertEqual(saved["abnormal"]["factors"]["man"], "Operator baru")
+        self.assertEqual(saved["abnormal"]["factors"]["machine"], "")
+        with self.assertRaises(ValidationError):
+            AnalysisIn.model_validate({
+                "revision": 1, "status": "draft", "whys": [], "solutions": [],
+                "abnormal": {**saved["abnormal"], "factors": {"man": "x" * 501}},
+            })
+
+    def test_saved_category_survives_later_deactivation(self):
+        self.db.add(AbnormalCategory(level=1, code="P", name="Planning Losses"))
+        self.db.commit()
+        created = self.create()
+        saved = self.save(created, abnormal={**created["abnormal"], "categoryCodes": ["P"]})
+        row = self.db.scalar(select(AbnormalCategory).where(AbnormalCategory.code == "P"))
+        row.is_active = False
+        self.db.commit()
+        again = self.save(saved, abnormal={**saved["abnormal"], "label": "Judul baru"})
+        self.assertEqual(again["abnormal"]["categoryLabels"], ["P-Planning Losses"])
 
     def test_list_carries_the_brief_of_each_countermeasure(self):
         created = self.create()
