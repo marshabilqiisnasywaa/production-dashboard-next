@@ -54,6 +54,7 @@ import StandupHistory from "./StandupHistory";
 import SqdipMonitor from "./sqdip/SqdipMonitor";
 import HistoryImportPage from "./history-import/HistoryImportPage";
 import FlowchartManager from "../flowchart/admin/FlowchartManager";
+import MechanismBoardEditor from "./MechanismBoardEditor";
 
 type Auth =
   | { kind: "checking" }
@@ -205,6 +206,10 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
     crumb: "Dokumen DM",
     title: "Dokumen DM",
   },
+  mechanism: {
+    crumb: "Mekanisme DM",
+    title: "Editor Template Mekanisme DM",
+  },
   attendance: {
     crumb: "Rekap Presensi",
     title: "Rekapitulasi Presensi & Riwayat Meeting per Tanggal",
@@ -255,6 +260,11 @@ const ADMIN_TAB_HEADERS: Record<
     title: "Dokumen DM",
     description:
       "Kelola Dokumen DM dalam bentuk flowchart dan manual.",
+  },
+  mechanism: {
+    title: "Mekanisme DM",
+    description:
+      "Edit langsung template DM Mechanism: ubah teks dan jam, tambah kolom dan baris, serta unggah foto tiap tahap.",
   },
   attendance: {
     title: "Rekapitulasi Absensi",
@@ -1288,6 +1298,12 @@ function AdminWorkspace({
             {activeTab === "flowchart" && isAdmin && (
               <div className="dm-admin-section">
                 <FlowchartManager />
+              </div>
+            )}
+
+            {activeTab === "mechanism" && isAdmin && (
+              <div className="dm-admin-section">
+                <MechanismBoardEditor />
               </div>
             )}
 

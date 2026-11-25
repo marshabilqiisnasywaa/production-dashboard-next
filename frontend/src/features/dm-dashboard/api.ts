@@ -2219,3 +2219,16 @@ export const flowchartApi = {
     );
   },
 };
+
+/** Foto dari server bisa berupa path relatif; jadikan URL penuh ke backend. Path frontend (/images/...) dibiarkan. */
+export function assetUrl(url: string): string {
+  if (/^(https?:|data:|blob:)/i.test(url) || url.startsWith("/images/")) return url;
+  return `${apiBase()}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
+/** Template DM Mechanism disimpan sebagai satu dokumen JSON. board = null berarti kembali ke bawaan. */
+export const mechanismApi = {
+  get: () => request<{ board: unknown | null }>("/mechanism-board"),
+  save: (board: unknown | null) =>
+    request<{ board: unknown | null }>("/mechanism-board", json("PUT", { board }), true),
+};

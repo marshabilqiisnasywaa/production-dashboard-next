@@ -15,6 +15,8 @@ from app.api import fivewhy
 from app.api import flowcharts
 from app.api import flowcharts
 from app.api import fivewhy_analyses
+from app.api import mechanism_board
+
 
 app = FastAPI(title="Production Dashboard API")
 
@@ -55,4 +57,7 @@ app.add_middleware(
 )
 
 for module in (health, auth, face, face_scan, photos, public, lines, admin, papercards, meetings, notifications, dm_groups, workshop_meetings, leader_mpv, leader_assignments, holidays, sqdip, history_import, fivewhy, flowcharts, flowcharts, fivewhy_analyses):
+    app.include_router(module.router, prefix="/api")
+
+for module in (health, auth, face, face_scan, photos, public, lines, admin, papercards, meetings, notifications, dm_groups, workshop_meetings, leader_mpv, leader_assignments, holidays, sqdip, history_import, fivewhy, flowcharts, fivewhy_analyses, mechanism_board):
     app.include_router(module.router, prefix="/api")

@@ -4,7 +4,7 @@ import { useUiText } from "@/locales/useUiText";
 import Link from "next/link";
 import { IconLogout, IconHistory } from "@/components/ui/icons";
 import { setToken } from "../api";
-import { Gauge as IconGauge, Workflow } from "lucide-react";
+import { CalendarClock, Gauge as IconGauge, Workflow } from "lucide-react";
 import { SIDEBAR_ID, SidebarCloseButton, useSidebar } from "@/components/ui/SidebarProvider";
 
 
@@ -15,6 +15,7 @@ export type DmAdminTabKey =
   | "papercard"
   | "mpv"
   | "flowchart"
+  | "mechanism"
   | "attendance"
   | "problems"
   | "history"
@@ -277,6 +278,19 @@ export default function DmAdminSidebar({
                 <Workflow size={18} />
               </span>
               <span>{uiText("Dokumen DM")}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`dm-admin-nav-btn ${
+                activeTab === "mechanism" ? "is-active" : ""
+              }`}
+              onClick={() => select("mechanism")}
+            >
+              <span className="dm-admin-nav-icon">
+                <CalendarClock size={18} />
+              </span>
+              <span>{uiText("Mekanisme DM")}</span>
             </button>
 
             <button
