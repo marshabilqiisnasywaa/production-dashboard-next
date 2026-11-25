@@ -1,0 +1,605 @@
+/* ==========================================================================
+   DM Mechanism  (/dm-dashboard/mekanisme)
+   Dipakai oleh: DmMechanismPage.tsx dan admin/MechanismBoardEditor.tsx
+   Data         : mechanismBoard.ts (template bisa diedit di admin)
+
+   Isi file:
+   1. Tokens
+   2. Page shell (back, heading)
+   3. Stepper (pill + nomor otomatis) + foto tahap + modal
+   4. Board (label kiri + kolom tahap)
+   5. Responsive (< 900px: satu tahap aktif sebagai kartu)
+   6. Utility
+   ========================================================================== */
+
+/* 1. Tokens -------------------------------------------------------------- */
+
+.dmm {
+  --dmm-ink: #18261e;
+  --dmm-muted: #6b7d72;
+  --dmm-line: #e4eae6;
+  --dmm-brand: #0a7a47;
+  --dmm-brand-dark: #086a3d;
+  --dmm-brand-deep: #065c35;
+  --dmm-tint: #eaf3ed;
+  --dmm-surface: #ffffff;
+  --dmm-soft: #f3f6f4;
+  --dmm-danger: #b3433b;
+}
+
+.dmm {
+  /* Ukuran board: kolom label + 6 kolom tahap. */
+  --dmm-label-w: 9rem;
+  --dmm-col-min: 9.5rem;
+  --dmm-gap: 2.25rem; /* jarak antar kolom tahap */
+  --dmm-arrow-w: 0.9rem; /* lebar panah di tengah jarak */
+  --dmm-pad: 0.4rem;
+  --dmm-board-min: calc(
+    var(--dmm-label-w) + var(--dmm-stages, 6) * var(--dmm-col-min) + var(--dmm-stages, 6) * var(--dmm-gap) + var(--dmm-pad)
+  );
+}
+
+/* 2. Page shell ---------------------------------------------------------- */
+
+.dmm {
+  width: min(96rem, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  color: var(--dmm-ink);
+}
+
+.dmm-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 38px;
+  padding: 0 0.9rem 0 0.7rem;
+  border: 1px solid var(--dmm-line);
+  border-radius: 10px;
+  background: var(--dmm-surface);
+  color: var(--dmm-ink);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.dmm-back:hover {
+  border-color: #98c7ad;
+}
+
+.dmm-back:focus-visible,
+.dmm-step:focus-visible {
+  outline: 2px solid var(--dmm-brand);
+  outline-offset: 3px;
+}
+
+/* Judul rata tengah, diberi jarak ke stepper.
+   Total jarak bawah = gap .dmm (1.5rem) + margin-bottom ini. */
+.dmm-head {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.dmm-head h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.dmm-head p {
+  margin: 0.4rem 0 0;
+  font-size: 0.92rem;
+  color: var(--dmm-muted);
+}
+
+.dmm-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+/* 3. Stepper -------------------------------------------------------------
+   Semua tahap selalu hijau (tanpa container putih). Di sela tiap tahap ada panah
+   setinggi kotak hijaunya dengan animasi berkedip bergiliran, supaya terasa seperti
+   alur yang berjalan. Kolomnya sejajar dengan kolom board di bawahnya.
+   Nomor tahap dibuat dengan CSS counter, jadi TSX tidak berubah. */
+
+.dmm-steps {
+  counter-reset: dmm-step;
+  display: grid;
+  grid-template-columns: repeat(var(--dmm-stages, 6), minmax(var(--dmm-col-min), 1fr));
+  column-gap: var(--dmm-gap);
+  min-width: calc(var(--dmm-board-min) - var(--dmm-label-w) - var(--dmm-gap) - var(--dmm-pad));
+  margin: 0 var(--dmm-pad) 0 calc(var(--dmm-label-w) + var(--dmm-gap));
+}
+
+.dmm-steps__spacer {
+  display: none;
+}
+
+.dmm-scroll.is-loading {
+  visibility: hidden;
+}
+
+.dmm-step {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 3.4rem;
+  padding: 0.45rem 0.8rem 0.45rem 0.6rem;
+  border: 0;
+  border-radius: 14px;
+  background: var(--dmm-brand);
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.dmm-step::before {
+  counter-increment: dmm-step;
+  content: counter(dmm-step);
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dmm-step:hover {
+  background: #0d8a50;
+}
+
+/* Tahap yang dipilih sedikit lebih tua; di layar kecil ini menentukan kartu yang tampil. */
+.dmm-step.is-active {
+  background: var(--dmm-brand-deep);
+}
+
+/* Panah di sela tahap: setinggi kotak hijau, berkedip bergiliran dari kiri ke kanan. */
+.dmm-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(100% + (var(--dmm-gap) - var(--dmm-arrow-w)) / 2);
+  width: var(--dmm-arrow-w);
+  background: var(--dmm-brand);
+  clip-path: polygon(0 0, 100% 50%, 0 100%, 35% 50%);
+  pointer-events: none;
+  animation: dmm-flow 2.4s ease-in-out infinite;
+}
+
+@keyframes dmm-flow {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateX(-2px);
+  }
+  35% {
+    opacity: 1;
+    transform: translateX(2px);
+  }
+  70% {
+    opacity: 0.25;
+    transform: translateX(2px);
+  }
+}
+
+.dmm-step:nth-child(2)::after {
+  animation-delay: 0.0s;
+}
+
+.dmm-step:nth-child(3)::after {
+  animation-delay: 0.3s;
+}
+
+.dmm-step:nth-child(4)::after {
+  animation-delay: 0.6s;
+}
+
+.dmm-step:nth-child(5)::after {
+  animation-delay: 0.9s;
+}
+
+.dmm-step:nth-child(6)::after {
+  animation-delay: 1.2s;
+}
+
+.dmm-step:nth-child(7)::after {
+  animation-delay: 1.5s;
+}
+
+.dmm-step:nth-child(8)::after {
+  animation-delay: 1.8s;
+}
+
+.dmm-step:nth-child(9)::after {
+  animation-delay: 2.1s;
+}
+
+.dmm-step:nth-child(10)::after {
+  animation-delay: 2.4s;
+}
+
+.dmm-step:nth-child(11)::after {
+  animation-delay: 2.7s;
+}
+
+/* 3b. Foto tahap ---------------------------------------------------------
+   Satu baris tepat di bawah stepper, kolomnya sejajar dengan tiap judul tahap.
+   Klik thumbnail membuka modal (MechanismPhotoModal). */
+
+.dmm-photos {
+  display: grid;
+  grid-template-columns: repeat(var(--dmm-stages, 6), minmax(var(--dmm-col-min), 1fr));
+  column-gap: var(--dmm-gap);
+  min-width: calc(var(--dmm-board-min) - var(--dmm-label-w) - var(--dmm-gap) + var(--dmm-pad));
+  margin: -0.5rem 0 0 calc(var(--dmm-label-w) + var(--dmm-gap) - var(--dmm-pad));
+  padding: 0 var(--dmm-pad);
+}
+
+.dmm-photo-cell {
+  min-width: 0;
+  padding: 0 0.25rem;
+}
+
+.dmm-thumb {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  padding: 0;
+  border: 1px solid var(--dmm-line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--dmm-soft);
+  cursor: zoom-in;
+}
+
+.dmm-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.dmm-thumb:hover img {
+  transform: scale(1.04);
+}
+
+.dmm-thumb:focus-visible {
+  outline: 2px solid var(--dmm-brand);
+  outline-offset: 3px;
+}
+
+.dmm-thumb__count {
+  position: absolute;
+  right: 0.45rem;
+  bottom: 0.45rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(24, 38, 30, 0.72);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Modal foto. Di-portal ke <body>, jadi memakai warna langsung (bukan variabel .dmm). */
+
+.dmm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(24, 38, 30, 0.55);
+}
+
+.dmm-modal__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: min(62rem, 100%);
+  max-height: calc(100dvh - 2rem);
+  padding: 1rem 1.1rem 1.1rem;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #18261e;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+}
+
+.dmm-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dmm-modal__head h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.dmm-modal__close,
+.dmm-modal__nav {
+  display: grid;
+  place-items: center;
+  flex: none;
+  border: 0;
+  background: transparent;
+  color: #18261e;
+  cursor: pointer;
+}
+
+.dmm-modal__close {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+}
+
+.dmm-modal__close:hover {
+  background: #eef2ef;
+}
+
+.dmm-modal__body {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  border-radius: 12px;
+  background: #f3f6f4;
+  overflow: hidden;
+}
+
+.dmm-modal__body img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100dvh - 9rem);
+  object-fit: contain;
+}
+
+.dmm-modal__nav {
+  position: absolute;
+  top: 50%;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-50%);
+}
+
+.dmm-modal__nav.is-prev {
+  left: 0.75rem;
+}
+
+.dmm-modal__nav.is-next {
+  right: 0.75rem;
+}
+
+.dmm-modal__nav:hover {
+  background: #ffffff;
+}
+
+.dmm-modal__close:focus-visible,
+.dmm-modal__nav:focus-visible {
+  outline: 2px solid #0a7a47;
+  outline-offset: 2px;
+}
+
+/* 4. Board ---------------------------------------------------------------
+   Jumlah baris dan kolom dinamis (--dmm-rows / --dmm-stages dari TSX).
+   .dmm-labels dan .dmm-stage memakai subgrid agar tinggi barisnya sinkron. */
+
+.dmm-board {
+  display: grid;
+  grid-template-columns: var(--dmm-label-w) repeat(var(--dmm-stages, 6), minmax(var(--dmm-col-min), 1fr));
+  grid-template-rows: repeat(var(--dmm-rows, 6), auto);
+  column-gap: var(--dmm-gap);
+  row-gap: 0.45rem;
+  min-width: var(--dmm-board-min);
+  padding-right: var(--dmm-pad);
+}
+
+.dmm-labels,
+.dmm-stage {
+  grid-row: 1 / span var(--dmm-rows, 6);
+  display: grid;
+  grid-template-rows: subgrid;
+}
+
+/* Kolom label (kiri) */
+
+.dmm-label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 0.25rem;
+  border-top: 1px solid var(--dmm-line);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--dmm-ink);
+}
+
+.dmm-label:first-child {
+  border-top: 0;
+}
+
+.dmm-label__icon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 8px;
+  background: var(--dmm-tint);
+  color: var(--dmm-brand);
+}
+
+/* Kolom tahap */
+
+.dmm-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.75rem 0.6rem;
+  border-top: 1px solid var(--dmm-line);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.dmm-cell p {
+  margin: 0;
+}
+
+/* Baris 1: level meeting, berfungsi sebagai kepala kolom. */
+.dmm-cell--level {
+  border-top: 0;
+  border-radius: 12px;
+  background: var(--dmm-tint);
+  color: var(--dmm-brand-dark);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.dmm-cell--time {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dmm-cell--objective {
+  justify-content: flex-start;
+  padding: 0.7rem 0.75rem;
+  border-top-color: transparent;
+  border-radius: 10px;
+  background: var(--dmm-soft);
+  color: #3d4f44;
+  text-align: left;
+}
+
+/* 5. Responsive ----------------------------------------------------------
+   Di bawah 900px hanya tahap aktif yang tampil, sebagai satu kartu.
+   Judul baris diambil dari atribut data-label tiap cell. */
+
+@media (max-width: 899px) {
+  .dmm:not(.dmm--edit) .dmm-scroll {
+    overflow: visible;
+  }
+
+  .dmm:not(.dmm--edit) .dmm-steps {
+    display: flex;
+    min-width: 0;
+    margin: 0;
+    overflow-x: auto;
+  }
+
+  .dmm:not(.dmm--edit) .dmm-step {
+    flex: none;
+    width: 14rem;
+  }
+
+  .dmm:not(.dmm--edit) .dmm-board {
+    display: block;
+    min-width: 0;
+    padding-right: 0;
+  }
+
+  .dmm:not(.dmm--edit) .dmm-labels {
+    display: none;
+  }
+
+  .dmm:not(.dmm--edit) .dmm-stage {
+    display: none;
+    border: 1px solid var(--dmm-line);
+    border-radius: 14px;
+    background: var(--dmm-surface);
+    overflow: hidden;
+  }
+
+  .dmm:not(.dmm--edit) .dmm-stage.is-active {
+    display: block;
+  }
+
+  .dmm:not(.dmm--edit) .dmm-cell {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .dmm:not(.dmm--edit) .dmm-cell::before {
+    content: attr(data-label);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+
+  .dmm:not(.dmm--edit) .dmm-cell--level,
+  .dmm:not(.dmm--edit) .dmm-cell--objective {
+    border-radius: 0;
+  }
+
+  .dmm:not(.dmm--edit) .dmm-cell--objective {
+    border-top-color: var(--dmm-line);
+  }
+
+  .dmm:not(.dmm--edit) .dmm-photos {
+    display: block;
+    min-width: 0;
+    margin-left: 0;
+    padding: 0;
+  }
+
+  .dmm:not(.dmm--edit) .dmm-photo-cell {
+    display: none;
+  }
+
+  .dmm:not(.dmm--edit) .dmm-photo-cell.is-active {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dmm-step {
+    transition: none;
+  }
+
+  .dmm-step::after {
+    animation: none !important;
+    opacity: 1;
+  }
+}
+
+/* 6. Utility ------------------------------------------------------------- */
+
+.dmm-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

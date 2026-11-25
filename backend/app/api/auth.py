@@ -1,3 +1,4 @@
+import logging
 import math
 from app.core.roles import ADMIN_ROLES, access_of
 
@@ -6,13 +7,16 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import Principal, get_principal, require
+from app.api.deps import Principal, get_active_principal, get_principal, require
 from app.core import ratelimit
+from app.core.config import settings
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db.session import get_db
 from app.models import Employee, User
 from app.schemas import ChangePasswordIn, LineRef, LoginIn, MeOut, TokenOut
-from app.services.accounts import active_line, active_lines
+from app.services.accounts import active_line, active_lines, forbidden
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -68,6 +72,37 @@ def login(body: LoginIn, request: Request, db: Session = Depends(get_db)) -> Tok
     )
 
 
+def can_impersonate(principal: Principal) -> bool:
+    return settings.allow_impersonation and principal.role == "superadmin" and principal.impersonated_by is None
+
+
+@router.post("/impersonate/{employee_id}", response_model=TokenOut)
+def impersonate(
+    employee_id: int,
+    principal: Principal = Depends(get_active_principal),
+    db: Session = Depends(get_db),
+) -> TokenOut:
+    if not can_impersonate(principal):
+        raise forbidden("Login sebagai akun lain tidak tersedia.")
+    employee = db.get(Employee, employee_id)
+    if employee is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "User tidak ditemukan.")
+    if not employee.is_active:
+        raise HTTPException(status.HTTP_409_CONFLICT, "User nonaktif, aktifkan dulu sebelum login sebagai akun ini.")
+    actor = principal.user.username if principal.user is not None else principal.employee.employee_no
+    logger.warning("impersonate: %s masuk sebagai %s (id=%s)", actor, employee.employee_no, employee.id)
+    return TokenOut(
+        access_token=create_access_token(employee.id, "employee", impersonated_by=actor),
+        username=employee.employee_no,
+        kind="admin" if employee.role in ADMIN_ROLES else "employee",
+        role=employee.role,
+        name=employee.name,
+        must_change_password=False,
+        dept=employee.dept,
+        **access_of(employee.role),
+    )
+
+
 @router.get("/me", response_model=MeOut)
 def me(principal: Principal = Depends(require("account.self", active=False)), db: Session = Depends(get_db)) -> MeOut:
     if principal.user is not None:
@@ -75,6 +110,7 @@ def me(principal: Principal = Depends(require("account.self", active=False)), db
         return MeOut(
             username=user.username, role=user.role, kind="admin", name=user.username,
             must_change_password=user.must_change_password, line=None, lines=[],
+            can_impersonate=can_impersonate(principal),
             **access_of(user.role),
         )
     employee = principal.employee
@@ -98,7 +134,7 @@ def me(principal: Principal = Depends(require("account.self", active=False)), db
         role=employee.role,
         kind="admin" if employee.role in ADMIN_ROLES else "employee",
         name=employee.name,
-        must_change_password=employee.must_change_password,
+        must_change_password=principal.must_change_password,
         line=primary_line,
         lines=lines_ref,
         dept=employee.dept,
@@ -106,6 +142,7 @@ def me(principal: Principal = Depends(require("account.self", active=False)), db
         supervisor=employee.supervisor_name,
         work_phone=employee.work_phone,
         photo_url=employee.photo_url,
+        can_impersonate=can_impersonate(principal),
         **access_of(employee.role),
     )
 
@@ -116,6 +153,8 @@ def change_password(
     principal: Principal = Depends(require("account.self", active=False)),
     db: Session = Depends(get_db),
 ) -> Response:
+    if principal.impersonated_by is not None:
+        raise forbidden("Password tidak bisa diganti saat login sebagai akun lain.")
     account = principal.account
     if not account.password_hash or not verify_password(body.current_password, account.password_hash):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Password saat ini salah.")

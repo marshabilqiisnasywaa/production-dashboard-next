@@ -30,25 +30,40 @@ class PapercardKpiTests(unittest.TestCase):
         result = score([sub(), sub(), sub(), sub()])
         self.assertEqual((result.on_time, result.registered, result.closed, result.total), (8, 14, 8, 30))
 
-    def test_one_late_breaks_on_time_and_registered(self):
+    def test_one_late_loses_a_quarter_of_on_time_and_registered(self):
         result = score([sub(), sub(), sub(9, 0), sub()])
-        self.assertEqual((result.on_time, result.registered, result.closed), (0, 0, 8))
+        self.assertEqual((result.on_time, result.registered, result.closed), (6, 10.5, 8))
 
-    def test_missing_submission_zeroes_everything(self):
+    def test_two_late_halves_on_time_and_registered(self):
+        result = score([sub(), sub(), sub(9, 0), sub(9, 0)])
+        self.assertEqual((result.on_time, result.registered), (4, 7))
+
+    def test_missing_submission_counts_as_not_on_time(self):
         result = score([sub(), sub(), sub(), None])
-        self.assertEqual(result.total, 0)
+        self.assertEqual((result.on_time, result.registered, result.closed), (6, 10.5, 8))
 
-    def test_no_finding_gives_zero_for_registered_and_closed(self):
+    def test_nothing_submitted_scores_zero(self):
+        self.assertEqual(score([None] * 4).total, 0)
+
+    def test_no_finding_still_earns_registered_when_on_time(self):
         result = score([sub(ng=False)] * 4)
-        self.assertEqual((result.on_time, result.registered, result.closed), (8, 0, 0))
+        self.assertEqual((result.on_time, result.registered, result.closed), (8, 14, 8))
 
-    def test_not_approved_breaks_close_loop(self):
-        result = score([sub(), sub(), sub(approved=False), sub()])
-        self.assertEqual((result.on_time, result.registered, result.closed), (8, 14, 0))
+    def test_no_finding_but_missing_submission_earns_no_close_loop(self):
+        result = score([sub(ng=False), sub(ng=False), sub(ng=False), None])
+        self.assertEqual(result.closed, 0)
+
+    def test_close_loop_is_share_of_findings_closed(self):
+        result = score([sub(), sub(approved=False), sub(ng=False), sub(ng=False)])
+        self.assertEqual(result.closed, 4)
+
+    def test_close_loop_ignores_departments_without_finding(self):
+        result = score([sub(), sub(ng=False), sub(ng=False), sub(ng=False)])
+        self.assertEqual(result.closed, 8)
 
     def test_approved_next_day_does_not_count(self):
         result = score([sub(), sub(), sub(approved_day=date(2026, 9, 16)), sub()])
-        self.assertEqual(result.closed, 0)
+        self.assertEqual(result.closed, 6)
 
     def test_today_is_not_final(self):
         self.assertFalse(score([sub()] * 4, today=DAY).final)

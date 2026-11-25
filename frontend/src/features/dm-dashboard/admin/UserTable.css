@@ -52,6 +52,48 @@
   text-align: right;
 }
 
+.ut-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.ut-loginas {
+  display: inline-grid;
+  place-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #286b46;
+  cursor: pointer;
+}
+
+.ut-loginas:hover:not(:disabled) {
+  background: #e6f1ea;
+  color: #1a4d31;
+}
+
+.ut-loginas:focus-visible {
+  outline: 2px solid rgba(40, 107, 70, 0.45);
+  outline-offset: 1px;
+}
+
+.ut-loginas:disabled {
+  color: #9aa8a0;
+  cursor: not-allowed;
+}
+
+@media (pointer: coarse) {
+  .ut-loginas {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 .ut-person {
   display: flex;
   align-items: center;

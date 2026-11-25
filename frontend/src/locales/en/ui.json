@@ -5398,5 +5398,10 @@
   "{{v0}} analisis, {{v1}} selesai": "{{v0}} analyses, {{v1}} done",
   "Buka detail analisis": "Open analysis detail",
   "Belum diisi:": "Not filled in:",
-  "Pilih Edit untuk mengisinya.": "Choose Edit to fill them in."
+  "Pilih Edit untuk mengisinya.": "Choose Edit to fill them in.",
+  "Login sebagai {{v0}}": "Log in as {{v0}}",
+  "User nonaktif, aktifkan dulu untuk login sebagai akun ini": "User is inactive. Activate it first to log in as this account",
+  "Kembali ke superadmin": "Back to superadmin",
+  "termasuk": "including",
+  "Peserta yang hadir, termasuk yang terlambat dan yang diwakilkan": "Participants present, including late arrivals and those represented by a stand-in"
 }

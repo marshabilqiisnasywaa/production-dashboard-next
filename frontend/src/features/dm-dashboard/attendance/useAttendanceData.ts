@@ -11,7 +11,13 @@ import {
 
 export type AttendanceLevel = "DM Line" | "DM Workshop";
 
-export type AttendanceStatus = "Tepat waktu" | "Telat" | "Tidak hadir";
+export type AttendanceStatus =
+  | "Tepat waktu"
+  | "Telat"
+  | "Diwakilkan"
+  | "Izin"
+  | "Sakit"
+  | "Tidak hadir";
 
 export type AttendanceRecord = {
   id: string;
@@ -23,6 +29,7 @@ export type AttendanceRecord = {
   attendanceTime: string | null;
   difference: number | null;
   status: AttendanceStatus;
+  representative?: string | null;
 };
 
 export type SessionStat = {
@@ -33,6 +40,7 @@ export type SessionStat = {
   onTime: number;
   late: number;
   absent: number;
+  represented: number;
   total: number;
 };
 
@@ -106,11 +114,22 @@ export function lateMinutes(
 
 function mapStatus(
   status: string,
-  difference: number | null
+  difference: number | null,
+  absenceReason?: string | null
 ): AttendanceStatus {
   if (status === "present")
     return (difference ?? 0) > 0 ? "Telat" : "Tepat waktu";
+  if (status === "permit") return "Izin";
+  if (status === "sick") return "Sakit";
+  if (absenceReason === "represented") return "Diwakilkan";
   return "Tidak hadir";
+}
+
+function representativeOf(
+  status: AttendanceStatus,
+  note?: string | null
+): string | null {
+  return status === "Diwakilkan" && note?.trim() ? note.trim() : null;
 }
 
 function roleOf(position?: string | null, dept?: string | null) {
@@ -130,13 +149,14 @@ function fromLineRecap(recap: DmAttendanceRecap): DayAttendance {
     let onTime = 0;
     let late = 0;
     let absent = 0;
+    let represented = 0;
 
     for (const r of rows) {
       const difference =
         r.status === "present"
           ? lateMinutes(r.attendedAt, recap.date, s.scheduledTime, s.startedAt, s.status)
           : null;
-      const status = mapStatus(r.status, difference);
+      const status = mapStatus(r.status, difference, r.absenceReason);
       records.push({
         id: `line-${s.id}-${r.employeeNo}-${r.isGuest ? "guest" : "roster"}`,
         date: recap.date,
@@ -147,11 +167,15 @@ function fromLineRecap(recap: DmAttendanceRecap): DayAttendance {
         attendanceTime: r.status === "present" ? timeHM(r.attendedAt) : null,
         difference,
         status,
+        representative: representativeOf(status, r.absenceNote),
       });
       if (r.isGuest) continue;
       if (status === "Tepat waktu") onTime += 1;
       else if (status === "Telat") late += 1;
-      else absent += 1;
+      else if (status === "Diwakilkan") {
+        onTime += 1;
+        represented += 1;
+      } else absent += 1;
     }
 
     const expected = s.teamSize > 0 ? s.teamSize : rosterRows.length;
@@ -165,6 +189,7 @@ function fromLineRecap(recap: DmAttendanceRecap): DayAttendance {
       onTime,
       late,
       absent,
+      represented,
       total: Math.max(expected, rosterRows.length),
     });
   }
@@ -188,6 +213,7 @@ function fromWorkshopSession(s: DmWorkshopAttendanceRecap): DayAttendance {
   let onTime = 0;
   let late = 0;
   let absent = 0;
+  let represented = 0;
 
   const pushPresent = (
     key: string,
@@ -212,8 +238,17 @@ function fromWorkshopSession(s: DmWorkshopAttendanceRecap): DayAttendance {
     });
   };
 
-  const pushAbsent = (key: string, name: string, role: string) => {
-    absent += 1;
+  const pushAbsent = (
+    key: string,
+    name: string,
+    role: string,
+    attendance?: { status: string; absenceReason?: string | null; absenceNote?: string | null }
+  ) => {
+    const status = mapStatus(attendance?.status ?? "absent", null, attendance?.absenceReason);
+    if (status === "Diwakilkan") {
+      onTime += 1;
+      represented += 1;
+    } else absent += 1;
     records.push({
       id: key,
       date: s.date,
@@ -223,7 +258,8 @@ function fromWorkshopSession(s: DmWorkshopAttendanceRecap): DayAttendance {
       role,
       attendanceTime: null,
       difference: null,
-      status: "Tidak hadir",
+      status,
+      representative: representativeOf(status, attendance?.absenceNote),
     });
   };
 
@@ -239,8 +275,10 @@ function fromWorkshopSession(s: DmWorkshopAttendanceRecap): DayAttendance {
         roleOf(p.position, p.dept),
         a.attendedAt
       );
+    } else if (p.isCore === false && (!a || a.absenceReason === "none" || !a.absenceReason)) {
+      continue;
     } else {
-      pushAbsent(`ws-${s.id}-${key}`, p.name, roleOf(p.position, p.dept));
+      pushAbsent(`ws-${s.id}-${key}`, p.name, roleOf(p.position, p.dept), a);
     }
   }
 
@@ -251,7 +289,7 @@ function fromWorkshopSession(s: DmWorkshopAttendanceRecap): DayAttendance {
     const role = roleOf(a.position, a.department);
     if (a.status === "present")
       pushPresent(`ws-${s.id}-${key}`, name, role, a.attendedAt);
-    else pushAbsent(`ws-${s.id}-${key}`, name, role);
+    else pushAbsent(`ws-${s.id}-${key}`, name, role, a);
   }
 
   sessions.push({
@@ -262,6 +300,7 @@ function fromWorkshopSession(s: DmWorkshopAttendanceRecap): DayAttendance {
     onTime,
     late,
     absent,
+    represented,
     total: onTime + late + absent,
   });
 

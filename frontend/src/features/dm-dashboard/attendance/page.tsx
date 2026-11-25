@@ -37,7 +37,23 @@ type TrendDay = {
   hasMeeting: boolean;
 };
 
-const STATUS_OPTIONS = ["Semua status", "Tepat waktu", "Telat", "Tidak hadir"];
+const STATUS_OPTIONS = [
+  "Semua status",
+  "Tepat waktu",
+  "Telat",
+  "Diwakilkan",
+  "Izin",
+  "Sakit",
+  "Tidak hadir",
+];
+
+const STATUS_PILL: Record<string, string> = {
+  "Tepat waktu": "ontime",
+  Telat: "late",
+  Diwakilkan: "represented",
+  Izin: "excused",
+  Sakit: "excused",
+};
 
 function formatDate(date: string, locale = "id-ID") {
   return new Date(`${date}T12:00:00`).toLocaleDateString(locale, {
@@ -606,17 +622,21 @@ export default function AttendanceDashboardPage() {
     let onTime = 0;
     let late = 0;
     let absent = 0;
+    let represented = 0;
     let total = 0;
 
     for (const s of sessions) {
       onTime += s.onTime;
       late += s.late;
       absent += s.absent;
+      represented += s.represented;
       total += s.total;
     }
 
     return {
       total,
+
+      represented,
 
       onTime,
 
@@ -766,6 +786,9 @@ export default function AttendanceDashboardPage() {
                 <p>
                   {formatPercent(stats.onTimeRate)}
                   {uiText(" dari total presensi")}
+                  {stats.represented > 0
+                    ? ` · ${uiText("termasuk")} ${stats.represented} ${uiText("diwakilkan")}`
+                    : ""}
                 </p>
               </article>
 
@@ -812,7 +835,7 @@ export default function AttendanceDashboardPage() {
 
                 <strong>{formatPercent(stats.rate)}</strong>
 
-                <p>{uiText("Peserta yang hadir, termasuk yang terlambat")}</p>
+                <p>{uiText("Peserta yang hadir, termasuk yang terlambat dan yang diwakilkan")}</p>
 
                 <div className="att-rate-track">
                   <span style={{ width: `${stats.rate}%` }} />
@@ -946,7 +969,7 @@ export default function AttendanceDashboardPage() {
                       }}
                     >
                       {STATUS_OPTIONS.map((s) => (
-                        <option key={s}>{uiText(s)}</option>
+                        <option key={s} value={s}>{uiText(s)}</option>
                       ))}
                     </select>
                   </label>
@@ -1028,15 +1051,17 @@ export default function AttendanceDashboardPage() {
                           <td>
                             <span
                               className={`att-status-pill ${
-                                r.status === "Tepat waktu"
-                                  ? "ontime"
-                                  : r.status === "Telat"
-                                  ? "late"
-                                  : "absent"
+                                STATUS_PILL[r.status] ?? "absent"
                               }`}
                             >
                               {uiText(r.status)}
                             </span>
+                            {r.representative ? (
+                              <small className="att-status-note">
+                                {uiText("Diwakilkan oleh ")}
+                                {r.representative}
+                              </small>
+                            ) : null}
                           </td>
                         </tr>
                       ))

@@ -31,9 +31,9 @@ class DeptCheck:
 class DayScore:
     date: date
     final: bool
-    on_time: int
-    registered: int
-    closed: int
+    on_time: float
+    registered: float
+    closed: float
     checks: list[DeptCheck]
 
     @property
@@ -63,17 +63,25 @@ def check_department(day: date, department: str, submission, window_end: str) ->
         and submission.approved_at is not None
         and to_jakarta(submission.approved_at).date() == day
     )
-    return DeptCheck(department, True, on_time, finding, finding and on_time, closed)
+    return DeptCheck(department, True, on_time, finding, on_time, closed)
+
+
+def share(points: int, hits: int, total: int) -> float:
+    return round(points * hits / total, 2) if total else 0
 
 
 def score_day(day: date, checks: list[DeptCheck], today: date) -> DayScore:
-    ready = bool(checks)
+    findings = [c for c in checks if c.has_finding]
+    if findings:
+        closed = share(MAX_CLOSED, sum(1 for c in findings if c.closed), len(findings))
+    else:
+        closed = MAX_CLOSED if checks and all(c.submitted for c in checks) else 0
     return DayScore(
         date=day,
         final=day < today,
-        on_time=MAX_ON_TIME if ready and all(c.on_time for c in checks) else 0,
-        registered=MAX_REGISTERED if ready and all(c.registered for c in checks) else 0,
-        closed=MAX_CLOSED if ready and all(c.closed for c in checks) else 0,
+        on_time=share(MAX_ON_TIME, sum(1 for c in checks if c.on_time), len(checks)),
+        registered=share(MAX_REGISTERED, sum(1 for c in checks if c.registered), len(checks)),
+        closed=closed,
         checks=checks,
     )
 

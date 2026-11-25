@@ -82,7 +82,23 @@ export default function AttendanceRecap({ lines, call }: Props) {
   const rows = useMemo(() => recap?.rows ?? [], [recap]);
 
   const workshopSessions = useMemo(
-    () => recap?.workshopSessions ?? [],
+    () =>
+      (recap?.workshopSessions ?? []).map((session) => {
+        const optional = new Set(
+          (session.participants ?? [])
+            .filter((participant) => participant.isCore === false)
+            .map((participant) => participant.employeeNo)
+        );
+        return {
+          ...session,
+          attendances: session.attendances.filter(
+            (attendance) =>
+              attendance.status === "present" ||
+              !optional.has(attendance.employeeNo ?? "") ||
+              Boolean(attendance.absenceReason && attendance.absenceReason !== "none")
+          ),
+        };
+      }),
     [recap]
   );
 

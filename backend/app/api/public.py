@@ -340,6 +340,7 @@ def attendance_recap(
                             name=p.name,
                             position=p.position,
                             dept=p.dept,
+                            is_core=p.is_core,
                         )
                         for p in mapped.participants
                     ],

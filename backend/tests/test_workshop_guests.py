@@ -61,6 +61,17 @@ class WorkshopGuestTests(TestCase):
         self.assertEqual(get_workshop_team(self.workshops[1].id, self.db).supervisors, [])
         self.assertEqual(len(get_workshop_team(self.workshops[0].id, self.db).supervisors), 1)
 
+    def test_roster_marks_core_supervisors(self):
+        core = {p.employee_no: p.is_core for p in self.prepared.participants}
+        self.assertEqual(core, {"HOST": True, "REGULAR": False})
+
+    def test_roster_without_core_flag_defaults_to_core(self):
+        legacy = [{k: v for k, v in item.items() if k != "is_core"} for item in self.session.roster]
+        self.session.roster = legacy
+        self.db.commit()
+        mapped = api.map_session(self.session, self.db)
+        self.assertTrue(all(p.is_core for p in mapped.participants))
+
     def test_other_workshop_supervisor_and_hods_are_not_guests(self):
         hods = [Employee(employee_no=f"HOD{i}", name=f"HOD {i}", role="hod", is_active=True) for i in range(2)]
         self.db.add_all(hods)

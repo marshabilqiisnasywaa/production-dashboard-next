@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     database_url: str
     secret_key: str
     access_token_minutes: int = 720
+    allow_impersonation: bool = False
     cors_origins: str = "http://localhost:3000"
     cors_origin_regex: str = (
         r"^https?://(localhost|127\.0\.0\.1|10(\.\d{1,3}){3}|192\.168(\.\d{1,3}){2}"

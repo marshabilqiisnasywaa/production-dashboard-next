@@ -63,7 +63,7 @@ export interface SqdipDetailRow {
 
 export const DIMS: SqdipDim[] = [
   { key: "Safety", target: 0, dir: "max", kind: "int", label: "0", rule: "Target 0 insiden" },
-  { key: "Quality", target: 0.93, dir: "min", kind: "pct", label: "≥ 93%", rule: "Target ≥ 93%" },
+  { key: "Quality", target: 0.92, dir: "min", kind: "pct", label: "≥ 92%", rule: "Target ≥ 92%" },
   { key: "Delivery", target: 1, dir: "min", kind: "pct", label: "100%", rule: "Target 100%" },
   { key: "Inventory", target: 400, dir: "max", kind: "num", label: "≤ 400", rule: "Target ≤ 400" },
   { key: "Productivity", target: 0.87, dir: "min", kind: "pct", label: "≥ 87%", rule: "Target ≥ 87%" },

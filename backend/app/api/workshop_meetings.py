@@ -155,7 +155,7 @@ def authorize_host(db: Session, principal: Principal, session: WorkshopMeetingSe
 
 def build_roster(db: Session, workshop_ids: list[int]) -> list[dict]:
     rows = db.execute(
-        select(Employee, Workshop)
+        select(Employee, Workshop, SupervisorWorkshop.show_in_structure)
         .select_from(SupervisorWorkshop)
         .join(Employee, Employee.id == SupervisorWorkshop.employee_id)
         .join(Workshop, Workshop.id == SupervisorWorkshop.workshop_id)
@@ -167,11 +167,14 @@ def build_roster(db: Session, workshop_ids: list[int]) -> list[dict]:
         .order_by(Employee.name, Employee.id, Workshop.name)
     ).all()
     members: dict[int, dict] = {}
-    for employee, workshop in rows:
+    for employee, workshop, show_in_structure in rows:
         item = members.setdefault(employee.id, {
             "employee_id": employee.id, "employee_no": employee.employee_no, "name": employee.name,
             "dept": employee.dept, "position": employee.position, "line_ids": [], "line_codes": [],
+            "is_core": False,
         })
+        if show_in_structure:
+            item["is_core"] = True
         if workshop.id not in item["line_ids"]:
             item["line_ids"].append(workshop.id)
             item["line_codes"].append(workshop.name)

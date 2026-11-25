@@ -4,6 +4,7 @@ import { useUiText } from "@/locales/useUiText";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { ChevronsRight } from "lucide-react";
 import { publicApi } from "./api";
 import type { DmBoardListItem } from "./api";
 import { dmStatusLabels } from "./dmData";
@@ -20,7 +21,7 @@ const TABS: { key: IndexTab; label: string }[] = [
   { key: "line", label: "Line" },
   { key: "kpi", label: "Scorecard" },
   { key: "rekap", label: "Rekap Absensi" },
-  { key: "masalah", label: "Masalah" },
+  { key: "masalah", label: "Tracking Abnormal" },
   { key: "flowchart", label: "Dokumen" },
 ];
 
@@ -151,6 +152,10 @@ function LineBoards() {
             </button>
           ))}
         </div>
+        <Link href="/dm-dashboard/mekanisme" className="dmi-mech">
+          {uiText("DM Mechanism")}
+          <ChevronsRight size={16} aria-hidden="true" />
+        </Link>
       </div>
 
       {groups.length === 0 && <p className="dmi-empty">{uiText("Tidak ada lini atau workshop yang cocok.")}</p>}

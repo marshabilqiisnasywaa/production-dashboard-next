@@ -54,12 +54,13 @@ import StandupHistory from "./StandupHistory";
 import SqdipMonitor from "./sqdip/SqdipMonitor";
 import HistoryImportPage from "./history-import/HistoryImportPage";
 import FlowchartManager from "../flowchart/admin/FlowchartManager";
+import MechanismBoardEditor from "./MechanismBoardEditor";
 
 type Auth =
   | { kind: "checking" }
   | { kind: "offline"; message: string }
   | { kind: "anon" }
-  | { kind: "in"; username: string; isAdmin: boolean };
+  | { kind: "in"; username: string; isAdmin: boolean; canImpersonate: boolean };
 
 type Banner = { type: "success" | "info" | "error"; message: string };
 
@@ -108,6 +109,7 @@ export default function DmAdminPage() {
           kind: "in",
           username: me.name ?? me.username,
           isAdmin: true,
+          canImpersonate: me.canImpersonate === true,
         });
       })
       .catch((error: unknown) => {
@@ -171,6 +173,7 @@ export default function DmAdminPage() {
       <AdminWorkspace
         username={auth.username}
         isAdmin={auth.isAdmin}
+        canImpersonate={auth.canImpersonate}
         onLogout={logout}
       />
     </SidebarProvider>
@@ -202,6 +205,10 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
   flowchart: {
     crumb: "Dokumen DM",
     title: "Dokumen DM",
+  },
+  mechanism: {
+    crumb: "Mekanisme DM",
+    title: "Editor Template Mekanisme DM",
   },
   attendance: {
     crumb: "Rekap Presensi",
@@ -254,6 +261,11 @@ const ADMIN_TAB_HEADERS: Record<
     description:
       "Kelola Dokumen DM dalam bentuk flowchart dan manual.",
   },
+  mechanism: {
+    title: "Mekanisme DM",
+    description:
+      "Edit langsung template DM Mechanism: ubah teks dan jam, tambah kolom dan baris, serta unggah foto tiap tahap.",
+  },
   attendance: {
     title: "Rekapitulasi Absensi",
     description:
@@ -284,10 +296,12 @@ const ADMIN_TAB_HEADERS: Record<
 function AdminWorkspace({
   username,
   isAdmin,
+  canImpersonate,
   onLogout,
 }: {
   username: string;
   isAdmin: boolean;
+  canImpersonate: boolean;
   onLogout: (notice: string | null) => void;
 }) {
   const { text: uiText } = useUiText();
@@ -1188,7 +1202,7 @@ function AdminWorkspace({
 
             {activeTab === "users" && (
               <div className="dm-admin-section dm-tab-lines">
-                <UserManager call={call} />
+                <UserManager call={call} canImpersonate={canImpersonate} />
               </div>
             )}
 
@@ -1284,6 +1298,12 @@ function AdminWorkspace({
             {activeTab === "flowchart" && isAdmin && (
               <div className="dm-admin-section">
                 <FlowchartManager />
+              </div>
+            )}
+
+            {activeTab === "mechanism" && isAdmin && (
+              <div className="dm-admin-section">
+                <MechanismBoardEditor />
               </div>
             )}
 

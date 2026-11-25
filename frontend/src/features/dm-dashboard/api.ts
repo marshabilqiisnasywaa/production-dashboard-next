@@ -22,6 +22,7 @@ function apiBase(): string {
 }
 
 const TOKEN_KEY = "dm_token";
+const ACTOR_TOKEN_KEY = "dm_actor_token";
 
 export type DmWorkshop = { id: number; name: string; lineCount: number };
 
@@ -306,9 +307,44 @@ export function getToken(): string | null {
 export function setToken(token: string | null) {
   try {
     if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
+    else {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(ACTOR_TOKEN_KEY);
+    }
   } catch {
     return;
+  }
+}
+
+export function getActorToken(): string | null {
+  try {
+    return localStorage.getItem(ACTOR_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function enterImpersonation(accessToken: string) {
+  try {
+    const current = localStorage.getItem(TOKEN_KEY);
+    if (current && !localStorage.getItem(ACTOR_TOKEN_KEY)) {
+      localStorage.setItem(ACTOR_TOKEN_KEY, current);
+    }
+    localStorage.setItem(TOKEN_KEY, accessToken);
+  } catch {
+    return;
+  }
+}
+
+export function leaveImpersonation(): boolean {
+  try {
+    const actor = localStorage.getItem(ACTOR_TOKEN_KEY);
+    if (!actor) return false;
+    localStorage.setItem(TOKEN_KEY, actor);
+    localStorage.removeItem(ACTOR_TOKEN_KEY);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -1067,6 +1103,7 @@ export type DmMe = {
   supervisor?: string | null;
   workPhone?: string | null;
   photoUrl?: string | null;
+  canImpersonate?: boolean;
   line: {
     id: number;
     code: string;
@@ -1094,6 +1131,8 @@ export const accountApi = {
   login: (username: string, password: string) =>
     request<DmLoginResult>("/auth/login", json("POST", { username, password })),
   me: () => request<DmMe>("/auth/me", {}, true),
+  impersonate: (employeeId: number) =>
+    request<DmLoginResult>(`/auth/impersonate/${employeeId}`, { method: "POST" }, true),
   lines: () => request<DmLine[]>("/lines", {}, true),
   changePassword: (currentPassword: string, newPassword: string) =>
     request<void>(
@@ -1149,6 +1188,7 @@ export type DmWorkshopAttendanceRecap = Pick<
     name: string;
     position: string | null;
     dept: string | null;
+    isCore?: boolean;
   }[];
   attendances: {
     isGuest: boolean;
@@ -1575,6 +1615,7 @@ export type DmMeetingParticipant = {
   lineIds: number[];
   lineCodes: string[];
   photoUrl: string | null;
+  isCore?: boolean;
 };
 
 export type DmMeetingSession = {
@@ -2211,4 +2252,17 @@ export const flowchartApi = {
       true
     );
   },
+};
+
+/** Foto dari server bisa berupa path relatif; jadikan URL penuh ke backend. Path frontend (/images/...) dibiarkan. */
+export function assetUrl(url: string): string {
+  if (/^(https?:|data:|blob:)/i.test(url) || url.startsWith("/images/")) return url;
+  return `${apiBase()}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
+/** Template DM Mechanism disimpan sebagai satu dokumen JSON. board = null berarti kembali ke bawaan. */
+export const mechanismApi = {
+  get: () => request<{ board: unknown | null }>("/mechanism-board"),
+  save: (board: unknown | null) =>
+    request<{ board: unknown | null }>("/mechanism-board", json("PUT", { board }), true),
 };

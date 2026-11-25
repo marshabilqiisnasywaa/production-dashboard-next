@@ -74,6 +74,7 @@ class MeOut(CamelModel):
     supervisor: str | None = None
     work_phone: str | None = None
     photo_url: str | None = None
+    can_impersonate: bool = False
     home: str | None = None
     scope: str | None = None
     capabilities: list[str] | None = None
@@ -611,6 +612,7 @@ class WorkshopRecapParticipantOut(CamelModel):
     name: str
     position: str | None = None
     dept: str | None = None
+    is_core: bool = True
 
 
 class WorkshopRecapAttendanceOut(CamelModel):
@@ -662,6 +664,7 @@ class MeetingParticipantOut(CamelModel):
     line_ids: list[int]
     line_codes: list[str]
     photo_url: str | None = None
+    is_core: bool = True
 
 
 class MeetingScheduleItemIn(CamelModel):

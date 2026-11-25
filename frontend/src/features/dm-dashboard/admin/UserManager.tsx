@@ -4,11 +4,14 @@ import { useUiText } from "@/locales/useUiText";
 import { departmentLabel } from "../departments";
 import { useCallback, useEffect, useState } from "react";
 import {
+  accountApi,
   adminApi,
   dmDepartments,
   dmEmployeeRoles,
+  enterImpersonation,
   syncEmployeeRoles,
 } from "../api";
+import { homeFor } from "../account/homeFor";
 
 import type { DmEmployee, DmEmployeeInput, DmEmployeeRole } from "../api";
 import { PlusIcon } from "./AdminIcons";
@@ -22,6 +25,7 @@ import "./UserTable.css";
 
 interface UserManagerProps {
   call: <T>(fn: () => Promise<T>) => Promise<T>;
+  canImpersonate?: boolean;
 }
 
 function messageOf(error: unknown) {
@@ -72,6 +76,13 @@ const icons = {
       <path d="M20 6 9 17l-5-5" />
     </svg>
   ),
+  loginAs: (
+    <svg {...iconProps} aria-hidden="true">
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5 1.6 0 3 .4 4.1 1.2" />
+      <path d="M15 17h6M18.5 14l3 3-3 3" />
+    </svg>
+  ),
   trash: (
     <svg {...iconProps}>
       <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
@@ -79,8 +90,9 @@ const icons = {
   ),
 };
 
-export default function UserManager({ call }: UserManagerProps) {
+export default function UserManager({ call, canImpersonate = false }: UserManagerProps) {
   const { text: uiText } = useUiText();
+  const [impersonatingId, setImpersonatingId] = useState<number | null>(null);
   const [users, setUsers] = useState<DmEmployee[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -172,6 +184,24 @@ export default function UserManager({ call }: UserManagerProps) {
         : current,
     );
     await load();
+  }
+
+  async function loginAs(user: DmEmployee) {
+    setImpersonatingId(user.id);
+    try {
+      const result = await call(() => accountApi.impersonate(user.id));
+      enterImpersonation(result.accessToken);
+      let destination = homeFor(result);
+      try {
+        destination = homeFor(await accountApi.me());
+      } catch {
+        destination = homeFor(result);
+      }
+      window.location.href = destination;
+    } catch (error) {
+      fail(error);
+      setImpersonatingId(null);
+    }
   }
 
   async function remove(user: DmEmployee) {
@@ -540,10 +570,28 @@ export default function UserManager({ call }: UserManagerProps) {
                           )}
                         </td>
                         <td className="ut-col-action">
-                          <RowMenu
-                            label={`Aksi untuk ${user.name}`}
-                            items={items}
-                          />
+                          <div className="ut-actions">
+                            {canImpersonate ? (
+                              <button
+                                type="button"
+                                className="ut-loginas"
+                                disabled={!user.isActive || impersonatingId !== null}
+                                title={
+                                  user.isActive
+                                    ? uiText("Login sebagai {{v0}}", { v0: user.name })
+                                    : uiText("User nonaktif, aktifkan dulu untuk login sebagai akun ini")
+                                }
+                                aria-label={uiText("Login sebagai {{v0}}", { v0: user.name })}
+                                onClick={() => void loginAs(user)}
+                              >
+                                {icons.loginAs}
+                              </button>
+                            ) : null}
+                            <RowMenu
+                              label={`Aksi untuk ${user.name}`}
+                              items={items}
+                            />
+                          </div>
                         </td>
                       </tr>
                     );
