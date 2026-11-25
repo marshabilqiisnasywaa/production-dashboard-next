@@ -135,7 +135,7 @@ class ScorecardIdentityTests(unittest.TestCase):
         self.assertTrue(all(d.date >= date(2026, 9, 8) for d in moved.standup))
         days = [d.date for e in (old, replacement) for d in e.papercard]
         self.assertEqual(len(days), len(set(days)))
-        self.assertEqual(next(d.total for d in old.papercard if d.date.day == 7), 8)
+        self.assertEqual(next(d.total for d in old.papercard if d.date.day == 7), 30)
 
     def test_retirement_and_role_change_preserve_historical_scores(self):
         before = [e.model_dump() for e in self.entries()]

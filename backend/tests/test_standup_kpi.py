@@ -27,20 +27,32 @@ class StandupKpiTests(unittest.TestCase):
         result = score([meeting(1), meeting(2, held=False, present=())], problems=1, closed=1)
         self.assertEqual((result.attendance, result.content), (5, 10))
 
-    def test_one_member_absent_breaks_that_meeting(self):
+    def test_one_member_absent_loses_share_of_that_meeting(self):
         result = score([meeting(1, present={1, 2, 3}), meeting(2)])
+        self.assertEqual((result.attendance, result.content), (8.75, 17.5))
+
+    def test_half_present_gives_half_points(self):
+        result = score([meeting(1, present={1, 2}), meeting(2, present={1, 2})])
         self.assertEqual((result.attendance, result.content), (5, 10))
+
+    def test_nobody_present_gives_zero(self):
+        result = score([meeting(1, present=()), meeting(2, present=())])
+        self.assertEqual((result.attendance, result.content), (0, 0))
 
     def test_no_meeting_held(self):
         result = score([meeting(1, held=False, present=()), meeting(2, held=False, present=())])
         self.assertEqual(result.total, 0)
 
-    def test_close_loop_needs_every_problem_closed_today(self):
-        self.assertEqual(score([meeting(1)], problems=2, closed=1).close_loop, 0)
+    def test_close_loop_is_share_of_problems_closed_today(self):
+        self.assertEqual(score([meeting(1)], problems=2, closed=1).close_loop, 5)
+        self.assertEqual(score([meeting(1)], problems=2, closed=0).close_loop, 0)
         self.assertEqual(score([meeting(1)], problems=2, closed=2).close_loop, 10)
 
-    def test_no_problems_gives_zero_close_loop(self):
-        self.assertEqual(score([meeting(1)], problems=0, closed=0).close_loop, 0)
+    def test_no_problems_gives_full_close_loop_when_meetings_held(self):
+        self.assertEqual(score([meeting(1), meeting(2)], problems=0, closed=0).close_loop, 10)
+
+    def test_no_problems_gives_zero_close_loop_when_a_meeting_not_held(self):
+        self.assertEqual(score([meeting(1), meeting(2, held=False, present=())], problems=0, closed=0).close_loop, 0)
 
     def test_empty_roster_is_never_complete(self):
         self.assertFalse(check_meeting(1, True, set(), set()).complete)

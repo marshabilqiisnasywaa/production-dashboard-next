@@ -23,7 +23,12 @@ type SessionRoster = {
   departmentByEmployeeNo: Map<string, DepartmentKey>;
   attendanceByEmployeeNo: Map<
     string,
-    { status: string; attendedAt: string; department?: string | null }
+    {
+      status: string;
+      attendedAt: string;
+      department?: string | null;
+      absenceReason?: string | null;
+    }
   >;
   participants: {
     employeeNo: string;
@@ -111,10 +116,24 @@ async function loadRoster(
     const ids = (participant as { lineIds?: number[] }).lineIds;
     return !ids || ids.includes(lineId);
   });
-  const participants: SessionRoster["participants"] = members.map((participant) => ({
-    employeeNo: participant.employeeNo,
-    dept: participant.dept,
-  }));
+  const skipped = new Set<string>();
+  const participants: SessionRoster["participants"] = [];
+  for (const participant of members) {
+    if (!isLine && participant.isCore === false) {
+      const attendance = session.attendances.find(
+        (item) => (item.employeeNo ?? String(item.employeeId)) === participant.employeeNo
+      );
+      const explained =
+        attendance &&
+        (attendance.status === "present" ||
+          (attendance.absenceReason && attendance.absenceReason !== "none"));
+      if (!explained) {
+        skipped.add(participant.employeeNo);
+        continue;
+      }
+    }
+    participants.push({ employeeNo: participant.employeeNo, dept: participant.dept });
+  }
   const attendanceByEmployeeNo = new Map(
     session.attendances
       .map((attendance) => ({
@@ -127,6 +146,7 @@ async function loadRoster(
           status: attendance.status,
           attendedAt: attendance.attendedAt,
           department: attendance.department,
+          absenceReason: attendance.absenceReason,
         },
       ] as const)
   );
@@ -134,7 +154,7 @@ async function loadRoster(
     const known = new Set(participants.map((participant) => participant.employeeNo));
     for (const attendance of session.attendances) {
       const key = attendance.employeeNo ?? String(attendance.employeeId);
-      if (known.has(key)) continue;
+      if (known.has(key) || skipped.has(key)) continue;
       known.add(key);
       participants.push({ employeeNo: key, dept: attendance.department ?? null });
     }
@@ -157,6 +177,22 @@ async function loadRoster(
   };
 }
 
+function outcomeOf(
+  attendance: ReturnType<SessionRoster["attendanceByEmployeeNo"]["get"]>,
+  roster: SessionRoster
+): "onTime" | "late" | "absent" {
+  if (!attendance) return "absent";
+  if (attendance.status !== "present") {
+    return attendance.status === "absent" && attendance.absenceReason === "represented"
+      ? "onTime"
+      : "absent";
+  }
+  const difference = lateMinutes(
+    attendance.attendedAt, roster.date, roster.scheduledTime, roster.startedAt, roster.status
+  );
+  return difference > 0 ? "late" : "onTime";
+}
+
 function rosterCounts(roster: SessionRoster): Omit<
   DepartmentAttendance,
   "department"
@@ -172,16 +208,9 @@ function rosterCounts(roster: SessionRoster): Omit<
   );
 
   for (const employeeNo of uniqueParticipants.keys()) {
-    const attendance = roster.attendanceByEmployeeNo.get(employeeNo);
-    if (!attendance || attendance.status !== "present") {
-      absent += 1;
-      continue;
-    }
-
-    const difference = lateMinutes(
-      attendance.attendedAt, roster.date, roster.scheduledTime, roster.startedAt, roster.status
-    );
-    if (difference > 0) late += 1;
+    const outcome = outcomeOf(roster.attendanceByEmployeeNo.get(employeeNo), roster);
+    if (outcome === "absent") absent += 1;
+    else if (outcome === "late") late += 1;
     else onTime += 1;
   }
 
@@ -306,18 +335,11 @@ export function useDepartmentAttendance({
         );
         if (!DEPARTMENTS.includes(department)) continue;
         const aggregate = departments.get(department)!;
-        const attendance = roster.attendanceByEmployeeNo.get(
-          participant.employeeNo
+        const outcome = outcomeOf(
+          roster.attendanceByEmployeeNo.get(participant.employeeNo),
+          roster
         );
-        if (!attendance || attendance.status !== "present") {
-          aggregate.absent += 1;
-        } else {
-          const difference = lateMinutes(
-            attendance.attendedAt, roster.date, roster.scheduledTime, roster.startedAt, roster.status
-          );
-          if (difference > 0) aggregate.late += 1;
-          else aggregate.onTime += 1;
-        }
+        aggregate[outcome] += 1;
         aggregate.total += 1;
       }
 

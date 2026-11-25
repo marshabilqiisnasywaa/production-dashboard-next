@@ -33,9 +33,9 @@ class MeetingCheck:
 class StandupDayScore:
     date: date
     final: bool
-    attendance: int
-    content: int
-    close_loop: int
+    attendance: float
+    content: float
+    close_loop: float
     problems: int
     problems_closed: int
     meetings: list[MeetingCheck]
@@ -51,14 +51,21 @@ def check_meeting(number: int, held: bool, required_ids: set[int], present_ids: 
     return MeetingCheck(number, held, len(required_ids), present, complete, finished)
 
 
+def share(points: int, hits: int, total: int) -> float:
+    return points * hits / total if total else 0
+
+
 def score_day(day: date, meetings: list[MeetingCheck], problems: int, problems_closed: int, today: date) -> StandupDayScore:
-    complete = sum(1 for m in meetings if m.complete)
+    if problems > 0:
+        close_loop = share(MAX_CLOSE_LOOP, problems_closed, problems)
+    else:
+        close_loop = MAX_CLOSE_LOOP if meetings and all(m.held for m in meetings) else 0
     return StandupDayScore(
         date=day,
         final=day < today,
-        attendance=complete * ATTENDANCE_PER_MEETING,
-        content=sum(1 for m in meetings if m.complete and m.finished) * CONTENT_PER_MEETING,
-        close_loop=MAX_CLOSE_LOOP if problems > 0 and problems_closed == problems else 0,
+        attendance=round(sum(share(ATTENDANCE_PER_MEETING, m.present, m.required) for m in meetings if m.held), 2),
+        content=round(sum(share(CONTENT_PER_MEETING, m.present, m.required) for m in meetings if m.held and m.finished), 2),
+        close_loop=round(close_loop, 2),
         problems=problems,
         problems_closed=problems_closed,
         meetings=meetings,

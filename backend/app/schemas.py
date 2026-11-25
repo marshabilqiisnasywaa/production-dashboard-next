@@ -612,6 +612,7 @@ class WorkshopRecapParticipantOut(CamelModel):
     name: str
     position: str | None = None
     dept: str | None = None
+    is_core: bool = True
 
 
 class WorkshopRecapAttendanceOut(CamelModel):
@@ -663,6 +664,7 @@ class MeetingParticipantOut(CamelModel):
     line_ids: list[int]
     line_codes: list[str]
     photo_url: str | None = None
+    is_core: bool = True
 
 
 class MeetingScheduleItemIn(CamelModel):

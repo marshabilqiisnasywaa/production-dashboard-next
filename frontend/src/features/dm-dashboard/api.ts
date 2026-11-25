@@ -1185,6 +1185,7 @@ export type DmWorkshopAttendanceRecap = Pick<
     name: string;
     position: string | null;
     dept: string | null;
+    isCore?: boolean;
   }[];
   attendances: {
     isGuest: boolean;
@@ -1611,6 +1612,7 @@ export type DmMeetingParticipant = {
   lineIds: number[];
   lineCodes: string[];
   photoUrl: string | null;
+  isCore?: boolean;
 };
 
 export type DmMeetingSession = {

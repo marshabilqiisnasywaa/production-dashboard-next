@@ -743,6 +743,25 @@
   color: #c93630;
 }
 
+.att-status-pill.represented {
+  border-color: #c9d8f0;
+  background: #eaf1fb;
+  color: #1f4f99;
+}
+
+.att-status-pill.excused {
+  border-color: #d9dfdb;
+  background: #f1f3f2;
+  color: #46544c;
+}
+
+.att-status-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #5c6f64;
+}
+
 .att-difference-early {
   color: #087443 !important;
   font-weight: 600;
