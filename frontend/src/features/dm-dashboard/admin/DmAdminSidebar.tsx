@@ -30,6 +30,7 @@ export type DmAdminTabKey =
   | "attendance"
   | "problems"
   | "fivewhy"
+  | "standard"
   | "history"
   | "sqdip"
   | "history-import";
@@ -330,6 +331,19 @@ export default function DmAdminSidebar({
               <span>{uiText("Papercard & Meeting")}</span>
             </button>
 
+            <button
+              type="button"
+              className={`dm-admin-nav-btn ${
+                activeTab === "standard" ? "is-active" : ""
+              }`}
+              onClick={() => select("standard")}
+            >
+              <span className="dm-admin-nav-icon">
+                <ClipboardCheckIcon />
+              </span>
+              <span>{uiText("Usulan Standar")}</span>
+            </button>
+            
             <button
               type="button"
               className={`dm-admin-nav-btn ${

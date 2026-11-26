@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { IconCheck } from "@/components/ui/icons";
 import { ApiError, fiveWhyAnalysesApi } from "../api";
-import type { FiveWhyAnalysisDetail } from "../api";
+import type { FiveWhyAnalysisDetail, FiveWhyStandard } from "../api";
 import {
   FIVE_WHY_ANALYSIS_LABELS,
   analysisStatusTone,
@@ -29,6 +29,7 @@ import ProblemSummary from "./ProblemSummary";
 import WhyTree from "./WhyTree";
 import ActionPlan from "./ActionPlan";
 import FiveWhyReport from "./FiveWhyReport";
+import StandardFlagBox from "./StandardFlagBox";
 import "./FiveWhy.css";
 
 const TABS: readonly { key: FiveWhyTabKey; label: string }[] = [
@@ -176,6 +177,8 @@ export default function FiveWhyPage({
   const [reloadToken, setReloadToken] = useState(0);
     const stepperRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+     const [standard, setStandard] = useState<Record<string, FiveWhyStandard> | null>(null);
+  const [canFlagStandard, setCanFlagStandard] = useState(false);
   const lastTabRef = useRef<Map<string, FiveWhyTabKey>>(new Map());
   const recordRef = useRef<FiveWhyRecord | null>(null);
   const editCountRef = useRef(0);
@@ -216,6 +219,8 @@ export default function FiveWhyPage({
         setRecord(next);
         setRevision(detail.revision);
         setCanEdit(detail.canEdit);
+        setStandard(detail.standard);
+        setCanFlagStandard(detail.canFlagStandard);
         setLineId(detail.lineId);
         setDirty(false);
         setConflict(false);
@@ -549,6 +554,17 @@ export default function FiveWhyPage({
               </div>
             </div>
             <FiveWhyReport record={record} canEdit={canEdit} />
+            {standard ? (
+              <StandardFlagBox
+                key={record.abnormal.id}
+                analysisId={record.abnormal.id}
+                solutions={record.solutions}
+                standard={standard}
+                canFlag={canFlagStandard}
+                onSaved={setStandard}
+                onNotify={notify}
+              />
+            ) : null}
           </>
         ) : (
           <>

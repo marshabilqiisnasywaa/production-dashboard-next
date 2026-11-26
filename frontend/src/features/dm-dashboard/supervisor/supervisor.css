@@ -649,13 +649,26 @@
    Modal Styling
    ========================================================================== */
 .spv-modal-overlay {
+  --dm-green: #046a38;
+  --dm-green-50: #e8f1ec;
+  --dm-green-100: #d3e6db;
+  --dm-red: #d92d20;
+  --dm-red-50: #fef0ee;
+  --dm-amber: #f79009;
+  --dm-amber-50: #fff6e0;
+  --dm-text: #111827;
+  --dm-muted: #6b7280;
+  --dm-border: #e5e7eb;
+  --dm-surface: #ffffff;
+  --dm-radius-sm: 8px;
+  --dm-radius-md: 12px;
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(4px);
   display: grid;
   place-items: center;
-  z-index: 100;
+  z-index: 1200;
   padding: 16px;
 }
 

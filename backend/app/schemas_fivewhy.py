@@ -149,6 +149,14 @@ class SolutionIn(CamelModel):
     photos_before: list[PhotoId] = Field(default_factory=list, max_length=20)
     photos_after: list[PhotoId] = Field(default_factory=list, max_length=20)
 
+class StandardFlagIn(CamelModel):
+    flagged: bool
+    department: Short = ""
+    note: Long = ""
+
+
+class StandardAppliedIn(CamelModel):
+    applied: bool
 
 class AnalysisCreateIn(CamelModel):
     line_id: int = Field(gt=0)

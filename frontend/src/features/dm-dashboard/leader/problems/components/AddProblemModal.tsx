@@ -9,7 +9,8 @@ import { InlineSpinner } from "@/components/ui/LoadingState";
 import { meetingApi } from "@/features/dm-dashboard/api";
 import { CategoryPathSelect, useCategoryOptions } from "../../../categoryPath";
 import { LineSelect, PicSelect } from "../../meeting/components/SummaryForm";
-import type { ItemErrors, MeetingMember, SummaryItem } from "../../meeting/types";
+import type { ItemErrors, MeetingMember, SummaryItem, SummaryPic } from "../../meeting/types";
+import type { ProblemRow } from "../types";
 import {
   initialsOf,
   makeEmptyItem,
@@ -23,6 +24,7 @@ import "./add-problem-modal.css";
 
 type Props = {
   open: boolean;
+  editingProblem?: ProblemRow | null;
   onClose: () => void;
   onCreated: () => void;
 };
@@ -33,7 +35,58 @@ function currentLocalDateTime(): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
 
-export function AddProblemModal({ open, onClose, onCreated }: Props) {
+function toDateTimeLocalValue(value?: string | null): string {
+  if (!value) return "";
+  const match = value.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})/);
+  if (match) return `${match[1]}T${match[2]}`;
+  const dateOnly = value.match(/^(\d{4}-\d{2}-\d{2})$/);
+  if (dateOnly) return `${dateOnly[1]}T00:00`;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+}
+
+function itemFromProblem(row: ProblemRow): SummaryItem {
+  const lines = row.lineCodes?.length
+    ? row.lineCodes
+    : row.line && row.line !== "-"
+      ? row.line.split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+  const pics: SummaryPic[] = row.pics?.length
+    ? row.pics.map((pic) =>
+        pic.employeeId != null
+          ? { id: String(pic.employeeId), name: pic.name, manual: false }
+          : { id: `custom:${pic.name}`, name: pic.name, manual: true }
+      )
+    : row.picName && row.picName !== "-"
+      ? row.picName
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .map((name) => ({ id: `custom:${name}`, name, manual: true }))
+      : [];
+
+  return {
+    id: row.id,
+    problem: row.problem || "",
+    problemCategories: row.problemCategories ?? [],
+    categoryCodes: (row.categoryCodes ?? []).filter(Boolean),
+    occurredAt: toDateTimeLocalValue(row.occurredAt) || (row.date ? `${row.date}T08:00` : currentLocalDateTime()),
+    respondedAt: toDateTimeLocalValue(row.respondedAt),
+    lines,
+    line: lines[0] ?? "",
+    pics,
+    picId: pics[0]?.id ?? "",
+    picName: pics[0]?.name,
+    customPic: pics[0]?.manual ?? false,
+    customPics: pics.filter((p) => p.manual).map((p) => p.name),
+    due: toDateTimeLocalValue(row.due),
+  };
+}
+
+export function AddProblemModal({ open, editingProblem = null, onClose, onCreated }: Props) {
+  const isEditing = Boolean(editingProblem);
   const { text: uiText } = useUiText();
   const titleId = useId();
   const [item, setItem] = useState<SummaryItem>(() => ({
@@ -57,10 +110,14 @@ export function AddProblemModal({ open, onClose, onCreated }: Props) {
   // Reset form & fetch line/PIC options whenever modal opens
   useEffect(() => {
     if (!open) return;
-    setItem({
-      ...makeEmptyItem(),
-      occurredAt: currentLocalDateTime(),
-    });
+    setItem(
+      editingProblem
+        ? itemFromProblem(editingProblem)
+        : {
+            ...makeEmptyItem(),
+            occurredAt: currentLocalDateTime(),
+          }
+    );
     setErrors({});
     setSubmitError(null);
 
@@ -97,7 +154,7 @@ export function AddProblemModal({ open, onClose, onCreated }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, editingProblem]);
 
   // Close on Escape
   useEffect(() => {
@@ -143,34 +200,39 @@ export function AddProblemModal({ open, onClose, onCreated }: Props) {
 
     setSubmitting(true);
     setSubmitError(null);
+    const payload = {
+      problem: item.problem.trim(),
+      categoryCodes: (item.categoryCodes ?? []).filter(Boolean),
+      occurredAt: item.occurredAt || null,
+      respondedAt: item.respondedAt || null,
+      lineCodes: selectedLines,
+      customLineCodes,
+      lineCode: selectedLines[0] ?? null,
+      customLine: selectedLines[0] ? !lines.includes(selectedLines[0]) : false,
+      pics: selectedPics.map((pic) => {
+        const member = !pic.manual
+          ? members.find((m) => m.id === pic.id)
+          : undefined;
+        return {
+          name: pic.name || member?.name || "",
+          employeeNo: member?.employeeNo ?? null,
+          manual: Boolean(pic.manual),
+        };
+      }),
+      picName: primaryPic?.name || primaryMember?.name || "",
+      picId:
+        primaryPic && !primaryPic.manual && /^\d+$/.test(primaryPic.id)
+          ? Number(primaryPic.id)
+          : null,
+      picEmployeeNo: primaryMember?.employeeNo ?? null,
+      dueDate: item.due || null,
+    };
     try {
-      await meetingApi.createProblem({
-        problem: item.problem.trim(),
-        categoryCodes: (item.categoryCodes ?? []).filter(Boolean),
-        occurredAt: item.occurredAt || null,
-        respondedAt: item.respondedAt || null,
-        lineCodes: selectedLines,
-        customLineCodes,
-        lineCode: selectedLines[0] ?? null,
-        customLine: selectedLines[0] ? !lines.includes(selectedLines[0]) : false,
-        pics: selectedPics.map((pic) => {
-          const member = !pic.manual
-            ? members.find((m) => m.id === pic.id)
-            : undefined;
-          return {
-            name: pic.name || member?.name || "",
-            employeeNo: member?.employeeNo ?? null,
-            manual: Boolean(pic.manual),
-          };
-        }),
-        picName: primaryPic?.name || primaryMember?.name || "",
-        picId:
-          primaryPic && !primaryPic.manual && /^\d+$/.test(primaryPic.id)
-            ? Number(primaryPic.id)
-            : null,
-        picEmployeeNo: primaryMember?.employeeNo ?? null,
-        dueDate: item.due || null,
-      });
+      if (editingProblem) {
+        await meetingApi.updateProblem(Number(editingProblem.id), payload);
+      } else {
+        await meetingApi.createProblem(payload);
+      }
       onCreated();
     } catch (err) {
       setSubmitError(
@@ -198,7 +260,9 @@ export function AddProblemModal({ open, onClose, onCreated }: Props) {
       >
         <header className="dml-pb-add-dialog__head">
           <div>
-            <h2 id={titleId}>{uiText("Tambah Masalah Baru")}</h2>
+            <h2 id={titleId}>
+              {isEditing ? uiText("Edit Masalah") : uiText("Tambah Masalah Baru")}
+            </h2>
           </div>
           <button
             type="button"
@@ -425,6 +489,8 @@ export function AddProblemModal({ open, onClose, onCreated }: Props) {
                   <InlineSpinner size={15} />
                   <span>{uiText("Menyimpan…")}</span>
                 </>
+              ) : isEditing ? (
+                uiText("Simpan Perubahan")
               ) : (
                 uiText("Simpan")
               )}

@@ -1,4 +1,5 @@
 "use client";
+import { createPortal } from "react-dom";
 import { useUiText } from "@/locales/useUiText";
 
 import { useRef, useState } from "react";
@@ -673,7 +674,7 @@ export default function ActionPlan({
         </section>
       ) : null}
 
-      {previewId ? (
+      {previewId && typeof document !== "undefined" ? createPortal(
         <div
           className="dm-5w-lightbox"
           role="dialog"
@@ -694,7 +695,8 @@ export default function ActionPlan({
             alt={uiText("Foto solusi diperbesar")}
             onClick={(event) => event.stopPropagation()}
           />
-        </div>
+        </div>,
+        document.body
       ) : null}
     </div>
   );

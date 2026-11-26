@@ -1,4 +1,5 @@
-.mpv-shell {
+.mpv-shell,
+.mpv-modal-overlay {
   --mpv-primary: var(--dm-admin-primary, #046a38);
   --mpv-primary-hover: var(--dm-admin-primary-hover, #035a2f);
   --mpv-primary-light: var(--dm-admin-primary-light, #e8f1ec);
@@ -8,23 +9,29 @@
   --mpv-border: var(--dm-admin-border, #e5e7eb);
   --mpv-border-light: var(--dm-admin-border-light, #f3f4f6);
   --mpv-surface: var(--dm-admin-card-bg, #ffffff);
+  color: var(--mpv-text);
+  font-family: var(--dm-admin-font, inherit);
+}
 
+.mpv-shell {
   display: flex;
   flex-direction: column;
   gap: 14px;
   width: 100%;
   min-width: 0;
-  color: var(--mpv-text);
-  font-family: var(--dm-admin-font, inherit);
 }
 
 .mpv-shell *,
 .mpv-shell *::before,
-.mpv-shell *::after {
+.mpv-shell *::after,
+.mpv-modal-overlay *,
+.mpv-modal-overlay *::before,
+.mpv-modal-overlay *::after {
   box-sizing: border-box;
 }
 
-.mpv-shell :is(button, input, select):focus-visible {
+.mpv-shell :is(button, input, select):focus-visible,
+.mpv-modal-overlay :is(button, input, select):focus-visible {
   outline: 2px solid var(--mpv-primary);
   outline-offset: 2px;
 }
@@ -632,7 +639,7 @@
 .mpv-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 1200;
   display: flex;
   align-items: center;
   justify-content: center;

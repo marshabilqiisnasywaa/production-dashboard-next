@@ -300,8 +300,14 @@ export default function FiveWhyList({
                         ) : null}
                         {item.major ? (
                           <strong className="dm-5w-row-major">{uiText("Major problem")}</strong>
+                          
                         ) : null}
+                        {Object.keys(item.standard ?? {}).length > 0 ? (
+                          <strong className="dm-5w-row-standard">{uiText("Standar baru")}</strong>
+                        ) : null}
+                        
                       </p>
+                      
                       <h4 className="dm-5w-row-title">
                         <button
                           type="button"

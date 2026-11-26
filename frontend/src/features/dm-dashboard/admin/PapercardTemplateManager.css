@@ -430,9 +430,10 @@
 .ptm-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 100;
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(2px);
+  z-index: 1200;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -442,10 +443,12 @@
 .ptm-modal-box {
   width: 100%;
   max-width: 480px;
+  max-height: min(88dvh, 720px);
+  overflow-y: auto;
   background: #ffffff;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15);
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.2);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -645,4 +648,36 @@
 .ptm-time-input {
   width: 90px;
   text-align: center;
+}
+
+
+.ptm-standard-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border: 1px solid #b7d9c4;
+  border-radius: 8px;
+  background: #eef8f1;
+}
+
+.ptm-standard-text {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ptm-standard-text p {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+}
+
+.ptm-standard-actions {
+  display: flex;
+  gap: 8px;
 }

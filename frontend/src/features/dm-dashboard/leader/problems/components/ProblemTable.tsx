@@ -2,7 +2,7 @@
 import { useUiText } from "@/locales/useUiText";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ChevronRight, X } from "lucide-react";
+import { ChevronRight, Pencil, Trash2, X } from "lucide-react";
 import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import { formatDue } from "../../meeting/utils";
 import type { ProblemRow, ProblemStatus } from "../types";
@@ -23,6 +23,8 @@ interface Props {
   onToggleSolved?: (id: string, currentlySolved: boolean) => void;
   onSaveSolution?: (id: string, solution: string) => Promise<void>;
   onSaveDueDate?: (id: string, dueDate: string) => Promise<void>;
+  onEditProblem?: (problem: ProblemRow) => void;
+  onDeleteProblem?: (id: string) => Promise<void>;
 }
 
 type ConfirmState = { id: string; action: "complete" | "reopen" } | null;
@@ -66,8 +68,12 @@ export function ProblemTable({
   onToggleSolved,
   onSaveSolution,
   onSaveDueDate,
+  onEditProblem,
+  onDeleteProblem,
 }: Props) {
   const { text: uiText, locale: uiLocale } = useUiText();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [assignmentDetails, setAssignmentDetails] = useState<{ kind: "line" | "pic"; problem: string; entries: { name: string; manual?: boolean }[] } | null>(null);
   const [selectedProblem, setSelectedProblem] = useState<ProblemRow | null>(null);
   const assignmentDialogRef = useRef<HTMLDialogElement>(null);
@@ -470,8 +476,12 @@ export function ProblemTable({
                   </td>
 
                   {onToggleSolved && (
-                    <td>
-                      {r.canEdit === false ? <span title={uiText("Hanya PIC yang dapat menindaklanjuti masalah ini.")}>—</span> : <>
+                    <td onClick={(event) => event.stopPropagation()}>
+                      {r.canEdit === false ? (
+                        !(onEditProblem || onDeleteProblem) && (
+                          <span title={uiText("Hanya PIC yang dapat menindaklanjuti masalah ini.")}>—</span>
+                        )
+                      ) : <>
                       {onSaveSolution && (
                         <div
                           style={{
@@ -565,6 +575,70 @@ export function ProblemTable({
                         </button>
                       )}
                       </>}
+                      {(onEditProblem || onDeleteProblem) && (
+                        <div className="dml-pb-admin-actions">
+                          {confirmDeleteId === r.id ? (
+                            <>
+                              <button
+                                type="button"
+                                className="dml-pb-admin-btn is-danger-solid"
+                                disabled={deletingId === r.id}
+                                onClick={async () => {
+                                  if (!onDeleteProblem) return;
+                                  setDeletingId(r.id);
+                                  try {
+                                    await onDeleteProblem(r.id);
+                                    setConfirmDeleteId(null);
+                                  } finally {
+                                    setDeletingId(null);
+                                  }
+                                }}
+                              >
+                                {deletingId === r.id
+                                  ? uiText("Menghapus…")
+                                  : uiText("Ya, hapus")}
+                              </button>
+                              <button
+                                type="button"
+                                className="dml-pb-admin-btn"
+                                disabled={deletingId === r.id}
+                                onClick={() => setConfirmDeleteId(null)}
+                              >
+                                {uiText("Batal")}
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              {onEditProblem && (
+                                <button
+                                  type="button"
+                                  className="dml-pb-admin-btn"
+                                  aria-label={uiText("Edit masalah: {{v0}}", {
+                                    v0: r.problem || "-",
+                                  })}
+                                  onClick={() => onEditProblem(r)}
+                                >
+                                  <Pencil size={12} aria-hidden="true" />
+                                  {uiText("Edit")}
+                                </button>
+                              )}
+                              {onDeleteProblem && (
+                                <button
+                                  type="button"
+                                  className="dml-pb-admin-btn is-danger"
+                                  aria-label={uiText("Hapus masalah: {{v0}}", {
+                                    v0: r.problem || "-",
+                                  })}
+                                  onClick={() => setConfirmDeleteId(r.id)}
+                                >
+                                  <Trash2 size={12} aria-hidden="true" />
+                                  {uiText("Hapus")}
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
                     </td>
                   )}
                 </tr>

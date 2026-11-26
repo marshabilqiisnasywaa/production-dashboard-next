@@ -3,6 +3,7 @@ import { useUiText } from "@/locales/useUiText";
 
 import { departmentLabel } from "../departments";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { adminApi, uploadPhoto } from "../api";
 import type { DmMvpCandidate, DmLine, DmMpvInput } from "../api";
 import { formatPeriod, previousPeriod } from "../dmData";
@@ -708,7 +709,7 @@ export default function MpvManager({
       </div>
 
       {/* 3. Soft Detail/Manual Modal */}
-      {allowManual && showEditModal && (
+      {allowManual && showEditModal && typeof document !== "undefined" && createPortal(
         <div
           className="mpv-modal-overlay"
           onClick={() => setShowEditModal(false)}
@@ -857,7 +858,8 @@ export default function MpvManager({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

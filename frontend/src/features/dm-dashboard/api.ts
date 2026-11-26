@@ -563,6 +563,20 @@ export type FiveWhyAnalysisSummary = {
   createdAt: string;
   updatedAt: string;
   canEdit: boolean;
+    standard: Record<string, FiveWhyStandard>;
+  canFlagStandard: boolean;
+};
+
+export type FiveWhyStandard = {
+  flagged: boolean;
+    solutionText: string;
+  department: string;
+  note: string;
+  flaggedBy: string;
+  flaggedAt: string;
+  applied: boolean;
+  appliedBy: string;
+  appliedAt: string;
 };
 
 export type FiveWhyAnalysisDetail = Omit<
@@ -638,6 +652,22 @@ export const fiveWhyAnalysesApi = {
     request<FiveWhyAnalysisDetail>(
       `/fivewhy/analyses/${encodeURIComponent(id)}`,
       json("PUT", input),
+      true
+    ),
+  setStandard: (
+    id: string,
+    solutionId: string,
+    input: { flagged: boolean; department: string; note: string }
+  ) =>
+    request<FiveWhyAnalysisDetail>(
+      `/fivewhy/analyses/${encodeURIComponent(id)}/solutions/${encodeURIComponent(solutionId)}/standard`,
+      json("PUT", input),
+      true
+    ),
+  setStandardApplied: (id: string, solutionId: string, applied: boolean) =>
+    request<FiveWhyAnalysisDetail>(
+      `/fivewhy/analyses/${encodeURIComponent(id)}/solutions/${encodeURIComponent(solutionId)}/standard/applied`,
+      json("PUT", { applied }),
       true
     ),
   remove: (id: string) =>
@@ -2042,6 +2072,27 @@ export const meetingApi = {
     picEmployeeNo?: string | null;
   }) =>
     request<DmMyProblem>("/meetings/problems", json("POST", input), true),
+  updateProblem: (
+    id: number,
+    input: {
+      lineCodes?: string[];
+      customLineCodes?: string[];
+      pics?: { name: string; employeeNo?: string | null; manual: boolean }[];
+      problem: string;
+      categoryCodes?: string[];
+      occurredAt?: string | null;
+      respondedAt?: string | null;
+      picName: string;
+      picId?: number | null;
+      dueDate?: string | null;
+      lineCode?: string | null;
+      customLine?: boolean;
+      picEmployeeNo?: string | null;
+    }
+  ) =>
+    request<DmMyProblem>(`/meetings/problems/${id}`, json("PUT", input), true),
+  deleteProblem: (id: number) =>
+    request<void>(`/meetings/problems/${id}`, { method: "DELETE" }, true),
   supervisorEscalations: () =>
     request<DmMyProblem[]>("/meetings/problems/escalations", {}, true),
 };

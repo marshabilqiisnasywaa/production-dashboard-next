@@ -4,6 +4,7 @@ import { useUiText } from "@/locales/useUiText";
 
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { notificationApi, papercardApi, type DmMeetingSession } from "../api";
 import "./ReminderModal.css";
 
@@ -314,7 +315,7 @@ export function ReminderModal({
         </div>
       )} */}
 
-      {current && (
+      {current && typeof document !== "undefined" && createPortal(
         <div
           className="dm-reminder-overlay"
           onMouseDown={(event) => {
@@ -385,7 +386,8 @@ export function ReminderModal({
               <p className="dm-reminder-demo-note">{uiText("Mode demo — tidak mengubah status Papercard atau meeting.")}</p>
             )}
           </section>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
