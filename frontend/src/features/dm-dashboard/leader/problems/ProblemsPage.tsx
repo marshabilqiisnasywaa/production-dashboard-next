@@ -3,9 +3,11 @@ import { useUiText } from "@/locales/useUiText";
 
 
 import { useEffect, useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import "./problems.css";
 import { Card } from "@/components/ui/Card";
 import { TableSkeleton } from "@/components/ui/LoadingState";
+import { AddProblemModal } from "./components/AddProblemModal";
 import { ProblemTable } from "./components/ProblemTable";
 import { ProblemLoadError } from "./components/ProblemLoadError";
 import { useProblems } from "./hooks/useProblems";
@@ -51,6 +53,7 @@ export default function ProblemsPage({
   const [lineFilter, setLineFilter] = useState("all");
   const [dueFilter, setDueFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [addOpen, setAddOpen] = useState(false);
 
   /** Share of all problems, rounded to a whole percent (0 when there is no data). */
   const rate = (n: number) =>
@@ -225,6 +228,15 @@ export default function ProblemsPage({
                 onClick={resetFilters}
               >{uiText("Reset")}</button>
             )}
+
+            <button
+              type="button"
+              className="dml-pb-add-btn"
+              onClick={() => setAddOpen(true)}
+            >
+              <Plus size={15} aria-hidden="true" />
+              {uiText("Tambah Masalah")}
+            </button>
           </div>
         </div>
 
@@ -238,6 +250,15 @@ export default function ProblemsPage({
           <TableSkeleton rows={6} columns={7} label={uiText("Memuat masalah…")} />
         )}
       </section>
+
+      <AddProblemModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onCreated={() => {
+          setAddOpen(false);
+          refresh();
+        }}
+      />
     </div>
   );
 }

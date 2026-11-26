@@ -10,7 +10,7 @@ import { ChevronDown, Search } from "lucide-react";
 import { summaryLines, summaryPics } from "../utils";
 import { CategoryPathSelect, useCategoryOptions } from "../../../categoryPath";
 
-function LineSelect({ id, lines, value, invalid, onChange, onAddCustom }: {
+export function LineSelect({ id, lines, value, invalid, onChange, onAddCustom }: {
   id: string;
   lines: string[];
   value: string[];
@@ -81,7 +81,7 @@ function LineSelect({ id, lines, value, invalid, onChange, onAddCustom }: {
   );
 }
 
-function PicSelect({ id, members, customNames, value, invalid, onChange }: {
+export function PicSelect({ id, members, customNames, value, invalid, onChange }: {
   id: string;
   members: MeetingMember[];
   customNames: string[];

@@ -1,0 +1,59 @@
+/* ============================================================================
+   Compact, Simple Color Chips for Abnormal Categories (Code 1 / Code 2 / Code 3)
+   ============================================================================ */
+
+.dm-cat-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 4px;
+}
+
+.dm-cat-badge {
+  display: inline-block;
+  padding: 1.5px 6px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* Code 1 — Hijau */
+.dm-cat-badge.is-code-1 {
+  background: #e6f4ec;
+  color: #046a38;
+}
+
+/* Code 2 — Amber / Kuning */
+.dm-cat-badge.is-code-2 {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Code 3 — Biru */
+.dm-cat-badge.is-code-3 {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* Legacy / uncoded fallback */
+.dm-cat-badge.is-legacy {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+/* Subtext under Date cell for occurred / responded time */
+.dm-pb-date-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dm-pb-date-time {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  white-space: nowrap;
+}

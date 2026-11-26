@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import (
@@ -129,18 +129,19 @@ def build_problems_report(db: Session, start: date, end: date) -> PublicProblems
             )
 
     # 3. DM Line & Workshop Meeting Problems within [start, end]
+    dm_date_expr = func.coalesce(DmMeetingSession.date, func.date(DmMeetingSummary.created_at))
     dm_stmt = (
         select(DmMeetingSummary, DmMeetingSession)
-        .join(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
+        .outerjoin(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
         .options(
             selectinload(DmMeetingSummary.affected_lines),
             selectinload(DmMeetingSummary.assigned_pics),
         )
         .where(
-            DmMeetingSession.date >= start,
-            DmMeetingSession.date <= end,
+            dm_date_expr >= start,
+            dm_date_expr <= end,
         )
-        .order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
+        .order_by(dm_date_expr.desc(), DmMeetingSummary.id.desc())
     )
     ws_stmt = (
         select(WorkshopMeetingSummary, WorkshopMeetingSession)
@@ -158,13 +159,31 @@ def build_problems_report(db: Session, start: date, end: date) -> PublicProblems
 
     meeting_problems: list[PublicMeetingProblemOut] = []
 
-    def append_summary(sm: DmMeetingSummary | WorkshopMeetingSummary, session: DmMeetingSession | WorkshopMeetingSession, prefix: str = "") -> None:
+    def append_summary(
+        sm: DmMeetingSummary | WorkshopMeetingSummary,
+        session: DmMeetingSession | WorkshopMeetingSession | None,
+        prefix: str = "",
+    ) -> None:
         meta = summary_metadata(sm)
         pic_names = [pic["name"] for pic in meta["pics"] if pic.get("name")]
-        session_label = f"{prefix}{session.label}" if prefix else session.label
+        base_label = (
+            session.label
+            if session is not None
+            else (getattr(sm, "created_by_name", None) or "Input Langsung")
+        )
+        session_label = f"{prefix}{base_label}" if prefix else base_label
+        if session is not None:
+            item_date = session.date
+        elif sm.occurred_at and len(sm.occurred_at) >= 10:
+            try:
+                item_date = date.fromisoformat(sm.occurred_at[:10])
+            except ValueError:
+                item_date = sm.created_at.date() if sm.created_at else date.today()
+        else:
+            item_date = sm.created_at.date() if sm.created_at else date.today()
         meeting_problems.append(
             PublicMeetingProblemOut(
-                date=session.date,
+                date=item_date,
                 session_label=session_label,
                 line_code=display_lines(sm),
                 problem=sm.problem,

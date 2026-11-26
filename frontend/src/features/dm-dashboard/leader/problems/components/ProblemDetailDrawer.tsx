@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { CalendarDays, Clock3, Tag, UserRound, X } from "lucide-react";
 import { useUiText } from "@/locales/useUiText";
 import { departmentLabel } from "@/features/dm-dashboard/departments";
 import { formatDue } from "../../meeting/utils";
 import type { ProblemRow, ProblemStatus } from "../types";
 import { formatMeetingDate, formatOverdue } from "../utils";
-import { categoryText, responseMinutes } from "../categoryText";
+import { CategoryCodeBadges } from "./CategoryCodeBadges";
 
 const STATUS_VIEW: Record<
   ProblemStatus,
@@ -47,11 +48,11 @@ export default function ProblemDetailDrawer({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [problem, onClose]);
 
-  if (!problem) return null;
+  if (!problem || typeof document === "undefined") return null;
 
   const status = STATUS_VIEW[problem.status];
 
-  return (
+  return createPortal(
     <div
       className="dml-pb-detail-overlay"
       onMouseDown={(event) => {
@@ -106,7 +107,7 @@ export default function ProblemDetailDrawer({
               <div className="dml-pb-detail-info">
                 <span className="dml-pb-detail-label">
                   <Clock3 size={14} aria-hidden="true" />
-                  {uiText("Sesi")}
+                  {uiText("Input By")}
                 </span>
                 <div className="dml-pb-detail-value">
                   {problem.sessionLabel || "-"}
@@ -124,10 +125,13 @@ export default function ProblemDetailDrawer({
                   {uiText("Kategori")}
                 </span>
                 <div className="dml-pb-detail-value">
-                  {categoryText(problem) || "-"}
+                  <CategoryCodeBadges
+                    categories={problem.problemCategories}
+                    codes={problem.categoryCodes}
+                  />
                 </div>
               </div>
-              {problem.occurredAt ? (
+              {problem.occurredAt || problem.respondedAt ? (
                 <>
                   <div className="dml-pb-detail-info">
                     <span className="dml-pb-detail-label">
@@ -135,7 +139,7 @@ export default function ProblemDetailDrawer({
                       {uiText("Jam terjadi")}
                     </span>
                     <div className="dml-pb-detail-value">
-                      {formatDue(problem.occurredAt, uiLocale)}
+                      {problem.occurredAt ? formatDue(problem.occurredAt, uiLocale) : "-"}
                     </div>
                   </div>
                   <div className="dml-pb-detail-info">
@@ -145,11 +149,8 @@ export default function ProblemDetailDrawer({
                     </span>
                     <div className="dml-pb-detail-value">
                       {problem.respondedAt
-                        ? uiText("{{v0}} ({{v1}} menit)", {
-                            v0: formatDue(problem.respondedAt, uiLocale),
-                            v1: responseMinutes(problem.occurredAt, problem.respondedAt) ?? "-",
-                          })
-                        : uiText("Belum direspon")}
+                        ? formatDue(problem.respondedAt, uiLocale)
+                        : "-"}
                     </div>
                   </div>
                 </>
@@ -212,6 +213,7 @@ export default function ProblemDetailDrawer({
           </section>
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body
   );
 }
