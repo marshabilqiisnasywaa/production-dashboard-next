@@ -336,7 +336,7 @@
 
 .dmfc-manager-table th:first-child,
 .dmfc-manager-table td:first-child {
-  width: 112px;
+  width: 200px;
 }
 
 .dmfc-manager-table th:nth-child(3),
@@ -2027,7 +2027,7 @@
   border-radius: 8px;
   background: #ffffff;
   color: var(--dm-admin-text-muted, #6b7280);
-  font: inherit;
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -2075,7 +2075,7 @@
   border: 0;
   outline: 0;
   background: transparent;
-  font: inherit;
+  font-size: 14px;
 }
 
 .dmfc-document-table .dmfc-document-title strong,

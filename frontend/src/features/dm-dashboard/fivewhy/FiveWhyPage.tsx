@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { IconCheck } from "@/components/ui/icons";
 import { ApiError, fiveWhyAnalysesApi } from "../api";
-import type { FiveWhyAnalysisDetail } from "../api";
+import type { FiveWhyAnalysisDetail, FiveWhyStandard } from "../api";
 import {
   FIVE_WHY_ANALYSIS_LABELS,
   analysisStatusTone,
@@ -29,6 +29,7 @@ import ProblemSummary from "./ProblemSummary";
 import WhyTree from "./WhyTree";
 import ActionPlan from "./ActionPlan";
 import FiveWhyReport from "./FiveWhyReport";
+import StandardFlagBox from "./StandardFlagBox";
 import "./FiveWhy.css";
 
 const TABS: readonly { key: FiveWhyTabKey; label: string }[] = [
@@ -174,7 +175,10 @@ export default function FiveWhyPage({
   const [focusTitleToken] = useState(focusTitle ? 1 : 0);
   const [whyFocus, setWhyFocus] = useState<WhyFocus>({ id: null, token: 0 });
   const [reloadToken, setReloadToken] = useState(0);
+    const stepperRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+     const [standard, setStandard] = useState<Record<string, FiveWhyStandard> | null>(null);
+  const [canFlagStandard, setCanFlagStandard] = useState(false);
   const lastTabRef = useRef<Map<string, FiveWhyTabKey>>(new Map());
   const recordRef = useRef<FiveWhyRecord | null>(null);
   const editCountRef = useRef(0);
@@ -215,6 +219,8 @@ export default function FiveWhyPage({
         setRecord(next);
         setRevision(detail.revision);
         setCanEdit(detail.canEdit);
+        setStandard(detail.standard);
+        setCanFlagStandard(detail.canFlagStandard);
         setLineId(detail.lineId);
         setDirty(false);
         setConflict(false);
@@ -367,6 +373,13 @@ export default function FiveWhyPage({
   function openTab(tab: FiveWhyTabKey) {
     setActiveTab(tab);
     if (recordId) lastTabRef.current.set(recordId, tab);
+  }
+
+      function goToStep(tab: FiveWhyTabKey) {
+    openTab(tab);
+    window.requestAnimationFrame(() =>
+      stepperRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    );
   }
 
   async function duplicateAnalysis() {
@@ -532,6 +545,17 @@ export default function FiveWhyPage({
               </div>
             </div>
             <FiveWhyReport record={record} canEdit={canEdit} />
+            {standard ? (
+              <StandardFlagBox
+                key={record.abnormal.id}
+                analysisId={record.abnormal.id}
+                solutions={record.solutions}
+                standard={standard}
+                canFlag={canFlagStandard}
+                onSaved={setStandard}
+                onNotify={notify}
+              />
+            ) : null}
           </>
         ) : (
           <>
@@ -617,7 +641,8 @@ export default function FiveWhyPage({
               </div>
             </section>
 
-            <div
+            <div             
+              ref={stepperRef}
               className="dm-5w-stepper"
               role="tablist"
               aria-label={uiText("Langkah analisis 5Why dan PDCA")}
@@ -669,6 +694,18 @@ export default function FiveWhyPage({
                   onChange={(abnormal) => updateRecord({ abnormal })}
                 />
               ) : null}
+                            {activeTab === 1 ? (
+                <div className="dm-5w-step-next">
+                  <button
+                    type="button"
+                    className="dm-5w-btn dm-5w-btn-primary"
+                    disabled={working}
+                    onClick={() => goToStep(2)}
+                  >
+                    {uiText("Lanjut ke Analisis 5Why")} &rarr;
+                  </button>
+                </div>
+              ) : null}
               {activeTab === 2 ? (
                 <WhyTree
                   whys={record.whys}
@@ -681,6 +718,26 @@ export default function FiveWhyPage({
                   onNotify={notify}
                   onUploadPhotos={uploadPhotos}
                 />
+              ) : null}
+                            {activeTab === 2 ? (
+                <div className="dm-5w-step-nav">
+                  <button
+                    type="button"
+                    className="dm-5w-btn dm-5w-btn-secondary"
+                    disabled={working}
+                    onClick={() => goToStep(1)}
+                  >
+                    &larr; {uiText("Kembali ke Ringkasan Masalah")}
+                  </button>
+                  <button
+                    type="button"
+                    className="dm-5w-btn dm-5w-btn-primary"
+                    disabled={working}
+                    onClick={() => goToStep(3)}
+                  >
+                    {uiText("Lanjut ke Solusi & PDCA")} &rarr;
+                  </button>
+                </div>
               ) : null}
               {activeTab === 3 ? (
                 <ActionPlan

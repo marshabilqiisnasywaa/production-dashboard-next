@@ -137,6 +137,7 @@ dialog.dm-5w-upload-modal:not([open]) {
 
 .dm-5w-documents {
   padding: 18px;
+  margin-top: 16px;
 }
 
 .dm-5w-document-form p,
@@ -4211,4 +4212,82 @@ dialog.dm-5w-upload-modal:not([open]) {
     grid-template-columns: minmax(0, 1fr);
     gap: 2px;
   }
+}
+
+.dm-5w-step-next {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--dm-5w-border-light);
+}
+
+.dm-5w-step-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--dm-5w-border-light);
+}
+
+
+.dm-5w-row-standard {
+  color: var(--dm-5w-primary);
+}
+
+.dm-5w-standard {
+  margin-top: 16px;
+}
+
+.dm-5w-standard-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.dm-5w-standard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.dm-5w-standard-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.dm-5w-standard-meta {
+  color: var(--dm-5w-sub);
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .dm-5w-standard-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dm-5w-standard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dm-5w-standard-item {
+  padding-top: 12px;
+  border-top: 1px solid var(--dm-5w-border-light);
+}
+
+.dm-5w-standard-item:first-child {
+  padding-top: 0;
+  border-top: 0;
 }

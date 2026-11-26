@@ -119,7 +119,7 @@ export default function DocumentLibrary({
   const working = useRef(false);
   const selectedLine = lines.find((line) => line.id === lineId);
   const selectedPic = selectedLine?.pics.find((pic) => pic.id === picId);
-  const canEdit = user?.role === "leader" || user?.role === "member";
+  const canEdit = user?.role === "leader" || user?.role === "member" || user?.role === "admin" || user?.role === "superadmin";
   const categoryOptions = getCategoryOptions(
     customCategories,
     pendingCategories,
@@ -179,7 +179,7 @@ export default function DocumentLibrary({
     Promise.all([accountApi.me(), fiveWhyDocumentsApi.list()])
       .then(async ([me, items]) => {
         const options =
-          me.role === "leader" || me.role === "member"
+          me.role === "leader" || me.role === "member" || me.role === "admin" || me.role === "superadmin"
             ? await fiveWhyDocumentsApi.options()
             : [];
         if (!active) return;

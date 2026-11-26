@@ -2449,7 +2449,7 @@
   flex-direction: column;
   gap: 0.85rem;
   padding: 1.05rem;
-  border: 1px solid rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(242, 242, 242, 0.92);
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.88) 0%,
@@ -2754,11 +2754,11 @@
   min-width: 0;
   margin-bottom: 16px;
   padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(238, 238, 238, 0.88);
   border-radius: 18px;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.72) 0%,
+    rgba(246, 246, 246, 0.72) 0%,
     rgba(248, 250, 252, 0.62) 100%
   );
   box-shadow:
@@ -2846,7 +2846,7 @@
   gap: 0.72rem;
   min-width: 0;
   padding: 1.05rem 1.1rem;
-  border: 1px solid rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(242, 242, 242, 0.92);
   border-radius: 16px;
   background: linear-gradient(
     180deg,
@@ -3992,4 +3992,15 @@ button.dm-status-badge.is-switchable:disabled {
   .dm-admin-nav-chevron {
     transition: none;
   }
+}
+
+.dm-standard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dm-standard-note {
+  max-width: 320px;
+  white-space: pre-wrap;
 }

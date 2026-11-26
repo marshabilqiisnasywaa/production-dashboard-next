@@ -6,8 +6,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal
+from app.models import Line
 from app.models.fivewhy import FiveWhyAnalysis
 from app.services.fivewhy import leader_line_ids
+from app.services.team_slots import team_department
 
 JAKARTA = ZoneInfo("Asia/Jakarta")
 MAJOR_DOWNTIME_MINUTES = 30
@@ -15,9 +17,12 @@ ROOT_CAUSE_PREVIEW = 160
 BRIEF_PREVIEW = 200
 COUNTERMEASURE_PREVIEW = 5
 SOLUTION_STAGES = ("rencana", "dikerjakan", "dipantau", "standar")
+STANDARD_DEPARTMENTS = ("PROD", "ME", "PE", "QC")
 
 
 def can_edit(principal: Principal, row: FiveWhyAnalysis, leader_lines: set[int] | None = None) -> bool:
+    if principal.is_admin:
+        return True
     employee = principal.employee
     if employee is None or principal.role not in ("leader", "member"):
         return False
@@ -27,6 +32,8 @@ def can_edit(principal: Principal, row: FiveWhyAnalysis, leader_lines: set[int] 
 
 
 def editor_lines(db: Session, principal: Principal) -> set[int]:
+    if principal.is_admin:
+        return {line.id for line in db.scalars(select(Line))}
     if principal.employee is None or principal.role != "leader":
         return set()
     return leader_line_ids(db, principal.employee.id)
@@ -61,6 +68,33 @@ def empty_data(line_code: str, pengusul: str, now: datetime, analysis_id: str) -
         "solutions": [],
     }
 
+def can_flag_standard(principal: Principal) -> bool:
+    employee = principal.employee
+    return (
+        employee is not None
+        and principal.role == "supervisor"
+        and team_department(employee.dept) == "PROD"
+    )
+
+
+def standard_out(data: dict) -> dict:
+    """Flagged solutions only: {solution id: flag}. Stale ids (solution deleted) are dropped."""
+    ids = {str(item.get("id")): item for item in section(data, "solutions", list) if isinstance(item, dict)}
+    out = {}
+    for solution_id, raw in section(section(data, "standard", dict), "items", dict).items():
+        if solution_id in ids and isinstance(raw, dict) and raw.get("flagged"):
+            out[solution_id] = {
+                "flagged": True,
+                "solutionText": brief(ids[solution_id].get("text"), 300),
+                "department": str(raw.get("department") or ""),
+                "note": str(raw.get("note") or ""),
+                "flaggedBy": str(raw.get("flaggedBy") or ""),
+                "flaggedAt": str(raw.get("flaggedAt") or ""),
+                "applied": bool(raw.get("applied")),
+                "appliedBy": str(raw.get("appliedBy") or ""),
+                "appliedAt": str(raw.get("appliedAt") or ""),
+            }
+    return out
 
 def section(data: dict, key: str, kind: type):
     value = data.get(key) if isinstance(data, dict) else None

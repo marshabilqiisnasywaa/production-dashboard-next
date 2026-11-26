@@ -6,11 +6,12 @@ import { departmentLabel } from "../departments";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { DmEmployee, DmLine, DmWorkshop } from "../api";
-import { adminApi, papercardApi } from "../api";
+import { adminApi, fiveWhyAnalysesApi, papercardApi } from "../api";
 import type { DmMember } from "../dmData";
 import type { DepartmentKey } from "../leader/types";
 import "./PapercardTemplateManager.css";
 import TemplateTreeEditor from "./TemplateTreeEditor";
+import type { StandardTarget } from "./StandardProposals";
 import {
   type ChecklistCategory,
   countItems,
@@ -23,7 +24,10 @@ import { FactoryIcon } from "./AdminIcons";
 interface PapercardTemplateManagerProps {
   workshops: DmWorkshop[];
   lines: DmLine[];
+  target?: StandardTarget | null;
+  onTargetDone?: () => void;
 }
+
 
 export interface DepartmentTemplate {
   dept: DepartmentKey;
@@ -57,6 +61,8 @@ const DEPARTMENTS: { key: DepartmentKey; label: string }[] = [
 export default function PapercardTemplateManager({
   workshops,
   lines,
+    target,
+  onTargetDone,
 }: PapercardTemplateManagerProps) {
   const { text: uiText } = useUiText();
   const [selectedWorkshopId, setSelectedWorkshopId] = useState<string>(
@@ -119,6 +125,43 @@ export default function PapercardTemplateManager({
   const currentLine = useMemo(() => {
     return lines.find((l) => l.code === selectedLineCode) ?? lines[0];
   }, [lines, selectedLineCode]);
+
+  // Buka line & departemen dari usulan standar
+  const openedTargetRef = useRef<string | null>(null);
+  const [applying, setApplying] = useState(false);
+  useEffect(() => {
+    if (!target || openedTargetRef.current === `${target.analysisId}:${target.solutionId}`) return;
+    const line = lines.find((item) => item.code === target.lineCode);
+    if (!line) return;
+    openedTargetRef.current = `${target.analysisId}:${target.solutionId}`;
+    setSelectedWorkshopId(String(line.workshopId));
+    setSelectedLineCode(line.code);
+    if (DEPARTMENTS.some((item) => item.key === target.department)) {
+      setSelectedDept(target.department as DepartmentKey);
+    }
+  }, [target, lines]);
+
+  const markStandardApplied = async () => {
+    if (!target) return;
+    setApplying(true);
+    try {
+      await fiveWhyAnalysesApi.setStandardApplied(target.analysisId, target.solutionId, true);
+      setSavedNotice({
+        type: "success",
+        message: "Usulan standar ditandai sudah diterapkan.",
+      });
+      onTargetDone?.();
+    } catch (err) {
+      setSavedNotice({
+        type: "error",
+        message:
+          err instanceof Error ? err.message : "Gagal menandai usulan standar.",
+      });
+    } finally {
+      setApplying(false);
+      setTimeout(() => setSavedNotice(null), 3000);
+    }
+  };
 
   // Load team members of current line from backend
   const loadLineMembers = useCallback(() => {
@@ -528,7 +571,45 @@ export default function PapercardTemplateManager({
   return (
     <div className="ptm-root">
       {/* 1. Header Toolbar (Compact, Clean & Calm - Refined) */}
-      
+            {target ? (
+        <div className="ptm-standard-banner" role="status">
+          <div className="ptm-standard-text">
+            <strong>
+              {uiText("Usulan standar baru")} · {target.nomor}
+            </strong>
+            <span>
+              {target.lineCode} · {departmentLabel(target.department)}
+            </span>
+            {target.title ? <span>{target.title}</span> : null}
+                        <span>
+              {uiText("Solusi")}: {target.solutionText || "—"}
+            </span>
+            <p>{target.note || "—"}</p>
+            {target.rootCause ? (
+              <small>
+                {uiText("Akar masalah")}: {target.rootCause}
+              </small>
+            ) : null}
+          </div>
+          <div className="ptm-standard-actions">
+            <button
+              type="button"
+              className="ptm-btn ptm-btn-primary"
+              disabled={applying}
+              onClick={() => void markStandardApplied()}
+            >
+              {uiText("Tandai sudah diterapkan")}
+            </button>
+            <button
+              type="button"
+              className="ptm-btn ptm-btn-ghost"
+              onClick={onTargetDone}
+            >
+              {uiText("Tutup")}
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div className="ptm-topbar">
         <div className="ptm-selectors">
           {/* Workshop Selector */}

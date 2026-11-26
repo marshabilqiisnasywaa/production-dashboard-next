@@ -28,7 +28,25 @@ def leader_line_ids(db: Session, employee_id: int) -> set[int]:
     return ids
 
 
+def creator_employee(db: Session, principal: Principal) -> Employee:
+    if principal.employee is not None:
+        return principal.employee
+    if principal.is_admin:
+        employee = db.scalar(select(Employee).where(
+            Employee.is_active.is_(True),
+            Employee.role.in_(("superadmin", "admin")),
+        ).order_by(Employee.role, Employee.id))
+        if employee is not None:
+            return employee
+        employee = db.scalar(select(Employee).where(Employee.is_active.is_(True)).order_by(Employee.id))
+        if employee is not None:
+            return employee
+    raise forbidden("Akun belum terhubung dengan karyawan aktif.")
+
+
 def upload_line_ids(db: Session, principal: Principal) -> set[int]:
+    if principal.is_admin:
+        return {line.id for line in db.scalars(select(Line))}
     if principal.employee is None:
         return set()
     if principal.role == "leader":
