@@ -2005,6 +2005,27 @@ export const meetingApi = {
     picEmployeeNo?: string | null;
   }) =>
     request<DmMyProblem>("/meetings/problems", json("POST", input), true),
+  updateProblem: (
+    id: number,
+    input: {
+      lineCodes?: string[];
+      customLineCodes?: string[];
+      pics?: { name: string; employeeNo?: string | null; manual: boolean }[];
+      problem: string;
+      categoryCodes?: string[];
+      occurredAt?: string | null;
+      respondedAt?: string | null;
+      picName: string;
+      picId?: number | null;
+      dueDate?: string | null;
+      lineCode?: string | null;
+      customLine?: boolean;
+      picEmployeeNo?: string | null;
+    }
+  ) =>
+    request<DmMyProblem>(`/meetings/problems/${id}`, json("PUT", input), true),
+  deleteProblem: (id: number) =>
+    request<void>(`/meetings/problems/${id}`, { method: "DELETE" }, true),
   supervisorEscalations: () =>
     request<DmMyProblem[]>("/meetings/problems/escalations", {}, true),
 };

@@ -1,4 +1,5 @@
 "use client";
+import { createPortal } from "react-dom";
 import { useUiText } from "@/locales/useUiText";
 
 import { useEffect, useRef, useState } from "react";
@@ -979,7 +980,7 @@ export default function WhyTree({
         </div>
       </aside>
 
-      {previewId ? (
+      {previewId && typeof document !== "undefined" ? createPortal(
         <div
           className="dm-5w-lightbox"
           role="dialog"
@@ -1000,7 +1001,8 @@ export default function WhyTree({
             alt={uiText("Foto bukti diperbesar")}
             onClick={(event) => event.stopPropagation()}
           />
-        </div>
+        </div>,
+        document.body
       ) : null}
     </div>
   );

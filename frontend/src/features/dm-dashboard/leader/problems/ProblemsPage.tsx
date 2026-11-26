@@ -10,8 +10,9 @@ import { TableSkeleton } from "@/components/ui/LoadingState";
 import { AddProblemModal } from "./components/AddProblemModal";
 import { ProblemTable } from "./components/ProblemTable";
 import { ProblemLoadError } from "./components/ProblemLoadError";
+import { meetingApi } from "../../api";
 import { useProblems } from "./hooks/useProblems";
-import type { ProblemFilter } from "./types";
+import type { ProblemFilter, ProblemRow } from "./types";
 
 /** Share of all problems: percent + "dari total" on the right of a KPI card, after a short divider. */
 function RateBadge({ tone, pct }: { tone: "warn" | "ok" | "bad"; pct: number }) {
@@ -54,6 +55,19 @@ export default function ProblemsPage({
   const [dueFilter, setDueFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [addOpen, setAddOpen] = useState(false);
+  const [editingProblem, setEditingProblem] = useState<ProblemRow | null>(null);
+
+  async function handleDeleteProblem(id: string) {
+    setActionError(null);
+    try {
+      await meetingApi.deleteProblem(Number(id));
+      refresh();
+    } catch (cause) {
+      setActionError(
+        cause instanceof Error ? cause.message : "Masalah gagal dihapus."
+      );
+    }
+  }
 
   /** Share of all problems, rounded to a whole percent (0 when there is no data). */
   const rate = (n: number) =>
@@ -232,7 +246,10 @@ export default function ProblemsPage({
             <button
               type="button"
               className="dml-pb-add-btn"
-              onClick={() => setAddOpen(true)}
+              onClick={() => {
+                setEditingProblem(null);
+                setAddOpen(true);
+              }}
             >
               <Plus size={15} aria-hidden="true" />
               {uiText("Tambah Masalah")}
@@ -245,7 +262,20 @@ export default function ProblemsPage({
 
         {actionError && <p className="dml-pb-action-error" role="alert">{uiText(actionError)}</p>}
         {error ? <ProblemLoadError error={error} onRetry={refresh} /> : ready ? (
-          <ProblemTable rows={visible} onToggleSolved={handleToggleSolved} onSaveSolution={saveSolution} />
+          <ProblemTable
+            rows={visible}
+            onToggleSolved={handleToggleSolved}
+            onSaveSolution={saveSolution}
+            onEditProblem={
+              adminLayout
+                ? (row) => {
+                    setEditingProblem(row);
+                    setAddOpen(true);
+                  }
+                : undefined
+            }
+            onDeleteProblem={adminLayout ? handleDeleteProblem : undefined}
+          />
         ) : (
           <TableSkeleton rows={6} columns={7} label={uiText("Memuat masalah…")} />
         )}
@@ -253,9 +283,14 @@ export default function ProblemsPage({
 
       <AddProblemModal
         open={addOpen}
-        onClose={() => setAddOpen(false)}
+        editingProblem={editingProblem}
+        onClose={() => {
+          setAddOpen(false);
+          setEditingProblem(null);
+        }}
         onCreated={() => {
           setAddOpen(false);
+          setEditingProblem(null);
           refresh();
         }}
       />

@@ -638,7 +638,7 @@
 
 .dmfc-board-modal-backdrop {
   position: fixed;
-  z-index: 100;
+  z-index: 1200;
   inset: 0;
   display: grid;
   place-items: center;
@@ -1899,7 +1899,7 @@
 .dmfc-preview-backdrop,
 .dmfc-copy-backdrop {
   position: fixed;
-  z-index: 100;
+  z-index: 1200;
   inset: 0;
   display: grid;
   place-items: center;
@@ -2341,7 +2341,7 @@
 
 .dmfc-preview-backdrop {
   position: fixed;
-  z-index: 100;
+  z-index: 1200;
   inset: 0;
   display: grid;
   place-items: center;

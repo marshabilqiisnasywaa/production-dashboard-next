@@ -981,6 +981,62 @@ def create_direct_problem(
     out.can_edit = principal.employee is not None and is_pic(new_sm, principal.employee)
     return out
 
+
+@router.put("/problems/{summary_id}", response_model=myProblemOut)
+def update_problem(
+    summary_id: int,
+    payload: MeetingSummaryIn,
+    db: Session = Depends(get_db),
+    _admin=Depends(get_current_admin),
+) -> myProblemOut:
+    """Admin-only edit untuk masalah DM meeting, workshop, maupun input langsung."""
+    if workshop_problems.is_workshop_id(summary_id):
+        out = workshop_problems.update_problem(db, summary_id, payload)
+        return with_pic_dept(db, [out])[0]
+
+    sm = db.get(DmMeetingSummary, summary_id)
+    if sm is None:
+        raise HTTPException(status_code=404, detail="Problem tidak ditemukan.")
+
+    assigned_lines, assigned_pics = resolve_assignments(db, payload, default_line_id=sm.line_id)
+    category_fields = resolve_category_fields(db, payload)
+    summary_line_id = next((lid for lid, _ in assigned_lines if lid is not None), None)
+
+    sm.line_id = summary_line_id
+    sm.problem = payload.problem
+    for key, value in category_fields.items():
+        setattr(sm, key, value)
+    sm.pic_name = assigned_pics[0][1]
+    sm.pic_id = assigned_pics[0][0]
+    sm.due_date = payload.due_date
+    sm.line_code = assigned_lines[0][1] if assigned_lines else None
+    sm.affected_lines = [DmSummaryLine(line_id=lid, code=code) for lid, code in assigned_lines]
+    sm.assigned_pics = [DmSummaryPic(employee_id=eid, name=name) for eid, name in assigned_pics]
+    db.commit()
+    db.refresh(sm)
+
+    session = db.get(DmMeetingSession, sm.session_id) if sm.session_id is not None else None
+    out = _my_problem_out(sm, session)
+    return with_pic_dept(db, [out])[0]
+
+
+@router.delete("/problems/{summary_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_problem(
+    summary_id: int,
+    db: Session = Depends(get_db),
+    _admin=Depends(get_current_admin),
+) -> None:
+    """Admin-only delete untuk masalah DM meeting, workshop, maupun input langsung."""
+    if workshop_problems.is_workshop_id(summary_id):
+        workshop_problems.delete_problem(db, summary_id)
+        return
+
+    sm = db.get(DmMeetingSummary, summary_id)
+    if sm is None:
+        raise HTTPException(status_code=404, detail="Problem tidak ditemukan.")
+    db.delete(sm)
+    db.commit()
+
 @router.get("/problems/escalations", response_model=list[myProblemOut])
 def list_supervisor_escalations(
     db: Session = Depends(get_db),

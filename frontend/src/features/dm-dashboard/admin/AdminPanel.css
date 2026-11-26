@@ -5,6 +5,7 @@
   --dm-admin-font: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+:root,
 .dm-admin-layout,
 .dm-admin-login-screen {
   --dm-admin-bg: #f6f7f8;

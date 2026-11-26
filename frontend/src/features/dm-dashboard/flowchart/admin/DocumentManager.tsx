@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Eye, FileText, LayoutTemplate, Pencil, Plus, Search, Trash2, Upload } from "lucide-react";
 import { useUiText } from "@/locales/useUiText";
 import { flowchartApi } from "../../api";
@@ -190,5 +191,9 @@ function PreviewModal({ id, onClose }: { id: number; onClose: () => void }) {
   const { text: uiText } = useUiText();
   const [doc, setDoc] = useState<Awaited<ReturnType<typeof flowchartApi.getAdmin>> | null>(null);
   useEffect(() => { void flowchartApi.getAdmin(id).then(setDoc); }, [id]);
-  return <div className="dmfc-preview-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><div className="dmfc-preview-modal" role="dialog" aria-modal="true"><div className="dmfc-preview-head"><h2>{uiText("Pratinjau")}</h2><button type="button" className="dm-admin-btn is-secondary" onClick={onClose}>{uiText("Tutup")}</button></div>{doc ? <DocumentView doc={doc} /> : <p role="status">{uiText("Memuat pratinjau...")}</p>}</div></div>;
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div className="dmfc-preview-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><div className="dmfc-preview-modal" role="dialog" aria-modal="true"><div className="dmfc-preview-head"><h2>{uiText("Pratinjau")}</h2><button type="button" className="dm-admin-btn is-secondary" onClick={onClose}>{uiText("Tutup")}</button></div>{doc ? <DocumentView doc={doc} /> : <p role="status">{uiText("Memuat pratinjau...")}</p>}</div></div>,
+    document.body
+  );
 }

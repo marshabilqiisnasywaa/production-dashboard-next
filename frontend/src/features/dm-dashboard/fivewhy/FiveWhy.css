@@ -3140,7 +3140,7 @@ dialog.dm-5w-upload-modal:not([open]) {
 .dm-5w-lightbox {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 1200;
   display: grid;
   place-items: center;
   padding: 24px;

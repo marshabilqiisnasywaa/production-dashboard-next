@@ -4,10 +4,23 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Employee, Line, WorkshopMeetingSession, WorkshopMeetingSummary
+from app.models import (
+    Employee,
+    Line,
+    WorkshopMeetingSession,
+    WorkshopMeetingSummary,
+    WorkshopSummaryLine,
+    WorkshopSummaryPic,
+)
 from app.services.problem_access import is_pic, pic_filter, line_filter
-from app.services.summary_assignments import summary_metadata, display_lines, display_pics
-from app.schemas import myProblemOut
+from app.services.summary_assignments import (
+    display_lines,
+    display_pics,
+    resolve_assignments,
+    resolve_category_fields,
+    summary_metadata,
+)
+from app.schemas import MeetingSummaryIn, myProblemOut
 
 # Workshop problems share the problem list with DM problems. Their ids are sent negated so the
 # two tables never collide and the status/solution endpoints can tell them apart.
@@ -108,3 +121,27 @@ def set_solution(db: Session, employee: Employee, problem_id: int, solution: str
     db.commit()
     db.refresh(sm)
     return to_out(sm, session)
+
+
+def update_problem(db: Session, problem_id: int, payload: MeetingSummaryIn) -> myProblemOut:
+    sm, session = _load(db, problem_id)
+    assigned_lines, assigned_pics = resolve_assignments(db, payload, default_line_id=None)
+    category_fields = resolve_category_fields(db, payload)
+    sm.problem = payload.problem
+    for key, value in category_fields.items():
+        setattr(sm, key, value)
+    sm.pic_name = assigned_pics[0][1]
+    sm.pic_id = assigned_pics[0][0]
+    sm.due_date = payload.due_date
+    sm.line_code = assigned_lines[0][1] if assigned_lines else None
+    sm.affected_lines = [WorkshopSummaryLine(line_id=lid, code=code) for lid, code in assigned_lines]
+    sm.assigned_pics = [WorkshopSummaryPic(employee_id=eid, name=name) for eid, name in assigned_pics]
+    db.commit()
+    db.refresh(sm)
+    return to_out(sm, session)
+
+
+def delete_problem(db: Session, problem_id: int) -> None:
+    sm, _ = _load(db, problem_id)
+    db.delete(sm)
+    db.commit()

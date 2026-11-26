@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Eye, FileText, LayoutTemplate, Pencil, Plus, Search, Trash2, Upload, Workflow } from "lucide-react";
 import { useUiText } from "@/locales/useUiText";
 import { flowchartApi } from "../../api";
@@ -343,7 +344,7 @@ export default function FlowchartManager() {
         </button>
       </form>
 
-      {uploadModalOpen && (
+      {uploadModalOpen && typeof document !== "undefined" && createPortal(
         <div className="dmfc-board-modal-backdrop" role="presentation" onMouseDown={(event) => {
           if (event.target === event.currentTarget) setUploadModalOpen(false);
         }}>
@@ -359,10 +360,11 @@ export default function FlowchartManager() {
               <div className="dmfc-board-modal__actions"><button type="button" className="dm-admin-btn is-secondary" onClick={() => setUploadModalOpen(false)}>{uiText("Batal")}</button><button type="submit" className="dm-admin-btn is-primary" disabled={uploading}><Upload size={16} /><span>{uploading ? uiText("Mengunggah...") : uiText("Upload")}</span></button></div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {boardModalOpen && (
+      {boardModalOpen && typeof document !== "undefined" && createPortal(
         <div className="dmfc-board-modal-backdrop" role="presentation" onMouseDown={(event) => {
           if (event.target === event.currentTarget) setBoardModalOpen(false);
         }}>
@@ -384,7 +386,8 @@ export default function FlowchartManager() {
               <button type="button" className="dm-admin-btn is-primary" disabled={savingId === -1} onClick={() => void createBoard()}>{savingId === -1 ? uiText("Membuat...") : uiText("Buat board")}</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {loading ? (

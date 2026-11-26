@@ -1,4 +1,5 @@
 "use client";
+import { createPortal } from "react-dom";
 
 import { Fragment, useState } from "react";
 import type { ReactNode } from "react";
@@ -448,7 +449,7 @@ export default function FiveWhyReport({ record, canEdit }: FiveWhyReportProps) {
         )}
       </section>
 
-      {previewId ? (
+      {previewId && typeof document !== "undefined" ? createPortal(
         <div
           className="dm-5w-lightbox"
           role="dialog"
@@ -469,7 +470,8 @@ export default function FiveWhyReport({ record, canEdit }: FiveWhyReportProps) {
             alt={uiText("Foto bukti diperbesar")}
             onClick={(event) => event.stopPropagation()}
           />
-        </div>
+        </div>,
+        document.body
       ) : null}
     </div>
   );
