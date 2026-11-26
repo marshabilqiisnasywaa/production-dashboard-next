@@ -321,10 +321,14 @@ function buildIntScale(series: number[], target: number) {
   return { min: 0, max, target, ticks };
 }
 
-export function formatSqdipValue(value: number, kind: SqdipTrend["kind"]) {
-  return `${value.toLocaleString("id-ID", { maximumFractionDigits: 2 })}${
-    kind === "pct" ? "%" : ""
-  }`;
+export function formatSqdipValue(
+  value: number,
+  kind: SqdipTrend["kind"],
+  decimals = 2
+) {
+  return `${value.toLocaleString("id-ID", {
+    maximumFractionDigits: decimals,
+  })}${kind === "pct" ? "%" : ""}`;
 }
 
 export const SQDIP_DIMS: DimKey[] = [
@@ -418,13 +422,13 @@ export function SqdipDimTiles({
               className={`text-xl font-semibold leading-none ${valueTone}`}
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
-              {actual === null ? "—" : formatSqdipValue(actual, trend.kind)}
+              {actual === null ? "—" : formatSqdipValue(actual, trend.kind, 0)}
             </div>
             <div className="flex items-center justify-between gap-2">
               <span className="truncate text-xs font-medium text-text-secondary">
                 {uiText("Target : ")}
                 {trend.dir === "max" ? "≤ " : ""}
-                {formatSqdipValue(trend.target, trend.kind)}
+                {formatSqdipValue(trend.target, trend.kind, 0)}
               </span>
               {ok !== null && (
                 <span
