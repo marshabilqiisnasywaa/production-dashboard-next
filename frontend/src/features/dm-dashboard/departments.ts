@@ -1,6 +1,7 @@
 const ALIASES: Record<string, string> = {
   PROD: "PROD",
   PRODUKSI: "PROD",
+  PRODUCTION: "PROD",
   QC: "QC",
   QA: "QC",
   QUALITY: "QC",

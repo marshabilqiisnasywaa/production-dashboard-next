@@ -40,6 +40,8 @@ import WorkshopScheduleCard from "./WorkshopScheduleCard";
 import HolidayManager from "./HolidayManager";
 import PapercardTemplateManager from "./PapercardTemplateManager";
 import { NotificationBellButton } from "../notifications/NotificationBellButton";
+import StandardProposals from "./StandardProposals";
+import type { StandardTarget } from "./StandardProposals";
 import DmGroupDialog from "./DmGroupDialog";
 import DmLeaderDialog from "./DmLeaderDialog";
 import RowMenu from "./RowMenu";
@@ -230,6 +232,10 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
     crumb: "5Why & PDCA",
     title: "Analisis 5Why & PDCA",
   },
+    standard: {
+    crumb: "Usulan Standar",
+    title: "Usulan Standar Baru dari 5Why & PDCA",
+  },
   history: {
     crumb: "Arsip",
     title: "Arsip Papercard dan Standup Meeting",
@@ -288,6 +294,10 @@ const ADMIN_TAB_HEADERS: Record<
     title: "Analisis 5Why & PDCA",
     description: "Analisis akar masalah menggunakan metode 5Why & siklus PDCA.",
   },
+    standard: {
+    title: "Usulan Standar",
+    description: "5Why & PDCA yang ditandai Supervisor sebagai standar baru.",
+  },
   history: {
     title: "Arsip Papercard & Meeting",
     description: "Riwayat papercard & standup per tanggal dan lini.",
@@ -324,6 +334,14 @@ function AdminWorkspace({
   const [problemSub, setProblemSub] = useState<
     "meeting" | "papercard" | "fivewhy"
   >("meeting");
+    const [standardTarget, setStandardTarget] = useState<StandardTarget | null>(
+    null
+  );
+  const openPapercardFor = (target: StandardTarget) => {
+    setStandardTarget(target);
+    setPapercardSub("template");
+    setActiveTab("papercard");
+  };
   const [historySub, setHistorySub] = useState<"papercard" | "standup">(
     "papercard"
   );
@@ -1268,11 +1286,16 @@ function AdminWorkspace({
                     {uiText("Hari Libur")}
                   </button>
                 </div>
+                
                 {papercardSub === "template" ? (
                   <PapercardTemplateManager
                     workshops={workshops}
                     lines={lines}
+                    target={standardTarget}
+                    onTargetDone={() => setStandardTarget(null)}
+                    
                   />
+                  
                 ) : papercardSub === "workshop" ? (
                   <WorkshopScheduleCard />
                 ) : papercardSub === "holiday" ? (
@@ -1314,6 +1337,11 @@ function AdminWorkspace({
             {activeTab === "fivewhy" && isAdmin && (
               <div className="dm-admin-section">
                 <FiveWhyWorkspace embedded />
+              </div>
+            )}
+            {activeTab === "standard" && isAdmin && (
+              <div className="dm-admin-section">
+                <StandardProposals onOpenPapercard={openPapercardFor} />
               </div>
             )}
 

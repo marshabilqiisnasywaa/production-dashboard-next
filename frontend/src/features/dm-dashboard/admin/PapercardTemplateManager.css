@@ -646,3 +646,35 @@
   width: 90px;
   text-align: center;
 }
+
+
+.ptm-standard-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border: 1px solid #b7d9c4;
+  border-radius: 8px;
+  background: #eef8f1;
+}
+
+.ptm-standard-text {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ptm-standard-text p {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+}
+
+.ptm-standard-actions {
+  display: flex;
+  gap: 8px;
+}
