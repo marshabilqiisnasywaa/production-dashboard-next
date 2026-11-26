@@ -16,15 +16,19 @@ from app.models import Employee, Line
 from app.models.fivewhy import FiveWhyDocument
 from app.schemas_fivewhy import BUILT_IN_CATEGORIES, DocumentCategory, SimoDocumentIn
 from app.services.accounts import forbidden
-from app.services.fivewhy import document_access, document_write_access, line_leaders, pic_candidates, supervisor_for, upload_line_ids, validate_pic
+from app.services.fivewhy import creator_employee, document_access, document_write_access, line_leaders, pic_candidates, supervisor_for, upload_line_ids, validate_pic
 
 router = APIRouter(prefix="/fivewhy", tags=["fivewhy"])
 MAX_FILE_BYTES = 20 * 1024 * 1024
 
 
 def can_write(principal: Principal) -> None:
-    if principal.role not in ("leader", "member") or principal.employee is None:
-        raise forbidden("Hanya leader dan member pada line terkait yang bisa mengelola dokumen.")
+    if principal.is_admin:
+        return
+    if principal.employee is None:
+        raise forbidden("Akun belum terhubung dengan karyawan.")
+    if principal.role not in ("leader", "member"):
+        raise forbidden("Hanya admin, leader, dan member pada line terkait yang bisa mengelola dokumen.")
 
 
 def document_out(row: FiveWhyDocument, db: Session) -> dict:
@@ -83,8 +87,8 @@ def document_options(principal: Principal = Depends(require("problems.write")), 
 def add_simo_document(payload: SimoDocumentIn, principal: Principal = Depends(require("problems.write")), db: Session = Depends(get_db)):
     can_write(principal)
     validate_pic(db, principal, payload.line_id, payload.pic_id)
-    assert principal.employee is not None
-    row = FiveWhyDocument(id=str(uuid4()), line_id=payload.line_id, line_code=db.get(Line, payload.line_id).code, pic_id=payload.pic_id, created_by=principal.employee.id, title=payload.title, category=payload.category, source="simo", url=payload.url)
+    creator = creator_employee(db, principal)
+    row = FiveWhyDocument(id=str(uuid4()), line_id=payload.line_id, line_code=db.get(Line, payload.line_id).code, pic_id=payload.pic_id, created_by=creator.id, title=payload.title, category=payload.category, source="simo", url=payload.url)
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -120,8 +124,8 @@ def upload_document(line_id: int = Form(gt=0), pic_id: int = Form(gt=0), title: 
                 raise ValueError()
     except (BadZipFile, ValueError, RuntimeError, NotImplementedError, ElementTree.ParseError):
         raise HTTPException(422, "File bukan workbook .xlsx yang valid atau ukurannya terlalu besar setelah dibuka.")
-    assert principal.employee is not None
-    row = FiveWhyDocument(id=str(uuid4()), line_id=line_id, line_code=db.get(Line, line_id).code, pic_id=pic_id, created_by=principal.employee.id, title=title.strip(), category=category, source="file", file_name=name, size=len(content))
+    creator = creator_employee(db, principal)
+    row = FiveWhyDocument(id=str(uuid4()), line_id=line_id, line_code=db.get(Line, line_id).code, pic_id=pic_id, created_by=creator.id, title=title.strip(), category=category, source="file", file_name=name, size=len(content))
     path = file_path(row.id)
     path.parent.mkdir(parents=True, exist_ok=True)
     try:

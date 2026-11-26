@@ -14,11 +14,13 @@ from app.core.config import settings
 from app.db.session import get_db
 from app.models import Employee, Line
 from app.models.fivewhy import FiveWhyAnalysis, FiveWhyPhoto
-from app.schemas_fivewhy import AnalysisCreateIn, AnalysisIn
+from app.schemas_fivewhy import AnalysisCreateIn, AnalysisIn, StandardAppliedIn, StandardFlagIn
 from app.services.accounts import forbidden
-from app.services.fivewhy import upload_line_ids
+from app.services.fivewhy import creator_employee, upload_line_ids
 from app.services.fivewhy_analyses import (
     can_edit,
+    STANDARD_DEPARTMENTS,
+    can_flag_standard,
     countermeasures,
     editor_lines,
     empty_data,
@@ -28,6 +30,7 @@ from app.services.fivewhy_analyses import (
     require_photos_owned,
     root_cause_text,
     settle_category,
+    standard_out,
     section,
     solution_counts,
 )
@@ -54,8 +57,12 @@ def detect_image(content: bytes) -> str | None:
 
 
 def can_write(principal: Principal) -> None:
-    if principal.role not in ("leader", "member") or principal.employee is None:
-        raise forbidden("Hanya leader dan member yang bisa mengisi analisis 5Why.")
+    if principal.is_admin:
+        return
+    if principal.employee is None:
+        raise forbidden("Akun belum terhubung dengan karyawan.")
+    if principal.role not in ("leader", "member"):
+        raise forbidden("Hanya admin, leader, dan member yang bisa mengisi analisis 5Why.")
 
 
 def line_code_of(row: FiveWhyAnalysis, lines: dict[int, Line]) -> str:
@@ -76,6 +83,8 @@ def summary_out(row: FiveWhyAnalysis, principal: Principal, lines: dict[int, Lin
         "solutionCounts": solution_counts(section(row.data, "solutions", list)),
         "countermeasures": countermeasures(section(row.data, "solutions", list)),
         **incident_brief(abnormal),
+        "standard": standard_out(row.data),
+        "canFlagStandard": can_flag_standard(principal),
         "photoCount": photo_count,
         "createdAt": row.created_at, "updatedAt": row.updated_at,
         "canEdit": can_edit(principal, row, leader_lines),
@@ -135,14 +144,14 @@ def create_analysis(payload: AnalysisCreateIn, principal: Principal = Depends(re
     line = db.get(Line, payload.line_id)
     if line is None:
         raise forbidden("Line analisis tidak ditemukan.")
-    assert principal.employee is not None
+    creator = creator_employee(db, principal)
     now = datetime.now(timezone.utc)
     for _ in range(NOMOR_ATTEMPTS):
         analysis_id = str(uuid4())
         row = FiveWhyAnalysis(
-            id=analysis_id, line_id=line.id, line_code=line.code, created_by=principal.employee.id,
+            id=analysis_id, line_id=line.id, line_code=line.code, created_by=creator.id,
             nomor=next_nomor(db, now), title="", status="draft", revision=1,
-            data=empty_data(line.code, principal.employee.name, now, analysis_id),
+            data=empty_data(line.code, creator.name, now, analysis_id),
         )
         try:
             with db.begin_nested():
@@ -167,7 +176,8 @@ def update_analysis(analysis_id: str, payload: AnalysisIn, principal: Principal 
         require_photos_owned(found, wanted)
     body = payload.model_dump(by_alias=True)
     body["abnormal"]["categoryCodes"], body["abnormal"]["categoryLabels"] = settle_category(db, row, body["abnormal"])
-    row.data = {"abnormal": body["abnormal"], "whys": body["whys"], "solutions": body["solutions"]}
+    standard = section(row.data, "standard", dict)
+    row.data = {"abnormal": body["abnormal"], "whys": body["whys"], "solutions": body["solutions"], **({"standard": standard} if standard else {})}
     row.title = payload.abnormal.label.strip()
     row.status = payload.status
     row.revision = row.revision + 1
@@ -175,6 +185,59 @@ def update_analysis(analysis_id: str, payload: AnalysisIn, principal: Principal 
     db.refresh(row)
     return detail_out(db, row, principal)
 
+def solution_ids(row: FiveWhyAnalysis) -> set[str]:
+    return {str(item.get("id")) for item in section(row.data, "solutions", list) if isinstance(item, dict)}
+
+
+def save_standard_item(row: FiveWhyAnalysis, solution_id: str, item: dict) -> None:
+    standard = section(row.data, "standard", dict)
+    items = dict(section(standard, "items", dict))
+    items[solution_id] = item
+    row.data = {**row.data, "standard": {**standard, "items": items}}
+
+
+@router.put("/analyses/{analysis_id}/solutions/{solution_id}/standard")
+def flag_standard(analysis_id: str, solution_id: str, payload: StandardFlagIn, principal: Principal = Depends(require("problems.write")), db: Session = Depends(get_db)):
+    if not can_flag_standard(principal):
+        raise forbidden("Hanya Supervisor Production yang bisa menandai standar baru.")
+    assert principal.employee is not None
+    department = payload.department.strip().upper()
+    if payload.flagged and department not in STANDARD_DEPARTMENTS:
+        raise HTTPException(422, "Pilih departemen papercard yang akan diubah.")
+    row = load(db, analysis_id, lock=True)
+    if solution_id not in solution_ids(row):
+        raise HTTPException(404, "Solusi tidak ditemukan pada analisis ini.")
+    save_standard_item(row, solution_id, {
+        "flagged": payload.flagged,
+        "department": department if payload.flagged else "",
+        "note": payload.note.strip() if payload.flagged else "",
+        "flaggedBy": principal.employee.name,
+        "flaggedAt": datetime.now(timezone.utc).isoformat(),
+        "applied": False, "appliedBy": "", "appliedAt": "",
+    })
+    db.commit()
+    db.refresh(row)
+    return detail_out(db, row, principal)
+
+
+@router.put("/analyses/{analysis_id}/solutions/{solution_id}/standard/applied")
+def mark_standard_applied(analysis_id: str, solution_id: str, payload: StandardAppliedIn, principal: Principal = Depends(require("problems.write")), db: Session = Depends(get_db)):
+    if not principal.is_admin:
+        raise forbidden("Hanya admin yang bisa menandai standar sudah diterapkan.")
+    row = load(db, analysis_id, lock=True)
+    current = standard_out(row.data).get(solution_id)
+    if current is None:
+        raise HTTPException(409, "Solusi ini belum ditandai sebagai standar baru.")
+    account = principal.account
+    save_standard_item(row, solution_id, {
+        **{key: value for key, value in current.items() if key != "solutionText"},
+        "applied": payload.applied,
+        "appliedBy": (getattr(account, "name", None) or account.username) if payload.applied else "",
+        "appliedAt": datetime.now(timezone.utc).isoformat() if payload.applied else "",
+    })
+    db.commit()
+    db.refresh(row)
+    return detail_out(db, row, principal)
 
 @router.delete("/analyses/{analysis_id}", status_code=204)
 def delete_analysis(analysis_id: str, principal: Principal = Depends(require("problems.write")), db: Session = Depends(get_db)):
@@ -200,8 +263,8 @@ def upload_photo(analysis_id: str, file: UploadFile = File(), principal: Princip
     if stored >= MAX_PHOTOS_PER_ANALYSIS:
         raise HTTPException(422, f"Satu analisis maksimal {MAX_PHOTOS_PER_ANALYSIS} foto.")
     name = (file.filename or "").replace("\\", "/").rsplit("/", 1)[-1].strip()[:255] or f"foto.{PHOTO_TYPES[content_type]}"
-    assert principal.employee is not None
-    photo = FiveWhyPhoto(id=str(uuid4()), analysis_id=row.id, created_by=principal.employee.id, file_name=name, content_type=content_type, size=len(content))
+    creator = creator_employee(db, principal)
+    photo = FiveWhyPhoto(id=str(uuid4()), analysis_id=row.id, created_by=creator.id, file_name=name, content_type=content_type, size=len(content))
     path = photo_path(photo)
     path.parent.mkdir(parents=True, exist_ok=True)
     try:

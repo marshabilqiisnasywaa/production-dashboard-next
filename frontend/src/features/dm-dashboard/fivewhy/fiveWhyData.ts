@@ -147,7 +147,7 @@ export const SOLUTION_STATUS_LABELS: Record<SolutionStatus, string> = {
   rencana: "Rencana",
   dikerjakan: "Dikerjakan",
   dipantau: "Dipantau",
-  standar: "Selesai & standar",
+  standar: "Selesai",
 };
 
 export const RECURRENCE_LABELS: Record<RecurrenceStatus, string> = {

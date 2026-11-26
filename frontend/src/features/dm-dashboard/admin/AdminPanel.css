@@ -3992,3 +3992,14 @@ button.dm-status-badge.is-switchable:disabled {
     transition: none;
   }
 }
+
+.dm-standard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dm-standard-note {
+  max-width: 320px;
+  white-space: pre-wrap;
+}
