@@ -85,6 +85,7 @@ class FactorsIn(CamelModel):
     machine: Factor = ""
     material: Factor = ""
     method: Factor = ""
+    measurement: Factor = ""
     environment: Factor = ""
 
 

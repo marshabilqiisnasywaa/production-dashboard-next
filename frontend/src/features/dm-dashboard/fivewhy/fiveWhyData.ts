@@ -45,7 +45,7 @@ export type ProblemSummaryFields = {
   shortTermSolution: string;
 };
 
-export type FactorKey = "man" | "machine" | "material" | "method" | "environment";
+export type FactorKey = "man" | "machine" | "material" | "method" | "measurement" | "environment";
 
 export type FourM1EFields = Record<FactorKey, string>;
 
@@ -54,11 +54,12 @@ export const FACTOR_ROWS: readonly { key: FactorKey; label: string; hint: string
   { key: "machine", label: "Machine", hint: "Mesin" },
   { key: "material", label: "Material", hint: "Bahan" },
   { key: "method", label: "Method", hint: "Metode / prosedur" },
+  { key: "measurement", label: "Measurement", hint: "Pengukuran / alat" },
   { key: "environment", label: "Environment", hint: "Lingkungan" },
 ];
 
 export function emptyFactors(): FourM1EFields {
-  return { man: "", machine: "", material: "", method: "", environment: "" };
+  return { man: "", machine: "", material: "", method: "", measurement: "", environment: "" };
 }
 
 export type FiveWhyAbnormal = {

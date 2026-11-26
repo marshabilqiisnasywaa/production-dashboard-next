@@ -450,7 +450,7 @@ export default function ProblemSummary({
         aria-labelledby="dm-5w-factors-title"
       >
         <h2 className="dm-5w-card-title" id="dm-5w-factors-title">
-          {uiText("4M 1E")}
+          {uiText("5M + 1E")}
         </h2>
         <table className="dm-5w-factor-table">
           <tbody>
