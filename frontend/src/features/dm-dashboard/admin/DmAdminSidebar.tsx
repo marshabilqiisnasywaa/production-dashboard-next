@@ -29,6 +29,7 @@ export type DmAdminTabKey =
   | "mechanism"
   | "attendance"
   | "problems"
+  | "fivewhy"
   | "history"
   | "sqdip"
   | "history-import";
@@ -367,6 +368,19 @@ export default function DmAdminSidebar({
               </span>
               <span>{uiText("Kategori Abnormal")}</span>
             </button>
+
+            <button
+  type="button"
+  className={`dm-admin-nav-btn ${
+    activeTab === "fivewhy" ? "is-active" : ""
+  }`}
+  onClick={() => select("fivewhy")}
+>
+  <span className="dm-admin-nav-icon">
+    <ListTree size={18} />
+  </span>
+  <span>{uiText("5Why & PDCA")}</span>
+</button>
           </>
         ) : (
           <Link href="/dm-dashboard/akun" className="dm-admin-nav-btn">

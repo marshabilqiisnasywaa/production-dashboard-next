@@ -16,7 +16,7 @@ from app.models import Employee, Line
 from app.models.fivewhy import FiveWhyAnalysis, FiveWhyPhoto
 from app.schemas_fivewhy import AnalysisCreateIn, AnalysisIn
 from app.services.accounts import forbidden
-from app.services.fivewhy import upload_line_ids
+from app.services.fivewhy import creator_employee, upload_line_ids
 from app.services.fivewhy_analyses import (
     can_edit,
     countermeasures,
@@ -54,8 +54,12 @@ def detect_image(content: bytes) -> str | None:
 
 
 def can_write(principal: Principal) -> None:
-    if principal.role not in ("leader", "member") or principal.employee is None:
-        raise forbidden("Hanya leader dan member yang bisa mengisi analisis 5Why.")
+    if principal.is_admin:
+        return
+    if principal.employee is None:
+        raise forbidden("Akun belum terhubung dengan karyawan.")
+    if principal.role not in ("leader", "member"):
+        raise forbidden("Hanya admin, leader, dan member yang bisa mengisi analisis 5Why.")
 
 
 def line_code_of(row: FiveWhyAnalysis, lines: dict[int, Line]) -> str:
@@ -135,14 +139,14 @@ def create_analysis(payload: AnalysisCreateIn, principal: Principal = Depends(re
     line = db.get(Line, payload.line_id)
     if line is None:
         raise forbidden("Line analisis tidak ditemukan.")
-    assert principal.employee is not None
+    creator = creator_employee(db, principal)
     now = datetime.now(timezone.utc)
     for _ in range(NOMOR_ATTEMPTS):
         analysis_id = str(uuid4())
         row = FiveWhyAnalysis(
-            id=analysis_id, line_id=line.id, line_code=line.code, created_by=principal.employee.id,
+            id=analysis_id, line_id=line.id, line_code=line.code, created_by=creator.id,
             nomor=next_nomor(db, now), title="", status="draft", revision=1,
-            data=empty_data(line.code, principal.employee.name, now, analysis_id),
+            data=empty_data(line.code, creator.name, now, analysis_id),
         )
         try:
             with db.begin_nested():
@@ -200,8 +204,8 @@ def upload_photo(analysis_id: str, file: UploadFile = File(), principal: Princip
     if stored >= MAX_PHOTOS_PER_ANALYSIS:
         raise HTTPException(422, f"Satu analisis maksimal {MAX_PHOTOS_PER_ANALYSIS} foto.")
     name = (file.filename or "").replace("\\", "/").rsplit("/", 1)[-1].strip()[:255] or f"foto.{PHOTO_TYPES[content_type]}"
-    assert principal.employee is not None
-    photo = FiveWhyPhoto(id=str(uuid4()), analysis_id=row.id, created_by=principal.employee.id, file_name=name, content_type=content_type, size=len(content))
+    creator = creator_employee(db, principal)
+    photo = FiveWhyPhoto(id=str(uuid4()), analysis_id=row.id, created_by=creator.id, file_name=name, content_type=content_type, size=len(content))
     path = photo_path(photo)
     path.parent.mkdir(parents=True, exist_ok=True)
     try:

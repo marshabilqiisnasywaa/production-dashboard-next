@@ -226,6 +226,10 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
     crumb: "Tracking Masalah",
     title: "Tracking Masalah DM Meeting dan Papercard",
   },
+    fivewhy: {
+    crumb: "5Why & PDCA",
+    title: "Analisis 5Why & PDCA",
+  },
   history: {
     crumb: "Arsip",
     title: "Arsip Papercard dan Standup Meeting",
@@ -267,6 +271,7 @@ const ADMIN_TAB_HEADERS: Record<
     title: "Kategori Abnormal",
     description: "Kode abnormal 3 tingkat (Code 1–3) & impor Excel.",
   },
+
   mechanism: {
     title: "Mekanisme DM",
     description: "Editor template jadwal & foto tahap DM.",
@@ -278,6 +283,10 @@ const ADMIN_TAB_HEADERS: Record<
   problems: {
     title: "Tracking Masalah",
     description: "Tindak lanjut masalah meeting & temuan NG.",
+  },
+    fivewhy: {
+    title: "Analisis 5Why & PDCA",
+    description: "Analisis akar masalah menggunakan metode 5Why & siklus PDCA.",
   },
   history: {
     title: "Arsip Papercard & Meeting",
@@ -1299,6 +1308,12 @@ function AdminWorkspace({
             {activeTab === "flowchart" && isAdmin && (
               <div className="dm-admin-section">
                 <FlowchartManager />
+              </div>
+            )}
+
+            {activeTab === "fivewhy" && isAdmin && (
+              <div className="dm-admin-section">
+                <FiveWhyWorkspace embedded />
               </div>
             )}
 

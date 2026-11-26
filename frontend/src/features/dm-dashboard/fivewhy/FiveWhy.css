@@ -137,6 +137,7 @@ dialog.dm-5w-upload-modal:not([open]) {
 
 .dm-5w-documents {
   padding: 18px;
+  margin-top: 16px;
 }
 
 .dm-5w-document-form p,
@@ -4211,4 +4212,22 @@ dialog.dm-5w-upload-modal:not([open]) {
     grid-template-columns: minmax(0, 1fr);
     gap: 2px;
   }
+}
+
+.dm-5w-step-next {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--dm-5w-border-light);
+}
+
+.dm-5w-step-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--dm-5w-border-light);
 }

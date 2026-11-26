@@ -174,6 +174,7 @@ export default function FiveWhyPage({
   const [focusTitleToken] = useState(focusTitle ? 1 : 0);
   const [whyFocus, setWhyFocus] = useState<WhyFocus>({ id: null, token: 0 });
   const [reloadToken, setReloadToken] = useState(0);
+    const stepperRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const lastTabRef = useRef<Map<string, FiveWhyTabKey>>(new Map());
   const recordRef = useRef<FiveWhyRecord | null>(null);
@@ -367,6 +368,13 @@ export default function FiveWhyPage({
   function openTab(tab: FiveWhyTabKey) {
     setActiveTab(tab);
     if (recordId) lastTabRef.current.set(recordId, tab);
+  }
+
+      function goToStep(tab: FiveWhyTabKey) {
+    openTab(tab);
+    window.requestAnimationFrame(() =>
+      stepperRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    );
   }
 
   async function duplicateAnalysis() {
@@ -617,7 +625,8 @@ export default function FiveWhyPage({
               </div>
             </section>
 
-            <div
+            <div             
+              ref={stepperRef}
               className="dm-5w-stepper"
               role="tablist"
               aria-label={uiText("Langkah analisis 5Why dan PDCA")}
@@ -669,6 +678,18 @@ export default function FiveWhyPage({
                   onChange={(abnormal) => updateRecord({ abnormal })}
                 />
               ) : null}
+                            {activeTab === 1 ? (
+                <div className="dm-5w-step-next">
+                  <button
+                    type="button"
+                    className="dm-5w-btn dm-5w-btn-primary"
+                    disabled={working}
+                    onClick={() => goToStep(2)}
+                  >
+                    {uiText("Lanjut ke Analisis 5Why")} &rarr;
+                  </button>
+                </div>
+              ) : null}
               {activeTab === 2 ? (
                 <WhyTree
                   whys={record.whys}
@@ -681,6 +702,26 @@ export default function FiveWhyPage({
                   onNotify={notify}
                   onUploadPhotos={uploadPhotos}
                 />
+              ) : null}
+                            {activeTab === 2 ? (
+                <div className="dm-5w-step-nav">
+                  <button
+                    type="button"
+                    className="dm-5w-btn dm-5w-btn-secondary"
+                    disabled={working}
+                    onClick={() => goToStep(1)}
+                  >
+                    &larr; {uiText("Kembali ke Ringkasan Masalah")}
+                  </button>
+                  <button
+                    type="button"
+                    className="dm-5w-btn dm-5w-btn-primary"
+                    disabled={working}
+                    onClick={() => goToStep(3)}
+                  >
+                    {uiText("Lanjut ke Solusi & PDCA")} &rarr;
+                  </button>
+                </div>
               ) : null}
               {activeTab === 3 ? (
                 <ActionPlan

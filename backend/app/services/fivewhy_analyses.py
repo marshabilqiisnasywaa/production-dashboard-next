@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal
+from app.models import Line
 from app.models.fivewhy import FiveWhyAnalysis
 from app.services.fivewhy import leader_line_ids
 
@@ -18,6 +19,8 @@ SOLUTION_STAGES = ("rencana", "dikerjakan", "dipantau", "standar")
 
 
 def can_edit(principal: Principal, row: FiveWhyAnalysis, leader_lines: set[int] | None = None) -> bool:
+    if principal.is_admin:
+        return True
     employee = principal.employee
     if employee is None or principal.role not in ("leader", "member"):
         return False
@@ -27,6 +30,8 @@ def can_edit(principal: Principal, row: FiveWhyAnalysis, leader_lines: set[int] 
 
 
 def editor_lines(db: Session, principal: Principal) -> set[int]:
+    if principal.is_admin:
+        return {line.id for line in db.scalars(select(Line))}
     if principal.employee is None or principal.role != "leader":
         return set()
     return leader_line_ids(db, principal.employee.id)
