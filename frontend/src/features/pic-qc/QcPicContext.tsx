@@ -1,20 +1,9 @@
 "use client";
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import {
-  type PicRepairInput,
-  type PicRepairRecord,
-  type PicRecordPatch,
-} from "@/features/pic-repair/RepairPicContext";
+import type { ReactNode } from "react";
+import type { PicRepairRecord } from "@/features/pic-repair/RepairPicContext";
+import { registerAreaSeeds, useAreaAbnormalities } from "@/features/abnormality/useAreaAbnormalities";
 
 export const QC_PIC_NAME = "QC PIC";
-
-type QcPicContextValue = {
-  records: PicRepairRecord[];
-  addRecord: (input: PicRepairInput) => void;
-  updateRecord: (id: string, patch: PicRecordPatch) => void;
-};
-
-const QcPicContext = createContext<QcPicContextValue | null>(null);
 
 const seedRecords: PicRepairRecord[] = [
   {
@@ -139,30 +128,14 @@ const seedRecords: PicRepairRecord[] = [
   },
 ];
 
+// Data contoh modul ini dimasukkan ke store bersama supaya terlihat juga oleh Host dan HOD.
+registerAreaSeeds("qc", seedRecords);
+
+// Data tidak lagi disimpan di sini. Provider dipertahankan agar AppShell tidak perlu diubah.
 export function QcPicProvider({ children }: { children: ReactNode }) {
-  const [records, setRecords] = useState<PicRepairRecord[]>(seedRecords);
-
-  const value = useMemo<QcPicContextValue>(() => ({
-    records,
-    addRecord: (input) => {
-      setRecords((current) => {
-        const highest = current.reduce((max, item) => {
-          const match = item.id.match(/QC-(\d+)/);
-          return Math.max(max, match ? Number(match[1]) : 0);
-        }, 0);
-        return [{ ...input, id: `QC-${String(highest + 1).padStart(3, "0")}` }, ...current];
-      });
-    },
-    updateRecord: (id, patch) => {
-      setRecords((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
-    },
-  }), [records]);
-
-  return <QcPicContext.Provider value={value}>{children}</QcPicContext.Provider>;
+  return <>{children}</>;
 }
 
-export function useQcPic(): QcPicContextValue {
-  const context = useContext(QcPicContext);
-  if (!context) throw new Error("useQcPic must be used inside QcPicProvider");
-  return context;
+export function useQcPic() {
+  return useAreaAbnormalities("qc", "QC");
 }

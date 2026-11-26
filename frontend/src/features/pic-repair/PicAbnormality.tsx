@@ -168,7 +168,7 @@ export function AbnormalityBoard({ records, addRecord, picName, areaOptions, def
           <div className="abnormality-empty">No findings match the filters.</div>
         ) : (
           <>
-            <AbnormalityTable rows={pageRows} onPreview={setPreview} />
+            <AbnormalityTable rows={pageRows} showCountermeasure showDueDate onPreview={setPreview} />
             <div className="pic-pagination">
               <span>Showing {startIndex + 1}-{Math.min(startIndex + pageSize, filteredRows.length)} of {filteredRows.length} data</span>
               <div className="pic-pagination-controls">

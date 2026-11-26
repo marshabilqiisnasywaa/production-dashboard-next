@@ -1,20 +1,9 @@
 "use client";
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import {
-  type PicRepairInput,
-  type PicRepairRecord,
-  type PicRecordPatch,
-} from "@/features/pic-repair/RepairPicContext";
+import type { ReactNode } from "react";
+import type { PicRepairRecord } from "@/features/pic-repair/RepairPicContext";
+import { registerAreaSeeds, useAreaAbnormalities } from "@/features/abnormality/useAreaAbnormalities";
 
 export const SERVICE_PIC_NAME = "Service PIC";
-
-type ServicePicContextValue = {
-  records: PicRepairRecord[];
-  addRecord: (input: PicRepairInput) => void;
-  updateRecord: (id: string, patch: PicRecordPatch) => void;
-};
-
-const ServicePicContext = createContext<ServicePicContextValue | null>(null);
 
 const seedRecords: PicRepairRecord[] = [
   {
@@ -139,30 +128,14 @@ const seedRecords: PicRepairRecord[] = [
   },
 ];
 
+// Data contoh modul ini dimasukkan ke store bersama supaya terlihat juga oleh Host dan HOD.
+registerAreaSeeds("service", seedRecords);
+
+// Data tidak lagi disimpan di sini. Provider dipertahankan agar AppShell tidak perlu diubah.
 export function ServicePicProvider({ children }: { children: ReactNode }) {
-  const [records, setRecords] = useState<PicRepairRecord[]>(seedRecords);
-
-  const value = useMemo<ServicePicContextValue>(() => ({
-    records,
-    addRecord: (input) => {
-      setRecords((current) => {
-        const highest = current.reduce((max, item) => {
-          const match = item.id.match(/SVC-(\d+)/);
-          return Math.max(max, match ? Number(match[1]) : 0);
-        }, 0);
-        return [{ ...input, id: `SVC-${String(highest + 1).padStart(3, "0")}` }, ...current];
-      });
-    },
-    updateRecord: (id, patch) => {
-      setRecords((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
-    },
-  }), [records]);
-
-  return <ServicePicContext.Provider value={value}>{children}</ServicePicContext.Provider>;
+  return <>{children}</>;
 }
 
-export function useServicePic(): ServicePicContextValue {
-  const context = useContext(ServicePicContext);
-  if (!context) throw new Error("useServicePic must be used inside ServicePicProvider");
-  return context;
+export function useServicePic() {
+  return useAreaAbnormalities("service", "SVC");
 }

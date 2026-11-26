@@ -1,20 +1,9 @@
 "use client";
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import {
-  type PicRepairInput,
-  type PicRepairRecord,
-  type PicRecordPatch,
-} from "@/features/pic-repair/RepairPicContext";
+import type { ReactNode } from "react";
+import type { PicRepairRecord } from "@/features/pic-repair/RepairPicContext";
+import { registerAreaSeeds, useAreaAbnormalities } from "@/features/abnormality/useAreaAbnormalities";
 
 export const ASSEMBLY_PIC_NAME = "Assembly PIC";
-
-type AssemblyPicContextValue = {
-  records: PicRepairRecord[];
-  addRecord: (input: PicRepairInput) => void;
-  updateRecord: (id: string, patch: PicRecordPatch) => void;
-};
-
-const AssemblyPicContext = createContext<AssemblyPicContextValue | null>(null);
 
 const seedRecords: PicRepairRecord[] = [
   {
@@ -139,30 +128,14 @@ const seedRecords: PicRepairRecord[] = [
   },
 ];
 
+// Data contoh modul ini dimasukkan ke store bersama supaya terlihat juga oleh Host dan HOD.
+registerAreaSeeds("assembly", seedRecords);
+
+// Data tidak lagi disimpan di sini. Provider dipertahankan agar AppShell tidak perlu diubah.
 export function AssemblyPicProvider({ children }: { children: ReactNode }) {
-  const [records, setRecords] = useState<PicRepairRecord[]>(seedRecords);
-
-  const value = useMemo<AssemblyPicContextValue>(() => ({
-    records,
-    addRecord: (input) => {
-      setRecords((current) => {
-        const highest = current.reduce((max, item) => {
-          const match = item.id.match(/ASM-(\d+)/);
-          return Math.max(max, match ? Number(match[1]) : 0);
-        }, 0);
-        return [{ ...input, id: `ASM-${String(highest + 1).padStart(3, "0")}` }, ...current];
-      });
-    },
-    updateRecord: (id, patch) => {
-      setRecords((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
-    },
-  }), [records]);
-
-  return <AssemblyPicContext.Provider value={value}>{children}</AssemblyPicContext.Provider>;
+  return <>{children}</>;
 }
 
-export function useAssemblyPic(): AssemblyPicContextValue {
-  const context = useContext(AssemblyPicContext);
-  if (!context) throw new Error("useAssemblyPic must be used inside AssemblyPicProvider");
-  return context;
+export function useAssemblyPic() {
+  return useAreaAbnormalities("assembly", "ASM");
 }

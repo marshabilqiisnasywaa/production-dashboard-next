@@ -1,5 +1,6 @@
 "use client";
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import { registerAreaSeeds, useAreaAbnormalities } from "@/features/abnormality/useAreaAbnormalities";
 
 export type PicRepairStatus = "Open" | "In Progress" | "Resolved";
 export type PicRepairArea = "Pre Assembly" | "Rework" | "Warranty" | (string & {});
@@ -36,14 +37,6 @@ export function getDueStatus(dueDate: string, todayIso: string = TODAY_ISO): { l
   if (diffDays <= 2) return { label: `D-${diffDays}`, tone: "warn" };
   return { label: "Safe", tone: "safe" };
 }
-
-type RepairPicContextValue = {
-  records: PicRepairRecord[];
-  addRecord: (input: PicRepairInput) => void;
-  updateRecord: (id: string, patch: PicRecordPatch) => void;
-};
-
-const RepairPicContext = createContext<RepairPicContextValue | null>(null);
 
 const seedRecords: PicRepairRecord[] = [
   {
@@ -168,30 +161,14 @@ const seedRecords: PicRepairRecord[] = [
   },
 ];
 
+// Data contoh modul ini dimasukkan ke store bersama supaya terlihat juga oleh Host dan HOD.
+registerAreaSeeds("repair", seedRecords);
+
+// Data tidak lagi disimpan di sini. Provider dipertahankan agar AppShell tidak perlu diubah.
 export function RepairPicProvider({ children }: { children: ReactNode }) {
-  const [records, setRecords] = useState<PicRepairRecord[]>(seedRecords);
-
-  const value = useMemo<RepairPicContextValue>(() => ({
-    records,
-    addRecord: (input) => {
-      setRecords((current) => {
-        const highest = current.reduce((max, item) => {
-          const match = item.id.match(/RPR-(\d+)/);
-          return Math.max(max, match ? Number(match[1]) : 0);
-        }, 0);
-        return [{ ...input, id: `RPR-${String(highest + 1).padStart(3, "0")}` }, ...current];
-      });
-    },
-    updateRecord: (id, patch) => {
-      setRecords((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
-    },
-  }), [records]);
-
-  return <RepairPicContext.Provider value={value}>{children}</RepairPicContext.Provider>;
+  return <>{children}</>;
 }
 
-export function useRepairPic(): RepairPicContextValue {
-  const context = useContext(RepairPicContext);
-  if (!context) throw new Error("useRepairPic must be used inside RepairPicProvider");
-  return context;
+export function useRepairPic() {
+  return useAreaAbnormalities("repair", "RPR");
 }

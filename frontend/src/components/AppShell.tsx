@@ -42,7 +42,8 @@ import PicAssemblyMonitoring from "@/features/pic-assembly/PicAssemblyMonitoring
 import PicAssemblyPlan from "@/features/pic-assembly/PicAssemblyPlan";
 import PaiRobot from "@/features/morning-meeting/PaiRobot";
 import MeetingDashboard from "@/features/morning-meeting/MeetingDashboard";
-import FollowupPage from "@/features/morning-meeting/FollowupPage";
+import PicCostFollowup from "@/features/cost/PicCostFollowup";
+import PicSafetyFollowup from "@/features/safety/PicSafetyFollowup";
 import HodDailyPlan from "@/features/morning-meeting/HodDailyPlan";
 import CostOverview from "@/features/cost/CostOverview";
 import CostProductivity from "@/features/cost/CostProductivity";
@@ -360,7 +361,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
             <section className="content repair-content">
               <CostPicProvider>
               {active === "followup" ? (
-                <FollowupPage role={role} picArea={picArea} />
+                <PicCostFollowup />
               ) : active === "cost-abnormality" ? (
                 <PicCostAbnormality />
               ) : active === "cost-daily-plan" ? (
@@ -386,7 +387,7 @@ export default function AppShell({ initialActive = "Dashboard" }: { initialActiv
             <section className="content repair-content">
               <SafetyPicProvider>
               {active === "followup" ? (
-                <FollowupPage role={role} picArea={picArea} />
+                <PicSafetyFollowup />
               ) : active === "safety-monitoring" ? (
                 <SafetyDashboard section="safety" onNavigate={selectMenu} />
               ) : active === "safety-isc" ? (

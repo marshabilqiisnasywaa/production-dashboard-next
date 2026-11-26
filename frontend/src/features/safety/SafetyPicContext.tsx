@@ -1,20 +1,9 @@
 "use client";
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import {
-  type PicRepairInput,
-  type PicRepairRecord,
-  type PicRecordPatch,
-} from "@/features/pic-repair/RepairPicContext";
+import type { ReactNode } from "react";
+import type { PicRepairRecord } from "@/features/pic-repair/RepairPicContext";
+import { registerAreaSeeds, useAreaAbnormalities } from "@/features/abnormality/useAreaAbnormalities";
 
 export const SAFETY_PIC_NAME = "Safety PIC";
-
-type SafetyPicContextValue = {
-  records: PicRepairRecord[];
-  addRecord: (input: PicRepairInput) => void;
-  updateRecord: (id: string, patch: PicRecordPatch) => void;
-};
-
-const SafetyPicContext = createContext<SafetyPicContextValue | null>(null);
 
 const seedRecords: PicRepairRecord[] = [
   {
@@ -139,30 +128,14 @@ const seedRecords: PicRepairRecord[] = [
   },
 ];
 
+// Data contoh modul ini dimasukkan ke store bersama supaya terlihat juga oleh Host dan HOD.
+registerAreaSeeds("safety", seedRecords);
+
+// Data tidak lagi disimpan di sini. Provider dipertahankan agar AppShell tidak perlu diubah.
 export function SafetyPicProvider({ children }: { children: ReactNode }) {
-  const [records, setRecords] = useState<PicRepairRecord[]>(seedRecords);
-
-  const value = useMemo<SafetyPicContextValue>(() => ({
-    records,
-    addRecord: (input) => {
-      setRecords((current) => {
-        const highest = current.reduce((max, item) => {
-          const match = item.id.match(/SAF-(\d+)/);
-          return Math.max(max, match ? Number(match[1]) : 0);
-        }, 0);
-        return [{ ...input, id: `SAF-${String(highest + 1).padStart(3, "0")}` }, ...current];
-      });
-    },
-    updateRecord: (id, patch) => {
-      setRecords((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
-    },
-  }), [records]);
-
-  return <SafetyPicContext.Provider value={value}>{children}</SafetyPicContext.Provider>;
+  return <>{children}</>;
 }
 
-export function useSafetyPic(): SafetyPicContextValue {
-  const context = useContext(SafetyPicContext);
-  if (!context) throw new Error("useSafetyPic must be used inside SafetyPicProvider");
-  return context;
+export function useSafetyPic() {
+  return useAreaAbnormalities("safety", "SAF");
 }
