@@ -3929,3 +3929,66 @@ button.dm-status-badge.is-switchable:disabled {
   position: relative;
   z-index: 5;
 }
+
+/* ==========================================================================
+   Sidebar: menu bertingkat (DM Info Settings, History)
+   ========================================================================== */
+.dm-admin-nav-group {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 0.15rem;
+}
+
+/* Garis pemisah supaya DM Info Settings tidak terbaca sebagai bagian SQDIP Monitoring. */
+.dm-admin-nav-divider {
+  flex-shrink: 0;
+  height: 1px;
+  margin: 0.6rem 0.65rem;
+  background: var(--dm-admin-border);
+}
+
+.dm-admin-nav-chevron {
+  margin-left: auto;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.dm-admin-nav-parent[aria-expanded="true"] .dm-admin-nav-chevron {
+  transform: rotate(180deg);
+}
+
+/* Induk dari halaman yang sedang dibuka. */
+.dm-admin-nav-parent.has-active {
+  color: var(--dm-admin-primary);
+  font-weight: 600;
+}
+
+/* Saat grup tertutup, induk diberi latar supaya posisi aktif tetap kelihatan. */
+.dm-admin-nav-parent.has-active[aria-expanded="false"] {
+  background: var(--dm-admin-primary-light);
+}
+
+.dm-admin-nav-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-left: 1.2rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid var(--dm-admin-border);
+}
+
+.dm-admin-nav-sub .dm-admin-nav-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.dm-admin-nav-sub[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dm-admin-nav-chevron {
+    transition: none;
+  }
+}
