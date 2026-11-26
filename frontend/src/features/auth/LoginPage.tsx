@@ -7,6 +7,7 @@ import { landingPathFor, landingTitleFor } from "@/config/access";
 import { findMultiAreaPicUser, findPicUserForArea, findUserByNik, findUserByRole, type ManagedUser } from "@/features/user-management/userStore";
 import type { Role } from "@/types/morningMeeting";
 import { useAuth } from "@/features/auth/AuthProvider";
+import LoginSlider from "@/features/auth/LoginSlider";
 import "./login.css";
 
 type QuickChip = {
@@ -92,15 +93,7 @@ export default function LoginPage() {
 
   return (
     <main className="mml-login">
-      <section className="mml-login__brand">
-        <img className="mml-login__logo" src="/assets/oppo-logo-dark.png" alt="OPPO" />
-        <div className="mml-login__brand-copy">
-          <p className="mml-login__eyebrow">Production Dashboard</p>
-          <h1 className="mml-login__title">Morning Meeting &amp; Production KPI</h1>
-          <p className="mml-login__lead">Satu tempat untuk membaca KPI produksi dan menjalankan morning meeting harian.</p>
-        </div>
-        <p className="mml-login__brand-foot">OPPO Manufacturing</p>
-      </section>
+      <LoginSlider />
       <section className="mml-login__panel">
         <form className="mml-login__form" onSubmit={handleSubmit}>
           <div className="mml-login__heading">

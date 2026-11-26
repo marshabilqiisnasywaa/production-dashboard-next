@@ -9,6 +9,7 @@
 .mml-login__brand {
   position: relative;
   overflow: hidden;
+  isolation: isolate;
   min-height: 100vh;
   padding: 48px;
   display: flex;
@@ -16,33 +17,90 @@
   justify-content: space-between;
   gap: 32px;
   color: #f4fff9;
-  background:
-    radial-gradient(120% 90% at 12% 8%, rgba(140, 198, 63, 0.28), transparent 58%),
-    radial-gradient(90% 80% at 90% 100%, rgba(15, 157, 138, 0.32), transparent 60%),
-    linear-gradient(145deg, #034d29 0%, #046a39 52%, #023d21 100%);
+  background: #023d21;
+}
+
+.mml-login__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-size: cover;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+
+.mml-login__bg--active {
+  opacity: 1;
 }
 
 .mml-login__brand::after {
   content: "";
   position: absolute;
   inset: 0;
-  pointer-events: none;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: radial-gradient(80% 70% at 50% 40%, black, transparent 78%);
+  z-index: -1;
+  background: linear-gradient(to top, rgba(0, 24, 13, 0.88) 0%, rgba(0, 24, 13, 0.5) 38%, rgba(0, 24, 13, 0.05) 70%);
 }
 
 .mml-login__logo {
-  position: relative;
-  z-index: 1;
-  width: 132px;
+  align-self: flex-start;
+  width: 220px;
   height: auto;
+  filter: brightness(0) invert(1);
+}
+
+.mml-login__slides {
+  display: grid;
 }
 
 .mml-login__brand-copy {
-  position: relative;
-  z-index: 1;
+  grid-area: 1 / 1;
+  align-self: end;
   max-width: 520px;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s ease, transform 0.6s ease, visibility 0.6s;
+}
+
+.mml-login__brand-copy--active {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+}
+
+.mml-login__dots {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.mml-login__dot {
+  position: relative;
+  width: 36px;
+  height: 5px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: width 0.25s, background 0.25s;
+}
+
+.mml-login__dot::before {
+  content: "";
+  position: absolute;
+  inset: -10px 0;
+}
+
+.mml-login__dot--active {
+  width: 44px;
+  background: #ffffff;
+}
+
+.mml-login__dot:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 4px;
 }
 
 .mml-login__eyebrow {
@@ -62,8 +120,8 @@
   margin: 0;
   color: #ffffff !important;
   font-size: clamp(2rem, 3.6vw, 3.25rem);
-  font-weight: 700;
-  line-height: 1.06;
+  font-weight: 500;
+  line-height: 1.0;
   letter-spacing: -0.035em;
 }
 
@@ -73,15 +131,6 @@
   font-size: 15px;
   line-height: 1.7;
   color: rgba(244, 255, 249, 0.82);
-}
-
-.mml-login__brand-foot {
-  position: relative;
-  z-index: 1;
-  margin: 0;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  color: rgba(244, 255, 249, 0.6);
 }
 
 .mml-login__panel {
@@ -295,6 +344,32 @@
   color: var(--faint);
 }
 
+/* Bingkai kartu seperti referensi (khusus layar lebar) */
+@media (min-width: 961px) {
+  .mml-login {
+    height: 100vh;
+    min-height: 640px;
+    padding: 32px clamp(24px, 4.5vw, 80px);
+    grid-template-columns: minmax(0, 1.07fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .mml-login__brand {
+    min-height: 0;
+    border-radius: 16px 0 0 16px;
+  }
+
+  .mml-login__panel {
+    min-height: 0;
+    overflow-y: auto;
+    align-items: safe center;
+    padding: 32px 40px;
+    border-radius: 0 16px 16px 0;
+    background: var(--surface);
+    box-shadow: 0 18px 40px rgba(16, 40, 28, 0.08);
+  }
+}
+
 @media (max-width: 960px) {
   .mml-login {
     grid-template-columns: 1fr;
@@ -307,19 +382,19 @@
   }
 
   .mml-login__logo {
-    width: 104px;
+    width: 170px;
+  }
+
+  .mml-login__dots {
+    margin-top: 20px;
   }
 
   .mml-login .mml-login__title {
-    font-size: clamp(1.75rem, 7vw, 2.4rem);
+    font-size: clamp(1.25 rem, 4vw, 2.4rem);
   }
 
   .mml-login__lead {
     font-size: 14px;
-  }
-
-  .mml-login__brand-foot {
-    display: none;
   }
 
   .mml-login__panel {
