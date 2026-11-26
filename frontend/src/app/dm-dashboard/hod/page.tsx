@@ -4,13 +4,16 @@ import { TableSkeleton } from "@/components/ui/LoadingState";
 
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { CalendarDays, ChevronRight, Clock3, Eye, Tag, UserRound, X } from "lucide-react";
+import { CalendarDays, ChevronRight, Clock3, Eye, Plus, Tag, UserRound, X } from "lucide-react";
 import PapercardProblems from "@/features/dm-dashboard/admin/PapercardProblems";
 import { accountApi, dmDepartments, type DmLine } from "@/features/dm-dashboard/api";
 import {
   departmentLabel,
   normalizeDepartment,
 } from "@/features/dm-dashboard/departments";
+import { AddProblemModal } from "@/features/dm-dashboard/leader/problems/components/AddProblemModal";
+import { CategoryCodeBadges } from "@/features/dm-dashboard/leader/problems/components/CategoryCodeBadges";
+import { formatIncidentTimeSubtext } from "@/features/dm-dashboard/leader/problems/categoryText";
 import { ProblemLoadError } from "@/features/dm-dashboard/leader/problems/components/ProblemLoadError";
 import {
   ProblemSourceTabs,
@@ -241,6 +244,7 @@ export default function HodTrackingProblemsPage() {
   const lineDialogTitleId = useId();
   const [source, setSource] = useState<ProblemSource>("meeting");
   const [papercardLines, setPapercardLines] = useState<DmLine[]>([]);
+  const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => {
     const dialog = lineDialogRef.current;
@@ -444,6 +448,15 @@ export default function HodTrackingProblemsPage() {
                 onClick={resetFilters}
               >{uiText("Reset")}</button>
             )}
+
+            <button
+              type="button"
+              className="dml-pb-add-btn"
+              onClick={() => setAddOpen(true)}
+            >
+              <Plus size={15} aria-hidden="true" />
+              {uiText("Tambah Masalah")}
+            </button>
           </div>
         </div>
 
@@ -458,7 +471,7 @@ export default function HodTrackingProblemsPage() {
             <table className="dml-table dml-pb-table">
               <colgroup>
                 <col style={{ width: 120 }} />
-                <col style={{ width: 110 }} />
+                <col style={{ width: 130 }} />
                 <col style={{ width: 110 }} />
                 <col style={{ width: 150 }} />
                 <col style={{ width: 260 }} />
@@ -470,7 +483,7 @@ export default function HodTrackingProblemsPage() {
               <thead>
                 <tr>
                   <th>{uiText("Tanggal")}</th>
-                  <th>{uiText("Sesi")}</th>
+                  <th>{uiText("Input By")}</th>
                   <th>{uiText("Line")}</th>
                   <th>{uiText("Kategori")}</th>
                   <th>{uiText("Masalah")}</th>
@@ -510,7 +523,18 @@ export default function HodTrackingProblemsPage() {
                         }}
                       >
                         <td title={uiText(problem.date)}>
-                          {formatMeetingDate(problem.date, uiLocale)}
+                          <div className="dm-pb-date-cell">
+                            <span>{formatMeetingDate(problem.date, uiLocale)}</span>
+                            {(() => {
+                              const sub = formatIncidentTimeSubtext(
+                                problem.occurredAt,
+                                problem.respondedAt
+                              );
+                              return sub ? (
+                                <span className="dm-pb-date-time">{sub}</span>
+                              ) : null;
+                            })()}
+                          </div>
                         </td>
                         <td title={uiText(problem.sessionLabel)}>
                           <span className="dml-pb-truncate">
@@ -541,7 +565,12 @@ export default function HodTrackingProblemsPage() {
                             </span>
                           )}
                         </td>
-                        <td>{problem.problemCategories?.join(", ") || "-"}</td>
+                        <td>
+                          <CategoryCodeBadges
+                            categories={problem.problemCategories}
+                            codes={problem.categoryCodes}
+                          />
+                        </td>
                         <td className="dml-pb-problem" title={problem.problem}>
                           <span className="dml-pb-truncate">
                             {problem.problem || "-"}
@@ -654,7 +683,7 @@ export default function HodTrackingProblemsPage() {
                   </div>
                   <div className="hod-info-item">
                     <span className="hod-info-label">
-                      <Clock3 size={14} aria-hidden="true" />{uiText("Sesi")}</span>
+                      <Clock3 size={14} aria-hidden="true" />{uiText("Input By")}</span>
                     <div className="hod-info-value">
                       {selectedProblem.sessionLabel || "-"}
                     </div>
@@ -669,9 +698,38 @@ export default function HodTrackingProblemsPage() {
                     <span className="hod-info-label">
                       <Tag size={14} aria-hidden="true" />{uiText("Kategori")}</span>
                     <div className="hod-info-value">
-                      {selectedProblem.problemCategories?.join(", ") || "-"}
+                      <CategoryCodeBadges
+                        categories={selectedProblem.problemCategories}
+                        codes={selectedProblem.categoryCodes}
+                      />
                     </div>
                   </div>
+                  {selectedProblem.occurredAt || selectedProblem.respondedAt ? (
+                    <>
+                      <div className="hod-info-item">
+                        <span className="hod-info-label">
+                          <Clock3 size={14} aria-hidden="true" />
+                          {uiText("Jam terjadi")}
+                        </span>
+                        <div className="hod-info-value">
+                          {selectedProblem.occurredAt
+                            ? uiText(formatDue(selectedProblem.occurredAt, uiLocale))
+                            : "-"}
+                        </div>
+                      </div>
+                      <div className="hod-info-item">
+                        <span className="hod-info-label">
+                          <Clock3 size={14} aria-hidden="true" />
+                          {uiText("Waktu respon")}
+                        </span>
+                        <div className="hod-info-value">
+                          {selectedProblem.respondedAt
+                            ? uiText(formatDue(selectedProblem.respondedAt, uiLocale))
+                            : "-"}
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
               </section>
 
@@ -733,6 +791,15 @@ export default function HodTrackingProblemsPage() {
           </aside>
         </div>
       )}
+
+      <AddProblemModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onCreated={() => {
+          setAddOpen(false);
+          refresh();
+        }}
+      />
 
       <dialog
         ref={lineDialogRef}

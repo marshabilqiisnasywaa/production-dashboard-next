@@ -7,7 +7,8 @@ import { StatusChip, type ChipTone } from "@/components/ui/StatusChip";
 import { formatDue } from "../../meeting/utils";
 import type { ProblemRow, ProblemStatus } from "../types";
 import { formatMeetingDate, formatOverdue } from "../utils";
-import { categoryText } from "../categoryText";
+import { formatIncidentTimeSubtext } from "../categoryText";
+import { CategoryCodeBadges } from "./CategoryCodeBadges";
 import ProblemDetailDrawer from "./ProblemDetailDrawer";
 
 const STATUS_VIEW: Record<ProblemStatus, { tone: ChipTone; label: string }> = {
@@ -229,7 +230,7 @@ export function ProblemTable({
         <thead>
           <tr>
             <th>{uiText("Tanggal")}</th>
-            <th>{uiText("Sesi")}</th>
+            <th>{uiText("Input By")}</th>
             <th>{uiText("Line")}</th>
             <th>{uiText("Kategori")}</th>
             <th>{uiText("Masalah")}</th>
@@ -289,7 +290,13 @@ export function ProblemTable({
                   }}
                 >
                   <td title={uiText(r.date)}>
-                    {formatMeetingDate(r.date, uiLocale)}
+                    <div className="dm-pb-date-cell">
+                      <span>{formatMeetingDate(r.date, uiLocale)}</span>
+                      {(() => {
+                        const sub = formatIncidentTimeSubtext(r.occurredAt, r.respondedAt);
+                        return sub ? <span className="dm-pb-date-time">{sub}</span> : null;
+                      })()}
+                    </div>
                   </td>
 
                   <td title={uiText(r.sessionLabel)}>
@@ -305,7 +312,10 @@ export function ProblemTable({
                   </td>
 
                   <td style={{ whiteSpace: "normal" }}>
-                    {categoryText(r) || "-"}
+                    <CategoryCodeBadges
+                      categories={r.problemCategories}
+                      codes={r.categoryCodes}
+                    />
                   </td>
 
                   <td className="dml-pb-problem" title={r.problem}>

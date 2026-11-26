@@ -82,8 +82,8 @@ class DmMeetingSummary(Base):
     assigned_pics: Mapped[list["DmSummaryPic"]] = relationship("DmSummaryPic", cascade="all, delete-orphan", order_by="DmSummaryPic.id")
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    session_id: Mapped[int] = mapped_column(ForeignKey("dm_meeting_sessions.id", ondelete="CASCADE"), index=True)
-    line_id: Mapped[int] = mapped_column(ForeignKey("lines.id", ondelete="CASCADE"), index=True)
+    session_id: Mapped[int | None] = mapped_column(ForeignKey("dm_meeting_sessions.id", ondelete="SET NULL"), nullable=True, index=True)
+    line_id: Mapped[int | None] = mapped_column(ForeignKey("lines.id", ondelete="SET NULL"), nullable=True, index=True)
     problem: Mapped[str] = mapped_column(Text)  # Masalah
     problem_categories: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)  # Kategori Masalah)
     category_codes: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
@@ -94,12 +94,13 @@ class DmMeetingSummary(Base):
     pic_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id", ondelete="SET NULL"), index=True)
     due_date: Mapped[str | None] = mapped_column(String(32))  # Target Waktu / Jam
     line_code: Mapped[str | None] = mapped_column(String(32))
+    created_by_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     status: Mapped[str] = mapped_column(String(16), default="open", server_default="open")  # "open", "in_progress", "resolved"
     resolved_at : Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_escalated_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    session: Mapped["DmMeetingSession"] = relationship("DmMeetingSession", back_populates="summaries")
+    session: Mapped["DmMeetingSession | None"] = relationship("DmMeetingSession", back_populates="summaries")
 
 
 class DmPostMeeting(Base):

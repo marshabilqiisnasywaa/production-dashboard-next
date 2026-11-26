@@ -52,7 +52,7 @@ def empty_data(line_code: str, pengusul: str, now: datetime, analysis_id: str) -
         "abnormal": {
             "label": "", "line": line_code, "pengusul": pengusul, "jenis": "",
             "categoryCodes": [], "categoryLabels": [], "respondedAt": "",
-            "factors": {"man": "", "machine": "", "material": "", "method": "", "environment": ""},
+            "factors": {"man": "", "machine": "", "material": "", "method": "", "measurement": "", "environment": ""},
             "sumberAbnormal": [], "sumberLainnya": "", "tingkatPengaruh": [], "pengaruhLainnya": "",
             "summary": {
                 "when": now.astimezone(JAKARTA).strftime("%Y-%m-%dT%H:%M"), "where": line_code,

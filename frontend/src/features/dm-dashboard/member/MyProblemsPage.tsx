@@ -3,8 +3,10 @@ import { useUiText } from "@/locales/useUiText";
 
 
 import { useEffect, useState } from "react";
+import { Plus } from "lucide-react";
 import "../leader/problems/problems.css"; // table styles shared with the Leader's Tracking Masalah
 import { Card } from "@/components/ui/Card";
+import { AddProblemModal } from "../leader/problems/components/AddProblemModal";
 import { ProblemTable } from "../leader/problems/components/ProblemTable";
 import { ProblemLoadError } from "../leader/problems/components/ProblemLoadError";
 import ProblemsPage from "../leader/problems/ProblemsPage";
@@ -26,6 +28,7 @@ export default function MyProblemsPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => {
     if (!toast) return;
@@ -59,18 +62,39 @@ export default function MyProblemsPage() {
         </div>
       </div>
 
-      <div className="dml-pb-sources" role="group" aria-label={uiText("Tampilan masalah")}>
-        {VIEWS.map((item) => (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 12,
+        }}
+      >
+        <div className="dml-pb-sources" role="group" aria-label={uiText("Tampilan masalah")}>
+          {VIEWS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className={"dml-pb-source" + (view === item.key ? " is-active" : "")}
+              aria-pressed={view === item.key}
+              onClick={() => setView(item.key)}
+            >
+              {uiText(item.label)}
+            </button>
+          ))}
+        </div>
+
+        {view === "mine" && (
           <button
-            key={item.key}
             type="button"
-            className={"dml-pb-source" + (view === item.key ? " is-active" : "")}
-            aria-pressed={view === item.key}
-            onClick={() => setView(item.key)}
+            className="dml-pb-add-btn"
+            onClick={() => setAddOpen(true)}
           >
-            {uiText(item.label)}
+            <Plus size={15} aria-hidden="true" />
+            {uiText("Tambah Masalah")}
           </button>
-        ))}
+        )}
       </div>
 
       {view === "all" ? <ProblemsPage hideHeading /> : <Card
@@ -90,6 +114,16 @@ export default function MyProblemsPage() {
           <div className="dml-empty">{uiText("Memuat masalah…")}</div>
         )}
       </Card>}
+
+      <AddProblemModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onCreated={() => {
+          setAddOpen(false);
+          refresh();
+          setToast(uiText("Masalah berhasil ditambahkan"));
+        }}
+      />
 
       {toast && (
         <div

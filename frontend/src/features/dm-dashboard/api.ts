@@ -1620,8 +1620,8 @@ export type DmMeetingSummary = {
   lineCodes?: string[];
   pics?: { employeeId: number | null; name: string }[];
   id: number;
-  sessionId: number;
-  lineId: number;
+  sessionId: number | null;
+  lineId: number | null;
   problem: string;
   problemCategories?: string[] | null;
   categoryCodes?: string[] | null;
@@ -1735,8 +1735,8 @@ export type DmMyProblem = {
   lineCodes?: string[];
   pics?: { employeeId: number | null; name: string }[];
   id: number;
-  sessionId: number;
-  lineId: number;
+  sessionId: number | null;
+  lineId: number | null;
   lineCode: string | null;
   date: string;
   sessionLabel?: string | null;
@@ -1989,6 +1989,22 @@ export const meetingApi = {
     const query = lineId ? `?line_id=${lineId}` : "";
     return request<DmMyProblem[]>("/meetings/problems" + query, {}, true);
   },
+  createProblem: (input: {
+    lineCodes?: string[];
+    customLineCodes?: string[];
+    pics?: { name: string; employeeNo?: string | null; manual: boolean }[];
+    problem: string;
+    categoryCodes?: string[];
+    occurredAt?: string | null;
+    respondedAt?: string | null;
+    picName: string;
+    picId?: number | null;
+    dueDate?: string | null;
+    lineCode?: string | null;
+    customLine?: boolean;
+    picEmployeeNo?: string | null;
+  }) =>
+    request<DmMyProblem>("/meetings/problems", json("POST", input), true),
   supervisorEscalations: () =>
     request<DmMyProblem[]>("/meetings/problems/escalations", {}, true),
 };

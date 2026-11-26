@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { departmentLabel } from "../departments";
 import { getStatus } from "../leader/problems/utils";
+import { CategoryCodeBadges } from "../leader/problems/components/CategoryCodeBadges";
+import { formatIncidentTimeSubtext } from "../leader/problems/categoryText";
 import { AlertTriangle, ChevronDown, ClipboardList, TrendingUp, Users, X } from "lucide-react";
 import { DateRangePicker, type DateRangeValue } from "../scorecard/ScorecardFilters";
 import { defaultRange, jakartaToday } from "../scorecard/useScorecardData";
@@ -465,7 +467,7 @@ function DetailPanel({
                   <thead>
                     <tr>
                       <th>{tr(["Tanggal", "Date"])}</th>
-                      <th>{tr(["Sesi", "Session"])}</th>
+                      <th>{tr(["Input By", "Input By"])}</th>
                       <th>{tr(["Line", "Line"])}</th>
                       <th>{tr(["Kategori (Code 1–3)", "Category (Code 1–3)"])}</th>
                       <th>{tr(["Masalah", "Problem"])}</th>
@@ -478,31 +480,30 @@ function DetailPanel({
                   <tbody>
                     {meetingRows.slice(start, end).map((row, index) => (
                       <tr key={`${row.date}-${row.lineCode}-${start + index}`}>
-                        <td className="is-date">{row.date}</td>
+                        <td className="is-date">
+                          <div className="dm-pb-date-cell">
+                            <span>{row.date}</span>
+                            {(() => {
+                              const sub = formatIncidentTimeSubtext(
+                                row.occurredAt,
+                                row.respondedAt
+                              );
+                              return sub ? (
+                                <span className="dm-pb-date-time">{sub}</span>
+                              ) : null;
+                            })()}
+                          </div>
+                        </td>
                         <td>{row.sessionLabel || "–"}</td>
                         <td className="is-line">
                           <LineCell lineCode={row.lineCode} english={english} />
                         </td>
                         <td>
                           {row.categoryPath.parts.length ? (
-                            row.categoryPath.isPath ? (
-                              <div className="msl-code-path">
-                                {row.categoryPath.parts.map((part, idx) => (
-                                  <span key={`${part}-${idx}`} className="msl-code-step">
-                                    {idx > 0 && <span className="msl-code-sep" aria-hidden="true">›</span>}
-                                    <span className={`msl-badge${idx === 0 ? " is-danger" : ""}`}>{part}</span>
-                                  </span>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="msl-badges">
-                                {row.categoryPath.parts.map((name) => (
-                                  <span key={name} className="msl-badge is-danger">
-                                    {name}
-                                  </span>
-                                ))}
-                              </div>
-                            )
+                            <CategoryCodeBadges
+                              categories={row.categoryPath.parts}
+                              codes={row.categoryPath.isPath ? row.categoryPath.parts : null}
+                            />
                           ) : (
                             "–"
                           )}

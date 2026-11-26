@@ -41,6 +41,7 @@ export function useMyProblems() {
       const status = getStatus(p.status === "resolved", due, now);
       return {
         id: String(p.id),
+        canEdit: p.canEdit ?? true,
         date: p.date,
         sessionLabel: p.sessionLabel ?? "-",
         line: p.lineCode ?? "-",
@@ -48,8 +49,12 @@ export function useMyProblems() {
         pics: p.pics,
         problem: p.problem,
         problemCategories: p.problemCategories ?? [],
+        categoryCodes: p.categoryCodes ?? null,
+        occurredAt: p.occurredAt ?? null,
+        respondedAt: p.respondedAt ?? null,
         solution: p.solution ?? null,
         picName: p.picName,
+        picDept: p.picDept ?? null,
         due,
         status,
         overdueMs:

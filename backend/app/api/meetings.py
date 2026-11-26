@@ -345,8 +345,6 @@ def summary_options(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_active_principal),
 ) -> MeetingSummaryOptionsOut:
-    if principal.role == "member":
-        raise HTTPException(status_code=403, detail="Hanya Leader yang berwenang mengisi summary.")
     return MeetingSummaryOptionsOut(
         lines=list(db.scalars(select(Line.code).order_by(Line.code))),
         users=[MeetingPicOut(id=e.id, employee_no=e.employee_no, name=e.name)
@@ -685,14 +683,25 @@ def end_session(
 
     return _map_session(session, db)
 
-def _my_problem_out(sm : DmMeetingSummary, session: DmMeetingSession) -> myProblemOut:
+def _summary_fallback_date(sm: DmMeetingSummary) -> date:
+    if sm.occurred_at and len(sm.occurred_at) >= 10:
+        try:
+            return date.fromisoformat(sm.occurred_at[:10])
+        except ValueError:
+            pass
+    if sm.created_at is not None:
+        return sm.created_at.date()
+    return date.today()
+
+
+def _my_problem_out(sm: DmMeetingSummary, session: DmMeetingSession | None) -> myProblemOut:
     return myProblemOut(
         id=sm.id,
         session_id=sm.session_id,
         line_id=sm.line_id,
         line_code=display_lines(sm),
-        date=session.date,
-        session_label=session.label,
+        date=session.date if session is not None else _summary_fallback_date(sm),
+        session_label=session.label if session is not None else (sm.created_by_name or "Input Langsung"),
         **summary_metadata(sm),
         problem=sm.problem,
         problem_categories=sm.problem_categories,
@@ -881,13 +890,14 @@ def my_problems(
     employee = principal.employee
     if employee is None:
         return []
+    date_expr = func.coalesce(DmMeetingSession.date, func.date(DmMeetingSummary.created_at))
     stmt = (
         select(DmMeetingSummary, DmMeetingSession)
-        .join(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
+        .outerjoin(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
         .where(
             problem_pic_filter(DmMeetingSummary, [employee.id], [employee.name.strip().lower()])
         )
-        .order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
+        .order_by(date_expr.desc(), DmMeetingSummary.id.desc())
     )
     rows = [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
     rows += workshop_problems.for_pic(db, employee)
@@ -906,21 +916,70 @@ def list_problems(
     # 1. Semua role boleh melihat masalah semua lini; hanya PIC yang bisa mengubahnya (can_edit)
     target_line_ids = [line_id] if line_id is not None else None
 
-    # 2. Query masalah meeting dari database
+    # 2. Query masalah meeting & input langsung dari database
+    date_expr = func.coalesce(DmMeetingSession.date, func.date(DmMeetingSummary.created_at))
     stmt = (
         select(DmMeetingSummary, DmMeetingSession)
-        .join(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
+        .outerjoin(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
     )
     if target_line_ids is not None:
         stmt = stmt.where(line_filter(DmMeetingSummary, target_line_ids))
 
-    stmt = stmt.order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
+    stmt = stmt.order_by(date_expr.desc(), DmMeetingSummary.id.desc())
     rows = [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
     rows += workshop_problems.for_lines(db, target_line_ids)
     rows = with_pic_dept(db, rows)
     for row in rows:
         row.can_edit = employee is not None and is_pic(row, employee)
     return sorted(rows, key=lambda row: (row.date, abs(row.id)), reverse=True)
+
+
+@router.post("/problems", response_model=myProblemOut, status_code=status.HTTP_201_CREATED)
+def create_direct_problem(
+    payload: MeetingSummaryIn,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_active_principal),
+) -> myProblemOut:
+    """Input masalah langsung dari Tracking Masalah / Masalah Saya tanpa menunggu sesi DM Meeting."""
+    assigned_lines, assigned_pics = resolve_assignments(db, payload, default_line_id=None)
+    category_fields = resolve_category_fields(db, payload)
+    summary_line_id = next((lid for lid, _ in assigned_lines if lid is not None), None)
+    creator_name = (
+        principal.employee.name.strip()
+        if principal.employee is not None and principal.employee.name
+        else (principal.user.username if principal.user is not None else "Admin")
+    )
+
+    new_sm = DmMeetingSummary(
+        session_id=None,
+        line_id=summary_line_id,
+        problem=payload.problem,
+        **category_fields,
+        pic_name=assigned_pics[0][1],
+        pic_id=assigned_pics[0][0],
+        due_date=payload.due_date,
+        line_code=assigned_lines[0][1] if assigned_lines else None,
+        created_by_name=creator_name,
+        status="open",
+        affected_lines=[DmSummaryLine(line_id=lid, code=code) for lid, code in assigned_lines],
+        assigned_pics=[DmSummaryPic(employee_id=eid, name=name) for eid, name in assigned_pics],
+    )
+    db.add(new_sm)
+    db.commit()
+    db.refresh(new_sm)
+
+    background_tasks.add_task(
+        notify_new_problems,
+        line_code=display_lines(new_sm) or "-",
+        session_label=creator_name,
+        summaries=[payload],
+    )
+
+    out = _my_problem_out(new_sm, None)
+    out = with_pic_dept(db, [out])[0]
+    out.can_edit = principal.employee is not None and is_pic(new_sm, principal.employee)
+    return out
 
 @router.get("/problems/escalations", response_model=list[myProblemOut])
 def list_supervisor_escalations(
@@ -932,11 +991,12 @@ def list_supervisor_escalations(
     Filter eskalasi waktu dilakukan berdasarkan due_date. Hanya PIC yang bisa mengubahnya (can_edit).
     """
     employee = principal.employee
+    date_expr = func.coalesce(DmMeetingSession.date, func.date(DmMeetingSummary.created_at))
     stmt = (
         select(DmMeetingSummary, DmMeetingSession)
-        .join(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
+        .outerjoin(DmMeetingSession, DmMeetingSession.id == DmMeetingSummary.session_id)
         .where(DmMeetingSummary.status != "resolved")
-        .order_by(DmMeetingSession.date.desc(), DmMeetingSummary.id.desc())
+        .order_by(date_expr.desc(), DmMeetingSummary.id.desc())
     )
     rows = [_my_problem_out(sm, s) for sm, s in db.execute(stmt).all()]
     rows += workshop_problems.unresolved_for_pics(db, None, None)
@@ -972,7 +1032,7 @@ def set_problem_status(
     sm.status = payload.status
     db.commit()
     db.refresh(sm)
-    session = db.get(DmMeetingSession, sm.session_id)
+    session = db.get(DmMeetingSession, sm.session_id) if sm.session_id is not None else None
     return _my_problem_out(sm, session)
 
 @router.patch(
@@ -1008,8 +1068,8 @@ def set_problem_solution(
             detail="Hanya PIC masalah ini yang dapat mengisi solusi.",
         )
 
-    session = db.get(DmMeetingSession, sm.session_id)
-    if session is None:
+    session = db.get(DmMeetingSession, sm.session_id) if sm.session_id is not None else None
+    if sm.session_id is not None and session is None:
         raise HTTPException(
             status_code=404,
             detail="Sesi meeting tidak ditemukan.",

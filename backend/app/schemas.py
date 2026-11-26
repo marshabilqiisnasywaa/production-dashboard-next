@@ -513,8 +513,8 @@ class myProblemOut(CamelModel):
     line_codes: list[str] = Field(default_factory=list)
     pics: list[SummaryPicOut] = Field(default_factory=list)
     id : int
-    session_id : int
-    line_id : int
+    session_id : int | None = None
+    line_id : int | None = None
     line_code : str | None = None
     date : date
     session_label : str | None = None

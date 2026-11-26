@@ -297,8 +297,8 @@ export default function FiveWhyReport({ record, canEdit }: FiveWhyReportProps) {
       </section>
 
       {factorRows.length ? (
-        <section className="dm-5w-card dm-5w-report-section" aria-labelledby="dm-5w-report-factors">
-          <h2 className="dm-5w-card-title" id="dm-5w-report-factors">{uiText("4M 1E")}</h2>
+        <section className="dm-5w-card dm-5w-report-section" aria-labelledby="dm-5w-factors-title">
+          <h2 className="dm-5w-card-title" id="dm-5w-factors-title">{uiText("5M + 1E")}</h2>
           <table className="dm-5w-report-factors">
             <tbody>
               {factorRows.map((row) => (
