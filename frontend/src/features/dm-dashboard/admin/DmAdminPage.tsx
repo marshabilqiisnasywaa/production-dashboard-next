@@ -53,6 +53,7 @@ import "../fivewhy/FiveWhy.css";
 import PapercardHistory from "./PapercardHistory";
 import StandupHistory from "./StandupHistory";
 import SqdipMonitor from "./sqdip/SqdipMonitor";
+import PerformanceMonitor from "./performance/PerformanceMonitor";
 import HistoryImportPage from "./history-import/HistoryImportPage";
 import FlowchartManager from "../flowchart/admin/FlowchartManager";
 import MechanismBoardEditor from "./MechanismBoardEditor";
@@ -234,6 +235,10 @@ const tabLabels: Record<DmAdminTabKey, { crumb: string; title: string }> = {
     crumb: "SQDIP",
     title: "SQDIP Monitoring: Skor Harian per Leader dan Line",
   },
+    perf: {
+    crumb: "OTP, Output, WIP & OPE",
+    title: "KPI Monitoring: OTP, Output, WIP, dan OPE Bulanan",
+  },
 };
 const ADMIN_TAB_HEADERS: Record<
   DmAdminTabKey,
@@ -286,6 +291,10 @@ const ADMIN_TAB_HEADERS: Record<
   sqdip: {
     title: "Monitoring SQDIP",
     description: "Skor harian SQDIP per leader dan lini.",
+  },
+    perf: {
+    title: "Monitoring OTP, Output, WIP & OPE",
+    description: "Target dan aktual bulanan, rata-rata Q dan tahunan.",
   },
   dashboard: {
     title: "Dashboard Admin",
@@ -737,6 +746,7 @@ function AdminWorkspace({
               activeTab === "dashboard" ||
               activeTab === "users" ||
               activeTab === "sqdip" ||
+              activeTab === "perf" ||
               activeTab === "abnormal"
                 ? " is-bare"
                 : ""
@@ -1408,9 +1418,9 @@ function AdminWorkspace({
                 <SqdipMonitor />
               </div>
             )}
-            {activeTab === "history-import" && isAdmin && (
-              <div className="dm-admin-section">
-                <HistoryImportPage lines={lines} />
+            {activeTab === "perf" && (
+              <div className="dm-admin-section dm-tab-lines">
+                <PerformanceMonitor />
               </div>
             )}
           </div>

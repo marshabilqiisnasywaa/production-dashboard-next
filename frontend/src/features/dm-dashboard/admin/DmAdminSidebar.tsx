@@ -31,7 +31,8 @@ export type DmAdminTabKey =
   | "problems"
   | "history"
   | "sqdip"
-  | "history-import";
+  | "history-import"
+  | "perf";
 
 interface DmAdminSidebarProps {
   isAdmin: boolean;
@@ -392,19 +393,18 @@ export default function DmAdminSidebar({
               ]}
             />
 
-            <div className="dm-admin-nav-heading">{uiText("SQDIP MONITORING")}</div>
-            <button
-              type="button"
-              className={`dm-admin-nav-btn ${
-                activeTab === "sqdip" ? "is-active" : ""
-              }`}
-              onClick={() => select("sqdip")}
-            >
-              <span className="dm-admin-nav-icon">
-                <ChartIcon />
-              </span>
-              <span>{uiText("SQDIP")}</span>
-            </button>
+                        <div className="dm-admin-nav-heading">{uiText("KPI MONITORING")}</div>
+            <NavGroup
+              id="dm-nav-kpi"
+              label="Data KPI"
+              icon={<ChartIcon />}
+              activeTab={activeTab}
+              onSelect={select}
+              items={[
+                { tab: "sqdip", label: "SQDIP", icon: <ChartIcon /> },
+                { tab: "perf", label: "OTP, Output, WIP & OPE", icon: <IconGauge size={16} /> },
+              ]}
+            />
 
             <div className="dm-admin-nav-divider" role="separator" />
             <NavGroup

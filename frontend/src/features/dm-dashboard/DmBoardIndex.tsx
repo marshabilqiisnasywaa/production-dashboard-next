@@ -12,10 +12,11 @@ import DmScorecard from "./scorecard/DmScorecard";
 import "./DmDashboard.css";
 import AttendanceDashboardPage from "./attendance/page";
 import MasalahPage from "./masalah/MasalahPage";
+import DmPerformance from "./performance/DmPerformance";
 
 const FlowchartViewer = dynamic(() => import("./flowchart/FlowchartViewer"), { ssr: false });
 
-type IndexTab = "line" | "kpi" | "rekap" | "masalah" | "flowchart";
+type IndexTab = "line" | "kpi" | "rekap" | "masalah" | "flowchart" | "performance";
 
 const TABS: { key: IndexTab; label: string }[] = [
   { key: "line", label: "Line" },
@@ -23,6 +24,7 @@ const TABS: { key: IndexTab; label: string }[] = [
   { key: "rekap", label: "Rekap Absensi" },
   { key: "masalah", label: "Tracking Abnormal" },
   { key: "flowchart", label: "Dokumen" },
+  { key: "performance", label: "Performance" },
 ];
 
 type LoadState =
@@ -271,6 +273,11 @@ export default function DmBoardIndex() {
     className="dmi-panel"
   >
     <FlowchartViewer />
+  </div>
+)}
+{tab === "performance" && (
+  <div id="dmi-panel-performance" role="tabpanel" aria-labelledby="dmi-tab-performance" className="dmi-panel">
+    <DmPerformance />
   </div>
 )}
       </div>
