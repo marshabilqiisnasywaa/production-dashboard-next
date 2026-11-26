@@ -16,7 +16,7 @@ export default function LeaderShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       <div
-        className={`dm-theme dml-shell dml-shell--drawer${
+        className={`dm-theme dml-shell dml-shell--drawer dml-shell--nav-title${
           isDashboard ? " dml-shell--dashboard" : ""
         }`}
       >

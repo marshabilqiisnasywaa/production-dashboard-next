@@ -6,6 +6,7 @@ import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { IconGauge } from "@/components/ui/icons";
 import LanguageMenu from "@/components/ui/LanguageMenu";
+import { InlineSpinner, SessionLoader } from "@/components/ui/LoadingState";
 import { ApiError, accountApi, getToken, setToken } from "../api";
 import { homeFor } from "./homeFor";
 import { OppoLogo } from "./OppoLogo";
@@ -81,6 +82,7 @@ export default function UserLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<LoginError | null>(null);
   const [busy, setBusy] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
@@ -93,12 +95,20 @@ export default function UserLogin() {
       return;
     }
     if (!getToken()) return;
+    let cancelled = false;
+    setCheckingSession(true);
     accountApi
       .me()
       .then((me) => {
-        window.location.href = homeFor(me);
+        if (!cancelled) window.location.href = homeFor(me);
       })
-      .catch(() => setToken(null));
+      .catch(() => {
+        setToken(null);
+        if (!cancelled) setCheckingSession(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function submit(event: FormEvent) {
@@ -136,6 +146,16 @@ export default function UserLogin() {
   const knownRole = DEMO_ACCOUNTS.find(
     (a) => a.nik.toLowerCase() === nik.trim().toLowerCase()
   )?.role;
+
+  if (checkingSession) {
+    return (
+      <SessionLoader
+        fullScreen
+        label={t("auth:login.checking")}
+        sublabel="DM Digital"
+      />
+    );
+  }
 
   return (
     <main className="dml-login">
@@ -247,7 +267,10 @@ export default function UserLogin() {
 
           <button type="submit" className="dml-login__submit" disabled={busy}>
             {busy ? (
-              t("auth:login.checking")
+              <>
+                <InlineSpinner size={16} />
+                <span>{t("auth:login.checking")}</span>
+              </>
             ) : (
               <>
                 {t("auth:login.signIn")} <ChevronRightIcon />

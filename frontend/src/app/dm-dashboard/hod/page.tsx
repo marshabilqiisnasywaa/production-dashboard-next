@@ -1,9 +1,10 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
+import { TableSkeleton } from "@/components/ui/LoadingState";
 
 
-import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Clock3, Eye, Tag, UserRound, X } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { CalendarDays, ChevronRight, Clock3, Eye, Tag, UserRound, X } from "lucide-react";
 import PapercardProblems from "@/features/dm-dashboard/admin/PapercardProblems";
 import { accountApi, dmDepartments, type DmLine } from "@/features/dm-dashboard/api";
 import {
@@ -58,6 +59,17 @@ function initials(name: string): string {
     .map((part) => part[0])
     .join("")
     .toUpperCase();
+}
+
+function linesOf(problem: ProblemRow): string[] {
+  if (problem.lineCodes?.length) return problem.lineCodes;
+  if (problem.line && problem.line !== "-") {
+    return problem.line
+      .split(",")
+      .map((line) => line.trim())
+      .filter(Boolean);
+  }
+  return [];
 }
 
 const HOD_STYLES = `
@@ -221,8 +233,24 @@ export default function HodTrackingProblemsPage() {
   const [selectedProblem, setSelectedProblem] = useState<ProblemRow | null>(
     null
   );
+  const [lineModal, setLineModal] = useState<{
+    problem: string;
+    lines: string[];
+  } | null>(null);
+  const lineDialogRef = useRef<HTMLDialogElement>(null);
+  const lineDialogTitleId = useId();
   const [source, setSource] = useState<ProblemSource>("meeting");
   const [papercardLines, setPapercardLines] = useState<DmLine[]>([]);
+
+  useEffect(() => {
+    const dialog = lineDialogRef.current;
+    if (!dialog) return;
+    if (lineModal && !dialog.open) dialog.showModal();
+    if (!lineModal && dialog.open) dialog.close();
+    return () => {
+      if (dialog.open) dialog.close();
+    };
+  }, [lineModal]);
 
   useEffect(() => {
     let cancelled = false;
@@ -239,7 +267,7 @@ export default function HodTrackingProblemsPage() {
 
   const lines = useMemo(
     () =>
-      [...new Set(rows.map((row) => row.line).filter((line) => line && line !== "-"))]
+      [...new Set(rows.flatMap((row) => linesOf(row)))]
         .sort(),
     [rows]
   );
@@ -257,14 +285,15 @@ export default function HodTrackingProblemsPage() {
   const visibleRows = useMemo(() => {
     const query = search.trim().toLowerCase();
     return rows.filter((row) => {
+      const rowLines = linesOf(row);
       const matchesSearch =
         !query ||
-        [row.problem, row.line, row.picName, row.sessionLabel, row.date].some(
+        [row.problem, row.line, rowLines.join(" "), row.picName, row.sessionLabel, row.date].some(
           (value) => String(value ?? "").toLowerCase().includes(query)
         );
       const matchesStatus =
         statusFilter === "all" || row.status === statusFilter;
-      const matchesLine = lineFilter === "all" || row.line === lineFilter;
+      const matchesLine = lineFilter === "all" || rowLines.includes(lineFilter);
       const matchesDept =
         deptFilter === "all" || normalizeDepartment(row.picDept) === deptFilter;
       const matchesDue =
@@ -423,14 +452,14 @@ export default function HodTrackingProblemsPage() {
         {error ? (
           <ProblemLoadError error={error} onRetry={refresh} />
         ) : !ready || loading ? (
-          <div className="dml-empty" role="status">{uiText("Memuat masalah…")}</div>
+          <TableSkeleton rows={6} columns={7} label={uiText("Memuat masalah…")} />
         ) : (
           <div className="dml-table-wrap dml-pb-table-wrap">
             <table className="dml-table dml-pb-table">
               <colgroup>
                 <col style={{ width: 120 }} />
                 <col style={{ width: 110 }} />
-                <col style={{ width: 90 }} />
+                <col style={{ width: 110 }} />
                 <col style={{ width: 150 }} />
                 <col style={{ width: 260 }} />
                 <col style={{ width: 145 }} />
@@ -459,6 +488,7 @@ export default function HodTrackingProblemsPage() {
                 ) : (
                   visibleRows.map((problem) => {
                     const status = STATUS_VIEW[problem.status];
+                    const lineEntries = linesOf(problem);
                     return (
                       <tr
                         key={problem.id}
@@ -472,6 +502,7 @@ export default function HodTrackingProblemsPage() {
                         aria-label={uiText("Lihat detail masalah: {{v0}}", { v0: problem.problem })}
                         onClick={() => openProblem(problem)}
                         onKeyDown={(event) => {
+                          if (event.target !== event.currentTarget) return;
                           if (event.key === "Enter" || event.key === " ") {
                             event.preventDefault();
                             openProblem(problem);
@@ -486,7 +517,30 @@ export default function HodTrackingProblemsPage() {
                             {uiText(problem.sessionLabel)}
                           </span>
                         </td>
-                        <td title={uiText(problem.line)}>{problem.line || "-"}</td>
+                        <td title={lineEntries.length > 1 ? lineEntries.join(", ") : uiText(problem.line)}>
+                          {lineEntries.length > 1 ? (
+                            <button
+                              type="button"
+                              className="dml-pb-assignment-count"
+                              aria-haspopup="dialog"
+                              aria-label={uiText("Lihat semua line")}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setLineModal({
+                                  problem: problem.problem,
+                                  lines: lineEntries,
+                                });
+                              }}
+                            >
+                              {uiText("{{v0}} line", { v0: lineEntries.length })}
+                              <ChevronRight size={13} aria-hidden="true" />
+                            </button>
+                          ) : (
+                            <span className="dml-pb-truncate">
+                              {lineEntries[0] || "-"}
+                            </span>
+                          )}
+                        </td>
                         <td>{problem.problemCategories?.join(", ") || "-"}</td>
                         <td className="dml-pb-problem" title={problem.problem}>
                           <span className="dml-pb-truncate">
@@ -679,6 +733,48 @@ export default function HodTrackingProblemsPage() {
           </aside>
         </div>
       )}
+
+      <dialog
+        ref={lineDialogRef}
+        className="dml-pb-assignment-dialog"
+        aria-labelledby={lineDialogTitleId}
+        onCancel={(event) => {
+          event.preventDefault();
+          setLineModal(null);
+        }}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) {
+            setLineModal(null);
+          }
+        }}
+      >
+        {lineModal && (
+          <>
+            <div className="dml-pb-assignment-dialog__head">
+              <h2 id={lineDialogTitleId}>
+                {uiText("Line terkait")} <span>{lineModal.lines.length}</span>
+              </h2>
+              <button
+                type="button"
+                autoFocus
+                aria-label={uiText("Tutup")}
+                onClick={() => setLineModal(null)}
+              >
+                <X size={18} aria-hidden="true" />
+              </button>
+            </div>
+            <p className="dml-pb-assignment-dialog__problem">{lineModal.problem}</p>
+            <ul>
+              {lineModal.lines.map((line, index) => (
+                <li key={`${line}-${index}`}>
+                  <span className="dml-pb-assignment-dialog__number">{index + 1}</span>
+                  <strong>{line}</strong>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </dialog>
     </div>
   );
 }

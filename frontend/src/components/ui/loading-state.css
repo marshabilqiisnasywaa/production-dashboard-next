@@ -1,0 +1,255 @@
+/* ============================================================================
+   Hybrid Loading Components — InlineSpinner, SessionLoader, ChartLoader, TableSkeleton
+   Designed for OPPO DM Digital (liquid glass + #046a38 green palette)
+   ============================================================================ */
+
+@keyframes dm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dm-bar-wave {
+  0%, 100% {
+    transform: scaleY(0.32);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes dm-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 1. Inline Spinner (buttons, inline controls) */
+.dm-inline-spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-top-color: currentColor;
+  animation: dm-spin 0.7s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+  vertical-align: middle;
+}
+
+/* 2. Session / Full-Screen Branded Loader */
+.dm-session-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 40px 20px;
+}
+
+.dm-session-loader.is-fullscreen {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(4, 106, 56, 0.08), transparent 45%),
+    radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.07), transparent 45%),
+    #f6f8f7;
+}
+
+.dm-session-loader__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  min-width: 240px;
+  max-width: 340px;
+  padding: 28px 32px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(4, 106, 56, 0.12);
+  box-shadow:
+    0 12px 32px rgba(15, 23, 42, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  text-align: center;
+}
+
+.dm-session-loader__visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+}
+
+.dm-session-loader__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(4, 106, 56, 0.14);
+  border-top-color: #046a38;
+  border-right-color: #10b981;
+  animation: dm-spin 0.85s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+}
+
+.dm-session-loader__bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 20px;
+}
+
+.dm-session-loader__bars span {
+  width: 3.5px;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #10b981 0%, #046a38 100%);
+  transform-origin: bottom center;
+  animation: dm-bar-wave 1.05s ease-in-out infinite;
+}
+
+.dm-session-loader__bars span:nth-child(1) { animation-delay: 0s; }
+.dm-session-loader__bars span:nth-child(2) { animation-delay: 0.15s; }
+.dm-session-loader__bars span:nth-child(3) { animation-delay: 0.3s; }
+.dm-session-loader__bars span:nth-child(4) { animation-delay: 0.45s; }
+
+.dm-session-loader__label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: -0.01em;
+}
+
+.dm-session-loader__sub {
+  margin: -8px 0 0;
+  font-size: 12.5px;
+  color: #6b7280;
+}
+
+/* 3. Chart Loader (animated mini bar chart for charts & analytics panels) */
+.dm-chart-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 180px;
+  padding: 28px 20px;
+  text-align: center;
+}
+
+.dm-chart-loader.is-compact {
+  min-height: 120px;
+  padding: 20px 16px;
+}
+
+.dm-chart-loader__bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 44px;
+  padding: 0 10px 6px;
+  border-bottom: 2px solid rgba(4, 106, 56, 0.16);
+}
+
+.dm-chart-loader.is-compact .dm-chart-loader__bars {
+  height: 32px;
+  gap: 5px;
+}
+
+.dm-chart-loader__bars span {
+  width: 8px;
+  height: 100%;
+  border-radius: 4px 4px 2px 2px;
+  background: linear-gradient(180deg, #10b981 0%, #046a38 100%);
+  transform-origin: bottom center;
+  animation: dm-bar-wave 1.15s ease-in-out infinite;
+}
+
+.dm-chart-loader.is-compact .dm-chart-loader__bars span {
+  width: 6px;
+}
+
+.dm-chart-loader__bars span:nth-child(1) { animation-delay: 0s; height: 72%; }
+.dm-chart-loader__bars span:nth-child(2) { animation-delay: 0.14s; height: 100%; }
+.dm-chart-loader__bars span:nth-child(3) { animation-delay: 0.28s; height: 84%; }
+.dm-chart-loader__bars span:nth-child(4) { animation-delay: 0.42s; height: 94%; }
+.dm-chart-loader__bars span:nth-child(5) { animation-delay: 0.56s; height: 64%; }
+
+.dm-chart-loader__label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* 4. Table Skeleton (shimmer rows for data tables) */
+.dm-table-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px 22px;
+  width: 100%;
+}
+
+.dm-table-skeleton__head,
+.dm-table-skeleton__row {
+  display: grid;
+  gap: 14px;
+  align-items: center;
+}
+
+.dm-table-skeleton__head {
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.dm-table-skeleton__row {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.04);
+}
+
+.dm-table-skeleton__row:last-of-type {
+  border-bottom: none;
+}
+
+.dm-table-skeleton__cell {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.055) 25%,
+    rgba(4, 106, 56, 0.09) 50%,
+    rgba(15, 23, 42, 0.055) 75%
+  );
+  background-size: 200% 100%;
+  animation: dm-shimmer 1.5s ease-in-out infinite;
+}
+
+.dm-table-skeleton__head .dm-table-skeleton__cell {
+  height: 10px;
+  opacity: 0.75;
+}
+
+.dm-table-skeleton__footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 8px;
+  font-size: 12.5px;
+  color: #6b7280;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dm-inline-spinner,
+  .dm-session-loader__ring,
+  .dm-session-loader__bars span,
+  .dm-chart-loader__bars span,
+  .dm-table-skeleton__cell {
+    animation-duration: 2.8s;
+  }
+}

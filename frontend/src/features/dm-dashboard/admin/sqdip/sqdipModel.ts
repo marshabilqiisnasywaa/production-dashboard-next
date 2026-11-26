@@ -80,9 +80,13 @@ export const EMPTY_FILTERS: SqdipFilters = {
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 const WEEKDAYS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
+const FLOAT_EPS = 1e-9;
+
 export function meets(index: number, value: number): boolean {
   const dim = DIMS[index];
-  return dim.dir === "max" ? value <= dim.target : value >= dim.target;
+  return dim.dir === "max"
+    ? value <= dim.target + FLOAT_EPS
+    : value >= dim.target - FLOAT_EPS;
 }
 
 export function titleCase(value: string): string {

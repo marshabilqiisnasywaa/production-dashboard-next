@@ -5,6 +5,7 @@ import { useUiText } from "@/locales/useUiText";
 import { useEffect, useMemo, useState } from "react";
 import "./problems.css";
 import { Card } from "@/components/ui/Card";
+import { TableSkeleton } from "@/components/ui/LoadingState";
 import { ProblemTable } from "./components/ProblemTable";
 import { ProblemLoadError } from "./components/ProblemLoadError";
 import { useProblems } from "./hooks/useProblems";
@@ -234,7 +235,7 @@ export default function ProblemsPage({
         {error ? <ProblemLoadError error={error} onRetry={refresh} /> : ready ? (
           <ProblemTable rows={visible} onToggleSolved={handleToggleSolved} onSaveSolution={saveSolution} />
         ) : (
-          <div className="dml-empty">{uiText("Memuat masalah…")}</div>
+          <TableSkeleton rows={6} columns={7} label={uiText("Memuat masalah…")} />
         )}
       </section>
     </div>

@@ -1,5 +1,6 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
+import { ChartLoader } from "@/components/ui/LoadingState";
 
 
 import { departmentLabel } from "../departments";
@@ -46,7 +47,7 @@ export default function DepartmentRecap({
       </div>
 
       {loading ? (
-        <div className="att-chart-empty">{uiText("Memuat data departemen…")}</div>
+        <ChartLoader compact label={uiText("Memuat data departemen…")} />
       ) : error ? (
         <div className="att-dept-message" role="alert">
           <p>{uiText(error)}</p>

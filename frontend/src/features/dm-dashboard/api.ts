@@ -976,18 +976,37 @@ export type DmArchivedDmScore = {
   rank: number | null;
 };
 
+export type DmPublicAbnormalCategory = {
+  id: number;
+  level: 1 | 2 | 3;
+  code: string;
+  name: string;
+  parentId: number | null;
+};
+
 export type DmPublicPapercardProblem = {
   date: string;
   lineCode: string | null;
+  department: string | null;
   category: string; // nama kategori checklist, mis. "Mesin & Peralatan Lini"
   title: string; // judul item checklist yang NG
+  cause: string | null;
+  solution: string | null;
 };
 
 export type DmPublicMeetingProblem = {
   date: string;
+  sessionLabel: string | null;
   lineCode: string | null;
   problem: string;
-  categories: string[] | null; // kategori loss P/H/T/R/Q/M
+  categories: string[] | null; // label jalur Code 1..3 atau kategori loss lama
+  categoryCodes: string[] | null; // kode jalur ["P", "P01", "P01-01"]
+  solution: string | null;
+  picNames: string[];
+  dueDate: string | null;
+  status: string;
+  occurredAt: string | null;
+  respondedAt: string | null;
 };
 
 export const publicApi = {
@@ -1027,6 +1046,7 @@ export const publicApi = {
     request<{
       papercard: DmPublicPapercardProblem[];
       meeting: DmPublicMeetingProblem[];
+      abnormalCategories: DmPublicAbnormalCategory[];
     }>("/public/problems/report?" + new URLSearchParams(range)),
   papercardKpi: (params: KpiParams) =>
     request<DmPapercardKpi>("/public/papercard-kpi?" + kpiQuery(params, true)),

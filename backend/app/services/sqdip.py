@@ -10,6 +10,26 @@ from app.services.scorecard_identity import ImportLeaderResolver
 DIMENSIONS = ("Safety", "Quality", "Delivery", "Inventory", "Productivity")
 POINTS_PER_DIMENSION = 6
 MAX_TOTAL = POINTS_PER_DIMENSION * len(DIMENSIONS)
+FLOAT_EPS = 1e-9
+
+DIMENSION_TARGETS: dict[str, tuple[str, float]] = {
+    "Safety": ("max", 0.0),
+    "Quality": ("min", 0.92),
+    "Delivery": ("min", 1.0),
+    "Inventory": ("max", 400.0),
+    "Productivity": ("min", 0.87),
+}
+
+
+def compute_points(dimension: str, actual: float | None) -> int:
+    if actual is None:
+        return 0
+    rule = DIMENSION_TARGETS.get(dimension)
+    if rule is None:
+        return 0
+    direction, target = rule
+    met = actual <= target + FLOAT_EPS if direction == "max" else actual >= target - FLOAT_EPS
+    return POINTS_PER_DIMENSION if met else 0
 
 
 @dataclass
@@ -63,17 +83,18 @@ def upsert_rows(db: Session, rows, file_name: str | None) -> tuple[int, int]:
         for dimension, cell in zip(DIMENSIONS, row.cells):
             key = (row.date, line, leader, dimension)
             entry = existing.get(key)
+            points = compute_points(dimension, cell.actual)
             if entry is None:
                 entry = SqdipEntry(
                     date=row.date, line_code=line, leader_name=leader, dimension=dimension,
-                    actual=cell.actual, points=cell.points, source_file=file_name,
+                    actual=cell.actual, points=points, source_file=file_name,
                 )
                 db.add(entry)
                 existing[key] = entry
             else:
                 replaced = True
                 entry.actual = cell.actual
-                entry.points = cell.points
+                entry.points = points
                 entry.source_file = file_name
             if entry.leader_employee_id is None or leader_id is not None:
                 entry.leader_employee_id = leader_id

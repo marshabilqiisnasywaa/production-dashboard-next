@@ -562,3 +562,15 @@ def historical_attendance(
     check_kpi_range(from_date, to_date)
     from app.services.imported_statuses import list_imported_statuses
     return list_imported_statuses(db, from_date, to_date, "attendance")
+
+
+@router.get("/problems/report")
+def public_problems_report(
+    from_date: date = Query(alias="from"),
+    to_date: date = Query(alias="to"),
+    db: Session = Depends(get_db),
+):
+    check_kpi_range(from_date, to_date)
+    from app.services.problems_report import build_problems_report
+
+    return build_problems_report(db, from_date, to_date)

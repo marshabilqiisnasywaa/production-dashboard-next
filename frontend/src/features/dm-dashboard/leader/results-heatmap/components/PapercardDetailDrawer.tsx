@@ -3,6 +3,7 @@ import { useUiText } from "@/locales/useUiText";
 
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { IconClose, IconCheckCircle, IconAlert } from "@/components/ui/icons";
 import type { PapercardResult, RoleKey } from "../types";
 import { ROLE_LABEL } from "../types";
@@ -23,11 +24,11 @@ export function PapercardDetailDrawer({ result, allResults, onClose }: Props) {
     return () => document.removeEventListener("keydown", onKey);
   }, [result, onClose]);
 
-  if (!result) return null;
+  if (!result || typeof document === "undefined") return null;
   const categories = groupAspects(result.aspects);
   const role = result.role as RoleKey;
 
-  return (
+  return createPortal(
     <div className="dmr-drawer-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <aside className="dmr-drawer" role="dialog" aria-modal="true" aria-labelledby="dmr-drawer-title">
         <header className="dmr-drawer__head">
@@ -77,6 +78,7 @@ export function PapercardDetailDrawer({ result, allResults, onClose }: Props) {
           ))}
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body
   );
 }

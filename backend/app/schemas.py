@@ -1016,3 +1016,42 @@ class ScorecardReportOut(CamelModel):
     archive_month: date | None = None
     archive_file: str | None = None
     averaged_months: list[date] = Field(default_factory=list)
+
+
+class PublicAbnormalCategoryOut(CamelModel):
+    id: int
+    level: int
+    code: str
+    name: str
+    parent_id: int | None = None
+
+
+class PublicPapercardProblemOut(CamelModel):
+    date: date
+    line_code: str | None = None
+    department: str | None = None
+    category: str
+    title: str
+    cause: str | None = None
+    solution: str | None = None
+
+
+class PublicMeetingProblemOut(CamelModel):
+    date: date
+    session_label: str | None = None
+    line_code: str | None = None
+    problem: str
+    categories: list[str] | None = None
+    category_codes: list[str] | None = None
+    solution: str | None = None
+    pic_names: list[str] = Field(default_factory=list)
+    due_date: str | None = None
+    status: str = "open"
+    occurred_at: str | None = None
+    responded_at: str | None = None
+
+
+class PublicProblemsReportOut(CamelModel):
+    papercard: list[PublicPapercardProblemOut] = Field(default_factory=list)
+    meeting: list[PublicMeetingProblemOut] = Field(default_factory=list)
+    abnormal_categories: list[PublicAbnormalCategoryOut] = Field(default_factory=list)

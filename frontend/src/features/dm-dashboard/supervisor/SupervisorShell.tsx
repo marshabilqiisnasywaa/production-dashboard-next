@@ -27,7 +27,7 @@ function SupervisorFrame({ children }: { children: ReactNode }) {
   } = useSupervisor();
 
   return (
-    <div className="dm-theme dml-shell dml-shell--drawer">
+    <div className="dm-theme dml-shell dml-shell--drawer dml-shell--nav-title">
       <SupervisorSidebar
         pendingApprovalsCount={pendingApprovalsCount}
         escalationCount={escalatedCount}

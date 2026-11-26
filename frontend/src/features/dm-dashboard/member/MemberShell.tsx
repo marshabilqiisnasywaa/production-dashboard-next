@@ -12,7 +12,7 @@ export default function MemberShell({ children }: { children: ReactNode }) {
   return (
     <MemberProvider>
       <SidebarProvider>
-        <div className="dm-theme dml-shell dml-shell--drawer">
+        <div className="dm-theme dml-shell dml-shell--drawer dml-shell--nav-title">
           <MemberSidebar />
           <SidebarBackdrop />
           <div className="dml-main">

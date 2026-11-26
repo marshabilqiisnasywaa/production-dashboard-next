@@ -1,5 +1,6 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
+import { SessionLoader } from "@/components/ui/LoadingState";
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 
 import Link from "next/link";
@@ -153,12 +154,11 @@ export default function AccountPage() {
 
   if (state.kind === "loading") {
     return (
-      <main className="dml-acc" aria-busy="true">
-        <div className="dml-acc__card dml-acc__state">
-          <span className="dml-acc__spinner" aria-hidden="true" />
-          <p role="status">{uiText("Memuat akun…")}</p>
-        </div>
-      </main>
+      <SessionLoader
+        fullScreen
+        label={uiText("Memuat akun…")}
+        sublabel="DM Digital"
+      />
     );
   }
 

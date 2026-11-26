@@ -100,11 +100,16 @@
 /* ---------- Panel melayang (menu select + popover tanggal) ---------- */
 .dmf-panel {
   z-index: 50;
-  border: 1px solid var(--color-border);
-  border-radius: 0.75rem;
-  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
   color: var(--color-text);
-  box-shadow: var(--shadow-popover);
+  box-shadow:
+    0 18px 44px -12px rgba(15, 23, 42, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 0 0 1px rgba(15, 23, 42, 0.05);
   font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.25rem;

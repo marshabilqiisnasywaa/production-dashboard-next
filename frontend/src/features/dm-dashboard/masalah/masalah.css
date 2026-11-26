@@ -472,6 +472,177 @@
   gap: 5px;
 }
 
+.msl-row-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.msl-sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 2px 0 4px 26px;
+  padding: 6px 0 6px 12px;
+  border-left: 2px solid #cde1d7;
+}
+
+.msl-subrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #eef2f0;
+  border-radius: 8px;
+  background: #f9fbfa;
+  color: #172b24;
+  font-size: 12px;
+  text-align: left;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+
+.msl-subrow:hover {
+  background: #eef7f2;
+  border-color: #cde1d7;
+}
+
+.msl-subrow.is-selected {
+  background: #e6f4ec;
+  border-color: #046a38;
+  color: #046a38;
+}
+
+.msl-subrow-path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.msl-subrow-count {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff1f0;
+  color: #c93630;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.msl-code-path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.msl-code-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.msl-code-sep {
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ---------- Compact Line Cell with Click Popover ---------- */
+.msl-line-cell {
+  position: relative;
+  display: inline-block;
+}
+
+.msl-line-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid #cde1d7;
+  border-radius: 999px;
+  background: #f1f8f4;
+  color: #046a38;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+
+.msl-line-toggle:hover,
+.msl-line-toggle.is-open {
+  background: #e2f2e9;
+  border-color: #046a38;
+}
+
+.msl-line-toggle svg {
+  transition: transform 0.15s ease;
+}
+
+.msl-line-toggle.is-open svg {
+  transform: rotate(180deg);
+}
+
+.msl-line-popover {
+  position: fixed;
+  z-index: 90;
+  min-width: 210px;
+  max-width: 300px;
+  padding: 10px 12px;
+  border: 1px solid #d9e4de;
+  border-radius: 12px;
+  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.18);
+}
+
+.msl-line-popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #edf1ef;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.msl-line-popover-head button {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+}
+
+.msl-line-popover-head button:hover {
+  background: #f1f5f9;
+  color: #111827;
+}
+
+.msl-line-popover-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
 .msl-badge {
   display: inline-flex;
   align-items: center;

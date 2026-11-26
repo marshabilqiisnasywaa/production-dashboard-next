@@ -21,6 +21,7 @@ import { InspectionDetailTable } from "./InspectionDetailTable";
 import { InspectionSummaryStrip } from "./InspectionSummaryStrip";
 import { InspectionTrendChart } from "./InspectionTrendChart";
 import { InspectionTrendFilters } from "./InspectionTrendFilters";
+import { isWeekendISO, useHolidayDates } from "../../shared/useHolidayDates";
 
 type Props = {
   rows: InspectionRow[];
@@ -49,6 +50,7 @@ export function InspectionRateFocalCard({
   const granularity = trendGranularityForRange(range);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const visibleRows = loading || error ? [] : rows;
+  const holidayDates = useHolidayDates(range.from, range.to);
 
   const trend = useMemo(() => {
     const observed = new Map(
@@ -56,6 +58,15 @@ export function InspectionRateFocalCard({
         point.key,
         point,
       ]),
+    );
+    const liburDates = new Set(
+      visibleRows
+        .filter(
+          (row) =>
+            row.total === 0 &&
+            Object.values(row.statuses).every((status) => status === "LIBUR"),
+        )
+        .map((row) => row.date),
     );
 
     const periodCount = Math.max(
@@ -69,17 +80,27 @@ export function InspectionRateFocalCard({
       ),
     );
 
-    return [...keys].sort().map(
-      (key) =>
-        observed.get(key) ?? {
-          key,
-          label: periodLabel(key, granularity),
-          value: 0,
-          submitted: 0,
-          total: 0,
-        },
-    );
-  }, [visibleRows, range.from, range.to, granularity]);
+    return [...keys]
+      .sort()
+      .map(
+        (key) =>
+          observed.get(key) ?? {
+            key,
+            label: periodLabel(key, granularity),
+            value: 0,
+            submitted: 0,
+            total: 0,
+          },
+      )
+      .filter((point) => {
+        if (granularity !== "day" || point.total > 0) return true;
+        return (
+          !isWeekendISO(point.key) &&
+          !holidayDates.has(point.key) &&
+          !liburDates.has(point.key)
+        );
+      });
+  }, [visibleRows, range.from, range.to, granularity, holidayDates]);
 
   const activeKey =
     selectedKey &&

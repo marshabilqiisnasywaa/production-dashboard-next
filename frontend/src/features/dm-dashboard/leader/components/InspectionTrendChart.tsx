@@ -2,7 +2,7 @@
 import { useUiText } from "@/locales/useUiText";
 
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { TrendGranularity, TrendPoint } from "../types";
 import { TARGET, toneFor } from "../utils";
 
@@ -25,6 +25,7 @@ export function InspectionTrendChart({
   granularity = "day",
 }: Props) {
   const { text: uiText } = useUiText();
+  const gradientId = useId();
   const [hover, setHover] = useState<number | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 800, height: 300 });
@@ -98,6 +99,12 @@ export function InspectionTrendChart({
   return (
     <div className="dml-chart" ref={chartRef}>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={uiText("Grafik tren Inspection Rate")}>
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#10b981" stopOpacity="0.24" />
+            <stop offset="100%" stopColor="#10b981" stopOpacity="0.01" />
+          </linearGradient>
+        </defs>
         {TICKS.map((t) => (
           <g key={t}>
             <line className="dml-chart__grid" x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} />
@@ -108,7 +115,7 @@ export function InspectionTrendChart({
         ))}
 
         {areas.map((area, index) => (
-          <path key={index} className="dml-chart__area" d={area} />
+          <path key={index} className="dml-chart__area" d={area} fill={`url(#${gradientId})`} />
         ))}
 
         <line className="dml-chart__target" x1={PAD.left} x2={W - PAD.right} y1={y(target)} y2={y(target)} />

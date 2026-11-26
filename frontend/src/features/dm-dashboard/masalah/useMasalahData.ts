@@ -1,17 +1,12 @@
 import { useEffect, useState } from "react";
 import {
   publicApi,
+  type DmPublicAbnormalCategory,
   type DmPublicMeetingProblem,
   type DmPublicPapercardProblem,
 } from "../api";
-import { jakartaToday } from "../scorecard/useScorecardData";
 
-/**
- * true  = pakai data contoh (backend belum siap)
- * false = ambil dari GET /api/public/problems/report
- * Ubah ke false setelah endpoint backend jadi, lalu hapus blok "Data contoh" di bawah.
- */
-const USE_MOCK = true;
+export type AbnormalLevel = 1 | 2 | 3;
 
 export type MasalahState =
   | { kind: "loading" }
@@ -20,9 +15,10 @@ export type MasalahState =
       kind: "ready";
       papercard: DmPublicPapercardProblem[];
       meeting: DmPublicMeetingProblem[];
+      abnormalCategories: DmPublicAbnormalCategory[];
     };
 
-/** Ambil data masalah (papercard NG + masalah DM meeting) untuk satu rentang tanggal. */
+/** Ambil data masalah (papercard NG + masalah DM & Workshop meeting + katalog 3-code) dari backend. */
 export function useMasalahData(range: { from: string; to: string }, attempt: number) {
   const [state, setState] = useState<MasalahState>({ kind: "loading" });
 
@@ -30,24 +26,6 @@ export function useMasalahData(range: { from: string; to: string }, attempt: num
     if (!range.from || !range.to) return;
     let cancelled = false;
     setState({ kind: "loading" });
-
-    if (USE_MOCK) {
-      const timer = setTimeout(() => {
-        const inRange = <T extends { date: string }>(rows: T[]) =>
-          rows.filter((row) => row.date >= range.from && row.date <= range.to);
-        const mock = buildMock();
-        if (!cancelled)
-          setState({
-            kind: "ready",
-            papercard: inRange(mock.papercard),
-            meeting: inRange(mock.meeting),
-          });
-      }, 300);
-      return () => {
-        cancelled = true;
-        clearTimeout(timer);
-      };
-    }
 
     publicApi
       .problemsReport({ from: range.from, to: range.to })
@@ -57,6 +35,7 @@ export function useMasalahData(range: { from: string; to: string }, attempt: num
             kind: "ready",
             papercard: data.papercard ?? [],
             meeting: data.meeting ?? [],
+            abnormalCategories: data.abnormalCategories ?? [],
           });
       })
       .catch((error: unknown) => {
@@ -74,15 +53,18 @@ export function useMasalahData(range: { from: string; to: string }, attempt: num
   return state;
 }
 
-/* ---------- Kategori papercard (5M 1E, sesuai template papercard) ---------- */
+/* ---------- Kategori papercard (5M + 1E, sesuai template papercard) ---------- */
 
-/** Hanya kategori ini yang dihitung. Kategori lain di template (5S, 6S, Lainnya) diabaikan.
- *  Measurement belum dipakai di template mana pun, jadi barisnya hanya tampil bila ada temuan. */
-export const PAPERCARD_CATEGORIES = ["Manusia", "Mesin", "Material", "Metode", "Measurement", "Lingkungan"];
+export const PAPERCARD_CATEGORIES = [
+  "Manusia",
+  "Mesin",
+  "Material",
+  "Metode",
+  "Measurement",
+  "Lingkungan",
+];
 
-const OPTIONAL_CATEGORIES = ["Measurement"];
-
-/** Label English untuk tampilan (5M 1E). */
+/** Label English untuk tampilan (5M + 1E). */
 export const PAPERCARD_EN: Record<string, string> = {
   Manusia: "Man",
   Mesin: "Machine",
@@ -92,20 +74,20 @@ export const PAPERCARD_EN: Record<string, string> = {
   Lingkungan: "Environment",
 };
 
-/** Nama kategori template papercard bebas diisi admin ("Mesin & Peralatan Lini", "Nama Mesin",
- *  "Jig, Fixture & Instruksi Kerja"), jadi dicocokkan lewat kata kunci di dalam namanya. */
+/** Nama kategori template papercard bebas diisi admin ("Mesin & Peralatan Lini",
+ *  "Jig, Fixture & Instruksi Kerja", dll.), jadi dicocokkan lewat kata kunci di dalam namanya. */
 const CATEGORY_KEYWORDS: Record<string, RegExp> = {
-  Manusia: /\b(manusia|man)\b/,
-  Mesin: /\b(mesin|machine)\b/,
-  Material: /\bmaterial\b/,
-  Metode: /\b(metode|method|jig|fixture|instruksi)\b/,
-  Measurement: /\b(alat ukur|pengukuran|measurement)\b/,
-  Lingkungan: /\b(lingkungan|environment)\b/,
+  Manusia: /\b(manusia|man|operator|pekerja|karyawan|personel|personil|mp|manpower)\b/,
+  Mesin: /\b(mesin|machine|peralatan|equipment|tools|alat kerja|conveyor)\b/,
+  Material: /\b(material|bahan|komponen|part|parts)\b/,
+  Metode: /\b(metode|method|prosedur|sop|jig|fixture|instruksi|wi|proses|process)\b/,
+  Measurement: /\b(alat ukur|pengukuran|measurement|kalibrasi|kalibrator|gauge|ukur)\b/,
+  Lingkungan: /\b(lingkungan|environment|suhu|kelembapan|esd|pencahayaan)\b/,
 };
 
 /** Kata kunci yang muncul paling awal di nama kategori menang ("Mesin & Temperatur" = Mesin).
- *  Hasilnya selalu nama Indonesia. null = bukan 5M+1E (5S, Lainnya, dll.), diabaikan. */
-export function papercardCategory(raw: string) {
+ *  Hasilnya selalu nama Indonesia. null = di luar 5M+1E (5S, Lainnya, dll.). */
+export function papercardCategory(raw: string): string | null {
   const text = raw.trim().toLowerCase();
   let best: { name: string; index: number } | null = null;
   for (const name of PAPERCARD_CATEGORIES) {
@@ -115,7 +97,7 @@ export function papercardCategory(raw: string) {
   return best?.name ?? null;
 }
 
-/* ---------- Kategori loss DM meeting (P-H-T-R-Q-M) ---------- */
+/* ---------- Kategori abnormal 3-code DM meeting (Code 1 / Code 2 / Code 3) ---------- */
 
 export const LOSS_CATEGORIES = [
   { key: "P", label: "P-Planning Losses" },
@@ -126,18 +108,108 @@ export const LOSS_CATEGORIES = [
   { key: "M", label: "M-Machine Losses" },
 ];
 
-/** Dicocokkan lewat huruf depan, jadi salah ketik lama di data ("ResuIt", "M--Machine")
- *  tetap masuk kategori yang benar. null = bukan kategori loss, diabaikan. */
-export function lossCategory(raw: string) {
+/** Fallback pencocokan data lama (sebelum 3-code) lewat huruf depan ("R-ResuIt", "M--Machine"). */
+export function legacyLossCategory(raw: string, level1Catalog: DmPublicAbnormalCategory[] = []): string | null {
   const text = raw.trim();
-  return (
-    LOSS_CATEGORIES.find(
-      (category) => text.charAt(0).toUpperCase() === category.key && text.charAt(1) === "-"
-    )?.label ?? null
-  );
+  if (!text) return null;
+  const prefix = text.charAt(0).toUpperCase();
+  if (text.charAt(1) === "-") {
+    const fromCatalog = level1Catalog.find((item) => item.code.toUpperCase() === prefix);
+    if (fromCatalog) return `${fromCatalog.code}-${fromCatalog.name}`;
+    const fromLegacy = LOSS_CATEGORIES.find((category) => category.key === prefix);
+    if (fromLegacy) return fromLegacy.label;
+  }
+  return null;
+}
+
+export function categoryLabelOf(cat: DmPublicAbnormalCategory): string {
+  return `${cat.code}-${cat.name}`;
+}
+
+/** Ambil daftar label kategori untuk satu masalah meeting pada level tertentu (Code 1, 2, atau 3). */
+export function meetingLabelsAtLevel(
+  problem: DmPublicMeetingProblem,
+  level: AbnormalLevel,
+  catalog: DmPublicAbnormalCategory[] = []
+): string[] {
+  const codes = problem.categoryCodes ?? [];
+  const rawLabels = problem.categories ?? [];
+
+  if (codes.length > 0) {
+    const idx = level - 1;
+    const code = codes[idx]?.trim();
+    if (!code) return [];
+    const fromCatalog = catalog.find(
+      (item) => item.level === level && item.code.toUpperCase() === code.toUpperCase()
+    );
+    if (fromCatalog) return [categoryLabelOf(fromCatalog)];
+    const raw = rawLabels[idx]?.trim();
+    return [raw || code];
+  }
+
+  // Data lama tanpa categoryCodes: hanya petakan ke Code 1.
+  if (level !== 1) return [];
+  const level1Catalog = catalog.filter((item) => item.level === 1);
+  const mapped = rawLabels.flatMap((raw) => {
+    const matched = legacyLossCategory(raw, level1Catalog);
+    return matched ? [matched] : [];
+  });
+  return [...new Set(mapped)];
+}
+
+/** Format tampilan jalur kategori untuk tabel detail DM Meeting. */
+export function meetingCategoryPath(
+  problem: DmPublicMeetingProblem,
+  catalog: DmPublicAbnormalCategory[] = []
+): { isPath: boolean; parts: string[] } {
+  const codes = problem.categoryCodes ?? [];
+  const rawLabels = problem.categories ?? [];
+  if (codes.length > 0) {
+    const parts = codes.map((code, index) => {
+      const level = (index + 1) as AbnormalLevel;
+      const match = catalog.find(
+        (item) => item.level === level && item.code.toUpperCase() === code.toUpperCase()
+      );
+      if (match) return categoryLabelOf(match);
+      return rawLabels[index]?.trim() || code;
+    });
+    return { isPath: true, parts };
+  }
+  const level1Catalog = catalog.filter((item) => item.level === 1);
+  const legacy = [...new Set(rawLabels.flatMap((raw) => legacyLossCategory(raw, level1Catalog) ?? (raw.trim() ? [raw.trim()] : [])))];
+  return { isPath: false, parts: legacy };
 }
 
 export type RankRow = { name: string; count: number };
+
+export type SubCodeRow = {
+  key: string;
+  parts: string[];
+  count: number;
+};
+
+/** Rincian sub-kode (Code 2 › Code 3) di bawah satu Code 1, hanya yang punya masalah (> 0). */
+export function meetingSubCodeBreakdown(
+  problems: DmPublicMeetingProblem[],
+  code1Label: string,
+  catalog: DmPublicAbnormalCategory[] = []
+): SubCodeRow[] {
+  const counts = new Map<string, { parts: string[]; count: number }>();
+  for (const problem of problems) {
+    if (!meetingLabelsAtLevel(problem, 1, catalog).includes(code1Label)) continue;
+    const path = meetingCategoryPath(problem, catalog);
+    const subParts = path.isPath ? path.parts.slice(1) : [];
+    const parts = subParts.length > 0 ? subParts : ["Lainnya / tanpa sub-kode"];
+    const key = parts.join(" › ");
+    const prev = counts.get(key);
+    if (prev) prev.count += 1;
+    else counts.set(key, { parts, count: 1 });
+  }
+  return [...counts.entries()]
+    .map(([key, value]) => ({ key, parts: value.parts, count: value.count }))
+    .filter((row) => row.count > 0)
+    .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
+}
 
 /** Hitung per kategori, tampilkan semua kategori baku, urut dari terbanyak. */
 export function rankCategories(names: string[], all: string[]): RankRow[] {
@@ -145,127 +217,39 @@ export function rankCategories(names: string[], all: string[]): RankRow[] {
   for (const name of names) counts.set(name, (counts.get(name) ?? 0) + 1);
   return [...counts]
     .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count || all.indexOf(a.name) - all.indexOf(b.name));
+    .sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      const ia = all.indexOf(a.name);
+      const ib = all.indexOf(b.name);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+      return a.name.localeCompare(b.name);
+    });
 }
 
-export function papercardRank(items: DmPublicPapercardProblem[]) {
+/** Peringkat 5M+1E: selalu tampilkan ke-6 kategori 5M+1E agar konsisten. */
+export function papercardRank(items: DmPublicPapercardProblem[]): RankRow[] {
   const names = items.flatMap((item) => {
     const name = papercardCategory(item.category);
     return name ? [name] : [];
   });
-  return rankCategories(names, PAPERCARD_CATEGORIES).filter(
-    (row) => row.count > 0 || !OPTIONAL_CATEGORIES.includes(row.name)
-  );
+  return rankCategories(names, PAPERCARD_CATEGORIES);
 }
 
-/** Satu masalah boleh punya beberapa kategori; tiap kategori dihitung sekali per masalah. */
-export function meetingRank(problems: DmPublicMeetingProblem[]) {
-  const names = problems.flatMap((problem) => [
-    ...new Set((problem.categories ?? []).flatMap((raw) => lossCategory(raw) ?? [])),
-  ]);
-  return rankCategories(names, LOSS_CATEGORIES.map((category) => category.label));
-}
-
-/* ---------- Data contoh (hapus bersama USE_MOCK setelah backend siap) ---------- */
-
-function seeded(seed: number) {
-  let a = seed;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function pick<T>(rand: () => number, rows: { value: T; weight: number }[]) {
-  const total = rows.reduce((sum, row) => sum + row.weight, 0);
-  let roll = rand() * total;
-  for (const row of rows) {
-    roll -= row.weight;
-    if (roll <= 0) return row.value;
+/** Peringkat masalah DM/Workshop meeting berdasarkan level Code 1, Code 2, atau Code 3. */
+export function meetingRank(
+  problems: DmPublicMeetingProblem[],
+  level: AbnormalLevel = 1,
+  catalog: DmPublicAbnormalCategory[] = []
+): RankRow[] {
+  const names = problems.flatMap((problem) => meetingLabelsAtLevel(problem, level, catalog));
+  if (level === 1) {
+    const level1Catalog = catalog.filter((item) => item.level === 1);
+    const baseline = level1Catalog.length
+      ? level1Catalog.map(categoryLabelOf)
+      : LOSS_CATEGORIES.map((category) => category.label);
+    return rankCategories(names, baseline);
   }
-  return rows[rows.length - 1].value;
-}
-
-function isoDaysAgo(days: number) {
-  const date = new Date(`${jakartaToday()}T00:00:00Z`);
-  date.setUTCDate(date.getUTCDate() - days);
-  return date.toISOString().slice(0, 10);
-}
-
-function buildMock() {
-  const rand = seeded(20261123);
-  const lines = ["TAC12345", "TAC20501", "TAC20502", "TAC20505", "TAC20601", "TAC20602"];
-
-  const papercardCategories = [
-    { value: "Mesin", weight: 9 },
-    { value: "Manusia", weight: 7 },
-    { value: "Metode", weight: 5 },
-    { value: "Material", weight: 3 },
-    { value: "Measurement", weight: 2 },
-    { value: "Lingkungan", weight: 1 },
-    { value: "5S", weight: 2 }, // sengaja: harus diabaikan
-    { value: "Lainnya", weight: 1 }, // sengaja: harus diabaikan
-  ];
-  const titles: Record<string, string[]> = {
-    Mesin: ["Sensor stopper dan interlock berfungsi", "Conveyor berjalan normal"],
-    Manusia: ["Operator sesuai skill matrix", "APD lengkap dipakai"],
-    Metode: ["Jig dan fixture sesuai instruksi kerja"],
-    Material: ["Material lot pertama lengkap di rak"],
-    Measurement: ["Alat ukur terkalibrasi dan tidak kedaluwarsa", "Hasil pengukuran sesuai toleransi"],
-    Lingkungan: ["Suhu dan kelembapan area sesuai"],
-    "5S": ["Area kerja bersih dan rapi"],
-    Lainnya: ["Temuan lain"],
-  };
-
-  // Sengaja memakai penulisan lama dari form (R-ResuIt, M--Machine) untuk menguji penyeragaman nama.
-  const lossCategories = [
-    { value: "H-Human Losses (MP)", weight: 8 },
-    { value: "M--Machine Losses", weight: 7 },
-    { value: "Q-Quality Losses", weight: 5 },
-    { value: "T-Time Losses (Overtime)", weight: 3 },
-    { value: "R-ResuIt Losses (Output)", weight: 3 },
-    { value: "P-Planning Losses", weight: 1 },
-  ];
-
-  const papercard: DmPublicPapercardProblem[] = [];
-  const meeting: DmPublicMeetingProblem[] = [];
-
-  for (let day = 0; day < 90; day++) {
-    const date = isoDaysAgo(day);
-    const ngCount = Math.floor(rand() * 5);
-    for (let i = 0; i < ngCount; i++) {
-      const category = pick(rand, papercardCategories);
-      const options = titles[category];
-      const variant = rand() < 0.6 ? 0 : 1;
-      papercard.push({
-        date,
-        lineCode: lines[Math.floor(rand() * lines.length)],
-        category,
-        title: options[Math.floor(rand() * options.length)],
-        department: rand() < 0.5 ? "PROD" : "QC",
-        cause: ["Komponen aus dan belum diganti", "Setting parameter belum sesuai SOP"][variant],
-        solution: ["Ganti komponen dan verifikasi ulang", "Setel ulang parameter sesuai SOP"][variant],
-      });
-    }
-    if (rand() < 0.7) {
-      const first = pick(rand, lossCategories);
-      const second = rand() < 0.25 ? pick(rand, lossCategories) : null;
-      const categories = rand() < 0.08 ? null : second && second !== first ? [first, second] : [first];
-      const solved = rand() < 0.4;
-      meeting.push({
-        date,
-        lineCode: lines[Math.floor(rand() * lines.length)],
-        problem: "Contoh masalah dari DM meeting",
-        categories,
-        sessionLabel: `Sesi ${1 + Math.floor(rand() * 2)}`,
-        solution: solved ? "Contoh solusi dari PIC" : "",
-        picNames: ["Contoh PIC"],
-        dueDate: `${isoDaysAgo(Math.max(0, day - 2))}T16:00`,
-        status: solved ? "resolved" : "open",
-      });
-    }
-  }
-  return { papercard, meeting };
+  return rankCategories(names, []);
 }

@@ -6,6 +6,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 
 type Props = {
   title: string;
@@ -42,7 +43,9 @@ export function LeaderDashboardDrawer({ title, onClose, children }: Props) {
     }
   }
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       className="dml-drawer-backdrop"
       onMouseDown={(event) => {
@@ -69,6 +72,7 @@ export function LeaderDashboardDrawer({ title, onClose, children }: Props) {
         </header>
         <div className="dml-drawer__body">{children}</div>
       </section>
-    </div>
+    </div>,
+    document.body
   );
 }

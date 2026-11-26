@@ -203,9 +203,13 @@ export default function DmAdminSidebar({
       {/* Brand / Logo */}
       <div className="dm-admin-sidebar-brand">
         <span className="dml-logo">
-          <IconGauge size={22} />
+          <IconGauge size={20} />
         </span>
-        <strong>{uiText("DM Digital")}</strong>
+        <div className="dm-admin-brand-copy">
+          <div className="dm-admin-brand-row">
+            <strong>{uiText("DM Digital")}</strong>
+          </div>
+        </div>
         <SidebarCloseButton />
       </div>
 

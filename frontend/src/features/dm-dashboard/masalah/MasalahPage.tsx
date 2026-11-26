@@ -1,21 +1,26 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
+import { ChartLoader, TableSkeleton } from "@/components/ui/LoadingState";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { departmentLabel } from "../departments";
 import { getStatus } from "../leader/problems/utils";
-import { AlertTriangle, ClipboardList, TrendingUp, Users, X } from "lucide-react";
+import { AlertTriangle, ChevronDown, ClipboardList, TrendingUp, Users, X } from "lucide-react";
 import { DateRangePicker, type DateRangeValue } from "../scorecard/ScorecardFilters";
 import { defaultRange, jakartaToday } from "../scorecard/useScorecardData";
 import {
-  lossCategory,
+  meetingCategoryPath,
+  meetingLabelsAtLevel,
   meetingRank,
+  meetingSubCodeBreakdown,
   papercardCategory,
   papercardRank,
   PAPERCARD_EN,
   useMasalahData,
   type MasalahState,
   type RankRow,
+  type SubCodeRow,
 } from "./useMasalahData";
 import "./masalah.css";
 
@@ -76,6 +81,7 @@ function RankCard({
   selected,
   onSelect,
   label = (name) => name,
+  renderExpanded,
 }: {
   title: Pair;
   subtitle: Pair;
@@ -90,6 +96,7 @@ function RankCard({
   selected: string | null;
   onSelect: (name: string) => void;
   label?: (name: string) => string;
+  renderExpanded?: (row: RankRow) => React.ReactNode;
 }) {
   const tr = ([id, en]: Pair) => (english ? en : id);
   const total = rows?.reduce((sum, row) => sum + row.count, 0) ?? 0;
@@ -108,7 +115,7 @@ function RankCard({
       </div>
 
       {loading ? (
-        <div className="msl-empty">{english ? "Loading problem data…" : "Memuat data masalah…"}</div>
+        <ChartLoader label={english ? "Loading problem data…" : "Memuat data masalah…"} />
       ) : error ? (
         <div className="msl-message" role="alert">
           <p>{error}</p>
@@ -126,27 +133,29 @@ function RankCard({
             const isTop = index === 0;
             const isSelected = selected === row.name;
             return (
-              <button
-                key={row.name}
-                type="button"
-                className={`msl-row${isTop ? " is-top" : ""}${isSelected ? " is-selected" : ""}`}
-                aria-pressed={isSelected}
-                disabled={row.count === 0}
-                title={english ? "Show details below" : "Lihat detail di bawah"}
-                onClick={() => onSelect(row.name)}
-              >
-                <span className="msl-rank">{index + 1}</span>
-                <span className="msl-name">{label(row.name)}</span>
-                <span className="msl-bar" aria-hidden="true" title={`${label(row.name)}: ${row.count}`}>
-                  <i style={{ width: `${max ? (row.count / max) * 100 : 0}%` }} />
-                </span>
-                <span className="msl-rate">
-                  <strong>{percent(row.count, total)}</strong>
-                  <small>
-                    {row.count} {unitFor(row.count, unit, english)}
-                  </small>
-                </span>
-              </button>
+              <div key={row.name} className="msl-row-group">
+                <button
+                  type="button"
+                  className={`msl-row${isTop ? " is-top" : ""}${isSelected ? " is-selected" : ""}`}
+                  aria-pressed={isSelected}
+                  disabled={row.count === 0}
+                  title={english ? "Show details" : "Lihat rincian"}
+                  onClick={() => onSelect(row.name)}
+                >
+                  <span className="msl-rank">{index + 1}</span>
+                  <span className="msl-name">{label(row.name)}</span>
+                  <span className="msl-bar" aria-hidden="true" title={`${label(row.name)}: ${row.count}`}>
+                    <i style={{ width: `${max ? (row.count / max) * 100 : 0}%` }} />
+                  </span>
+                  <span className="msl-rate">
+                    <strong>{percent(row.count, total)}</strong>
+                    <small>
+                      {row.count} {unitFor(row.count, unit, english)}
+                    </small>
+                  </span>
+                </button>
+                {isSelected && renderExpanded ? renderExpanded(row) : null}
+              </div>
             );
           })}
         </div>
@@ -174,6 +183,99 @@ const newestFirst = <T extends { date: string; lineCode: string | null }>(rows: 
     (a, b) => b.date.localeCompare(a.date) || (a.lineCode ?? "").localeCompare(b.lineCode ?? "")
   );
 
+function LineCell({ lineCode, english }: { lineCode: string | null; english: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const lines = useMemo(
+    () => (lineCode ? lineCode.split(",").map((s) => s.trim()).filter(Boolean) : []),
+    [lineCode]
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    const updatePos = () => {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const maxLeft = Math.max(12, window.innerWidth - 316);
+      setPos({
+        top: Math.min(rect.bottom + 6, window.innerHeight - 220),
+        left: Math.min(rect.left, maxLeft),
+      });
+    };
+    updatePos();
+    const onDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (triggerRef.current?.contains(target) || popoverRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", updatePos);
+    window.addEventListener("scroll", updatePos, true);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", updatePos);
+      window.removeEventListener("scroll", updatePos, true);
+    };
+  }, [open]);
+
+  if (lines.length === 0) return <>–</>;
+  if (lines.length === 1) return <>{lines[0]}</>;
+
+  return (
+    <div className="msl-line-cell">
+      <button
+        ref={triggerRef}
+        type="button"
+        className={`msl-line-toggle${open ? " is-open" : ""}`}
+        aria-expanded={open}
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <span>
+          {lines.length} {english ? "lines" : "line"}
+        </span>
+        <ChevronDown size={13} aria-hidden="true" />
+      </button>
+      {open && pos && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              className="msl-line-popover"
+              style={{ top: pos.top, left: pos.left }}
+              role="dialog"
+              aria-label={english ? "Affected lines" : "Daftar line terdampak"}
+            >
+              <div className="msl-line-popover-head">
+                <span>
+                  {lines.length} {english ? "lines" : "line"}
+                </span>
+                <button type="button" aria-label={english ? "Close" : "Tutup"} onClick={() => setOpen(false)}>
+                  <X size={12} aria-hidden="true" />
+                </button>
+              </div>
+              <div className="msl-line-popover-list">
+                {lines.map((code) => (
+                  <span key={code} className="msl-badge">
+                    {code}
+                  </span>
+                ))}
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
+    </div>
+  );
+}
+
+type MeetingFilter = { code1: string; subKey: string | null } | null;
+
 function DetailPanel({
   panelRef,
   tab,
@@ -193,7 +295,7 @@ function DetailPanel({
   paperState: MasalahState;
   meetingState: MasalahState;
   paperFilter: string | null;
-  meetingFilter: string | null;
+  meetingFilter: MeetingFilter;
   onClearFilter: (tab: DetailTab) => void;
   english: boolean;
   paperLabel: (name: string) => string;
@@ -210,28 +312,49 @@ function DetailPanel({
   const paperRows = useMemo(() => {
     if (paperState.kind !== "ready") return [];
     const rows = newestFirst(
-      paperState.papercard.flatMap((item) => {
-        const category = papercardCategory(item.category);
-        return category ? [{ ...item, category }] : [];
+      paperState.papercard.map((item) => {
+        const mapped = papercardCategory(item.category);
+        return {
+          ...item,
+          mappedCategory: mapped,
+          displayCategory: mapped ? paperLabel(mapped) : item.category,
+        };
       })
     );
-    return paperFilter ? rows.filter((row) => row.category === paperFilter) : rows;
-  }, [paperState, paperFilter]);
+    return paperFilter ? rows.filter((row) => row.mappedCategory === paperFilter) : rows;
+  }, [paperState, paperFilter, paperLabel]);
 
   const meetingRows = useMemo(() => {
     if (meetingState.kind !== "ready") return [];
+    const catalog = meetingState.abnormalCategories;
     const rows = newestFirst(
       meetingState.meeting.map((item) => ({
         ...item,
-        losses: [...new Set((item.categories ?? []).flatMap((raw) => lossCategory(raw) ?? []))],
+        categoryPath: meetingCategoryPath(item, catalog),
         status: getStatus(item.status === "resolved", item.dueDate ?? "", now) as ProblemStatus,
       }))
     );
-    return meetingFilter ? rows.filter((row) => row.losses.includes(meetingFilter)) : rows;
+    if (!meetingFilter) return rows;
+    return rows.filter((row) => {
+      if (!meetingLabelsAtLevel(row, 1, catalog).includes(meetingFilter.code1)) return false;
+      if (!meetingFilter.subKey) return true;
+      const subParts = row.categoryPath.isPath ? row.categoryPath.parts.slice(1) : [];
+      const rowSubKey = (subParts.length > 0 ? subParts : ["Lainnya / tanpa sub-kode"]).join(" › ");
+      return rowSubKey === meetingFilter.subKey;
+    });
   }, [meetingState, meetingFilter, now]);
 
   const state = tab === "papercard" ? paperState : meetingState;
-  const filter = tab === "papercard" ? paperFilter : meetingFilter;
+  const activeFilterLabel =
+    tab === "papercard"
+      ? paperFilter
+        ? paperLabel(paperFilter)
+        : null
+      : meetingFilter
+        ? meetingFilter.subKey
+          ? `${meetingFilter.code1} › ${meetingFilter.subKey}`
+          : meetingFilter.code1
+        : null;
   const total = tab === "papercard" ? paperRows.length : meetingRows.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const current = Math.min(page, pageCount - 1);
@@ -271,21 +394,25 @@ function DetailPanel({
                 : tr(["Masalah yang dicatat saat DM meeting selesai, mengikuti periode kartu Top Masalah DM Meeting", "Problems logged when DM meetings close, following the period of the Top DM Meeting Problems card"])}
             </p>
           </div>
-          {filter && (
+          {activeFilterLabel && (
             <button
               type="button"
               className="msl-filter-chip"
               onClick={() => onClearFilter(tab)}
               aria-label={english ? "Clear filter" : "Hapus filter"}
             >
-              {tr(["Filter", "Filter"])}: {tab === "papercard" ? paperLabel(filter) : filter}
+              {tr(["Filter", "Filter"])}: {activeFilterLabel}
               <X size={12} aria-hidden="true" />
             </button>
           )}
         </div>
 
         {state.kind === "loading" ? (
-          <div className="msl-empty">{english ? "Loading problem data…" : "Memuat data masalah…"}</div>
+          <TableSkeleton
+            rows={5}
+            columns={6}
+            label={english ? "Loading problem data…" : "Memuat data masalah…"}
+          />
         ) : state.kind === "error" ? (
           <div className="msl-message" role="alert">
             <p>{state.message}</p>
@@ -307,7 +434,7 @@ function DetailPanel({
                       <th>{tr(["Tanggal", "Date"])}</th>
                       <th>{tr(["Line", "Line"])}</th>
                       <th>{tr(["Departemen", "Department"])}</th>
-                      <th>{tr(["Kategori", "Category"])}</th>
+                      <th>{tr(["Kategori (5M+1E)", "Category (5M+1E)"])}</th>
                       <th>{tr(["Masalah", "Problem"])}</th>
                       <th>{tr(["Penyebab", "Cause"])}</th>
                       <th>{tr(["Solusi", "Solution"])}</th>
@@ -317,10 +444,14 @@ function DetailPanel({
                     {paperRows.slice(start, end).map((row, index) => (
                       <tr key={`${row.date}-${row.lineCode}-${start + index}`}>
                         <td className="is-date">{row.date}</td>
-                        <td className="is-line">{row.lineCode ?? "–"}</td>
+                        <td className="is-line">
+                          <LineCell lineCode={row.lineCode} english={english} />
+                        </td>
                         <td>{row.department ? departmentLabel(row.department) : "–"}</td>
                         <td>
-                          <span className="msl-badge is-primary">{paperLabel(row.category)}</span>
+                          <span className={`msl-badge${row.mappedCategory ? " is-primary" : ""}`}>
+                            {row.displayCategory}
+                          </span>
                         </td>
                         <td className="is-wide">{row.title}</td>
                         <td className="is-wide">{row.cause || "–"}</td>
@@ -336,7 +467,7 @@ function DetailPanel({
                       <th>{tr(["Tanggal", "Date"])}</th>
                       <th>{tr(["Sesi", "Session"])}</th>
                       <th>{tr(["Line", "Line"])}</th>
-                      <th>{tr(["Kategori", "Category"])}</th>
+                      <th>{tr(["Kategori (Code 1–3)", "Category (Code 1–3)"])}</th>
                       <th>{tr(["Masalah", "Problem"])}</th>
                       <th>{tr(["Solusi", "Solution"])}</th>
                       <th>{tr(["PIC", "PIC"])}</th>
@@ -349,16 +480,29 @@ function DetailPanel({
                       <tr key={`${row.date}-${row.lineCode}-${start + index}`}>
                         <td className="is-date">{row.date}</td>
                         <td>{row.sessionLabel || "–"}</td>
-                        <td className="is-line">{row.lineCode ?? "–"}</td>
+                        <td className="is-line">
+                          <LineCell lineCode={row.lineCode} english={english} />
+                        </td>
                         <td>
-                          {row.losses.length ? (
-                            <div className="msl-badges">
-                              {row.losses.map((name) => (
-                                <span key={name} className="msl-badge is-danger">
-                                  {name}
-                                </span>
-                              ))}
-                            </div>
+                          {row.categoryPath.parts.length ? (
+                            row.categoryPath.isPath ? (
+                              <div className="msl-code-path">
+                                {row.categoryPath.parts.map((part, idx) => (
+                                  <span key={`${part}-${idx}`} className="msl-code-step">
+                                    {idx > 0 && <span className="msl-code-sep" aria-hidden="true">›</span>}
+                                    <span className={`msl-badge${idx === 0 ? " is-danger" : ""}`}>{part}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="msl-badges">
+                                {row.categoryPath.parts.map((name) => (
+                                  <span key={name} className="msl-badge is-danger">
+                                    {name}
+                                  </span>
+                                ))}
+                              </div>
+                            )
                           ) : (
                             "–"
                           )}
@@ -420,7 +564,7 @@ export default function MasalahPage() {
   const detailRef = useRef<HTMLElement>(null);
   const [detailTab, setDetailTab] = useState<DetailTab>("papercard");
   const [paperFilter, setPaperFilter] = useState<string | null>(null);
-  const [meetingFilter, setMeetingFilter] = useState<string | null>(null);
+  const [meetingFilter, setMeetingFilter] = useState<MeetingFilter>(null);
 
   const scrollToDetail = () => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -431,8 +575,18 @@ export default function MasalahPage() {
     setDetailTab("papercard");
     scrollToDetail();
   };
-  const selectMeeting = (name: string) => {
-    setMeetingFilter((current) => (current === name ? null : name));
+  const selectMeeting = (code1: string) => {
+    setMeetingFilter((current) =>
+      current && current.code1 === code1 ? null : { code1, subKey: null }
+    );
+    setDetailTab("meeting");
+  };
+  const selectMeetingSub = (code1: string, subKey: string) => {
+    setMeetingFilter((current) =>
+      current && current.code1 === code1 && current.subKey === subKey
+        ? { code1, subKey: null }
+        : { code1, subKey }
+    );
     setDetailTab("meeting");
     scrollToDetail();
   };
@@ -450,14 +604,31 @@ export default function MasalahPage() {
   const paperReady = paperState.kind === "ready" ? paperState : null;
   const meetingReady = meetingState.kind === "ready" ? meetingState : null;
   const papercard = useMemo(() => (paperReady ? papercardRank(paperReady.papercard) : null), [paperReady]);
-  const meeting = useMemo(() => (meetingReady ? meetingRank(meetingReady.meeting) : null), [meetingReady]);
+  const meeting = useMemo(
+    () =>
+      meetingReady
+        ? meetingRank(meetingReady.meeting, 1, meetingReady.abnormalCategories)
+        : null,
+    [meetingReady]
+  );
+  const activeSubCodes = useMemo<SubCodeRow[]>(
+    () =>
+      meetingReady && meetingFilter
+        ? meetingSubCodeBreakdown(
+            meetingReady.meeting,
+            meetingFilter.code1,
+            meetingReady.abnormalCategories
+          )
+        : [],
+    [meetingReady, meetingFilter]
+  );
 
-  const paperLabel = (name: string) => PAPERCARD_EN[name] ?? name;
+  const paperLabel = (name: string) => (english ? PAPERCARD_EN[name] ?? name : `${name} (${PAPERCARD_EN[name] ?? name})`);
   const sum = (rows: RankRow[] | null) => rows?.reduce((total, row) => total + row.count, 0) ?? 0;
   const findings = sum(papercard);
   const lossTotal = sum(meeting);
-  const topCause = papercard && papercard[0].count > 0 ? papercard[0] : null;
-  const topLoss = meeting && meeting[0].count > 0 ? meeting[0] : null;
+  const topCause = papercard && papercard[0]?.count > 0 ? papercard[0] : null;
+  const topLoss = meeting && meeting[0]?.count > 0 ? meeting[0] : null;
   const dash = "–";
   const noData = tr(["Belum ada data", "No data yet"]);
 
@@ -528,9 +699,9 @@ export default function MasalahPage() {
 
           <div className="msl-grid">
             <RankCard
-              title={["Top Masalah Papercard", "Top Papercard Problems"]}
+              title={["Top Masalah Papercard (5M+1E)", "Top Papercard Problems (5M+1E)"]}
               subtitle={[
-                "Masalah 5M+1E (Man, Machine, Material, Method, Measurement, Environment)",
+                "Dikelompokkan berdasarkan 5M+1E (Man, Machine, Material, Method, Measurement, Environment)",
                 "Grouped by 5M+1E (Man, Machine, Material, Method, Measurement, Environment)",
               ]}
               unit={["temuan", "findings"]}
@@ -548,8 +719,8 @@ export default function MasalahPage() {
             <RankCard
               title={["Top Masalah DM Meeting", "Top DM Meeting Problems"]}
               subtitle={[
-                "Kategori loss yang diisi saat DM meeting selesai",
-                "Loss categories filled in when a DM meeting closes",
+                "Klik kategori (Code 1) untuk melihat rincian sub-kode yang bermasalah",
+                "Click a category (Code 1) to see its breakdown of sub-codes with issues",
               ]}
               unit={["masalah", "problems"]}
               rows={meeting}
@@ -559,8 +730,38 @@ export default function MasalahPage() {
               range={meetingRange}
               onRangeChange={setMeetingRange}
               english={english}
-              selected={meetingFilter}
+              selected={meetingFilter?.code1 ?? null}
               onSelect={selectMeeting}
+              renderExpanded={(row) =>
+                activeSubCodes.length > 0 ? (
+                  <div className="msl-sublist" role="region" aria-label={tr(["Rincian sub-kode", "Sub-code breakdown"])}>
+                    {activeSubCodes.map((sub) => {
+                      const isSubSelected = meetingFilter?.subKey === sub.key;
+                      return (
+                        <button
+                          key={sub.key}
+                          type="button"
+                          className={`msl-subrow${isSubSelected ? " is-selected" : ""}`}
+                          aria-pressed={isSubSelected}
+                          onClick={() => selectMeetingSub(row.name, sub.key)}
+                        >
+                          <span className="msl-subrow-path">
+                            {sub.parts.map((part, idx) => (
+                              <span key={`${part}-${idx}`} className="msl-code-step">
+                                {idx > 0 && <span className="msl-code-sep" aria-hidden="true">›</span>}
+                                <span>{part}</span>
+                              </span>
+                            ))}
+                          </span>
+                          <span className="msl-subrow-count">
+                            {sub.count} {unitFor(sub.count, ["masalah", "problems"], english)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null
+              }
             />
           </div>
 

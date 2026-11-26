@@ -1,5 +1,6 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
+import { SessionLoader } from "@/components/ui/LoadingState";
 
 import { departmentLabel } from "./departments";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -143,9 +144,11 @@ export default function DmDashboard({ slug }: { slug: string }) {
 
   if (state.kind === "loading") {
     return (
-      <main className="dmg-root dmg-state-screen" aria-busy="true">
-        <p role="status">{uiText("Memuat dashboard ")}{slug}...</p>
-      </main>
+      <SessionLoader
+        fullScreen
+        label={`${uiText("Memuat dashboard ")}${slug}...`}
+        sublabel="DM Digital"
+      />
     );
   }
 

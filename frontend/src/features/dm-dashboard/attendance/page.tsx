@@ -1,5 +1,6 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
+import { ChartLoader } from "@/components/ui/LoadingState";
 
 // import Link from "next/link";
 import { departmentLabel } from "../departments";
@@ -22,6 +23,7 @@ import {
   useDepartmentAttendance,
   type DepartmentKey,
 } from "./useDepartmentAttendance";
+import { isWeekendISO, useHolidayDates } from "../shared/useHolidayDates";
 
 type TrendDay = {
   label: string;
@@ -551,30 +553,39 @@ export default function AttendanceDashboardPage() {
     range: deptRange,
     retry: departmentRetry,
   });
+  const holidayDates = useHolidayDates(trendRange.from, trendRange.to);
   const visibleTrend = useMemo<TrendDay[]>(
     () =>
-      trendDates.map((date) => {
-        const daySessions = trendSessions.filter((s) => s.date === date);
-        const total = daySessions.reduce((n, s) => n + s.total, 0);
-        const pct = (n: number) => (total ? (n / total) * 100 : 0);
+      trendDates
+        .map((date) => {
+          const daySessions = trendSessions.filter((s) => s.date === date);
+          const total = daySessions.reduce((n, s) => n + s.total, 0);
+          const pct = (n: number) => (total ? (n / total) * 100 : 0);
 
-        return {
-          date,
-          label: new Date(`${date}T12:00:00`).toLocaleDateString(uiLocale, {
-            weekday: "short",
-          }),
-          onTime: total
-            ? pct(daySessions.reduce((n, s) => n + s.onTime, 0))
-            : null,
-          late: total ? pct(daySessions.reduce((n, s) => n + s.late, 0)) : null,
-          absent: total
-            ? pct(daySessions.reduce((n, s) => n + s.absent, 0))
-            : null,
-          hasMeeting: total > 0,
-        };
-      }),
+          return {
+            date,
+            label: new Date(`${date}T12:00:00`).toLocaleDateString(uiLocale, {
+              weekday: "short",
+            }),
+            onTime: total
+              ? pct(daySessions.reduce((n, s) => n + s.onTime, 0))
+              : null,
+            late: total
+              ? pct(daySessions.reduce((n, s) => n + s.late, 0))
+              : null,
+            absent: total
+              ? pct(daySessions.reduce((n, s) => n + s.absent, 0))
+              : null,
+            hasMeeting: total > 0,
+          };
+        })
+        .filter(
+          (day) =>
+            day.hasMeeting ||
+            (!isWeekendISO(day.date) && !holidayDates.has(day.date))
+        ),
 
-    [trendDates, trendSessions, uiLocale]
+    [trendDates, trendSessions, uiLocale, holidayDates]
   );
 
   const filteredRows = useMemo(() => {
@@ -765,9 +776,7 @@ export default function AttendanceDashboardPage() {
             </button>
           </div>
         ) : loading && !hasData ? (
-          <div className="att-chart-empty">
-            {uiText("Memuat data presensi…")}
-          </div>
+          <ChartLoader label={uiText("Memuat data presensi…")} />
         ) : (
           <>
             <section

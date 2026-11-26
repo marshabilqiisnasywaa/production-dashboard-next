@@ -73,7 +73,6 @@ export async function parseSqdipFile(
   const cLeader = names.indexOf("leader");
   const cDim = names.indexOf("rincian");
   const cActual = names.indexOf("aktual");
-  const cPoints = names.indexOf("perolehan nilai");
 
   const drafts = new Map<string, Draft>();
   let skipped = 0;
@@ -109,11 +108,9 @@ export async function parseSqdipFile(
       drafts.set(key, draft);
     }
     const actual = toNumber(row[cActual]);
-    // Perolehan Nilai opsional: kalau kosong, dihitung dari Aktual dan target.
-    const given = cPoints >= 0 ? toNumber(row[cPoints]) : null;
+    // Poin selalu dihitung otomatis dari Aktual vs Target agar tidak terdampak rumus Excel yang salah.
     draft.actuals[dimIndex] = actual;
-    draft.points[dimIndex] =
-      given !== null ? (given === 6 ? 6 : 0) : actual !== null && meets(dimIndex, actual) ? 6 : 0;
+    draft.points[dimIndex] = actual !== null && meets(dimIndex, actual) ? 6 : 0;
     draft.seen[dimIndex] = true;
   }
 

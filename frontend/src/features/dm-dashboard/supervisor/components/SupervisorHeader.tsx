@@ -4,6 +4,7 @@ import { useUiText } from "@/locales/useUiText";
 
 import { departmentLabel } from "../../departments";
 import { useMemo } from "react";
+import { usePathname } from "next/navigation";
 import LanguageMenu from "@/components/ui/LanguageMenu";
 import { SidebarToggle } from "@/components/ui/SidebarProvider";
 import { setToken } from "../../api";
@@ -21,8 +22,41 @@ function parseTime(value: string): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function supervisorHeading(
+  pathname: string,
+  dept?: string
+): { title: string; desc: string } {
+  if (pathname.startsWith(SUPERVISOR_ROUTES.approvals)) {
+    return { title: "Persetujuan Checklist", desc: "Tinjau & setujui papercard harian lini." };
+  }
+  if (pathname.startsWith(SUPERVISOR_ROUTES.lines)) {
+    return { title: "Monitoring Lini", desc: "Pantau status inspeksi & aktivitas tiap lini." };
+  }
+  if (pathname.startsWith(SUPERVISOR_ROUTES.workshopMeeting)) {
+    return { title: "Workshop Meeting", desc: "Presensi & catatan rapat tingkat workshop." };
+  }
+  if (pathname.startsWith(SUPERVISOR_ROUTES.escalations)) {
+    return { title: "Eskalasi", desc: "Masalah melewati due date yang perlu tindak lanjut." };
+  }
+  if (pathname.startsWith(SUPERVISOR_ROUTES.fiveWhy)) {
+    return { title: "5Why & PDCA", desc: "Analisis akar masalah & tindakan perbaikan." };
+  }
+  if (pathname.startsWith(SUPERVISOR_ROUTES.myProblems)) {
+    return { title: "Masalah Saya", desc: "Daftar masalah yang ditugaskan kepada Anda." };
+  }
+  if (pathname.startsWith(SUPERVISOR_ROUTES.history)) {
+    return { title: "Riwayat Checklist", desc: "Arsip papercard & persetujuan harian." };
+  }
+  const deptName = dept ? departmentLabel(dept) : null;
+  return {
+    title: "Dashboard Supervisor",
+    desc: deptName ? `Ringkasan persetujuan & lini · ${deptName}` : "Ringkasan persetujuan, eskalasi & lini.",
+  };
+}
+
 export function SupervisorHeader() {
   const { text: uiText, locale: uiLocale } = useUiText();
+  const pathname = usePathname();
   const { currentSupervisor, escalatedRows, allListItems } = useSupervisor();
 
   const headerNotifications = useMemo<DmAppNotification[]>(() => {
@@ -82,10 +116,17 @@ export function SupervisorHeader() {
   };
 
   const displayName = currentSupervisor.name || "Supervisor";
+  const heading = supervisorHeading(pathname, currentSupervisor.dept);
 
   return (
     <header className="dml-header">
-      <SidebarToggle />
+      <div className="dml-header__start">
+        <SidebarToggle />
+        <div className="dml-header__heading">
+          <h1 className="dml-header__title">{uiText(heading.title)}</h1>
+          <p className="dml-header__desc">{uiText(heading.desc)}</p>
+        </div>
+      </div>
       <div className="dml-header__right">
         <LanguageMenu />
         <NotificationBellButton

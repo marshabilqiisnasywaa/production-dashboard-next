@@ -1,6 +1,7 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
 import LanguageMenu from "@/components/ui/LanguageMenu";
+import { SessionLoader } from "@/components/ui/LoadingState";
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -141,13 +142,15 @@ export default function DmAdminPage() {
 
   if (auth.kind === "checking" || auth.kind === "anon") {
     return (
-      <main className="dm-admin-login-screen" aria-busy="true">
-        <p role="status">
-          {auth.kind === "anon"
+      <SessionLoader
+        fullScreen
+        label={
+          auth.kind === "anon"
             ? uiText("Mengalihkan ke halaman masuk...")
-            : uiText("Memeriksa sesi...")}
-        </p>
-      </main>
+            : uiText("Memeriksa sesi...")
+        }
+        sublabel="DM Digital"
+      />
     );
   }
 
@@ -237,68 +240,56 @@ const ADMIN_TAB_HEADERS: Record<
   { title: string; description: string } | null
 > = {
   "history-import": {
-    title: "Impor Histori Papercard & Standup Meeting",
-    description:
-      "Upload workbook asesmen, cocokkan line, dan periksa histori sebelum disimpan.",
+    title: "Impor Histori",
+    description: "Upload & verifikasi histori papercard dan standup.",
   },
   workshop: {
     title: "Line, Workshop & Tim",
-    description:
-      "Kelola struktur workshop, DM meeting, lini produksi, dan penugasan tim.",
+    description: "Struktur workshop, DM meeting, lini, dan tim.",
   },
   users: {
     title: "Manajemen User",
-    description:
-      "Kelola akun pengguna, peran sistem, penugasan lini, dan hak akses.",
+    description: "Akun pengguna, peran, dan penugasan lini.",
   },
   papercard: {
     title: "Papercard & Jadwal Meeting",
-    description:
-      "Atur konfigurasi template checklist papercard dan jadwal pelaksanaan DM meeting harian.",
+    description: "Template checklist papercard & jadwal DM meeting.",
   },
   mpv: {
     title: "MVP of The Month",
-    description:
-      "Kelola kandidat dan tentukan pemenang MVP bulanan untuk operator lini produksi.",
+    description: "Kandidat & pemenang MVP bulanan per lini.",
   },
   flowchart: {
     title: "Dokumen DM",
-    description: "Kelola Dokumen DM dalam bentuk flowchart dan manual.",
+    description: "Flowchart dan dokumen manual operasional DM.",
   },
   abnormal: {
     title: "Kategori Abnormal",
-    description:
-      "Kelola kode abnormal tiga tingkat, cari jalurnya, dan import dari Excel.",
+    description: "Kode abnormal 3 tingkat (Code 1–3) & impor Excel.",
   },
   mechanism: {
     title: "Mekanisme DM",
-    description:
-      "Edit langsung template DM Mechanism: ubah teks dan jam, tambah kolom dan baris, serta unggah foto tiap tahap.",
+    description: "Editor template jadwal & foto tahap DM.",
   },
   attendance: {
     title: "Rekapitulasi Absensi",
-    description:
-      "Pantau ringkasan kehadiran tim dan aktivitas presensi di lini produksi.",
+    description: "Ringkasan kehadiran tim & sesi meeting.",
   },
   problems: {
     title: "Tracking Masalah",
-    description:
-      "Pantau tindak lanjut masalah DM meeting dan temuan NG papercard harian.",
+    description: "Tindak lanjut masalah meeting & temuan NG.",
   },
   history: {
-    title: "Riwayat Papercard & Standup Meeting",
-    description:
-      "Telusuri riwayat papercard dan standup meeting per tanggal, line, dan shift.",
+    title: "Arsip Papercard & Meeting",
+    description: "Riwayat papercard & standup per tanggal dan lini.",
   },
   sqdip: {
-    title: "Monitoring SQCDIP",
-    description:
-      "Pantau indikator keselamatan, kualitas, biaya, pengiriman, dan keterlibatan tim.",
+    title: "Monitoring SQDIP",
+    description: "Skor harian SQDIP per leader dan lini.",
   },
   dashboard: {
     title: "Dashboard Admin",
-    description:
-      "Ringkasan performa lini dan pemantauan aktivitas produksi secara menyeluruh.",
+    description: "Ringkasan performa & aktivitas produksi.",
   },
 };
 
@@ -680,7 +671,19 @@ function AdminWorkspace({
 
       <div className="dm-admin-main-wrap">
         <header className="dm-admin-topbar-nav">
-          <SidebarToggle />
+          <div className="dm-admin-topbar-start">
+            <SidebarToggle />
+            {tabHeader && (
+              <div className="dm-admin-topbar-left">
+                <h1 className="dm-admin-topbar-title">
+                  {uiText(tabHeader.title)}
+                </h1>
+                <p className="dm-admin-topbar-desc">
+                  {uiText(tabHeader.description)}
+                </p>
+              </div>
+            )}
+          </div>
           <div className="dm-admin-topbar-actions">
             {/* <button
               type="button"
@@ -704,18 +707,6 @@ function AdminWorkspace({
         </header>
 
         <main className="dm-admin-content-pane">
-          {tabHeader && (
-            <header className="dm-admin-page-head">
-              <div className="dm-admin-page-head-main">
-                <h1 className="dm-admin-page-title">
-                  {uiText(tabHeader.title)}
-                </h1>
-                <p className="dm-admin-page-desc">
-                  {uiText(tabHeader.description)}
-                </p>
-              </div>
-            </header>
-          )}
           {banner && (
             <div
               className={`dm-admin-alert-banner is-${banner.type}`}
