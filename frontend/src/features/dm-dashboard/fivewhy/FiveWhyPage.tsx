@@ -431,6 +431,15 @@ export default function FiveWhyPage({
     }
   }
 
+  function requestSuggestion(whys: WhyNode[]) {
+    const source = recordRef.current;
+    if (!source) return Promise.reject(new Error("Analisis belum dimuat."));
+    return fiveWhyAnalysesApi.suggestRootCause(source.abnormal.id, {
+      abnormal: source.abnormal,
+      whys,
+    });
+  }
+
   function showRootCause(node: WhyNode) {
     openTab(2);
     setWhyFocus((current) => ({ id: node.id, token: current.token + 1 }));
@@ -701,6 +710,7 @@ export default function FiveWhyPage({
                   onSave={() => void persist("Analisis 5Why disimpan.")}
                   onNotify={notify}
                   onUploadPhotos={uploadPhotos}
+                  onRequestSuggestion={requestSuggestion}
                 />
               ) : null}
                             {activeTab === 2 ? (

@@ -18,6 +18,13 @@ class Settings(BaseSettings):
     teamtalk_enabled: bool = False
     teamtalk_webhook_url: str | None = None
 
+    deepseek_api_key: str | None = None
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_model: str = "deepseek-chat"
+    deepseek_timeout_seconds: float = 90.0
+    deepseek_max_tokens: int = 8000
+    fivewhy_ai_hourly_limit: int = 30
+
     # treshold setting similarity
     # skor minimum supaya dianggap dikenali
     face_match_threshold: float = 0.45

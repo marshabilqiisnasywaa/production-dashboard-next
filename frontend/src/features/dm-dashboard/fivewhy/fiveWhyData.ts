@@ -91,6 +91,7 @@ export type WhyNode = {
   level: number;
   statement: string;
   verification: WhyVerification;
+  rootNote?: string;
   evidence: Evidence[];
   branches: WhyBranch[];
 };
@@ -343,8 +344,7 @@ export function isSummaryTabDone(record: FiveWhyRecord) {
 
 export function isWhyTabDone(record: FiveWhyRecord) {
   return (
-    record.whys.length === 5 &&
-    record.whys.every((why) => why.statement.trim().length > 0) &&
+    record.whys.some((why) => why.statement.trim().length > 0) &&
     record.whys.filter((why) => why.verification === "root").length === 1
   );
 }

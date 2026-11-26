@@ -9,7 +9,11 @@ import {
   createFiveWhyId,
 } from "./fiveWhyData";
 import AuthImage from "./AuthImage";
+import RootCauseConfirm from "./RootCauseConfirm";
+import WhySuggestionBox from "./RootCauseSuggestion";
+import type { RootCauseSuggestion } from "../api";
 import type { Evidence, WhyBranch, WhyNode } from "./fiveWhyData";
+import type { SuggestionStatus } from "./RootCauseSuggestion";
 
 type WhyTreeProps = {
   whys: WhyNode[];
@@ -21,6 +25,7 @@ type WhyTreeProps = {
   onSave: () => void;
   onNotify: (message: string) => void;
   onUploadPhotos: (files: File[]) => Promise<string[]>;
+  onRequestSuggestion: (whys: WhyNode[]) => Promise<RootCauseSuggestion>;
 };
 
 type EvidenceOwner = {
@@ -103,6 +108,24 @@ function initialVisibleLevel(nodes: WhyNode[]) {
   const ordered = [...nodes].sort((a, b) => a.level - b.level);
   const lastFilled = [...ordered].reverse().find(isFilledWhy);
   return Math.min(5, Math.max(1, (lastFilled?.level ?? 0) + 1));
+}
+
+function suggestionSnapshot(nodes: WhyNode[]) {
+  return JSON.stringify(
+    [...nodes]
+      .sort((a, b) => a.level - b.level)
+      .filter((node) => node.statement.trim())
+      .map((node) => [
+        node.level,
+        node.statement.trim(),
+        node.evidence.map((entry) => [
+          entry.label,
+          entry.text.trim(),
+          entry.photos.length,
+        ]),
+        node.branches.map((branch) => branch.statement.trim()),
+      ])
+  );
 }
 
 function ownerKey(owner: EvidenceOwner) {
@@ -201,8 +224,17 @@ export default function WhyTree({
   onSave,
   onNotify,
   onUploadPhotos,
+  onRequestSuggestion,
 }: WhyTreeProps) {
   const { text: uiText } = useUiText();
+  const [suggestion, setSuggestion] = useState<RootCauseSuggestion | null>(null);
+  const [suggestionStatus, setSuggestionStatus] =
+    useState<SuggestionStatus>("idle");
+  const [suggestionError, setSuggestionError] = useState("");
+  const [suggestionSource, setSuggestionSource] = useState("");
+  const [requestLevel, setRequestLevel] = useState<number | null>(null);
+  const [pendingRootId, setPendingRootId] = useState<string | null>(null);
+  const suggestionSeqRef = useRef(0);
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [customLabelFor, setCustomLabelFor] = useState<string | null>(null);
@@ -226,6 +258,11 @@ export default function WhyTree({
     setActiveNodeId(null);
     setHighlightId(null);
     setCustomLabelFor(null);
+    suggestionSeqRef.current += 1;
+    setSuggestion(null);
+    setSuggestionStatus("idle");
+    setSuggestionError("");
+    setPendingRootId(null);
   }, [whys]);
 
   useEffect(() => {
@@ -501,18 +538,70 @@ export default function WhyTree({
     );
   }
 
-  function setRootCause(nodeId: string, active: boolean) {
+  function setRootCause(nodeId: string, active: boolean, note = "") {
     onChange(
       whys.map((item) => {
         if (item.id === nodeId) {
-          return { ...item, verification: active ? "root" : "unverified" };
+          return {
+            ...item,
+            verification: active ? "root" : "unverified",
+            rootNote: active ? note : "",
+          };
         }
         if (active && item.verification === "root") {
-          return { ...item, verification: "unverified" };
+          return { ...item, verification: "unverified", rootNote: "" };
         }
         return item;
       })
     );
+  }
+
+  async function requestSuggestion(fromLevel: number) {
+    if (suggestionStatus === "loading") return;
+    const sent = whys;
+    const sequence = suggestionSeqRef.current + 1;
+    suggestionSeqRef.current = sequence;
+    setRequestLevel(fromLevel);
+    setSuggestionStatus("loading");
+    setSuggestionError("");
+    try {
+      const result = await onRequestSuggestion(sent);
+      if (suggestionSeqRef.current !== sequence) return;
+      setSuggestion(result);
+      setSuggestionSource(suggestionSnapshot(sent));
+      setSuggestionStatus("idle");
+    } catch (error) {
+      if (suggestionSeqRef.current !== sequence) return;
+      setSuggestionError(
+        error instanceof Error ? error.message : "Saran gagal dimuat."
+      );
+      setSuggestionStatus("error");
+    }
+  }
+
+  function dismissSuggestion() {
+    suggestionSeqRef.current += 1;
+    setSuggestion(null);
+    setSuggestionStatus("idle");
+    setSuggestionError("");
+  }
+
+  function applyDraft(node: WhyNode, draft: string) {
+    if (
+      node.statement.trim() &&
+      !window.confirm(
+        uiText("Ganti isi Why {{v0}} dengan draf ini?", { v0: node.level })
+      )
+    ) {
+      return;
+    }
+    updateNode(node.id, { statement: draft });
+    window.setTimeout(() => {
+      document
+        .getElementById(`dm-5w-node-${node.id}`)
+        ?.querySelector("textarea")
+        ?.focus({ preventScroll: true });
+    }, 60);
   }
 
   const filled = whys.filter((why) => why.statement.trim()).length;
@@ -524,10 +613,41 @@ export default function WhyTree({
   const deepestFilled = [...ordered]
     .reverse()
     .find((why) => why.statement.trim());
+  const lastFilledLevel = deepestFilled?.level ?? 0;
+  const rootNode = whys.find((why) => why.verification === "root") ?? null;
+  const rootMisplaced = rootNode !== null && lastFilledLevel > rootNode.level;
+  const suggestionStale =
+    suggestion !== null && suggestionSource !== suggestionSnapshot(whys);
+  const pendingNode = whys.find((why) => why.id === pendingRootId) ?? null;
+  const pendingTarget = pendingNode
+    ? {
+        level: pendingNode.level,
+        statement: pendingNode.statement,
+        lastFilledLevel,
+        suggestedLevel:
+          suggestion && !suggestionStale ? suggestion.suggestedLevel : null,
+        reasonDraft:
+          suggestion &&
+          !suggestionStale &&
+          suggestion.verdict === "final" &&
+          suggestion.suggestedLevel === pendingNode.level
+            ? suggestion.rootReason
+            : (pendingNode.rootNote ?? ""),
+      }
+    : null;
+  const nextCardLevel = lastFilledLevel < 5 ? lastFilledLevel + 1 : null;
+  const suggestionHostLevel =
+    suggestion === null
+      ? null
+      : suggestion.verdict === "dig_deeper" && nextCardLevel !== null
+        ? nextCardLevel
+        : lastFilledLevel > 0
+          ? lastFilledLevel
+          : null;
   const chainRows = deepestFilled
     ? ordered
         .filter((why) => why.level <= deepestFilled.level)
-        .sort((a, b) => b.level - a.level)
+        .sort((a, b) => a.level - b.level)
         .map((why) => ({
           level: why.level,
           text: why.statement.trim(),
@@ -735,6 +855,14 @@ export default function WhyTree({
                     <div className="dm-5w-why-head-left">
                       <span className="dm-5w-why-badge">{uiText("Why ")}{node.level}
                       </span>
+                      {suggestion &&
+                      !suggestionStale &&
+                      suggestion.verdict === "final" &&
+                      suggestion.suggestedLevel === node.level ? (
+                        <span className="dm-5w-chip is-neutral">
+                          {uiText("Disarankan")}
+                        </span>
+                      ) : null}
                     </div>
                     <button
                       type="button"
@@ -742,7 +870,11 @@ export default function WhyTree({
                         rootActive ? "is-on" : ""
                       }`}
                       aria-pressed={rootActive}
-                      onClick={() => setRootCause(node.id, !rootActive)}
+                      onClick={() =>
+                        rootActive
+                          ? setRootCause(node.id, false)
+                          : setPendingRootId(node.id)
+                      }
                       disabled={!canEdit}
                     >
                       <Flag size={12} aria-hidden="true" />
@@ -782,6 +914,22 @@ export default function WhyTree({
                       node.evidence,
                       `Why ${node.level}`
                     )}
+                    {canEdit &&
+                    ((lastFilledLevel > 0 && node.level === lastFilledLevel) ||
+                      node.level === nextCardLevel) ? (
+                      <button
+                        type="button"
+                        className="dm-5w-btn dm-5w-btn-secondary dm-5w-btn-sm dm-5w-suggest-ask"
+                        onClick={() => void requestSuggestion(node.level)}
+                        disabled={suggestionStatus === "loading"}
+                      >
+                        {uiText(
+                          node.level === nextCardLevel
+                            ? "Bingung isinya? Minta saran AI"
+                            : "Cek apakah ini akar (minta saran AI)"
+                        )}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="dm-5w-add-field dm-5w-why-actions-end"
@@ -789,6 +937,44 @@ export default function WhyTree({
                       disabled={!canEdit}
                     >{uiText("Hipotesis lain")}</button>
                   </div>
+
+                  {requestLevel === node.level &&
+                  suggestionStatus === "loading" ? (
+                    <p className="dm-5w-suggest-note" role="status">
+                      {uiText("Meminta saran...")}
+                    </p>
+                  ) : null}
+                  {requestLevel === node.level &&
+                  suggestionStatus === "error" ? (
+                    <p className="dm-5w-suggest-error" role="alert">
+                      {uiText(suggestionError || "Saran gagal dimuat.")}
+                    </p>
+                  ) : null}
+                  {canEdit && suggestion && suggestionHostLevel === node.level ? (
+                    <WhySuggestionBox
+                      suggestion={suggestion}
+                      stale={suggestionStale}
+                      placement={
+                        suggestion.verdict === "dig_deeper" &&
+                        node.level === nextCardLevel
+                          ? "next"
+                          : "last"
+                      }
+                      canDraft={node.level === nextCardLevel}
+                      onApply={(level) => {
+                        const target = whys.find((why) => why.level === level);
+                        if (target) setPendingRootId(target.id);
+                      }}
+                      onUseDraft={(draft) => applyDraft(node, draft)}
+                      onDismiss={dismissSuggestion}
+                    />
+                  ) : null}
+
+                  {rootActive && node.rootNote ? (
+                    <p className="dm-5w-root-note">
+                      <strong>{uiText("Alasan Root Cause")}:</strong> {node.rootNote}
+                    </p>
+                  ) : null}
 
                   {openNodeEvidence.length > 0 ? (
                     <div className="dm-5w-evidence-grid">
@@ -918,38 +1104,44 @@ export default function WhyTree({
           <h2 className="dm-5w-card-title">{uiText("Ringkasan rantai sebab")}</h2>
           {chainRows.length > 0 ? (
             <div className="dm-5w-chain-list">
-              {chainRows.map((row, index) => (
+              <div className="dm-5w-chain-row">
+                <p className="dm-5w-chain-line">
+                  <strong>{uiText("Masalah")}</strong>{" "}
+                  {problemLabel.trim() || uiText("(judul abnormal belum diisi)")}
+                </p>
+              </div>
+              {chainRows.map((row) => (
                 <div className="dm-5w-chain-row" key={`chain-${row.level}`}>
-                  {index > 0 ? (
-                    <span className="dm-5w-chain-arrow" aria-hidden="true">
-                      ↑
-                    </span>
-                  ) : null}
+                  <span className="dm-5w-chain-arrow">
+                    <span aria-hidden="true">↓</span> {uiText("kenapa?")}
+                  </span>
                   <p
                     className={`dm-5w-chain-line ${
                       row.text ? "" : "is-empty"
                     } ${row.isRoot ? "is-root-cause" : ""}`}
                   >
-                    <strong>{index === 0 ? uiText("Karena") : uiText("maka")}</strong>{" "}
+                    <strong>{uiText("Why ")}{row.level}</strong>{" "}
                     {row.text || uiText("(Why {{v0}} belum diisi)", { v0: row.level })}
+                    {row.isRoot ? (
+                      <span className="dm-5w-chain-root-tag">{uiText("Root Cause")}</span>
+                    ) : null}
                   </p>
                 </div>
               ))}
-              <div className="dm-5w-chain-row">
-                <span className="dm-5w-chain-arrow" aria-hidden="true">
-                  ↑
-                </span>
-                <p className="dm-5w-chain-line">
-                  <strong>{uiText("sehingga terjadi")}</strong>{" "}
-                  {problemLabel.trim() || uiText("(judul abnormal belum diisi)")}
-                </p>
-              </div>
             </div>
           ) : (
             <p className="dm-5w-chain-text">{uiText("Rantai sebab akan muncul setelah Why diisi.")}</p>
           )}
           {rootCount === 0 ? (
             <p className="dm-5w-chain-warn">{uiText("Tandai satu Why sebagai Root Cause")}</p>
+          ) : null}
+          {rootMisplaced && rootNode ? (
+            <p className="dm-5w-chain-warn">
+              {uiText(
+                "Root Cause ada di Why {{v0}}, padahal Why {{v1}} sudah terisi.",
+                { v0: rootNode.level, v1: lastFilledLevel }
+              )}
+            </p>
           ) : null}
           <div className="dm-5w-progress">
             <div className="dm-5w-progress-item">
@@ -978,6 +1170,15 @@ export default function WhyTree({
           ) : null}
         </div>
       </aside>
+
+      <RootCauseConfirm
+        target={pendingTarget}
+        onCancel={() => setPendingRootId(null)}
+        onConfirm={(note) => {
+          if (pendingNode) setRootCause(pendingNode.id, true, note);
+          setPendingRootId(null);
+        }}
+      />
 
       {previewId ? (
         <div

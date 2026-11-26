@@ -583,8 +583,45 @@ export type FiveWhyAnalysisInput = {
   solutions: Solution[];
 };
 
+export type RootCauseVerdict = "final" | "dig_deeper" | "insufficient";
+
+export type RootCauseRuleStatus = "met" | "not_met" | "unknown";
+
+export type RootCauseSuggestion = {
+  verdict: RootCauseVerdict;
+  suggestedLevel: number | null;
+  confidence: "high" | "medium" | "low";
+  summary: string;
+  rules: { id: string; title: string; status: RootCauseRuleStatus; note: string }[];
+  missing: string[];
+  nextQuestion: string | null;
+  candidates: { text: string; check: string }[];
+  rootReason: string;
+  markedAssessment: {
+    markedLevel: number;
+    stance: "agree" | "not_enough" | "other";
+    level: number | null;
+    reason: string;
+  } | null;
+  otherWhys: { level: number; reason: string }[];
+  lastFilledLevel: number;
+  model: string;
+  generatedAt: string;
+};
+
+export type RootCauseSuggestionInput = {
+  abnormal: Omit<FiveWhyAbnormal, "id">;
+  whys: WhyNode[];
+};
+
 export const fiveWhyAnalysesApi = {
   list: () => request<FiveWhyAnalysisSummary[]>("/fivewhy/analyses", {}, true),
+  suggestRootCause: (id: string, input: RootCauseSuggestionInput) =>
+    request<RootCauseSuggestion>(
+      `/fivewhy/analyses/${encodeURIComponent(id)}/root-cause-suggestion`,
+      json("POST", input),
+      true
+    ),
   get: (id: string) =>
     request<FiveWhyAnalysisDetail>(
       `/fivewhy/analyses/${encodeURIComponent(id)}`,

@@ -14,8 +14,9 @@ from app.core.config import settings
 from app.db.session import get_db
 from app.models import Employee, Line
 from app.models.fivewhy import FiveWhyAnalysis, FiveWhyPhoto
-from app.schemas_fivewhy import AnalysisCreateIn, AnalysisIn
+from app.schemas_fivewhy import AnalysisCreateIn, AnalysisIn, RootCauseSuggestIn
 from app.services.accounts import forbidden
+from app.services.fivewhy_ai import suggest_root_cause
 from app.services.fivewhy import creator_employee, upload_line_ids
 from app.services.fivewhy_analyses import (
     can_edit,
@@ -178,6 +179,14 @@ def update_analysis(analysis_id: str, payload: AnalysisIn, principal: Principal 
     db.commit()
     db.refresh(row)
     return detail_out(db, row, principal)
+
+
+@router.post("/analyses/{analysis_id}/root-cause-suggestion")
+def root_cause_suggestion(analysis_id: str, payload: RootCauseSuggestIn, principal: Principal = Depends(require("problems.write")), db: Session = Depends(get_db)):
+    load_editable(db, principal, analysis_id)
+    body = payload.model_dump(by_alias=True)
+    quota_key = str(principal.employee.id) if principal.employee else "admin"
+    return suggest_root_cause(body["abnormal"], body["whys"], quota_key)
 
 
 @router.delete("/analyses/{analysis_id}", status_code=204)

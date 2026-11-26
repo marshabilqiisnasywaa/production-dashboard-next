@@ -382,6 +382,11 @@ export default function FiveWhyReport({ record, canEdit }: FiveWhyReportProps) {
                         <span className="dm-5w-report-root-tag">{uiText("Root Cause")}</span>
                       ) : null}
                     </p>
+                    {isRoot && node.rootNote ? (
+                      <p className="dm-5w-root-note">
+                        <strong>{uiText("Alasan Root Cause")}:</strong> {node.rootNote}
+                      </p>
+                    ) : null}
                     <EvidenceList
                       evidence={node.evidence}
                       label={`Why ${node.level}`}
