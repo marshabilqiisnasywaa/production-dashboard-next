@@ -7,7 +7,7 @@ import unittest
 from uuid import uuid4
 
 from fastapi import BackgroundTasks, HTTPException, UploadFile
-from sqlalchemy import select, text
+from sqlalchemy import create_engine, select, text
 from sqlalchemy.orm import Session
 
 from app.api.admin import create_line
@@ -19,6 +19,7 @@ from app.api import face_scan
 from app.api.meetings import close_presensi, end_session, list_sessions, prepare_session, save_absence_notes, start_session, summary_options
 from app.db.base import Base
 from app.db.session import engine
+from app.models.abnormal_category import AbnormalCategory
 from app.models import Board, BoardMember, DmGroup, DmMeetingAttendance, DmMeetingSchedule, DmMeetingSession, Employee, Line, Workshop
 from app.schemas import AbsenceNotesIn, DmGroupLineAssignIn, LineIn, MeetingPrepareIn, MeetingSessionEndIn, MeetingSessionStartIn, PresensiCloseIn
 from app.services import joint_meetings
@@ -34,6 +35,8 @@ class JointMeetingTests(unittest.TestCase):
         Base.metadata.create_all(self.connection)
         self.db = Session(self.connection, autoflush=False, expire_on_commit=False, join_transaction_mode="create_savepoint")
         self.day = date(2026, 10, 26)
+        self.db.add(AbnormalCategory(level=1, code="P", name="Planning Losses"))
+        self.db.flush()
         workshop = Workshop(name="Test Workshop")
         self.db.add(workshop)
         self.db.flush()
@@ -188,11 +191,14 @@ class JointMeetingTests(unittest.TestCase):
         self.prepare()
         start_session(MeetingSessionStartIn(line_id=self.lines[0].id, date=self.day, session_number=1), BackgroundTasks(), self.db, self.host)
         self.assertEqual(self.target().status, "in_progress")
-        result = end_session(self.source_id, MeetingSessionEndIn(summaries=[{"problem": "Test issue", "picName": self.employees[3].name, "picEmployeeNo": self.employees[3].employee_no, "lineCode": "502"}]), BackgroundTasks(), self.db, self.host)
+        result = end_session(self.source_id, MeetingSessionEndIn(summaries=[{"problem": "Test issue", "categoryCodes": ["P"], "occurredAt": "2026-10-26T08:00", "picName": self.employees[3].name, "picEmployeeNo": self.employees[3].employee_no, "lineCode": "502"}]), BackgroundTasks(), self.db, self.host)
         self.assertEqual(self.target().status, "completed")
         self.assertEqual(len(result.summaries), 1)
         self.assertEqual(result.summaries[0].line_id, self.lines[1].id)
         self.assertEqual(result.summaries[0].pic_id, self.employees[3].id)
+        self.assertEqual(result.summaries[0].category_codes, ["P"])
+        self.assertEqual(result.summaries[0].problem_categories, ["P-Planning Losses"])
+        self.assertEqual((result.summaries[0].occurred_at, result.summaries[0].responded_at), ("2026-10-26T08:00", None))
         with self.assertRaises(HTTPException):
             end_session(self.source_id, MeetingSessionEndIn(), BackgroundTasks(), self.db, self.host)
 
@@ -212,7 +218,7 @@ class JointMeetingTests(unittest.TestCase):
         self.prepare()
         start_session(MeetingSessionStartIn(line_id=self.lines[0].id, date=self.day, session_number=1), BackgroundTasks(), self.db, self.host)
         result = end_session(self.source_id, MeetingSessionEndIn(summaries=[{
-            "problem": "Outside issue", "picName": "Old name", "picEmployeeNo": "OUTSIDE", "lineCode": "999",
+            "problem": "Outside issue", "categoryCodes": ["P"], "occurredAt": "2026-10-26T08:00", "picName": "Old name", "picEmployeeNo": "OUTSIDE", "lineCode": "999",
         }]), BackgroundTasks(), self.db, self.host)
         self.assertEqual(result.status, "completed")
         self.assertEqual(len(result.summaries), 1)
@@ -318,3 +324,38 @@ class JointMeetingTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SummaryCategoryFieldTests(unittest.TestCase):
+    def setUp(self):
+        self.engine = create_engine("sqlite://")
+        AbnormalCategory.__table__.create(self.engine)
+        self.db = Session(self.engine, expire_on_commit=False)
+        self.db.add(AbnormalCategory(level=1, code="P", name="Planning Losses"))
+        self.db.commit()
+
+    def tearDown(self):
+        self.db.close()
+        self.engine.dispose()
+
+    def body(self, **extra):
+        from app.schemas import MeetingSummaryIn
+
+        data = {"problem": "x", "picName": "A", "categoryCodes": ["P"], "occurredAt": "2026-10-26T08:00", **extra}
+        return MeetingSummaryIn(**data)
+
+    def test_response_is_optional_but_not_before_occurrence(self):
+        from app.services.summary_assignments import resolve_category_fields
+
+        fields = resolve_category_fields(self.db, self.body(respondedAt="2026-10-26T08:30"))
+        self.assertEqual(fields["responded_at"], "2026-10-26T08:30")
+        with self.assertRaises(HTTPException):
+            resolve_category_fields(self.db, self.body(respondedAt="2026-10-26T07:59"))
+
+    def test_occurrence_and_code_1_are_required(self):
+        from app.services.summary_assignments import resolve_category_fields
+
+        with self.assertRaises(HTTPException):
+            resolve_category_fields(self.db, self.body(occurredAt=""))
+        with self.assertRaises(HTTPException):
+            resolve_category_fields(self.db, self.body(categoryCodes=[]))

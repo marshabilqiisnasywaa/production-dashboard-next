@@ -46,6 +46,8 @@ def empty_data(line_code: str, pengusul: str, now: datetime, analysis_id: str) -
     return {
         "abnormal": {
             "label": "", "line": line_code, "pengusul": pengusul, "jenis": "",
+            "categoryCodes": [], "categoryLabels": [], "respondedAt": "",
+            "factors": {"man": "", "machine": "", "material": "", "method": "", "environment": ""},
             "sumberAbnormal": [], "sumberLainnya": "", "tingkatPengaruh": [], "pengaruhLainnya": "",
             "summary": {
                 "when": now.astimezone(JAKARTA).strftime("%Y-%m-%dT%H:%M"), "where": line_code,
@@ -128,3 +130,19 @@ def require_photos_owned(found: set[str], wanted: set[str]) -> None:
     missing = wanted - found
     if missing:
         raise HTTPException(422, "Ada foto yang tidak ditemukan pada analisis ini. Unggah ulang fotonya.")
+
+
+def settle_category(db, row, abnormal: dict) -> tuple[list[str], list[str]]:
+    from app.services.abnormal_categories import resolve_category_path
+
+    codes = list(abnormal.get("categoryCodes") or [])
+    while codes and not codes[-1]:
+        codes.pop()
+    if not codes:
+        return [], []
+    before = section(row.data, "abnormal", dict)
+    stored_codes = section(before, "categoryCodes", list)
+    stored_labels = section(before, "categoryLabels", list)
+    if codes == stored_codes and len(stored_labels) == len(codes):
+        return codes, stored_labels
+    return resolve_category_path(db, codes)

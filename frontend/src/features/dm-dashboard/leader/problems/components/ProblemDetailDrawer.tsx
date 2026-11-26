@@ -7,6 +7,7 @@ import { departmentLabel } from "@/features/dm-dashboard/departments";
 import { formatDue } from "../../meeting/utils";
 import type { ProblemRow, ProblemStatus } from "../types";
 import { formatMeetingDate, formatOverdue } from "../utils";
+import { categoryText, responseMinutes } from "../categoryText";
 
 const STATUS_VIEW: Record<
   ProblemStatus,
@@ -123,9 +124,36 @@ export default function ProblemDetailDrawer({
                   {uiText("Kategori")}
                 </span>
                 <div className="dml-pb-detail-value">
-                  {problem.problemCategories?.join(", ") || "-"}
+                  {categoryText(problem) || "-"}
                 </div>
               </div>
+              {problem.occurredAt ? (
+                <>
+                  <div className="dml-pb-detail-info">
+                    <span className="dml-pb-detail-label">
+                      <Clock3 size={14} aria-hidden="true" />
+                      {uiText("Jam terjadi")}
+                    </span>
+                    <div className="dml-pb-detail-value">
+                      {formatDue(problem.occurredAt, uiLocale)}
+                    </div>
+                  </div>
+                  <div className="dml-pb-detail-info">
+                    <span className="dml-pb-detail-label">
+                      <Clock3 size={14} aria-hidden="true" />
+                      {uiText("Waktu respon")}
+                    </span>
+                    <div className="dml-pb-detail-value">
+                      {problem.respondedAt
+                        ? uiText("{{v0}} ({{v1}} menit)", {
+                            v0: formatDue(problem.respondedAt, uiLocale),
+                            v1: responseMinutes(problem.occurredAt, problem.respondedAt) ?? "-",
+                          })
+                        : uiText("Belum direspon")}
+                    </div>
+                  </div>
+                </>
+              ) : null}
             </div>
           </section>
 

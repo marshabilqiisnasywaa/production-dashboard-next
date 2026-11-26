@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import admin, auth, dm_groups, face, face_scan, health, holidays, lines, meetings, notifications, papercards, photos, public, sqdip, workshop_meetings
 from app.core.config import settings
+from app.api import abnormal_categories
 from app.api import leader_mpv
 from app.api import leader_assignments
 from app.api import history_import
@@ -56,7 +57,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for module in (health, auth, face, face_scan, photos, public, lines, admin, papercards, meetings, notifications, dm_groups, workshop_meetings, leader_mpv, leader_assignments, holidays, sqdip, history_import, fivewhy, flowcharts, flowcharts, fivewhy_analyses):
+for module in (health, auth, face, face_scan, photos, public, lines, admin, papercards, meetings, notifications, dm_groups, workshop_meetings, leader_mpv, leader_assignments, holidays, sqdip, history_import, fivewhy, flowcharts, flowcharts, fivewhy_analyses, abnormal_categories):
     app.include_router(module.router, prefix="/api")
 
 for module in (health, auth, face, face_scan, photos, public, lines, admin, papercards, meetings, notifications, dm_groups, workshop_meetings, leader_mpv, leader_assignments, holidays, sqdip, history_import, fivewhy, flowcharts, fivewhy_analyses, mechanism_board):

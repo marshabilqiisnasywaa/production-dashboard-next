@@ -565,7 +565,10 @@ export type FiveWhyAnalysisSummary = {
   canEdit: boolean;
 };
 
-export type FiveWhyAnalysisDetail = Omit<FiveWhyAnalysisSummary, "solutionCounts"> & {
+export type FiveWhyAnalysisDetail = Omit<
+  FiveWhyAnalysisSummary,
+  "solutionCounts"
+> & {
   revision: number;
   abnormal: Omit<FiveWhyAbnormal, "id">;
   whys: WhyNode[];
@@ -977,7 +980,7 @@ export type DmPublicPapercardProblem = {
   date: string;
   lineCode: string | null;
   category: string; // nama kategori checklist, mis. "Mesin & Peralatan Lini"
-  title: string;    // judul item checklist yang NG
+  title: string; // judul item checklist yang NG
 };
 
 export type DmPublicMeetingProblem = {
@@ -985,7 +988,7 @@ export type DmPublicMeetingProblem = {
   lineCode: string | null;
   problem: string;
   categories: string[] | null; // kategori loss P/H/T/R/Q/M
-}; 
+};
 
 export const publicApi = {
   scorecardReport: (range: { from: string; to: string }) =>
@@ -1021,10 +1024,10 @@ export const publicApi = {
         (range ? `?from=${range.from}&to=${range.to}` : "")
     ),
   problemsReport: (range: { from: string; to: string }) =>
-  request<{
-    papercard: DmPublicPapercardProblem[];
-    meeting: DmPublicMeetingProblem[];
-  }>("/public/problems/report?" + new URLSearchParams(range)),
+    request<{
+      papercard: DmPublicPapercardProblem[];
+      meeting: DmPublicMeetingProblem[];
+    }>("/public/problems/report?" + new URLSearchParams(range)),
   papercardKpi: (params: KpiParams) =>
     request<DmPapercardKpi>("/public/papercard-kpi?" + kpiQuery(params, true)),
   standupKpi: (params: KpiParams) =>
@@ -1132,7 +1135,11 @@ export const accountApi = {
     request<DmLoginResult>("/auth/login", json("POST", { username, password })),
   me: () => request<DmMe>("/auth/me", {}, true),
   impersonate: (employeeId: number) =>
-    request<DmLoginResult>(`/auth/impersonate/${employeeId}`, { method: "POST" }, true),
+    request<DmLoginResult>(
+      `/auth/impersonate/${employeeId}`,
+      { method: "POST" },
+      true
+    ),
   lines: () => request<DmLine[]>("/lines", {}, true),
   changePassword: (currentPassword: string, newPassword: string) =>
     request<void>(
@@ -1597,6 +1604,9 @@ export type DmMeetingSummary = {
   lineId: number;
   problem: string;
   problemCategories?: string[] | null;
+  categoryCodes?: string[] | null;
+  occurredAt?: string | null;
+  respondedAt?: string | null;
   solution?: string | null;
   picName: string;
   picId?: number | null;
@@ -1712,6 +1722,9 @@ export type DmMyProblem = {
   sessionLabel?: string | null;
   problem: string;
   problemCategories?: string[] | null;
+  categoryCodes?: string[] | null;
+  occurredAt?: string | null;
+  respondedAt?: string | null;
   solution?: string | null;
   picName: string;
   picId?: number | null;
@@ -1802,10 +1815,7 @@ export const meetingApi = {
       {},
       true
     ),
-  saveAbsenceNotes: (
-    sessionId: number,
-    items: DmAbsenceNoteInput[]
-  ) =>
+  saveAbsenceNotes: (sessionId: number, items: DmAbsenceNoteInput[]) =>
     request<DmMeetingSession>(
       "/meetings/sessions/" + sessionId + "/absence-notes",
       json("PUT", { items }),
@@ -1851,7 +1861,9 @@ export const meetingApi = {
         customLineCodes?: string[];
         pics?: { name: string; employeeNo?: string | null; manual: boolean }[];
         problem: string;
-        problemCategories?: string[] | null;
+        categoryCodes?: string[];
+        occurredAt?: string | null;
+        respondedAt?: string | null;
         picName: string;
         picId?: number | null;
         dueDate?: string | null;
@@ -2010,7 +2022,11 @@ export type DmWorkshopScheduleInput = Pick<
 export const workshopMeetingApi = {
   allowManualRepresentative: true,
   confirmGuest: (sessionId: number, token: string) =>
-    request<DmFaceScan>(`${workshopBase}/sessions/${sessionId}/guests/confirm`, json("POST", { token }), true),
+    request<DmFaceScan>(
+      `${workshopBase}/sessions/${sessionId}/guests/confirm`,
+      json("POST", { token }),
+      true
+    ),
   mine: () => request<DmWorkshopRef[]>(workshopBase + "/mine", {}, true),
   getSchedule: () =>
     request<DmWorkshopSchedule[]>(workshopBase + "/schedule", {}, true),
@@ -2038,10 +2054,7 @@ export const workshopMeetingApi = {
       { method: "POST" },
       true
     ),
-  saveAbsenceNotes: (
-    sessionId: number,
-    items: DmAbsenceNoteInput[]
-  ) =>
+  saveAbsenceNotes: (sessionId: number, items: DmAbsenceNoteInput[]) =>
     request<DmMeetingSession>(
       `${workshopBase}/sessions/${sessionId}/absence-notes`,
       json("PUT", { items }),
@@ -2193,8 +2206,7 @@ export const flowchartApi = {
     const query = phase ? `?phase=${encodeURIComponent(phase)}` : "";
     return request<FlowchartListItem[]>(`/flowcharts${query}`, {}, false);
   },
-  get: (id: number) =>
-    request<Flowchart>(`/flowcharts/${id}`, {}, false),
+  get: (id: number) => request<Flowchart>(`/flowcharts/${id}`, {}, false),
   listAll: (phase?: FlowchartPhase) => {
     const query = phase ? `?phase=${encodeURIComponent(phase)}` : "";
     return request<FlowchartListItem[]>(`/flowcharts/manage${query}`, {}, true);
@@ -2235,12 +2247,7 @@ export const flowchartApi = {
       requirements?: string[];
       contacts?: FlowchartContact[];
     }
-  ) =>
-    request<Flowchart>(
-      `/flowcharts/${id}`,
-      json("PATCH", input),
-      true
-    ),
+  ) => request<Flowchart>(`/flowcharts/${id}`, json("PATCH", input), true),
   remove: (id: number) =>
     request<void>(`/flowcharts/${id}`, { method: "DELETE" }, true),
   uploadImage: (id: number, file: File) => {
@@ -2254,9 +2261,89 @@ export const flowchartApi = {
   },
 };
 
+export type DmAbnormalCategory = {
+  id: number;
+  level: number;
+  code: string;
+  name: string;
+  parentId: number | null;
+  isActive: boolean;
+  childCount: number;
+  updatedAt: string;
+};
+
+export type DmAbnormalImportInput = {
+  code1: string[];
+  code2: string[];
+  code3: string[];
+  deactivateMissing?: boolean;
+};
+
+export type DmAbnormalImportItem = {
+  level: number;
+  position: number;
+  code: string;
+  name: string;
+  parentCode: string | null;
+  action: "baru" | "diperbarui" | "tetap" | "error";
+  message: string | null;
+};
+
+export type DmAbnormalImportPreview = {
+  items: DmAbnormalImportItem[];
+  created: number;
+  updated: number;
+  unchanged: number;
+  errors: number;
+  missing: string[];
+};
+
+export type DmAbnormalImportResult = {
+  created: number;
+  updated: number;
+  unchanged: number;
+  deactivated: number;
+};
+
+export const abnormalCategoryApi = {
+  list: () => request<DmAbnormalCategory[]>("/abnormal-categories", {}, true),
+  options: () =>
+    request<DmAbnormalCategory[]>("/abnormal-categories/options", {}, true),
+  create: (input: { code: string; name: string; parentId: number | null }) =>
+    request<DmAbnormalCategory>(
+      "/abnormal-categories",
+      json("POST", input),
+      true
+    ),
+  update: (
+    id: number,
+    input: { code?: string; name?: string; isActive?: boolean }
+  ) =>
+    request<DmAbnormalCategory>(
+      `/abnormal-categories/${id}`,
+      json("PATCH", input),
+      true
+    ),
+  remove: (id: number) =>
+    request<void>(`/abnormal-categories/${id}`, { method: "DELETE" }, true),
+  previewImport: (input: DmAbnormalImportInput) =>
+    request<DmAbnormalImportPreview>(
+      "/abnormal-categories/import/preview",
+      json("POST", input),
+      true
+    ),
+  runImport: (input: DmAbnormalImportInput) =>
+    request<DmAbnormalImportResult>(
+      "/abnormal-categories/import",
+      json("POST", input),
+      true
+    ),
+};
+
 /** Foto dari server bisa berupa path relatif; jadikan URL penuh ke backend. Path frontend (/images/...) dibiarkan. */
 export function assetUrl(url: string): string {
-  if (/^(https?:|data:|blob:)/i.test(url) || url.startsWith("/images/")) return url;
+  if (/^(https?:|data:|blob:)/i.test(url) || url.startsWith("/images/"))
+    return url;
   return `${apiBase()}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
@@ -2264,5 +2351,9 @@ export function assetUrl(url: string): string {
 export const mechanismApi = {
   get: () => request<{ board: unknown | null }>("/mechanism-board"),
   save: (board: unknown | null) =>
-    request<{ board: unknown | null }>("/mechanism-board", json("PUT", { board }), true),
+    request<{ board: unknown | null }>(
+      "/mechanism-board",
+      json("PUT", { board }),
+      true
+    ),
 };

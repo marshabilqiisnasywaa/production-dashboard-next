@@ -64,6 +64,9 @@ export const makeEmptyItem = (): SummaryItem => ({
   line: "",
   problem: "",
   problemCategories: [],
+  categoryCodes: [],
+  occurredAt: "",
+  respondedAt: "",
   picId: "",
   due: "",
 });
@@ -78,6 +81,9 @@ export const isBlank = (i: SummaryItem) =>
   summaryLines(i).length === 0 &&
   !i.problem.trim() &&
   !i.problemCategories?.length &&
+  !i.categoryCodes?.some(Boolean) &&
+  !i.occurredAt &&
+  !i.respondedAt &&
   summaryPics(i).length === 0 &&
   !i.due;
 
@@ -85,6 +91,9 @@ export function validateItem(i: SummaryItem): ItemErrors {
   const errors: ItemErrors = {};
   if (summaryLines(i).length === 0) errors.line = "Pilih line";
   if (!i.problem.trim()) errors.problem = "Masalah wajib diisi";
+  if (!i.categoryCodes?.[0]) errors.category = "Pilih Code 1";
+  if (!i.occurredAt) errors.occurredAt = "Isi jam terjadi";
+  if (i.occurredAt && i.respondedAt && i.respondedAt < i.occurredAt) errors.respondedAt = "Waktu respon tidak boleh lebih awal dari jam terjadi";
   if (summaryPics(i).length === 0 || summaryPics(i).some((pic) => pic.manual ? !pic.name.trim() || pic.name.trim().length > 120 : !pic.id)) errors.picId = "Pilih PIC";
   if (!i.due) errors.due = "Tentukan due date";
   return errors;

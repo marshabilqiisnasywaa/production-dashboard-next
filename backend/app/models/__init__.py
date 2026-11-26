@@ -1,3 +1,4 @@
+from app.models.abnormal_category import AbnormalCategory
 from app.models.board import Board
 from app.models.board_member import BoardMember
 from app.models.dm_group import DmGroup
@@ -59,6 +60,7 @@ __all__ = [
     "Employee",
     "FaceTemplate",
     "Flowchart",
+    "AbnormalCategory",
     "Line",
     "MpvAward",
     "PapercardSubmission",

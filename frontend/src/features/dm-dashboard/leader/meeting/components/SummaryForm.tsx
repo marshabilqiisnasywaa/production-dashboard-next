@@ -8,143 +8,7 @@ import { IconPlus, IconTrash } from "./MeetingIcons";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import { summaryLines, summaryPics } from "../utils";
-
-const PROBLEM_CATEGORIES = [
-  { value: "P-Planning Losses", label: "P-Planning Losses" },
-  { value: "H-Human Losses (MP)", label: "H-Human Losses (MP)" },
-  { value: "T-Time Losses (Overtime)", label: "T-Time Losses (Overtime)" },
-  { value: "R-ResuIt Losses (Output)", label: "R-ResuIt Losses (Output)" },
-  { value: "Q-Quality Losses", label: "Q-Quality Losses" },
-  { value: "M--Machine Losses", label: "M--Machine Losses" },
-];
-
-function CategorySelect({
-  id,
-  value,
-  onChange,
-}: {
-  id: string;
-  value: string[];
-  onChange: (value: string[]) => void;
-}) {
-  const { text: uiText } = useUiText();
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function handleOutsideClick(event: PointerEvent) {
-      if (
-        event.target instanceof Node &&
-        !containerRef.current?.contains(event.target)
-      ) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("pointerdown", handleOutsideClick);
-    return () =>
-      document.removeEventListener("pointerdown", handleOutsideClick);
-  }, [open]);
-
-  const selectedLabels = value.map(
-    (selected) =>
-      PROBLEM_CATEGORIES.find((category) => category.value === selected)
-        ?.label ?? selected
-  );
-
-  return (
-    <div
-      ref={containerRef}
-      style={{ position: "relative", minWidth: 0 }}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setOpen(false);
-        }
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          setOpen(false);
-          buttonRef.current?.focus();
-        }
-      }}
-    >
-      <button
-        ref={buttonRef}
-        id={id}
-        type="button"
-        className="ui-select ui-select--block"
-        aria-expanded={open}
-        aria-controls={`${id}-options`}
-        onClick={() => setOpen((previous) => !previous)}
-        style={{
-          textAlign: "left",
-          cursor: "pointer",
-          whiteSpace: "normal",
-          height: "auto",
-          minHeight: 40,
-        }}
-      >
-        {selectedLabels.length
-          ? selectedLabels.join(", ")
-          : uiText("Pilih kategori masalah")}
-      </button>
-
-      {open && (
-        <div
-          id={`${id}-options`}
-          role="group"
-          aria-label={uiText("Kategori masalah")}
-          style={{
-            position: "absolute",
-            top: "calc(100% + 4px)",
-            left: 0,
-            right: 0,
-            zIndex: 20,
-            maxHeight: 240,
-            overflowY: "auto",
-            padding: 8,
-            border: "1px solid var(--dm-border, #cbd5e1)",
-            borderRadius: 8,
-            background: "var(--dm-card, Canvas)",
-            color: "var(--dm-text, CanvasText)",
-            boxShadow: "0 4px 12px rgb(0 0 0 / 12%)",
-          }}
-        >
-          {PROBLEM_CATEGORIES.map((category) => (
-            <label
-              key={category.value}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                minHeight: 44,
-                padding: "8px",
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={value.includes(category.value)}
-                onChange={(event) =>
-                  onChange(
-                    event.target.checked
-                      ? [...value, category.value]
-                      : value.filter((entry) => entry !== category.value)
-                  )
-                }
-              />
-              <span>{uiText(category.label)}</span>
-            </label>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+import { CategoryPathSelect, useCategoryOptions } from "../../../categoryPath";
 
 function LineSelect({ id, lines, value, invalid, onChange, onAddCustom }: {
   id: string;
@@ -311,6 +175,7 @@ export function SummaryForm({
   const { text: uiText } = useUiText();
   const availableLines = Array.from(new Set([...lines, ...items.flatMap((item) => item.customLines ?? [])]));
   const customPicNames = items.flatMap((item) => item.customPics ?? []);
+  const { options: categories, failed: categoryError, reload: loadCategories } = useCategoryOptions();
   return (
     <Card
       className="dml-mt-summary"
@@ -355,20 +220,59 @@ export function SummaryForm({
               </Field>
               {/* </div> */}
 
-              <div className="dml-mt-item__row">
-                <Field
-                  label={uiText("Kategori Masalah")}
-                  htmlFor={`categories-${item.id}`}
-                >
-                  <CategorySelect
-                    id={`categories-${item.id}`}
-                    value={item.problemCategories ?? []}
-                    onChange={(problemCategories) =>
-                      onChange(item.id, { problemCategories })
-                    }
-                  />
-                </Field>
+              <div className="dml-mt-item__group" role="group" aria-label={uiText("Kategori Masalah")}>
+                <span className="dml-mt-item__group-title">{uiText("Kategori Masalah")}</span>
+                {categoryError ? (
+                  <p className="dml-mt-error" role="alert">
+                    {uiText("Kategori masalah gagal dimuat.")}{" "}
+                    <button type="button" className="dml-mt-item__retry" onClick={loadCategories}>
+                      {uiText("Coba lagi")}
+                    </button>
+                  </p>
+                ) : null}
+                <CategoryPathSelect
+                  id={`categories-${item.id}`}
+                  value={item.categoryCodes ?? []}
+                  options={categories}
+                  invalid={Boolean(err.category)}
+                  className="dml-mt-item__cats"
+                  selectClassName="ui-select ui-select--block"
+                  renderField={(label, htmlFor, control) => (
+                    <Field label={label} htmlFor={htmlFor}>{control}</Field>
+                  )}
+                  onChange={(categoryCodes) => onChange(item.id, { categoryCodes })}
+                />
+                {err.category && <span className="dml-mt-error">{uiText(err.category)}</span>}
+              </div>
 
+              <div className="dml-mt-item__row">
+                <Field label={uiText("Jam terjadi")} htmlFor={`oc-${item.id}`}>
+                  <input
+                    id={`oc-${item.id}`}
+                    type="datetime-local"
+                    className="ui-input ui-input--block"
+                    value={item.occurredAt ?? ""}
+                    aria-invalid={Boolean(err.occurredAt)}
+                    aria-required="true"
+                    onChange={(e) => onChange(item.id, { occurredAt: e.target.value })}
+                  />
+                  {err.occurredAt && <span className="dml-mt-error">{uiText(err.occurredAt)}</span>}
+                </Field>
+                <Field label={uiText("Waktu respon (opsional)")} htmlFor={`rs-${item.id}`}>
+                  <input
+                    id={`rs-${item.id}`}
+                    type="datetime-local"
+                    className="ui-input ui-input--block"
+                    value={item.respondedAt ?? ""}
+                    min={item.occurredAt || undefined}
+                    aria-invalid={Boolean(err.respondedAt)}
+                    onChange={(e) => onChange(item.id, { respondedAt: e.target.value })}
+                  />
+                  {err.respondedAt && <span className="dml-mt-error">{uiText(err.respondedAt)}</span>}
+                </Field>
+              </div>
+
+              <div className="dml-mt-item__row">
                 <Field label={uiText("Line")} htmlFor={`l-${item.id}`}>
                   <LineSelect
                     id={`l-${item.id}`}

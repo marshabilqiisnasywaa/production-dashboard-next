@@ -6,6 +6,7 @@ import { useUiText } from "@/locales/useUiText";
 import { IconClose } from "@/components/ui/icons";
 import AuthImage from "./AuthImage";
 import {
+  FACTOR_ROWS,
   FIVE_WHY_ANALYSIS_LABELS,
   PDCA_STAGE_BY_STATUS,
   RECURRENCE_LABELS,
@@ -125,7 +126,7 @@ function EvidenceList({
   );
 }
 
-function SolutionRow({
+function SolutionCard({
   solution,
   index,
   onOpen,
@@ -143,54 +144,60 @@ function SolutionRow({
         year: "numeric",
       })
     : "—";
+  const hasNotes =
+    Boolean(solution.remark.trim()) ||
+    solution.photosBefore.length > 0 ||
+    solution.photosAfter.length > 0;
   return (
-    <tr>
-      <td data-label={uiText("No")}>{index + 1}</td>
-      <td data-label={uiText("Solusi")} className="dm-5w-report-solution">
-        {solution.text.trim() || "—"}
-      </td>
-      <td data-label={uiText("Tipe aksi")}>{uiText(SOLUTION_TYPE_LABELS[solution.type])}</td>
-      <td data-label={uiText("PIC")}>{solution.pic.trim() || "—"}</td>
-      <td data-label={uiText("Departemen")}>{solution.dept.trim() || "—"}</td>
-      <td data-label={uiText("Deadline")}>{deadline}</td>
-      <td data-label={uiText("Status")}>
+    <li className="dm-5w-solution-card">
+      <div className="dm-5w-solution-head">
+        <span className="dm-5w-solution-no" aria-label={uiText("Solusi {{v0}}", { v0: index + 1 })}>
+          {index + 1}
+        </span>
         <span className={`dm-5w-pdca-badge is-${stage.toLowerCase()}`}>{stage}</span>
-        <span className="dm-5w-report-status">
+        <span className="dm-5w-solution-status">
           {uiText(SOLUTION_STATUS_LABELS[solution.status])}
         </span>
-      </td>
-      <td data-label={uiText("Terulang kembali?")}>
-        {uiText(RECURRENCE_LABELS[solution.recurred])}
-      </td>
-      <td data-label={uiText("Monitoring & Remark")} className="dm-5w-report-remark">
-        {solution.remark.trim() ? <p>{solution.remark}</p> : null}
-        {solution.photosBefore.length > 0 ? (
-          <div className="dm-5w-report-photo-group">
-            <span>{uiText("Before")}</span>
-            <PhotoStrip
-              photos={solution.photosBefore}
-              label={`${uiText("Before")} ${index + 1}`}
-              onOpen={onOpen}
-            />
-          </div>
-        ) : null}
-        {solution.photosAfter.length > 0 ? (
-          <div className="dm-5w-report-photo-group">
-            <span>{uiText("After")}</span>
-            <PhotoStrip
-              photos={solution.photosAfter}
-              label={`${uiText("After")} ${index + 1}`}
-              onOpen={onOpen}
-            />
-          </div>
-        ) : null}
-        {!solution.remark.trim() &&
-        solution.photosBefore.length === 0 &&
-        solution.photosAfter.length === 0
-          ? "—"
-          : null}
-      </td>
-    </tr>
+        <span className="dm-5w-solution-type">{uiText(SOLUTION_TYPE_LABELS[solution.type])}</span>
+      </div>
+      <p className="dm-5w-solution-text">{solution.text.trim() || "—"}</p>
+      <dl className="dm-5w-solution-meta">
+        <Detail label={uiText("PIC")}>{solution.pic.trim() || "—"}</Detail>
+        <Detail label={uiText("Departemen")}>{solution.dept.trim() || "—"}</Detail>
+        <Detail label={uiText("Deadline")}>{deadline}</Detail>
+        <Detail label={uiText("Terulang kembali?")}>{uiText(RECURRENCE_LABELS[solution.recurred])}</Detail>
+      </dl>
+      {hasNotes ? (
+        <div className="dm-5w-solution-notes">
+          <span className="dm-5w-solution-notes-title">{uiText("Monitoring & Remark")}</span>
+          {solution.remark.trim() ? <p>{solution.remark}</p> : null}
+          {solution.photosBefore.length > 0 || solution.photosAfter.length > 0 ? (
+            <div className="dm-5w-solution-photos">
+            {solution.photosBefore.length > 0 ? (
+              <div className="dm-5w-report-photo-group">
+                <span>{uiText("Before")}</span>
+                <PhotoStrip
+                  photos={solution.photosBefore}
+                  label={`${uiText("Before")} ${index + 1}`}
+                  onOpen={onOpen}
+                />
+              </div>
+            ) : null}
+            {solution.photosAfter.length > 0 ? (
+              <div className="dm-5w-report-photo-group">
+                <span>{uiText("After")}</span>
+                <PhotoStrip
+                  photos={solution.photosAfter}
+                  label={`${uiText("After")} ${index + 1}`}
+                  onOpen={onOpen}
+                />
+              </div>
+            ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </li>
   );
 }
 
@@ -223,6 +230,11 @@ export default function FiveWhyReport({ record, canEdit }: FiveWhyReportProps) {
   const when = summary.when.trim() ? formatDateTimeLabel(summary.when, locale) : "";
   const stamp = (value: string) =>
     new Date(value).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
+
+  const factorRows = FACTOR_ROWS.map((row) => ({
+    label: row.label,
+    value: abnormal.factors[row.key].trim(),
+  })).filter((row) => row.value);
 
   const problemFields = [
     { label: "When", value: when },
@@ -265,6 +277,12 @@ export default function FiveWhyReport({ record, canEdit }: FiveWhyReportProps) {
           {abnormal.pengusul.trim() ? (
             <Detail label={uiText("Pengusul")}>{abnormal.pengusul.trim()}</Detail>
           ) : null}
+          {abnormal.categoryLabels.length ? (
+            <Detail label={uiText("Kategori abnormal")}>{abnormal.categoryLabels.join(" › ")}</Detail>
+          ) : null}
+          {abnormal.respondedAt.trim() ? (
+            <Detail label={uiText("Waktu respon")}>{formatDateTimeLabel(abnormal.respondedAt, locale)}</Detail>
+          ) : null}
           {sumber.length ? (
             <Detail label={uiText("Sumber abnormal")}>{sumber.join(", ")}</Detail>
           ) : null}
@@ -277,6 +295,22 @@ export default function FiveWhyReport({ record, canEdit }: FiveWhyReportProps) {
           {stamp(record.updatedAt)}
         </p>
       </section>
+
+      {factorRows.length ? (
+        <section className="dm-5w-card dm-5w-report-section" aria-labelledby="dm-5w-report-factors">
+          <h2 className="dm-5w-card-title" id="dm-5w-report-factors">{uiText("4M 1E")}</h2>
+          <table className="dm-5w-report-factors">
+            <tbody>
+              {factorRows.map((row) => (
+                <tr key={row.label}>
+                  <th scope="row">{row.label}</th>
+                  <td>{row.value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      ) : null}
 
       <section className="dm-5w-card dm-5w-report-section" aria-labelledby="dm-5w-report-problem">
         <h2 className="dm-5w-card-title" id="dm-5w-report-problem">
@@ -401,34 +435,16 @@ export default function FiveWhyReport({ record, canEdit }: FiveWhyReportProps) {
             {uiText(`Belum ada solusi.${emptyHint}`)}
           </p>
         ) : (
-          <div className="dm-5w-report-table-wrap">
-            <table className="dm-5w-report-table">
-              <caption className="dm-5w-sr-only">{uiText("Siklus PDCA")}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">{uiText("No")}</th>
-                  <th scope="col">{uiText("Solusi")}</th>
-                  <th scope="col">{uiText("Tipe aksi")}</th>
-                  <th scope="col">{uiText("PIC")}</th>
-                  <th scope="col">{uiText("Departemen")}</th>
-                  <th scope="col">{uiText("Deadline")}</th>
-                  <th scope="col">{uiText("Status")}</th>
-                  <th scope="col">{uiText("Terulang kembali?")}</th>
-                  <th scope="col">{uiText("Monitoring & Remark")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {record.solutions.map((solution, index) => (
-                  <SolutionRow
-                    key={solution.id}
-                    solution={solution}
-                    index={index}
-                    onOpen={setPreviewId}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ol className="dm-5w-solution-list">
+            {record.solutions.map((solution, index) => (
+              <SolutionCard
+                key={solution.id}
+                solution={solution}
+                index={index}
+                onOpen={setPreviewId}
+              />
+            ))}
+          </ol>
         )}
       </section>
 

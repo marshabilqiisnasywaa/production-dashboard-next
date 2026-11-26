@@ -45,12 +45,32 @@ export type ProblemSummaryFields = {
   shortTermSolution: string;
 };
 
+export type FactorKey = "man" | "machine" | "material" | "method" | "environment";
+
+export type FourM1EFields = Record<FactorKey, string>;
+
+export const FACTOR_ROWS: readonly { key: FactorKey; label: string; hint: string }[] = [
+  { key: "man", label: "Man", hint: "Manusia" },
+  { key: "machine", label: "Machine", hint: "Mesin" },
+  { key: "material", label: "Material", hint: "Bahan" },
+  { key: "method", label: "Method", hint: "Metode / prosedur" },
+  { key: "environment", label: "Environment", hint: "Lingkungan" },
+];
+
+export function emptyFactors(): FourM1EFields {
+  return { man: "", machine: "", material: "", method: "", environment: "" };
+}
+
 export type FiveWhyAbnormal = {
   id: string;
   label: string;
   line: string;
   pengusul: string;
   jenis: string;
+  categoryCodes: string[];
+  categoryLabels: string[];
+  respondedAt: string;
+  factors: FourM1EFields;
   sumberAbnormal: SumberAbnormal[];
   sumberLainnya: string;
   tingkatPengaruh: TingkatPengaruh[];
@@ -312,6 +332,7 @@ export function isSummaryTabDone(record: FiveWhyRecord) {
   const { when, where, what, how } = record.abnormal.summary;
   return (
     record.abnormal.label.trim().length > 0 &&
+    Boolean(record.abnormal.categoryCodes[0]) &&
     when.trim().length > 0 &&
     where.trim().length > 0 &&
     what.trim().length > 0 &&

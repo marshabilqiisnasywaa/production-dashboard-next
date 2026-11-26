@@ -312,7 +312,9 @@ function MeetingView(props: MeetingViewProps) {
         .filter((i) => !isBlank(i))
         .map((i) => ({
           problem: i.problem.trim(),
-          problemCategories: i.problemCategories ?? [],
+          categoryCodes: i.categoryCodes ?? [],
+          occurredAt: i.occurredAt || null,
+          respondedAt: i.respondedAt || null,
           picName: summaryPics(i)[0]?.name || summaryMembers.find((m) => m.id === summaryPics(i)[0]?.id)?.name || "-",
           pics: summaryPics(i).map((pic) => ({
             name: pic.manual ? pic.name.trim() : summaryMembers.find((m) => m.id === pic.id)?.name ?? "-",
@@ -417,6 +419,9 @@ function MeetingView(props: MeetingViewProps) {
             customLines: s.lineCodes?.length ? s.lineCodes : s.lineCode ? [s.lineCode] : [],
             problem: s.problem,
             problemCategories: s.problemCategories ?? [],
+            categoryCodes: s.categoryCodes ?? [],
+            occurredAt: s.occurredAt ?? "",
+            respondedAt: s.respondedAt ?? "",
             picId: s.picId != null ? String(s.picId) : `custom:${s.picName}`,
             picName: s.pics?.[0]?.name ?? s.picName,
             pics: s.pics?.length ? s.pics.map((pic) => ({ id: pic.employeeId != null ? String(pic.employeeId) : `custom:${pic.name}`, name: pic.name, manual: pic.employeeId == null })) : [{ id: s.picId != null ? String(s.picId) : `custom:${s.picName}`, name: s.picName, manual: s.picId == null }],

@@ -1180,6 +1180,33 @@
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+.dml-mt-item__group {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.dml-mt-item__group-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+.dml-mt-item__cats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.dml-mt-item__cats select {
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+.dml-mt-item__retry {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .dml-mt-item__remove {
   position: absolute;
   top: -14px;
@@ -1748,6 +1775,7 @@
     padding-top: 12px;
   }
   .dml-mt-item__row,
+  .dml-mt-item__cats,
   .dml-mt-done__stats {
     grid-template-columns: minmax(0, 1fr);
   }

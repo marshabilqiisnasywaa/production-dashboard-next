@@ -6,9 +6,17 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { IconLogout, IconHistory } from "@/components/ui/icons";
 import { setToken } from "../api";
-import { BookOpen, CalendarClock, ChevronDown, Gauge as IconGauge, Workflow } from "lucide-react";
-import { SIDEBAR_ID, SidebarCloseButton, useSidebar } from "@/components/ui/SidebarProvider";
-
+import { BookOpen,
+  CalendarClock, ChevronDown,
+  Gauge as IconGauge,
+  ListTree,
+  Workflow,
+} from "lucide-react";
+import {
+  SIDEBAR_ID,
+  SidebarCloseButton,
+  useSidebar,
+} from "@/components/ui/SidebarProvider";
 
 export type DmAdminTabKey =
   | "dashboard"
@@ -17,6 +25,7 @@ export type DmAdminTabKey =
   | "papercard"
   | "mpv"
   | "flowchart"
+  | "abnormal"
   | "mechanism"
   | "attendance"
   | "problems"
@@ -242,7 +251,9 @@ export default function DmAdminSidebar({
 }: DmAdminSidebarProps) {
   const { text: uiText } = useUiText();
   const sidebar = useSidebar();
-  const state = `${sidebar?.open ? " is-open" : ""}${sidebar?.collapsed ? " is-collapsed" : ""}`;
+  const state = `${sidebar?.open ? " is-open" : ""}${
+    sidebar?.collapsed ? " is-collapsed" : ""
+  }`;
   const select = (tab: DmAdminTabKey) => {
     onSelectTab(tab);
     sidebar?.close();
@@ -250,7 +261,7 @@ export default function DmAdminSidebar({
   return (
     <aside id={SIDEBAR_ID} className={`dm-admin-sidebar${state}`}>
       {/* Brand / Logo */}
-            <div className="dm-admin-sidebar-brand">
+      <div className="dm-admin-sidebar-brand">
         <span className="dml-logo">
           <IconGauge size={22} />
         </span>
@@ -338,6 +349,19 @@ export default function DmAdminSidebar({
                 <ClipboardCheckIcon />
               </span>
               <span>{uiText("Tracking Masalah")}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`dm-admin-nav-btn ${
+                activeTab === "abnormal" ? "is-active" : ""
+              }`}
+              onClick={() => select("abnormal")}
+            >
+              <span className="dm-admin-nav-icon">
+                <ListTree size={18} />
+              </span>
+              <span>{uiText("Kategori Abnormal")}</span>
             </button>
           </>
         ) : (
