@@ -643,15 +643,15 @@ function AdminWorkspace({
                 type="button"
                 className="dm-admin-btn is-primary"
                 onClick={() => setTeamModalLine(line)}
-                style={{
-                  background: "#008a4f",
-                  color: "#ffffff",
-                  fontWeight: 700,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  boxShadow: "0 2px 6px rgba(0, 138, 79, 0.25)",
-                }}
+                // style={{
+                //   background: "#008a4f",
+                //   color: "#ffffff",
+                //   fontWeight: 700,
+                //   display: "inline-flex",
+                //   alignItems: "center",
+                //   gap: "6px",
+                //   boxShadow: "0 2px 6px rgba(0, 138, 79, 0.25)",
+                // }}
                 title={uiText("Buka Manajemen Tim khusus untuk Line {{v0}}", {
                   v0: line.code,
                 })}
