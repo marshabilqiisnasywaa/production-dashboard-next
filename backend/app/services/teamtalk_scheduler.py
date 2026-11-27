@@ -1,7 +1,10 @@
 import asyncio
+import json
 import logging
+import os
 from datetime import date, datetime, time, timedelta
-from typing import Set
+from pathlib import Path
+from typing import Iterable, Set
 
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
@@ -34,9 +37,10 @@ from app.services.teamtalk import (
 
 logger = logging.getLogger("teamtalk_scheduler")
 
-# Cache memori agar tidak mengirim pesan ganda untuk event yang sama pada hari yang sama
+# Cache memori + file JSON agar tidak mengirim pesan ganda meski backend di-restart di hari yang sama
 _sent_events_cache: Set[str] = set()
 _last_cache_cleanup_date: date | None = None
+_SENT_EVENTS_FILE = Path(__file__).resolve().parents[2] / "data" / "teamtalk_sent_events.json"
 
 ESCALATION_WORK_START = time(8, 0)
 ESCALATION_WORK_END = time(17, 0)
@@ -44,11 +48,49 @@ ESCALATION_BATCH_SIZE = 10
 PAPERCARD_DEADLINE_GRACE_MINUTES = 5
 
 
+def _load_sent_events(today: date) -> Set[str]:
+    if not _SENT_EVENTS_FILE.exists():
+        return set()
+    try:
+        payload = json.loads(_SENT_EVENTS_FILE.read_text(encoding="utf-8"))
+        if payload.get("date") == today.isoformat() and isinstance(payload.get("events"), list):
+            return {str(item) for item in payload["events"]}
+    except Exception as exc:
+        logger.warning("Gagal membaca cache event TeamTalk dari %s: %s", _SENT_EVENTS_FILE, exc)
+    return set()
+
+
+def _save_sent_events(today: date) -> None:
+    try:
+        _SENT_EVENTS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = _SENT_EVENTS_FILE.with_suffix(".tmp")
+        tmp_path.write_text(
+            json.dumps(
+                {"date": today.isoformat(), "events": sorted(_sent_events_cache)},
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        os.replace(tmp_path, _SENT_EVENTS_FILE)
+    except Exception as exc:
+        logger.warning("Gagal menyimpan cache event TeamTalk ke %s: %s", _SENT_EVENTS_FILE, exc)
+
+
+def _mark_events_sent(today: date, keys: Iterable[str]) -> None:
+    _sent_events_cache.update(keys)
+    _save_sent_events(today)
+
+
 def _cleanup_old_cache(today: date):
     global _last_cache_cleanup_date, _sent_events_cache
-    if _last_cache_cleanup_date != today:
+    if _last_cache_cleanup_date is None:
+        _sent_events_cache = _load_sent_events(today)
+        _last_cache_cleanup_date = today
+    elif _last_cache_cleanup_date != today:
         _sent_events_cache.clear()
         _last_cache_cleanup_date = today
+        _save_sent_events(today)
 
 
 def get_line_setting(db: Session, line_id: int) -> DmNotificationSetting | None:
@@ -108,7 +150,7 @@ async def check_meeting_reminders(db: Session, now: datetime):
     if due_slots:
         logger.info("Mengirim pengingat meeting untuk %d line", len(due_slots))
         if await notify_meeting_reminder(due_slots):
-            _sent_events_cache.update(due_keys)
+            _mark_events_sent(today, due_keys)
 
 
 async def check_workshop_meeting_reminders(db: Session, now: datetime):
@@ -155,7 +197,7 @@ async def check_workshop_meeting_reminders(db: Session, now: datetime):
     if due_entries:
         logger.info("Mengirim pengingat workshop meeting untuk %d workshop", len(due_entries))
         if await notify_workshop_meeting_reminder(due_entries):
-            _sent_events_cache.update(due_keys)
+            _mark_events_sent(today, due_keys)
 
 
 def _papercard_review_state(db: Session, line: Line, templates: list, today: date) -> dict | None:
@@ -283,15 +325,15 @@ async def check_papercard_reminders(db: Session, now: datetime):
             if complete_entries:
                 logger.info("Mengirim pemberitahuan papercard lengkap untuk %d line", len(complete_entries))
                 if await notify_papercard_complete(complete_entries):
-                    _sent_events_cache.add(complete_key)
+                    _mark_events_sent(today, [complete_key])
     if due_entries:
         logger.info("Mengirim pengingat papercard untuk %d line-departemen", len(due_entries))
         if await notify_papercard_reminder(due_entries):
-            _sent_events_cache.update(due_keys)
+            _mark_events_sent(today, due_keys)
     if missed_entries:
         logger.info("Mengirim pemberitahuan papercard belum submit untuk %d line-departemen", len(missed_entries))
         if await notify_papercard_deadline(missed_entries):
-            _sent_events_cache.update(missed_keys)
+            _mark_events_sent(today, missed_keys)
 
 
 async def check_escalated_reminders(db: Session, now: datetime):
