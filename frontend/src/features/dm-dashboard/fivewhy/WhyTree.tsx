@@ -9,6 +9,7 @@ import { EVIDENCE_LABEL_OPTIONS, createFiveWhyId } from "./fiveWhyData";
 import AuthImage from "./AuthImage";
 import RootCauseConfirm from "./RootCauseConfirm";
 import WhySuggestionBox from "./RootCauseSuggestion";
+import AiLauncher from "./AiLauncher";
 import type { RootCauseSuggestion } from "../api";
 import type { Evidence, WhyBranch, WhyNode } from "./fiveWhyData";
 import type { SuggestionStatus } from "./RootCauseSuggestion";
@@ -941,22 +942,7 @@ export default function WhyTree({
                       node.evidence,
                       `Why ${node.level}`
                     )}
-                    {canEdit &&
-                    ((lastFilledLevel > 0 && node.level === lastFilledLevel) ||
-                      node.level === nextCardLevel) ? (
-                      <button
-                        type="button"
-                        className="dm-5w-btn dm-5w-btn-secondary dm-5w-btn-sm dm-5w-suggest-ask"
-                        onClick={() => void requestSuggestion(node.level)}
-                        disabled={suggestionStatus === "loading"}
-                      >
-                        {uiText(
-                          node.level === nextCardLevel
-                            ? "Bingung isinya? Minta saran AI"
-                            : "Cek apakah ini akar (minta saran AI)"
-                        )}
-                      </button>
-                    ) : null}
+                
                     <button
                       type="button"
                       className="dm-5w-add-field dm-5w-why-actions-end"
@@ -967,18 +953,6 @@ export default function WhyTree({
                     </button>
                   </div>
 
-                  {requestLevel === node.level &&
-                  suggestionStatus === "loading" ? (
-                    <p className="dm-5w-suggest-note" role="status">
-                      {uiText("Meminta saran...")}
-                    </p>
-                  ) : null}
-                  {requestLevel === node.level &&
-                  suggestionStatus === "error" ? (
-                    <p className="dm-5w-suggest-error" role="alert">
-                      {uiText(suggestionError || "Saran gagal dimuat.")}
-                    </p>
-                  ) : null}
                   {canEdit &&
                   suggestion &&
                   suggestionHostLevel === node.level ? (
@@ -1234,6 +1208,15 @@ export default function WhyTree({
           ) : null}
         </div>
       </aside>
+                <AiLauncher
+        visible={canEdit && suggestionHostLevel === null}
+        status={suggestionStatus}
+        error={suggestionError}
+        lastFilledLevel={lastFilledLevel}
+        onAsk={() =>
+          void requestSuggestion(lastFilledLevel > 0 ? lastFilledLevel : 1)
+        }
+      />
 
       <RootCauseConfirm
         target={pendingTarget}

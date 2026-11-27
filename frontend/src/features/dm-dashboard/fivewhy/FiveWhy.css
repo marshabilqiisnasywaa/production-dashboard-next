@@ -5283,3 +5283,131 @@ body .dm-5w-toast {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ===== AI suggestion, gaya Notion AI (CSS saja) ===== */
+
+/* 1) Tombol pemicu: pil polos + avatar Ollie */
+.dm-5w-why-actions .dm-5w-suggest-ask,
+.dm-5w-why-actions .dm-5w-ai-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 3px 12px 3px 4px;
+  border: 1px solid var(--dm-5w-border-control, var(--dm-5w-border));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dm-5w-text);
+  font: inherit;
+  font-size: var(--fw-fs-label);
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: none;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.dm-5w-why-actions .dm-5w-suggest-ask::before,
+.dm-5w-why-actions .dm-5w-ai-trigger::before {
+  content: "";
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff url("/assets/ollie-ai.png") 39% 41% / 190% no-repeat;
+  box-shadow: 0 0 0 1px var(--dm-5w-border);
+}
+.dm-5w-why-actions .dm-5w-ai-trigger > .dm-5w-ai-avatar {
+  display: none;
+}
+.dm-5w-why-actions .dm-5w-suggest-ask:hover:not(:disabled),
+.dm-5w-why-actions .dm-5w-ai-trigger:hover:not(:disabled) {
+  background: var(--dm-5w-neutral-bg);
+  color: var(--dm-5w-text);
+  box-shadow: none;
+  transform: none;
+}
+.dm-5w-why-actions .dm-5w-suggest-ask:focus-visible,
+.dm-5w-why-actions .dm-5w-ai-trigger:focus-visible {
+  outline: 2px solid var(--dm-5w-primary);
+  outline-offset: 2px;
+}
+.dm-5w-why-actions .dm-5w-suggest-ask:disabled,
+.dm-5w-why-actions .dm-5w-ai-trigger:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* 2) Kartu hasil saran: putih, rounded, bayangan lembut, header avatar Ollie */
+.dm-5w-suggest.dm-5w-suggest-inline {
+  position: relative;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--dm-5w-border);
+  border-radius: 14px;
+  background: var(--dm-5w-card);
+  box-shadow: 0 1px 2px rgba(16, 40, 28, 0.05), 0 10px 28px rgba(16, 40, 28, 0.09);
+  animation: dm-5w-ai-in 0.18s ease-out;
+}
+/* teks header (tanpa kata "Ollie") */
+.dm-5w-suggest.dm-5w-suggest-inline::before {
+  content: "Saran AI";
+  display: block;
+  flex: none;
+  min-height: 30px;
+  padding-left: 38px;
+  color: var(--dm-5w-text);
+  font-size: var(--fw-fs-body);
+  font-weight: 700;
+  line-height: 30px;
+}
+/* avatar Ollie di kiri header */
+.dm-5w-suggest.dm-5w-suggest-inline::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #fff url("/assets/ollie-ai.png") 39% 41% / 190% no-repeat;
+  box-shadow: 0 0 0 1px var(--dm-5w-border);
+  pointer-events: none;
+}
+
+/* 3) Loading "Meminta saran..." jadi pill dengan Ollie */
+p.dm-5w-suggest-note[role="status"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin-top: 10px;
+  padding: 5px 14px 5px 6px;
+  border: 1px solid var(--dm-5w-border);
+  border-radius: 999px;
+  background: var(--dm-5w-card);
+  box-shadow: 0 4px 12px rgba(16, 40, 28, 0.06);
+  font-weight: 600;
+}
+p.dm-5w-suggest-note[role="status"]::before {
+  content: "";
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff url("/assets/ollie-ai.png") 39% 41% / 190% no-repeat;
+  box-shadow: 0 0 0 1px var(--dm-5w-border);
+  animation: dm-5w-ai-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes dm-5w-ai-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes dm-5w-ai-pulse {
+  50% { opacity: 0.45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dm-5w-suggest.dm-5w-suggest-inline,
+  p.dm-5w-suggest-note[role="status"]::before { animation: none; }
+}

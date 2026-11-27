@@ -1,4 +1,5 @@
 import type { DmBoard, DmLineStatus, DmMember, DmMpv } from "./dmData";
+import { Sparkles } from "lucide-react";
 import type {
   FiveWhyAbnormal,
   FiveWhyAnalysisStatus,
