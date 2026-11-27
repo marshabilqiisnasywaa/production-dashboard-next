@@ -597,8 +597,45 @@ export type FiveWhyAnalysisInput = {
   solutions: Solution[];
 };
 
+export type RootCauseVerdict = "final" | "dig_deeper" | "insufficient";
+
+export type RootCauseRuleStatus = "met" | "not_met" | "unknown";
+
+export type RootCauseSuggestion = {
+  verdict: RootCauseVerdict;
+  suggestedLevel: number | null;
+  confidence: "high" | "medium" | "low";
+  summary: string;
+  rules: { id: string; title: string; status: RootCauseRuleStatus; note: string }[];
+  missing: string[];
+  nextQuestion: string | null;
+  candidates: { text: string; check: string }[];
+  rootReason: string;
+  markedAssessment: {
+    markedLevel: number;
+    stance: "agree" | "not_enough" | "other";
+    level: number | null;
+    reason: string;
+  } | null;
+  otherWhys: { level: number; reason: string }[];
+  lastFilledLevel: number;
+  model: string;
+  generatedAt: string;
+};
+
+export type RootCauseSuggestionInput = {
+  abnormal: Omit<FiveWhyAbnormal, "id">;
+  whys: WhyNode[];
+};
+
 export const fiveWhyAnalysesApi = {
   list: () => request<FiveWhyAnalysisSummary[]>("/fivewhy/analyses", {}, true),
+  suggestRootCause: (id: string, input: RootCauseSuggestionInput) =>
+    request<RootCauseSuggestion>(
+      `/fivewhy/analyses/${encodeURIComponent(id)}/root-cause-suggestion`,
+      json("POST", input),
+      true
+    ),
   get: (id: string) =>
     request<FiveWhyAnalysisDetail>(
       `/fivewhy/analyses/${encodeURIComponent(id)}`,
@@ -2035,6 +2072,27 @@ export const meetingApi = {
     picEmployeeNo?: string | null;
   }) =>
     request<DmMyProblem>("/meetings/problems", json("POST", input), true),
+  updateProblem: (
+    id: number,
+    input: {
+      lineCodes?: string[];
+      customLineCodes?: string[];
+      pics?: { name: string; employeeNo?: string | null; manual: boolean }[];
+      problem: string;
+      categoryCodes?: string[];
+      occurredAt?: string | null;
+      respondedAt?: string | null;
+      picName: string;
+      picId?: number | null;
+      dueDate?: string | null;
+      lineCode?: string | null;
+      customLine?: boolean;
+      picEmployeeNo?: string | null;
+    }
+  ) =>
+    request<DmMyProblem>(`/meetings/problems/${id}`, json("PUT", input), true),
+  deleteProblem: (id: number) =>
+    request<void>(`/meetings/problems/${id}`, { method: "DELETE" }, true),
   supervisorEscalations: () =>
     request<DmMyProblem[]>("/meetings/problems/escalations", {}, true),
 };

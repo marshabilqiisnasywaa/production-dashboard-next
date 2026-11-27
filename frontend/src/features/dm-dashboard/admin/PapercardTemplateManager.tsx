@@ -4,6 +4,7 @@ import { useUiText } from "@/locales/useUiText";
 
 import { departmentLabel } from "../departments";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { DmEmployee, DmLine, DmWorkshop } from "../api";
 import { adminApi, fiveWhyAnalysesApi, papercardApi } from "../api";
 import type { DmMember } from "../dmData";
@@ -809,9 +810,12 @@ export default function PapercardTemplateManager({
       />
 
       {/* ======================================================================
-          MODALS
+          MODALS (portaled to document.body so they float above sidebar & navbar)
          ====================================================================== */}
-
+      {typeof document !== "undefined" &&
+        (showBulkModal || showCopyModal || showTimeModal || showWorkersModal) &&
+        createPortal(
+          <>
       {/* MODAL 1: Bulk Apply to Other Lines */}
       {showBulkModal && (
         <div
@@ -1216,6 +1220,9 @@ export default function PapercardTemplateManager({
           </div>
         </div>
       )}
+          </>,
+          document.body
+        )}
     </div>
   );
 }

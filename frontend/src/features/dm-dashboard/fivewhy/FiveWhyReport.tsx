@@ -1,4 +1,5 @@
 "use client";
+import { createPortal } from "react-dom";
 
 import { Fragment, useState } from "react";
 import type { ReactNode } from "react";
@@ -382,6 +383,11 @@ export default function FiveWhyReport({ record, canEdit }: FiveWhyReportProps) {
                         <span className="dm-5w-report-root-tag">{uiText("Root Cause")}</span>
                       ) : null}
                     </p>
+                    {isRoot && node.rootNote ? (
+                      <p className="dm-5w-root-note">
+                        <strong>{uiText("Alasan Root Cause")}:</strong> {node.rootNote}
+                      </p>
+                    ) : null}
                     <EvidenceList
                       evidence={node.evidence}
                       label={`Why ${node.level}`}
@@ -448,7 +454,7 @@ export default function FiveWhyReport({ record, canEdit }: FiveWhyReportProps) {
         )}
       </section>
 
-      {previewId ? (
+      {previewId && typeof document !== "undefined" ? createPortal(
         <div
           className="dm-5w-lightbox"
           role="dialog"
@@ -469,7 +475,8 @@ export default function FiveWhyReport({ record, canEdit }: FiveWhyReportProps) {
             alt={uiText("Foto bukti diperbesar")}
             onClick={(event) => event.stopPropagation()}
           />
-        </div>
+        </div>,
+        document.body
       ) : null}
     </div>
   );

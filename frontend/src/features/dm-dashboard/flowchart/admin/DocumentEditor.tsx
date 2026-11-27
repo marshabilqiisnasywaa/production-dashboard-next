@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ArrowLeft, LayoutTemplate, Plus, Trash2, Upload } from "lucide-react";
 import { useUiText } from "@/locales/useUiText";
 import { flowchartApi } from "../../api";
@@ -204,9 +205,15 @@ export default function DocumentEditor({ id, onClose }: { id: number | null; onC
         <section className="dmfc-document-card dmfc-document-card--flowchart"><h2>{uiText("Flowchart")}</h2>{kind === null && <p>{uiText("Pilih Buat board atau Upload gambar di bagian atas.")}</p>}{kind === "board" && <div className="dmfc-inline-board"><FlowchartCanvas ref={canvasRef} initial={board} onDirty={markDirty} /><div className="dmfc-inline-board-actions"><button type="button" className="dm-admin-btn is-secondary" onClick={save}>{saving ? uiText("Menyimpan...") : uiText("Simpan flowchart")}</button></div></div>}{kind === "image" && <p>{uiText(imageFile?.name || "Gambar flowchart")}</p>}</section>
       </div>
 
-      {copyOpen && <div className="dmfc-copy-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setCopyOpen(false); }}><div className="dmfc-copy-modal" role="dialog" aria-modal="true"><h2>{uiText("Salin kontak dari dokumen lain")}</h2><div>{copyDocs.map((doc) => <button type="button" key={doc.id} onClick={() => copyContacts(doc)}>{doc.title}</button>)}</div><button type="button" className="dm-admin-btn is-secondary" onClick={() => setCopyOpen(false)}>{uiText("Batal")}</button></div></div>}
+      {copyOpen && typeof document !== "undefined" && createPortal(
+        <div className="dmfc-copy-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setCopyOpen(false); }}><div className="dmfc-copy-modal" role="dialog" aria-modal="true"><h2>{uiText("Salin kontak dari dokumen lain")}</h2><div>{copyDocs.map((doc) => <button type="button" key={doc.id} onClick={() => copyContacts(doc)}>{doc.title}</button>)}</div><button type="button" className="dm-admin-btn is-secondary" onClick={() => setCopyOpen(false)}>{uiText("Batal")}</button></div></div>,
+        document.body
+      )}
 
-      {preview && <div className="dmfc-preview-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview(false); }}><div className="dmfc-preview-modal" role="dialog" aria-modal="true"><div className="dmfc-preview-head"><h2>{uiText("Pratinjau")}</h2><button type="button" className="dm-admin-btn is-secondary" onClick={() => setPreview(false)}>{uiText("Tutup")}</button></div><DocumentView doc={previewDoc} /></div></div>}
+      {preview && typeof document !== "undefined" && createPortal(
+        <div className="dmfc-preview-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview(false); }}><div className="dmfc-preview-modal" role="dialog" aria-modal="true"><div className="dmfc-preview-head"><h2>{uiText("Pratinjau")}</h2><button type="button" className="dm-admin-btn is-secondary" onClick={() => setPreview(false)}>{uiText("Tutup")}</button></div><DocumentView doc={previewDoc} /></div></div>,
+        document.body
+      )}
     </div>
   );
 }

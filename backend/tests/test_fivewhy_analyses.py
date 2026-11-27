@@ -18,7 +18,7 @@ from app.db.session import engine
 from app.models import Board, BoardMember, Employee, Line, Workshop
 from app.models.abnormal_category import AbnormalCategory
 from app.models.fivewhy import FiveWhyPhoto
-from app.schemas_fivewhy import AnalysisCreateIn, AnalysisIn
+from app.schemas_fivewhy import AnalysisCreateIn, AnalysisIn, RootCauseSuggestIn
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
 
@@ -228,6 +228,31 @@ class FiveWhyAnalysisTests(unittest.TestCase):
         self.save(saved, whys=created["whys"])
         api.delete_photo(created["id"], photo["id"], self.principal(self.member), self.db)
         self.assertFalse((self.folder / "fivewhy" / "photos" / f"{photo['id']}.png").exists())
+
+    def test_root_cause_suggestion_is_limited_to_editors_and_uses_the_form_data(self):
+        created = self.create()
+        payload = RootCauseSuggestIn.model_validate({"abnormal": created["abnormal"], "whys": created["whys"]})
+        reply = {"verdict": "insufficient"}
+        with patch.object(api, "suggest_root_cause", return_value=reply) as suggest:
+            self.assertEqual(api.root_cause_suggestion(created["id"], payload, self.principal(self.member), self.db), reply)
+            self.assertEqual(api.root_cause_suggestion(created["id"], payload, self.principal(self.leader), self.db), reply)
+            self.assertEqual(suggest.call_args.args[2], str(self.leader.id))
+            for outsider in (self.other_member, self.other_leader, self.supervisor):
+                with self.assertRaises(HTTPException) as caught:
+                    api.root_cause_suggestion(created["id"], payload, self.principal(outsider), self.db)
+                self.assertEqual(caught.exception.status_code, 403)
+            self.assertEqual(suggest.call_count, 2)
+
+    def test_root_note_is_saved_with_the_why(self):
+        created = self.create()
+        whys = [{**why, "statement": f"sebab {why['level']}", "verification": "root" if why["level"] == 2 else "unverified", "rootNote": "dipilih karena ada log" if why["level"] == 2 else ""} for why in created["whys"]]
+        saved = self.save(created, whys=whys)
+        self.assertEqual(saved["whys"][1]["rootNote"], "dipilih karena ada log")
+
+    def test_suggestion_input_rejects_duplicate_why_levels(self):
+        created = self.create()
+        with self.assertRaises(ValidationError):
+            RootCauseSuggestIn.model_validate({"abnormal": created["abnormal"], "whys": [created["whys"][0], created["whys"][0]]})
 
     def test_deleting_an_analysis_removes_its_photos_and_files(self):
         created = self.create()

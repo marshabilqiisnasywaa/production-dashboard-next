@@ -131,6 +131,7 @@ class WhyIn(CamelModel):
     level: int = Field(ge=1, le=5)
     statement: Long = ""
     verification: WhyVerification = "unverified"
+    root_note: Short = ""
     evidence: list[EvidenceIn] = Field(default_factory=list, max_length=20)
     branches: list[BranchIn] = Field(default_factory=list, max_length=20)
 
@@ -159,6 +160,18 @@ class StandardAppliedIn(CamelModel):
 
 class AnalysisCreateIn(CamelModel):
     line_id: int = Field(gt=0)
+
+
+class RootCauseSuggestIn(CamelModel):
+    abnormal: AbnormalIn
+    whys: list[WhyIn] = Field(max_length=5)
+
+    @model_validator(mode="after")
+    def check_levels(self) -> "RootCauseSuggestIn":
+        levels = [why.level for why in self.whys]
+        if len(set(levels)) != len(levels):
+            raise ValueError("Level Why tidak boleh dobel.")
+        return self
 
 
 class AnalysisIn(CamelModel):

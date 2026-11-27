@@ -4,6 +4,7 @@ import { useUiText } from "@/locales/useUiText";
 
 import { departmentLabel } from "../../departments";
 import { useMemo } from "react";
+import { createPortal } from "react-dom";
 import { IconCheck, IconCheckCircle, IconClose } from "@/components/ui/icons";
 import type { DmSupervisorSubordinate } from "../../api";
 import { SubstituteBadge } from "./SubstituteBadge";
@@ -109,7 +110,9 @@ export function SupervisorReviewModal({
       </div>
     );
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       className="spv-modal-overlay"
       onClick={onClose}
@@ -341,7 +344,8 @@ export function SupervisorReviewModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
