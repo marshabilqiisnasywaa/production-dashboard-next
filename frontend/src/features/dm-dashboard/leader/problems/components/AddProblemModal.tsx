@@ -25,6 +25,7 @@ import "./add-problem-modal.css";
 type Props = {
   open: boolean;
   editingProblem?: ProblemRow | null;
+  initialSolved?: boolean;
   onClose: () => void;
   onCreated: () => void;
 };
@@ -85,7 +86,13 @@ function itemFromProblem(row: ProblemRow): SummaryItem {
   };
 }
 
-export function AddProblemModal({ open, editingProblem = null, onClose, onCreated }: Props) {
+export function AddProblemModal({
+  open,
+  editingProblem = null,
+  initialSolved = false,
+  onClose,
+  onCreated,
+}: Props) {
   const isEditing = Boolean(editingProblem);
   const { text: uiText } = useUiText();
   const titleId = useId();
@@ -93,6 +100,9 @@ export function AddProblemModal({ open, editingProblem = null, onClose, onCreate
     ...makeEmptyItem(),
     occurredAt: currentLocalDateTime(),
   }));
+  const [solution, setSolution] = useState("");
+  const [markSolved, setMarkSolved] = useState(false);
+  const [solutionError, setSolutionError] = useState<string | null>(null);
   const [errors, setErrors] = useState<ItemErrors>({});
   const [lines, setLines] = useState<string[]>([]);
   const [members, setMembers] = useState<MeetingMember[]>([]);
@@ -118,6 +128,9 @@ export function AddProblemModal({ open, editingProblem = null, onClose, onCreate
             occurredAt: currentLocalDateTime(),
           }
     );
+    setSolution(editingProblem?.solution ?? "");
+    setMarkSolved(initialSolved || editingProblem?.status === "solved");
+    setSolutionError(null);
     setErrors({});
     setSubmitError(null);
 
@@ -154,7 +167,7 @@ export function AddProblemModal({ open, editingProblem = null, onClose, onCreate
     return () => {
       cancelled = true;
     };
-  }, [open, editingProblem]);
+  }, [open, editingProblem, initialSolved]);
 
   // Close on Escape
   useEffect(() => {
@@ -188,7 +201,13 @@ export function AddProblemModal({ open, editingProblem = null, onClose, onCreate
     event.preventDefault();
     const validation = validateItem(item);
     setErrors(validation);
-    if (Object.keys(validation).length > 0) return;
+    const trimmedSolution = solution.trim();
+    const nextSolutionError =
+      markSolved && !trimmedSolution
+        ? "Solusi wajib diisi sebelum menandai masalah selesai."
+        : null;
+    setSolutionError(nextSolutionError);
+    if (Object.keys(validation).length > 0 || nextSolutionError) return;
 
     const selectedLines = summaryLines(item);
     const customLineCodes = selectedLines.filter((code) => !lines.includes(code));
@@ -226,6 +245,8 @@ export function AddProblemModal({ open, editingProblem = null, onClose, onCreate
           : null,
       picEmployeeNo: primaryMember?.employeeNo ?? null,
       dueDate: item.due || null,
+      solution: trimmedSolution || null,
+      status: (markSolved ? "resolved" : "open") as "open" | "resolved",
     };
     try {
       if (editingProblem) {
@@ -382,7 +403,7 @@ export function AddProblemModal({ open, editingProblem = null, onClose, onCreate
               </Field>
             </div>
 
-            <div className="dml-mt-item__row">
+            <div className="dml-mt-item__row dml-mt-item__row--three">
               <Field label={uiText("Line")} htmlFor="add-pb-line">
                 <LineSelect
                   id="add-pb-line"
@@ -467,6 +488,51 @@ export function AddProblemModal({ open, editingProblem = null, onClose, onCreate
                   <span className="dml-mt-error">{uiText(errors.due)}</span>
                 )}
               </Field>
+            </div>
+
+            <div className="dml-pb-add-dialog__solution">
+              <Field
+                label={
+                  markSolved
+                    ? uiText("Tindak Lanjut / Solusi (wajib untuk Solved)")
+                    : uiText("Tindak Lanjut / Solusi (opsional)")
+                }
+                htmlFor="add-pb-solution"
+              >
+                <textarea
+                  id="add-pb-solution"
+                  className="ui-textarea"
+                  rows={2}
+                  placeholder={uiText(
+                    "Tuliskan tindakan perbaikan atau solusi yang dilakukan..."
+                  )}
+                  value={solution}
+                  aria-invalid={Boolean(solutionError)}
+                  aria-required={markSolved}
+                  onChange={(e) => {
+                    setSolution(e.target.value);
+                    if (solutionError && e.target.value.trim()) {
+                      setSolutionError(null);
+                    }
+                  }}
+                />
+                {solutionError && (
+                  <span className="dml-mt-error">{uiText(solutionError)}</span>
+                )}
+              </Field>
+
+              <label className="dml-pb-add-dialog__solve-check">
+                <input
+                  type="checkbox"
+                  checked={markSolved}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setMarkSolved(checked);
+                    if (!checked) setSolutionError(null);
+                  }}
+                />
+                <span>{uiText("Tandai masalah selesai (Solved)")}</span>
+              </label>
             </div>
           </div>
 

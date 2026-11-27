@@ -114,30 +114,35 @@ export function ProblemTable({
 
   const renderConfirm = (row: ProblemRow, action: "complete" | "reopen") => {
     const reopen = action === "reopen";
+    const missingSolution = !reopen && !row.solution?.trim();
 
     return (
       <div ref={confirmRef} className="dml-pb-act-confirm">
         <span className="dml-pb-act-question">
-          {reopen
+          {missingSolution
+            ? uiText("Isi solusi terlebih dahulu sebelum menandai selesai.")
+            : reopen
             ? uiText("Yakin buka kembali?")
             : uiText("Yakin sudah selesai?")}
         </span>
         <span className="dml-pb-act-row">
-          <button
-            type="button"
-            className="dml-pb-act-yes"
-            aria-label={uiText(
-              `${reopen ? "Ya, buka kembali" : "Ya, tandai selesai"}: ${
-                row.problem || "-"
-              }`
-            )}
-            onClick={() => {
-              onToggleSolved?.(row.id, reopen);
-              setConfirming(null);
-            }}
-          >
-            {uiText("Ya")}
-          </button>
+          {!missingSolution && (
+            <button
+              type="button"
+              className="dml-pb-act-yes"
+              aria-label={uiText(
+                `${reopen ? "Ya, buka kembali" : "Ya, tandai selesai"}: ${
+                  row.problem || "-"
+                }`
+              )}
+              onClick={() => {
+                onToggleSolved?.(row.id, reopen);
+                setConfirming(null);
+              }}
+            >
+              {uiText("Ya")}
+            </button>
+          )}
           <button
             type="button"
             className="dml-pb-act-cancel"
@@ -147,7 +152,7 @@ export function ProblemTable({
             })}
             onClick={() => setConfirming(null)}
           >
-            {uiText("Batal")}
+            {missingSolution ? uiText("Tutup") : uiText("Batal")}
           </button>
         </span>
       </div>

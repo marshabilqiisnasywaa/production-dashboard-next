@@ -956,12 +956,14 @@ def create_direct_problem(
         line_id=summary_line_id,
         problem=payload.problem,
         **category_fields,
+        solution=payload.solution,
         pic_name=assigned_pics[0][1],
         pic_id=assigned_pics[0][0],
         due_date=payload.due_date,
         line_code=assigned_lines[0][1] if assigned_lines else None,
         created_by_name=creator_name,
-        status="open",
+        status=payload.status or "open",
+        resolved_at=datetime.now(timezone.utc) if payload.status == "resolved" else None,
         affected_lines=[DmSummaryLine(line_id=lid, code=code) for lid, code in assigned_lines],
         assigned_pics=[DmSummaryPic(employee_id=eid, name=name) for eid, name in assigned_pics],
     )
@@ -987,12 +989,20 @@ def update_problem(
     summary_id: int,
     payload: MeetingSummaryIn,
     db: Session = Depends(get_db),
-    _admin=Depends(get_current_admin),
+    principal: Principal = Depends(get_active_principal),
 ) -> myProblemOut:
-    """Admin-only edit untuk masalah DM meeting, workshop, maupun input langsung."""
+    """Edit masalah DM meeting, workshop, maupun input langsung oleh admin, leader, atau supervisor."""
+    if not principal.is_admin and principal.role not in ("leader", "supervisor"):
+        raise HTTPException(
+            status_code=403,
+            detail="Hanya admin, leader, atau supervisor yang dapat mengubah masalah.",
+        )
+
     if workshop_problems.is_workshop_id(summary_id):
         out = workshop_problems.update_problem(db, summary_id, payload)
-        return with_pic_dept(db, [out])[0]
+        out = with_pic_dept(db, [out])[0]
+        out.can_edit = principal.employee is not None and is_pic(out, principal.employee)
+        return out
 
     sm = db.get(DmMeetingSummary, summary_id)
     if sm is None:
@@ -1006,6 +1016,20 @@ def update_problem(
     sm.problem = payload.problem
     for key, value in category_fields.items():
         setattr(sm, key, value)
+    if "solution" in payload.model_fields_set:
+        sm.solution = payload.solution
+    if payload.status is not None:
+        if payload.status == "resolved":
+            if not (sm.solution and sm.solution.strip()):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Solusi wajib diisi sebelum menandai masalah selesai.",
+                )
+            if sm.status != "resolved":
+                sm.resolved_at = datetime.now(timezone.utc)
+        else:
+            sm.resolved_at = None
+        sm.status = payload.status
     sm.pic_name = assigned_pics[0][1]
     sm.pic_id = assigned_pics[0][0]
     sm.due_date = payload.due_date
@@ -1017,7 +1041,9 @@ def update_problem(
 
     session = db.get(DmMeetingSession, sm.session_id) if sm.session_id is not None else None
     out = _my_problem_out(sm, session)
-    return with_pic_dept(db, [out])[0]
+    out = with_pic_dept(db, [out])[0]
+    out.can_edit = principal.employee is not None and is_pic(out, principal.employee)
+    return out
 
 
 @router.delete("/problems/{summary_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -1080,6 +1106,11 @@ def set_problem_status(
             raise HTTPException(status_code=403, detail="Hanya PIC yang bisa mengubah status problem.")
 
     if payload.status == "resolved":
+        if not (sm.solution and sm.solution.strip()):
+            raise HTTPException(
+                status_code=400,
+                detail="Solusi wajib diisi sebelum menandai masalah selesai.",
+            )
         if sm.status != "resolved":
             sm.resolved_at = datetime.now(timezone.utc)
     else :

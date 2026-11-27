@@ -471,9 +471,15 @@ class MeetingSummaryIn(CamelModel):
     line_codes: list[Annotated[str, Field(min_length=1, max_length=32)]] | None = None
     custom_line_codes: list[str] = Field(default_factory=list)
     pics: list[SummaryPicIn] | None = None
+    solution: str | None = Field(default=None, max_length=2000)
+    status: Literal["open", "in_progress", "resolved"] | None = None
 
     @model_validator(mode="after")
     def validate_custom_line(self):
+        if self.solution is not None:
+            self.solution = self.solution.strip() or None
+        if self.status == "resolved" and not self.solution:
+            raise ValueError("Solusi wajib diisi sebelum menandai masalah selesai.")
         if self.line_code is not None:
             self.line_code = self.line_code.strip() or None
         if self.custom_line and self.line_code is None:

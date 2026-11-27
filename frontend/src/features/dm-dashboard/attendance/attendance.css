@@ -679,18 +679,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.att-late-cell {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 7px;
-  border: 1px solid #fde2ad;
-  border-radius: 6px;
-  background: #fff8e8;
-  color: #9a5800;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
 .att-table th,
 .att-table td {
   padding: 12px 13px;

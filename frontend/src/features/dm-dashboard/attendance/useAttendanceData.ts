@@ -98,8 +98,6 @@ function timeHM(iso: string) {
 
 function personMeetingTiming(
   isPresent: boolean,
-  isLate: boolean,
-  attendedAt: string | null,
   startedAt?: string | null,
   endedAt?: string | null,
   durationSeconds?: number | null,
@@ -117,20 +115,18 @@ function personMeetingTiming(
     };
   }
 
-  const effectiveStartIso = isLate ? attendedAt : startedAt ?? null;
-  const actualStartTime = effectiveStartIso ? timeHM(effectiveStartIso) : null;
+  const actualStartTime = startedAt ? timeHM(startedAt) : null;
   const actualEndTime = endedAt ? timeHM(endedAt) : null;
 
   let meetingDurationMinutes: number | null = null;
-  if (effectiveStartIso && endedAt) {
+  if (startedAt && endedAt) {
     const diffMs =
-      new Date(endedAt).getTime() - new Date(effectiveStartIso).getTime();
+      new Date(endedAt).getTime() - new Date(startedAt).getTime();
     if (Number.isFinite(diffMs)) {
       meetingDurationMinutes =
         diffMs <= 0 ? 0 : Math.max(1, Math.round(diffMs / 60000));
     }
   } else if (
-    !isLate &&
     sessionStatus === "completed" &&
     durationSeconds &&
     durationSeconds > 0
@@ -207,8 +203,6 @@ function fromLineRecap(recap: DmAttendanceRecap): DayAttendance {
       const status = mapStatus(r.status, difference, r.absenceReason);
       const timing = personMeetingTiming(
         isPresent,
-        status === "Telat",
-        isPresent ? r.attendedAt : null,
         s.startedAt,
         s.endedAt,
         s.durationSeconds,
@@ -285,8 +279,6 @@ function fromWorkshopSession(s: DmWorkshopAttendanceRecap): DayAttendance {
     else late += 1;
     const timing = personMeetingTiming(
       true,
-      status === "Telat",
-      attendedAt,
       s.startedAt,
       s.endedAt,
       s.durationSeconds,

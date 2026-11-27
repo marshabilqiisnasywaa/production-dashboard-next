@@ -199,8 +199,35 @@
   gap: 14px;
 }
 
-.dml-pb-add-dialog .dml-mt-item__row:last-child {
+.dml-pb-add-dialog .dml-mt-item__row--three {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dml-pb-add-dialog__solution {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f8faf9;
+  border: 1px solid rgba(4, 106, 56, 0.12);
+}
+
+.dml-pb-add-dialog__solve-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+}
+
+.dml-pb-add-dialog__solve-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #046a38;
+  cursor: pointer;
 }
 
 .dml-pb-add-dialog .dml-mt-line-select__trigger {
@@ -228,7 +255,7 @@
 @media (max-width: 680px) {
   .dml-pb-add-dialog .dml-mt-item__cats,
   .dml-pb-add-dialog .dml-mt-item__row,
-  .dml-pb-add-dialog .dml-mt-item__row:last-child {
+  .dml-pb-add-dialog .dml-mt-item__row--three {
     grid-template-columns: 1fr;
   }
 }

@@ -1,7 +1,6 @@
 "use client";
 import { useUiText } from "@/locales/useUiText";
 
-
 import { meetingApi, workshopMeetingApi } from "../../api";
 import { MeetingApiProvider, useMeetingApi } from "./MeetingApiContext";
 import { useWorkshopMeetingWorkspace } from "./hooks/useWorkshopMeetingWorkspace";
@@ -16,6 +15,7 @@ import { AttendanceScanner } from "./components/AttendanceScanner";
 import { DurationCard } from "./components/DurationCard";
 import { EndMeetingDialog } from "./components/EndMeetingDialog";
 import { MeetingDoneCard } from "./components/MeetingDoneCard";
+import { MeetingFollowUpCard } from "./components/MeetingFollowUpCard";
 import { MeetingHeaderCard } from "./components/MeetingHeaderCard";
 import { MeetingMaterials } from "./components/MeetingMaterials";
 import { StartAttendanceDialog } from "./components/StartAttendanceDialog";
@@ -187,13 +187,20 @@ function MeetingView(props: MeetingViewProps) {
       const itemErrors = validateItem(item);
       if (
         summaryOptions &&
-        summaryLines(item).some((line) => !summaryOptions.lines.includes(line) && !item.customLines?.includes(line))
+        summaryLines(item).some(
+          (line) =>
+            !summaryOptions.lines.includes(line) &&
+            !item.customLines?.includes(line)
+        )
       ) {
         itemErrors.line = "Pilih line yang tersedia.";
       }
       if (
         summaryOptions &&
-        summaryPics(item).some((pic) => !pic.manual && !summaryMembers.some((user) => user.id === pic.id))
+        summaryPics(item).some(
+          (pic) =>
+            !pic.manual && !summaryMembers.some((user) => user.id === pic.id)
+        )
       ) {
         itemErrors.picId = "Pilih user PIC yang masih aktif.";
       }
@@ -282,8 +289,7 @@ function MeetingView(props: MeetingViewProps) {
         }))
         .filter((n) => n.reason !== "none" || n.note.trim() !== "");
       try {
-        if (notes.length > 0)
-          await api.saveAbsenceNotes(session.dbId, notes);
+        if (notes.length > 0) await api.saveAbsenceNotes(session.dbId, notes);
         const updated = await api.startSession({
           sessionId: session.dbId,
           lineId: session.lineId,
@@ -315,16 +321,27 @@ function MeetingView(props: MeetingViewProps) {
           categoryCodes: i.categoryCodes ?? [],
           occurredAt: i.occurredAt || null,
           respondedAt: i.respondedAt || null,
-          picName: summaryPics(i)[0]?.name || summaryMembers.find((m) => m.id === summaryPics(i)[0]?.id)?.name || "-",
+          picName:
+            summaryPics(i)[0]?.name ||
+            summaryMembers.find((m) => m.id === summaryPics(i)[0]?.id)?.name ||
+            "-",
           pics: summaryPics(i).map((pic) => ({
-            name: pic.manual ? pic.name.trim() : summaryMembers.find((m) => m.id === pic.id)?.name ?? "-",
-            employeeNo: pic.manual ? null : summaryMembers.find((m) => m.id === pic.id)?.employeeNo ?? null,
+            name: pic.manual
+              ? pic.name.trim()
+              : summaryMembers.find((m) => m.id === pic.id)?.name ?? "-",
+            employeeNo: pic.manual
+              ? null
+              : summaryMembers.find((m) => m.id === pic.id)?.employeeNo ?? null,
             manual: pic.manual,
           })),
           dueDate: i.due || null,
           lineCode: summaryLines(i)[0] || null,
           lineCodes: summaryLines(i),
-          customLineCodes: summaryLines(i).filter((line) => !summaryOptions?.lines.includes(line) && i.customLines?.includes(line)),
+          customLineCodes: summaryLines(i).filter(
+            (line) =>
+              !summaryOptions?.lines.includes(line) &&
+              i.customLines?.includes(line)
+          ),
         }));
       try {
         const updated = await api.endSession(session.dbId, {
@@ -371,9 +388,11 @@ function MeetingView(props: MeetingViewProps) {
 
   const phase = state.phase;
   const rosterTitle =
-    phase === "running" || phase === "done" ? "Kehadiran" : variant === "workshop"
-    ? "Daftar Supervisor"
-    : "Daftar Member DM";
+    phase === "running" || phase === "done"
+      ? "Kehadiran"
+      : variant === "workshop"
+      ? "Daftar Supervisor"
+      : "Daftar Member DM";
   const rosterNote = MEETING_CONFIG.requireAllPresent
     ? "Semua member dari Triangle Team wajib hadir untuk memulai meeting."
     : phase === "running" || phase === "done"
@@ -415,8 +434,16 @@ function MeetingView(props: MeetingViewProps) {
           items: server.summaries.map((s) => ({
             id: String(s.id),
             line: s.lineCodes?.[0] ?? s.lineCode ?? "",
-            lines: s.lineCodes?.length ? s.lineCodes : s.lineCode ? [s.lineCode] : [],
-            customLines: s.lineCodes?.length ? s.lineCodes : s.lineCode ? [s.lineCode] : [],
+            lines: s.lineCodes?.length
+              ? s.lineCodes
+              : s.lineCode
+              ? [s.lineCode]
+              : [],
+            customLines: s.lineCodes?.length
+              ? s.lineCodes
+              : s.lineCode
+              ? [s.lineCode]
+              : [],
             problem: s.problem,
             problemCategories: s.problemCategories ?? [],
             categoryCodes: s.categoryCodes ?? [],
@@ -424,9 +451,31 @@ function MeetingView(props: MeetingViewProps) {
             respondedAt: s.respondedAt ?? "",
             picId: s.picId != null ? String(s.picId) : `custom:${s.picName}`,
             picName: s.pics?.[0]?.name ?? s.picName,
-            pics: s.pics?.length ? s.pics.map((pic) => ({ id: pic.employeeId != null ? String(pic.employeeId) : `custom:${pic.name}`, name: pic.name, manual: pic.employeeId == null })) : [{ id: s.picId != null ? String(s.picId) : `custom:${s.picName}`, name: s.picName, manual: s.picId == null }],
+            pics: s.pics?.length
+              ? s.pics.map((pic) => ({
+                  id:
+                    pic.employeeId != null
+                      ? String(pic.employeeId)
+                      : `custom:${pic.name}`,
+                  name: pic.name,
+                  manual: pic.employeeId == null,
+                }))
+              : [
+                  {
+                    id:
+                      s.picId != null ? String(s.picId) : `custom:${s.picName}`,
+                    name: s.picName,
+                    manual: s.picId == null,
+                  },
+                ],
             customPic: s.picId == null,
-            customPics: s.pics?.length ? s.pics.filter((pic) => pic.employeeId == null).map((pic) => pic.name) : s.picId == null ? [s.picName] : [],
+            customPics: s.pics?.length
+              ? s.pics
+                  .filter((pic) => pic.employeeId == null)
+                  .map((pic) => pic.name)
+              : s.picId == null
+              ? [s.picName]
+              : [],
             due: s.dueDate ?? "",
           })),
         });
@@ -453,12 +502,15 @@ function MeetingView(props: MeetingViewProps) {
   const pageSubtitle =
     variant === "workshop"
       ? `Supervisor · ${workspace.workshop?.name ?? "Workshop"}`
-      : `During-Management · ${workspace.line?.workshopName ?? MEETING_LOCATION}`;
+      : `During-Management · ${
+          workspace.line?.workshopName ?? MEETING_LOCATION
+        }`;
   const lineSelector =
     variant === "workshop"
       ? ws &&
         ws.workshops.length > 1 && (
-          <label>{uiText("Workshop")}{" "}
+          <label>
+            {uiText("Workshop")}{" "}
             <select
               className="ui-select"
               aria-label={uiText("Pilih workshop meeting")}
@@ -478,7 +530,8 @@ function MeetingView(props: MeetingViewProps) {
           </label>
         )
       : workspace.ownLines.length > 1 && (
-          <label>{" "}
+          <label>
+            {" "}
             <select
               className="ui-select"
               aria-label={uiText("Pilih lini meeting")}
@@ -514,8 +567,8 @@ function MeetingView(props: MeetingViewProps) {
             ? uiText("Memuat jadwal meeting…")
             : workspace.error ??
               (variant === "workshop"
-              ? "Belum ada workshop yang ditugaskan ke akun ini. Hubungi admin."
-              : "Belum ada jadwal meeting untuk lini ini hari ini. Admin bisa mengaturnya di Papercard & Meeting > Jadwal Meeting.")}
+                ? "Belum ada workshop yang ditugaskan ke akun ini. Hubungi admin."
+                : "Belum ada jadwal meeting untuk lini ini hari ini. Admin bisa mengaturnya di Papercard & Meeting > Jadwal Meeting.")}
         </div>
       </div>
     );
@@ -546,14 +599,23 @@ function MeetingView(props: MeetingViewProps) {
       </div>
 
       {readOnly && (
-        <div className="dml-empty" role="status">{uiText("Meeting ini dikelola oleh ")}{serverSession?.leaderName ?? uiText("leader lain")}
+        <div className="dml-empty" role="status">
+          {uiText("Meeting ini dikelola oleh ")}
+          {serverSession?.leaderName ?? uiText("leader lain")}
           {serverSession?.dmGroupName
             ? uiText(" untuk {{v0}}", { v0: serverSession.dmGroupName })
             : ""}
-          . {variant === "workshop" ? uiText("Presensi workshop ini") : uiText("Presensi lini ini")}{uiText(" tersinkron dari meeting tersebut.")}</div>
+          .{" "}
+          {variant === "workshop"
+            ? uiText("Presensi workshop ini")
+            : uiText("Presensi lini ini")}
+          {uiText(" tersinkron dari meeting tersebut.")}
+        </div>
       )}
       {preparing && (
-        <div className="dml-empty" role="status">{uiText("Menyiapkan presensi…")}</div>
+        <div className="dml-empty" role="status">
+          {uiText("Menyiapkan presensi…")}
+        </div>
       )}
 
       <MeetingHeaderCard
@@ -659,14 +721,33 @@ function MeetingView(props: MeetingViewProps) {
                     size="lg"
                     style={{ justifyContent: "center", textAlign: "center" }}
                     onClick={() => setLateAttendanceSessionId(session.dbId)}
-                  >{uiText("Absen")}</Button>
+                  >
+                    {uiText("Absen")}
+                  </Button>
                 )}
 
+                <MeetingFollowUpCard
+                  variant={variant}
+                  meetingLines={meetingLines}
+                  sessionLineId={session.lineId ?? null}
+                  groupLineIds={
+                    effectiveScope === "dm"
+                      ? workspace.group?.lineIds ?? []
+                      : []
+                  }
+                  workshopName={workspace.workshop?.name ?? null}
+                  userRole={workspace.me?.role ?? null}
+                  userKind={workspace.me?.kind ?? null}
+                />
+
                 {summaryOptionsError ? (
-                  <p role="alert">{uiText("Daftar line dan PIC gagal dimuat.")}{" "}
+                  <p role="alert">
+                    {uiText("Daftar line dan PIC gagal dimuat.")}{" "}
                     <Button
                       onClick={() => setSummaryOptionsRetry((n) => n + 1)}
-                    >{uiText("Coba lagi")}</Button>
+                    >
+                      {uiText("Coba lagi")}
+                    </Button>
                   </p>
                 ) : !summaryOptions ? (
                   <p role="status">{uiText("Memuat daftar line dan PIC…")}</p>
@@ -693,7 +774,9 @@ function MeetingView(props: MeetingViewProps) {
                   }
                   onClick={handleEndClick}
                 >
-                  <IconStop size={16} />{uiText(" End Meeting")}</Button>
+                  <IconStop size={16} />
+                  {uiText(" End Meeting")}
+                </Button>
               </>
             )}
 
@@ -726,10 +809,6 @@ function MeetingView(props: MeetingViewProps) {
         </div>
       )}
 
-      {MEETING_CONFIG.faceScanSimulation && hydrated && phase !== "idle" && (
-        <button type="button" className="dml-mt-reset" onClick={actions.reset}>{uiText("Reset sesi ini (dev)")}</button>
-      )}
-
       {variant === "dm" && (
         <StartAttendanceDialog
           open={startAttendanceConfirmOpen}
@@ -737,7 +816,7 @@ function MeetingView(props: MeetingViewProps) {
           sessionText={session.label}
           dateText={new Date(`${session.date}T00:00:00`).toLocaleDateString(
             uiLocale,
-            { day: "numeric", month: "long", year: "numeric" },
+            { day: "numeric", month: "long", year: "numeric" }
           )}
           lineText={
             workspace.line

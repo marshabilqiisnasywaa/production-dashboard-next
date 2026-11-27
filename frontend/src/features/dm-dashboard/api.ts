@@ -2083,6 +2083,8 @@ export const meetingApi = {
     lineCode?: string | null;
     customLine?: boolean;
     picEmployeeNo?: string | null;
+    solution?: string | null;
+    status?: "open" | "in_progress" | "resolved";
   }) => request<DmMyProblem>("/meetings/problems", json("POST", input), true),
   updateProblem: (
     id: number,
@@ -2100,6 +2102,8 @@ export const meetingApi = {
       lineCode?: string | null;
       customLine?: boolean;
       picEmployeeNo?: string | null;
+      solution?: string | null;
+      status?: "open" | "in_progress" | "resolved";
     }
   ) =>
     request<DmMyProblem>(`/meetings/problems/${id}`, json("PUT", input), true),

@@ -103,6 +103,11 @@ def set_status(db: Session, employee: Employee | None, problem_id: int, status: 
     if employee is not None and not _is_pic(sm, employee):
         raise HTTPException(status_code=403, detail="Hanya PIC yang bisa mengubah status problem.")
     if status == "resolved":
+        if not (sm.solution and sm.solution.strip()):
+            raise HTTPException(
+                status_code=400,
+                detail="Solusi wajib diisi sebelum menandai masalah selesai.",
+            )
         if sm.status != "resolved":
             sm.resolved_at = datetime.now(timezone.utc)
     else:
@@ -130,6 +135,20 @@ def update_problem(db: Session, problem_id: int, payload: MeetingSummaryIn) -> m
     sm.problem = payload.problem
     for key, value in category_fields.items():
         setattr(sm, key, value)
+    if "solution" in payload.model_fields_set:
+        sm.solution = payload.solution
+    if payload.status is not None:
+        if payload.status == "resolved":
+            if not (sm.solution and sm.solution.strip()):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Solusi wajib diisi sebelum menandai masalah selesai.",
+                )
+            if sm.status != "resolved":
+                sm.resolved_at = datetime.now(timezone.utc)
+        else:
+            sm.resolved_at = None
+        sm.status = payload.status
     sm.pic_name = assigned_pics[0][1]
     sm.pic_id = assigned_pics[0][0]
     sm.due_date = payload.due_date

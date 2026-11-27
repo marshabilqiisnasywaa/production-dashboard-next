@@ -1037,28 +1037,14 @@ export default function AttendanceDashboardPage() {
 
                           <td className="att-num">{r.session.replace("Sesi ", "")}</td>
 
-                          <td className="att-num">
-                            {r.actualStartTime === null ? (
-                              "—"
-                            ) : r.status === "Telat" ? (
-                              <span className="att-late-cell">{r.actualStartTime}</span>
-                            ) : (
-                              r.actualStartTime
-                            )}
-                          </td>
+                          <td className="att-num">{r.actualStartTime ?? "—"}</td>
 
                           <td className="att-num">{r.actualEndTime ?? "—"}</td>
 
                           <td className="att-num">
-                            {r.meetingDurationMinutes === null ? (
-                              "—"
-                            ) : r.status === "Telat" ? (
-                              <span className="att-late-cell">
-                                {`${r.meetingDurationMinutes} mnt`}
-                              </span>
-                            ) : (
-                              `${r.meetingDurationMinutes} mnt`
-                            )}
+                            {r.meetingDurationMinutes === null
+                              ? "—"
+                              : `${r.meetingDurationMinutes} mnt`}
                           </td>
 
                           <td className="att-person">{r.name}</td>
