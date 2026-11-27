@@ -1,0 +1,355 @@
+/* Saran AI: satu launcher + satu panel, keduanya melayang di kanan bawah.
+   Dirender lewat portal ke <body> (lihat AiLauncher.tsx dan RootCauseSuggestion.tsx). */
+
+/* tombol dan status saran per-Why diganti launcher tunggal */
+.dm-5w-why-actions .dm-5w-suggest-ask,
+p.dm-5w-suggest-note[role="status"],
+p.dm-5w-suggest-error[role="alert"] {
+  display: none !important;
+}
+
+/* ---------- Launcher: Ollie melayang + gelembung ucapan ---------- */
+.dm-5w-root.dm-5w-ai-launcher-wrap {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 100;
+  display: block;
+  max-width: calc(100vw - 24px);
+  pointer-events: none; /* area kosong tidak menghalangi klik */
+}
+
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dm-5w-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher:focus-visible {
+  outline: 2px solid var(--dm-5w-primary);
+  outline-offset: 4px;
+  border-radius: 20px;
+}
+
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher:disabled {
+  cursor: progress;
+}
+
+/* gelembung ucapan */
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher-bubble {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  margin-bottom: 22px;
+  padding: 8px 14px;
+  border: 1px solid var(--dm-5w-border);
+  border-radius: 16px 16px 4px 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher-bubble strong {
+  color: var(--dm-5w-text);
+  font-size: var(--fw-fs-body);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher-bubble span {
+  color: var(--dm-5w-muted);
+  font-size: var(--fw-fs-label);
+  line-height: 1.4;
+}
+
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher:hover:not(:disabled) .dm-5w-ai-launcher-bubble {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.3);
+}
+
+/* Ollie utuh tanpa kotak */
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher-ollie {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 10px rgba(15, 23, 42, 0.25));
+  transition: transform 0.2s ease;
+}
+
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher:hover:not(:disabled) .dm-5w-ai-launcher-ollie {
+  transform: translateY(-4px) rotate(-4deg);
+}
+
+/* error */
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher.is-error .dm-5w-ai-launcher-bubble {
+  border-color: var(--dm-5w-danger-text);
+}
+
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher.is-error .dm-5w-ai-launcher-bubble span {
+  color: var(--dm-5w-danger-text);
+}
+
+/* Ollie naik-turun saat menunggu hasil */
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher.is-loading .dm-5w-ai-launcher-ollie {
+  animation: dm-5w-ai-bob 1.1s ease-in-out infinite;
+}
+
+@keyframes dm-5w-ai-bob {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* ---------- Panel hasil saran ---------- */
+.dm-5w-root.dm-5w-ai-float {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(72dvh, 640px);
+  min-height: 0;
+}
+
+/* kartu: satu bayangan, satu radius, tanpa gradien */
+.dm-5w-root.dm-5w-ai-float .dm-5w-ai-card.dm-5w-suggest.dm-5w-suggest-inline {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  max-height: min(72dvh, 640px);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--dm-5w-border);
+  border-radius: 14px;
+  background: var(--dm-5w-card);
+  box-shadow:
+    0 12px 32px -8px rgba(15, 23, 42, 0.22),
+    0 2px 6px rgba(15, 23, 42, 0.08);
+  animation: dm-5w-ai-float-in 0.16s ease-out;
+}
+
+/* matikan header lama yang dibuat dengan ::before / ::after */
+.dm-5w-root.dm-5w-ai-float .dm-5w-ai-card.dm-5w-suggest.dm-5w-suggest-inline::before,
+.dm-5w-root.dm-5w-ai-float .dm-5w-ai-card.dm-5w-suggest.dm-5w-suggest-inline::after {
+  content: none;
+  display: none;
+}
+
+/* header: Ollie utuh, judul, tombol tutup */
+.dm-5w-ai-float .dm-5w-ai-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 8px 12px;
+  border-bottom: 1px solid var(--dm-5w-border-light);
+}
+
+.dm-5w-ai-float .dm-5w-ai-avatar {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 0;
+  background: url("/assets/ollie-ai.png") center / contain no-repeat;
+  box-shadow: none;
+}
+
+.dm-5w-ai-float .dm-5w-ai-title {
+  flex: 1;
+  min-width: 0;
+  color: var(--dm-5w-text);
+  font-size: var(--fw-fs-body);
+  font-weight: 600;
+}
+
+.dm-5w-ai-float .dm-5w-ai-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dm-5w-muted);
+  cursor: pointer;
+}
+
+.dm-5w-ai-float .dm-5w-ai-close:hover {
+  background: var(--dm-5w-neutral-bg);
+  color: var(--dm-5w-text);
+}
+
+.dm-5w-ai-float .dm-5w-ai-close:focus-visible {
+  outline: 2px solid var(--dm-5w-primary);
+  outline-offset: 2px;
+}
+
+/* isi: bisa discroll, header tetap di atas */
+.dm-5w-ai-float .dm-5w-ai-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 14px 16px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.dm-5w-ai-float .dm-5w-ai-scroll > .dm-5w-suggest-note:last-child {
+  padding-top: 10px;
+  border-top: 1px solid var(--dm-5w-border-light);
+  color: var(--dm-5w-sub);
+}
+
+@keyframes dm-5w-ai-float-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dm-5w-root.dm-5w-ai-float .dm-5w-ai-card.dm-5w-suggest.dm-5w-suggest-inline,
+  .dm-5w-ai-launcher-wrap .dm-5w-ai-launcher,
+  .dm-5w-ai-launcher-wrap .dm-5w-ai-launcher-ollie,
+  .dm-5w-ai-launcher-wrap .dm-5w-ai-launcher-bubble,
+  .dm-5w-ai-launcher-wrap .dm-5w-ai-launcher-ping::after {
+    animation: none !important;
+  }
+}
+
+/* HP: lebar penuh di bawah layar */
+@media (max-width: 720px) {
+  .dm-5w-root.dm-5w-ai-launcher-wrap {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .dm-5w-root.dm-5w-ai-float {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+    max-height: 70dvh;
+  }
+
+  @media (max-width: 720px) {
+  .dm-5w-ai-launcher-wrap .dm-5w-ai-launcher-bubble span {
+    display: none; /* di HP cukup judul saja */
+  }
+  .dm-5w-ai-launcher-wrap .dm-5w-ai-launcher-ollie {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+  .dm-5w-root.dm-5w-ai-float .dm-5w-ai-card.dm-5w-suggest.dm-5w-suggest-inline {
+    max-height: 70dvh;
+  }
+}
+
+.dm-5w-content {
+  padding-bottom: 110px;
+}
+
+/* ---------- Animasi idle: tanda bahwa Ollie aktif ---------- */
+
+/* Ollie melambai: goyang pelan, lalu diam sebentar */
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher:not(.is-loading):not(.is-error) .dm-5w-ai-launcher-ollie {
+  transform-origin: 50% 90%;
+  animation: dm-5w-ai-wave 4s ease-in-out 1.5s infinite;
+}
+
+/* gelembung ikut "bernapas" tipis */
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher:not(.is-loading):not(.is-error) .dm-5w-ai-launcher-bubble {
+  animation: dm-5w-ai-breathe 4s ease-in-out 1.5s infinite;
+}
+
+/* berhenti saat disentuh, biar hover tidak bentrok */
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher:hover .dm-5w-ai-launcher-ollie,
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher:hover .dm-5w-ai-launcher-bubble {
+  animation: none;
+}
+
+/* muncul dengan pop saat pertama kali tampil */
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher {
+  animation: dm-5w-ai-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* titik notifikasi kecil di pojok Ollie */
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher {
+  position: relative;
+}
+
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher-ping {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: var(--dm-5w-primary);
+}
+
+.dm-5w-ai-launcher-wrap .dm-5w-ai-launcher-ping::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: var(--dm-5w-primary);
+  opacity: 0.5;
+  animation: dm-5w-ai-ping 2s ease-out infinite;
+}
+
+@keyframes dm-5w-ai-wave {
+  0%, 55%, 100% { transform: rotate(0) translateY(0); }
+  62% { transform: rotate(-8deg) translateY(-3px); }
+  70% { transform: rotate(7deg) translateY(-3px); }
+  78% { transform: rotate(-6deg) translateY(-2px); }
+  86% { transform: rotate(4deg) translateY(0); }
+}
+
+@keyframes dm-5w-ai-breathe {
+  0%, 55%, 100% { transform: scale(1); }
+  70% { transform: scale(1.04); }
+}
+
+@keyframes dm-5w-ai-pop {
+  from { opacity: 0; transform: translateY(12px) scale(0.9); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes dm-5w-ai-ping {
+  0% { transform: scale(1); opacity: 0.5; }
+  80%, 100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* chip verdict di panel: tampil sebagai chip utuh, tidak menjorok */
+.dm-5w-ai-float .dm-5w-chip.is-neutral {
+  background: var(--dm-5w-neutral-bg);
+  color: var(--dm-5w-muted);
+}
