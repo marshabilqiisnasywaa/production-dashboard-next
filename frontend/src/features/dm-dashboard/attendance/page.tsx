@@ -1009,6 +1009,12 @@ export default function AttendanceDashboardPage() {
 
                       <th>{uiText("Sesi")}</th>
 
+                      <th>{uiText("Mulai Aktual")}</th>
+
+                      <th>{uiText("Selesai Aktual")}</th>
+
+                      <th>{uiText("Durasi Meeting")}</th>
+
                       <th>{uiText("Nama")}</th>
 
                       <th>{uiText("Peran")}</th>
@@ -1029,7 +1035,31 @@ export default function AttendanceDashboardPage() {
                         <tr key={r.id}>
                           <td>{formatDate(r.date, uiLocale)}</td>
 
-                          <td>{r.session.replace("Sesi ", "")}</td>
+                          <td className="att-num">{r.session.replace("Sesi ", "")}</td>
+
+                          <td className="att-num">
+                            {r.actualStartTime === null ? (
+                              "—"
+                            ) : r.status === "Telat" ? (
+                              <span className="att-late-cell">{r.actualStartTime}</span>
+                            ) : (
+                              r.actualStartTime
+                            )}
+                          </td>
+
+                          <td className="att-num">{r.actualEndTime ?? "—"}</td>
+
+                          <td className="att-num">
+                            {r.meetingDurationMinutes === null ? (
+                              "—"
+                            ) : r.status === "Telat" ? (
+                              <span className="att-late-cell">
+                                {`${r.meetingDurationMinutes} mnt`}
+                              </span>
+                            ) : (
+                              `${r.meetingDurationMinutes} mnt`
+                            )}
+                          </td>
 
                           <td className="att-person">{r.name}</td>
 
@@ -1039,15 +1069,15 @@ export default function AttendanceDashboardPage() {
                             <span className="att-level-pill">{r.level}</span>
                           </td>
 
-                          <td>{r.attendanceTime ?? "—"}</td>
+                          <td className="att-num">{r.attendanceTime ?? "—"}</td>
 
                           <td
                             className={
                               r.difference === null
-                                ? ""
+                                ? "att-num"
                                 : r.difference > 0
-                                ? "att-difference-late"
-                                : "att-difference-early"
+                                ? "att-num att-difference-late"
+                                : "att-num att-difference-early"
                             }
                           >
                             {r.difference === null
@@ -1078,7 +1108,7 @@ export default function AttendanceDashboardPage() {
 
                     {!paginatedRows.length && (
                       <tr>
-                        <td colSpan={8} className="att-empty-row">
+                        <td colSpan={11} className="att-empty-row">
                           {uiText("Tidak ada data yang cocok dengan filter.")}
                         </td>
                       </tr>

@@ -23,6 +23,9 @@ export type AttendanceRecord = {
   id: string;
   date: string;
   session: string;
+  actualStartTime: string | null;
+  actualEndTime: string | null;
+  meetingDurationMinutes: number | null;
   level: AttendanceLevel;
   name: string;
   role: string;
@@ -93,6 +96,51 @@ function timeHM(iso: string) {
   ).padStart(2, "0")}`;
 }
 
+function personMeetingTiming(
+  isPresent: boolean,
+  isLate: boolean,
+  attendedAt: string | null,
+  startedAt?: string | null,
+  endedAt?: string | null,
+  durationSeconds?: number | null,
+  sessionStatus?: string
+): {
+  actualStartTime: string | null;
+  actualEndTime: string | null;
+  meetingDurationMinutes: number | null;
+} {
+  if (!isPresent) {
+    return {
+      actualStartTime: null,
+      actualEndTime: null,
+      meetingDurationMinutes: null,
+    };
+  }
+
+  const effectiveStartIso = isLate ? attendedAt : startedAt ?? null;
+  const actualStartTime = effectiveStartIso ? timeHM(effectiveStartIso) : null;
+  const actualEndTime = endedAt ? timeHM(endedAt) : null;
+
+  let meetingDurationMinutes: number | null = null;
+  if (effectiveStartIso && endedAt) {
+    const diffMs =
+      new Date(endedAt).getTime() - new Date(effectiveStartIso).getTime();
+    if (Number.isFinite(diffMs)) {
+      meetingDurationMinutes =
+        diffMs <= 0 ? 0 : Math.max(1, Math.round(diffMs / 60000));
+    }
+  } else if (
+    !isLate &&
+    sessionStatus === "completed" &&
+    durationSeconds &&
+    durationSeconds > 0
+  ) {
+    meetingDurationMinutes = Math.max(1, Math.round(durationSeconds / 60));
+  }
+
+  return { actualStartTime, actualEndTime, meetingDurationMinutes };
+}
+
 // Telat = presensi setelah meeting benar-benar dimulai (started_at), bukan setelah jam jadwal.
 // Presensi sebelum meeting di-start tidak pernah telat. Tanpa started_at, sesi yang belum
 // selesai dianggap belum mulai; sesi selesai tanpa started_at jatuh kembali ke jam jadwal.
@@ -152,19 +200,29 @@ function fromLineRecap(recap: DmAttendanceRecap): DayAttendance {
     let represented = 0;
 
     for (const r of rows) {
-      const difference =
-        r.status === "present"
-          ? lateMinutes(r.attendedAt, recap.date, s.scheduledTime, s.startedAt, s.status)
-          : null;
+      const isPresent = r.status === "present";
+      const difference = isPresent
+        ? lateMinutes(r.attendedAt, recap.date, s.scheduledTime, s.startedAt, s.status)
+        : null;
       const status = mapStatus(r.status, difference, r.absenceReason);
+      const timing = personMeetingTiming(
+        isPresent,
+        status === "Telat",
+        isPresent ? r.attendedAt : null,
+        s.startedAt,
+        s.endedAt,
+        s.durationSeconds,
+        s.status
+      );
       records.push({
         id: `line-${s.id}-${r.employeeNo}-${r.isGuest ? "guest" : "roster"}`,
         date: recap.date,
         session,
+        ...timing,
         level: "DM Line",
         name: r.name,
         role: roleOf(r.position, r.dept),
-        attendanceTime: r.status === "present" ? timeHM(r.attendedAt) : null,
+        attendanceTime: isPresent ? timeHM(r.attendedAt) : null,
         difference,
         status,
         representative: representativeOf(status, r.absenceNote),
@@ -225,10 +283,20 @@ function fromWorkshopSession(s: DmWorkshopAttendanceRecap): DayAttendance {
     const status = mapStatus("present", difference);
     if (status === "Tepat waktu") onTime += 1;
     else late += 1;
+    const timing = personMeetingTiming(
+      true,
+      status === "Telat",
+      attendedAt,
+      s.startedAt,
+      s.endedAt,
+      s.durationSeconds,
+      s.status
+    );
     records.push({
       id: key,
       date: s.date,
       session,
+      ...timing,
       level: "DM Workshop",
       name,
       role,
@@ -253,6 +321,9 @@ function fromWorkshopSession(s: DmWorkshopAttendanceRecap): DayAttendance {
       id: key,
       date: s.date,
       session,
+      actualStartTime: null,
+      actualEndTime: null,
+      meetingDurationMinutes: null,
       level: "DM Workshop",
       name,
       role,
