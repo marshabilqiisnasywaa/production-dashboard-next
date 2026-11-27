@@ -591,6 +591,7 @@ class RecapSessionOut(CamelModel):
     status: str
     started_at: datetime | None = None
     ended_at: datetime | None = None
+    duration_seconds: int = 0
     team_size: int
 
 
@@ -645,6 +646,8 @@ class WorkshopRecapSessionOut(CamelModel):
     scheduled_time: str
     status: str
     started_at: datetime | None = None
+    ended_at: datetime | None = None
+    duration_seconds: int = 0
     participants: list[WorkshopRecapParticipantOut]
     attendances: list[WorkshopRecapAttendanceOut]
 

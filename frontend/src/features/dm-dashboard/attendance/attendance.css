@@ -669,10 +669,26 @@
 
 .att-table {
   width: 100%;
-  min-width: 900px;
+  min-width: 1120px;
   border-collapse: collapse;
   border-spacing: 0;
   font-size: 12px;
+}
+
+.att-table .att-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.att-late-cell {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border: 1px solid #fde2ad;
+  border-radius: 6px;
+  background: #fff8e8;
+  color: #9a5800;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .att-table th,

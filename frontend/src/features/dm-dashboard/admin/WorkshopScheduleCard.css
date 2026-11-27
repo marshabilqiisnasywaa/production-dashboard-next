@@ -1,6 +1,6 @@
 .wsc {
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 22px;
   background: #fff;
   padding: 16px;
 }
@@ -17,7 +17,7 @@
 
 .wsc-row {
   padding: 14px 0;
-  border-top: 1px solid #f1f5f9;
+  /* border-top: 1px solid #f1f5f9; */
 }
 
 .wsc-row__head {

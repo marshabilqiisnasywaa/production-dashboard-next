@@ -247,6 +247,7 @@ export const dmDepartments: readonly string[] = [
   "PROD",
   "QC",
   "BPM",
+  "HR",
 ];
 
 export type DmEmployee = {
@@ -564,13 +565,13 @@ export type FiveWhyAnalysisSummary = {
   createdAt: string;
   updatedAt: string;
   canEdit: boolean;
-    standard: Record<string, FiveWhyStandard>;
+  standard: Record<string, FiveWhyStandard>;
   canFlagStandard: boolean;
 };
 
 export type FiveWhyStandard = {
   flagged: boolean;
-    solutionText: string;
+  solutionText: string;
   department: string;
   note: string;
   flaggedBy: string;
@@ -607,7 +608,12 @@ export type RootCauseSuggestion = {
   suggestedLevel: number | null;
   confidence: "high" | "medium" | "low";
   summary: string;
-  rules: { id: string; title: string; status: RootCauseRuleStatus; note: string }[];
+  rules: {
+    id: string;
+    title: string;
+    status: RootCauseRuleStatus;
+    note: string;
+  }[];
   missing: string[];
   nextQuestion: string | null;
   candidates: { text: string; check: string }[];
@@ -661,13 +667,17 @@ export const fiveWhyAnalysesApi = {
     input: { flagged: boolean; department: string; note: string }
   ) =>
     request<FiveWhyAnalysisDetail>(
-      `/fivewhy/analyses/${encodeURIComponent(id)}/solutions/${encodeURIComponent(solutionId)}/standard`,
+      `/fivewhy/analyses/${encodeURIComponent(
+        id
+      )}/solutions/${encodeURIComponent(solutionId)}/standard`,
       json("PUT", input),
       true
     ),
   setStandardApplied: (id: string, solutionId: string, applied: boolean) =>
     request<FiveWhyAnalysisDetail>(
-      `/fivewhy/analyses/${encodeURIComponent(id)}/solutions/${encodeURIComponent(solutionId)}/standard/applied`,
+      `/fivewhy/analyses/${encodeURIComponent(
+        id
+      )}/solutions/${encodeURIComponent(solutionId)}/standard/applied`,
       json("PUT", { applied }),
       true
     ),
@@ -1247,6 +1257,7 @@ export type DmRecapSession = {
   status: "pending" | "in_progress" | "completed";
   startedAt: string | null;
   endedAt: string | null;
+  durationSeconds?: number;
   teamSize: number;
 };
 
@@ -1278,6 +1289,8 @@ export type DmWorkshopAttendanceRecap = Pick<
   "id" | "date" | "scheduledTime" | "status"
 > & {
   startedAt?: string | null;
+  endedAt?: string | null;
+  durationSeconds?: number;
   participants: {
     employeeNo: string;
     name: string;
@@ -2071,8 +2084,7 @@ export const meetingApi = {
     lineCode?: string | null;
     customLine?: boolean;
     picEmployeeNo?: string | null;
-  }) =>
-    request<DmMyProblem>("/meetings/problems", json("POST", input), true),
+  }) => request<DmMyProblem>("/meetings/problems", json("POST", input), true),
   updateProblem: (
     id: number,
     input: {

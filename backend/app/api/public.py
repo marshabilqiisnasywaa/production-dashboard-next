@@ -246,6 +246,7 @@ def attendance_recap(
             status=s.status,
             started_at=s.started_at,
             ended_at=s.ended_at,
+            duration_seconds=s.duration_seconds,
             team_size=(
                 sum(s.line_id in item["line_ids"] for item in s.roster)
                 if s.roster is not None
@@ -334,6 +335,8 @@ def attendance_recap(
                     scheduled_time=mapped.scheduled_time,
                     status=mapped.status,
                     started_at=mapped.started_at,
+                    ended_at=mapped.ended_at,
+                    duration_seconds=mapped.duration_seconds,
                     participants=[
                         WorkshopRecapParticipantOut(
                             employee_no=p.employee_no,
