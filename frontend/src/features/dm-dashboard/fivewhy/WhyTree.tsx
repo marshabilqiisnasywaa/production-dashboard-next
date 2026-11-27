@@ -1228,7 +1228,7 @@ export default function WhyTree({
       />
 
       {previewId
-        ? ((
+        ? createPortal(
             <div
               className="dm-5w-lightbox"
               role="dialog"
@@ -1249,9 +1249,9 @@ export default function WhyTree({
                 alt={uiText("Foto bukti diperbesar")}
                 onClick={(event) => event.stopPropagation()}
               />
-            </div>
-          ),
-          document.body)
+            </div>,
+            document.body
+          )
         : null}
     </div>
   );

@@ -183,7 +183,7 @@ export function SupervisorReviewModal({
             </div>
             {reviewTarget.submission?.isSubstitute && (
               <SubstituteBadge
-                variant="banner"
+                variant="detail"
                 filledByName={reviewTarget.submission.filledByName ?? reviewTarget.name}
                 replacedName={reviewTarget.submission.replacedEmployeeName}
               />

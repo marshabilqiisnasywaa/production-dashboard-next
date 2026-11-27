@@ -84,4 +84,11 @@ export default function ImportedStatusHistory({
     page,
     Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
   );
+  void uiText;
+  void locale;
+  void roles;
+  void loading;
+  void error;
+  void safePage;
+  return null;
 }
