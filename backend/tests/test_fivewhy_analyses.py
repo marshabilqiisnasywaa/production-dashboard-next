@@ -264,6 +264,25 @@ class FiveWhyAnalysisTests(unittest.TestCase):
             api.get_analysis(created["id"], self.principal(self.member), self.db)
         self.assertEqual(caught.exception.status_code, 404)
 
+    def test_admin_can_delete_any_analysis(self):
+        from app.models import User
+
+        created = self.create(self.member, line=0)
+        admin_emp = Employee(employee_no="A1", name="Admin", role="admin", dept="PROD", must_change_password=False)
+        self.db.add(admin_emp)
+        self.db.flush()
+        api.delete_analysis(created["id"], self.principal(admin_emp), self.db)
+        with self.assertRaises(HTTPException) as caught:
+            api.get_analysis(created["id"], self.principal(self.member), self.db)
+        self.assertEqual(caught.exception.status_code, 404)
+
+        created2 = self.create(self.other_leader, line=1)
+        superadmin = User(username="root", password_hash="x", role="superadmin", is_active=True)
+        api.delete_analysis(created2["id"], Principal(user=superadmin), self.db)
+        with self.assertRaises(HTTPException) as caught:
+            api.get_analysis(created2["id"], self.principal(self.other_leader), self.db)
+        self.assertEqual(caught.exception.status_code, 404)
+
 
 if __name__ == "__main__":
     unittest.main()

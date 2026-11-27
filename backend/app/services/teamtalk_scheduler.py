@@ -113,6 +113,9 @@ async def check_meeting_reminders(db: Session, now: datetime):
 
 async def check_workshop_meeting_reminders(db: Session, now: datetime):
     today = now.date()
+    due_entries: list[dict] = []
+    due_keys: list[str] = []
+
     for setting in db.scalars(select(WorkshopMeetingSetting)):
         if not setting.is_active or not setting.reminder_enabled:
             continue
@@ -140,16 +143,19 @@ async def check_workshop_meeting_reminders(db: Session, now: datetime):
             if session is not None and session.status != "pending":
                 continue
             workshop = db.get(Workshop, setting.workshop_id)
-            logger.info("Mengirim pengingat workshop meeting: %s", workshop.name if workshop else setting.workshop_id)
-            sent = await notify_workshop_meeting_reminder(
-                workshop_name=workshop.name if workshop else "-",
-                scheduled_time=setting.time,
-                minutes_left=max(1, int(diff_min)),
-            )
-            if sent:
-                _sent_events_cache.add(event_key)
+            due_entries.append({
+                "workshop_name": workshop.name if workshop else "-",
+                "scheduled_time": setting.time,
+                "minutes_left": max(1, int(diff_min)),
+            })
+            due_keys.append(event_key)
         except Exception as e:
             logger.error("Error saat evaluasi workshop meeting %s: %s", setting.workshop_id, e)
+
+    if due_entries:
+        logger.info("Mengirim pengingat workshop meeting untuk %d workshop", len(due_entries))
+        if await notify_workshop_meeting_reminder(due_entries):
+            _sent_events_cache.update(due_keys)
 
 
 def _papercard_review_state(db: Session, line: Line, templates: list, today: date) -> dict | None:

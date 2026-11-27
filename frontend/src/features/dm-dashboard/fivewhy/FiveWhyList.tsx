@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Circle, CircleCheck, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Circle, CircleCheck, Plus, Trash2 } from "lucide-react";
 import { useUiText } from "@/locales/useUiText";
 import type { FiveWhyAnalysisSummary } from "../api";
 import {
@@ -19,9 +19,13 @@ type FiveWhyListProps = {
   newLineId: number;
   creating: boolean;
   createError: string;
+  canDelete?: boolean;
+  deletingId?: string;
+  deleteError?: string;
   onNewLineChange: (lineId: number) => void;
   onCreate: () => void;
   onOpen: (analysisId: string) => void;
+  onDelete?: (item: FiveWhyAnalysisSummary) => void;
 };
 
 type EventDay = { year: number; month: number; day: number };
@@ -52,9 +56,13 @@ export default function FiveWhyList({
   newLineId,
   creating,
   createError,
+  canDelete = false,
+  deletingId = "",
+  deleteError = "",
   onNewLineChange,
   onCreate,
   onOpen,
+  onDelete,
 }: FiveWhyListProps) {
   const { text: uiText, locale } = useUiText();
   const today = new Date();
@@ -163,6 +171,11 @@ export default function FiveWhyList({
       {createError ? (
         <div className="dm-5w-document-error" role="alert">
           {uiText(createError)}
+        </div>
+      ) : null}
+      {deleteError ? (
+        <div className="dm-5w-document-error" role="alert">
+          {uiText(deleteError)}
         </div>
       ) : null}
       <div className="dm-5w-document-fields dm-5w-library-filters">
@@ -406,9 +419,25 @@ export default function FiveWhyList({
                         </div>
                       </dl>
                     </div>
-                    <span className={`dm-5w-row-status is-${item.status}`}>
-                      {uiText(FIVE_WHY_ANALYSIS_LABELS[item.status])}
-                    </span>
+                    <div className="dm-5w-row-aside">
+                      <span className={`dm-5w-row-status is-${item.status}`}>
+                        {uiText(FIVE_WHY_ANALYSIS_LABELS[item.status])}
+                      </span>
+                      {canDelete && onDelete ? (
+                        <button
+                          type="button"
+                          className="dm-5w-row-delete"
+                          disabled={Boolean(deletingId)}
+                          aria-label={`${uiText("Hapus analisis")} ${item.nomor}`}
+                          onClick={() => onDelete(item)}
+                        >
+                          <Trash2 size={14} aria-hidden="true" />
+                          <span>
+                            {uiText(deletingId === item.id ? "Menghapus..." : "Hapus")}
+                          </span>
+                        </button>
+                      ) : null}
+                    </div>
                   </li>
                 );
               })}

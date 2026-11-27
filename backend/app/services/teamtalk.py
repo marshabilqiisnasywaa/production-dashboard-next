@@ -170,17 +170,27 @@ async def notify_meeting_reminder(slots: list[dict], started: bool = False) -> b
     return await send_teamtalk_message("\n".join(lines))
 
 
-async def notify_workshop_meeting_reminder(workshop_name: str, scheduled_time: str, minutes_left: int = 15) -> bool:
+async def notify_workshop_meeting_reminder(entries: list[dict]) -> bool:
     """
-    Notifikasi pengingat Workshop Meeting yang akan segera dimulai.
+    Satu notifikasi pengingat Workshop Meeting untuk semua workshop, dikelompokkan per jam jadwal.
     """
-    content = (
-        f"[PENGINGAT WORKSHOP MEETING - {workshop_name or '-'}]\n"
-        f"Workshop Meeting dijadwalkan pukul {scheduled_time}.\n"
-        f"Waktu tersisa kurang lebih {minutes_left} menit lagi.\n\n"
-        f"Harap seluruh DM workshop bersiap. @ALL"
-    )
-    return await send_teamtalk_message(content)
+    if not entries:
+        return False
+
+    groups: dict[str, dict] = {}
+    for entry in entries:
+        scheduled_time = entry["scheduled_time"]
+        group = groups.setdefault(scheduled_time, {"workshops": [], "minutes_left": entry["minutes_left"]})
+        group["workshops"].append(entry["workshop_name"] or "-")
+        group["minutes_left"] = min(group["minutes_left"], entry["minutes_left"])
+
+    lines = ["[PENGINGAT WORKSHOP MEETING]"]
+    for scheduled_time, group in sorted(groups.items()):
+        lines.append(f"{scheduled_time} (sekitar {group['minutes_left']} menit lagi)")
+        lines.append(f"   Workshop: {', '.join(group['workshops'])}")
+    lines.append("")
+    lines.append("Harap seluruh DM workshop bersiap. @ALL")
+    return await send_teamtalk_message("\n".join(lines))
 
 
 async def notify_papercard_reminder(entries: list[dict]) -> bool:
@@ -216,6 +226,8 @@ async def notify_papercard_complete(entries: list[dict]) -> bool:
     if not entries:
         return False
 
+    lines = [""]
+    lines = [""]
     lines = ["[PAPERCARD SUDAH DISUBMIT SEMUA]"]
     job_nos: list[str] = []
     for entry in entries:
