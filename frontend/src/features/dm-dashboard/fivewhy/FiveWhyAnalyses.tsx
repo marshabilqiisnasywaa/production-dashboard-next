@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { useUiText } from "@/locales/useUiText";
-import { fiveWhyAnalysesApi, fiveWhyDocumentsApi } from "../api";
+import { accountApi, fiveWhyAnalysesApi, fiveWhyDocumentsApi } from "../api";
 import type { FiveWhyAnalysisSummary } from "../api";
 import FiveWhyList from "./FiveWhyList";
 import type { FiveWhyLineOption } from "./FiveWhyList";
@@ -39,10 +39,13 @@ export default function FiveWhyAnalyses({
   const [items, setItems] = useState<FiveWhyAnalysisSummary[]>([]);
   const [lines, setLines] = useState<FiveWhyLineOption[]>([]);
   const [newLineId, setNewLineId] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [deletingId, setDeletingId] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
@@ -58,17 +61,18 @@ export default function FiveWhyAnalyses({
 
   useEffect(() => {
     let active = true;
-    fiveWhyDocumentsApi
-      .options()
-      .catch(() => [])
-      .then((options) => {
-        if (!active) return;
-        const choices = options.map((line) => ({ id: line.id, code: line.code }));
-        setLines(choices);
-        setNewLineId((current) =>
-          choices.some((line) => line.id === current) ? current : choices[0]?.id ?? 0
-        );
-      });
+    Promise.all([
+      accountApi.me().catch(() => null),
+      fiveWhyDocumentsApi.options().catch(() => []),
+    ]).then(([me, options]) => {
+      if (!active) return;
+      setIsAdmin(me?.role === "admin" || me?.role === "superadmin");
+      const choices = options.map((line) => ({ id: line.id, code: line.code }));
+      setLines(choices);
+      setNewLineId((current) =>
+        choices.some((line) => line.id === current) ? current : choices[0]?.id ?? 0
+      );
+    });
     return () => {
       active = false;
     };
@@ -118,6 +122,29 @@ export default function FiveWhyAnalyses({
       setCreateError(failureMessage(reason, "Analisis gagal dibuat."));
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function remove(item: FiveWhyAnalysisSummary) {
+    if (!isAdmin || deletingId) return;
+    if (
+      !window.confirm(
+        uiText("Hapus analisis {{v0}}? Analisis akan dihapus permanen.", {
+          v0: item.nomor,
+        })
+      )
+    ) {
+      return;
+    }
+    setDeletingId(item.id);
+    setDeleteError("");
+    try {
+      await fiveWhyAnalysesApi.remove(item.id);
+      setItems((current) => current.filter((entry) => entry.id !== item.id));
+    } catch (reason) {
+      setDeleteError(failureMessage(reason, "Analisis gagal dihapus."));
+    } finally {
+      setDeletingId("");
     }
   }
 
@@ -171,9 +198,13 @@ export default function FiveWhyAnalyses({
             newLineId={newLineId}
             creating={creating}
             createError={createError}
+            canDelete={isAdmin}
+            deletingId={deletingId}
+            deleteError={deleteError}
             onNewLineChange={setNewLineId}
             onCreate={() => void create()}
             onOpen={open}
+            onDelete={(item) => void remove(item)}
           />
         )}
       </div>
