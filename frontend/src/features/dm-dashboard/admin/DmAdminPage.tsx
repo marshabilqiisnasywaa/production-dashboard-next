@@ -1459,6 +1459,12 @@ activeTab === "problems"
               </div>
             )}
 
+            {activeTab === "history-import" && (
+              <div className="dm-admin-section dm-tab-lines">
+                <HistoryImportPage lines={lines} />
+              </div>
+            )}
+
             {activeTab === "sqdip" && (
               <div className="dm-admin-section dm-tab-lines">
                 <SqdipMonitor />
