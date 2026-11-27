@@ -185,6 +185,7 @@ export default function FiveWhyList({
             className="dm-5w-input"
             type="search"
             value={search}
+            placeholder="Cari analisis"
             onChange={(event) => setSearch(event.target.value)}
           />
         </label>

@@ -3,7 +3,7 @@ import { useUiText } from "@/locales/useUiText";
 
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import { IconCheck } from "@/components/ui/icons";
 import { ApiError, fiveWhyAnalysesApi } from "../api";
 import type { FiveWhyAnalysisDetail, FiveWhyStandard } from "../api";
@@ -487,10 +487,11 @@ export default function FiveWhyPage({
   const backButton = (
     <button
       type="button"
-      className="dm-5w-btn dm-5w-btn-secondary dm-5w-btn-sm"
+      className="dm-5w-back-link"
       disabled={working}
       onClick={goBack}
     >
+      <ArrowLeft size={16} aria-hidden="true" />
       {uiText("Kembali ke daftar")}
     </button>
   );
@@ -527,7 +528,17 @@ export default function FiveWhyPage({
         ) : mode === "view" ? (
           <>
             <div className="dm-5w-toolbar">
-              {backButton}
+              <div className="dm-5w-detail-head">
+                {backButton}
+                {canEdit ? (
+                  <button
+                    type="button"
+                    className="dm-5w-btn dm-5w-btn-primary dm-5w-btn-sm"
+                    disabled={working}
+                    onClick={() => setMode("edit")}
+                  >{uiText("Edit")}</button>
+                ) : null}
+              </div>
               <div className="dm-5w-toolbar-actions">
                 {dirty ? (
                   <>
@@ -541,14 +552,6 @@ export default function FiveWhyPage({
                       onClick={() => void persist("Analisis disimpan.")}
                     >{uiText("Simpan")}</button>
                   </>
-                ) : null}
-                {canEdit ? (
-                  <button
-                    type="button"
-                    className="dm-5w-btn dm-5w-btn-primary dm-5w-btn-sm"
-                    disabled={working}
-                    onClick={() => setMode("edit")}
-                  >{uiText("Edit")}</button>
                 ) : null}
                 {actionMenu}
               </div>
@@ -568,24 +571,18 @@ export default function FiveWhyPage({
           </>
         ) : (
           <>
+          <div className="dm-5w-back-row">{backButton}</div>
             <section
               className="dm-5w-picker dm-5w-card"
               aria-labelledby="dm-5w-picker-title"
             >
               <div className="dm-5w-picker-head">
                 <div className="dm-5w-detail-head">
-                  {backButton}
                   <h2 className="dm-5w-card-title" id="dm-5w-picker-title">
                     {record.abnormal.label.trim() || uiText("Tanpa judul")}
                   </h2>
                 </div>
                 <div className="dm-5w-toolbar-actions">
-                  <button
-                    type="button"
-                    className="dm-5w-btn dm-5w-btn-secondary dm-5w-btn-sm"
-                    disabled={working}
-                    onClick={() => setMode("view")}
-                  >{uiText("Lihat hasil")}</button>
                   {actionMenu}
                 </div>
               </div>

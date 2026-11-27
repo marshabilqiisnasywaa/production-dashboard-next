@@ -1269,74 +1269,95 @@ dialog.dm-5w-upload-modal:not([open]) {
   cursor: not-allowed;
 }
 
+/* =====================================================================
+   Glass design layer (paste at the very END of FiveWhy.css)
+   Only colors, borders, radius, shadows. Layout and spacing are untouched.
+   To switch it off, delete everything from this comment down.
+   ===================================================================== */
+
 .dm-5w-stepper {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  overflow: hidden;
-  border: 1px solid var(--dm-5w-border);
-  border-radius: 8px;
-  background: var(--dm-5w-card);
-  box-shadow: 0 1px 2px rgba(18, 42, 29, 0.04);
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 255, 255, 0.8) 100%
+  );
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+  backdrop-filter: blur(18px) saturate(165%);
+  box-shadow:
+    0 10px 28px -16px rgba(15, 23, 42, 0.12),
+    0 2px 6px -2px rgba(15, 23, 42, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
 }
 
 .dm-5w-step {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 7px;
-  min-height: 46px;
-  padding: 8px 10px;
-  border: 0;
-  border-right: 1px solid var(--dm-5w-border-light);
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
   background: transparent;
   color: var(--dm-5w-muted);
   font-size: var(--fw-fs-body);
   font-weight: 500;
   text-align: left;
   cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.dm-5w-step:last-child {
-  border-right: 0;
-}
-
-.dm-5w-step:hover {
-  background: var(--dm-5w-bg);
+.dm-5w-step:hover:not(.is-active) {
+  background: rgba(15, 23, 42, 0.04);
+  color: var(--dm-5w-text);
 }
 
 .dm-5w-step.is-active {
-  background: var(--dm-5w-primary-light);
-  color: var(--dm-5w-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #0c9e6d 0%, #059669 100%);
+  box-shadow:
+    0 8px 18px -8px rgba(5, 150, 105, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  color: #ffffff;
   font-weight: 600;
 }
 
 .dm-5w-step.is-active::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  background: var(--dm-5w-primary);
+  content: none;
+}
+
+.dm-5w-step:focus-visible {
+  outline: 2px solid #059669;
+  outline-offset: 2px;
 }
 
 .dm-5w-step-circle {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
-  border: 1px solid var(--dm-5w-border);
+  border: 1px solid rgba(15, 23, 42, 0.14);
   border-radius: 50%;
-  background: var(--dm-5w-card);
+  background: #ffffff;
   color: var(--dm-5w-sub);
   font-size: var(--fw-fs-label);
   font-weight: 700;
 }
 
 .dm-5w-step-circle.is-done {
-  border-color: var(--dm-5w-primary);
-  background: var(--dm-5w-primary);
+  border-color: transparent;
+  background: linear-gradient(135deg, #0c9e6d 0%, #059669 100%);
   color: #ffffff;
 }
 
@@ -1352,10 +1373,298 @@ dialog.dm-5w-upload-modal:not([open]) {
   background: var(--dm-5w-warning-text);
 }
 
+/* circle on the active (green) step */
+.dm-5w-step.is-active .dm-5w-step-circle {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.95);
+  color: #047857;
+}
+
+.dm-5w-step.is-active .dm-5w-step-circle.is-done {
+  background: rgba(255, 255, 255, 0.95);
+  color: #047857;
+}
+
 .dm-5w-step-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .dm-5w-step {
+    justify-content: flex-start;
+    padding: 8px 10px;
+  }
+}
+
+
+.dm-5w-root {
+  --dm-5w-bg: #f6f8f8;
+  --dm-5w-border: rgba(15, 23, 42, 0.1);
+  --dm-5w-border-light: rgba(15, 23, 42, 0.06);
+  --dm-5w-border-control: #cfd5da;
+  --dm-5w-text: #1f2933;
+  --dm-5w-muted: #55636b;
+  --dm-5w-sub: #74818a;
+  --dm-5w-primary: #047857;
+  --dm-5w-primary-hover: #065f46;
+  --dm-5w-primary-light: #ecf8f3;
+  --dm-5w-primary-border: #bfe3d2;
+  --dm-5w-neutral-bg: #f2f4f5;
+  --dm-5w-glass-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 255, 255, 0.8) 100%
+  );
+  --dm-5w-glass-shadow:
+    0 12px 32px -14px rgba(15, 23, 42, 0.1),
+    0 2px 8px -2px rgba(15, 23, 42, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+  --dm-5w-gradient: linear-gradient(135deg, #0c9e6d 0%, #059669 100%);
+  --dm-5w-gradient-hover: linear-gradient(135deg, #0aae79 0%, #047857 100%);
+}
+
+/* ---------- Big cards ---------- */
+body .dm-5w-card {
+  border-radius: 20px;
+  background: var(--dm-5w-glass-bg);
+  box-shadow: var(--dm-5w-glass-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+  backdrop-filter: blur(18px) saturate(165%);
+}
+
+body .dm-5w-card.dm-5w-problem-card > .dm-5w-card-title,
+body .dm-5w-card.dm-5w-report-section > .dm-5w-card-title {
+  background: var(--dm-5w-gradient);
+}
+
+
+/* ---------- Stepper ---------- */
+body .dm-5w-stepper {
+  border-radius: 20px;
+  background: var(--dm-5w-glass-bg);
+  box-shadow: var(--dm-5w-glass-shadow);
+}
+
+body .dm-5w-step:hover {
+  background: rgba(15, 23, 42, 0.035);
+}
+
+body .dm-5w-step.is-active {
+  background: var(--dm-5w-gradient);
+}
+
+body .dm-5w-step-circle.is-done {
+  background: var(--dm-5w-gradient);
+  border-color: transparent;
+}
+
+/* ---------- Buttons ---------- */
+body .dm-5w-btn {
+  border-radius: 999px;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+body .dm-5w-btn-primary {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--dm-5w-gradient);
+  color: #ffffff;
+}
+
+body .dm-5w-btn-primary:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--dm-5w-gradient-hover);
+  box-shadow:
+    0 8px 18px -6px rgba(5, 150, 105, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+body .dm-5w-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 3px 8px -4px rgba(5, 150, 105, 0.5);
+}
+
+body .dm-5w-btn-secondary {
+  border-color: var(--dm-5w-border-control);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--dm-5w-text);
+}
+
+body .dm-5w-btn-secondary:hover:not(:disabled) {
+  border-color: var(--dm-5w-border-control);
+  background: var(--dm-5w-neutral-bg);
+  color: var(--dm-5w-text);
+  box-shadow: 0 6px 14px -8px rgba(15, 23, 42, 0.25);
+}
+
+body .dm-5w-step-next .dm-5w-btn,
+body .dm-5w-step-nav .dm-5w-btn {
+  border-radius: 999px;
+}
+
+/* ---------- Inputs, selects, textareas ---------- */
+body .dm-5w-input,
+body .dm-5w-select {
+  border-color: var(--dm-5w-border-control);
+  border-radius: 999px;
+  padding-inline: 16px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+body .dm-5w-textarea {
+  border-color: var(--dm-5w-border-control);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+body .dm-5w-problem-card
+  :is(.dm-5w-input, .dm-5w-select, .dm-5w-textarea):not(:disabled) {
+  border-color: var(--dm-5w-border-control);
+}
+
+body .dm-5w-problem-card :is(.dm-5w-input, .dm-5w-textarea):focus,
+body .dm-5w-problem-card :is(.dm-5w-input, .dm-5w-textarea):focus-visible,
+body .dm-5w-input:focus,
+body .dm-5w-select:focus,
+body .dm-5w-textarea:focus {
+  border-color: var(--dm-5w-primary);
+  background: #ffffff;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+}
+
+body .dm-5w-label,
+body .dm-5w-why-question .dm-5w-label,
+body .dm-5w-evidence-summary,
+body .dm-5w-root-toggle {
+  color: var(--dm-5w-muted);
+}
+
+body .dm-5w-problem-card .dm-5w-label {
+  color: var(--dm-5w-text);
+}
+
+/* ---------- Segmented controls ---------- */
+body .dm-5w-segment,
+body .dm-5w-view-toggle {
+  border-radius: 999px;
+  background: var(--dm-5w-neutral-bg);
+}
+
+body .dm-5w-segment-btn,
+body .dm-5w-view-btn {
+  border-radius: 999px;
+}
+
+/* ---------- Inner blocks ---------- */
+body .dm-5w-why-node,
+body .dm-5w-evidence-block,
+body .dm-5w-solution-card,
+body .dm-5w-board-card,
+body .dm-5w-history-card,
+body .dm-5w-summary-preview,
+body .dm-5w-factor-table {
+  border-color: var(--dm-5w-border);
+  border-radius: 16px;
+}
+
+body .dm-5w-why-node,
+body .dm-5w-board-card {
+  box-shadow: 0 6px 16px -10px rgba(15, 23, 42, 0.12);
+}
+
+body .dm-5w-why-node.is-active,
+body .dm-5w-why-node.is-highlight {
+  border-color: var(--dm-5w-primary);
+}
+
+body .dm-5w-rows {
+  border-radius: 16px;
+  background: var(--dm-5w-glass-bg);
+}
+
+body .dm-5w-row + .dm-5w-row {
+  border-top-color: var(--dm-5w-border-light);
+}
+
+/* ---------- Menus and popovers ---------- */
+body .dm-5w-menu-panel,
+body .dm-5w-evidence-menu-panel,
+body .dm-5w-category-combobox-popover {
+  border-color: var(--dm-5w-border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+  backdrop-filter: blur(18px) saturate(165%);
+  box-shadow: 0 14px 32px -12px rgba(15, 23, 42, 0.2);
+}
+
+body .dm-5w-menu-item,
+body .dm-5w-evidence-menu-item,
+body .dm-5w-category-combobox-option {
+  border-radius: 10px;
+}
+
+body .dm-5w-menu-item:hover,
+body .dm-5w-evidence-menu-item:hover,
+body .dm-5w-category-combobox-option:hover,
+body .dm-5w-category-combobox-option.is-active,
+body .dm-5w-menu-trigger:hover:not(:disabled) {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+body .dm-5w-menu-trigger {
+  border-radius: 999px;
+}
+
+/* ---------- Upload modal, pickers, options ---------- */
+body dialog.dm-5w-upload-modal {
+  border-color: var(--dm-5w-border);
+  border-radius: 20px;
+  background: var(--dm-5w-glass-bg);
+  box-shadow: 0 24px 56px -16px rgba(15, 23, 42, 0.28);
+}
+
+body .dm-5w-source-option,
+body .dm-5w-file-picker {
+  border-color: var(--dm-5w-border-control);
+  border-radius: 14px;
+}
+
+body .dm-5w-source-option:hover {
+  border-color: var(--dm-5w-primary-border);
+}
+
+body .dm-5w-source-option:has(input:checked) {
+  border-color: var(--dm-5w-primary);
+  background: var(--dm-5w-primary-light);
+}
+
+body .dm-5w-file-picker-action,
+body .dm-5w-file-clear {
+  border-radius: 999px;
+}
+
+body .dm-5w-file-picker-icon {
+  border-radius: 12px;
+}
+
+/* ---------- Workspace tabs (underline style, only colors) ---------- */
+body .dm-5w-workspace-nav {
+  border-bottom-color: var(--dm-5w-border);
+}
+
+/* ---------- Toast ---------- */
+body .dm-5w-toast {
+  border-color: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding-inline: 18px;
 }
 
 .dm-5w-panel {
@@ -3415,7 +3724,7 @@ dialog.dm-5w-upload-modal:not([open]) {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-top: 16px;
 }
 
 .dm-5w-toolbar-actions {
@@ -3531,7 +3840,7 @@ dialog.dm-5w-upload-modal:not([open]) {
   justify-content: center;
   align-self: start;
   height: 28px;
-  border: 1px solid var(--dm-5w-primary-border);
+  border: 1px solid rgba(238, 237, 237, 0.92);
   border-radius: 999px;
   background: var(--dm-5w-card);
   color: var(--dm-5w-primary);
@@ -4668,4 +4977,309 @@ dialog.dm-5w-confirm {
 .dm-5w-standard-item:first-child {
   padding-top: 0;
   border-top: 0;
+}
+
+
+/* =====================================================================
+   Glass design layer (paste at the very END of FiveWhy.css)
+   Only colors, borders, radius, shadows. Layout and spacing are untouched.
+   To switch it off, delete everything from this comment down.
+   ===================================================================== */
+
+.dm-5w-root {
+  --dm-5w-bg: #f6f8f8;
+  --dm-5w-border: rgba(15, 23, 42, 0.1);
+  --dm-5w-border-light: rgba(15, 23, 42, 0.06);
+  --dm-5w-border-control: #cfd5da;
+  --dm-5w-text: #1f2933;
+  --dm-5w-muted: #55636b;
+  --dm-5w-sub: #74818a;
+  --dm-5w-primary: #047857;
+  --dm-5w-primary-hover: #065f46;
+  --dm-5w-primary-light: #ecf8f3;
+  --dm-5w-primary-border: #bfe3d2;
+  --dm-5w-neutral-bg: #f2f4f5;
+  --dm-5w-glass-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 255, 255, 0.8) 100%
+  );
+  --dm-5w-glass-shadow:
+    0 12px 32px -14px rgba(15, 23, 42, 0.1),
+    0 2px 8px -2px rgba(15, 23, 42, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+  --dm-5w-gradient: linear-gradient(135deg, #0c9e6d 0%, #059669 100%);
+  --dm-5w-gradient-hover: linear-gradient(135deg, #0aae79 0%, #047857 100%);
+}
+
+/* ---------- Big cards ---------- */
+body .dm-5w-card {
+  border-radius: 20px;
+  background: var(--dm-5w-glass-bg);
+  box-shadow: var(--dm-5w-glass-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+  backdrop-filter: blur(18px) saturate(165%);
+}
+
+body .dm-5w-card.dm-5w-problem-card > .dm-5w-card-title,
+body .dm-5w-card.dm-5w-report-section > .dm-5w-card-title {
+  background: var(--dm-5w-gradient);
+}
+
+/* ---------- Stepper ---------- */
+/* body .dm-5w-stepper {
+  border-radius: 20px;
+  background: var(--dm-5w-glass-bg);
+  box-shadow: var(--dm-5w-glass-shadow);
+}
+
+body .dm-5w-step:hover {
+  background: rgba(15, 23, 42, 0.035);
+}
+
+body .dm-5w-step.is-active {
+  background: var(--dm-5w-primary-light);
+}
+
+body .dm-5w-step-circle.is-done {
+  background: var(--dm-5w-gradient);
+  border-color: transparent;
+} */
+
+/* ---------- Buttons ---------- */
+body .dm-5w-btn {
+  border-radius: 999px;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+body .dm-5w-btn-primary {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--dm-5w-gradient);
+  color: #ffffff;
+}
+
+body .dm-5w-btn-primary:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--dm-5w-gradient-hover);
+  box-shadow:
+    0 8px 18px -6px rgba(5, 150, 105, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+body .dm-5w-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 3px 8px -4px rgba(5, 150, 105, 0.5);
+}
+
+body .dm-5w-btn-secondary {
+  border-color: var(--dm-5w-border-control);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--dm-5w-text);
+}
+
+body .dm-5w-btn-secondary:hover:not(:disabled) {
+  border-color: var(--dm-5w-border-control);
+  background: var(--dm-5w-neutral-bg);
+  color: var(--dm-5w-text);
+  box-shadow: 0 6px 14px -8px rgba(15, 23, 42, 0.25);
+}
+
+body .dm-5w-step-next .dm-5w-btn,
+body .dm-5w-step-nav .dm-5w-btn {
+  border-radius: 999px;
+}
+
+/* ---------- Inputs, selects, textareas ---------- */
+body .dm-5w-input,
+body .dm-5w-select {
+  border-color: var(--dm-5w-border-control);
+  border-radius: 999px;
+  padding-inline: 16px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+body .dm-5w-textarea {
+  border-color: var(--dm-5w-border-control);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+body .dm-5w-problem-card
+  :is(.dm-5w-input, .dm-5w-select, .dm-5w-textarea):not(:disabled) {
+  border-color: var(--dm-5w-border-control);
+}
+
+body .dm-5w-problem-card :is(.dm-5w-input, .dm-5w-textarea):focus,
+body .dm-5w-problem-card :is(.dm-5w-input, .dm-5w-textarea):focus-visible,
+body .dm-5w-input:focus,
+body .dm-5w-select:focus,
+body .dm-5w-textarea:focus {
+  border-color: var(--dm-5w-primary);
+  background: #ffffff;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+}
+
+body .dm-5w-label,
+body .dm-5w-why-question .dm-5w-label,
+body .dm-5w-evidence-summary,
+body .dm-5w-root-toggle {
+  color: var(--dm-5w-muted);
+}
+
+body .dm-5w-problem-card .dm-5w-label {
+  color: var(--dm-5w-text);
+}
+
+/* ---------- Segmented controls ---------- */
+body .dm-5w-segment,
+body .dm-5w-view-toggle {
+  border-radius: 999px;
+  background: var(--dm-5w-neutral-bg);
+}
+
+body .dm-5w-segment-btn,
+body .dm-5w-view-btn {
+  border-radius: 999px;
+}
+
+/* ---------- Inner blocks ---------- */
+body .dm-5w-why-node,
+body .dm-5w-evidence-block,
+body .dm-5w-solution-card,
+body .dm-5w-board-card,
+body .dm-5w-history-card,
+body .dm-5w-summary-preview,
+body .dm-5w-factor-table {
+  border-color: var(--dm-5w-border);
+  border-radius: 16px;
+}
+
+body .dm-5w-why-node,
+body .dm-5w-board-card {
+  box-shadow: 0 6px 16px -10px rgba(15, 23, 42, 0.12);
+}
+
+body .dm-5w-why-node.is-active,
+body .dm-5w-why-node.is-highlight {
+  border-color: var(--dm-5w-primary);
+}
+
+body .dm-5w-rows {
+  border-radius: 16px;
+  background: var(--dm-5w-glass-bg);
+}
+
+body .dm-5w-row + .dm-5w-row {
+  border-top-color: var(--dm-5w-border-light);
+}
+
+/* ---------- Menus and popovers ---------- */
+body .dm-5w-menu-panel,
+body .dm-5w-evidence-menu-panel,
+body .dm-5w-category-combobox-popover {
+  border-color: var(--dm-5w-border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+  backdrop-filter: blur(18px) saturate(165%);
+  box-shadow: 0 14px 32px -12px rgba(15, 23, 42, 0.2);
+}
+
+body .dm-5w-menu-item,
+body .dm-5w-evidence-menu-item,
+body .dm-5w-category-combobox-option {
+  border-radius: 10px;
+}
+
+body .dm-5w-menu-item:hover,
+body .dm-5w-evidence-menu-item:hover,
+body .dm-5w-category-combobox-option:hover,
+body .dm-5w-category-combobox-option.is-active,
+body .dm-5w-menu-trigger:hover:not(:disabled) {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+body .dm-5w-menu-trigger {
+  border-radius: 999px;
+}
+
+/* ---------- Upload modal, pickers, options ---------- */
+body dialog.dm-5w-upload-modal {
+  border-color: var(--dm-5w-border);
+  border-radius: 20px;
+  background: var(--dm-5w-glass-bg);
+  box-shadow: 0 24px 56px -16px rgba(15, 23, 42, 0.28);
+}
+
+body .dm-5w-source-option,
+body .dm-5w-file-picker {
+  border-color: var(--dm-5w-border-control);
+  border-radius: 14px;
+}
+
+body .dm-5w-source-option:hover {
+  border-color: var(--dm-5w-primary-border);
+}
+
+body .dm-5w-source-option:has(input:checked) {
+  border-color: var(--dm-5w-primary);
+  background: var(--dm-5w-primary-light);
+}
+
+body .dm-5w-file-picker-action,
+body .dm-5w-file-clear {
+  border-radius: 999px;
+}
+
+body .dm-5w-file-picker-icon {
+  border-radius: 12px;
+}
+
+/* ---------- Workspace tabs (underline style, only colors) ---------- */
+body .dm-5w-workspace-nav {
+  border-bottom-color: var(--dm-5w-border);
+}
+
+/* ---------- Toast ---------- */
+body .dm-5w-toast {
+  border-color: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding-inline: 18px;
+}
+
+.dm-5w-back-row {
+  display: flex;
+  margin-top: 12px;
+}
+
+.dm-5w-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px 0 6px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dm-5w-muted);
+  font-size: var(--fw-fs-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dm-5w-back-link:hover:not(:disabled) {
+  background: rgba(15, 23, 42, 0.05);
+  color: var(--dm-5w-text);
+}
+
+.dm-5w-back-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
