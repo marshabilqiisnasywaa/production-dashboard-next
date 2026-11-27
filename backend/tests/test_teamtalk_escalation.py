@@ -282,6 +282,29 @@ class EscalationReminderTests(unittest.TestCase):
         self.assertIsNone(self.summary.last_escalated_on)
         self.assertEqual(self.run_check(datetime(2026, 11, 4, 10, 1)).call_count, 1)
 
+    def test_workshop_meeting_reminders_merged_when_same_time(self):
+        from app.models import WorkshopMeetingSetting
+        from app.services import teamtalk
+
+        teamtalk_scheduler._sent_events_cache.clear()
+        first = self.db.scalar(select(Workshop))
+        second = Workshop(name="Second Workshop")
+        self.db.add(second)
+        self.db.flush()
+        self.db.add(WorkshopMeetingSetting(workshop_id=first.id, time="08:30", days="1,2,3,4,5", reminder_minutes=15, is_active=True, reminder_enabled=True))
+        self.db.add(WorkshopMeetingSetting(workshop_id=second.id, time="08:30", days="1,2,3,4,5", reminder_minutes=15, is_active=True, reminder_enabled=True))
+        self.db.flush()
+
+        send_mock = AsyncMock(return_value=True)
+        with patch.object(teamtalk, "send_teamtalk_message", send_mock):
+            asyncio.run(teamtalk_scheduler.check_workshop_meeting_reminders(self.db, datetime(2026, 11, 4, 8, 15)))
+            self.assertEqual(send_mock.call_count, 1)
+            msg = send_mock.call_args.args[0]
+            self.assertIn("08:30", msg)
+            self.assertIn("Test Workshop, Second Workshop", msg)
+            asyncio.run(teamtalk_scheduler.check_workshop_meeting_reminders(self.db, datetime(2026, 11, 4, 8, 20)))
+            self.assertEqual(send_mock.call_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()
