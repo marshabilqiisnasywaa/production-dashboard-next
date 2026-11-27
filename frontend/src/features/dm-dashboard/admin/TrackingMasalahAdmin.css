@@ -1,0 +1,545 @@
+/* =========================================================
+   Tracking Masalah (admin) — satu card, hierarki jelas
+   Scope: .tm-page (wrapper di DmAdminPage)
+   ========================================================= */
+
+.tm-page {
+  --tm-border: var(--dm-admin-border, #e5e7eb);
+  --tm-muted: var(--dm-admin-text-muted, #6b7280);
+  --tm-text: var(--dm-admin-text, #111827);
+  --tm-primary: #059669;
+  --tm-primary-dark: #047857;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px 28px;
+  background: #fff;
+  border: 1px solid var(--tm-border);
+  border-radius: 16px;
+}
+
+/* ---------- Level 1: tab utama (underline) ---------- */
+.tm-page > .dm-subtabs {
+  display: flex;
+  gap: 28px;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--tm-border);
+  border-radius: 0;
+}
+.tm-page > .dm-subtabs .dm-subtab {
+  padding: 0 2px 12px;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--tm-muted);
+}
+.tm-page > .dm-subtabs .dm-subtab.is-active {
+  color: var(--tm-primary);
+  border-bottom-color: var(--tm-primary);
+}
+
+/* ---------- Seragamkan input & select (semua tab) ---------- */
+.tm-page
+  :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    select
+  ) {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 999px;
+  background-color: #fff;
+  color: var(--tm-text);
+  font-size: 0.85rem;
+  box-shadow: none;
+}
+.tm-page :is(input, select):focus {
+  outline: 0;
+  border-color: var(--tm-primary);
+  box-shadow: 0 0 0 3px rgba(4, 106, 56, 0.14);
+}
+
+/* ---------- Seragamkan tombol utama (semua tab) ---------- */
+.tm-page :is(.dml-pb-add-btn, .is-primary, [class*="btn-primary"], [class*="add-btn"]) {
+  height: 38px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #10b981 0%, var(--tm-primary) 100%);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  box-shadow: 0 8px 18px -6px rgba(5, 150, 105, 0.45);
+}
+.tm-page :is(.dml-pb-add-btn, .is-primary, [class*="btn-primary"], [class*="add-btn"]):hover {
+  background: linear-gradient(135deg, var(--tm-primary) 0%, var(--tm-primary-dark) 100%);
+}
+
+/* ---------- Hilangkan card dalam card ---------- */
+.tm-page .dml-pb,
+.tm-page .dml-pb .dml-pb-panel,
+.tm-page [class*="fivewhy"] [class*="panel"],
+.tm-page [class*="fivewhy"] [class*="card"]:not([class*="item"]) {
+  background: transparent;
+}
+.tm-page .dml-pb .dml-pb-panel {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* ---------- DM Meeting: toolbar 2 baris ---------- */
+.tm-page .dml-pb .dml-pb-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 0;
+  margin: 0 0 12px;
+  border: 0;
+}
+/* baris 1: pencarian kiri, tombol tambah kanan */
+.tm-page .dml-pb .dml-pb-search {
+  order: 1;
+  flex: 1 1 20rem;
+  max-width: 28rem;
+}
+.tm-page .dml-pb .dml-pb-search input { width: 100%; }
+.tm-page .dml-pb .dml-pb-add-btn { order: 2; margin-left: auto; }
+/* baris 2: semua filter */
+.tm-page .dml-pb .dml-pb-filters {
+  order: 3;
+  flex: 1 0 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* jumlah data: kecil, abu-abu, rata kanan */
+.tm-page .dml-pb .dml-pb-result-count {
+  width: fit-content;
+  margin: 0 0 10px auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--tm-muted);
+}
+
+/* ---------- Tabel (DM Meeting) ---------- */
+.tm-page .dml-pb .dml-pb-table-wrap {
+  border: 1px solid var(--tm-border);
+  border-radius: 12px;
+  background: #fff;
+  overflow-x: auto;
+}
+.tm-page .dml-pb .dml-pb-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.tm-page .dml-pb .dml-pb-table th,
+.tm-page .dml-pb .dml-pb-table td {
+  padding: 14px 16px;
+  font-size: 0.84rem;
+  vertical-align: middle;
+}
+.tm-page .dml-pb .dml-pb-table thead th {
+  background: #f9fafb;
+  color: var(--tm-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--tm-border) !important;
+}
+.tm-page .dml-pb .dml-pb-table tbody td {
+  height: 60px;
+  color: var(--tm-text);
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+.tm-page .dml-pb .dml-pb-table tbody tr:not(.is-escalated):hover {
+  background: #f9fafb;
+}
+/* eskalasi: tint tipis + penanda kiri, bukan blok merah penuh */
+.tm-page .dml-pb .dml-pb-table tbody tr.is-escalated { background: #fffafa; }
+.tm-page .dml-pb .dml-pb-table tbody tr.is-escalated td:first-child {
+  box-shadow: inset 3px 0 0 #ef4444;
+}
+/* kolom Masalah dibatasi supaya Status tidak terpotong */
+.tm-page .dml-pb .dml-pb-table td:nth-child(6) {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* kolom Status menempel di kanan saat scroll horizontal */
+.tm-page .dml-pb .dml-pb-table th:last-child,
+.tm-page .dml-pb .dml-pb-table td:last-child {
+  position: sticky;
+  right: 0;
+  background: inherit;
+  box-shadow: -8px 0 8px -8px rgba(15, 23, 42, 0.12);
+}
+.tm-page .dml-pb .dml-pb-table thead th:last-child { background: #f9fafb; }
+.tm-page .dml-pb .dml-pb-table tbody tr td:last-child { background: #fff; }
+.tm-page .dml-pb .dml-pb-table tbody tr.is-escalated td:last-child { background: #fffafa; }
+
+/* ---------- Tombol teks (Reset / Muat ulang) ---------- */
+.tm-page :is([class*="reset"], [class*="refresh"], [class*="reload"]) {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  color: var(--tm-primary);
+  font-weight: 600;
+}
+
+/* ---------- Tombol ikon (Reset / Muat ulang) ---------- */
+.tm-page .tm-icon-btn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: none;
+  color: var(--tm-muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.tm-page .tm-icon-btn:hover,
+.tm-page .tm-icon-btn:focus-visible {
+  border-color: var(--tm-primary);
+  color: var(--tm-primary);
+  background: #f0fdf7;
+  outline: 0;
+}
+
+/* Tooltip */
+.tm-page .tm-icon-btn::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(2px);
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #111827;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s, transform 0.12s;
+  z-index: 20;
+}
+.tm-page .tm-icon-btn:hover::after,
+.tm-page .tm-icon-btn:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---------- Keterangan jumlah di bawah tabel ---------- */
+.tm-page .tm-table-foot {
+  margin: 10px 0 0;
+  text-align: right;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--tm-muted);
+}
+.tm-page .tm-table-foot b {
+  color: var(--tm-text);
+  font-weight: 700;
+}
+
+/* ---------- DM Meeting: search + filter + tombol tambah satu baris ---------- */
+.tm-page .dml-pb:not(.dm-papercard-problems) .dml-pb-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+/* search dikecilkan */
+.tm-page .dml-pb:not(.dm-papercard-problems) .dml-pb-search {
+  order: 1;
+  flex: 0 1 17rem;
+  min-width: 12rem;
+  max-width: 17rem;
+}
+
+/* filter menempel di kanan search, bukan satu baris penuh sendiri */
+.tm-page .dml-pb:not(.dm-papercard-problems) .dml-pb-filters {
+  order: 2;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.tm-page .dml-pb:not(.dm-papercard-problems) .dml-pb-filters select {
+  min-width: 0;
+  padding-right: 28px;
+}
+
+/* tombol tambah selalu di ujung kanan baris yang sama
+   (berlaku baik di dalam .dml-pb-filters maupun di luarnya) */
+.tm-page .dml-pb:not(.dm-papercard-problems) .dml-pb-add-btn {
+  order: 3;
+  margin-left: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.tm-page .dml-pb:not(.dm-papercard-problems) .dml-pb-toolbar {
+  margin: 24px 0 14px;
+}
+
+.tm-page .dml-pb:not(.dm-papercard-problems) .dml-pb-toolbar {
+  margin: 24px 0 24px;
+}
+
+/* ---------- Papercard: search + filter + ikon dalam 1 baris ---------- */
+.tm-page .dml-pb.dm-papercard-problems .dml-pb-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin: 0 0 20px;
+}
+
+/* search dikecilkan */
+.tm-page .dml-pb.dm-papercard-problems .dml-pb-search {
+  order: 1;
+  flex: 0 1 18rem;
+  min-width: 12rem;
+  max-width: 18rem;
+}
+
+/* filter menempel di kanan search, rata kiri */
+.tm-page .dml-pb.dm-papercard-problems .dml-pb-filters {
+  order: 2;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 0;
+}
+
+/* tombol ikon Reset + Muat ulang didorong ke ujung kanan baris */
+.tm-page .dml-pb.dm-papercard-problems .dml-pb-filters .tm-icon-btn:first-of-type {
+  margin-left: auto;
+}
+
+/* =========================================================
+   5Why & PDCA di dalam Tracking Masalah
+   ========================================================= */
+
+.tm-page .dm-5w-root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ---------- Level 2: Analisis 5Why / Upload jadi segmented pill ---------- */
+.tm-page .dm-5w-workspace-nav {
+  display: inline-flex;
+  width: fit-content;
+  gap: 2px;
+  padding: 3px;
+  overflow: visible;
+  border: 0;
+  border-radius: 999px;
+  background: #f1f5f9;
+}
+.tm-page .dm-5w-workspace-tab {
+  min-height: 32px;
+  padding: 0 18px;
+  border: 0;
+  border-bottom: 0;
+  border-radius: 999px;
+  color: var(--tm-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.tm-page .dm-5w-workspace-tab:hover:not(:disabled) { color: var(--tm-text); }
+.tm-page .dm-5w-workspace-tab.is-active {
+  background: #fff;
+  color: var(--tm-text);
+  border-bottom-color: transparent;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+}
+
+/* ---------- Hilangkan card dalam card ---------- */
+.tm-page .dm-5w-root .dm-5w-documents,
+.tm-page .dm-5w-root .dm-5w-card:has(.dm-5w-library-filters),
+.tm-page .dm-5w-root .dm-5w-card:has(> .dm-5w-picker-head) {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ---------- Header seksi: judul kiri, aksi kanan ---------- */
+.tm-page .dm-5w-picker-head,
+.tm-page .dm-5w-document-library-head {
+  margin-bottom: 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tm-page .dm-5w-picker-head .dm-5w-card-title,
+.tm-page .dm-5w-document-library-head .dm-5w-card-title,
+.tm-page .dm-5w-document-library-head h2,
+.tm-page .dm-5w-document-library-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--tm-text);
+}
+.tm-page .dm-5w-analysis-create { gap: 8px; }
+.tm-page .dm-5w-analysis-create .dm-5w-select { width: 140px; }
+
+/* ---------- Filter: satu baris rapi, label kecil abu-abu ---------- */
+.tm-page .dm-5w-library-filters {
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1.2fr)
+    minmax(140px, 1fr)
+    minmax(140px, 1fr)
+    minmax(240px, 1.4fr);
+  align-items: end;
+  gap: 12px 16px;
+  margin: 0 0 8px;
+  padding: 0 0 16px;
+  overflow: visible;
+  border-bottom: 1px solid var(--tm-border);
+}
+.tm-page .dm-5w-library-filters .dm-5w-label {
+  margin-bottom: 4px;
+  color: var(--tm-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.tm-page .dm-5w-library-filters .dm-5w-input,
+.tm-page .dm-5w-library-filters .dm-5w-select {
+  height: 38px;
+  border-radius: 999px;
+}
+
+/* tombol < > bulan menyatu dengan dropdown */
+.tm-page .dm-5w-period { gap: 6px; }
+.tm-page .dm-5w-period-step {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border-color: rgba(15, 23, 42, 0.12);
+  color: var(--tm-muted);
+}
+.tm-page .dm-5w-period-step:hover:not(:disabled) {
+  border-color: var(--tm-primary);
+  color: var(--tm-primary);
+}
+
+/* ---------- Pemisah bulan: sub-judul yang jelas ---------- */
+.tm-page .dm-5w-group { margin-top: 28px; }
+.tm-page .dm-5w-group:first-of-type { margin-top: 20px; }
+.tm-page .dm-5w-group-title {
+  margin: 0 0 12px;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--tm-text);
+}
+.tm-page .dm-5w-group-title span {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: var(--tm-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+/* ---------- Daftar analisis (baris) ---------- */
+.tm-page .dm-5w-rows {
+  border: 1px solid var(--tm-border);
+  border-radius: 12px;
+}
+.tm-page .dm-5w-row {
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  gap: 20px;
+  padding: 20px 24px;
+  transition: background 0.15s;
+}
+.tm-page .dm-5w-row:hover { background: #fafcfb; }
+.tm-page .dm-5w-row-date strong { font-size: 1.6rem; color: var(--tm-text); }
+.tm-page .dm-5w-row-date span { font-size: 0.74rem; color: var(--tm-muted); }
+
+/* hierarki: judul dominan, meta redup */
+.tm-page .dm-5w-row-meta {
+  margin: 0 0 4px;
+  gap: 2px 14px;
+  color: #9ca3af;
+  font-size: 0.74rem;
+}
+.tm-page .dm-5w-row-open { font-size: 1.05rem; }
+.tm-page .dm-5w-row-facts {
+  margin-top: 14px;
+  gap: 8px;
+  font-size: 0.84rem;
+}
+.tm-page .dm-5w-row-facts > div { grid-template-columns: 150px minmax(0, 1fr); }
+.tm-page .dm-5w-row-facts dt { color: #9ca3af; font-size: 0.8rem; }
+.tm-page .dm-5w-row-facts dd { color: var(--tm-text); }
+
+/* ---------- Tab Upload: tabel dokumen ---------- */
+.tm-page .dm-5w-document-table-wrap {
+  margin-top: 16px;
+  border: 1px solid var(--tm-border);
+  border-radius: 12px;
+  overflow-x: auto;
+  background: #fff;
+}
+.tm-page .dm-5w-document-table th {
+  padding: 12px 16px;
+  background: #f9fafb;
+  color: var(--tm-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.tm-page .dm-5w-document-table td { padding: 14px 16px; font-size: 0.84rem; }
+
+/* ---------- Responsif ---------- */
+@media (max-width: 1000px) {
+  .tm-page .dm-5w-library-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .tm-page .dm-5w-library-filters { grid-template-columns: minmax(0, 1fr); }
+  .tm-page .dm-5w-row { grid-template-columns: 44px minmax(0, 1fr); padding: 16px; }
+}

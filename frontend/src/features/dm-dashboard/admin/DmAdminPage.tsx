@@ -60,6 +60,8 @@ import HistoryImportPage from "./history-import/HistoryImportPage";
 import FlowchartManager from "../flowchart/admin/FlowchartManager";
 import MechanismBoardEditor from "./MechanismBoardEditor";
 import AbnormalCategoryManager from "./abnormal/AbnormalCategoryManager";
+import "../fivewhy/FiveWhy.css";
+import "./TrackingMasalahAdmin.css";
 
 type Auth =
   | { kind: "checking" }
@@ -774,9 +776,10 @@ function AdminWorkspace({
               activeTab === "users" ||
               activeTab === "sqdip" ||
               activeTab === "perf" ||
-              activeTab === "abnormal"
-                ? " is-bare"
-                : ""
+              activeTab === "abnormal" ||
+activeTab === "problems"
+  ? " is-bare"
+  : ""
             }`}
           >
             {activeTab === "dashboard" && (
@@ -1373,7 +1376,7 @@ function AdminWorkspace({
               </div>
             )}
             {activeTab === "problems" && (
-              <div className="dm-admin-section">
+  <div className="dm-admin-section tm-page">
                 <div
                   className="dm-subtabs"
                   role="group"

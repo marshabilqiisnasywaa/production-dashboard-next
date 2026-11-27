@@ -257,9 +257,6 @@ export default function ProblemsPage({
           </div>
         </div>
 
-        <div className="dml-pb-result-count">{uiText("Menampilkan ")}<strong>{visible.length}</strong>{uiText(" dari")}{" "}
-          <strong>{rows.length}</strong>{uiText(" masalah")}</div>
-
         {actionError && <p className="dml-pb-action-error" role="alert">{uiText(actionError)}</p>}
         {error ? <ProblemLoadError error={error} onRetry={refresh} /> : ready ? (
           <ProblemTable

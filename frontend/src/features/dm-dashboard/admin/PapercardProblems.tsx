@@ -9,6 +9,7 @@ import { ProblemLoadError } from "../leader/problems/components/ProblemLoadError
 import { papercardProblemRows } from "./papercardProblemRows";
 import "../leader/problems/problems.css";
 import "./PapercardProblems.css";
+import { RotateCcw, RefreshCw } from "lucide-react";
 
 function today() {
   const date = new Date();
@@ -90,6 +91,13 @@ export default function PapercardProblems({
     );
   });
 
+  function resetFilters() {
+    setDate(today());
+    setLine("");
+    setDepartment("");
+    setSearch("");
+  }
+
   return (
     <div className={"dml-pb dm-papercard-problems" + (adminLayout ? " is-admin" : "")}>
       <section
@@ -148,20 +156,23 @@ export default function PapercardProblems({
             </select>
             <button
               type="button"
-              className="dml-pb-reset"
-              onClick={() => {
-                setDate(today());
-                setLine("");
-                setDepartment("");
-                setSearch("");
-              }}
-            >{uiText("Reset")}</button>
+              className="tm-icon-btn"
+              data-tip={uiText("Reset filter")}
+              aria-label={uiText("Reset filter")}
+              onClick={resetFilters}
+            >
+              <RotateCcw size={16} strokeWidth={1.8} aria-hidden="true" />
+            </button>
             <button
               type="button"
-              className="dml-pb-reset"
+              className="tm-icon-btn"
+              data-tip={uiText("Muat ulang")}
+              aria-label={uiText("Muat ulang")}
               disabled={loading}
               onClick={() => setAttempt((value) => value + 1)}
-            >{uiText("Muat ulang")}</button>
+            >
+              <RefreshCw size={16} strokeWidth={1.8} aria-hidden="true" />
+            </button>
           </div>
         </div>
         {error ? (
@@ -173,8 +184,6 @@ export default function PapercardProblems({
           <div className="dml-empty" role="status">{uiText("Memuat log papercard...")}</div>
         ) : (
           <>
-            <div className="dml-pb-result-count" role="status">{uiText("Menampilkan ")}<strong>{visible.length}</strong>{uiText(" dari")}{" "}
-              <strong>{rows.length}</strong>{uiText(" masalah NG")}{!date && uiText(" · Semua tanggal")}{uiText(". Hanya papercard dengan temuan NG atau keterlambatan yang ditampilkan.")}</div>
             <div
               className="dml-pb-table-wrap"
               tabIndex={0}
@@ -241,6 +250,17 @@ export default function PapercardProblems({
                 </tbody>
               </table>
             </div>
+
+            <p className="tm-table-foot" role="status">
+              
+              <strong>{visible.length}</strong>
+              {uiText(" dari")} <strong>{rows.length}</strong>
+              {uiText(" masalah NG")}
+              {!date && uiText(" · Semua tanggal")}
+              {uiText(
+                ". Hanya papercard dengan temuan NG atau keterlambatan yang ditampilkan."
+              )}
+            </p>
           </>
         )}
       </section>
